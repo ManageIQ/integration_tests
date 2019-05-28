@@ -760,11 +760,13 @@ def test_rolename_required_error_validation(appliance):
     # When trying to create a role with no name, the Add button is disabled.
     # We are waiting for an Exception saying that there are no success
     # or fail messages, because the Add button cannot be clicked.
-    with pytest.raises(Exception, match=r"Available messages: \[\]"):
-        appliance.collections.roles.create(
-            name=None,
-            vm_restriction='Only User Owned'
-        )
+    view = navigate_to(appliance.collections.roles, 'Add')
+    view.fill({'name_txt': '',
+               'vm_restriction_select': 'Only User Owned'})
+    assert view.add_button.disabled
+    view.fill({'name_txt': 'test-required-name'})
+    assert not view.add_button.disabled
+    view.cancel_button.click()
 
 
 @pytest.mark.tier(3)
@@ -777,13 +779,13 @@ def test_rolename_duplicate_validation(appliance):
         tags: rbac
     """
     name = 'rol{}'.format(fauxfactory.gen_alphanumeric())
-    role = new_role(appliance, name=name)
-    with pytest.raises(RBACOperationBlocked):
-        new_role(appliance, name=name)
-
-    # Navigating away from this page will create an "Abandon Changes" alert
-    # Since group creation failed we need to reset the state of the page
-    navigate_to(role.appliance.server, 'Dashboard')
+    role = appliance.collections.roles.create(name=name)
+    assert role.exists
+    view = navigate_to(appliance.collections.roles, 'Add')
+    view.fill({'name_txt': name})
+    view.add_button.click()
+    view.flash.assert_message('Name has already been taken', 'error')
+    view.cancel_button.click()
 
 
 @pytest.mark.tier(3)

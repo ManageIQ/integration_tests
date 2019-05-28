@@ -21,11 +21,12 @@ def category(appliance):
         display_name=fauxfactory.gen_alphanumeric(length=32)
     )
     yield cg
+    appliance.server.login_admin()
     cg.delete_if_exists()
 
 
 @pytest.fixture(scope="session")
-def tag(category):
+def tag(category, appliance):
     """
         Returns random created tag object
         Object can be used in all test run session
@@ -35,6 +36,7 @@ def tag(category):
         display_name=fauxfactory.gen_alphanumeric(length=32)
     )
     yield tag
+    appliance.server.login_admin()
     tag.delete_if_exists()
 
 
@@ -47,6 +49,7 @@ def role(appliance):
         name='role{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')
     yield role
+    appliance.server.login_admin()
     role.delete_if_exists()
 
 
@@ -61,6 +64,7 @@ def group_with_tag(appliance, role, category, tag):
         tag=([category.display_name, tag.display_name], True)
     )
     yield group
+    appliance.server.login_admin()
     group.delete_if_exists()
 
 
@@ -78,6 +82,7 @@ def user_restricted(appliance, group_with_tag, new_credential):
         cost_center='Workload',
         value_assign='Database')
     yield user
+    appliance.server.login_admin()
     user.delete_if_exists()
 
 
@@ -86,9 +91,8 @@ def new_credential():
     """
         Returns credentials object used for new user in test module
     """
-    # Todo remove .lower() for principal after 1486041 fix
     return Credential(
-        principal='uid{}'.format(fauxfactory.gen_alphanumeric().lower()), secret='redhat')
+        principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
 
 
 @pytest.fixture(scope='function')

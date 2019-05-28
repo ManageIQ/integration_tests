@@ -71,12 +71,14 @@ class HandleModalsMixin(object):
         # throws timeout exception if not found
         try:
             if wait:
-                alert = wait_for(self.get_alert, num_sec=wait, fail_condition=None).out
-                if isinstance(alert, Modal) and BZ(1713399):
+                popup = wait_for(self.get_alert, num_sec=wait, fail_condition=None).out
+                if isinstance(popup, Modal) and BZ(1713399).blocks:
                     # infinispinner if accept button is clicked too quick in  modal
                     sleep(1)
-
-            popup = self.get_alert()
+            else:
+                popup = self.get_alert()
+            if popup is None:
+                raise TimedOutError('Pretending to timeout, no wait')  # same logging
             self.logger.info('handling alert: %r', popup.text)
             if prompt is not None:
                 self.logger.info('  answering prompt: %r', prompt)
@@ -94,9 +96,12 @@ class HandleModalsMixin(object):
             self.dismiss_any_alerts()
             return True
         except TimedOutError:
+            # we waited (or didn't), and there was no alert
             if check_present:
+                self.logger.error('handle_alert timed out with wait of %s, raising', wait)
                 raise
             else:
+                self.logger.info('handle_alert found no alert with wait of %s', wait)
                 return None
         except Exception:
             if squash:
