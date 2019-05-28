@@ -3,15 +3,19 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 
 pytestmark = [
-    test_requirements.vmware
+    test_requirements.vmware,
+    pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
+    pytest.mark.provider([VMwareProvider], scope="module")
 ]
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
-def test_vmware_provider_filters():
+def test_vmware_provider_filters(appliance, provider, soft_assert):
     """
     N-3 filters for esx provider.
     Example: ESXi 6.5 is the current new release.
@@ -31,7 +35,12 @@ def test_vmware_provider_filters():
             2.All hosts are listed.
             3.We should have at least 3 filters based on VMware version.
     """
-    pass
+    esx_platforms = ['Platform / ESX 6.0', 'Platform / ESX 6.5', 'Platform / ESX 6.7']
+    view = navigate_to(appliance.collections.hosts, 'All')
+    all_options = view.filters.navigation.all_options
+    logger.info("All options for Filters are: {} ".format(all_options))
+    for esx_platform in esx_platforms:
+        soft_assert(esx_platform in all_options, "ESX Platform does not exists in options")
 
 
 @pytest.mark.manual
