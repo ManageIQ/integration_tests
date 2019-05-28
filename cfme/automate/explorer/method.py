@@ -27,7 +27,6 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import EntryPoint
@@ -239,6 +238,7 @@ class MethodAddView(AutomateExplorerView):
 
     location = BootstrapSelect('cls_method_location', can_hide_on_select=True)
 
+    # Inline
     inline_name = Input(name='cls_method_name')
     inline_display_name = Input(name='cls_method_display_name')
     script = ScriptBox()
@@ -246,6 +246,7 @@ class MethodAddView(AutomateExplorerView):
     validate_button = Button('Validate')
     inputs = View.nested(Inputs)
 
+    # Playbook
     playbook_name = Input(name='name')
     playbook_display_name = Input(name='display_name')
     repository = PlaybookBootstrapSelect('provisioning_repository_id')
@@ -262,6 +263,16 @@ class MethodAddView(AutomateExplorerView):
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
+
+    # Ansible Tower Workflow Template
+    ansible_tower_workflow_template_name = Input(name="name")
+    ansible_tower_workflow_template_display_name = Input(name="display_name")
+
+    # Ansible Tower Job Template
+    ansible_tower_job_template_name = Input(name="name")
+    ansible_tower_job_template_display_name = Input(name="display_name")
+
+    ansible_max_ttl = Input(name='provisioning_execution_ttl')
 
     add_button = Button('Add')
     cancel_button = Button('Cancel')
@@ -306,30 +317,41 @@ class MethodEditView(AutomateExplorerView):
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
 
+    # Ansible Tower Workflow Template
+    ansible_tower_workflow_template_name = Input(name="name")
+    ansible_tower_workflow_template_display_name = Input(name="display_name")
+
+    # Ansible Tower Job Template
+    ansible_tower_job_template_name = Input(name="name")
+    ansible_tower_job_template_display_name = Input(name="display_name")
+
+    ansible_max_ttl = Input(name='provisioning_execution_ttl')
+
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
 
     def before_fill(self, values):
         location = self.context['object'].location.lower()
-        if 'display_name' in values and location in ['inline', 'playbook']:
-            values['{}_display_name'.format(location)] = values['display_name']
+        if 'display_name' in values and location in ['inline', 'playbook',
+                                                     'ansible tower job template',
+                                                     'ansible tower workflow template']:
+            values['{}_display_name'.format(location.replace(" ", "_"))] = values['display_name']
             del values['display_name']
-        elif 'name' in values and location in ['inline', 'playbook']:
-            values['{}_name'.format(location)] = values['name']
+        elif 'name' in values and location in ['inline', 'playbook', 'ansible tower job template',
+                                               'ansible tower workflow template']:
+            values['{}_name'.format(location.replace(" ", "_"))] = values['name']
             del values['name']
 
     @property
     def is_displayed(self):
         return (
-            self.in_explorer
-            and self.datastore.is_opened
-            and (f'Editing Automate Method "{self.context["object"].name}"' in self.title.text)
+            self.in_explorer and
+            self.datastore.is_opened and
+            'Editing Automate Method "{}"'.format(self.context['object'].name) in self.title.text
             and check_tree_path(
                 self.datastore.tree.currently_selected,
-                self.context["object"].tree_path,
-                partial=True,
-            )
+                self.context['object'].tree_path, partial=True)
         )
 
 
@@ -401,11 +423,18 @@ class Method(BaseEntity, Copiable):
     def tree_path(self):
         icon_name_map = {'inline': 'fa-ruby', 'playbook': 'vendor-ansible'}
         if self.display_name:
-            return self.parent_obj.tree_path + [
-                (icon_name_map[self.location.lower()], '{} ({})'.format(self.display_name,
-                                                                        self.name))]
+            if self.location in ['Ansible Tower Job Template', 'Ansible Tower Workflow Template']:
+                return self.parent_obj.tree_path + [f'{self.display_name} ({self.name})']
+            else:
+                return self.parent_obj.tree_path + [
+                    (icon_name_map[self.location.lower()], f'{self.display_name} ({self.name})')]
         else:
-            return self.parent_obj.tree_path + [(icon_name_map[self.location.lower()], self.name)]
+            if self.location in ['Ansible Tower Job Template', 'Ansible Tower Workflow Template']:
+                return self.parent_obj.tree_path + [self.name]
+            else:
+                return self.parent_obj.tree_path + [(
+                    icon_name_map[self.location.lower()], self.name
+                )]
 
     @property
     def tree_path_name_only(self):
@@ -484,6 +513,25 @@ class MethodCollection(BaseCollection):
                 'playbook_input_parameters': playbook_input_parameters
             })
             validate = False
+
+        if location == 'Ansible Tower Workflow Template':
+            add_page.wait_displayed()
+            add_page.fill({
+                'ansible_tower_workflow_template_name': name,
+                'ansible_tower_workflow_template_display_name': display_name,
+                'ansible_max_ttl': max_ttl,
+            })
+            validate = False
+
+        if location == 'Ansible Tower Job Template':
+            add_page.wait_displayed()
+            add_page.fill({
+                'ansible_tower_job_template_name': name,
+                'ansible_tower_job_template_display_name': display_name,
+                'ansible_max_ttl': max_ttl,
+            })
+            validate = False
+
         if validate:
             add_page.validate_button.click()
             add_page.wait_displayed()
@@ -498,12 +546,6 @@ class MethodCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-
-            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
-                view = self.create_view(ClassDetailsView)
-                view.flash.assert_message('Automate Method "{}" was added'.format(name))
-                self.browser.refresh()
 
             return self.instantiate(
                 name=name,
@@ -557,10 +599,6 @@ class MethodCollection(BaseCollection):
         for method in checked_methods:
             all_page.flash.assert_message(
                 'Automate Method "{}": Delete successful'.format(method.name))
-
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
 
 
 @navigator.register(MethodCollection)
