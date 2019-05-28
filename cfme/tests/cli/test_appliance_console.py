@@ -7,12 +7,14 @@ import yaml
 from wait_for import TimedOutError
 from wait_for import wait_for
 
+from cfme import test_requirements
 from cfme.utils import os
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 
 pytestmark = [
+    test_requirements.app_console,
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
                             reason="cli isn't supported in pod appliance")
 ]
