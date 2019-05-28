@@ -1008,7 +1008,7 @@ class Role(Updateable, Pretty, BaseEntity):
 
     pretty_attrs = ['name', 'product_features']
 
-    name = attr.ib(default=None)
+    name = attr.ib()
     vm_restriction = attr.ib(default=None)
     product_features = attr.ib(default=None)
 
@@ -1135,7 +1135,7 @@ class Role(Updateable, Pretty, BaseEntity):
 class RoleCollection(BaseCollection):
     ENTITY = Role
 
-    def create(self, name=None, vm_restriction=None, product_features=None, cancel=False):
+    def create(self, name, vm_restriction=None, product_features=None, cancel=False):
         """ Create role method
 
         Args:
@@ -1151,7 +1151,6 @@ class RoleCollection(BaseCollection):
                 for currently selected role
         """
         flash_blocked_msg = "Name has already been taken"
-
         role = self.instantiate(
             name=name, vm_restriction=vm_restriction, product_features=product_features
         )
