@@ -103,6 +103,7 @@ class BaseLoggedInPage(View):
 
     def logout(self):
         self.settings.select_item('Logout')
+        self.browser.handle_alert(wait=None)
         self.extra.appliance.user = None
 
     @property

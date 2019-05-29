@@ -90,23 +90,9 @@ def check_permissions(appliance, assigned_tenant):
     assert not view.toolbar.configuration.has_item('Manage Quotas')
 
 
-@pytest.fixture(scope="module")
-def product_features(appliance):
-    """Tree path navigation (for quota management permissions) to particular node of product feature
-     in RBAC for roles
-     """
-    config = "Settings,Configuration" if appliance.version < "5.11" else "Main Configuration"
-    product_feature = [
-        "Everything,{config},Access Control,Tenants,Modify,Manage Quotas,Manage Quotas ({tenant})".
-        format(config=config, tenant=tenant).split(",") for tenant in TENANTS
-    ]
-    return product_feature
-
-
 @test_requirements.quota
 @pytest.mark.tier(1)
-def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant, child_tenant,
-                                                  product_features):
+def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant, child_tenant):
     """
     Polarion:
         assignee: ghubale
@@ -155,6 +141,13 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
     user_ = []
     role_ = []
 
+    # Tree path navigation(for quota management permissions) to particular node of product feature
+    # in RBAC for roles
+    product_feature = ['Everything']
+    product_feature.extend(
+        ['Settings', 'Configuration'] if appliance.version < '5.11' else ['Main Configuration'])
+    product_feature.extend(["Access Control", "Tenants", "Modify", "Manage Quotas"])
+
     # List of two tenants with their parents to assign to two different groups
     tenant_ = ["My Company/{parent}".format(parent=new_tenant.name),
                "My Company/{parent}/{child}".format(parent=new_tenant.name,
@@ -192,16 +185,18 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
         user_.append(user)
         request.addfinalizer(user.delete_if_exists)
 
-        # Updating roles for users with PRODUCT_FEATURES tree. It restrict user from the
+        # Updating roles for users with product_feature tree. It restrict user from the
         # tenants for which this role does not have access.
-        # Here PRODUCT_FEATURES[0] is the tree path navigation for updating RBAC role for tenant1
-        # (parent tenant) from TENANTS list.
-        # Here PRODUCT_FEATURES[1] is the tree path navigation for updating RBAC role for tenant2
-        # (child tenant) from TENANTS list.
+        # Here product_feature is the tree path navigation for updating RBAC role for tenant1 -
+        # (parent tenant) and tenant2 - (child tenant) from TENANTS list.
         # role_[0] and role_[1] is the first and second role from the list of two role created
         # above; Providing 'False' while updating role means it restrict user from accessing that
         # particular tenant.
-        role_[i].update({'product_features': [(product_features[i], False)]})
+        product_feature.extend(["Manage Quotas ({tenant})".format(tenant=TENANTS[i])])
+        role_[i].update({'product_features': [(product_feature, False)]})
+        # Need to pop up last element added which is parent tenant. So that we can add child tenant
+        # for updating product feature for it.
+        product_feature.pop()
 
     # Logged in with user1 and then checking; this user should not have access of manage quota for
     # tenant1(parent tenant).
