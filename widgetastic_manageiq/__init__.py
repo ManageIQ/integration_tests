@@ -5422,9 +5422,8 @@ class EntryPoint(View, ClickableMixin):
             value (list): path to for selection.
         """
 
-        # `domain` not become part of value also some time need to avoid initial `/`
-        diff = set(self.value.split("/")) - set(value)
-        if not diff or diff == {""}:
+        # `domain` not become part of value
+        if self.value and self.value in "/".join(value):
             return False
 
         if self.textbox.__element__().is_enabled():

@@ -21,6 +21,7 @@ from widgetastic_manageiq import DialogBootstrapSwitch
 from widgetastic_manageiq import DialogButton
 from widgetastic_manageiq import DialogElement
 from widgetastic_manageiq import DragandDrop
+from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import WaitTab
 
@@ -47,6 +48,10 @@ class ElementForm(AddBoxView):
     @View.nested
     class options(WaitTab):  # noqa
         default_text_box = Input(name='default_value')
+        entry_point = EntryPoint(
+            locator="//input[@class='form-control']",
+            tree_id="treeview-tree-selector"
+        )
         field_required = DialogBootstrapSwitch(label='Required')
         default_value = DialogBootstrapSwitch(label='Default value')
         field_required = DialogBootstrapSwitch(label='Required')
