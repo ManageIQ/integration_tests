@@ -7,9 +7,10 @@ from cfme.automate.explorer.domain import DomainAddView
 from cfme.automate.explorer.instance import InstanceCopyView
 from cfme.automate.explorer.klass import ClassCopyView
 from cfme.automate.explorer.method import MethodCopyView
+from cfme.automate.simulation import simulate
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -70,7 +71,7 @@ def test_domain_edit_enabled(domain, appliance):
 
 
 @pytest.mark.tier(2)
-def test_domain_lock_disabled(request, appliance):
+def test_domain_lock_disabled(klass):
     """
     Polarion:
         assignee: ghubale
@@ -79,15 +80,55 @@ def test_domain_lock_disabled(request, appliance):
         initialEstimate: 1/16h
         tags: automate
     """
-    domain = appliance.collections.domains.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
-        enabled=False)
-    request.addfinalizer(domain.delete_if_exists)
-    domain.lock()
-    view = navigate_to(domain, 'Details')
+    # Disable automate domain
+    with update(klass.namespace.domain):
+        klass.namespace.domain.enabled = False
+
+    # Adding schema for executing automate method
+    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+
+    # Adding automate method
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline'
+    )
+
+    # Adding instance to call automate method
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={'execute': {'value': method.name}}
+    )
+
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[r".*ERROR.*"],
+    )
+    result.fix_before_start()
+
+    # Executing automate method using simulation
+    simulate(
+        appliance=klass.appliance,
+        attributes_values={
+            "namespace": klass.namespace.name,
+            "class": klass.name,
+            "instance": instance.name,
+        },
+        message="create",
+        request="Call_Instance",
+        execute_methods=True,
+    )
+    result.validate_logs()
+
+    klass.namespace.domain.lock()
+    view = navigate_to(klass.namespace.domain, 'Details')
     assert 'Disabled' in view.title.text
     assert 'Locked' in view.title.text
+
+    # Need to unlock the domain to perform teardown on domain, namespace, class
+    klass.namespace.domain.unlock()
 
 
 @pytest.mark.tier(1)
@@ -248,7 +289,6 @@ def test_domain_lock_unlock(domain, appliance):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1686762)])
 def test_object_attribute_type_in_automate_schedule(appliance):
     """
     Polarion:
