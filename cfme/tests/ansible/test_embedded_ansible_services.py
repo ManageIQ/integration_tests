@@ -7,6 +7,9 @@ from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -23,8 +26,38 @@ pytestmark = [
 SERVICE_CATALOG_VALUES = [
     ("default", None, "localhost"),
     ("blank", "", "localhost"),
-    ("unavailable_host", "unavailable_host", "unavailable_host")
+    ("unavailable_host", "unavailable_host", "unavailable_host"),
 ]
+
+
+CREDENTIALS = [
+    ("Amazon", ""),
+    ("VMware", "vcenter_host"),
+    ("Red Hat Virtualization", "host"),
+]
+
+
+@pytest.fixture
+def provider_credentials(appliance, provider, credential):
+    cred_type, hostname = credential
+    creds = provider.get_credentials_from_config(provider.data["credentials"])
+    credentials = {}
+    if cred_type == "Amazon":
+        credentials["access_key"] = creds.principal
+        credentials["secret_key"] = creds.secret
+    else:
+        credentials["username"] = creds.principal
+        credentials["password"] = creds.secret
+        credentials[hostname] = provider.hostname
+
+    credential = appliance.collections.ansible_credentials.create(
+        "{}_credential_{}".format(cred_type, fauxfactory.gen_alpha()),
+        cred_type,
+        **credentials
+    )
+    yield credential
+
+    credential.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -33,21 +66,7 @@ def ansible_credential(appliance):
         fauxfactory.gen_alpha(),
         "Machine",
         username=fauxfactory.gen_alpha(),
-        password=fauxfactory.gen_alpha()
-    )
-    yield credential
-
-    credential.delete_if_exists()
-
-
-@pytest.fixture
-def ansible_amazon_credential(appliance, provider):
-    creds = provider.get_credentials_from_config(provider.data["credentials"])
-    credential = appliance.collections.ansible_credentials.create(
-        fauxfactory.gen_alpha(),
-        "Amazon",
-        access_key=creds.principal,
-        secret_key=creds.secret,
+        password=fauxfactory.gen_alpha(),
     )
     yield credential
 
@@ -59,7 +78,8 @@ def custom_service_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
-        type=appliance.collections.button_groups.SERVICE)
+        type=appliance.collections.button_groups.SERVICE,
+    )
     button = buttongroup.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
@@ -83,7 +103,9 @@ def test_service_ansible_playbook_available(appliance):
         tags: ansible_embed
     """
     view = navigate_to(appliance.collections.catalog_items, "Choose Type")
-    assert "Ansible Playbook" in [option.text for option in view.select_item_type.all_options]
+    assert "Ansible Playbook" in [
+        option.text for option in view.select_item_type.all_options
+    ]
 
 
 @pytest.mark.tier(1)
@@ -105,19 +127,20 @@ def test_service_ansible_playbook_crud(appliance, ansible_repository):
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
-        }
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+        },
     )
     assert cat_item.exists
     with update(cat_item):
         new_name = "edited_{}".format(fauxfactory.gen_alphanumeric())
         cat_item.name = new_name
-        cat_item.provisioning = {
-            "playbook": "copy_file_example.yml"
-        }
+        cat_item.provisioning = {"playbook": "copy_file_example.yml"}
     view = navigate_to(cat_item, "Details")
     assert new_name in view.entities.title.text
-    assert view.entities.provisioning.info.get_text_of("Playbook") == "copy_file_example.yml"
+    assert (
+        view.entities.provisioning.info.get_text_of("Playbook")
+        == "copy_file_example.yml"
+    )
     cat_item.delete()
     assert not cat_item.exists
 
@@ -138,10 +161,11 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
             4. Remove the given tag
     """
     added_tag = ansible_catalog_item.add_tag()
-    assert any(tag.category.display_name == added_tag.category.display_name and
-               tag.display_name == added_tag.display_name
-               for tag in ansible_catalog_item.get_tags()), (
-        'Assigned tag was not found on the details page')
+    assert any(
+        tag.category.display_name == added_tag.category.display_name
+        and tag.display_name == added_tag.display_name
+        for tag in ansible_catalog_item.get_tags()
+    ), "Assigned tag was not found on the details page"
     ansible_catalog_item.remove_tag(added_tag)
     assert ansible_catalog_item.get_tags() == []
 
@@ -160,10 +184,12 @@ def test_service_ansible_playbook_negative(appliance):
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
     view = navigate_to(cat_item, "Add")
-    view.fill({
-        "name": fauxfactory.gen_alphanumeric(),
-        "description": fauxfactory.gen_alphanumeric()
-    })
+    view.fill(
+        {
+            "name": fauxfactory.gen_alphanumeric(),
+            "description": fauxfactory.gen_alphanumeric(),
+        }
+    )
     assert not view.add.active
     view.browser.refresh()
 
@@ -203,15 +229,21 @@ def test_service_ansible_playbook_provision_in_requests(
     ansible_service_request.wait_for_request()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+    service_request = appliance.collections.requests.instantiate(
+        description=request_descr
+    )
+    service_id = appliance.rest_api.collections.service_requests.get(
+        description=request_descr
+    )
 
     @request.addfinalizer
     def _finalize():
         service = MyService(appliance, cat_item_name)
         if service_request.exists():
             service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+            appliance.rest_api.collections.service_requests.action.delete(
+                id=service_id.id
+            )
 
         if service.exists:
             service.delete()
@@ -323,7 +355,7 @@ def test_service_ansible_playbook_order_retire(
     order_value,
     result,
     action,
-    request
+    request,
 ):
     """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.
@@ -340,15 +372,21 @@ def test_service_ansible_playbook_order_retire(
     ansible_service_request.wait_for_request()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+    service_request = appliance.collections.requests.instantiate(
+        description=request_descr
+    )
+    service_id = appliance.rest_api.collections.service_requests.get(
+        description=request_descr
+    )
 
     @request.addfinalizer
     def _finalize():
         service = MyService(appliance, cat_item_name)
         if service_request.exists():
             service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+            appliance.rest_api.collections.service_requests.action.delete(
+                id=service_id.id
+            )
 
         if service.exists:
             service.delete()
@@ -375,9 +413,14 @@ def test_service_ansible_playbook_plays_table(
     ansible_service.order()
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
-    soft_assert(view.provisioning.plays.row_count > 1, "Plays table in provisioning tab is empty")
+    soft_assert(
+        view.provisioning.plays.row_count > 1,
+        "Plays table in provisioning tab is empty",
+    )
     ansible_service.retire()
-    soft_assert(view.provisioning.plays.row_count > 1, "Plays table in retirement tab is empty")
+    soft_assert(
+        view.provisioning.plays.row_count > 1, "Plays table in retirement tab is empty"
+    )
 
 
 @pytest.mark.tier(3)
@@ -399,7 +442,7 @@ def test_service_ansible_playbook_order_credentials(
             "machine_credential": ansible_credential.name
         }
     view = navigate_to(ansible_service_catalog, "Order")
-    options = [o.text for o in (view.fields('credential')).visible_widget.all_options]
+    options = [o.text for o in (view.fields("credential")).visible_widget.all_options]
     assert ansible_credential.name in set(options)
 
 
@@ -430,8 +473,13 @@ def test_service_ansible_playbook_pass_extra_vars(
     stdout.wait_displayed()
     pre = stdout.text
     json_str = pre.split("--------------------------------")
-    result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
-        '\\, "', '",').split('" ] } PLAY')[0])
+    result_dict = json.loads(
+        json_str[5]
+        .replace('", "', "")
+        .replace('\\"', '"')
+        .replace('\\, "', '",')
+        .split('" ] } PLAY')[0]
+    )
     assert result_dict["some_var"] == "some_value"
 
 
@@ -461,7 +509,7 @@ def test_service_ansible_execution_ttl(
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
             "playbook": "long_running_playbook.yml",
-            "max_ttl": 200
+            "max_ttl": 200,
         }
 
     def _revert():
@@ -506,8 +554,7 @@ def test_custom_button_ansible_credential_list(
         custom_service_button.text
     )
     credentials_dropdown = BootstrapSelect(
-        appliance.browser.widgetastic,
-        locator=".//select[@id='credential']/.."
+        appliance.browser.widgetastic, locator=".//select[@id='credential']/.."
     )
     wait_for(lambda: credentials_dropdown.is_displayed, timeout=30)
     all_options = [option.text for option in credentials_dropdown.all_options]
@@ -545,20 +592,38 @@ def test_ansible_group_id_in_payload(
     # Standard output has several sections splitted by --------------------------------
     # Required data is located in 6th section
     # Then we need to replace or remove some characters to get a parsable json string
-    result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
-        '\\, "', '",').split('" ] } PLAY')[0])
+    result_dict = json.loads(
+        json_str[5]
+        .replace('", "', "")
+        .replace('\\"', '"')
+        .replace('\\, "', '",')
+        .split('" ] } PLAY')[0]
+    )
     assert "group" in result_dict["manageiq"]
 
 
-@pytest.mark.provider([EC2Provider], scope="function")
-def test_embed_tower_exec_play_against_amazon(
+@pytest.mark.parametrize(
+    "credential", CREDENTIALS, ids=[cred[0] for cred in CREDENTIALS]
+)
+@pytest.mark.provider(
+    [RHEVMProvider, EC2Provider, VMwareProvider], selector=ONE_PER_TYPE
+)
+@pytest.mark.uncollectif(
+    lambda credential, provider: not (
+        (credential[0] == "Amazon" and provider.one_of(EC2Provider))
+        or (credential[0] == "VMware" and provider.one_of(VMwareProvider))
+        or (
+            credential[0] == "Red Hat Virtualization" and provider.one_of(RHEVMProvider)
+        )
+    )
+)
+def test_embed_tower_exec_play_against(
     request,
-    provider,
-    setup_provider,
     ansible_catalog_item,
     ansible_service,
-    ansible_amazon_credential,
     ansible_service_catalog,
+    credential,
+    provider_credentials,
 ):
     """
     Polarion:
@@ -568,11 +633,18 @@ def test_embed_tower_exec_play_against_amazon(
         initialEstimate: 1/4h
         tags: ansible_embed
     """
+    if provider_credentials.credential_type == "Amazon":
+        playbook = "list_ec2_instances.yml"
+    elif provider_credentials.credential_type == "VMware":
+        playbook = "gather_all_vms_from_vmware.yml"
+    elif provider_credentials.credential_type == "Red Hat Virtualization":
+        playbook = "connect_to_rhv.yml"
+
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
-            "playbook": "list_ec2_instances.yml",
-            "cloud_type": "Amazon",
-            "cloud_credential": ansible_amazon_credential.name
+            "playbook": playbook,
+            "cloud_type": provider_credentials.credential_type,
+            "cloud_credential": provider_credentials.name,
         }
 
     @request.addfinalizer
@@ -580,10 +652,10 @@ def test_embed_tower_exec_play_against_amazon(
         with update(ansible_catalog_item):
             ansible_catalog_item.provisioning = {
                 "playbook": "dump_all_variables.yml",
-                "cloud_type": "<Choose>"
+                "cloud_type": "<Choose>",
             }
 
     service_request = ansible_service_catalog.order()
-    service_request.wait_for_request(method="ui", num_sec=300, delay=20)
+    service_request.wait_for_request(num_sec=300, delay=20)
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"
