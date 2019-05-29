@@ -12,6 +12,7 @@ from cfme.utils import datafile
 from cfme.utils import db
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 
@@ -24,6 +25,12 @@ class ApplianceDBException(AppliancePluginException):
 class ApplianceDB(AppliancePlugin):
     """Holder for appliance DB related methods and functions"""
     _ssh_client = attr.ib(default=None)
+
+    @cached_property
+    def service_name(self):
+        return VersionPicker({
+            '5.10': 'rh-postgresql95-postgresql',
+            '5.11': 'postgresql'}).pick(self.appliance.version)
 
     @property
     def pg_prefix(self):

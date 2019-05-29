@@ -34,7 +34,6 @@ from .db import ApplianceDB
 from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
 from .implementations.ui import ViaUI
-from .services import DynaService
 from .services import SystemdException
 from .services import SystemdService
 from cfme.fixtures import ui_coverage
@@ -310,14 +309,15 @@ class IPAppliance(object):
     auditd = SystemdService.declare(unit_name='auditd')
     chronyd = SystemdService.declare(unit_name='chronyd')
     collectd = SystemdService.declare(unit_name='collectd')
+    evminit = SystemdService.declare(unit_name='evminit')
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     httpd = SystemdService.declare(unit_name='httpd')
     merkyl = SystemdService.declare(unit_name='merkyl')
     nginx = SystemdService.declare(unit_name='nginx')
     rabbitmq_server = SystemdService.declare(unit_name='rabbitmq-server')
     sssd = SystemdService.declare(unit_name='sssd')
+    sshd = SystemdService.declare(unit_name='sshd')
     supervisord = SystemdService.declare(unit_name='supervisord')
-    db_service = DynaService.declare(service_name_getting_cmd="echo $APPLIANCE_PG_SERVICE")
     firewalld = SystemdService.declare(unit_name='firewalld')
     db = ApplianceDB.declare()
 
@@ -347,6 +347,10 @@ class IPAppliance(object):
         'openldap': '/etc/openldap/ldap.conf',
         'sssd': '/etc/sssd/sssd.conf'
     }
+
+    @cached_property
+    def db_service(self):
+        return SystemdService(self, unit_name=self.db.service_name)
 
     @property
     def as_json(self):

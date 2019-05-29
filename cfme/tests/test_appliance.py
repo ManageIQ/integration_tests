@@ -84,7 +84,7 @@ def test_evm_running(appliance):
     'evmserverd',
     'evminit',
     'sshd',
-    'postgresql',
+    'db_service',
 ])
 @pytest.mark.uncollectif(
     lambda appliance: appliance.is_pod)
@@ -98,14 +98,7 @@ def test_service_enabled(appliance, service):
         testtype: functional
         casecomponent: Appliance
     """
-    if service == 'postgresql':
-        service = appliance.db_service.unit_name
-    if appliance.os_version >= '7':
-        cmd = 'systemctl is-enabled {}'.format(service)
-    else:
-        cmd = 'chkconfig | grep {} | grep -q "5:on"'.format(service)
-    result = appliance.ssh_client.run_command(cmd)
-    assert result.success, result.output
+    assert getattr(appliance, service).enabled
 
 
 @pytest.mark.ignore_stream("upstream")
