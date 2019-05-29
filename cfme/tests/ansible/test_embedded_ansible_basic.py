@@ -112,26 +112,6 @@ def credentials_collection(appliance):
     return appliance.collections.ansible_credentials
 
 
-@pytest.fixture(scope="module")
-def catalog_item(appliance, ansible_repository):
-    cat_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
-        provisioning={
-            "repository": ansible_repository.name,
-            "playbook": "dump_all_variables.yml",
-            "machine_credential": "CFME Default Credential",
-            "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
-        },
-    )
-    yield cat_item
-
-    if cat_item.exists:
-        cat_item.delete()
-
-
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
@@ -139,6 +119,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
+        caseimportance: critical
         initialEstimate: 1/12h
         tags: ansible_embed
     """
@@ -182,6 +163,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
+        caseimportance: critical
         initialEstimate: 1/6h
         tags: ansible_embed
     """
@@ -250,7 +232,7 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
 
 @pytest.mark.tier(2)
 def test_control_crud_ansible_playbook_action(
-    request, appliance, catalog_item, action_collection
+    request, appliance, ansible_catalog_item, action_collection
 ):
     """
     Polarion:
@@ -263,7 +245,7 @@ def test_control_crud_ansible_playbook_action(
         action_type="Run Ansible Playbook",
         action_values={
             "run_ansible_playbook": {
-                "playbook_catalog_item": catalog_item.name,
+                "playbook_catalog_item": ansible_catalog_item.name,
                 "inventory": {"target_machine": True},
             }
         },
@@ -295,7 +277,7 @@ def test_control_crud_ansible_playbook_action(
 
 @pytest.mark.tier(2)
 def test_control_add_ansible_playbook_action_invalid_address(
-    request, appliance, catalog_item, action_collection
+    request, appliance, ansible_catalog_item, action_collection
 ):
     """
     Polarion:
@@ -308,7 +290,7 @@ def test_control_add_ansible_playbook_action_invalid_address(
         action_type="Run Ansible Playbook",
         action_values={
             "run_ansible_playbook": {
-                "playbook_catalog_item": catalog_item.name,
+                "playbook_catalog_item": ansible_catalog_item.name,
                 "inventory": {
                     "specific_hosts": True,
                     "hosts": "invalid_address_!@#$%^&*",
