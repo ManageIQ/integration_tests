@@ -2,9 +2,7 @@ import pytest
 
 from cfme import test_requirements
 
-pytestmark = [
-    test_requirements.replication
-]
+pytestmark = [test_requirements.replication]
 
 
 @pytest.mark.manual
