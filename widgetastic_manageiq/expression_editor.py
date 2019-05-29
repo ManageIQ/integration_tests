@@ -125,6 +125,11 @@ class ExpressionEditor(View, Pretty):
     SELECT_SPECIFIC = ".//a[@title='Click to change to a specific Date/Time format']"
     SELECT_RELATIVE = ".//a[@title='Click to change to a relative Date/Time format']"
 
+    # This returns the whole expression unlike EXPRESSION_TEXT which only returns
+    # the first expression
+    COMPLETE_EXPRESSION_TEXT = '//*[@id="exp_editor_div"]//p'
+    complete_expression_text_widget = Text(COMPLETE_EXPRESSION_TEXT)
+
     # widgets
     expression_text_widget = Text(EXPRESSION_TEXT)
     commit = Button(title="Commit expression element changes")
@@ -192,8 +197,15 @@ class ExpressionEditor(View, Pretty):
         except NoSuchElementException:
             return "<new element>"
 
+    @property
+    def complete_expression_text(self):
+        try:
+            return self.complete_expression_text_widget.text
+        except NoSuchElementException:
+            return "<new element>"
+
     def select_first_expression(self):
-        """There is always at least one (???), so no checking of bounds."""
+        """There is always at least one (<new element>), so no checking of bounds."""
         els = wait_for(
             lambda: self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root),
             fail_condition=[],
@@ -251,8 +263,11 @@ class ExpressionEditor(View, Pretty):
             self.select_first_expression()
             self.click_remove()
 
-    def read(self):
+    def read(self, complete_expression=False):
         """Returns whole expression as represented visually."""
+        if complete_expression:
+            return self.complete_expression_text_widget.text.encode("utf-8").strip()
+
         return self.expression_text.encode("utf-8").strip()
 
     def enable_editor(self):
@@ -267,16 +282,16 @@ class ExpressionEditor(View, Pretty):
         if self.show_loc is not None:
             self.enable_editor()
         prog = create_program(expression, self)
-        before = self.expression_text.encode("utf-8").strip()
+        before = self.complete_expression_text.encode("utf-8").strip()
         prog()
         wait_for(
-            lambda: self.expression_text != before,
+            lambda: self.complete_expression_text != before,
             handle_exception=True,
             num_sec=10,
             message="updated expression text to appear",
             delay=1,
         )
-        after = self.expression_text.encode("utf-8").strip()
+        after = self.complete_expression_text.encode("utf-8").strip()
         return before != after
 
     def fill_count(self, count=None, key=None, value=None):
