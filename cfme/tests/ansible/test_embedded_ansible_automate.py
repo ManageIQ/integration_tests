@@ -5,13 +5,10 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
-from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.services.myservice import MyService
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
@@ -25,35 +22,6 @@ pytestmark = [
     test_requirements.ansible,
     pytest.mark.tier(3),
 ]
-
-
-@pytest.fixture(scope="module")
-def wait_for_ansible(appliance):
-    appliance.server.settings.enable_server_roles("embedded_ansible")
-    appliance.wait_for_embedded_ansible()
-    yield
-    appliance.server.settings.disable_server_roles("embedded_ansible")
-
-
-@pytest.fixture(scope="module")
-def ansible_repository(appliance, wait_for_ansible):
-    repositories = appliance.collections.ansible_repositories
-    try:
-        repository = repositories.create(
-            name=fauxfactory.gen_alpha(),
-            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-            description=fauxfactory.gen_alpha())
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
-    view = navigate_to(repository, "Details")
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
-        timeout=60,
-        fail_func=view.toolbar.refresh.click
-    )
-    yield repository
-
-    repository.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -152,27 +120,6 @@ def management_event_instance(management_event_class, management_event_method):
 
 
 @pytest.fixture(scope="module")
-def ansible_catalog_item(appliance, ansible_repository):
-    cat_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
-        display_in_catalog=True,
-        provisioning={
-            "repository": ansible_repository.name,
-            "playbook": "dump_all_variables.yml",
-            "machine_credential": "CFME Default Credential",
-            "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
-            "extra_vars": [("some_var", "some_value")]
-        }
-    )
-    yield cat_item
-
-    cat_item.delete_if_exists()
-
-
-@pytest.fixture(scope="module")
 def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
@@ -186,26 +133,6 @@ def custom_vm_button(appliance, ansible_catalog_item):
     yield button
     button.delete_if_exists()
     buttongroup.delete_if_exists()
-
-
-@pytest.fixture
-def service_request(appliance, ansible_catalog_item):
-    request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    _service_request = appliance.collections.requests.instantiate(request_desc)
-    yield _service_request
-    if _service_request.exists():
-        _service_request.remove_request()
-
-
-@pytest.fixture
-def service(appliance, ansible_catalog_item):
-    _service = MyService(appliance, ansible_catalog_item.name)
-    yield _service
-    try:
-        if _service.exists:
-            _service.delete()
-    except ItemNotFound:
-        pass
 
 
 @pytest.fixture
@@ -319,7 +246,7 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
 
 
 def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, custom_vm_button,
-        appliance, service_request, service, ansible_catalog_item):
+        appliance, ansible_service_request, ansible_service, ansible_catalog_item):
     """
     Polarion:
         assignee: sbulage
@@ -334,16 +261,16 @@ def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, cus
     order_dialog_view.submit_button.wait_displayed()
     order_dialog_view.fields("credential").fill("CFME Default Credential")
     order_dialog_view.submit_button.click()
-    wait_for(service_request.exists, num_sec=600)
-    service_request.wait_for_request()
-    view = navigate_to(service, "Details")
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == "localhost"
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
 def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope, custom_vm_button,
-        ansible_credential, appliance, service_request, service):
+        ansible_credential, appliance, ansible_service_request, ansible_service):
     """
     Polarion:
         assignee: sbulage
@@ -358,16 +285,16 @@ def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope
     order_dialog_view.submit_button.wait_displayed()
     order_dialog_view.fields("credential").fill(ansible_credential.name)
     order_dialog_view.submit_button.click()
-    wait_for(service_request.exists, num_sec=600)
-    service_request.wait_for_request()
-    view = navigate_to(service, "Details")
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == full_template_vm_modscope.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
 def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope, custom_vm_button,
-        ansible_credential, appliance, service_request, service):
+        ansible_credential, appliance, ansible_service_request, ansible_service):
     """
     Polarion:
         assignee: sbulage
@@ -383,9 +310,9 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
     order_dialog_view.submit_button.wait_displayed()
     order_dialog_view.fields("credential").fill(ansible_credential.name)
     order_dialog_view.submit_button.click()
-    wait_for(service_request.exists, num_sec=600)
-    service_request.wait_for_request()
-    view = navigate_to(service, "Details")
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == full_template_vm_modscope.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
