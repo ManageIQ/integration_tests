@@ -618,6 +618,7 @@ def test_ansible_group_id_in_payload(
     )
 )
 def test_embed_tower_exec_play_against(
+    appliance,
     request,
     ansible_catalog_item,
     ansible_service,
