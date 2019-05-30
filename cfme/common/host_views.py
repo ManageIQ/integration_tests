@@ -82,6 +82,14 @@ class HostDetailsEntities(View):
     summary = ParametrizedView.nested(ParametrizedSummaryTable)
 
 
+class HostNetworkDetailsView(View):
+    network_tree = BootstrapNav(".//div[contains(@class,'treeview')]/ul")
+
+    @property
+    def is_displayed(self):
+        return self.network_tree.is_displayed
+
+
 class HostDetailsView(ComputeInfrastructureHostsView):
     """Main Host details page."""
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
@@ -98,7 +106,7 @@ class HostDetailsView(ComputeInfrastructureHostsView):
     def is_displayed(self):
         return (
             self.in_compute_infrastructure_hosts and
-            self.breadcrumb.active_location == self.context["object"].expected_details_breadcrumb
+            self.context["object"].expected_details_breadcrumb in self.breadcrumb.active_location
         )
 
 

@@ -60,9 +60,8 @@ def test_appliance_scsi_control_vmware():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vmware_vds_ui_display():
+def test_vmware_vds_ui_display(appliance, provider, soft_assert):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
     to vds port groups.
@@ -83,7 +82,12 @@ def test_vmware_vds_ui_display():
             2.Properties page for the host opens.
             3.If DSwitch exists it will be displayed on this page.
     """
-    pass
+    try:
+        host = provider.hosts.all()[0]
+    except IndexError:
+        pytest.skip("No hosts found")
+    view = navigate_to(host, 'Networks')
+    assert 'DSwitch' in view.network_tree.all_options
 
 
 @pytest.mark.manual
