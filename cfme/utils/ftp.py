@@ -13,6 +13,12 @@ from time import strptime
 import fauxfactory
 
 
+try:
+    Pattern = re.Pattern
+except AttributeError:
+    Pattern = re._pattern_type
+
+
 class FTPException(Exception):
     pass
 
@@ -121,7 +127,7 @@ class FTPDirectory(object):
         """
 
         def _scan(what, in_what):
-            if isinstance(what, re._pattern_type):
+            if isinstance(what, Pattern):
                 return what.match(in_what) is not None
             else:
                 return what in in_what
