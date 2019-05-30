@@ -23,10 +23,11 @@ from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.net import resolve_hostname
+from cfme.utils.net import find_pingable
 from cfme.utils.path import project_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 NUM_OF_TRIES = 3
@@ -190,15 +191,18 @@ class ProviderTemplateUpload(object):
     @cached_property
     def raw_vm_ssh_client_args(self):
         """ Returns credentials + hostname for ssh client auth for a temp_vm."""
-
-        def check_ip():
-            ip = self._vm_mgmt.ip
-            # get_ip_address might return None
-            return ip if ip and resolve_hostname(ip) else False
-
-        vm_ip, tc = wait_for(check_ip, delay=5, num_sec=600,
-                             message="waiting for {} to obtain DHCP"
-                             .format(self._vm_mgmt.name))
+        try:
+            vm_ip, _ = wait_for(
+                find_pingable,
+                func_args=[self._vm_mgmt],
+                fail_condition=None,
+                delay=5,
+                num_sec=300
+            )
+        except TimedOutError:
+            msg = 'Timed out waiting for reachable raw VM IP'
+            logger.exception(msg)
+            raise TemplateUploadException(msg)
 
         return {'hostname': vm_ip,
                 'username': credentials['ssh']['username'],

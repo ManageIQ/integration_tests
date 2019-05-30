@@ -18,9 +18,11 @@ from cfme.utils.conf import credentials as cred
 from cfme.utils.conf import provider_data
 from cfme.utils.log import add_stdout_handler
 from cfme.utils.log import logger
+from cfme.utils.net import find_pingable
 from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.trackerbot import api
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 # log to stdout
@@ -282,32 +284,37 @@ def main(**kwargs):
             logger.error('VM %s is not running', deploy_args['vm_name'])
             return 10
     else:
-        vm = provider.get_vm(deploy_args['vm_name'])
-        vm.ensure_state(VmState.RUNNING, timeout='5m')
+        vm_mgmt = provider.get_vm(deploy_args['vm_name'])
+        vm_mgmt.ensure_state(VmState.RUNNING, timeout='5m')
         if provider_type == 'gce':
             try:
-                attach_gce_disk(vm)
+                attach_gce_disk(vm_mgmt)
             except Exception:
                 logger.exception("Failed to attach db disk")
                 destroy_vm(provider, deploy_args['vm_name'])
                 return 10
 
     if provider_type == 'openshift':
-        ip = output['url']
+        vm_ip = output['url']
     else:
         try:
-            ip, _ = wait_for(lambda: vm.ip, num_sec=1200, fail_condition=None)
-            logger.info('IP Address returned is %s', ip)
-        except Exception as e:
-            logger.exception(e)
-            logger.error('IP address not returned')
+            vm_ip, _ = wait_for(
+                find_pingable,
+                func_args=[vm_mgmt],
+                fail_condition=None,
+                delay=5,
+                num_sec=300
+            )
+        except TimedOutError:
+            msg = 'Timed out waiting for reachable depot VM IP'
+            logger.exception(msg)
             return 10
 
     try:
         if kwargs.get('configure'):
             logger.info('Configuring appliance, this can take a while.')
             if kwargs.get('deploy'):
-                app = IPAppliance(hostname=ip)
+                app = IPAppliance(hostname=vm_ip)
             else:
                 app_args = (kwargs['provider'], deploy_args['vm_name'])
                 app_kwargs = {}
@@ -318,7 +325,7 @@ def main(**kwargs):
                         'project': output['project'],
                         'db_host': output['external_ip'],
                         'container': 'cloudforms-0',
-                        'hostname': ip,
+                        'hostname': vm_ip,
                         'openshift_creds': {
                             'hostname': provider_dict['hostname'],
                             'username': ocp_creds['username'],
@@ -366,7 +373,7 @@ def main(**kwargs):
                             {
                                 'project': output['project'],
                                 'db_host': output['external_ip'],
-                                'hostname': ip,
+                                'hostname': vm_ip,
                                 'container': 'cloudforms-0',
                                 'openshift_creds': {
                                     'hostname': provider_dict['hostname'],
@@ -383,7 +390,7 @@ def main(**kwargs):
             else:
                 output_data = {
                     'appliances':
-                        [{'hostname': ip}]
+                        [{'hostname': vm_ip}]
                 }
             yaml_data = yaml.safe_dump(output_data, default_flow_style=False)
             outfile.write(yaml_data)

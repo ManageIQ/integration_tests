@@ -11,7 +11,6 @@ from ftplib import FTP
 import fauxfactory
 import pytest
 from pytz import timezone
-from wait_for import TimedOutError
 
 from cfme import test_requirements
 from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
@@ -22,8 +21,6 @@ from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
-from cfme.utils.virtual_machines import deploy_template
-from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.long_running, test_requirements.log_depot]
 
@@ -101,29 +98,6 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def depot_machine_ip(appliance):
-    """ Deploy vm for depot test
-
-    This fixture uses for deploy vm on provider from yaml and then receive it's ip
-    After test run vm deletes from provider
-    """
-    depot_machine_name = "test_long_log_depot_{}".format(fauxfactory.gen_alphanumeric())
-    data = conf.cfme_data.get("log_db_operations", {})
-    depot_provider_key = data["log_db_depot_template"]["provider"]
-    depot_template_name = data["log_db_depot_template"]["template_name"]
-    vm = deploy_template(depot_provider_key,
-                         depot_machine_name,
-                         template_name=depot_template_name,
-                         timeout=1200)
-    try:
-        wait_for(lambda: vm.ip is not None, timeout=600)
-    except TimedOutError:
-        pytest.skip('Depot VM does not have IP address')
-    yield vm.ip
-    vm.cleanup()
-
-
-@pytest.fixture(scope="module")
 def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
                                   temp_appliance_unconfig):
     hostname = temp_appliance_preconfig.hostname
@@ -147,7 +121,7 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     It also provides a finalizer to disable the depot after test run.
     """
     log_depot.machine_ip = depot_machine_ip
-    uri = log_depot.machine_ip + log_depot.access_dir
+    uri = '{}{}'.format(log_depot.machine_ip, log_depot.access_dir)
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
         server_log_depot.depot_type = log_depot.protocol
@@ -161,7 +135,7 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
 
 
 def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=False):
-    server_string = server_name + "_" + str(server_zone_id)
+    server_string = '{}_{}'.format(server_name, server_zone_id)
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
         date_group = '(_.*?){4}'
@@ -169,7 +143,7 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
             r"^.*{}{}[.]zip$".format(server_string, date_group)), directories=False)
         assert zip_files, "No logs found!"
         # Collection of Models and Dialogs introduced in 5.10
-        if appliance.version >= '5.10' and not BZ(1656318, forced_streams=["5.10"]).blocks:
+        if not BZ(1656318, forced_streams=["5.10"]).blocks:
             models_files = ftp.filesystem.search(re.compile(
                 r"^Models_.*{}[.]zip$".format(server_string)), directories=False
             )
@@ -363,7 +337,7 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
         ftp.recursively_delete()
 
     with appliance:
-        uri = log_depot.machine_ip + log_depot.access_dir
+        uri = '{}{}'.format(log_depot.machine_ip, log_depot.access_dir)
         with update(collect_logs):
             collect_logs.second_server_collect = from_slave
             collect_logs.depot_type = log_depot.protocol
@@ -415,7 +389,7 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
         # delete all files
         ftp.recursively_delete()
 
-    uri = log_depot.machine_ip + log_depot.access_dir
+    uri = '{}{}'.format(log_depot.machine_ip, log_depot.access_dir)
     collect_logs = (
         appliance.server.zone.collect_logs if zone_collect else appliance.server.collect_logs)
     with update(collect_logs):
@@ -423,7 +397,8 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
         collect_logs.depot_name = fauxfactory.gen_alphanumeric()
         collect_logs.uri = uri
         collect_logs.username = log_depot.credentials.username
-        collect_logs.password = log_depot.credentials.password
+        # password update needs EditView fill fix
+        # collect_logs.password = log_depot.credentials.password
     request.addfinalizer(collect_logs.clear)
     if collect_type == 'all':
         collect_logs.collect_all()

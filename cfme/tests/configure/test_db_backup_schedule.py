@@ -10,7 +10,6 @@ from cfme.utils import conf
 from cfme.utils import testgen
 from cfme.utils.pretty import Pretty
 from cfme.utils.ssh import SSHClient
-from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
 PROTOCOL_TYPES = ('smb', 'nfs')
@@ -104,27 +103,6 @@ def pytest_generate_tests(metafunc):
         testgen.parametrize(metafunc, argnames, argvalues, ids=ids)
 
 
-@pytest.fixture(scope="module")
-def db_depot_machine_ip(request, appliance):
-    """ Deploy vm for depot test
-
-    This fixture uses for deploy vm on provider from yaml and then receive it's ip
-    After test run vm deletes from provider
-    """
-    depot_machine_name = "test_db_backup_depot_{}".format(fauxfactory.gen_alphanumeric())
-    data = conf.cfme_data.get("log_db_operations", {})
-    depot_provider_key = data["log_db_depot_template"]["provider"]
-    depot_template_name = data["log_db_depot_template"]["template_name"]
-    vm = deploy_template(depot_provider_key,
-                         depot_machine_name,
-                         template_name=depot_template_name)
-
-    if vm.ip is None:
-        pytest.skip('Depot VM does not have IP address')
-    yield vm.ip
-    vm.cleanup()
-
-
 def get_schedulable_datetime():
     """ Returns datetime for closest schedulable time (every 5 minutes)
     """
@@ -158,7 +136,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
 
 
 @pytest.mark.tier(3)
-def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, appliance):
+def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance):
     """ Test scheduled one-type backup on given machines using smb/nfs
 
     Polarion:
@@ -173,7 +151,7 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, applia
     # the dash is there to make strftime not use a leading zero
     hour = dt.strftime('%-H')
     minute = dt.strftime('%-M')
-    db_depot_uri = '{}{}'.format(db_depot_machine_ip, db_backup_data.sub_folder)
+    db_depot_uri = '{}{}'.format(depot_machine_ip, db_backup_data.sub_folder)
     sched_args = {
         'name': db_backup_data.schedule_name,
         'description': db_backup_data.schedule_description,

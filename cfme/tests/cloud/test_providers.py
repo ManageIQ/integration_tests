@@ -80,7 +80,7 @@ def az_pwsh_vm(appliance):
 
     @wait_for_decorator(timeout="10m", delay=5)
     def get_ip_address():
-        ip = vm.mgmt.ip
+        ip = vm.ip_address
         return ip is not None
     yield vm
 

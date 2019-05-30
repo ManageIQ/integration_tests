@@ -15,6 +15,7 @@ import attr
 import dateutil.parser
 import fauxfactory
 import lxml.etree
+import pytz
 import requests
 import sentaku
 import six
@@ -46,6 +47,7 @@ from cfme.utils.conf import hidden
 from cfme.utils.log import create_sublogger
 from cfme.utils.log import logger
 from cfme.utils.log import logger_wrap
+from cfme.utils.net import is_pingable
 from cfme.utils.net import net_check
 from cfme.utils.net import resolve_hostname
 from cfme.utils.path import conf_path
@@ -408,10 +410,8 @@ class IPAppliance(object):
             self.is_pod = True
         else:
             self.is_pod = False
-        if version is not None:
-            # only set when given so we can defer to therest api via the
-            # cached property
-            self.version = Version(version)
+        # only set when given so we can defer to the rest api via the cached property
+        self._version = version
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """
@@ -943,17 +943,17 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @cached_property
     def is_downstream(self):
-        return self.product_name == 'CFME'
+        return self.product_name != 'ManageIQ'
 
-    @cached_property
+    @property
     def version(self):
-        return self._version_from_rest()
+        return Version(self._version) if self._version else self._version_from_rest()
 
     def _version_from_rest(self):
         try:
             return Version(self.rest_api.server_info['version'])
         except (AttributeError, KeyError, IOError, APIException):
-            self.log.exception('appliance.version could not be retrieved from REST, falling back')
+            self.log.exception('Exception fetching appliance version from REST, trying ssh')
             return self.ssh_client.vmdb_version
 
     def verify_version(self):
@@ -1047,8 +1047,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 'is_pod': self.is_pod,
                 'port': self.ssh_port,
             }
-        if self.is_dev:
-            connect_kwargs.update({'is_dev': True})
+        connect_kwargs.update({'is_dev': self.is_dev})
 
         def create_ssh_connection():
             ssh_client = ssh.SSHClient(**connect_kwargs)
@@ -1540,6 +1539,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         return result
 
     def utc_time(self):
+        """Get UTC time of appliance"""
+        if self.is_dev:
+            logger.info('Using local UTC time on dev appliance')
+            return datetime.now(pytz.UTC)
         client = self.ssh_client
         result = client.run_command('date --iso-8601=seconds -u')
         if result.success:
@@ -1846,14 +1849,15 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 return server.get('host')
         except Exception as e:
             logger.exception(e)
-            self.log.error('Exception occured while fetching host address')
+            self.log.error('Exception occurred while fetching host address')
 
     def wait_for_host_address(self):
         try:
-            wait_for(func=lambda: getattr(self, 'get_host_address'),
+            wait_for(func=lambda: self.get_host_address,
                      fail_condition=None,
                      delay=5,
-                     num_sec=120)
+                     num_sec=120,
+                     fail_func=lambda: delattr(self, 'get_host_address'))
             return self.get_host_address
         except Exception as e:
             logger.exception(e)
@@ -2629,21 +2633,27 @@ class Appliance(IPAppliance):
 
         if 'hostname' not in app_kwargs:
             def is_ip_available():
+                found_ip = None
                 try:
                     # TODO: change after openshift wrapanapi refactor
                     if provider.one_of(OpenshiftProvider):
-                        ip = provider.mgmt.get_ip_address(vm_name)
+                        found_ip = provider.mgmt.get_ip_address(vm_name)
                     else:
                         vm = provider.mgmt.get_vm(vm_name)
-                        ip = vm.ip
+                        vm.ensure_state(VmState.RUNNING)
+                        # intentionally taking the time to ping all of these so its recorded
+                        potentials = [ip for ip in vm.all_ips if is_pingable(ip)]
+                        logger.info('Found reachable IPs for appliance VM, picking first: %s',
+                                    potentials)
+                        found_ip = potentials[0] if potentials else None
                     # get_ip_address might return None
-                    return ip if ip and resolve_hostname(ip) else False
+                    return found_ip if found_ip and resolve_hostname(found_ip) else False
                 except (AttributeError, VMInstanceNotFound):
                     return False
-            ec, tc = wait_for(is_ip_available,
+            vm_ip, _ = wait_for(is_ip_available,
                               delay=5,
                               num_sec=600)
-            app_kwargs['hostname'] = str(ec)
+            app_kwargs['hostname'] = str(vm_ip)
 
         if provider.one_of(OpenshiftProvider):
             # there should also be present appliance hostname, container, db_host
@@ -2824,9 +2834,10 @@ class Appliance(IPAppliance):
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
             log_callback = logger.info
-        if not self.is_on_rhev:
-            log_callback("appliance NOT on rhev, unable to connect direct_lun")
-            raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
+        if self.is_dev or not self.is_on_rhev:
+            msg = "appliance NOT on rhev or is dev, unable to connect direct_lun"
+            log_callback(msg)
+            raise ApplianceException(msg)
         log_callback('Adding RHEV direct_lun hook...')
         self.wait_for_ssh()
         try:
@@ -2838,8 +2849,8 @@ class Appliance(IPAppliance):
 
     @logger_wrap("Remove RHEV LUN: {}")
     def remove_rhev_direct_lun_disk(self, log_callback=None):
-        if not self.is_on_rhev:
-            msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vm_name)
+        if self.is_dev or not self.is_on_rhev:
+            msg = "appliance NOT on rhev or is dev, unable to disconnect direct_lun"
             log_callback(msg)
             raise ApplianceException(msg)
         log_callback('Removing RHEV direct_lun hook...')
