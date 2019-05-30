@@ -5392,9 +5392,7 @@ class EntryPoint(View, ClickableMixin):
     group_btn = Text(ParametrizedLocator("{@locator}/../span[@class='input-group-btn']"))
     apply = Button("Apply")
 
-    def __init__(
-        self, parent, id=None, name=None, locator=None, tree_id=None, logger=None
-    ):  # noqa
+    def __init__(self, parent, id=None, name=None, locator=None, tree_id=None, logger=None):  # noqa
         View.__init__(self, parent=parent, logger=logger)
 
         self.tree_id = tree_id
@@ -5426,7 +5424,7 @@ class EntryPoint(View, ClickableMixin):
         if self.value and self.value in "/".join(value):
             return False
 
-        if self.textbox.__element__().is_enabled():
+        if self.textbox.is_enabled:
             self.browser.click(self.textbox)
         else:
             self.group_btn.click()

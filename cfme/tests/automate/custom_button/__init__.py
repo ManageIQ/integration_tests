@@ -1,7 +1,10 @@
 # Common stuff for custom button testing
+from widgetastic.widget import ParametrizedLocator
+from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
 from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
@@ -131,7 +134,23 @@ class TextInputDialogView(View):
 
 class TextInputDialogSSUIView(TextInputDialogView):
     """ This is view comes on SSUI custom button dialog execution"""
+
     submit = Button("Submit Request")
+
+
+class DropdownDialogView(ParametrizedView):
+    """ This is custom view for custom button dropdown dialog execution"""
+
+    title = Text("#explorer_title_text")
+    class service_name(ParametrizedView):  # noqa
+        PARAMETERS = ("dialog_id",)
+        dropdown = BootstrapSelect(
+            locator=ParametrizedLocator("//select[@id={dialog_id|quote}]/..")
+        )
+
+    submit = Button("Submit")
+    submit_request = Button("Submit Request")
+    cancel = Button("Cancel")
 
 
 class CustomButtonSSUIDropdwon(Dropdown):
@@ -140,4 +159,4 @@ class CustomButtonSSUIDropdwon(Dropdown):
     def item_enabled(self, item):
         self._verify_enabled()
         el = self.item_element(item)
-        return 'disabled' not in self.browser.classes(el)
+        return "disabled" not in self.browser.classes(el)
