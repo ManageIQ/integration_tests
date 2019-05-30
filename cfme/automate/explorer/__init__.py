@@ -14,6 +14,12 @@ from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Splitter
 
 
+try:
+    Pattern = re.Pattern
+except AttributeError:
+    Pattern = re._pattern_type
+
+
 class AutomateExplorerView(BaseLoggedInPage):
     @property
     def in_explorer(self):
@@ -52,7 +58,7 @@ def check_tree_path(actual, desired, partial=False):
         return False
     # We don't care about icons because we also match titles, which give the type away
     for actual_item, desired_item in zip(actual, without_icons(desired)):
-        if isinstance(desired_item, re._pattern_type):
+        if isinstance(desired_item, Pattern):
             if desired_item.match(actual_item) is None:
                 return False
         else:
