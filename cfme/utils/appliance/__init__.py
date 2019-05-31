@@ -309,14 +309,16 @@ class IPAppliance(object):
     auditd = SystemdService.declare(unit_name='auditd')
     chronyd = SystemdService.declare(unit_name='chronyd')
     collectd = SystemdService.declare(unit_name='collectd')
-    db_service = SystemdService.declare(unit_name=ApplianceDB.service_name)
+    evminit = SystemdService.declare(unit_name='evminit')
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     httpd = SystemdService.declare(unit_name='httpd')
     merkyl = SystemdService.declare(unit_name='merkyl')
     nginx = SystemdService.declare(unit_name='nginx')
     rabbitmq_server = SystemdService.declare(unit_name='rabbitmq-server')
     sssd = SystemdService.declare(unit_name='sssd')
+    sshd = SystemdService.declare(unit_name='sshd')
     supervisord = SystemdService.declare(unit_name='supervisord')
+    firewalld = SystemdService.declare(unit_name='firewalld')
     db = ApplianceDB.declare()
 
     CONFIG_MAPPING = {
@@ -345,6 +347,10 @@ class IPAppliance(object):
         'openldap': '/etc/openldap/ldap.conf',
         'sssd': '/etc/sssd/sssd.conf'
     }
+
+    @cached_property
+    def db_service(self):
+        return SystemdService(self, unit_name=self.db.service_name)
 
     @property
     def as_json(self):
@@ -1065,6 +1071,13 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # FIXME: properly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
         return ssh_client
+
+    @cached_property
+    def default_iface(self):
+        default_iface_cmd = self.ssh_client.run_command(
+            "ip r | awk '/^default/ { print $5 }'")
+        assert default_iface_cmd.success
+        return default_iface_cmd.output.strip()
 
     @property
     def swap(self):

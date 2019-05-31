@@ -14,7 +14,7 @@ class SystemdException(AppliancePluginException):
 
 @attr.s
 class SystemdService(AppliancePlugin):
-    unit_name = attr.ib()
+    unit_name = attr.ib(type=str)
 
     @logger_wrap('SystemdService command runner: {}')
     def _run_service_command(

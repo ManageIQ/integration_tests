@@ -137,7 +137,6 @@ class SSHClient(paramiko.SSHClient):
             allow_agent=False,
             look_for_keys=False,
             gss_auth=False,
-            hostname=store.current_appliance.hostname,
             username=conf.credentials['ssh']['username'],
             password=conf.credentials['ssh']['password'],
             port=ports.SSH,
@@ -145,6 +144,9 @@ class SSHClient(paramiko.SSHClient):
 
         # Overlay defaults with any passed-in kwargs and assign to _connect_kwargs
         compiled_kwargs.update(connect_kwargs)
+        if not compiled_kwargs['hostname']:
+            compiled_kwargs['hostname'] = store.current_appliance.hostname,
+
         self._connect_kwargs = compiled_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         _client_session.append(self)

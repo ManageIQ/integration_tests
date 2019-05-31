@@ -12,6 +12,7 @@ from cfme.utils import datafile
 from cfme.utils import db
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 
@@ -25,9 +26,15 @@ class ApplianceDB(AppliancePlugin):
     """Holder for appliance DB related methods and functions"""
     _ssh_client = attr.ib(default=None)
 
-    # Until this needs a version pick, make it an attr
-    postgres_version = 'rh-postgresql95'
-    service_name = '{}-postgresql'.format(postgres_version)
+    @cached_property
+    def service_name(self):
+        return VersionPicker({
+            '5.10': 'rh-postgresql95-postgresql',
+            '5.11': 'postgresql'}).pick(self.appliance.version)
+
+    @property
+    def pg_prefix(self):
+        return '/opt/rh/rh-postgresql95/root' if self.appliance.version < '5.11' else ''
 
     @cached_property
     def client(self):
@@ -236,10 +243,11 @@ class ApplianceDB(AppliancePlugin):
         )
         client.run_command(cmd)
 
+        pg_prefix = self.pg_prefix
         # back up pg_hba.conf
-        scl = self.postgres_version
-        client.run_command('mv /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf '
-                           '/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf.sav'.format(scl=scl))
+        client.run_command(
+            'mv {pg_prefix}/var/lib/pgsql/data/pg_hba.conf '
+            '{pg_prefix}/var/lib/pgsql/data/pg_hba.conf.sav'.format(pg_prefix=pg_prefix))
 
         if with_ssl:
             ssl = 'hostssl all all all cert map=sslmap'
@@ -248,19 +256,18 @@ class ApplianceDB(AppliancePlugin):
 
         # rewrite pg_hba.conf
         write_pg_hba = dedent("""\
-        cat > /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf <<EOF
+        cat > {pg_prefix}/var/lib/pgsql/data/pg_hba.conf <<EOF
         local all postgres,root trust
         host all all 0.0.0.0/0 md5
         {ssl}
         EOF
-        """.format(ssl=ssl, scl=scl))
+        """.format(ssl=ssl, pg_prefix=pg_prefix))
         client.run_command(write_pg_hba)
         client.run_command("chown postgres:postgres "
-            "/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf".format(scl=scl))
+            "{pg_prefix}/var/lib/pgsql/data/pg_hba.conf".format(pg_prefix=pg_prefix))
 
         # restart postgres
-        result = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
-        return result.rc
+        return self.appliance.db_service.restart()
 
     def _run_cmd_show_output(self, cmd):
         """
@@ -508,7 +515,8 @@ class ApplianceDB(AppliancePlugin):
             rbt_repl = {
                 'miq_lib': '/var/www/miq/lib',
                 'region': region,
-                'postgres_version': self.postgres_version,
+                'postgres_svcname': self.service_name,
+                'postgres_prefix': self.pg_prefix,
                 'db_mounted': str(db_mounted),
             }
 
