@@ -76,21 +76,27 @@ def test_configure_icons_roles_by_server():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_verify_page_landing_cloud_subnets():
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+def test_configuration_dropdown_roles_by_server():
     """
     Polarion:
         assignee: pvala
-        casecomponent: Cloud
+        casecomponent: Configuration
         caseimportance: low
-        initialEstimate: 1/10h
-        startsin: 5.6
+        initialEstimate: 1/15h
         testSteps:
-            1. Navigate to compute-> cloud -> instance -> click on any instance ->
-            Click on Cloud Networks (under relationships)
-            2. Check if the page is displayed.
+            1. Navigate to Settings -> Configuration -> Diagnostics -> CFME Region ->
+                Roles by Servers.
+            2. Select a Role and check the `Configuration` dropdown in toolbar.
+            3. Check the `Suspend Role` option.
         expectedResults:
             1.
-            2. Page must be displayed correctly.
+            2. `Configuration` dropdown must be enabled/active.
+            3. `Suspend Role` must be enabled.
+
+    Bugzilla:
+        1715466
+        1455283
     """
     pass

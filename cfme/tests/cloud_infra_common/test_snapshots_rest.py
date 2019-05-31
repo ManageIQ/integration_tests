@@ -108,6 +108,23 @@ class TestRESTSnapshots(object):
         vm, snapshot = vm_snapshot
         vm.snapshots.get(description=snapshot.description)
 
+    @pytest.mark.manual
+    def test_query_snapshots(self):
+        """Queries VM/instance snapshot using REST API.
+
+        Metadata:
+            test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Rest
+            caseimportance: medium
+            initialEstimate: 1/4h
+        Bugzilla:
+            1712850
+        """
+        pass
+
     @pytest.mark.rhv3
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_snapshot_from_detail(self, vm_snapshot, method):
