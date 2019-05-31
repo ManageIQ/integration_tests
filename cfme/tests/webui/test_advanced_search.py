@@ -12,7 +12,7 @@ from cfme.services.myservice import MyService
 from cfme.services.workloads import TemplatesImages
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from cfme.utils.blockers import BZ
 
 pytestmark = [test_requirements.filtering]
 
@@ -31,7 +31,7 @@ params_values = [
     Param('cloud_tenants', 'All', 'tenant', 'Cloud Tenant : Name', None),
     Param('cloud_flavors', 'All', 'flavor', 'Flavor : Name', None),
     Param('cloud_instances', 'All', 'instances', 'Instance : Name',
-     ('sidebar.instances', "All Instances")),
+          ('sidebar.instances', "All Instances")),
     Param('cloud_images', 'All', 'images', 'Image : Name', ('sidebar.images', "All Images")),
     Param('cloud_stacks', 'All', 'orchestration_stacks', 'Orchestration Stack : Name', None),
     Param('cloud_keypairs', 'All', 'key_pairs', 'Key Pair : Name', None),
@@ -39,6 +39,7 @@ params_values = [
     Param('infra_providers', 'All', 'infraproviders', 'Infrastructure Provider : Name', None),
     Param('clusters', 'All', 'clusters', 'Cluster / Deployment Role : Name', None),
     Param('hosts', 'All', 'hosts', 'Host / Node : Name', None),
+    Param('hosts', 'All', 'hosts', 'Host / Node.VMs', None),
     Param('infra_vms', 'VMsOnly', 'vms', 'Virtual Machine : Name', ('sidebar.vms', "All VMs")),
     Param('infra_templates', 'TemplatesOnly', 'templates', 'Template : Name',
      ('sidebar.templates', "All Templates")),
@@ -185,6 +186,7 @@ def test_can_open_advanced_search(param, appliance):
         param.filter == 'Job Template (Ansible Tower) : Name'
     )
 )
+@pytest.mark.meta(automates=[BZ(1402392)])
 def test_filter_crud(param, appliance):
     """
     Polarion:
@@ -198,8 +200,14 @@ def test_filter_crud(param, appliance):
     filter_value_updated = fauxfactory.gen_string('alphanumeric', 10)
     view = _navigation(param, appliance)
     # create
-    view.search.save_filter(
-        "fill_field({}, =, {})".format(param.filter, filter_value), filter_name)
+    if ':' not in param.filter:  # to test "Count of" field, values don't contain ':'
+        filter_value = fauxfactory.gen_numeric_string(3)
+        filter_value_updated = fauxfactory.gen_numeric_string(3)
+        view.search.save_filter(
+            "fill_count({}, =, {})".format(param.filter, filter_value), filter_name)
+    else:
+        view.search.save_filter(
+            "fill_field({}, =, {})".format(param.filter, filter_value), filter_name)
     view.search.close_advanced_search()
     view.flash.assert_no_error()
     # read
@@ -218,9 +226,14 @@ def test_filter_crud(param, appliance):
     _select_filter(filters, filter_name, param)
     view.search.open_advanced_search()
     view.search.advanced_search_form.search_exp_editor.select_first_expression()
-    view.search.advanced_search_form.search_exp_editor.fill_field(field=param.filter,
-                                                                  key='=',
-                                                                  value=filter_value_updated)
+    if ':' not in param.filter:  # to test "Count of" field
+        view.search.advanced_search_form.search_exp_editor.fill_count(count=param.filter,
+                                                                      key='=',
+                                                                      value=filter_value_updated)
+    else:
+        view.search.advanced_search_form.search_exp_editor.fill_field(field=param.filter,
+                                                                      key='=',
+                                                                      value=filter_value_updated)
     # save expression
     view.search.advanced_search_form.save_filter_button.click()
     # save filter
