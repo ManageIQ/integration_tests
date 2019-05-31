@@ -322,10 +322,16 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                  timeout=1000,
                  fail_func=self.refresh)
 
-    def create_snapshot(self, name, cancel=False, reset=False):
+    def create_snapshot(self, name, cancel=False, reset=False, from_manager=False):
         """create snapshot of cloud volume"""
         snapshot_collection = self.appliance.collections.volume_snapshots
-        view = navigate_to(self, 'Snapshot')
+        if from_manager:
+            view = navigate_to(self.parent.manager, 'Volumes')
+            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.toolbar.configuration.item_select('Create a Snapshot of selected Cloud Volume')
+            view = view.browser.create_view(VolumeSnapshotView, additional_context={'object': self})
+        else:
+            view = navigate_to(self, 'Snapshot')
 
         changed = view.snapshot_name.fill(name)
 
@@ -402,10 +408,11 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
             self.refresh()
         else:
             view.browser.refresh()
-
-        for item in view.entities.elements.read():
-            if self.name in item['Name']:
-                return str(item['Status'])
+        try:
+            ent = view.entities.get_entity(name=self.name, surf_pages=True)
+            return ent.data["status"]
+        except ItemNotFound:
+            return False
 
     @property
     def size(self):
