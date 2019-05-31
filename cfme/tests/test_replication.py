@@ -2,9 +2,10 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [test_requirements.replication]
+
 
 @pytest.mark.manual
-@test_requirements.replication
 def test_replication_powertoggle():
     """
     power toggle from global to remote
@@ -29,7 +30,6 @@ def test_replication_powertoggle():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 def test_replication_central_admin_vm_retirement():
     """
     retire a vm via CA
@@ -64,7 +64,6 @@ def test_replication_central_admin_service_provisioning():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(2)
 def test_replication_appliance_add_single_subscription():
     """
@@ -87,7 +86,6 @@ def test_replication_appliance_add_single_subscription():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(3)
 def test_replication_delete_remote_from_global():
     """
@@ -122,7 +120,6 @@ def test_replication_low_bandwidth():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(3)
 def test_replication_re_add_deleted_remote():
     """
@@ -160,7 +157,6 @@ def test_replication_central_admin_ansible_playbook_service_from_global():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(1)
 def test_replication_remote_to_global_by_ip_pglogical():
     """
@@ -186,7 +182,6 @@ def test_replication_remote_to_global_by_ip_pglogical():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(1)
 def test_replication_appliance_set_type_global_ui():
     """
@@ -211,7 +206,6 @@ def test_replication_appliance_set_type_global_ui():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(2)
 def test_replication_appliance_add_multi_subscription():
     """
@@ -247,7 +241,6 @@ def test_replication_network_dropped_packets():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(1)
 def test_replication_global_region_dashboard():
     """
@@ -269,7 +262,6 @@ def test_replication_global_region_dashboard():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 @pytest.mark.tier(1)
 def test_replication_global_to_remote_new_vm_from_template():
     """
@@ -293,7 +285,6 @@ def test_replication_global_to_remote_new_vm_from_template():
 
 
 @pytest.mark.manual
-@test_requirements.replication
 def test_replication_central_admin_vm_reconfigure():
     """
     reconfigure a VM via CA
