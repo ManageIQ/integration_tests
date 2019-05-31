@@ -4,6 +4,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -279,15 +280,16 @@ def test_vmware_inaccessible_datastore_vm_provisioning(appliance, provider):
         if not provider.mgmt.get_datastore(datastore).summary.accessible]
     if inaccessible_datastores:
         logger.info("Found {} inaccessible_datastores".format(inaccessible_datastores))
-    vm = appliance.collections.infra_vms.create('test-prov-' + fauxfactory.gen_alphanumeric(),
+    else:
+        pytest.skip("This provider {} has no inaccessible_datastores.".format(provider.name))
+    vm = appliance.collections.infra_vms.create('test-vmware-' + fauxfactory.gen_alphanumeric(),
         provider, find_in_cfme=True, wait=True,
         form_values={'environment': {'automatic_placement': True}})
     assert vm.datastore.name not in inaccessible_datastores
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vmware_provisioned_vm_host_relationship():
+def test_vmware_provisioned_vm_host_relationship(appliance, provider):
     """
     VMware VMs provisioned through cloudforms should have host relationship.
 
@@ -309,7 +311,11 @@ def test_vmware_provisioned_vm_host_relationship():
             2.See all available templates
             3.CFME Provisioned VM should have host relationship.
     """
-    pass
+    vm = appliance.collections.infra_vms.create('test-vmware-' + fauxfactory.gen_alphanumeric(),
+        provider, find_in_cfme=True, wait=True,
+        form_values={'environment': {'automatic_placement': True}})
+    # assert if Host property is set for VM.
+    assert isinstance(vm.host, Host)
 
 
 @pytest.mark.manual
