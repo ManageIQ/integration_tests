@@ -3,6 +3,7 @@ from navmazing import NavigateToSibling
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
@@ -16,6 +17,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
 
 
@@ -33,6 +35,12 @@ class ServicesCatalogsView(BaseLoggedInPage):
         ACCORDION_NAME = "Service Catalogs"
 
         tree = ManageIQTree()
+
+    @View.nested
+    class toolbar(View):                # noqa
+        reload = Button(title='Refresh this page')
+        download = Dropdown(text='Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
 
     @property
     def is_displayed(self):

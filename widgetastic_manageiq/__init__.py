@@ -2050,7 +2050,7 @@ class ViewSelector(View):
     @property
     def selected(self):
         if self.is_displayed:
-            return next(btn.title for btn in self._view_buttons if btn.active)
+            return next(btn.title for btn in self._view_buttons if btn.is_displayed and btn.active)
         else:
             return None
 
@@ -2082,7 +2082,11 @@ class ItemsToolBarViewSelector(ViewSelector):
 
     @property
     def is_displayed(self):
-        return self.grid_button.is_displayed
+        return (
+            self.grid_button.is_displayed
+            or self.list_button.is_displayed
+            or self.tile_button.is_displayed
+        )
 
 
 class DetailsToolBarViewSelector(ViewSelector):
