@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Manual VMware Provider tests"""
+import re
+
 import fauxfactory
 import pytest
 
@@ -318,9 +320,8 @@ def test_vmware_provisioned_vm_host_relationship(appliance, provider):
     assert isinstance(vm.host, Host)
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_esxi_reboot_not_orphan_vms():
+def test_esxi_reboot_not_orphan_vms(appliance, provider):
     """
     By mimicking ESXi reboot effect on VMs in CFME, make sure they are not getting marked orphaned.
 
@@ -339,13 +340,27 @@ def test_esxi_reboot_not_orphan_vms():
                 '''
                 ems = ManageIQ::Providers::Vmware::InfraManager.find_by(:name => "name of your vc")
                 vm = ems.vms.last # Or do vms[index] and find a vm to work with
-                puts "ID [#{vm.id}] ems_ref [#{vm.ems_ref}]"
+                puts "VM_ID [#{vm.id}],name [#{vm.name}],uid[#{vm.uid_ems}]"
                 vm.update_attributes(:uid_ems => SecureRandom.uuid)
                 '''
             3.Refresh the provider
         expectedResults:
             1.Provider added successfully and is refreshed
             2.VM's uid_ems is modified
-            3.VM is still active and usable in cloudforms, not archived/orphaned.
+            3.After a full refresh,VM is still active and usable in cfme,not archived/orphaned.
     """
-    pass
+    command = "'ems=ManageIQ::Providers::Vmware::InfraManager.find_by(:name =>\"" + provider.name + "\");\
+                vm = ems.vms.last;\
+                puts \"VM_ID=#{vm.id} name=[#{vm.name}] uid=#{vm.uid_ems}\";\
+                vm.update_attributes(:uid_ems => SecureRandom.uuid);\
+                puts \"VM_ID=#{vm.id} name=[#{vm.name}] uid=#{vm.uid_ems}\"'"
+    result = appliance.ssh_client.run_rails_command(command)
+    logger.info("Output of Rails command was {}".format(result.output))
+    provider.refresh_provider_relationships()
+    if not result.output:
+        vm_name = re.findall(r"\[.+\]", result.output)[0].split('[')[1].split(']')[0]
+        vm = appliance.collections.infra_vms.instantiate(name=vm_name, provider=provider)
+        view = vm.load_details(from_any_provider=True)
+        power_state = view.entities.summary('Power Management').get_text_of('Power State')
+        assert not power_state == 'orphaned'
+        assert not power_state == 'archived'
