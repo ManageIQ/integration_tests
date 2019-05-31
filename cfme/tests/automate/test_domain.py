@@ -9,6 +9,7 @@ from cfme.automate.explorer.klass import ClassCopyView
 from cfme.automate.explorer.method import MethodCopyView
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -247,6 +248,7 @@ def test_domain_lock_unlock(domain, appliance):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1686762)])
 def test_object_attribute_type_in_automate_schedule(appliance):
     """
     Polarion:

@@ -7,11 +7,13 @@ from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.automate.import_export import AutomateGitRepository
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [
     test_requirements.automate,
     pytest.mark.meta(server_roles="+git_owner"),
+    pytest.mark.meta(blockers=[BZ(1714493)])
 ]
 
 GIT_REPO_URL = "https://github.com/RedHatQE/ManageIQ-automate-git.git"
