@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Manual VMware Provider tests"""
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -9,8 +10,13 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.vmware,
+    pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
-    pytest.mark.provider([VMwareProvider], scope="module")
+    pytest.mark.provider([VMwareProvider],
+                        required_fields=[['provisioning', 'template'],
+                                        ['provisioning', 'host'],
+                                        ['provisioning', 'datastore']],
+                        scope="module")
 ]
 
 
@@ -243,9 +249,8 @@ def test_vmware_cdrom_dropdown_not_blank():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vmware_inaccessible_datastore_vm_provisioning():
+def test_vmware_inaccessible_datastore_vm_provisioning(appliance, provider):
     """
     VMware sometimes has datastores that are inaccessible, and CloudForms should not pick this
     during provisioning when using "Choose Automatically" as an option under environment tab.
@@ -269,7 +274,15 @@ def test_vmware_inaccessible_datastore_vm_provisioning():
             2.See all available templates
             3.CFME should provision VM on datastore other than the one that is inaccessible.
     """
-    pass
+    inaccessible_datastores = [
+        datastore for datastore in provider.mgmt.list_datastore()
+        if not provider.mgmt.get_datastore(datastore).summary.accessible]
+    if inaccessible_datastores:
+        logger.info("Found {} inaccessible_datastores".format(inaccessible_datastores))
+    vm = appliance.collections.infra_vms.create('test-prov-' + fauxfactory.gen_alphanumeric(),
+        provider, find_in_cfme=True, wait=True,
+        form_values={'environment': {'automatic_placement': True}})
+    assert vm.datastore.name not in inaccessible_datastores
 
 
 @pytest.mark.manual
