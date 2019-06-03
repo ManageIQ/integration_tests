@@ -731,36 +731,6 @@ def test_appliance_console_ha_setup_dc():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_screen():
-    """
-    Test new screen package added to appliances. Should be able to run a
-    task and switch terminal/screen within ssh to run other tasks
-    simultaneously.
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.9
-        testSteps:
-            1. Type 'screen'
-            2. Initiate screen commands by 'ctrl+a'
-            "c" creates new screen, "n" switch to next screen,
-            "p" for previous screen, "d" detach from screens.
-            3. After this, it will takes you back to standard terminal.
-            4. Type screen -r to resume using screen.
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Check whether it will return back to ealier session.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_appliance_console_restart():
     """
     test restarting the appliance
