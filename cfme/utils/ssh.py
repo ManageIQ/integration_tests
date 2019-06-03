@@ -137,7 +137,7 @@ class SSHClient(paramiko.SSHClient):
         self.oc_password = connect_kwargs.pop('oc_password', False)
         self.f_stdout = connect_kwargs.pop('stdout', sys.stdout)
         self.f_stderr = connect_kwargs.pop('stderr', sys.stderr)
-        self.strict_host_key_checking = connect_kwargs.pop('strict_host_key_checking', False)
+        self.strict_host_key_checking = connect_kwargs.pop('strict_host_key_checking', True)
 
         # load the defaults for ssh, including current_appliance and default credentials keys
         compiled_kwargs = dict(
@@ -234,8 +234,18 @@ class SSHClient(paramiko.SSHClient):
         if not self.connected:
             self._connect_kwargs.update(kwargs)
             wait_for(self._check_port, timeout='2m', delay=5)
-            # Only install ssh keys if they aren't installed (or currently being installed)
-            conn = super(SSHClient, self).connect(**self._connect_kwargs)
+            try:
+                conn = super(SSHClient, self).connect(**self._connect_kwargs)
+            except paramiko.ssh_exception.BadHostKeyException:
+                if self.strict_host_key_checking:
+                    raise
+
+                hk = self.get_host_keys()
+                del hk[self._connect_kwargs['hostname']]
+                conn = super(SSHClient, self).connect(**self._connect_kwargs)
+                logger.warning('Host key for host %s changed. Using the new one as '
+                               'strict_host_key_checking is disabled.',
+                               self._connect_kwargs['hostname'])
         else:
             conn = None
 
