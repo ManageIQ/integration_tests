@@ -623,7 +623,15 @@ def test_embed_tower_exec_play_against(
                 "cloud_type": "<Choose>",
             }
 
+        if service_request.exists():
+            service_request.wait_for_request()
+            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"

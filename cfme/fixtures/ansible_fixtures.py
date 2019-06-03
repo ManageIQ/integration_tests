@@ -100,7 +100,7 @@ def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
     return service_catalog
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def ansible_service_request(appliance, ansible_catalog_item):
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
     service_request = appliance.collections.requests.instantiate(description=request_descr)
@@ -111,7 +111,7 @@ def ansible_service_request(appliance, ansible_catalog_item):
         appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def ansible_service(appliance, ansible_catalog_item):
     service = MyService(appliance, ansible_catalog_item.name)
     yield service
