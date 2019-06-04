@@ -186,6 +186,12 @@ events = pytest.mark.requirement(
     assignee_id='jdupuy'
 )
 
+ec2 = pytest.mark.requirement(
+    "EC2Provider",
+    description='EC2Provider integration with CFME',
+    assignee_id='mmojzis'
+)
+
 filtering = pytest.mark.requirement(
     "Searching and Filtering",
     description='Searching and Filtering in the UI/SSUI',

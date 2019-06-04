@@ -1559,24 +1559,6 @@ def test_osp_vmware60_test_vm_migration_with_windows_2012_server():
 
 
 @pytest.mark.manual
-def test_ec2_targeted_refresh_instance():
-    """
-    Instance CREATE
-    Instance RUNNING
-    Instance STOPPED
-    Instance UPDATE
-    Instance DELETE - or - Instance TERMINATE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_verify_that_changing_groups_while_in_ssui_updates_dashboard_items():
     """
@@ -2095,29 +2077,6 @@ def test_validate_cost_weekly_allocation_cpu():
 
 
 @pytest.mark.manual
-def test_ec2_targeted_refresh_floating_ip():
-    """
-    #AWS naming is Elastic IP
-    Classic Floating IP Allocate
-    VPC Floating IP Allocate
-    Classic Floating IP Allocate to Instance (Check both IP and Instance)
-    Classic Floating IP Allocate to Network Port (Check both IP and Port)
-    VPC Floating IP Allocate to Instance (Check both IP and Instance)
-    VPC Floating IP Allocate to Network Port (Check both IP and Port)
-    Floating IP UPDATE
-    Floating IP DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1 1/2h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_host_graph_by_vm_tag_vsphere6():
@@ -2169,24 +2128,6 @@ def test_osp_test_ssh_creds_can_be_added_while_adding_osp_provider():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test SSH Creds can be added while adding OSP provider
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_targeted_refresh_network():
-    """
-    #AWS naming is VPC
-    Network CREATE
-    Network UPDATE
-    Network DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 2/3h
-        startsin: 5.9
     """
     pass
 
@@ -2335,24 +2276,6 @@ def test_service_chargeback_retired_service():
         casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_targeted_refresh_network_router():
-    """
-    #AWS naming is Route Table
-    Network Router CREATE
-    Network Router DELETE
-    Network Router UPDATE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 2/3h
-        startsin: 5.9
     """
     pass
 
@@ -2535,26 +2458,6 @@ def test_distributed_zone_mixed_appliance_ip_versions():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_targeted_refresh_network_port():
-    """
-    #AWS naming is Network Interface
-    Network port CREATE
-    Network port UPDATE
-    Assign private IP
-    Unassign private IP
-    Network port DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 2/3h
-        startsin: 5.9
     """
     pass
 
@@ -3096,22 +2999,6 @@ def test_osp_test_associated_tags_before_and_after_migration_department_accounti
         subcomponent: OSP
         title: OSP: Test associated tags before and after migration
                (Department:Accounting kind)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_targeted_refresh_stack():
-    """
-    Stack CREATE
-    Stack DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.9
     """
     pass
 
@@ -4216,23 +4103,6 @@ def test_optimize_memory_usage_by_making_object_in_hash():
 
 
 @pytest.mark.manual
-def test_ec2_targeted_refresh_volume():
-    """
-    #AWS naming is EBS
-    Volume CREATE
-    Volume UPDATE
-    Volume DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 2/3h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_migration_from_nfs_storage_in_vmware_to_iscsi_on_osp():
     """
     OSP: vmware67-Test VM migration from NFS Storage in VMware to iSCSI on
@@ -4853,23 +4723,6 @@ def test_osp_vmware65_test_vm_migration_with_windows_2012_server():
 
 
 @pytest.mark.manual
-def test_ec2_targeted_refresh_subnet():
-    """
-    Subnet CREATE
-    Subnet UPDATE
-    Subnet DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 2/3h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 def test_validate_cost_monthly_usage_storage():
     """
@@ -5170,25 +5023,6 @@ def test_osp_vmware67_test_vm_with_mutliple_nics_with_single_ip_ipv6_to_first_ni
         subcomponent: OSP
         title: OSP: vmware67-Test VM with mutliple NICs with single IP
                (IPv6 to first NIC and IPv4 to second)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_targeted_refresh_load_balancer():
-    """
-    #AWS naming is ELB
-    Apply Security group
-    Floating IP CREATE
-    Floating IP UPDATE
-    Floating IP DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 2/3h
-        startsin: 5.9
     """
     pass
 
@@ -9515,23 +9349,6 @@ def test_retire_cloud_vms_notification_folder():
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_targeted_refresh_security_group():
-    """
-    Security group CREATE
-    Security group UPDATE
-    Security group DELETE
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 2/3h
-        startsin: 5.9
     """
     pass
 
