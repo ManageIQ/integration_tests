@@ -250,7 +250,7 @@ pyparsing==2.4.0
 pyperclip==1.7.0
 pytesseract==0.2.6
 pytest==3.4.1
-pytest-polarion-collect==0.13
+pytest-polarion-collect==0.14
 python-box==3.2.4
 python-bugzilla==2.2.0
 python-cinderclient==4.1.0
