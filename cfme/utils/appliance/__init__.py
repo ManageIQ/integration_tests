@@ -2668,56 +2668,6 @@ class Appliance(IPAppliance):
         appliance.provider_key = provider_key
         return appliance
 
-    def _custom_configure(self, **kwargs):
-        log_callback = kwargs.pop(
-            "log_callback",
-            lambda msg: logger.info("Custom configure %s: %s", self.vm_name, msg))
-        region = kwargs.get('region', 0)
-        db_address = kwargs.get('db_address')
-        key_address = kwargs.get('key_address')
-        db_username = kwargs.get('db_username')
-        db_password = kwargs.get('ssh_password')
-        ssh_password = kwargs.get('ssh_password')
-        db_name = kwargs.get('db_name')
-        on_openstack = kwargs.pop('on_openstack', False)
-
-        if self.is_downstream:
-            # Upstream already has one.
-            if kwargs.get('db_address') is None:
-                # This is workaround for appliances to use only one disk for the VMDB
-                # If they have been provisioned with a second disk in the infra,
-                # 'self.unpartitioned_disks' should exist and therefore this won't run.
-                if not self.unpartitioned_disks:
-                    self.db.create_db_lvm()
-                self.db.enable_internal(
-                    region, key_address, db_password, ssh_password)
-            else:
-                self.db.enable_external(
-                    db_address, region, db_name, db_username, db_password)
-        if kwargs.get('loosen_pgssl', True) is True:
-            self.db.loosen_pgssl()
-
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-        restart_evm = False
-
-        if kwargs.get('fix_ntp_clock', True) is True:
-            self.set_ntp_sources(log_callback=log_callback)
-            restart_evm = True
-
-        name_to_set = kwargs.get('name_to_set')
-        if name_to_set is not None and name_to_set != self.name:
-            self.rename(name_to_set)
-            restart_evm = True
-
-        if restart_evm:
-            self.evmserverd.restart(log_callback=log_callback)
-            self.wait_for_web_ui(log_callback=log_callback)
-
-        # Try to set a resolvable FQDN on openstack
-        if on_openstack:
-            self.set_resolvable_hostname(log_callback=log_callback)
-
     @logger_wrap("Configure Appliance: {}")
     def configure(self, setup_fleece=False, log_callback=None, on_openstack=False, **kwargs):
         """Configures appliance - database setup, rename, ntp sync
@@ -2736,12 +2686,9 @@ class Appliance(IPAppliance):
             on_openstack: If appliance is running on Openstack provider (default ``False``)
         """
         log_callback("Configuring appliance {} on {}".format(self.vm_name, self.provider_key))
-        if kwargs:
-            with self:
-                self._custom_configure(**kwargs)
-        else:
-            # Defer to the IPAppliance.
-            super(Appliance, self).configure(log_callback=log_callback, on_openstack=on_openstack)
+
+        # Defer to the IPAppliance.
+        super(Appliance, self).configure(log_callback=log_callback, on_openstack=on_openstack)
         # And do configure the fleecing if requested
         if setup_fleece:
             self.configure_fleecing(log_callback=log_callback)
