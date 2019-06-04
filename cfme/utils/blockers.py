@@ -184,14 +184,14 @@ class BZ(Blocker):
     @property
     def can_test_on_current_upstream_appliance(self):
         bug = self.data
-        if not bug.can_test_on_upstream:
-            return False
-        if version.appliance_is_downstream():
+        if bug is None:  # if bug is None, then it is not a blocker and we can test it
+            return True
+        if not bug.can_test_on_upstream:  # if bug is not fixed in upstream, we can't test it!
             return False
 
         change_states = {"POST", "MODIFIED"}
-        # With these states, the change is in upstream
-        if bug.status not in {"POST", "MODIFIED", "ON_QA", "VERIFIED", "RELEASE_PENDING"}:
+        # With these states, the change is not in upstream
+        if bug.status in {"NEW", "ON_DEV", "ASSIGNED"}:
             return False
         history = bug.get_history_raw()["bugs"][0]["history"]
         changes = []
