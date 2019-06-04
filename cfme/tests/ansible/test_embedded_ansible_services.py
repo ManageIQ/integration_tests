@@ -31,15 +31,15 @@ SERVICE_CATALOG_VALUES = [
 
 
 CREDENTIALS = [
-    ("Amazon", ""),
-    ("VMware", "vcenter_host"),
-    ("Red Hat Virtualization", "host"),
+    ("Amazon", "", "list_ec2_instances.yml"),
+    ("VMware", "vcenter_host", "gather_all_vms_from_vmware.yml"),
+    ("Red Hat Virtualization", "host", "connect_to_rhv.yml"),
 ]
 
 
 @pytest.fixture
 def provider_credentials(appliance, provider, credential):
-    cred_type, hostname = credential
+    cred_type, hostname, playbook = credential
     creds = provider.get_credentials_from_config(provider.data["credentials"])
     credentials = {}
     if cred_type == "Amazon":
@@ -601,13 +601,7 @@ def test_embed_tower_exec_play_against(
         initialEstimate: 1/4h
         tags: ansible_embed
     """
-    if provider_credentials.credential_type == "Amazon":
-        playbook = "list_ec2_instances.yml"
-    elif provider_credentials.credential_type == "VMware":
-        playbook = "gather_all_vms_from_vmware.yml"
-    elif provider_credentials.credential_type == "Red Hat Virtualization":
-        playbook = "connect_to_rhv.yml"
-
+    playbook = credential[2]
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
             "playbook": playbook,
@@ -623,9 +617,12 @@ def test_embed_tower_exec_play_against(
                 "cloud_type": "<Choose>",
             }
 
+        service = MyService(appliance, ansible_catalog_item.name)
         if service_request.exists():
             service_request.wait_for_request()
             appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+        if service.exists:
+            service.delete()
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
