@@ -306,6 +306,7 @@ def test_provision_from_template_using_rest(appliance, request, provider, vm_nam
         form_values = None
     collection = appliance.provider_based_collection(provider)
     instance = collection.create_rest(vm_name, provider, form_values=form_values)
+    request.addfinalizer(instance.retire)
 
     wait_for(
         lambda: instance.exists,
