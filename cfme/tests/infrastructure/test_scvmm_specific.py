@@ -103,7 +103,7 @@ def test_create_appliance_on_scvmm_using_the_vhd_image():
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1700909)], automates=[1700909])
+@pytest.mark.meta(blockers=[BZ(1700909, forced_streams=["5.10", "5.11"])], automates=[1700909])
 def test_check_disk_allocation_size_scvmm(vm):
     """
     Test datastore used space is the correct value, c.f.
