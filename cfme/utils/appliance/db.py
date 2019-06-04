@@ -615,10 +615,7 @@ class ApplianceDB(AppliancePlugin):
 
     @property
     def is_dedicated_active(self):
-        result = self.appliance.ssh_client.run_command(
-            "systemctl status {}-postgresql.service | grep running".format(
-                self.postgres_version))
-        return result.success
+        return self.appliance.db_service.is_active
 
     def wait_for(self, timeout=600):
         """Waits for appliance database to be ready
