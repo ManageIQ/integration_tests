@@ -144,8 +144,8 @@ class SSHClient(paramiko.SSHClient):
 
         # Overlay defaults with any passed-in kwargs and assign to _connect_kwargs
         compiled_kwargs.update(connect_kwargs)
-        if not compiled_kwargs['hostname']:
-            compiled_kwargs['hostname'] = store.current_appliance.hostname,
+        if not compiled_kwargs.get("hostname"):
+            compiled_kwargs["hostname"] = store.current_appliance.hostname
 
         self._connect_kwargs = compiled_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
