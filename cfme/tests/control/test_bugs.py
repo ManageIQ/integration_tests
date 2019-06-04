@@ -192,6 +192,41 @@ def action_for_testing(appliance):
     action_.delete()
 
 
+@pytest.fixture
+def compliance_condition(appliance):
+    expression = (
+        "fill_field(VM and Instance : Name, =, cu-24x7); "
+        "select_expression_text; "
+        "click_or; "
+        "fill_field(VM and Instance : Name, =, {}); "
+        "select_expression_text; "
+        "click_or; "
+        "fill_field(VM and Instance : Name, =, {}); "
+    ).format(fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric())
+    condition = appliance.collections.conditions.create(
+        conditions.VMCondition,
+        "vm-name-{}".format(fauxfactory.gen_alphanumeric()),
+        expression=expression
+    )
+    yield condition
+    condition.delete()
+
+
+@pytest.fixture
+def vm_compliance_policy_profile(appliance, compliance_condition):
+    policy = appliance.collections.policies.create(
+        VMCompliancePolicy, "vm-compliance-{}".format(fauxfactory.gen_alphanumeric())
+    )
+    policy.assign_conditions(compliance_condition)
+    profile = appliance.collections.policy_profiles.create(
+        "VM Compliance Profile {}".format(fauxfactory.gen_alphanumeric()),
+        [policy],
+    )
+    yield profile
+    profile.delete()
+    policy.delete()
+
+
 @pytest.mark.meta(blockers=[BZ(1155284)])
 def test_scope_windows_registry_stuck(request, appliance, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable.
@@ -515,3 +550,54 @@ def test_edit_action_buttons(action_for_testing):
     # click the cancel button and navigate to "Details" so that the action can be deleted
     view.cancel_button.click()
     navigate_to(action_for_testing, "Details")
+
+
+@pytest.mark.meta(blockers=[BZ(1717483, forced_streams=["5.11"])], automates=[1711352])
+def test_policy_condition_multiple_ors(
+        appliance,
+        virtualcenter_provider,
+        vm_compliance_policy_profile
+):
+    """
+    Tests to make sure that policy conditions with multiple or statements work properly
+
+    Bugzilla:
+        1711352
+
+    Polarion:
+        assignee: jdupuy
+        caseimportance: low
+        casecomponent: Control
+        initialEstimate: 1/12h
+    """
+    collection = virtualcenter_provider.appliance.provider_based_collection(virtualcenter_provider)
+    all_vms = collection.all()
+    all_vm_names = [vm.name for vm in all_vms]
+
+    # we need to select out cu-24x7
+    vms = [all_vms.pop(all_vm_names.index("cu-24x7"))]
+
+    # add some other vms to the list to run the policy simulation against
+    # we use this ugly logic in case there are not that many vms on the provider
+    if len(all_vms) > 3:
+        vms.extend(all_vms[0:4])
+    elif len(all_vms) > 2:
+        vms.extend(all_vms[0:3])
+    elif len(all_vms) > 1:
+        vms.extend(all_vms[0:2])
+    else:
+        vms.extend(all_vms[0])
+
+    filtered_collection = collection.filter({"names": [vm.name for vm in vms]})
+    # Now perform the policy simulation
+    view = navigate_to(filtered_collection, "PolicySimulation")
+    # Select the correct policy profile
+    view.fill({"form": {"policy_profile": "{}".format(vm_compliance_policy_profile.description)}})
+
+    # Now check each quadicon and ensure that only cu-24x7 is compliant
+    for entity in view.form.entities.get_all():
+        state = entity.data["quad"]["bottomRight"]["tooltip"]
+        if entity.name == "cu-24x7":
+            assert state == "Policy simulation successful."
+        else:
+            assert state == "Policy simulation failed with: false"

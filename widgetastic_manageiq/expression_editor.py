@@ -203,6 +203,10 @@ class ExpressionEditor(View, Pretty):
         # select first element (first_expression) of the elements in the result
         self.browser.click(els[0][0])
 
+    def select_expression_text(self):
+        self.expression_text_widget.wait_displayed()
+        self.expression_text_widget.click()
+
     def select_expression_by_text(self, text):
         self.browser.click(
             "{}[contains(normalize-space(text()),'{}')]".format(self.EXPRESSION_TEXT, text)
