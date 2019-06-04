@@ -316,9 +316,12 @@ def test_import_export_generic_object_definition(request, appliance, gen_obj_def
             data = yaml.safe_load(f)[0]["GenericObjectDefinition"]
 
     except IOError:
-        pytest.fail("{}/{}.yaml not found, exporting the generic object definition failed".format(
-            GEN_OBJ_DIRECTORY, gen_obj_def_import_export.name
-        ))
+        pytest.fail(
+            "IOError: {}/{}.yaml not found on the appliance, "
+            "exporting the generic object definition failed".format(
+                GEN_OBJ_DIRECTORY, gen_obj_def_import_export.name
+            )
+        )
 
     assert data.get("description") == gen_obj_def_import_export.description
     assert data.get("name") == gen_obj_def_import_export.name
