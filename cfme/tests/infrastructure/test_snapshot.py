@@ -116,6 +116,28 @@ def test_snapshot_crud(small_test_vm, provider):
 
 @pytest.mark.rhv3
 @pytest.mark.provider([RHEVMProvider], override=True)
+@pytest.mark.meta(automates=[BZ(1443411)])
+def test_delete_active_vm_snapshot(small_test_vm):
+    """
+    Check that it's not possible to delete an Active VM from RHV snapshots
+
+    Bugzilla:
+        1443411
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Infra
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/12h
+    """
+    view = navigate_to(small_test_vm, 'SnapshotsAll')
+    view.tree.click_path(small_test_vm.name, 'Active VM (Active)')
+    assert not view.toolbar.delete.is_displayed
+
+
+@pytest.mark.rhv3
+@pytest.mark.provider([RHEVMProvider], override=True)
 def test_create_without_description(small_test_vm):
     """
     Test that we get an error message when we try to create a snapshot with
