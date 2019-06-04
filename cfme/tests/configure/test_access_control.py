@@ -1193,7 +1193,7 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
 
 
 # Tenant/Project test cases
-
+@test_requirements.multi_tenancy
 def test_delete_default_tenant(appliance):
     """
     Polarion:
@@ -1225,6 +1225,7 @@ def test_delete_default_tenant(appliance):
 
 
 @pytest.mark.tier(3)
+@test_requirements.multi_tenancy
 def test_superadmin_tenant_crud(request, appliance):
     """Test suppose to verify CRUD operations for CFME tenants
 
@@ -1263,6 +1264,7 @@ def test_superadmin_tenant_crud(request, appliance):
 
 
 @pytest.mark.tier(3)
+@test_requirements.multi_tenancy
 def test_superadmin_tenant_project_crud(request, appliance):
     """Test suppose to verify CRUD operations for CFME projects
 
@@ -1310,6 +1312,7 @@ def test_superadmin_tenant_project_crud(request, appliance):
 
 
 @pytest.mark.tier(3)
+@test_requirements.multi_tenancy
 @pytest.mark.parametrize('number_of_childrens', [5])
 def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
     """Test CRUD operations for CFME child tenants, where several levels of tenants are created.
@@ -1356,6 +1359,7 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
 
 
 @pytest.mark.tier(3)
+@test_requirements.multi_tenancy
 @pytest.mark.parametrize('collection_name', ['tenants', 'projects'])
 def test_unique_name_on_parent_level(request, appliance, collection_name):
     """Tenant or Project has always unique name on parent level. Same name cannot be used twice.
@@ -1402,6 +1406,7 @@ def test_unique_name_on_parent_level(request, appliance, collection_name):
 
 
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_superadmin_tenant_admin_crud(appliance, group_collection):
     """
     Super admin is able to create new tenant administrator
@@ -1428,6 +1433,7 @@ def test_superadmin_tenant_admin_crud(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
+@test_requirements.multi_tenancy
 def test_tenant_unique_catalog(appliance, request, catalog_obj):
     """
     Catalog name is unique per tenant. Every tenant can have catalog with
@@ -1457,6 +1463,7 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_tenant_visibility_service_template_catalogs_all_parents():
     """
     Members of child tenants can see service templates which are visible
@@ -1476,6 +1483,7 @@ def test_tenant_visibility_service_template_catalogs_all_parents():
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_tenant_visibility_services_all_childs():
     """
     Members of parent tenant can see services of all child tenants.
@@ -1493,6 +1501,7 @@ def test_tenant_visibility_services_all_childs():
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
 def test_tenant_osp_mapping_refresh():
     """
     There is new feature in 5.7, mapping of Openstack tenants to CFME
@@ -1519,6 +1528,7 @@ def test_tenant_osp_mapping_refresh():
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_tenant_visibility_providers_all_parents():
     """
     Child tenants can see providers which were defined in parent tenants.
@@ -1537,6 +1547,7 @@ def test_tenant_visibility_providers_all_parents():
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_tenant_visibility_miq_requests_all_childs():
     """
     Tenant members can see MIQ requests of this tenant and its children.
@@ -1554,6 +1565,7 @@ def test_tenant_visibility_miq_requests_all_childs():
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
 def test_tenant_osp_mapping_delete():
     """
     Tenants created by tenant mapping cannot be deleted.
@@ -1577,6 +1589,7 @@ def test_tenant_osp_mapping_delete():
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
 def test_tenant_ssui_users_can_see_their_services():
     """
     Self Service UI - users can see their services
@@ -1622,6 +1635,7 @@ def test_tenant_ssui_users_can_see_their_services():
 
 
 @pytest.mark.tier(3)
+@test_requirements.multi_tenancy
 def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request):
     """
     Automation domain name is unique across parent tenants and cannot be
@@ -1658,6 +1672,7 @@ def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
 def test_tenantadmin_user_crud():
     """
     As a Tenant Admin I want to be able to create users in my tenant
@@ -1689,6 +1704,7 @@ def test_tenantadmin_user_crud():
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
 def test_tenant_automation_domains():
     """
     Tenants can see Automation domains owned by tenant or parent tenants
@@ -1722,6 +1738,7 @@ def test_tenant_automation_domains():
 
 
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collection, request):
     """
     Child superadmin tenant should able to delete catalog belonging to
@@ -1780,6 +1797,7 @@ def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collecti
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(1)
+@test_requirements.multi_tenancy
 def test_verify_groups_for_tenant_user():
     """
     verify if only 1 group displayed when login as tenant user ()that one
@@ -1798,6 +1816,7 @@ def test_verify_groups_for_tenant_user():
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_tenant_visibility_service_template_items_all_parents():
     """
     Child tenants can see all service template items defined in parent
@@ -1816,6 +1835,7 @@ def test_tenant_visibility_service_template_items_all_parents():
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
 def test_tenantadmin_group_crud():
     """
     As a Tenant Admin I want to be able to create groups related to the
@@ -1840,6 +1860,7 @@ def test_tenantadmin_group_crud():
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_tenant_visibility_vms_all_childs():
     """
     Members of parent tenant can see all VMs/instances created by users in
@@ -1858,6 +1879,7 @@ def test_tenant_visibility_vms_all_childs():
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
 def test_tenant_ldap_group_switch_between_tenants():
     """
     User who is member of 2 or more LDAP groups can switch between tenants
@@ -1895,6 +1917,7 @@ def test_tenant_ldap_group_switch_between_tenants():
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
+@test_requirements.multi_tenancy
 def test_tenant_visibility_miq_ae_namespaces_all_parents():
     """
     Child tenants can see MIQ AE namespaces of parent tenants.
