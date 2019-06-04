@@ -130,6 +130,7 @@ class SSHClient(paramiko.SSHClient):
         self.oc_password = connect_kwargs.pop('oc_password', False)
         self.f_stdout = connect_kwargs.pop('stdout', sys.stdout)
         self.f_stderr = connect_kwargs.pop('stderr', sys.stderr)
+        self.strict_host_key_checking = connect_kwargs.pop('strict_host_key_checking', False)
 
         # load the defaults for ssh, including current_appliance and default credentials keys
         compiled_kwargs = dict(
@@ -289,6 +290,56 @@ class SSHClient(paramiko.SSHClient):
         except gevent.Timeout:
             logger.error("command %s couldn't finish in given timeout %s", command, timeout)
             raise
+
+    def load_host_keys(self, filename):
+        """
+        Load host keys from a local host-key file.  Host keys read with this
+        method will be checked after keys loaded via `load_system_host_keys`,
+        but will be saved back by `save_host_keys` (so they can be modified).
+        The missing host key policy `.AutoAddPolicy` adds keys to this set and
+        saves them, when connecting to a previously-unknown server.
+
+        This method can be called multiple times.  Each new set of host keys
+        will be merged with the existing set (new replacing old if there are
+        conflicts).  When automatically saving, the last hostname is used.
+
+        :param str filename: the filename to read
+
+        :raises: ``IOError`` -- if the filename could not be read
+        """
+        if self.strict_host_key_checking:
+            self._host_keys_filename = filename
+            self._host_keys.load(filename)
+
+    def load_system_host_keys(self, filename=None):
+        """
+        Load host keys from a system (read-only) file.  Host keys read with
+        this method will not be saved back by `save_host_keys`.
+
+        This method can be called multiple times.  Each new set of host keys
+        will be merged with the existing set (new replacing old if there are
+        conflicts).
+
+        If ``filename`` is left as ``None``, an attempt will be made to read
+        keys from the user's local "known hosts" file, as used by OpenSSH,
+        and no exception will be raised if the file can't be read.  This is
+        probably only useful on posix.
+
+        :param str filename: the filename to read, or ``None``
+
+        :raises: ``IOError`` --
+            if a filename was provided and the file could not be read
+        """
+        if self.strict_host_key_checking:
+            if filename is None:
+                # try the user's .ssh key file, and mask exceptions
+                filename = os_path.expanduser("~/.ssh/known_hosts")
+                try:
+                    self._system_host_keys.load(filename)
+                except IOError:
+                    pass
+                return
+            self._system_host_keys.load(filename)
 
     def _run_command(self, command, timeout=RUNCMD_TIMEOUT, ensure_host=False,
                      ensure_user=False, container=None):
