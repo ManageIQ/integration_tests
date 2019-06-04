@@ -19,7 +19,6 @@ pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
     'nfs-utils',
     'libnfsidmap',
     'ipmitool',
-    'prince',
     'rhn-client-tools',
     'rhn-check',
     'rhnlib',
