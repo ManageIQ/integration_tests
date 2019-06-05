@@ -10,15 +10,16 @@ from widgetastic.exceptions import NoSuchElementException
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider(classes=[InfraProvider], required_fields=['large'], selector=ONE),
+    pytest.mark.provider(classes=[InfraProvider], selector=ONE),
     pytest.mark.usefixtures('setup_provider')
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def vms(appliance, provider):
     """Ensure the infra providers are set up and get list of vms"""
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
@@ -26,21 +27,21 @@ def vms(appliance, provider):
     return view.entities.all_entity_names  # surfs pages
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def subset_of_vms(vms):
     """We'll pick a host with median number of vms"""
     vm_num = 4 if len(vms) >= 4 else len(vms)
     return sample(vms, vm_num)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def expression_for_vms_subset(subset_of_vms):
     return ";select_first_expression;click_or;".join(
         ["fill_field(Virtual Machine : Name, =, {})".format(vm) for vm in subset_of_vms]
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def vm_view(appliance):
     view = navigate_to(appliance.collections.infra_vms, 'VMsOnly')
     assert view.entities.search.is_advanced_search_possible, (
@@ -77,7 +78,7 @@ def test_vm_filter_without_user_input(appliance, vm_view, vms, subset_of_vms,
         assert vm in vms_present, "Could not find VM {} after filtering!".format(vm)
 
 
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
+@pytest.mark.meta(blockers=[BZ(1715550)])
 def test_vm_filter_with_user_input(
         appliance, vm_view, vms, subset_of_vms, expression_for_vms_subset):
     """
@@ -88,11 +89,16 @@ def test_vm_filter_with_user_input(
         initialEstimate: 1/10h
     """
     vm = sample(subset_of_vms, 1)[0]
+    # Find the number of VMs before filtering
+    vms_before = len(vm_view.entities.get_all())
     # Set up the filter
     vm_view.entities.search.advanced_search(
         "fill_field(Virtual Machine : Name, =)", {"Virtual Machine": vm}
     )
     vm_view.flash.assert_no_error()
+    # Check the number of VMs after filtering and that it's less than without filtering
+    vms_after = len(vm_view.entities.get_all())
+    assert vms_after < vms_before
     assert vm in vm_view.entities.entity_names, "Could not find VM {} after filtering!".format(vm)
 
 
