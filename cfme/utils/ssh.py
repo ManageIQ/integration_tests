@@ -95,6 +95,12 @@ class SSHResult(object):
         return self.rc != 0
 
 
+class SSHResultDummy(SSHResult):
+    """ Dummy result class to handle partial calls with extra kwargs for SSHClient methods"""
+    def __init__(self, command, rc, output, *args, **kwargs):
+        SSHResult.__init__(self, command, rc, output)
+
+
 _ssh_key_file = project_path.join('.generated_ssh_key')
 _ssh_pubkey_file = project_path.join('.generated_ssh_key.pub')
 
@@ -780,6 +786,29 @@ class SSHTail(SSHClient):
     def lines_as_list(self):
         """Return lines as list"""
         return list(self)
+
+
+class SSHDummy(object):
+    """Dummy object that support contextmanager and just returns a logger.info bound method
+    This is for dev appliances that don't support ssh
+    Framework/tests that use appliance.ssh_client will end up just logging what they would have run
+    """
+    def __enter__(self, *args, **kwargs):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        pass
+
+    @staticmethod
+    def is_appliance_downstream(self):
+        return False
+
+    def __getattr__(self, item):
+        if item in ['run_command', 'run_rails_command', 'run_rails_console', 'run_rake_command']:
+            logger.error('Cannot run ssh against a dev appliance, SSH function call skipped: %s',
+                         item)
+            from functools import partial
+            return partial(SSHResultDummy, rc=1, output=None)
 
 
 def keygen():
