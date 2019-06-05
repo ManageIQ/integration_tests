@@ -4,13 +4,17 @@ from datetime import timedelta
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.ssh import SSHClient
 from cfme.utils.timeutil import parsetime
 
-pytestmark = pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+pytestmark = [
+    test_requirements.bottleneck,
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod),
+    pytest.mark.uncollectif(lambda appliance: appliance.version > '5.11')]
 
 
 @pytest.fixture(scope="module")
