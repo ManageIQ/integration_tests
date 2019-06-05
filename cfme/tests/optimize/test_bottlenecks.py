@@ -14,7 +14,7 @@ from cfme.utils.timeutil import parsetime
 pytestmark = [
     test_requirements.bottleneck,
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod),
-    pytest.mark.uncollectif(lambda appliance: appliance.version > '5.11')]
+    pytest.mark.ignore_stream('5.11')]
 
 
 @pytest.fixture(scope="module")
