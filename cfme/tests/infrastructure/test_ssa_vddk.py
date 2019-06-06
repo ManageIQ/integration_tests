@@ -21,7 +21,8 @@ pytestmark = [
 vddk_versions = [
     ('v5_5'),
     ('v6_0'),
-    ('v6_5')
+    ('v6_5'),
+    ('v6_7')
 ]
 
 
@@ -47,13 +48,16 @@ def ssa_analysis_profile(appliance):
 @pytest.fixture(params=vddk_versions, ids=([item for item in vddk_versions]), scope='function')
 def configure_vddk(request, appliance, provider, vm):
     vddk_version = request.param
-    vddk_url = conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
+    vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", {}).get(vddk_version, None)
+    if vddk_url is None:
+        pytest.skip('Could not locate vddk url in cfme_data')
+    else:
+        appliance.install_vddk(vddk_url=vddk_url)
     view = navigate_to(vm, 'Details')
     host_name = view.entities.summary("Relationships").get_text_of("Host")
     host, = [host for host in provider.hosts.all() if host.name == host_name]
     host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
     host.update_credentials_rest(credentials=host_data['credentials'])
-    appliance.install_vddk(vddk_url=vddk_url)
 
     @request.addfinalizer
     def _finalize():
