@@ -45,8 +45,12 @@ def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
     """
     Polarion:
         assignee: sshveta
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/2h
+        initialEstimate: 1h
     """
     # Test VM migration power state and tags are preserved
     # as this is single_vm_migration it only has one vm_obj
@@ -97,6 +101,10 @@ def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert
     """
     Polarion:
         assignee: sshveta
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         initialEstimate: 1h
     """
@@ -154,8 +162,12 @@ def test_migration_special_char_name(appliance, provider,
 
     Polarion:
         assignee: sshveta
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/2h
+        initialEstimate: 1h
     """
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
@@ -239,8 +251,11 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
         Polarion:
             assignee: sshveta
             caseimportance: medium
-            initialEstimate: 1/4h
+            caseposneg: positive
+            testtype: functional
+            startsin: 5.10
             casecomponent: V2V
+            initialEstimate: 1h
         """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = infra_mapping_default_data(source_provider, provider)

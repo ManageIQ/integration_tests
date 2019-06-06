@@ -64,8 +64,11 @@ def test_single_datastore_single_vm_migration(
     Polarion:
         assignee: sshveta
         caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
+        initialEstimate: 1h
     """
 
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
@@ -108,8 +111,11 @@ def test_single_network_single_vm_migration(
     Polarion:
         assignee: sshveta
         caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
+        initialEstimate: 1h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_vm_obj_single_network.infra_mapping_data
@@ -152,8 +158,11 @@ def test_dual_datastore_dual_vm_migration(
     Polarion:
         assignee: sshveta
         caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
+        initialEstimate: 1h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_dual_vm_obj_dual_datastore.infra_mapping_data
@@ -196,8 +205,11 @@ def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_d
     Polarion:
         assignee: sshveta
         caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
+        initialEstimate: 1h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_vm_obj_dual_nics.infra_mapping_data
@@ -235,8 +247,11 @@ def test_dual_disk_vm_migration(
     Polarion:
         assignee: sshveta
         caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
+        initialEstimate: 1h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
@@ -284,8 +299,11 @@ def test_migrations_different_os_templates(
     Polarion:
         assignee: sshveta
         caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
+        initialEstimate: 1h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_multiple_vm_obj_single_datastore.infra_mapping_data
@@ -330,8 +348,11 @@ def test_single_vm_migration_with_ssh(
     Polarion:
         assignee: sshveta
         caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
-        initialEstimate: 1/4h
+        initialEstimate: 1h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_multiple_vm_obj_single_datastore.infra_mapping_data

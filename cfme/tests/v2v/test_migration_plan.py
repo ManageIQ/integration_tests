@@ -46,6 +46,10 @@ def test_migration_plan(
         assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data

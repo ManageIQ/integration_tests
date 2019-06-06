@@ -35,10 +35,13 @@ def test_infrastructure_mapping_crud(request, appliance, mapping_data_vm_obj_sin
     """ Test create and delete for Infra Mapping
     Polarion:
         assignee: sshveta
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
+        customerscenario: true
         initialEstimate: 1/4h
-        subcomponent: RHV
-        upstream: yes
         testSteps:
             1. V2V providers have to be added to create Mapping (Vmware and RHV/OSP)
             2. create mapping with nfs source and nfs target datastore
