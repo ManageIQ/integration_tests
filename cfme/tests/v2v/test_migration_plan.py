@@ -2,12 +2,14 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope="module"
     ),

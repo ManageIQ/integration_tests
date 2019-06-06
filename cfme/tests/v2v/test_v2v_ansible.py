@@ -15,7 +15,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    test_requirements.ansible,
+    test_requirements.v2v,
     pytest.mark.meta(
         server_roles=["+embedded_ansible"]
     ),

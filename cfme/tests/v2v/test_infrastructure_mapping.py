@@ -1,6 +1,7 @@
 """Test to validate End-to-End migrations- functional testing."""
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -9,6 +10,7 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[OpenStackProvider, RHEVMProvider],
         selector=ONE_PER_VERSION,

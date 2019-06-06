@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import dportgroup_template
 from cfme.fixtures.provider import dual_disk_template
@@ -19,6 +20,7 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.blockers import BZ
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,

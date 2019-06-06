@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel69_template
 from cfme.fixtures.provider import rhel7_minimal
@@ -19,6 +20,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,

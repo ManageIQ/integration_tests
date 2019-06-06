@@ -4,6 +4,7 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
+from cfme import test_requirements
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -13,6 +14,7 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope="module"
     ),
