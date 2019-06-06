@@ -22,27 +22,8 @@ class DisksButton(Button):
 
 class DisksTable(VanillaTable):
     """Table to add and remove Disks (in VM Reconfigure form)"""
-
-    BASELOC = "//div/table[./../h3[normalize-space(text())={}]//button]"
     add_disk_btn = DisksButton("contains", "Add Disk", classes=[Button.PRIMARY])
     cancel_add_btn = DisksButton("contains", "Cancel Add", classes=[Button.DEFAULT])
-    column_widgets = {
-        "Type": BootstrapSelect(id="hdType"),
-        "Mode": BootstrapSelect(id="hdMode"),
-        "Size": Input(id="dvcSize"),
-        "ControllerType": BootstrapSelect(id="Controller"),
-        "Unit": BootstrapSelect(id="hdUnit"),
-        "Dependent": BootstrapSwitch(name="vm.cb_dependent"),
-        "Delete Backing": BootstrapSwitch(name="cb_deletebacking"),
-        "Actions": Button(),
-        # second action button, 'Cancel Add' or 'Delete' depending on context of row
-        # https://github.com/RedHatQE/widgetastic.core/issues/95
-        9: Button(),
-    }
-
-    def __init__(self, parent, *args, **kwargs):
-        kwargs["column_widgets"] = self.column_widgets
-        VanillaTable.__init__(self, parent, self.BASELOC.format(quote("Disks")), *args, **kwargs)
 
     def click_add_disk(self):
         """Clicks the Add Disk button attached to the table and returns the new editable row"""
