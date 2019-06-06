@@ -326,6 +326,28 @@ def test_host_refresh_relationships(provider, setup_provider):
     wait_for_relationship_refresh(provider)
 
 
+@pytest.mark.rhv3
+@pytest.mark.provider([InfraProvider])
+def test_template_refresh_relationships(appliance, provider, setup_provider):
+    """ Test that host refresh doesn't fail
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/8h
+        tags: relationship
+    """
+    templates_view = navigate_to(provider, 'ProviderTemplates')
+    template_names = templates_view.entities.entity_names
+    template_collection = appliance.provider_based_collection(provider=provider,
+                                                              coll_type='templates')
+
+    template = template_collection.instantiate(template_names[0], provider)
+    template.refresh_relationships()
+    wait_for_relationship_refresh(provider)
+
+
 @pytest.mark.manual
 @pytest.mark.tier(1)
 def test_inventory_refresh_westindia_azure():

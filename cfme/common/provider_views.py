@@ -12,6 +12,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostEntitiesView
+from cfme.utils.blockers import BZ
 from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
@@ -94,9 +95,14 @@ class ProviderDetailsView(BaseLoggedInPage):
             name=self.context['object'].name,
             subtitle=subtitle
         )
-        return (self.logged_in_as_current_user and
-                self.breadcrumb.is_displayed and
-                self.breadcrumb.active_location == title)
+        if BZ(1703744).blocks:
+            return (self.logged_in_as_current_user and
+                    self.breadcrumb.is_displayed and
+                    self.breadcrumb.active_location in title)
+        else:
+            return (self.logged_in_as_current_user and
+                    self.breadcrumb.is_displayed and
+                    self.breadcrumb.active_location == title)
 
 
 class InfraProviderDetailsView(ProviderDetailsView):
