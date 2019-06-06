@@ -15,6 +15,7 @@ IMAGE_SPEC = [
     ('fedora:27', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:28', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:29', PYTHON_RPM.format(cmd="dnf")),
+    ('fedora:30', PYTHON_RPM.format(cmd="dnf")),
     ('centos:7', PYTHON_RPM.format(cmd="yum")),
     ('debian:stable', PYTHON_DEB),
     ('ubuntu:artful', PYTHON_DEB),

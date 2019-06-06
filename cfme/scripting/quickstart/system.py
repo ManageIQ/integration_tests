@@ -73,6 +73,7 @@ REDHAT_PACKAGES_SPECS = [
     ("Fedora release 27", "openssl", RH_BASE_NEW + DNF_EXTRA),
     ("Fedora release 28", "openssl", RH_BASE_NEW + DNF_EXTRA),
     ("Fedora release 29", "openssl", RH_BASE_NEW + DNF_EXTRA),
+    ("Fedora release 30", "openssl", RH_BASE_NEW + DNF_EXTRA),
     ("CentOS Linux release 7", "nss", RH_BASE + YUM_EXTRA),
     ("Red Hat Enterprise Linux Server release 7", "nss", RH_BASE + YUM_EXTRA),
     ("Red Hat Enterprise Linux Workstation release 7", "nss",
