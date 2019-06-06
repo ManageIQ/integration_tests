@@ -221,9 +221,8 @@ def test_vmware_inaccessible_datastore():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vmware_cdrom_dropdown_not_blank():
+def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     """
     Test CD/DVD Drives dropdown lists ISO files, dropdown is not blank
 
@@ -249,6 +248,18 @@ def test_vmware_cdrom_dropdown_not_blank():
             4.Virtual machine is selected
             5.Dropdown of ISO files is not empty for CD/DVD Drive
     """
+    datastore_collection = appliance.collections.datastores
+    ds = [ds.name for ds in provider.data['datastores'] if ds.type == 'iso']
+    try:
+        iso_ds = datastore_collection.instantiate(name=ds[0], provider=provider)
+    except IndexError:
+        pytest.skip('No datastores found of type iso on provider {}'.format(provider.name))
+    iso_ds.run_smartstate_analysis()
+    vms_collections = appliance.collections.infra_vms
+    vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
+    view = navigate_to(vm, 'Reconfigure')
+    from IPython import embed
+    embed()
     pass
 
 
