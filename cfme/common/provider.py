@@ -284,7 +284,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                     provider_attributes['uid_ems'] = self.keystone_v3_domain_id
 
         if self.type_name == "azure":
-            provider_attributes["uid_ems"] = self.tenant_id
+            provider_attributes["azure_tenant_id"] = self.tenant_id
             provider_attributes["provider_region"] = self.region.lower().replace(" ", "")
             if getattr(self, "subscription_id", None):
                 provider_attributes["subscription"] = self.subscription_id
