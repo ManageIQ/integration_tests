@@ -78,7 +78,7 @@ def test_vm_filter_without_user_input(appliance, vm_view, vms, subset_of_vms,
         assert vm in vms_present, "Could not find VM {} after filtering!".format(vm)
 
 
-@pytest.mark.meta(blockers=[BZ(1715550)])
+@pytest.mark.meta(blockers=[BZ(1715550, forced_streams=["5.10", "5.11"])])
 def test_vm_filter_with_user_input(
         appliance, vm_view, vms, subset_of_vms, expression_for_vms_subset):
     """
