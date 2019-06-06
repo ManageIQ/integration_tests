@@ -368,7 +368,19 @@ def test_server_info(appliance):
         caseimportance: medium
         initialEstimate: 1/3h
     """
-    assert all(item in appliance.rest_api.server_info for item in ('appliance', 'build', 'version'))
+    key_list = (
+        "enterprise_href",
+        "zone_href",
+        "region_href",
+        "plugins",
+        "appliance",
+        "server_href",
+        "version",
+        "build",
+        "time",
+    )
+
+    assert all(item in appliance.rest_api.server_info for item in key_list)
 
 
 def test_server_info_href(appliance):
