@@ -35,6 +35,13 @@ pytestmark = [
     pytest.mark.usefixtures("v2v_provider_setup")
 ]
 
+# vm name with 64 characters
+vm_char64 = "{vm_name}{extra_words}".format(
+    vm_name=random_vm_name(context="v2v"), extra_words=fauxfactory.gen_alpha(51))
+# vm name with space
+vm_space = "{vm_name} {extra_words}".format(
+    vm_name=random_vm_name(context="v2v"), extra_words=fauxfactory.gen_alpha())
+
 
 @pytest.mark.parametrize('power_state', ['RUNNING', 'STOPPED'])
 def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
@@ -176,21 +183,25 @@ def test_migration_special_char_name(appliance, provider,
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
-def test_migration_long_name(request, appliance, provider, source_provider):
-    """Test to check VM name with 64 character should work
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("vm_name", [vm_char64, vm_space], ids=["char64", "space"])
+@pytest.mark.parametrize("v2v_provider_setup", ["SSH", "VDDK"], indirect=True)
+def test_migration_vm_name(request, appliance, provider, source_provider, vm_name):
+    """Test to check different VM name type should work
 
     Polarion:
         assignee: sshveta
         initialEstimate: 1/2h
         casecomponent: V2V
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
     """
     source_datastores_list = source_provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]
     collection = appliance.provider_based_collection(source_provider)
 
-    # Following code will create vm name with 64 characters
-    vm_name = "{vm_name}{extra_words}".format(vm_name=random_vm_name(context="v2v"),
-                                              extra_words=fauxfactory.gen_alpha(51))
     vm_obj = collection.instantiate(
         name=vm_name,
         provider=source_provider,
