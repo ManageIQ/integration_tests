@@ -353,7 +353,7 @@ def test_send_email_method(smtp_test, klass):
 
 
 @pytest.fixture(scope="module")
-def generic_definition(appliance):
+def generic_object_definition(appliance):
     # Creating generic object using REST
     with appliance.context.use(ViaREST):
         definition = appliance.collections.generic_object_definitions.create(
@@ -363,22 +363,22 @@ def generic_definition(appliance):
             associations={"vms": "Vm", "services": "Service"}
         )
         yield definition
-        if definition.exists:
-            definition.delete()
+        definition.delete_if_exists()
 
 
 @pytest.fixture
-def service_req(request, generic_catalog_item):
+def go_service_request(generic_catalog_item):
     # Creating generic service
     service_request = generic_catalog_item.appliance.rest_api.collections.service_templates.get(
         name=generic_catalog_item.name
     ).action.order()
-    request.addfinalizer(service_request.action.delete)
+    yield
+    service_request.action.delete()
 
 
 @pytest.mark.tier(1)
-def test_automate_generic_object_service_associations(appliance, klass, service_req,
-                                                      generic_definition):
+def test_automate_generic_object_service_associations(appliance, klass, go_service_request,
+                                                      generic_object_definition):
     """
     Polarion:
         assignee: ghubale
@@ -392,7 +392,7 @@ def test_automate_generic_object_service_associations(appliance, klass, service_
     """
     # Ruby code
     script = 'go_class = $evm.vmdb(:generic_object_definition).find_by(:name => "{name}")\n'.format(
-        name=generic_definition.name
+        name=generic_object_definition.name
     )
     script = script + (
         'load_balancer = go_class.create_object(:name => "Test Load Balancer", :location => '
