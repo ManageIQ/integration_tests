@@ -27,9 +27,10 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.net import find_pingable
 from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
-from cfme.utils.wait import wait_for_decorator
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -294,14 +295,14 @@ def ssa_single_vm(request, local_setup_provider, enable_smartproxy_affinity, pro
 
         vm.mgmt.ensure_state(VmState.RUNNING)
 
-        @wait_for_decorator(timeout="10m", delay=5)
-        def get_ip_address():
-            ip = vm.mgmt.ip
-            logger.info("Fetched IP for %s: %s", vm_name, ip)
-            return ip is not None
-
-        connect_ip = vm.mgmt.ip
-        assert connect_ip is not None
+        try:
+            connect_ip, _ = wait_for(find_pingable,
+                                     func_args=[vm.mgmt],
+                                     timeout="10m",
+                                     delay=5,
+                                     fail_condition=None)
+        except TimedOutError:
+            pytest.fail('Timed out waiting for pingable address on SSA VM')
 
         # Check that we can at least get the uptime via ssh this should only be possible
         # if the username and password have been set via the cloud-init script so

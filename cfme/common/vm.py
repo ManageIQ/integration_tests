@@ -28,6 +28,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.net import find_pingable
 from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
 from cfme.utils.timeutil import parsetime
@@ -184,8 +185,12 @@ class BaseVM(
 
     @property
     def ip_address(self):
-        """Fetches IP Address of VM"""
-        return self.mgmt.ip
+        """Fetches IP Address of VM
+
+        First looks to see if any of the mgmt ips returned by 'all_ips' are pingable
+        Then defaults to whatever mgmt.ip returns
+        """
+        return find_pingable(self.mgmt)
 
     @property
     def mac_address(self):

@@ -437,6 +437,7 @@ class CollectLogsBasicEntities(View):
 class CollectLogsCredsEntities(View):
     fill_strategy = WaitFillViewStrategy("5s")
     username = Input(name='log_userid')
+    # TODO implement fill method (fill_strategy) to click 'change stored password' when updating
     password = Input(name='log_password')
     confirm_password = Input(name='log_verify')
     validate_button = Button('Validate')

@@ -15,13 +15,21 @@ def _create_vm(request, template, provider, vm_name):
     vm_obj.create_on_provider(allow_skip="default")
     vm_obj.mgmt.ensure_state(VmState.RUNNING)
     # In order to have seamless SSH connection
+
     vm_ip, _ = wait_for(
-        lambda: vm_obj.mgmt.ip,
-        num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address."
+        lambda: vm_obj.ip_address,
+        num_sec=300,
+        delay=5,
+        fail_condition=None,
+        message="wait for testing VM pingable IP address."
     )
     wait_for(
-        net_check, func_args=[ports.SSH, vm_ip], func_kwargs={"force": True},
-        num_sec=300, delay=5, message="testing VM's SSH available")
+        net_check,
+        func_args=[ports.SSH, vm_ip],
+        func_kwargs={"force": True},
+        num_sec=300,
+        delay=5,
+        message="testing VM's SSH available")
     if not vm_obj.exists:
         provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()

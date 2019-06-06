@@ -22,10 +22,9 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     is_dev = False
-    if 'appliances' in env:
-        for appliance in env.appliances:
-            if appliance.get('is_dev', False):
-                is_dev = True
+    for appliance in env.get('appliances', []) or []:
+        if appliance.get('is_dev', False):
+            is_dev = True
     tb_url = trackerbot.conf.get('url')
     if (
         config.getoption('--help') or

@@ -39,10 +39,11 @@ from sprout.log import create_logger
 
 from cfme.utils import conf
 from cfme.utils.appliance import Appliance as CFMEAppliance
-from cfme.utils.net import resolve_hostname
+from cfme.utils.net import find_pingable
 from cfme.utils.path import project_path
 from cfme.utils.timeutil import parsetime
 from cfme.utils.trackerbot import api, depaginate
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 
@@ -998,6 +999,7 @@ def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, yum
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
         appliance_power_on.si(appliance_id),
+        retrieve_appliance_ip.si(appliance_id),
         appliance_rename.si(appliance_id),
         appliance_set_ansible_url.si(appliance_id)
     ]
@@ -1189,36 +1191,20 @@ def appliance_power_on(self, appliance_id):
             vm_running = appliance.vm_mgmt.is_running
             vm_steady = appliance.vm_mgmt.in_steady_state
         if vm_running:
-            # TODO: change after openshift wrapanapi refactor
-            if appliance.is_openshift:
-                try:
-                    current_ip = appliance.provider_api.current_ip_address(appliance.name)
-                except Exception:
-                    current_ip = None
-            else:
-                ip = appliance.vm_mgmt.ip
-                current_ip = ip if ip and resolve_hostname(ip) else None
-            if current_ip is not None:
-                # IP present
-                Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
-                with transaction.atomic():
-                    appliance = Appliance.objects.get(id=appliance_id)
-                    if not appliance.is_openshift:
-                        appliance.ip_address = current_ip
-                    appliance.set_power_state(Appliance.Power.ON)
-                    appliance.save()
-                if appliance.containerized and not appliance.is_openshift:
-                    with appliance.ipapp.ssh_client as ssh:
-                        # Fire up the container
-                        ssh.run_command('cfme-start', ensure_host=True)
+            appliance.set_status("Appliance was powered on.")
+
+            with transaction.atomic():
+                appliance = Appliance.objects.get(id=appliance_id)
+                appliance.set_power_state(Appliance.Power.ON)
+                appliance.save()
+            if appliance.containerized and not appliance.is_openshift:
+                with appliance.ipapp.ssh_client as ssh:
+                    # Fire up the container
+                    ssh.run_command('cfme-start', ensure_host=True)
                 # VM is running now.
-                sync_appliance_hw.delay(appliance.id)
-                sync_provider_hw.delay(appliance.template.provider.id)
-                return
-            else:
-                # IP not present yet
-                Appliance.objects.get(id=appliance_id).set_status("Appliance waiting for IP.")
-                self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
+            sync_appliance_hw.delay(appliance.id)
+            sync_provider_hw.delay(appliance.template.provider.id)
+            return
         elif not vm_steady:
             # TODO: change after openshift wrapanapi refactor
             if appliance.is_openshift:
@@ -1236,9 +1222,9 @@ def appliance_power_on(self, appliance_id):
             else:
                 appliance.vm_mgmt.start()
             self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
-    except Exception as e:
-        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
-        self.retry(args=(appliance_id, ), exc=e, countdown=20, max_retries=30)
+    except Exception as ex:
+        provider_error_logger().error("Exception {}: {}".format(type(ex).__name__, str(ex)))
+        self.retry(args=(appliance_id, ), exc=ex, countdown=20, max_retries=30)
 
 
 @singleton_task()
@@ -1389,21 +1375,44 @@ def retrieve_appliance_ip(self, appliance_id):
         appliance.set_status("Retrieving IP address.")
         # TODO: change after openshift wrapanapi refactor
         if appliance.is_openshift:
-            ip_address = appliance.provider_api.current_ip_address(appliance.name)
+            ip_address, _ = wait_for(
+                appliance.provider_api.current_ip_address,
+                func_args=[appliance.name],
+                fail_condition=None,
+                delay=5,
+                num_sec=30,
+            )
         else:
-            ip = appliance.vm_mgmt.ip
-            ip_address = ip if ip and resolve_hostname(ip) else None
-        if ip_address is None:
-            self.retry(args=(appliance_id,), countdown=30, max_retries=20)
+            if appliance.vm_mgmt is None:
+                self.logger.error(
+                    'Appliance %s vm_mgmt is None, skipping retrieve IP on orphaned appliance',
+                    appliance_id
+                )
+                return
+            ip_address, _ = wait_for(
+                find_pingable,
+                func_args=[appliance.vm_mgmt],
+                fail_condition=None,
+                delay=5,
+                num_sec=30
+            )
+        self.logger.info('Updating with reachable IP %s for appliance %s',
+                         ip_address, appliance_id)
+
         with transaction.atomic():
             appliance = Appliance.objects.get(id=appliance_id)
             appliance.ip_address = ip_address
             appliance.save(update_fields=['ip_address'])
     except ObjectDoesNotExist:
         # source object is not present, terminating
+        self.logger.warning('Appliance object not found for id %s in retrieve_appliance_ip',
+                            appliance_id)
         return
+    except TimedOutError:
+        self.logger.info('No reachable IPs found forappliance %s, retrying', appliance_id)
+        self.retry(args=(appliance_id,), countdown=2, max_retries=10)
     else:
-        appliance.set_status("IP address retrieved.")
+        wait_appliance_ready.delay(appliance_id)
 
 
 @singleton_task()
@@ -1454,25 +1463,23 @@ def refresh_appliances_provider(self, provider_id):
             vm = uuid_vms[appliance.uuid]
             # Using the UUID and change the name if it changed
             appliance.name = vm.name
-
-            appliance.ip_address = vm.ip if vm.ip and resolve_hostname(vm.ip) else None
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.state, Appliance.Power.UNKNOWN))
-            appliance.save()
         elif appliance.name in dict_vms:
             vm = dict_vms[appliance.name]
             # Using the name, and then retrieve uuid
             appliance.uuid = vm.uuid
-            appliance.ip_address = vm.ip if vm.ip and resolve_hostname(vm.ip) else None
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.state, Appliance.Power.UNKNOWN))
-            appliance.save()
             self.logger.info("Retrieved UUID for appliance {}/{}: {}".format(
                 appliance.id, appliance.name, appliance.uuid))
         else:
             # Orphaned :(
             appliance.set_power_state(Appliance.Power.ORPHANED)
+        with transaction.atomic():
             appliance.save()
+        retrieve_appliance_ip.delay(appliance.id)  # set the IP
+        appliance.set_status('Appliance Refreshed')
 
 
 @singleton_task()
@@ -1647,6 +1654,7 @@ def wait_appliance_ready(self, appliance_id):
                 kill_appliance.delay(appliance_id)
                 return
         if appliance.power_state == Appliance.Power.UNKNOWN or appliance.ip_address is None:
+            retrieve_appliance_ip.delay(appliance_id)
             self.retry(args=(appliance_id,), countdown=30, max_retries=45)
         if Appliance.objects.get(id=appliance_id).cfme.ipapp.is_web_ui_running():
             with transaction.atomic():
@@ -1900,7 +1908,7 @@ def connect_direct_lun(self, appliance_id):
         appliance.reload()
         with transaction.atomic():
             appliance.lun_disk_connected = True
-            appliance.save()
+            appliance.save(update_fields=['lun_disk_connected'])
         return True
 
 
@@ -1926,7 +1934,7 @@ def disconnect_direct_lun(self, appliance_id):
         appliance.reload()
         with transaction.atomic():
             appliance.lun_disk_connected = False
-            appliance.save()
+            appliance.save(update_fields=['lun_disk_connected'])
         return True
 
 
@@ -2031,7 +2039,7 @@ def check_swap_in_appliance(self, appliance_id):
 
     appliance.swap = swap_amount
     appliance.ssh_failed = ssh_failed
-    appliance.save()
+    appliance.save(update_fields=['swap', 'ssh_failed'])
 
     # Returns a tuple - (appliance_id, went_up?, current_amount, ssh_failed?)
     return appliance.id, went_up, swap_amount, ssh_failed_changed
