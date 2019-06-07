@@ -15,6 +15,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import Modal
 
 from cfme.automate.explorer import AutomateExplorerView
 from cfme.automate.explorer import check_tree_path
@@ -233,15 +234,21 @@ class PlaybookInputParameters(View):
 class EntryPoint(Text, ClickableMixin):
     def fill(self, value):
         """Used to select the automate method from automate domain"""
-        if value:
-            self.click()
+        if not self.parent_view.embedded_method_table.is_displayed:
+            table = []
+        else:
+            table = self.parent_view.embedded_method_table.read()
+        for current_value in table:
+            if value == current_value['Path']:
+                return False
+        else:
+            self.parent_view.embedded_method.click()
             self.parent_view.embedded_view.wait_displayed('15s')
             self.parent_view.embedded_view.tree.click_path(*value)
             return True
-        return None
 
 
-class EmbeddedView(View):
+class EmbeddedView(Modal):
     """This view is for embedding automate method"""
     title = Text(
         './/div[contains(@class, "modal-header ng-scope")]/h4[contains(@class, "modal-title")]'
@@ -288,6 +295,7 @@ class MethodAddView(AutomateExplorerView):
     # Add embedded method
     embedded_method = EntryPoint('//*[@id="automate-inline-method-select"]//button')
     embedded_view = View.nested(EmbeddedView)
+    embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
 
     add_button = Button('Add')
     cancel_button = Button('Cancel')
@@ -330,6 +338,7 @@ class MethodEditView(AutomateExplorerView):
     # Edit embedded method
     embedded_method = EntryPoint('//*[@id="automate-inline-method-select"]//button')
     embedded_view = View.nested(EmbeddedView)
+    embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
 
     save_button = Button('Save')
     reset_button = Button('Reset')
