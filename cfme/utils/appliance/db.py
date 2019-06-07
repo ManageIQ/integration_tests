@@ -259,6 +259,7 @@ class ApplianceDB(AppliancePlugin):
         cat > {pg_prefix}/var/lib/pgsql/data/pg_hba.conf <<EOF
         local all postgres,root trust
         host all all 0.0.0.0/0 md5
+        hostssl all all all md5
         {ssl}
         EOF
         """.format(ssl=ssl, pg_prefix=pg_prefix))
