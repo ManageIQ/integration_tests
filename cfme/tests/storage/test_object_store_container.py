@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.wait import wait_for
 
@@ -50,3 +51,30 @@ def test_add_remove_tag(container):
     container.remove_tag(added_tag)
     tag_available = container.get_tags()
     assert not tag_available
+
+
+@pytest.mark.manual
+@test_requirements.storage
+def test_storage_object_store_container_edit_tag_openstack():
+    """
+    Requires:
+        OpenstackProvider
+
+    Polarion:
+        assignee: anikifor
+        caseimportance: medium
+        casecomponent: Cloud
+        initialEstimate: 1/8h
+        startsin: 5.7
+        testSteps:
+            1. Add Object Store Container
+            2. go to summery pages
+            3. add tag : [Policy > Edit Tags]
+            4. remove tag: [Policy > Edit Tags]
+        expectedResults:
+            1.
+            2.
+            3. Verify the tag is assigned
+            4. Verify the tag is removed
+    """
+    pass

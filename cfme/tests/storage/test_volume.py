@@ -92,19 +92,17 @@ def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=Fa
 
 def test_storage_volume_create_cancelled_validation(appliance, provider, from_manager):
     """ Test Attach instance to storage volume cancelled
-
     prerequisites:
         * Storage provider
-
-    Steps:
-        * Navigate to storage add volume page
-        * Click Cancel button
-        * Assert flash message
 
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
+        testSteps:
+            1. Navigate to storage add volume page
+            2. Click Cancel button
+            3. Assert flash message
     """
     volume_collection = appliance.collections.volumes
     create_volume(appliance, provider, from_manager, cancel=True)
@@ -116,18 +114,18 @@ def test_storage_volume_create_cancelled_validation(appliance, provider, from_ma
 @pytest.mark.tier(1)
 def test_storage_volume_crud(appliance, provider, from_manager):
     """ Test storage volume crud
-
     prerequisites:
         * Storage provider
-
-    Steps:
-        * Crate new volume
-        * Delete volume
 
     Polarion:
         assignee: mmojzis
         initialEstimate: 1/4h
         casecomponent: Cloud
+        caseimportance: high
+        testSteps:
+            1. Create new volume
+            2. Update volume
+            3. Delete volume
     """
     # create volume
     volume = create_volume(appliance, provider, from_manager, should_assert=True)
@@ -157,6 +155,24 @@ def test_storage_volume_crud(appliance, provider, from_manager):
                                unblock=lambda provider: provider.one_of(EC2Provider))])
 @pytest.mark.tier(1)
 def test_storage_volume_attach_detach(appliance, provider, instance_fixture, from_manager):
+    """ Test storage volume attach/detach
+    prerequisites:
+        * Storage provider
+        * Instance
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/4h
+        casecomponent: Cloud
+        startsin: 5.7
+        caseimportance: high
+        testSteps:
+            1. Create new volume
+            2. Attach that volume to instance
+            3. Detach that volume from instance
+            4. Delete that volume
+
+    """
     volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
                            vm_default_args["environment"]["availability_zone"], should_assert=True)
 
@@ -173,20 +189,50 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
     volume.delete()
 
 
-def test_storage_volume_edit_tag(volume):
-    """ Test add and remove tag to storage volume
-
-    prerequisites:
-        * Storage Volume
-
-    Steps:
-        * Add tag and check
-        * Remove tag and check
+@pytest.mark.manual
+@test_requirements.storage
+def test_storage_volume_attached_delete():
+    """
+    Requires:
+        RHCF3-21779 - test_storage_volume_attach[openstack]
 
     Polarion:
         assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/16h
+        startsin: 5.7
+        testSteps:
+            1. Check after attached status of volume in-used or not
+            2. Now try to delete volume from Detail page
+            3. Navigate on All page
+            4. try to delete volume from All page
+        expectedResults:
+            1. check for flash message " Cloud Volume "Volume_name" cannot be
+            removed because it is attached to one or more Instances "
+            2.
+            3.
+            4. check for flash message " Cloud Volume "Volume_name" cannot be
+            removed because it is attached to one or more Instances "
+        """
+    pass
+
+
+def test_storage_volume_edit_tag(volume):
+    """ Test add and remove tag to storage volume
+    prerequisites:
+        * Storage Volume
+
+    Polarion:
+        assignee: anikifor
         initialEstimate: 1/4h
         casecomponent: Cloud
+        testSteps:
+            1. Add tag
+            2. Remove tag
+        expectedResults:
+            1. Check that tag is added
+            2. Checked that tag is removed
     """
 
     # add tag with category Department and tag communication
