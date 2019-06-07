@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """This module tests only cloud specific events"""
+import time
+
 import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
@@ -78,6 +80,8 @@ def test_manage_nsg_group(appliance, provider, register_event):
 
     # creating and removing network security group
     provider.mgmt.create_netsec_group(nsg_name, resource_group)
+    # wait for a minute before deleting the security group so CFME has time to receive the event
+    time.sleep(60)
     provider.mgmt.remove_netsec_group(nsg_name, resource_group)
 
 
