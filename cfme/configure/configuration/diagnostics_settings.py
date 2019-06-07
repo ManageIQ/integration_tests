@@ -17,6 +17,7 @@ from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
@@ -456,12 +457,16 @@ class ServerCollectLogsEditView(ServerCollectLogsView):
 
     @property
     def is_displayed(self):
-        return(
-            self.in_server_collect_logs and
-            self.depot_type.is_displayed and
-            ('Editing Log Depot Settings for Server'in self.edit_form_title.text or
-             'Editing Log Depot Settings for Zone' in self.edit_form_title.text)
-        )
+        if BZ(1717902).blocks:
+            return (self.in_server_collect_logs and
+                    self.depot_type.is_displayed
+                    )
+        else:
+            return (self.in_server_collect_logs and
+                    self.depot_type.is_displayed and
+                    ('Editing Log Depot Settings for Server' in self.edit_form_title.text or
+                     'Editing Log Depot Settings for Zone' in self.edit_form_title.text)
+                    )
 
 
 class ServerCollectLog(CollectLogsBase):
