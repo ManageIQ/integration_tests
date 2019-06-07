@@ -193,16 +193,20 @@ def action_for_testing(appliance):
 
 
 @pytest.fixture
-def compliance_condition(appliance):
+def compliance_condition(appliance, virtualcenter_provider):
+    try:
+        vm_name = virtualcenter_provider.data["cap_and_util"]["capandu_vm"]
+    except KeyError:
+        pytest.skip("No capandu_vm exists on virtualcenter_provider")
     expression = (
-        "fill_field(VM and Instance : Name, =, cu-24x7); "
-        "select_expression_text; "
-        "click_or; "
         "fill_field(VM and Instance : Name, =, {}); "
         "select_expression_text; "
         "click_or; "
         "fill_field(VM and Instance : Name, =, {}); "
-    ).format(fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric())
+        "select_expression_text; "
+        "click_or; "
+        "fill_field(VM and Instance : Name, =, {}); "
+    ).format(vm_name, fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric())
     condition = appliance.collections.conditions.create(
         conditions.VMCondition,
         "vm-name-{}".format(fauxfactory.gen_alphanumeric()),
@@ -575,7 +579,12 @@ def test_policy_condition_multiple_ors(
     all_vm_names = [vm.name for vm in all_vms]
 
     # we need to select out cu-24x7
-    vms = [all_vms.pop(all_vm_names.index("cu-24x7"))]
+    try:
+        vm_name = virtualcenter_provider.data["cap_and_util"]["capandu_vm"]
+    except KeyError:
+        pytest.skip("No capandu_vm available on virtualcenter_provider")
+
+    vms = [all_vms.pop(all_vm_names.index(vm_name))]
 
     # add some other vms to the list to run the policy simulation against
     # we use this ugly logic in case there are not that many vms on the provider
@@ -597,7 +606,7 @@ def test_policy_condition_multiple_ors(
     # Now check each quadicon and ensure that only cu-24x7 is compliant
     for entity in view.form.entities.get_all():
         state = entity.data["quad"]["bottomRight"]["tooltip"]
-        if entity.name == "cu-24x7":
+        if entity.name == vm_name:
             assert state == "Policy simulation successful."
         else:
             assert state == "Policy simulation failed with: false"
