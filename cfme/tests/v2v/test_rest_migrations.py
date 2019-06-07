@@ -126,7 +126,6 @@ def test_rest_mapping_create(request, appliance, get_clusters, get_datastores, g
         caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
-        subcomponent: RHV
         startsin: 5.9
         tags: V2V
     """
@@ -159,7 +158,6 @@ def test_rest_mapping_bulk_delete_from_collection(
         caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
-        subcomponent: RHV
         startsin: 5.9
         tags: V2V
     """

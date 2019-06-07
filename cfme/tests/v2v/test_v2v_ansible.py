@@ -15,7 +15,7 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    test_requirements.ansible,
+    test_requirements.v2v,
     pytest.mark.meta(
         server_roles=["+embedded_ansible"]
     ),
@@ -100,8 +100,11 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     Polarion:
         assignee: sshveta
         caseimportance: medium
+        caseposneg: positive
         casecomponent: V2V
+        testtype: functional
         initialEstimate: 1/4h
+        startsin: 5.10
         testSteps:
             1. Enable embedded ansible role
             2. Create repository

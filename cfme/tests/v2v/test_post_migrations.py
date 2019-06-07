@@ -4,6 +4,7 @@ import re
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
@@ -15,6 +16,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import TimedOutError
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,

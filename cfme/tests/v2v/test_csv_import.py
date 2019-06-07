@@ -4,6 +4,7 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
+from cfme import test_requirements
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -13,6 +14,7 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
 
 pytestmark = [
+    test_requirements.v2v,
     pytest.mark.provider(
         classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope="module"
     ),
@@ -111,9 +113,12 @@ def archived_vm(appliance, source_provider):
 
 def test_non_csv(appliance, infra_map):
     """Test non-csv file import
-
     Polarion:
         assignee: ytale
+        caseimportance: high
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
@@ -128,6 +133,10 @@ def test_blank_csv(appliance, infra_map):
     """Test csv with blank file
     Polarion:
         assignee: ytale
+        caseimportance: high
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
@@ -142,8 +151,15 @@ def test_column_headers(appliance, infra_map):
     """Test csv with unsupported column header
     Polarion:
         assignee: ytale
-        initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
+        customerscenario: true
+        initialEstimate: 1/8h
+        subcomponent: RHV
+        upstream: yes
     """
     content = fauxfactory.gen_alpha(10)
     error_msg = "Error: Required column 'Name' does not exist in the .CSV file"
@@ -154,8 +170,15 @@ def test_inconsistent_columns(appliance, infra_map):
     """Test csv with extra inconsistent column value
     Polarion:
         assignee: ytale
-        initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
+        customerscenario: true
+        initialEstimate: 1/8h
+        subcomponent: RHV
+        upstream: yes
     """
     content = "Name\n{}, {}".format(fauxfactory.gen_alpha(10), fauxfactory.gen_alpha(10))
     error_msg = "Error: Number of columns is inconsistent on line 2"
@@ -166,6 +189,10 @@ def test_csv_empty_vm(appliance, infra_map):
     """Test csv with empty column value
     Polarion:
         assignee: ytale
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
@@ -182,6 +209,10 @@ def test_csv_invalid_vm(appliance, infra_map):
     """Test csv with invalid vm name
     Polarion:
         assignee: ytale
+        caseimportance: high
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
@@ -198,6 +229,10 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
     """Test csv with valid vm name
     Polarion:
         assignee: ytale
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
@@ -214,6 +249,10 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
     """Test csv with duplicate vm name
     Polarion:
         assignee: ytale
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
@@ -230,6 +269,10 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name
     Polarion:
         assignee: ytale
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
