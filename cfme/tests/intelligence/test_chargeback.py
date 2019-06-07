@@ -78,7 +78,7 @@ def test_chargeback_duplicate_disallowed(
 ):
     """
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
@@ -112,7 +112,7 @@ def test_chargeback_duplicate_disallowed(
 def test_chargeback_rate(rate_resource, rate_type, rate_action, request, chargeback_rate):
     """
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         initialEstimate: 1/4h
     """
@@ -164,7 +164,7 @@ class TestRatesViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: nachandr
+            assignee: tpapaioa
             casecomponent: CandU
             caseimportance: low
             initialEstimate: 1/4h
@@ -185,7 +185,7 @@ class TestRatesViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: nachandr
+            assignee: tpapaioa
             casecomponent: CandU
             caseimportance: low
             initialEstimate: 1/3h
@@ -230,7 +230,7 @@ class TestRatesViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: nachandr
+            assignee: tpapaioa
             casecomponent: CandU
             caseimportance: medium
             initialEstimate: 1/20h
@@ -245,7 +245,7 @@ class TestRatesViaREST(object):
             test_flag: rest
 
         Polarion:
-            assignee: nachandr
+            assignee: tpapaioa
             casecomponent: CandU
             caseimportance: low
             initialEstimate: 1/4h
