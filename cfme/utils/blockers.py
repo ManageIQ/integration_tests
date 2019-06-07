@@ -183,6 +183,19 @@ class BZ(Blocker):
 
     @property
     def can_test_on_current_upstream_appliance(self):
+        """
+        This property is designed for use with the blocks property and is answering the question:
+
+        "If I have a bug, and that bug is in a "POST" or "MODIFIED" state, and if I have an
+        upstream appliance, is the build date of my current upstream appliance after
+        the fix for the bug was merged?"
+
+        If so, then it will return True, because the bug's fix is included in your current
+        upstream appliance.
+
+        If you happen to be on an older version of an upstream appliance that doesn't have the fix,
+        then it will return False.
+        """
         bug = self.data
         if bug is None:  # if bug is None, then it is not a blocker and we can test it
             return True
