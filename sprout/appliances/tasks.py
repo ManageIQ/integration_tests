@@ -298,7 +298,12 @@ def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
     If the appliance was assigned to pool and we want to replace it, redo the provisioning.
     """
     self.logger.info("Initiated kill of appliance {}".format(appliance_id))
-    appliance = Appliance.objects.get(id=appliance_id)
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist as e:
+        self.logger.error("It seems such appliance %s doesn't exist: %s", appliance_id, str(e))
+        return False
+
     workflow = [
         disconnect_direct_lun.si(appliance_id),
         appliance_power_off.si(appliance_id),
@@ -858,7 +863,13 @@ def request_appliance_pool(self, appliance_pool_id, time_minutes):
 
 @singleton_task()
 def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes):
-    pool = AppliancePool.objects.get(id=appliance_pool_id)
+    try:
+        pool = AppliancePool.objects.get(id=appliance_pool_id)
+    except ObjectDoesNotExist as e:
+        self.logger.error("It seems such appliance pool %s doesn't exist: %s", appliance_pool_id,
+                          str(e))
+        return False
+
     if pool.fulfilled:
         pool.logger.info("Applying lease time and renaming appliances")
         for appliance in pool.appliances:
@@ -1409,10 +1420,10 @@ def retrieve_appliance_ip(self, appliance_id):
                             appliance_id)
         return
     except TimedOutError:
-        self.logger.info('No reachable IPs found forappliance %s, retrying', appliance_id)
+        self.logger.info('No reachable IPs found for appliance %s, retrying', appliance_id)
         self.retry(args=(appliance_id,), countdown=2, max_retries=10)
     else:
-        wait_appliance_ready.delay(appliance_id)
+        appliance.set_status("appliance {a} IP address retrieved".format(a=appliance_id))
 
 
 @singleton_task()
@@ -1478,7 +1489,6 @@ def refresh_appliances_provider(self, provider_id):
             appliance.set_power_state(Appliance.Power.ORPHANED)
         with transaction.atomic():
             appliance.save()
-        retrieve_appliance_ip.delay(appliance.id)  # set the IP
         appliance.set_status('Appliance Refreshed')
 
 
@@ -1650,11 +1660,11 @@ def wait_appliance_ready(self, appliance_id):
         if appliance.appliance_pool is not None:
             if appliance.appliance_pool.not_needed_anymore:
                 # Terminate task chain
-                self.request.callbacks[:] = []
+                self.request.callbacks = None
                 kill_appliance.delay(appliance_id)
                 return
         if appliance.power_state == Appliance.Power.UNKNOWN or appliance.ip_address is None:
-            retrieve_appliance_ip.delay(appliance_id)
+            retrieve_appliance_ip.delay(appliance_id).get()
             self.retry(args=(appliance_id,), countdown=30, max_retries=45)
         if Appliance.objects.get(id=appliance_id).cfme.ipapp.is_web_ui_running():
             with transaction.atomic():
@@ -1915,7 +1925,12 @@ def connect_direct_lun(self, appliance_id):
 @singleton_task()
 def disconnect_direct_lun(self, appliance_id):
     self.logger.info("Disconnect direct lun has been started for {}".format(appliance_id))
-    appliance = Appliance.objects.get(id=appliance_id)
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist as e:
+        self.logger.error("It seems such appliance %s doesn't exist: %s", appliance_id, str(e))
+        return False
+
     if not appliance.provider.is_working:
         raise RuntimeError('Provider {} is not working for appliance {}'
                            .format(appliance.provider, appliance.name))
@@ -1953,7 +1968,11 @@ def appliance_set_hostname(self, appliance_id):
 
 @singleton_task()
 def appliance_set_ansible_url(self, appliance_id):
-    appliance = Appliance.objects.get(id=appliance_id)
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist as e:
+        self.logger.error("It seems such appliance %s doesn't exist: %s", appliance_id, str(e))
+        return False
     if appliance.is_openshift and Version(appliance.version) >= '5.10':
         appliance.cfme.set_ansible_url()
 
