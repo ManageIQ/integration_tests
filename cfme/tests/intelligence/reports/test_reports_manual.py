@@ -59,29 +59,6 @@ def test_reports_generate_custom_conditional_filter_report():
 
 @pytest.mark.manual
 @test_requirements.report
-@pytest.mark.tier(1)
-def test_report_import_export_widgets():
-    """
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        initialEstimate: 1/16h
-        startsin: 5.3
-        setup:
-            1. Navigate to Cloud Intel > Reports > Edit Report Menus > Import/Export > Widgets.
-        testSteps:
-            1. Export the widget in available widgets.
-            2. Make some changes to the exported widget yaml and import it back.
-        expectedResults:
-            1. Widget must be exported successfully.
-            2. Widget must be imported successfully.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
 @pytest.mark.tier(3)
 def test_import_duplicate_report():
     """
@@ -196,48 +173,28 @@ def test_report_secondary_display_filter_should_be_editable():
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_import_export_report():
+def test_reports_manage_report_menu_accordion_with_users():
     """
-    Import and export report
+    Bugzilla:
+        1535023
 
     Polarion:
         assignee: pvala
         casecomponent: Reporting
         caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Create or Identify appliance
-            (no prerequisite or provider needed for this test)
-        title: Import/Export report
+        initialEstimate: 1/6h
+        startsin: 5.8
         setup:
-            1. Navigate to Cloud Intel > Reports > All Reports.
+            1. Create a new report called report01
+            2. Create a new user under EvmGroup-super_administrator called
+            testuser
+            3. "Edit Report Menus" and add the report01 under EvmGroup-
+            super_administrator"s Provisioning -> Activities
+            4. Login using testuser and navigate to Reports
         testSteps:
-            1. Select any report and create its copy
-            2. Locate newly created report in My Company > Custom
-            3. Navigate to Import / Export
-            4. Select Custom reports
-            5. Select newly copied report and select Export
-            6. Download the yaml file
-            7. Locate exported report in My Company > Custom
-            8. Delete exported report
-            9. Navigate back to Import / Export
-            10. Select Choose file
-            11. Locate and select previously downloaded yaml file
-            12. Select Upload
-            13. Locate import report in My Company > Custom
+            1. Check if the report01 is present under Provisioning -> Activities
         expectedResults:
-            1.
-            2. Verify that canned report was copied under new name
-            3.
-            4. Verify you"ve been redirected to Import / Export screen
-            5. Verify that yaml file download was initiated
-            6.
-            7.
-            8.
-            9.
-            10. Verify File upload screen was open
-            11.
-            12. Verify Imported report is now again available for Export
-            13. Verify report is present
+            1. The report01 must be present under Provisioning -> Activities
     """
     pass
 

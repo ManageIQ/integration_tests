@@ -7,7 +7,9 @@ from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Checkbox
+from widgetastic.widget import FileInput
 from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Select
 from widgetastic.widget import Table as VanillaTable
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -29,6 +31,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ReportToolBarViewSelector
 from widgetastic_manageiq import Table
@@ -267,6 +270,30 @@ class ReportScheduleView(SchedulesFormCommon):
         )
 
 
+class ImportExportCustomReportsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+    subtitle = Text(locator=".//div[@id='main_div']/h2")
+
+    upload_file = FileInput(id="upload_file")
+    upload_button = InputButton("commit")
+
+    overwrite = Checkbox("overwrite")
+    preserve_owner = Checkbox("preserve_owner")
+
+    items_for_export = Select(id="choices_chosen")
+    export_button = Button(id="export_button")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports
+            and self.title.text == "Import / Export"
+            and self.subtitle.text == "Custom Reports"
+            and self.import_export.tree.currently_selected
+            == ["Import / Export", "Custom Reports"]
+        )
+
+
 @attr.s
 class Report(BaseEntity, Updateable):
     _param_name = ParamClassName('title')
@@ -450,6 +477,40 @@ class ReportsCollection(BaseCollection):
         view.flash.assert_no_error()
         view.flash.assert_message('Report "{}" was added'.format(values["menu_name"]))
         return self.instantiate(**values)
+
+    def import_report(
+        self, filepath, preserve_owner=False, overwrite=False
+    ):
+        """
+        Import yaml files containing report data
+        Args:
+            filepath (str): Complete path to the file
+            preserve_owner (bool): If true, original owner of the report will be preserved
+            overwrite (bool): If true, a possible duplicate of the report will be overwritten
+        """
+        view = navigate_to(self, "ImportExport")
+
+        view.fill(
+            {
+                "upload_file": filepath,
+                "preserve_owner": preserve_owner,
+                "overwrite": overwrite,
+            }
+        )
+        view.upload_button.click()
+        view.flash.assert_no_error()
+
+    def export_report(self, *reports):
+        """
+        Export custom report
+        Args:
+            reports (str, tuple): name of reports to be exported
+        """
+        view = navigate_to(self, "ImportExport")
+
+        view.items_for_export.fill(*reports)
+        view.export_button.click()
+        view.flash.assert_no_error()
 
 
 @attr.s
@@ -673,3 +734,12 @@ class SavedReportDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.reports.tree.click_path(*self.obj.tree_path)
+
+
+@navigator.register(ReportsCollection, "ImportExport")
+class ImportExportCustomReports(CFMENavigateStep):
+    VIEW = ImportExportCustomReportsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.import_export.tree.click_path("Import / Export", "Custom Reports")

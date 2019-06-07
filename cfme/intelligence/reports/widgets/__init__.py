@@ -2,6 +2,8 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Checkbox
+from widgetastic.widget import FileInput
+from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
@@ -16,7 +18,9 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import Table
 
 
 @attr.s
@@ -132,6 +136,41 @@ class DashboardReportWidgetsCollection(BaseCollection):
         view.flash.assert_no_error()
         return dashboard_widget
 
+    def import_widget(self, filepath, cancel=False):
+        """
+        Import yaml files containing widget data
+        Args:
+            filepath (str): Complete path to the file
+            cancel (bool): If true, widgets will not be imported
+        """
+        view = navigate_to(self, "ImportExport")
+
+        view.fill({"upload_file": filepath})
+        view.upload_button.click()
+        view.flash.assert_no_error()
+
+        import_view = self.create_view(ImportExportWidgetsCommitView, wait='5s')
+        import_view.table.check_all()
+
+        if cancel:
+            import_view.cancel_button.click()
+            view.flash.assert_message("Widget import cancelled")
+        else:
+            import_view.commit_button.click()
+            import_view.flash.assert_no_error()
+
+    def export_widget(self, *widgets):
+        """
+        Export custom widgets
+        Args:
+            widgets (str, tuple): name of widgets to be exported
+        """
+        view = navigate_to(self, "ImportExport")
+
+        view.items_for_export.fill(*widgets)
+        view.export_button.click()
+        view.flash.assert_no_error()
+
 
 class DashboardWidgetsView(CloudIntelReportsView):
 
@@ -225,6 +264,44 @@ class BaseEditDashboardWidgetView(DashboardWidgetsView):
         )
 
 
+class ImportExportWidgetsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+    subtitle = Text(locator=".//div[@id='main_div']/h2")
+
+    upload_file = FileInput(id="upload_file")
+    upload_button = InputButton("commit")
+
+    items_for_export = Select(id="widgets_")
+    export_button = Button(value="Export")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports
+            and self.title.text == "Import / Export"
+            and self.subtitle.text == "Widgets"
+            and self.import_export.tree.currently_selected
+            == ["Import / Export", "Widgets"]
+        )
+
+
+class ImportExportWidgetsCommitView(CloudIntelReportsView):
+
+    title = Text("#explorer_title_text")
+    table = Table(".//form[@id='import-widgets-form']/table")
+    commit_button = Button(value="Commit")
+    cancel_button = Button(value="Cancel")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports
+            and self.title.text == "Import / Export"
+            and self.import_export.tree.currently_selected
+            == ["Import / Export", "Widgets"]
+        )
+
+
 class BaseNewDashboardWidgetStep(CFMENavigateStep):
     VIEW = None
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
@@ -249,3 +326,12 @@ class BaseEditDashboardWidgetStep(BaseDashboardWidgetDetailsStep):
 
     def step(self, *args, **kwargs):
         self.view.configuration.item_select("Edit this Widget")
+
+
+@navigator.register(DashboardReportWidgetsCollection, "ImportExport")
+class ImportExportWidgets(CFMENavigateStep):
+    VIEW = ImportExportWidgetsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.import_export.tree.click_path("Import / Export", "Widgets")
