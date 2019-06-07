@@ -376,6 +376,9 @@ class AlertCollection(BaseCollection):
         view = navigate_to(self, "Add")
         if driving_event is None and evaluate is None:
             driving_event = view.driving_event.all_options[1].text
+        if severity is None and self.appliance.version >= "5.11.0.7":
+            # set default severity to "Info" only for "5.11"
+            severity = view.severity.all_options[1].text
         # instantiate the alert
         alert = self.instantiate(description, severity=severity, active=active, based_on=based_on,
             evaluate=evaluate, driving_event=driving_event,
