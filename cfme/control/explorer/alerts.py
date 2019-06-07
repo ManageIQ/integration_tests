@@ -25,7 +25,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.version import current_version
 from widgetastic_manageiq import AlertEmail
 from widgetastic_manageiq import MonitorStatusCard
 from widgetastic_manageiq import SNMPForm
@@ -377,7 +376,7 @@ class AlertCollection(BaseCollection):
         view = navigate_to(self, "Add")
         if driving_event is None and evaluate is None:
             driving_event = view.driving_event.all_options[1].text
-        if severity is None and current_version() >= "5.11.0.7":
+        if severity is None and self.appliance.version >= "5.11.0.7":
             # set default severity to "Info" only for "5.11"
             severity = view.severity.all_options[1].text
         # instantiate the alert
