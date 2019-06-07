@@ -11,6 +11,7 @@ from cfme.rest.gen_data import categories as _categories
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import tenants as _tenants
+from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
@@ -40,6 +41,7 @@ INFRA_COLLECTION = [
     "service_templates",
     "tenants",
     "vms",
+    "users",
 ]
 pytestmark = [
     pytest.mark.provider(classes=[InfraProvider], selector=ONE),
@@ -172,7 +174,7 @@ def test_updated_tag_name_on_vm(provider, tag, request):
 @test_requirements.rest
 class TestTagsViaREST(object):
 
-    COLLECTIONS_BULK_TAGS = ("services", "vms")
+    COLLECTIONS_BULK_TAGS = ("services", "vms", "users")
 
     def _service_body(self, **kwargs):
         uid = fauxfactory.gen_alphanumeric(5)
@@ -236,6 +238,10 @@ class TestTagsViaREST(object):
     @pytest.fixture(scope="function")
     def vm(self, request, provider, appliance):
         return _vm(request, provider, appliance)
+
+    @pytest.fixture(scope="function")
+    def users(self, request, appliance, num=3):
+        return _users(request, appliance, num=num)
 
     @pytest.mark.tier(2)
     def test_edit_tags_rest(self, appliance, tags):
@@ -359,12 +365,11 @@ class TestTagsViaREST(object):
             provider.one_of(CloudProvider) and collection_name in INFRA_COLLECTION
         )
         or (
-            (provider.one_of(InfraProvider) or appliance.version < "5.10")
-            and collection_name in CLOUD_COLLECTION
+            provider.one_of(InfraProvider) and collection_name in CLOUD_COLLECTION
         )
     )
     def test_assign_and_unassign_tag(self, appliance, tags_mod, provider, services_mod,
-            service_templates, tenants, vm, collection_name):
+            service_templates, tenants, vm, collection_name, users):
         """Tests assigning and unassigning tags.
 
         Metadata:
@@ -401,7 +406,7 @@ class TestTagsViaREST(object):
     @pytest.mark.parametrize(
         "collection_name", COLLECTIONS_BULK_TAGS)
     def test_bulk_assign_and_unassign_tag(self, appliance, tags_mod, services_mod, vm,
-            collection_name):
+            collection_name, users):
         """Tests bulk assigning and unassigning tags.
 
         Metadata:
@@ -456,7 +461,7 @@ class TestTagsViaREST(object):
     @pytest.mark.parametrize(
         "collection_name", COLLECTIONS_BULK_TAGS)
     def test_bulk_assign_and_unassign_invalid_tag(self, appliance, services_mod, vm,
-            collection_name):
+            collection_name, users):
         """Tests bulk assigning and unassigning invalid tags.
 
         Metadata:
