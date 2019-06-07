@@ -68,10 +68,11 @@ def cfme_vhd(provider, appliance):
     yield image_name
 
 
-def create_appliance(provider, vhd):
+@pytest.fixture
+def scvmm_appliance(provider, cfme_vhd):
     """ Create an appliance from the VHD provided on SCVMM """
     # script to create template
-    version = ".".join(re.findall(r"\d+", vhd)[0:4])  # [0:4] gets the 4 version numbers for CFME
+    version = ".".join(re.findall(r"\d+", cfme_vhd)[0:4])  # [0:4] gets the 4 version num for CFME
     template_name = "cfme-{}-template".format(version)
     vhd_path = provider.data.get("vhd_path")
     small_disk = provider.data.get("small_disk")
@@ -116,7 +117,7 @@ def create_appliance(provider, vhd):
     """.format(
         domain=provider.mgmt.domain,
         user=provider.mgmt.user,
-        image=vhd,
+        image=cfme_vhd,
         hostname=provider.mgmt.host,
         template_name=template_name,
         vhd_path=vhd_path,
@@ -125,7 +126,18 @@ def create_appliance(provider, vhd):
     # create the template
     provider.mgmt.run_script(template_script)
     # provision the appliance from the newly created template
-    return provision_appliance(provider.key, version=version, template=template_name), template_name
+    scvmm_appliance = provision_appliance(provider.key, version=version, template=template_name)
+
+    yield scvmm_appliance
+
+    # 1) delete VM
+    scvmm_appliance.destroy()
+    # 2) delete template
+    template = provider.mgmt.get_template(template_name)
+    template.delete()
+    # 3) delete the VHD
+    provider.mgmt.delete_vhd(cfme_vhd)
+    provider.mgmt.update_scvmm_library()
 
 
 @pytest.mark.tier(0)
@@ -179,7 +191,7 @@ def test_vm_mac_scvmm(provider):
 
 @pytest.mark.tier(1)
 @pytest.mark.long_running
-def test_create_appliance_on_scvmm_using_the_vhd_image(request, provider, cfme_vhd):
+def test_create_appliance_on_scvmm_using_the_vhd_image(scvmm_appliance):
     """
     View the documentation at access.redhat.com for help with this.
 
@@ -199,21 +211,8 @@ def test_create_appliance_on_scvmm_using_the_vhd_image(request, provider, cfme_v
     """
     # use appliance to get the stream so this test only runs once per test run
     # this will always use the downstream stable build, not the version of the appliance
-    # provision the appliance
-    scvmm_appliance, template_name = create_appliance(provider, cfme_vhd)
     # configure the appliance
     scvmm_appliance.configure(loosen_psql=False, fix_ntp_clock=False)
-
-    @request.addfinalizer
-    def cleanup():
-        # 1) delete VM
-        scvmm_appliance.destroy()
-        # 2) delete template
-        template = provider.mgmt.get_template(template_name)
-        template.delete()
-        # 3) delete the VHD
-        provider.mgmt.delete_vhd(cfme_vhd)
-        provider.mgmt.update_scvmm_library()
 
 
 @pytest.mark.tier(1)
