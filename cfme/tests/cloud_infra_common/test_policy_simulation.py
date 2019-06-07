@@ -22,13 +22,17 @@ pytestmark = [
 
 
 @pytest.mark.parametrize("navigation", ["provider_vms", "all_vms", "vm_summary"])
-@pytest.mark.uncollectif(
-    lambda navigation: navigation == "provider_vms" and (BZ(1686617).blocks or BZ(1686619).blocks),
-    reason="This test is blocked by the following BZs: {}, {}".format(
-        BZ(1686617).bug_id,
-        BZ(1686619).bug_id
-    )
-)
+@pytest.mark.meta(blockers=[
+    BZ(1717483, forced_streams=['5.11']),
+    BZ(1686617,
+       forced_streams=["5.10"],
+       unblock=lambda navigation: navigation != 'provider_vms'),
+    BZ(1686619,
+       forced_streams=["5.10"],
+       unblock=lambda navigation: navigation != 'provider_vms'),
+    BZ(1717539,
+       unblock=lambda navigation: navigation != 'provider_vms')
+])
 def test_policy_simulation_ui(appliance, provider, navigation):
     """
     Bugzilla:
@@ -37,6 +41,8 @@ def test_policy_simulation_ui(appliance, provider, navigation):
         1686619
         1688359
         1550503
+        1717483
+        1717539
 
     Polarion:
         assignee: jdupuy
@@ -69,13 +75,13 @@ def test_policy_simulation_ui(appliance, provider, navigation):
     assert view.form.cancel_button.is_displayed
     view.form.policy_profile.select_by_visible_text("OpenSCAP profile")
     # now check that we can navigate to the right page
-    if vm.provider.one_of(InfraProvider) or not BZ(1688359).blocks:
+    if vm.provider.one_of(InfraProvider) or not BZ(1688359, forced_streams=["5.10"]).blocks:
         view.form.entities.get_entity(name=vm.name).click()
         view = vm.create_view(PolicySimulationDetailsView, wait="10s")
         # check that the back button works
         view.back_button.click()
     # check that the cancel button works
-    if not BZ(1670456).blocks:
+    if not BZ(1670456, forced_streams=["5.10"]).blocks:
         view = vm.create_view(PolicySimulationView, wait="10s")
         view.form.cancel_button.click()
         assert not view.is_displayed
