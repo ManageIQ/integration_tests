@@ -159,7 +159,7 @@ def test_button_avp_displayed(appliance, dialog, request):
     """This test checks whether the Attribute/Values pairs are displayed in the dialog.
 
     Polarion:
-        assignee: anikifor
+        assignee: ndhandre
         initialEstimate: 1/12h
         caseimportance: medium
         caseposneg: positive

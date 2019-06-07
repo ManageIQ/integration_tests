@@ -7,6 +7,7 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -14,6 +15,7 @@ from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.tier(3),
+    test_requirements.filtering,
     pytest.mark.provider(classes=[InfraProvider], selector=ONE),
     pytest.mark.usefixtures('setup_provider')
 ]

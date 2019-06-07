@@ -10,12 +10,13 @@ from cfme.utils.wait import wait_for
 
 
 @pytest.mark.tier(3)
+@test_requirements.configuration
 @pytest.mark.sauce
 def test_session_timeout(request, appliance):
     """Sets the timeout to shortest possible time and waits if it really times out.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/8h

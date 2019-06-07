@@ -6,13 +6,14 @@ import fauxfactory
 import pytest
 from selenium.common.exceptions import NoSuchElementException
 
+from cfme import test_requirements
 from cfme.fixtures.pytest_store import store
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 
 pytestmark = [
-    pytest.mark.usefixtures("infra_provider"), pytest.mark.tier(3)]
+    pytest.mark.usefixtures("infra_provider"), pytest.mark.tier(3), test_requirements.filtering]
 
 
 @pytest.fixture(scope="function")

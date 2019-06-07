@@ -273,6 +273,7 @@ def test_retire_stack(order_stack):
 
 @pytest.mark.manual
 @test_requirements.service
+@test_requirements.azure
 @pytest.mark.tier(1)
 def test_error_message_azure():
     """
@@ -300,6 +301,7 @@ def test_error_message_azure():
 
 
 @pytest.mark.manual
+@test_requirements.azure
 @pytest.mark.tier(2)
 def test_stack_template_azure():
     """

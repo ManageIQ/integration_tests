@@ -96,12 +96,13 @@ def provider_classes(appliance):
 
 
 @pytest.mark.tier(0)
+@test_requirements.general_ui
 @pytest.mark.meta(automates=[BZ(1671844)])
 def test_provider_type_support(appliance, soft_assert):
     """Test availability of GCE provider in downstream CFME builds
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         initialEstimate: 1/10h
         casecomponent: WebUI
     """

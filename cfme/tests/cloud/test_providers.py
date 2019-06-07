@@ -323,7 +323,7 @@ def test_region_required_validation(request, soft_assert, appliance):
     """Tests to validate the region while adding a provider
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         caseimportance: low
         casecomponent: WebUI
         initialEstimate: 1/6h
@@ -466,6 +466,7 @@ def test_api_port_max_character_validation_cloud(appliance):
 
 
 @pytest.mark.tier(2)
+@test_requirements.azure
 @pytest.mark.provider([AzureProvider], scope="function", override=True)
 def test_azure_subscription_required(request, provider):
     """
@@ -492,6 +493,7 @@ def test_azure_subscription_required(request, provider):
 
 
 @pytest.mark.tier(2)
+@test_requirements.azure
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_azure_multiple_subscription(appliance, request, soft_assert):
     """
@@ -552,7 +554,7 @@ def test_openstack_provider_has_dashboard(appliance, openstack_provider):
         1487142
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Cloud
         initialEstimate: 1/12h
         startsin: 5.10
@@ -601,6 +603,7 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
 
 
 @pytest.mark.tier(3)
+@test_requirements.azure
 @pytest.mark.provider([AzureProvider], override=True)
 def test_azure_instance_password_requirements(appliance, request,
         has_no_cloud_providers, setup_provider):
@@ -654,7 +657,7 @@ def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
         Test if names are displayed
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         caseimportance: medium
         casecomponent: WebUI
         initialEstimate: 1/30h
@@ -762,6 +765,7 @@ class TestProvidersRESTAPI(object):
             assert 'SecurityGroup' in security_groups[0]['type']
 
 
+@test_requirements.tag
 @pytest.mark.provider([CloudProvider], override=True, selector=ONE)
 def test_tagvis_provision_fields(setup_provider, request, appliance, user_restricted, tag,
                                  soft_assert):
@@ -824,6 +828,7 @@ def test_domain_id_validation(request, provider):
 
 
 @pytest.mark.manual
+@test_requirements.azure
 @pytest.mark.tier(1)
 def test_sdn_nsg_arrays_refresh_azure():
     """
@@ -850,6 +855,7 @@ def test_sdn_nsg_arrays_refresh_azure():
 
 
 @pytest.mark.manual
+@test_requirements.azure
 @pytest.mark.tier(2)
 def test_provider_flavors_azure():
     """
@@ -879,6 +885,7 @@ def test_provider_flavors_azure():
 
 
 @pytest.mark.manual
+@test_requirements.azure
 @pytest.mark.tier(1)
 def test_market_place_images_azure():
     """
@@ -902,6 +909,7 @@ def test_market_place_images_azure():
 
 
 @pytest.mark.ignore_stream('5.11')
+@test_requirements.azure
 @pytest.mark.tier(1)
 def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_image_to_azure,
                                           vm_ip):

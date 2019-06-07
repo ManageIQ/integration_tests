@@ -4,6 +4,7 @@ import socket
 
 import pytest
 
+from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
@@ -196,6 +197,7 @@ def test_multiple_host_bad_creds(setup_provider, provider):
     edit_view.cancel_button.click()
 
 
+@test_requirements.tag
 @pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
 def test_tag_host_after_provider_delete(provider, appliance, setup_provider, request):
     """Test if host can be tagged after delete
@@ -222,13 +224,14 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
     request.addfinalizer(lambda: host.remove_tag(tag))
 
 
+@test_requirements.general_ui
 @pytest.mark.parametrize('view_type', VIEWS)
 def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
     """
     Test to automate BZ1580569
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         initialEstimate: 1/4h
         casecomponent: WebUI
     """

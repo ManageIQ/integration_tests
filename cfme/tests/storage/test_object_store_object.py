@@ -41,6 +41,7 @@ def storage_object(appliance, provider):
         return objs[0]
 
 
+@test_requirements.tag
 def test_object_add_remove_tag(storage_object):
     """
     Polarion:

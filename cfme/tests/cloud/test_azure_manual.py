@@ -1,9 +1,10 @@
 import pytest
 
-pytestmark = [pytest.mark.manual]
+from cfme import test_requirements
+
+pytestmark = [pytest.mark.manual, test_requirements.azure]
 
 
-@pytest.mark.manual
 def test_vpc_env_selection():
     """
     Test selection of components in environment page of cloud instances
@@ -28,7 +29,6 @@ def test_vpc_env_selection():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
     """
@@ -50,7 +50,6 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_vm_terminate_deletedisk_azure():
     """
@@ -73,7 +72,6 @@ def test_vm_terminate_deletedisk_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_refresh_with_empty_iot_hub_azure():
     """
@@ -95,7 +93,6 @@ def test_refresh_with_empty_iot_hub_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_regions_gov_azure():
     """
@@ -116,7 +113,6 @@ def test_regions_gov_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_regions_all_azure():
     """
@@ -135,7 +131,6 @@ def test_regions_all_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_regions_disable_azure():
     """
@@ -161,7 +156,6 @@ def test_regions_disable_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_public_ip_without_nic_azure():
     """
@@ -184,7 +178,6 @@ def test_public_ip_without_nic_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_sdn_nsg_arrays_refresh_azure():
     """
@@ -205,7 +198,6 @@ def test_sdn_nsg_arrays_refresh_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_provider_flavors_azure():
     """
@@ -229,7 +221,6 @@ def test_provider_flavors_azure():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_market_place_images_azure():
     """

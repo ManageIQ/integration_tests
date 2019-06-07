@@ -9,9 +9,13 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfpage import PDFPage
 
+from cfme import test_requirements
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
+
+
+pytestmark = [test_requirements.general_ui]
 
 # This is list of tested links expected to be on the documentation page
 # Keys here correspond to nested view names from configure.documentation.LinksView
@@ -48,7 +52,7 @@ def test_links(appliance):
     """Test whether the PDF documents are present.
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/20h
@@ -78,7 +82,7 @@ def test_contents(appliance, soft_assert):
     """Test title of each document.
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/10h
@@ -122,7 +126,7 @@ def test_info(appliance, soft_assert):
     Verify image anchor href matches link text href
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         initialEstimate: 1/4h
         casecomponent: WebUI
 
@@ -153,7 +157,7 @@ def test_all_docs_present(appliance):
     Use the doc_titles dict keys to query widget is_displayed
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/10h

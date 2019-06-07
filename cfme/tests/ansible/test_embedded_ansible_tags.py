@@ -6,7 +6,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.wait import wait_for
 
-pytestmark = [test_requirements.ansible]
+pytestmark = [test_requirements.ansible, test_requirements.tag]
 
 
 @pytest.fixture(scope='module')

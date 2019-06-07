@@ -2,9 +2,13 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
+
+
+pytestmark = [test_requirements.configuration]
 
 
 @pytest.mark.tier(1)
@@ -13,7 +17,7 @@ from cfme.utils.update import update
 def test_zone_crud(soft_assert):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         caseimportance: low
         initialEstimate: 1/15h
         casecomponent: WebUI
@@ -46,7 +50,7 @@ def test_zone_crud(soft_assert):
 def test_zone_add_cancel_validation():
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/20h
@@ -67,7 +71,7 @@ def test_zone_change_appliance_zone(request, appliance):
     """ Tests that an appliance can be changed to another Zone
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/15h
@@ -92,7 +96,7 @@ def test_zone_change_appliance_zone(request, appliance):
 def test_zone_add_dupe(appliance, request):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/4h
@@ -119,7 +123,7 @@ def test_zone_add_dupe(appliance, request):
 def test_zone_add_maxlength(request, soft_assert):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/4h
@@ -140,7 +144,7 @@ def test_zone_add_maxlength(request, soft_assert):
 def test_zone_add_blank_name():
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: medium
         caseposneg: negative
@@ -159,7 +163,7 @@ def test_zone_add_blank_name():
 def test_zone_add_blank_description():
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: medium
         caseposneg: negative
@@ -180,7 +184,7 @@ def test_add_zone_windows_domain_credentials(request):
     Testing Windows Domain credentials add
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: WebUI
     """
@@ -209,7 +213,7 @@ def test_remove_zone_windows_domain_credentials():
     Testing Windows Domain credentials removal
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: WebUI
     """

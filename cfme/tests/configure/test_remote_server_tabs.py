@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
+
+pytestmark = [test_requirements.configuration]
 
 
 @pytest.fixture(scope="module")
@@ -24,7 +27,7 @@ def test_remote_server_advanced_config(temp_appliance_preconfig, request,
     BZ1536524
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Configuration
     """

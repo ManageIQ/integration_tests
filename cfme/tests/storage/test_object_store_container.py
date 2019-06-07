@@ -33,6 +33,7 @@ def container(appliance, provider):
         return conts[0]
 
 
+@test_requirements.tag
 def test_add_remove_tag(container):
     """
     Polarion:

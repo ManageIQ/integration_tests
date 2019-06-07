@@ -4,9 +4,9 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [test_requirements.log_depot, pytest.mark.manual]
 
-@pytest.mark.manual
-@test_requirements.log_depot
+
 @pytest.mark.tier(1)
 def test_log_collect_current_zone_multiple_servers_server_setup():
     """
@@ -23,8 +23,6 @@ def test_log_collect_current_zone_multiple_servers_server_setup():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_all_zone_zone_multiple_servers_server_setup():
     """
@@ -41,8 +39,6 @@ def test_log_collect_all_zone_zone_multiple_servers_server_setup():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_current_zone_multiple_servers():
     """
@@ -59,8 +55,6 @@ def test_log_collect_current_zone_multiple_servers():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_all_zone_multiple_servers():
     """
@@ -77,8 +71,6 @@ def test_log_collect_all_zone_multiple_servers():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_current_zone():
     """
@@ -95,8 +87,6 @@ def test_log_collect_current_zone():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_all_zone_zone_setup():
     """
@@ -113,8 +103,6 @@ def test_log_collect_all_zone_zone_setup():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_current_zone_zone_setup():
     """
@@ -131,8 +119,6 @@ def test_log_collect_current_zone_zone_setup():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_multiple_servers_unconfigured():
     """
@@ -154,8 +140,6 @@ def test_log_multiple_servers_unconfigured():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_all_zone_unconfigured():
     """
@@ -172,8 +156,6 @@ def test_log_collect_all_zone_unconfigured():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.log_depot
 @pytest.mark.tier(1)
 def test_log_collect_current_zone_all_unconfigured():
     """

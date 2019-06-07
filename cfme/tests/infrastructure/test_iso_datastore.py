@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure import pxe
 from cfme.infrastructure.provider import InfraProvider
 
@@ -19,6 +20,7 @@ def no_iso_dss(provider):
 
 
 @pytest.mark.rhv1
+@test_requirements.rhev
 def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
     """
     Basic CRUD test for ISO datastores.

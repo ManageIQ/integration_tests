@@ -63,6 +63,7 @@ def test_none_public_ip_provision_azure():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@test_requirements.azure
 def test_public_ip_reuse_azure():
     """
     Testing Public Ip reuse

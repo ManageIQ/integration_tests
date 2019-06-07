@@ -139,6 +139,7 @@ def test_add_button(catalog_item, appliance):
     view.flash.assert_success_message(message)
 
 
+@test_requirements.tag
 def test_edit_tags_catalog_item(catalog_item):
     """
     Polarion:
@@ -211,6 +212,7 @@ def test_permissions_catalog_item_add(appliance, catalog, dialog, request):
     tac.single_task_permission_test(appliance, test_product_features, test_actions)
 
 
+@test_requirements.tag
 def test_tagvis_catalog_items(check_catalog_visibility, catalog_item):
     """ Checks catalog item tag visibility for restricted user
     Prerequisites:
@@ -230,6 +232,7 @@ def test_tagvis_catalog_items(check_catalog_visibility, catalog_item):
     check_catalog_visibility(catalog_item)
 
 
+@test_requirements.tag
 def test_tagvis_catalog_bundle(check_catalog_visibility, catalog_bundle):
     """ Checks catalog bundle tag visibility for restricted user
         Prerequisites:

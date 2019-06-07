@@ -41,7 +41,7 @@ def test_server_roles_changing(request, roles, appliance):
       - Change the yaml role list to dict.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h

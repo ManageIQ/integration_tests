@@ -38,7 +38,7 @@ def test_timezone_setting(appliance, set_timezone):
         test_flag: visuals
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/30h

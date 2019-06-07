@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from Crypto.PublicKey import RSA
 
+from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 
 pytestmark = [
@@ -93,6 +94,7 @@ def test_keypair_create_cancel(provider, appliance):
     assert not keypair.exists
 
 
+@test_requirements.tag
 def test_keypair_add_and_remove_tag(keypair):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.

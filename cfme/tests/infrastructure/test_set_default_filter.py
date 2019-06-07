@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("virtualcenter_provider")]
+pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("virtualcenter_provider"),
+              test_requirements.filtering]
 
 
 def test_set_default_host_filter(request, appliance):

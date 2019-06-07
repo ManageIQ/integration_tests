@@ -171,6 +171,7 @@ def test_empty_content_error_validation(appliance, template_type):
                           content='')
 
 
+@test_requirements.tag
 def test_tag_orchestration_template(tag, created_template):
     """Tests template tagging. Verifies that tag was added, confirms in template details,
     removes tag

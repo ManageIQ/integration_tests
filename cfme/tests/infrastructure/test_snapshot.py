@@ -115,6 +115,7 @@ def test_snapshot_crud(small_test_vm, provider):
 
 
 @pytest.mark.rhv3
+@test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider], override=True)
 @pytest.mark.meta(automates=[BZ(1443411)])
 def test_delete_active_vm_snapshot(small_test_vm):
@@ -137,6 +138,7 @@ def test_delete_active_vm_snapshot(small_test_vm):
 
 
 @pytest.mark.rhv3
+@test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider], override=True)
 def test_create_without_description(small_test_vm):
     """

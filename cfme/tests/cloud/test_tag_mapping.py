@@ -14,7 +14,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider([EC2Provider], scope='function'),
-    pytest.mark.usefixtures('setup_provider', 'refresh_provider')
+    pytest.mark.usefixtures('setup_provider', 'refresh_provider'),
+    test_requirements.tag
 ]
 
 
@@ -71,7 +72,6 @@ def tag_components():
             'tag_value_{}'.format(fauxfactory.gen_alphanumeric()))
 
 
-@test_requirements.tag
 @pytest.mark.provider([AzureProvider], selector=ONE_PER_TYPE, scope='function', override=True)
 def test_tag_mapping_azure_instances(tagged_vm, map_tags):
     """"
@@ -106,7 +106,6 @@ def test_tag_mapping_azure_instances(tagged_vm, map_tags):
     assert view.tag.get_text_of('My Company Tags')[0] == 'Testing: testing'
 
 
-@test_requirements.tag
 # TODO: Azure needs tagging support in wrapanapi
 def test_labels_update(provider, tag_mapping_items, soft_assert):
     """" Test updates of tag labels on entity details
@@ -153,7 +152,6 @@ def test_labels_update(provider, tag_mapping_items, soft_assert):
     )
 
 
-@test_requirements.tag
 # TODO: Azure needs tagging support in wrapanapi
 def test_mapping_tags(
     appliance, provider, tag_mapping_items, soft_assert, category, request

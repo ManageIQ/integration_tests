@@ -25,6 +25,7 @@ def custom_category(appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
+@test_requirements.tag
 def test_category_crud(appliance, soft_assert):
     """
     Polarion:

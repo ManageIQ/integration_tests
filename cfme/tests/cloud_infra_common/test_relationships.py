@@ -244,6 +244,7 @@ def prov_child_visibility(appliance, provider, request, tag, user_restricted):
     return _prov_child_visibility
 
 
+@test_requirements.tag
 @pytest.mark.parametrize("relationship", infra_test_items)
 @pytest.mark.provider([VMwareProvider], selector=ONE)
 # used VMwareProvider to cover all relationship as they have each of them
@@ -264,6 +265,7 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
     prov_child_visibility(relationship, visibility=False)
 
 
+@test_requirements.tag
 @pytest.mark.parametrize("relationship", cloud_test_items)
 @pytest.mark.provider(classes=[OpenStackProvider, EC2Provider], selector=ONE)
 def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, relationship):
@@ -349,6 +351,7 @@ def test_template_refresh_relationships(appliance, provider, setup_provider):
 
 
 @pytest.mark.manual
+@test_requirements.azure
 @pytest.mark.tier(1)
 def test_inventory_refresh_westindia_azure():
     """
