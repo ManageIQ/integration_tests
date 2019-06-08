@@ -265,13 +265,14 @@ class FTPClient(object):
 
     """
 
-    def __init__(self, host, login, password, upload_dir="/"):
+    def __init__(self, host, login, password, upload_dir="/", time_diff=True):
         """ Constructor
 
         Args:
             host: FTP server host
             login: FTP login
             password: FTP password
+            time_diff: Server and client time diff management
         """
         self.host = host
         self.login = login
@@ -280,7 +281,8 @@ class FTPClient(object):
         self.dt = None
         self.upload_dir = upload_dir
         self.connect()
-        self.update_time_difference()
+        if time_diff:
+            self.update_time_difference()
 
     def connect(self):
         self.ftp = ftplib.FTP(self.host)
