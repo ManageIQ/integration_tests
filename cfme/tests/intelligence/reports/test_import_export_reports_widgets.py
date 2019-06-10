@@ -4,14 +4,21 @@ import pytest
 from cfme import test_requirements
 from cfme.intelligence.reports.reports import ImportExportCustomReportsView
 from cfme.intelligence.reports.widgets import ImportExportWidgetsCommitView
-from cfme.utils.path import data_path
+from cfme.utils.ftp import FTPClientWrapper
+from cfme.utils.ftp import FTPException
 
 pytestmark = [pytest.mark.tier(1), test_requirements.report]
 
 
 @pytest.fixture()
 def widget_file(appliance):
-    file_path = data_path.join("ui/intelligence/import_widget.yaml").realpath().strpath
+    fs = FTPClientWrapper("Reports")
+
+    try:
+        file_path = fs.download("import_widget.yaml", "/tmp/import_widget.yaml")
+    except FTPException:
+        pytest.skip("FTP: import_widget.yaml file not found")
+
     widget = appliance.collections.dashboard_report_widgets.instantiate(
         appliance.collections.dashboard_report_widgets.CHART,
         "testing widget",
@@ -28,7 +35,13 @@ def widget_file(appliance):
 
 @pytest.fixture(scope="function")
 def report_file(appliance):
-    file_path = data_path.join("ui/intelligence/import_report.yaml").realpath().strpath
+    fs = FTPClientWrapper("Reports")
+
+    try:
+        file_path = fs.download("import_report.yaml", "/tmp/import_report.yaml")
+    except FTPException:
+        pytest.skip("FTP: import_report.yaml file not found")
+
     report = appliance.collections.reports.instantiate(
         type="My Company (All Groups)",
         subtype="Custom",

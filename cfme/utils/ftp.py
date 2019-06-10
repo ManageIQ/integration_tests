@@ -4,6 +4,7 @@
 @author: Milan Falešník <mfalesni@redhat.com>
 """
 import ftplib
+import os
 import re
 from datetime import datetime
 from io import BytesIO
@@ -12,6 +13,8 @@ from time import strptime
 
 import fauxfactory
 
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 
 try:
     Pattern = re.Pattern
@@ -152,13 +155,14 @@ class FTPFile(object):
     It encapsulates mainly its position in FS and adds the possibility
     of downloading the file.
     """
-    def __init__(self, client, name, parent_dir, time):
+    def __init__(self, client, name, parent_dir, time=None):
         """ Constructor
 
         Args:
             client: ftplib.FTP instance
             name: File name (without path)
-            parent_dir: Directory in which this file is
+            parent_dir: Directory in which this file is (FTPDirectory or path)
+            time: Time to match local computer's timezone
         """
         self.client = client
         self.parent_dir = parent_dir
@@ -172,10 +176,10 @@ class FTPFile(object):
             whole path for this file
 
         """
-        if self.parent_dir:
+        if isinstance(self.parent_dir, FTPDirectory):
             return self.parent_dir.path + self.name
         else:
-            return self.name
+            return os.path.join(self.parent_dir, self.name)
 
     @property
     def local_time(self):
@@ -538,3 +542,142 @@ class FTPClient(object):
 
         """
         self.close()
+
+
+class FTPClientWrapper(FTPClient):
+    """
+    This class is for miq remote file management with FTP. It is useful to make a collection of raw
+    files related to customer BZ testing directly or indirectly. This will help to easily download
+    testing related files in a runtime environment.
+
+    The base directory is `miq` and under that, we have directories as per the automation entities;
+    which can be set at initialization.
+
+    Directory Structure:
+    /-miq/
+        /-Database/
+        /-Datastores/
+        /-Dialogs/
+        /-Others/
+        /-Reports/
+
+    Args:
+        entity: entity which you want to access like `Datastores`, `Dialogs`, etc.
+        entrypoint: FTP server entry point
+        host: FTP server host
+        login: FTP user
+        password: FTP password
+
+    Usage:
+        .. code-block:: python
+          # Entities
+          fs = FileServer()
+          fs.directory_names    # list of current available entities
+          fs.mkd("Dialogs")   # create new entity type
+          fs.rmd("Dialogs")     # delete created entity type
+
+          fs = FileServer("Dialogs")
+          fs.upload("foo.zip") # upload local file
+          fs.file_names # return list of available files
+          fs.files()  # return list of available file objects
+          download_path = fs.download("foo.zip") # It will download foo.zip file
+
+          f = fs.get_file("foo.zip")
+          f.path    # It will return file storage path
+          f.link    # gives remote file link; can be used to download with 'wget'
+          f.download()  # download file
+    """
+
+    def __init__(self, entity=None, entrypoint=None, host=None, login=None, password=None):
+        ftp_data = cfme_data.ftpserver
+        host = host or ftp_data.host
+        login = login or credentials[ftp_data.credentials]["username"]
+        password = password or credentials[ftp_data.credentials]["password"]
+
+        self.entrypoint = entrypoint or ftp_data.entrypoint
+        self.entity = entity
+
+        super(FTPClientWrapper, self).__init__(
+            host=host, login=login, password=password, time_diff=False
+        )
+
+        # Change working directory as per entity. `miq` is base directory
+        self.cwd(os.path.join(self.entrypoint, "miq", self.entity if entity else ""))
+
+    @property
+    def file_names(self):
+        """List of remote FTP file names"""
+        return [name for is_dir, name, _ in self.ls() if not is_dir]
+
+    def get_file(self, name):
+        """
+        Arg:
+            name: name of remote file
+        Returns:
+            FTP file object
+        """
+
+        if name in self.file_names:
+            return FTPFileWrapper(self, name=name, parent_dir=self.pwd())
+        else:
+            raise FTPException("{} not found".format(name))
+
+    def files(self):
+        """List of FTP file objects"""
+        current_dir = self.pwd()
+        return [FTPFileWrapper(self, name=name, parent_dir=current_dir) for name in self.file_names]
+
+    def download(self, name, target=None):
+        """ Download FTP file
+        Arg:
+            name: remote file name
+            target: local path for download else it will consider current working path
+        Returns:
+            target path
+        """
+
+        target = target if target else os.path.join("/tmp", name)
+        if name not in self.file_names:
+            raise FTPException("{} not found in {}".format(name, self.pwd()))
+
+        with open(target, "wb") as output:
+            self.retrbinary(name, output.write)
+            return target
+
+    def upload(self, path, name=None):
+        """ Upload FTP file
+        Arg:
+            path: path of local file
+            name: set name of file default it will consider original name of uploading file
+        Returns:
+            Success of the action
+        """
+
+        name = name or os.path.basename(path)
+        if name in self.file_names:
+            raise FTPException("{} already available in {}".format(name, self.pwd()))
+        with open(path, "rb") as f:
+            return self.storbinary(name, f)
+
+    @property
+    def directory_names(self):
+        """ List remote FTP directories"""
+        return [name for is_dir, name, _ in self.ls() if is_dir]
+
+
+class FTPFileWrapper(FTPFile):
+    """This is simple FTPFile class wrapper for FTPClientWrapper"""
+
+    @property
+    def link(self):
+        """Remote FTP file url"""
+        return self.path.replace(self.client.entrypoint, self.client.host)
+
+    def download(self, target=None):
+        """
+        Arg:
+            target: local path for download else it will consider current working path
+        Returns:
+            target path
+        """
+        return self.client.download(self.name, target)
