@@ -39,7 +39,7 @@ from sprout.log import create_logger
 
 from cfme.utils import conf
 from cfme.utils.appliance import Appliance as CFMEAppliance
-from cfme.utils.net import find_pingable
+from cfme.utils.net import wait_pingable
 from cfme.utils.path import project_path
 from cfme.utils.timeutil import parsetime
 from cfme.utils.trackerbot import api, depaginate
@@ -1400,13 +1400,7 @@ def retrieve_appliance_ip(self, appliance_id):
                     appliance_id
                 )
                 return
-            ip_address, _ = wait_for(
-                find_pingable,
-                func_args=[appliance.vm_mgmt],
-                fail_condition=None,
-                delay=5,
-                num_sec=30
-            )
+            ip_address = wait_pingable(appliance.vm_mgmt)
         self.logger.info('Updating with reachable IP %s for appliance %s',
                          ip_address, appliance_id)
 
