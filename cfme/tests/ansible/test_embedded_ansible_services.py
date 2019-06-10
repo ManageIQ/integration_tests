@@ -634,3 +634,43 @@ def test_embed_tower_exec_play_against(
 
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[BZ(1460788)])
+def test_service_ansible_verbosity(
+    request,
+    ansible_catalog_item,
+    ansible_service_catalog,
+    ansible_service_request,
+    ansible_service,
+):
+    """Check if the different Verbosity levels can be applied to service and
+    monitor the std out
+
+    Bugzilla:
+        1460788
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"verbosity": "3 (Debug)"}
+        ansible_catalog_item.retirement = {"verbosity": "3 (Debug)"}
+
+    @request.addfinalizer
+    def _revert():
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning = {"verbosity": "0 (Normal)"}
+            ansible_catalog_item.retirement = {"verbosity": "0 (Normal)"}
+
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
+    # '3' denotes Debug level verbosity which is passed in the catalog creation.
+    assert "3" == view.provisioning.details.get_text_of("Verbosity")
+    assert "3" == view.retirement.details.get_text_of("Verbosity")
