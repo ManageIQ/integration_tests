@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 _ports = defaultdict(dict)
 _dns_cache = {}
@@ -172,6 +173,30 @@ def find_pingable(mgmt_vm):
     else:
         logger.info('No reachable IPs found for VM, just returning wrapanapi IP')
         return getattr(mgmt_vm, 'ip', None)
+
+
+def wait_pingable(mgmt_vm, wait=30):
+    """Looks for a pingable address from mgmt_vm.all_ips and waits if it isn't present
+
+     Assuming mgmt_vm is a wrapanapi VM entity, with all_ips and ip methods
+
+     Returns:
+         first pingable address or exception
+    """
+    def is_reachable(mgmt_vm):
+        ip = find_pingable(mgmt_vm)
+        if is_pingable(ip):
+            return ip
+        else:
+            return None
+
+    return wait_for(
+        is_reachable,
+        func_args=[mgmt_vm],
+        fail_condition=None,
+        delay=5,
+        num_sec=wait
+    )[0]
 
 
 def is_ipv4(ip_addr):
