@@ -3,11 +3,15 @@ import pytest
 from Crypto.PublicKey import RSA
 
 from cfme import test_requirements
+from cfme.cloud.keypairs import KeyPairAllView
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([OpenStackProvider], scope="module")
+    pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module")
 ]
 
 
@@ -21,6 +25,8 @@ def keypair(appliance, provider):
     yield key
 
 
+@pytest.mark.meta(blockers=[BZ(1718833, forced_streams=["5.10", "5.11"],
+                               unblock=lambda provider: provider.one_of(OpenStackProvider))])
 @pytest.mark.tier(3)
 def test_keypair_crud(appliance, provider):
     """ This will test whether it will create new Keypair and then deletes it.
@@ -90,11 +96,31 @@ def test_keypair_create_cancel(provider, appliance):
         provider=provider,
         cancel=True
     )
+    view = keypair.create_view(KeyPairAllView)
+    assert view.flash.assert_message('Add of new Key Pair was cancelled by the user')
 
-    assert not keypair.exists
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(OpenStackProvider))
+@pytest.mark.tier(3)
+def test_keypair_create_validation(provider, appliance):
+    """ This will test validating the new of name of the key pair
+
+    Steps:
+        * Try to add key pair with empty name.
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: WebUI
+        initialEstimate: 1/4h
+    """
+    keypair_collection = appliance.collections.cloud_keypairs
+    view = navigate_to(keypair_collection, 'Add')
+    view.fill({'provider': provider})
+    assert not view.form.add.active
 
 
 @test_requirements.tag
+@pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider))
 def test_keypair_add_and_remove_tag(keypair):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.

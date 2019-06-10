@@ -1915,26 +1915,6 @@ def test_utilization_cluster():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_add_cloud_key_pair():
-    """
-    Add Cloud key pair
-    Add Ec2 provider, Clouds - Key pair, Give any name , select provider.
-    Click on Add .
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.5
-        title: Add Cloud Key pair
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_with_multiple_nics_with_single_ip_ipv6_to_first_nic_and_ipv4_to_():
     """
     OSP: vmware65-Test VM with multiple NICs with single IP (IPv6 to first
@@ -3492,24 +3472,6 @@ def test_osp_test_migration_using_vddk_connection_type_for_vmware():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test Migration using VDDK (Connection type for VMware)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_cloud_key_pair_validation():
-    """
-    Cloud - Key pair - without filling data , click on add
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.5
-        title: Cloud Key pair validation
     """
     pass
 
