@@ -28,6 +28,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
+from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -157,19 +158,33 @@ def vm_analysis_provisioning_data(provider, analysis_type):
 
 def set_hosts_credentials(appliance, request, provider):
     hosts = provider.hosts.all()
+    host_collection = appliance.collections.hosts
     for host in hosts:
         try:
-            host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+            host_data, = [
+                data for data in provider.data["hosts"] if data["name"] == host.name
+            ]
         except ValueError:
-            pytest.skip('Multiple hosts with the same name found, only expecting one')
-        host.refresh(cancel=True)
-        host.update_credentials_rest(credentials=host_data['credentials'])
+            pytest.skip("Multiple hosts with the same name found, only expecting one")
+        # TO DO: Remove Host credentials update via UI once BZ: 1718209 fix
+        # host.update_credentials_rest(credentials=host_data['credentials'])
+        host_obj = host_collection.instantiate(name=host.name, provider=provider)
+        with update(host_obj, validate_credentials=True):
+            host_obj.credentials = {
+                "default": Host.Credential.from_config(
+                    host_data["credentials"]["default"]
+                )
+            }
 
     @request.addfinalizer
     def _hosts_remove_creds():
         for host in hosts:
-            host.update_credentials_rest(
-                credentials={'default': Host.Credential(principal="", secret="")})
+            with update(host_obj):
+                host_obj.credentials = {
+                    'default': Host.Credential(
+                        principal="", secret="", verify_secret=""
+                    )
+                }
 
 
 def set_agent_creds(appliance, request, provider):
