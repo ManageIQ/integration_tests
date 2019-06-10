@@ -360,3 +360,56 @@ def test_reports_sort_column():
         1678150
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("5.10")
+def test_reports_timezone():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/10h
+        startsin: 5.11
+        setup:
+            1. Navigate to My Settings and change the timezone.
+            2. Create a report with the date created field
+            3. Run report
+        testSteps:
+            1. Check the timezone in the report.
+        expectedResults:
+            1. Timezone must be same as set in My Settings.
+
+    Bugzilla:
+        1599849
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@pytest.mark.tier(0)
+def test_report_new_tags():
+    """
+    This test case tests report creation with new tags.
+
+    TODO: New tags are often added as an RFE, parametrize and design the test
+    such that it can accommodate any new tags added in the future.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/3h
+        testSteps:
+            1. Create a report with the parametrized tags.
+        expectedResults:
+            1. Report should be created successfully.
+
+    Bugzilla:
+        1546927
+        1504155
+    """
+    pass

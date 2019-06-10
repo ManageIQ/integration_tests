@@ -293,3 +293,35 @@ def test_refresh_git_current_user(imported_domain, new_user):
                 break
         else:
             raise NameError("Task not found")
+
+
+@test_requirements.rest
+@pytest.mark.manual
+@pytest.mark.tier(3)
+@pytest.mark.ignore_stream("5.10")
+def test_domain_import_git_rest():
+    """
+    This test checks importing datastore from git via REST
+
+    Polarion:
+        assignee: pvala
+        initialEstimate: 1/15h
+        startsin: 5.11
+        casecomponent: Automate
+        setup:
+            1. Enable server role: Git Repositories Owner
+        testSteps:
+            1. Send a request POST /api/automate_domains
+                Query: {
+                    "action": "create_from_git",
+                    "git_url": "https://github.com/RedHatQE/ManageIQ-automate-git",
+                    "ref_type": "branch",
+                    "ref_name": "master"
+                }
+        expectedResults:
+            1. The automate domain must have been created successfully.
+
+    Bugzilla:
+        1600961
+    """
+    pass
