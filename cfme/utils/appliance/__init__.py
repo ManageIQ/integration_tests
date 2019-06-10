@@ -962,8 +962,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @cached_property
     def build(self):
-        if not self.is_downstream:
-            return 'master'
         try:
             return self.rest_api.server_info['build']
         except (AttributeError, KeyError, IOError):
