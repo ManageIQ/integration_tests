@@ -8,8 +8,6 @@ from functools import partial
 
 import six
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic.utils import Version
-from widgetastic.utils import VersionPick
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -40,15 +38,13 @@ class BootstrapSelect(VanillaBootstrapSelect):
         self.logger.info("FILLING WIDGET %s", str(self))
         self.wait_displayed()
         super(BootstrapSelect, self).fill(value)
-        # BZ 1649057 documents that a loading screen appears twice when a scope or expression
-        # element is selected. Between loads, the page is displayed and we make a selection, which
+        # BZ 1649057 (fixed) documents that a loading screen appears twice when a scope or
+        # expression element is selected. Between loads, the page is displayed
+        # and we make a selection, which
         # is then overwritten in the next load. This work-around will wait for both loads.
         # BZ 1664886 and BZ 1664852 are similar but for different fields in the Expression Editor.
-        if (
-            BZ(1649057, forced_streams=["5.9", "5.10"]).blocks
-            or BZ(1664886, forced_streams=["5.9", "5.10"]).blocks
-            or BZ(1664852, forced_streams=["5.9", "5.10"]).blocks
-        ):
+        # they have been fixed in 5.11 but fixes are not backported to 5.10
+        if BZ(1664886, forced_streams=["5.10"]).blocks or BZ(1664852).blocks:
             time.sleep(1)
 
 
@@ -123,34 +119,22 @@ class ExpressionEditor(View, Pretty):
     MAKE_BUTTON = "//span[not(contains(@style,'none'))]//img[@alt='{}']"
     ATOM_ROOT = "./div[@id='exp_atom_editor_div']"
     # fmt: off
-    EXPRESSIONS_ROOT = VersionPick({
-        Version.lowest(): "./fieldset/div",
-        "5.10": ".//div[@class='panel-body']",
-    })
+    EXPRESSIONS_ROOT = ".//div[@class='panel-body']"
     # fmt: on
     EXPRESSION_TEXT = "//a[contains(@id,'exp_')]"
+    SELECT_SPECIFIC = ".//a[@title='Click to change to a specific Date/Time format']"
+    SELECT_RELATIVE = ".//a[@title='Click to change to a relative Date/Time format']"
+
+    # widgets
     expression_text_widget = Text(EXPRESSION_TEXT)
-    # TODO: do not refer to these buttons with CAPS
-    COMMIT = Button(title="Commit expression element changes")
-    DISCARD = Button(title="Discard expression element changes")
-    REMOVE = Button(title="Remove this expression element")
-    NOT = ExpressionButton(title="Wrap this expression element with a NOT")
-    OR = ExpressionButton(title="OR with a new expression element")
-    AND = ExpressionButton(title="AND with a new expression element")
-    REDO = Button(title="Redo the last change")
-    UNDO = Button(title="Undo the last change")
-    SELECT_SPECIFIC = VersionPick(
-        {
-            Version.lowest(): ".//img[@alt='Click to change to a specific Date/Time format']",
-            "5.10": ".//a[@title='Click to change to a specific Date/Time format']",
-        }
-    )
-    SELECT_RELATIVE = VersionPick(
-        {
-            Version.lowest(): ".//img[@alt='Click to change to a relative Date/Time format']",
-            "5.10": ".//a[@title='Click to change to a relative Date/Time format']",
-        }
-    )
+    commit = Button(title="Commit expression element changes")
+    discard = Button(title="Discard expression element changes")
+    remove = Button(title="Remove this expression element")
+    not_button = ExpressionButton(title="Wrap this expression element with a NOT")
+    or_button = ExpressionButton(title="OR with a new expression element")
+    and_button = ExpressionButton(title="AND with a new expression element")
+    redo = Button(title="Redo the last change")
+    undo = Button(title="Undo the last change")
 
     pretty_attrs = ["show_loc"]
 
@@ -163,30 +147,30 @@ class ExpressionEditor(View, Pretty):
 
     # TODO: update these methods to use the button's click method
     def click_undo(self):
-        self.browser.click(self.UNDO)
+        self.undo.click()
 
     def click_redo(self):
-        self.browser.click(self.REDO)
+        self.redo.click()
 
     def click_and(self):
-        self.browser.click(self.AND)
+        self.and_button.click()
 
     def click_or(self):
-        self.browser.click(self.OR)
+        self.or_button.click()
 
     def click_not(self):
-        self.browser.click(self.NOT)
+        self.not_button.click()
 
     def click_remove(self):
-        self.browser.click(self.REMOVE)
+        self.remove.click()
 
     def click_commit(self):
-        self.COMMIT.wait_displayed()
-        self.browser.click(self.COMMIT)
-        self.UNDO.wait_displayed()
+        self.commit.wait_displayed()
+        self.commit.click()
+        self.undo.wait_displayed()
 
     def click_discard(self):
-        self.browser.click(self.DISCARD)
+        self.discard.click()
 
     def click_switch_to_relative(self):
         self.browser.click(self.SELECT_RELATIVE)
