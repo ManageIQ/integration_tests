@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.cloud.keypairs import KeyPairAllView
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
@@ -30,15 +31,15 @@ def keypair(appliance, provider):
 @pytest.mark.tier(3)
 def test_keypair_crud(appliance, provider):
     """ This will test whether it will create new Keypair and then deletes it.
-    Steps:
-        * Provide Keypair name.
-        * Select Cloud Provider.
-        * Also delete it.
-
     Polarion:
-        assignee: mnadeem
+        assignee: mmojzis
         casecomponent: Cloud
+        caseimportance: high
         initialEstimate: 1/4h
+        testSteps:
+            1. Create keypair.
+            2. Read keypair.
+            3. Delete keypair.
     """
     keypair = appliance.collections.cloud_keypairs.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -53,16 +54,15 @@ def test_keypair_crud(appliance, provider):
 @pytest.mark.tier(3)
 def test_keypair_crud_with_key(provider, appliance):
     """ This will test whether it will create new Keypair and then deletes it.
-
-    Steps:
-        * Provide Keypair name.
-        * Select Cloud Provider.
-        * Also delete it.
-
     Polarion:
-        assignee: mnadeem
+        assignee: mmojzis
         casecomponent: Cloud
+        caseimportance: high
         initialEstimate: 1/4h
+        testSteps:
+            1. Create keypair.
+            2. Read keypair.
+            3. Delete keypair.
     """
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
@@ -80,38 +80,33 @@ def test_keypair_crud_with_key(provider, appliance):
 @pytest.mark.tier(3)
 def test_keypair_create_cancel(provider, appliance):
     """ This will test cancelling on adding a keypair
-
-    Steps:
-        * Provide Keypair name.
-        * Select Cloud Provider.
-        * Also delete it.
-
     Polarion:
-        assignee: mnadeem
+        assignee: mmojzis
         casecomponent: WebUI
+        caseimportance: low
         initialEstimate: 1/4h
+        testSteps:
+            1. Cancel creating keypair.
     """
     keypair = appliance.collections.cloud_keypairs.create(
         name="",
         provider=provider,
         cancel=True
     )
-    view = keypair.create_view(KeyPairAllView)
-    assert view.flash.assert_message('Add of new Key Pair was cancelled by the user')
+    assert not keypair.exists
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(OpenStackProvider))
+@pytest.mark.provider([EC2Provider], override=True, scope="module", selector=ONE_PER_TYPE)
 @pytest.mark.tier(3)
 def test_keypair_create_validation(provider, appliance):
     """ This will test validating the new of name of the key pair
-
-    Steps:
-        * Try to add key pair with empty name.
-
     Polarion:
-        assignee: mnadeem
+        assignee: mmojzis
         casecomponent: WebUI
+        caseimportance: low
         initialEstimate: 1/4h
+        testSteps:
+            1. Try to add key pair with empty name.
     """
     keypair_collection = appliance.collections.cloud_keypairs
     view = navigate_to(keypair_collection, 'Add')
@@ -121,21 +116,20 @@ def test_keypair_create_validation(provider, appliance):
 
 @test_requirements.tag
 @pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider))
+@pytest.mark.provider([OpenStackProvider], override=True, scope="module", selector=ONE_PER_TYPE)
 def test_keypair_add_and_remove_tag(keypair):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.
-
-    Steps:
-        * Provide Keypair name.
-        * Select Cloud Provider.
-        * Add tag to Keypair.
-        * Remove tag from Keypair
-        * Also delete it.
-
     Polarion:
         assignee: anikifor
         casecomponent: Tagging
         initialEstimate: 1/4h
+        testSteps:
+            1. Create keypair.
+            2. Read keypair.
+            3. Add tag to Keypair.
+            4. Remove tag from Keypair.
+            5. Delete keypair.
     """
     added_tag = keypair.add_tag()
     tagged_value = keypair.get_tags()
@@ -160,8 +154,9 @@ def test_keypair_add_and_remove_tag(keypair):
 def test_download_private_key(keypair):
     """
     Polarion:
-        assignee: mnadeem
+        assignee: mmojzis
         casecomponent: Cloud
+        caseimportance: medium
         initialEstimate: 1/4h
     """
     keypair.download_private_key()
