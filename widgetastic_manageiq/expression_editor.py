@@ -145,7 +145,6 @@ class ExpressionEditor(View, Pretty):
     def __locator__(self):
         return self.ROOT
 
-    # TODO: update these methods to use the button's click method
     def click_undo(self):
         self.undo.click()
 
@@ -213,14 +212,13 @@ class ExpressionEditor(View, Pretty):
         els = self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root)
         if len(els) > 1:
             return False
-        no_expression_text = "???" if self.browser.product_version < "5.10" else "<new element>"
-        return self.expression_text == no_expression_text
+        return self.expression_text == "<new element>"
 
     def any_expression_present(self):
         return not self.no_expression_present()
 
     def is_editing(self):
-        no_expression_text = "???" if self.browser.product_version < "5.10" else "<new element>"
+        no_expression_text = "<new element>"
         try:
             self.browser.element(
                 "{}[contains(normalize-space(text()), {})]".format(
