@@ -29,6 +29,7 @@ def sprout_appliances(
     stream=None,
     provider_type=None,
     version=None,
+    wait_time=1800,
     **kwargs
 ):
     """ Provisions one or more appliances for testing
@@ -56,6 +57,7 @@ def sprout_appliances(
         preconfigured=preconfigured,
         stream=req_stream,
         lease_time=lease_time,
+        wait_time=wait_time,
         **kwargs
     )
     try:
