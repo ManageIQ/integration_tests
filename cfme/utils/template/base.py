@@ -23,7 +23,7 @@ from cfme.utils import trackerbot
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.net import find_pingable
+from cfme.utils.net import wait_pingable
 from cfme.utils.path import project_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
@@ -192,13 +192,7 @@ class ProviderTemplateUpload(object):
     def raw_vm_ssh_client_args(self):
         """ Returns credentials + hostname for ssh client auth for a temp_vm."""
         try:
-            vm_ip, _ = wait_for(
-                find_pingable,
-                func_args=[self._vm_mgmt],
-                fail_condition=None,
-                delay=5,
-                num_sec=300
-            )
+            vm_ip = wait_pingable(self._vm_mgmt, wait=300)
         except TimedOutError:
             msg = 'Timed out waiting for reachable raw VM IP'
             logger.exception(msg)
