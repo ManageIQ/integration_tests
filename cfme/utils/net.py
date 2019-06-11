@@ -100,7 +100,7 @@ def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=F
             )
         with ssh_client:
             # on exception => fails with return code 1
-            cmd = '''python -c "
+            cmd = '''python2 -c "
 import sys, socket
 addr = socket.gethostbyname('%s')
 socket.create_connection((addr, %d), timeout=10)
