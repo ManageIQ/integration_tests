@@ -1011,3 +1011,127 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
     # Check we can login
     logged_in_page = app.server.login()
     assert logged_in_page.is_displayed
+
+
+@pytest.mark.manual
+def test_ec2_refresh_with_stack_without_parameters():
+    """
+    1) Add cloudformation stack without parameters(https://s3-us-
+    west-2.amazonaws.com/cloudformation-templates-us-
+    west-2/Managed_EC2_Batch_Environment.template  )
+    2) Add ec2 provider with cloudformation stack without parameters
+    3) Wait for refresh - it should be refreshed successfully without
+    errors
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/5h
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_ec2_public_images():
+    """
+    1) Set
+    :ems_refresh:
+    :ec2:
+    :get_public_images: true
+    2) Add an ec2 provider
+    3) Wait for its refresh(It can take more than 30 minutes)
+    4) Refresh should be successful and there should be more than 100k ec2
+    images
+
+    Polarion:
+        assignee: mmojzis
+        caseimportance: critical
+        initialEstimate: 2/3h
+        casecomponent: Cloud
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_ec2_api_filter_limit():
+    """
+    Bugzilla:
+        1612086
+
+    The easiest way to simulate AWS API Limit for > 200 items is to enable
+    and disable public images:
+    Requirement: Have an ec2 provider
+    1) Enable public images for ec2 in Advanced Settings
+    2) Wait for public images to be refreshed
+    3) Disable public images for ec2 in Advanced Settings
+    4) Wait for public images to be refreshed (cleared)
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1 1/3h
+        startsin: 5.9
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_ec2_create_sns_topic():
+    """
+    Requires: No SNS topic for tested region
+    1) Add an ec2 provider with tested region
+    2) Wait 3 minutes
+    3) Check SNS topic for this region in AWS Console
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/6h
+        startsin: 5.8
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_ec2_add_delete_add_provider():
+    """
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1h
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_ec2_deploy_instance_with_ssh_addition_template():
+    """
+    Requirement: EC2 provider
+    1) Provision an instance
+    2) Select Choose Automatically in Environment -> Placement
+    3) Select SSH key addition template in Customize -> Customize Template
+    4) Instance should be provisioned without any errors
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_add_ec2_provider_with_instance_without_name():
+    """
+    1) Add an ec2 provider with instance without name
+    2) Wait for refresh
+    3) Refresh should complete without errors
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/6h
+    """
+    pass
+

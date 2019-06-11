@@ -435,3 +435,31 @@ def test_codename_in_stdout(appliance):
         r = appliance.ssh_client.run_command(
             r'journalctl -u evmserverd -c "{}" | egrep -i "codename: \w+$"'.format(cursor))
         return r.success
+
+
+@pytest.mark.manual('manualonly')
+def test_ec2_deploy_cfme_image():
+    """
+    Bugzilla:
+        1413835
+    Requirement: CFME image imported as AMI in EC2 environment - should be
+    imported automatically with every build
+    1) Deploy appliance:
+    c4.xlarge instance type
+    default vpc network
+    Two disks: one default 41GB, one additional 10GB
+    Security group with open port 22 & 443 to world
+    select appropriate private key
+    2) Associate instance with Elastic IP
+    3) Configure database using appliance_console
+    4) Start evmserverd
+    5) CFME appliance should work
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Appliance
+        caseimportance: critical
+        initialEstimate: 4h
+        endsin: 5.11
+    """
+    pass

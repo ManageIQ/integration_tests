@@ -68,3 +68,43 @@ def test_security_group_create_cancel(appliance, provider):
                                       provider=provider,
                                       cancel=True)
     assert not sec_group.exists
+
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_sdn_nsg_firewall_rules_azure():
+    """
+    Bugzilla:
+        1520196
+
+    1. Add Network Security group on Azure with coma separated port ranges
+    `1023,1025` rule inbound/outbound ( ATM this feature is not allowed in
+    East US region of Azure - try West/Central)
+    2. Add such Azure Region into CFME
+    3. Refresh provider
+    4. Open such NSG in CFME and check that ports from 1) do present in
+    the UI as Firewall rules
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    pass
+
+
+@pytest.mark.manual
+def test_ec2_security_group_record_values():
+    """
+    Bugzilla:
+        1540283
+
+    Polarion:
+        assignee: mmojzis
+        caseimportance: medium
+        casecomponent: Cloud
+        initialEstimate: 1/4h
+    """
+    pass
