@@ -12,6 +12,7 @@ from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
+from sqlalchemy.sql.schema import PrimaryKeyConstraint
 
 from cfme.fixtures.pytest_store import store
 from cfme.utils import conf
@@ -250,7 +251,7 @@ class Db(Mapping):
             table_name: The name of a table to reflect
 
         """
-        self.metadata.reflect(only=[table_name])
+        self.metadata.reflect(only=[table_name], views=True)
 
     def _table(self, table_name):
         """Retrieves, reflects, and caches table objects
@@ -267,6 +268,15 @@ class Db(Mapping):
                 '__tablename__': table_name
             }
 
+            # easy workaround for views which don't have primary key
+            # this has to be replaced with method to recognize table primary key in future
+            # if it isn't enough
+
+            pk = table.primary_key
+            if isinstance(pk, PrimaryKeyConstraint) and len(pk.columns) == 0:
+                id_column = table.c.get('id')
+                if id_column is not None:
+                    table.primary_key = PrimaryKeyConstraint(id_column)
             try:
                 table_cls = type(str(table_name), (self.table_base,), table_dict)
                 self._table_cache[table_name] = table_cls
