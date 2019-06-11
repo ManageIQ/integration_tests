@@ -53,9 +53,10 @@ class CloudProviderInstancesView(BaseLoggedInPage):
     """
     @property
     def is_displayed(self):
-        return (
-            self.breadcrumb.locations[0] == 'Cloud Providers' and
-            self.entities.title.text == '{} (All Instances)'.format(self.context['object'].name))
+        return (self.breadcrumb.locations[-1] == '{} (All Instances)'.format(
+            self.context['object'].name) and
+            self.entities.title.text == '{} (All Instances)'.format(
+            self.context['object'].name))
 
     breadcrumb = BreadCrumb()
     toolbar = View.nested(VMToolbar)

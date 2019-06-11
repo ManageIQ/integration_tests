@@ -29,6 +29,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import Table
@@ -441,6 +442,8 @@ class UserEdit(CFMENavigateStep):
 class MyCompanyTagsTree(View):
     tree_locator = 'tags_treebox'
     tree = CbTree(tree_locator)
+    tag_category = ReactSelect(locator='.//div[@id="tag_cat"]')
+    tag_name = ReactSelect(locator='.//div[@id="cat_tags_div"]')
 
 
 class MyCompanyTagsExpressionView(View):
@@ -794,10 +797,16 @@ class Group(BaseEntity, Taggable):
                     path, action_type = item
                     if isinstance(path, list):
                         tab_form = getattr(tab_view, 'form', tab_view)
-                        tree_view = getattr(tab_form, 'tag_settings', tab_form)
-                        node = (tree_view.tree.CheckNode(path) if action_type else
-                                tree_view.tree.UncheckNode(path))
-                        updated_result = tree_view.tree.fill(node)
+                        view = getattr(tab_form, 'tag_settings', tab_form)
+                        if (tab_form.TAB_NAME == 'My Company Tags'
+                                and self.appliance.version > "5.11"):
+                            category = view.tag_category.fill(path[0])
+                            value = view.tag_name.fill(path[1])
+                            updated_result = category and value
+                        else:
+                            node = (view.tree.CheckNode(path) if action_type else
+                                    view.tree.UncheckNode(path))
+                            updated_result = view.tree.fill(node)
         return updated_result
 
     @property

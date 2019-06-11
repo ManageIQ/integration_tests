@@ -15,6 +15,7 @@ import six
 from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.keys import Keys
 from wait_for import TimedOutError
@@ -54,6 +55,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import NavDropdown
+from widgetastic_patternfly import SelectItemNotFound
 from widgetastic_patternfly import SelectorDropdown
 from widgetastic_patternfly import Tab
 from widgetastic_patternfly import VerticalNavigation
@@ -2633,6 +2635,127 @@ class UpDownSelect(View):
         for item in reversed(items):  # reversed because every new item at top pushes others down
             self.move_top(item)
         return True
+
+
+class ReactSelect(Widget, ClickableMixin):
+    """This view is used in 5.11 for tagging instead of BootstrapSelect.
+
+    Args:
+        id: id of the select, that is the ``data-id`` attribute on the ``button`` tag.
+        locator: If none of above apply, you can also supply a full locator.
+        can_hide_on_select: Whether the select can hide after selection, important for
+            :py:meth:`close` to work properly.
+
+       """
+
+    # fmt: off
+    ROOT = ParametrizedLocator('{@locator}')
+    BASE_LOCATOR = ".//div[@id={}]"
+    BY_VISIBLE_TEXT = './/*[self::span or self::div][contains(text(), {})]'
+    # fmt: on
+
+    def __init__(self, parent, id=None, locator=None, can_hide_on_select=False, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if id:
+            self.locator = self.BASE_LOCATOR.format(quote(id))
+        elif locator:
+            self.locator = locator
+        else:
+            raise TypeError("You need to specify a locator for ReactSelect")
+
+        self.can_hide_on_select = can_hide_on_select
+
+    @property
+    def is_open(self):
+        try:
+            return self.browser.is_displayed('//div[@class="css-1paxw40-menu"]')
+        except StaleElementReferenceException:
+            self.logger.warning(
+                "Got a StaleElementReferenceException in .is_open, but ignoring. Returned False."
+            )
+            return False
+
+    def open(self):
+        if not self.is_open:
+            self.click()
+            self.logger.debug("opened")
+
+    def close(self):
+        try:
+            if self.is_open:
+                self.click()
+                self.logger.debug("closed")
+        except NoSuchElementException:
+            if self.can_hide_on_select:
+                self.logger.info("While closing %r it disappeared, but ignoring.", self)
+            else:
+                raise
+
+    def select_by_visible_text(self, *items):
+        """Selects items in the select.
+
+        Args:
+            *items: Items to be selected. If the select does not support multiple selections and you
+                pass more than one item, it will raise an exception. If you want to select using
+                partial match, use the :py:class:`BootstrapSelect.partial` to wrap the value.
+        """
+        if len(items) > 1:
+            raise ValueError(
+                "The ReactSelect {} does not allow multiple selections".format(self.locator)
+            )
+        self.open()
+        for item in items:
+            item = item.split(" *")[0]
+            self.logger.info("selecting by visible text: %r", item)
+            try:
+                self.browser.click(
+                    self.BY_VISIBLE_TEXT.format(quote(item)), parent=self, force_scroll=True
+                )
+            except NoSuchElementException:
+                try:
+                    # Added this as for some views(some tags pages) dropdown is separated from
+                    # button and doesn't have exact id or name
+                    self.browser.click(self.BY_VISIBLE_TEXT.format(quote(item)), force_scroll=True)
+                except NoSuchElementException:
+                    raise SelectItemNotFound(
+                        widget=self, item=item, options=[opt.text for opt in self.all_options]
+                    )
+        self.close()
+
+    @property
+    def all_selected_options(self):
+        return [
+            self.browser.text(e)
+            for e in self.browser.elements('//ul[@class="tag-category list-inline"]', parent=self)
+        ]
+
+    @property
+    def all_options(self):
+        script = """return ManageIQ.component.getInstance(
+        "TaggingWrapperConnected", "TaggingWrapperConnected-0").props.tags"""
+        return self.browser.execute_script(script)
+
+    @property
+    def selected_option(self):
+        return self.all_selected_options[0]
+
+    def read(self):
+        return self.selected_option
+
+    def fill(self, items):
+        if not isinstance(items, (list, tuple, set)):
+            items = {items}
+        elif not isinstance(items, set):
+            items = set(items)
+
+        if set(self.all_selected_options) == items:
+            return False
+        else:
+            self.select_by_visible_text(*items)
+            return True
+
+    def __repr__(self):
+        return "{}(locator={!r})".format(type(self).__name__, self.locator)
 
 
 class AlertEmail(View):
