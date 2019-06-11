@@ -2,12 +2,17 @@
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from navmazing import NavigationDestinationNotFound
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
+
+
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
@@ -18,6 +23,7 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
@@ -29,6 +35,7 @@ from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Text
 from widgetastic_manageiq import TextInput
+
 
 
 class KeyPairToolbar(View):
@@ -184,6 +191,24 @@ class KeyPair(BaseEntity, Taggable):
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select('Download private key')
         view.flash.assert_no_error()
+
+    @property
+    def exists(self):
+        try:
+            wait_for(lambda: navigate_to(self, "Details"), num_sec=10, delay=2,
+                     handle_exception=True)
+        except (
+            CandidateNotFound,
+            ItemNotFound,
+            KeyPairNotFound,
+            NameError,
+            NavigationDestinationNotFound,
+            NoSuchElementException,
+            TimedOutError,
+        ):
+            return False
+        else:
+            return True
 
 
 @attr.s
