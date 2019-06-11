@@ -6,7 +6,9 @@ from wrapanapi import VmState
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.storage.volume import StorageManagerVolumeAllView
 from cfme.storage.volume import VolumeAllView
+from cfme.storage.volume import VolumeDetailsView
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -198,9 +200,10 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
     volume.delete()
 
 
-@pytest.mark.manual
+@pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.10"],
+                               unblock=lambda provider: provider.one_of(EC2Provider))])
 @test_requirements.storage
-def test_storage_volume_attached_delete():
+def test_storage_volume_attached_delete(appliance, provider, instance_fixture, from_manager):
     """
     Requires:
         RHCF3-21779 - test_storage_volume_attach[openstack]
@@ -224,7 +227,30 @@ def test_storage_volume_attached_delete():
             4. check for flash message " Cloud Volume "Volume_name" cannot be
             removed because it is attached to one or more Instances "
         """
-    pass
+    volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
+                           vm_default_args["environment"]["availability_zone"], should_assert=True)
+
+    # attach
+    volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
+                           from_manager=from_manager)
+    wait_for(lambda: volume.status == 'in-use', delay=15, timeout=600)
+
+    try:
+        volume.delete(from_manager=from_manager)
+        pytest.fail("Attached volume was deleted!")
+    except Exception:
+        if from_manager:
+            view = volume.browser.create_view(StorageManagerVolumeAllView,
+                                              additional_context={'object': volume.parent.manager})
+        else:
+            view = volume.create_view(VolumeDetailsView)
+        assert view.flash.assert_message('Cloud Volume "{}" cannot be removed because it is '
+                                         'attached to one or more Instances'.format(volume.name))
+    # detach
+    volume.detach_instance(name=instance_fixture.name, from_manager=from_manager)
+    wait_for(lambda: volume.status == 'available', delay=15, timeout=600)
+
+    volume.delete()
 
 
 @test_requirements.tag
