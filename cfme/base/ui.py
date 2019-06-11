@@ -1617,7 +1617,7 @@ class AutomateSimulationView(BaseLoggedInPage):
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ["Automation", "Automate", "Simulation"]
         )
-
+    copy = Button("Copy")
     instance = BootstrapSelect('instance_name')
     message = Input(name='object_message')
     request = Input(name='object_request')

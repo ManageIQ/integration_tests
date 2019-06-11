@@ -120,6 +120,7 @@ class ButtonFormCommon(AutomateCustomizationView):
 
 class NewButtonView(ButtonFormCommon):
     title = Text("#explorer_title_text")
+    paste = Button(title="Paste object details for use in a Button.")
 
     add_button = Button("Add")
 
