@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -537,5 +538,34 @@ def test_proxy_valid_ec2():
         setup: Follow the instructions in the mojo doc above as it is easier to
                change in one place.
         startsin: 5.7
+    """
+    pass
+
+
+@test_requirements.ec2
+@pytest.mark.manual
+def test_ec2_proxy():
+    """
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/2h
+        caseimportance: high
+        testSteps:
+            1. Go to Configuration -> Advanced Settings
+            2. Find:
+            :http_proxy:
+            :ec2:
+            :host:
+            :password:
+            :port:
+            :user:
+            and fill in squid proxy credentials
+            3. Add an ec2 provider
+        expectedResults:
+            1.
+            2.
+            3. Check whether traffic goes through squid proxy
+            Check whether ec2 provider was refreshed successfully
     """
     pass

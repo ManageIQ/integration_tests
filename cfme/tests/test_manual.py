@@ -25,24 +25,6 @@ def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
 
 
 @pytest.mark.manual
-def test_ec2_refresh_with_stack_without_parameters():
-    """
-    1) Add cloudformation stack without parameters(https://s3-us-
-    west-2.amazonaws.com/cloudformation-templates-us-
-    west-2/Managed_EC2_Batch_Environment.template  )
-    2) Add ec2 provider with cloudformation stack without parameters
-    3) Wait for refresh - it should be refreshed successfully without
-    errors
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/5h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.right_size
 @pytest.mark.tier(1)
 def test_nor_cpu_values_correct_vsphere6():
@@ -464,27 +446,6 @@ def test_infrastructure_hosts_icons_states():
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/3h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_public_images():
-    """
-    1) Set
-    :ems_refresh:
-    :ec2:
-    :get_public_images: true
-    2) Add an ec2 provider
-    3) Wait for its refresh(It can take more than 30 minutes)
-    4) Refresh should be successful and there should be more than 100k ec2
-    images
-
-    Polarion:
-        assignee: mmojzis
-        caseimportance: critical
-        initialEstimate: 2/3h
-        casecomponent: Cloud
     """
     pass
 
@@ -1001,34 +962,6 @@ def test_osp_kill_the_v2v_process_in_the_middle_restart_evmserverd_should_resume
         subcomponent: OSP
         title: OSP: kill the v2v process in the middle(restart evmserverd)
                - should resume migration post restart
-    """
-    pass
-
-
-@pytest.mark.manual('manualonly')
-def test_ec2_deploy_cfme_image():
-    """
-    Bugzilla:
-        1413835
-    Requirement: CFME image imported as AMI in EC2 environment - should be
-    imported automatically with every build
-    1) Deploy appliance:
-    c4.xlarge instance type
-    default vpc network
-    Two disks: one default 41GB, one additional 10GB
-    Security group with open port 22 & 443 to world
-    select appropriate private key
-    2) Associate instance with Elastic IP
-    3) Configure database using appliance_console
-    4) Start evmserverd
-    5) CFME appliance should work
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Appliance
-        caseimportance: critical
-        initialEstimate: 4h
-        endsin: 5.11
     """
     pass
 
@@ -1598,29 +1531,6 @@ def test_bottleneck_datastore():
 
 
 @pytest.mark.manual
-def test_ec2_api_filter_limit():
-    """
-    Bugzilla:
-        1612086
-
-    The easiest way to simulate AWS API Limit for > 200 items is to enable
-    and disable public images:
-    Requirement: Have an ec2 provider
-    1) Enable public images for ec2 in Advanced Settings
-    2) Wait for public images to be refreshed
-    3) Disable public images for ec2 in Advanced Settings
-    4) Wait for public images to be refreshed (cleared)
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1 1/3h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_host_credentials_web():
     """
@@ -1761,23 +1671,6 @@ def test_no_rbac_warnings_in_logs_when_viewing_satellite_provider():
         caseimportance: medium
         initialEstimate: 1/15h
         title: No RBAC warnings in logs when viewing Satellite provider
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_create_sns_topic():
-    """
-    Requires: No SNS topic for tested region
-    1) Add an ec2 provider with tested region
-    2) Wait 3 minutes
-    3) Check SNS topic for this region in AWS Console
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/6h
-        startsin: 5.8
     """
     pass
 
@@ -2102,30 +1995,6 @@ def test_candu_graphs_vm_compare_host_vsphere65():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_sdn_nsg_firewall_rules_azure():
-    """
-    Bugzilla:
-        1520196
-
-    1. Add Network Security group on Azure with coma separated port ranges
-    `1023,1025` rule inbound/outbound ( ATM this feature is not allowed in
-    East US region of Azure - try West/Central)
-    2. Add such Azure Region into CFME
-    3. Refresh provider
-    4. Open such NSG in CFME and check that ports from 1) do present in
-    the UI as Firewall rules
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -2728,17 +2597,6 @@ def test_osp_test_multiple_sources_to_single_target_mapping_for_clusters_ds_netw
 
 
 @pytest.mark.manual
-def test_ec2_add_delete_add_provider():
-    """
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware67_test_vm_migration_with_rhel_7x():
     """
     OSP: vmware67-Test VM migration with RHEL 7.x
@@ -3001,24 +2859,6 @@ def test_utilization_cluster():
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_deploy_instance_with_ssh_addition_template():
-    """
-    Requirement: EC2 provider
-    1) Provision an instance
-    2) Select Choose Automatically in Environment -> Placement
-    3) Select SSH key addition template in Customize -> Customize Template
-    4) Instance should be provisioned without any errors
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 
@@ -3354,21 +3194,6 @@ def test_requests_in_ui_and_api():
 
 
 @pytest.mark.manual
-def test_add_ec2_provider_with_instance_without_name():
-    """
-    1) Add an ec2 provider with instance without name
-    2) Wait for refresh
-    3) Refresh should complete without errors
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 @pytest.mark.tier(3)
 def test_chargeback_report_compute_provider():
@@ -3656,31 +3481,6 @@ def test_osp_vmware65_test_vm_migration_with_windows_7():
     pass
 
 
-@pytest.mark.manual('manualonly')
-def test_ec2_flavor_list_up_to_date():
-    """
-    Requirement: EC2 Provider
-    1) Go to Compute -> Cloud -> Instances
-    2) Try to provision an HVM instance
-    3) Go to Properties and compare hvm instance types with HVM instance
-    types in AWS console.
-    4) AWS console instance types list should be equal to instance types
-    in CFME
-    5) Try to provision an paravirtual instance
-    6) Go to Properties and compare paravirtual instance types with
-    paravirtual instance types in AWS console.
-    7) AWS console instance types list should be equal to instance types
-    in CFME
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/3h
-        casecomponent: Cloud
-    """
-    pass
-
-
 @pytest.mark.manual
 def test_osp_vmware67_test_vm_migration_with_windows_10():
     """
@@ -3922,30 +3722,6 @@ def test_view_quotas_without_manage_quota_permisson():
         initialEstimate: 1/4h
         tags: rbac
         title: Test view quotas without manage quota permisson
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_proxy():
-    """
-    1) Go to Configuration -> Advanced Settings
-    2) Find:
-    :http_proxy:
-    :ec2:
-    :host:
-    :password:
-    :port:
-    :user:
-    and fill in squid proxy credentials
-    3) Add an ec2 provider
-    4) Check whether traffic goes through squid proxy
-    5) Check whether ec2 provider was refreshed successfully
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/2h
     """
     pass
 
@@ -4909,21 +4685,6 @@ def test_osp_vmware65_test_vm_with_multiple_disks():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware65-Test VM with multiple Disks
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ec2_security_group_record_values():
-    """
-    Bugzilla:
-        1540283
-
-    Polarion:
-        assignee: mmojzis
-        caseimportance: medium
-        casecomponent: Cloud
-        initialEstimate: 1/4h
     """
     pass
 
@@ -9016,7 +8777,7 @@ def test_verify_page_landing_cloud_subnets():
     3. Check properly land on page or not.
 
     Polarion:
-        assignee: mmojzis
+        assignee: pvala
         casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/10h
@@ -9177,7 +8938,7 @@ def test_infrastructure_provider_left_panel_titles():
     have their titles.
 
     Polarion:
-        assignee: mmojzis
+        assignee: pvala
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/18h
