@@ -360,7 +360,7 @@ def main(**kwargs):
                 ssh_client.get_file('/root/anaconda-post.log',
                                     log_path.join('anaconda-post.log').strpath)
             ssh_client.close()
-        destroy_vm(app.provider, deploy_args['vm_name'])
+        destroy_vm(app.provider.mgmt, deploy_args['vm_name'])
         return 10
 
     if kwargs.get('outfile') or kwargs.get('deploy'):

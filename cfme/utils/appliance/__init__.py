@@ -2674,7 +2674,7 @@ class Appliance(IPAppliance):
 
         appliance = cls(**app_kwargs)
         appliance.vm_name = vm_name
-        appliance.provider = provider.mgmt
+        appliance.provider = provider
         appliance.provider_key = provider_key
         return appliance
 
@@ -2739,12 +2739,10 @@ class Appliance(IPAppliance):
 
     @cached_property
     def mgmt(self):
-        # in this case provider is the wrapanapi mgmt class
-        return self.provider.get_vm(self.vm_name)
+        return self.provider.mgmt.get_vm(self.vm_name)
 
     def does_vm_exist(self):
-        # in this case provider is the wrapanapi mgmt class
-        return self.provider.does_vm_exist(self.vm_name)
+        return self.provider.mgmt.does_vm_exist(self.vm_name)
 
     def rename(self, new_name):
         """Changes appliance name
@@ -2803,23 +2801,23 @@ class Appliance(IPAppliance):
     @property
     def is_on_rhev(self):
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
-        return isinstance(self.provider, RHEVMProvider.mgmt_class)
+        return isinstance(self.provider.mgmt, RHEVMProvider.mgmt_class)
 
     @property
     def is_on_vsphere(self):
         from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-        return isinstance(self.provider, VMwareProvider.mgmt_class)
+        return isinstance(self.provider.mgmt, VMwareProvider.mgmt_class)
 
     @property
     def is_on_openshift(self):
         from cfme.containers.provider.openshift import OpenshiftProvider
-        return isinstance(self.provider, OpenshiftProvider.mgmt_class)
+        return isinstance(self.provider.mgmt, OpenshiftProvider.mgmt_class)
 
     @logger_wrap("Setting ansible url: {}")
     def set_ansible_url(self, log_callback=None):
         if self.is_on_openshift:
             try:
-                config_map = self.provider.get_appliance_tags(self.project)
+                config_map = self.provider.mgmt.get_appliance_tags(self.project)
                 url = config_map['cfme-openshift-embedded-ansible']['url']
                 tag = config_map['cfme-openshift-embedded-ansible']['tag']
                 config = {'embedded_ansible': {'container': {'image_name': url, 'image_tag': tag}}}
