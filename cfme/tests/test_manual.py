@@ -1095,38 +1095,6 @@ def test_distributed_zone_add_provider_to_nondefault_zone():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_azone_cpu_usage_gce():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/12h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(1)
-def test_azone_cpu_usage_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_orchestration_link_mismatch():
     """
 
@@ -1178,22 +1146,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_7():
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_crosshair_op_azone_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_crosshair_op_azone_gce():
     """
     Utilization Test
 
@@ -1321,25 +1273,6 @@ def test_host_tagged_crosshair_op_vsphere65():
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_host_tagged_crosshair_op_vsphere6():
-    """
-    Required C&U enabled application:1. Navigate to host C&U graphs
-    2. select Group by option with suitable VM tag
-    3. try to drill graph for VM
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_host_tagged_crosshair_op_vsphere55():
     """
     Required C&U enabled application:1. Navigate to host C&U graphs
     2. select Group by option with suitable VM tag
@@ -1907,46 +1840,6 @@ def test_validate_cost_weekly_allocation_cpu():
         assignee: tpapaioa
         casecomponent: CandU
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_host_graph_by_vm_tag_vsphere6():
-    """
-    test_host_graph_by_vm_tag[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_host_graph_by_vm_tag_vsphere65():
-    """
-    Requires:
-    C&U enabled Vsphere-65 appliance.
-    Steps:
-    1. Navigate to Host [Compute > infrastructure>Hosts]
-    2. Select any available host
-    3. Go for utilization graphs [Monitoring > Utilization]
-    4. For hourly "Group by"  select VM tag
-    5. For Daily "Group by" select VM tag
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -3533,22 +3426,6 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
 @pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
-def test_crosshair_op_instance_gce():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
 def test_crosshair_op_instance_azure():
     """
     Utilization Test
@@ -3597,22 +3474,6 @@ def test_osp_test_edit_migration_plan():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test edit migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_candu_graphs_cluster_hourly_vsphere55():
-    """
-    test_candu_graphs_cluster_hourly[vsphere55]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
@@ -3899,22 +3760,6 @@ def test_nor_memory_values_correct_rhv41():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_gap_collection_vsphere6():
-    """
-    Draft
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_migrating_a_vm_which_has_encrypted_disk():
     """
     OSP: Test migrating a VM which has encrypted disk
@@ -3934,22 +3779,6 @@ def test_osp_test_migrating_a_vm_which_has_encrypted_disk():
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_group_by_tag_azone_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_group_by_tag_azone_gce():
     """
     Utilization Test
 
@@ -5797,22 +5626,6 @@ def test_ordering_service_by_non_admin_user():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test ordering service by non-admin user
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_gap_collection_hourly_graph_vsphere6():
-    """
-    Draft
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -8457,38 +8270,6 @@ def test_config_manager_override_extra_vars_dialog_vsphere():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_azone_disk_io_gce():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/12h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(1)
-def test_azone_disk_io_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(2)
 def test_monitor_ansible_playbook_std_output():
@@ -8734,22 +8515,6 @@ def test_cluster_graph_by_host_tag_vsphere65():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(1)
-def test_azone_memory_usage_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.retirement
 @pytest.mark.tier(2)
 def test_retire_cloud_vms_notification_folder():
@@ -8861,38 +8626,6 @@ def test_chargeback_preview():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_azone_network_io_gce():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/12h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(1)
-def test_azone_network_io_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/12h
-        testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.replication
 def test_distributed_zone_mixed_infra():
     """
@@ -8942,22 +8675,6 @@ def test_infrastructure_provider_left_panel_titles():
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/18h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_candu_graphs_host_hourly_vsphere55():
-    """
-    test_candu_graphs_host_hourly[vsphere55]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
