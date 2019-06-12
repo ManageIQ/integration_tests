@@ -16,7 +16,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.providers import list_providers_by_class
 from cfme.utils.ssh import SSHClient
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
