@@ -86,7 +86,7 @@ def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     appl1 = temp_appliance_preconfig_funcscope
     # enable embedded ansible and create pg_basebackup
     appl1.enable_embedded_ansible_role()
-    assert appl1.is_embedded_ansible_running
+    appl1.wait_for_embedded_ansible()
     appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
     return temp_appliance_preconfig_funcscope
 
