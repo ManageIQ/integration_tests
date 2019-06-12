@@ -428,6 +428,7 @@ def test_service_provisioning_email(request, appliance, catalog_item):
     Polarion:
         assignee: nansari
         casecomponent: Services
+        caseposneg: negative
         initialEstimate: 1/4h
 
     Bugzilla:
