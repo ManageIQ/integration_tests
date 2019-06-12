@@ -216,7 +216,7 @@ class BaseEntity(NavigatableMixin):
         .. code-block:: python
             expected_breadcrumb = self.context['object'].expected_details_breadcrumb
         """
-        return "{}{}".format(self.name, " (Summary)" if self.appliance.version < "5.11" else "")
+        return "{} (Summary)".format(self.name)
 
 
 @attr.s
