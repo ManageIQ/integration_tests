@@ -9,10 +9,13 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.services.catalogs.catalog_items import AddCatalogItemView
 from cfme.services.catalogs.catalog_items import AllCatalogItemView
 from cfme.services.catalogs.catalog_items import DetailsCatalogItemView
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
+
 
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
 
@@ -415,3 +418,30 @@ def test_service_select_tenants():
         1678123
     """
     pass
+
+
+@test_requirements.service
+@pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1668004)])
+def test_service_provisioning_email(request, appliance, catalog_item):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+
+    Bugzilla:
+        1668004
+    """
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", failure_patterns=[".*Error during substitution.*"]
+    )
+    result.fix_before_start()
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    service_catalogs.order()
+    request_description = ("Provisioning Service [{catalog_item_name}] from [{catalog_item_name}]"
+                           .format(catalog_item_name=catalog_item.name))
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    result.validate_logs()
