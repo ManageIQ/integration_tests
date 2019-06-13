@@ -11,8 +11,6 @@ from miq_version import Version
 from cfme.utils.conf import credentials
 from cfme.utils.conf import env
 from cfme.utils.log import logger
-from cfme.utils.version import appliance_build_datetime
-from cfme.utils.version import appliance_is_downstream
 from cfme.utils.version import current_version
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
@@ -323,10 +321,9 @@ class BugWrapper(object):
     @property
     def is_opened(self):
         states = self._bugzilla.open_states
-        if appliance_is_downstream():
-            # for downstream appliances, "POST" and "MODIFIED" are considered open states
-            states.add('POST')
-            states.add('MODIFIED')
+        # we consider "POST" and "MODIFIED" to still be open states
+        states.add('POST')
+        states.add('MODIFIED')
         return self.status in states
 
     @property
@@ -342,21 +339,7 @@ class BugWrapper(object):
     @property
     def can_test_on_upstream(self):
         change_states = {"POST", "MODIFIED"}
-        # With these states, the change is in upstream
-        if self.status not in {"POST", "MODIFIED", "ON_QA", "VERIFIED", "RELEASE_PENDING"}:
-            return False
-        history = self.get_history_raw()["bugs"][0]["history"]
-        changes = []
-        # We look for status changes in the history
-        for event in history:
-            for change in event["changes"]:
-                if change["field_name"].lower() != "status":
-                    continue
-                if change["added"] in change_states:
-                    changes.append(event["when"])
-                    return event["when"] < appliance_build_datetime()
-        else:
-            return False
+        return self.status in change_states
 
     def __repr__(self):
         return repr(self._bug)
