@@ -1,0 +1,9 @@
+usage
+=====
+
+RHEL_REPO_BASE=http://download.lab.bos.redhat.com/rel-eng  \
+DOWNLOAD_LINK=http://download.eng.brq.redhat.com/brewroot/packages/rhel-guest-image/8.1/68/images/rhel-guest-image-8.1-68.x86_64.qcow2 \
+make
+
+After make you should have utility_vm.qcow2 file in the current directory which
+you can upload to the provider.
