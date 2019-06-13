@@ -380,8 +380,7 @@ class ProviderTemplateUpload(object):
             try:
                 out = self.execute_ssh_command('systemctl status appliance-initialize',
                                                client_args=client_args)
-                return True if all(
-                    check in out.output for check in app_init_complete_check) else False
+                return all(check in out.output for check in app_init_complete_check)
             except Exception:
                 # Have seen instances where IP is resolvable but SSH connect failed.
                 logger.info('SSH connection failed, trying again')
@@ -407,6 +406,7 @@ class ProviderTemplateUpload(object):
         # Check to make sure appliance-initialization has run
         wait_for(func=check_appliance_init,
                  func_args=[client_args],
+                 fail_condition=False,
                  delay=5,
                  timeout=300,
                  message='Waiting for appliance-initialization to complete')

@@ -1784,6 +1784,7 @@ def appliance_rename(self, appliance_id):
         self.logger.info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
         appliance.vm_mgmt.rename(new_name)
         appliance.name = new_name
+        del appliance.vm_mgmt  # its cached and based on appliance VM name
         appliance.save(update_fields=['name'])
     return appliance.name
 
