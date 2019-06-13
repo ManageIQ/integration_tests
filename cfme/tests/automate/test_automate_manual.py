@@ -747,34 +747,6 @@ def test_miq_stop_abort_with_state_machines():
     pass
 
 
-@pytest.mark.tier(3)
-def test_user_requester_for_lifecycle_provision():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: high
-        initialEstimate: 1/6h
-        tags: automate
-        testSteps:
-            1. Tested a series of service provisions and default lifecycle provisions with different
-               users (user1 only did default lifecycle provision,
-               user2 only did generic service provision or provision different service catalog items
-               with different users)
-            2. Added logging to the validate_request method for both Service and Infrastructure
-               namespaces
-            3. Viewed the automation.log
-        expectedResults:
-            1.
-            2.
-            3. The same user is shown in the automation.log as in the request
-
-    Bugzilla:
-         1671563
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_vm_naming_number_padding():
     """
