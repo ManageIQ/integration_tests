@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
+import re
+
 import fauxfactory
 import pytest
+from six.moves.urllib.request import urlopen
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.utils import conf
+from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
@@ -19,6 +24,18 @@ pytestmark = [
 SIZES = {"KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4}
 
 
+def get_vhd_name(url, pattern="hyperv"):
+    """ Given URL finds VHD file name """
+    html = urlopen(url).read().decode("utf-8")
+    files = re.findall('href="(.*vhd)"', html)
+    image_name = None
+    for name in files:
+        if pattern in name:
+            image_name = name
+            break
+    return image_name
+
+
 @pytest.fixture
 def vm(provider, small_template):
     vm_name = "test-scvmm-{}".format(fauxfactory.gen_alpha())
@@ -28,6 +45,99 @@ def vm(provider, small_template):
     vm.create_on_provider(find_in_cfme=True)
     yield vm
     vm.cleanup_on_provider()
+
+
+@pytest.fixture
+def cfme_vhd(provider, appliance):
+    """ Given a stream from the appliance, gets the cfme vhd"""
+    stream = appliance.version.stream()
+    try:
+        url = '{}/'.format(conf.cfme_data["basic_info"]["cfme_images_url"][stream])
+    except KeyError:
+        pytest.skip("No such stream: {} found in cfme_data.yaml".format(stream))
+    # get image name
+    image_name = get_vhd_name(url)
+    if not image_name:
+        pytest.skip("No hyperv vhd image at {}".format(url))
+    # download the image to SCVMM library
+    provider.mgmt.download_file(url + image_name, image_name)
+    provider.mgmt.update_scvmm_library()
+    # check to make sure that the file is in the library
+    assert image_name in provider.mgmt.list_vhds()
+
+    yield image_name
+
+
+@pytest.fixture
+def scvmm_appliance(provider, cfme_vhd):
+    """ Create an appliance from the VHD provided on SCVMM """
+    # script to create template
+    version = ".".join(re.findall(r"\d+", cfme_vhd)[0:4])  # [0:4] gets the 4 version num for CFME
+    template_name = "cfme-{}-template".format(version)
+    vhd_path = provider.data.get("vhd_path")
+    small_disk = provider.data.get("small_disk")
+
+    if not vhd_path:
+        pytest.skip("vhd_path not present in yamls, skipping test")
+    if not small_disk:
+        pytest.skip("No small_disk vhd specified, skipping test")
+
+    template_script = """
+        $networkName = "cfme2"
+        $templateName = "{template_name}"
+        $templateOwner = "{domain}\\{user}"
+        $maxMemorySizeMb = 12288
+        $startMemeorySizeMb = 4096
+        $minMemorySizeMb = 128
+        $cpuCount = 4
+        $srcName = "{image}"
+        $srcPath = "{vhd_path}\\$srcName"
+        $dbDiskName = "{small_disk}"
+        $dbDiskSrcPath = "{vhd_path}\\$dbDiskName"
+        $scvmmFqdn = "{hostname}"
+
+        $JobGroupId01 = [Guid]::NewGuid().ToString()
+        $LogicalNet = Get-SCLogicalNetwork -Name $networkName
+        New-SCVirtualNetworkAdapter -JobGroup $JobGroupId01 -MACAddressType Dynamic\
+            -LogicalNetwork $LogicalNet -Synthetic
+        New-SCVirtualSCSIAdapter -JobGroup $JobGroupId01 -AdapterID 6 -Shared $False
+        New-SCHardwareProfile -Name $templateName -Owner $templateOwner -Description\
+            'Temp profile used to create a VM Template' -DynamicMemoryEnabled $True\
+            -DynamicMemoryMaximumMB $maxMemorySizeMb -DynamicMemoryMinimumMB $minMemorySizeMb\
+            -CPUCount $cpuCount -JobGroup $JobGroupId01
+        $JobGroupId02 = [Guid]::NewGuid().ToString()
+        $VHD = Get-SCVirtualHardDisk -Name $srcName
+        New-SCVirtualDiskDrive -IDE -Bus 0 -LUN 0 -JobGroup $JobGroupId02 -VirtualHardDisk $VHD
+        $DBVHD = Get-SCVirtualHardDisk -Name $dbDiskName
+        New-SCVirtualDiskDrive -IDE -Bus 1 -LUN 0 -JobGroup $JobGroupId02 -VirtualHardDisk $DBVHD
+        $HWProfile = Get-SCHardwareProfile | where {{ $_.Name -eq $templateName }}
+        New-SCVMTemplate -Name $templateName -Owner $templateOwner -HardwareProfile $HWProfile\
+         -JobGroup $JobGroupId02 -RunAsynchronously -Generation 1 -NoCustomization
+        Remove-HardwareProfile -HardwareProfile $templateName
+    """.format(
+        domain=provider.mgmt.domain,
+        user=provider.mgmt.user,
+        image=cfme_vhd,
+        hostname=provider.mgmt.host,
+        template_name=template_name,
+        vhd_path=vhd_path,
+        small_disk=small_disk,
+    )
+    # create the template
+    provider.mgmt.run_script(template_script)
+    # provision the appliance from the newly created template
+    scvmm_appliance = provision_appliance(provider.key, version=version, template=template_name)
+
+    yield scvmm_appliance
+
+    # 1) delete VM
+    scvmm_appliance.destroy()
+    # 2) delete template
+    template = provider.mgmt.get_template(template_name)
+    template.delete()
+    # 3) delete the VHD
+    provider.mgmt.delete_vhd(cfme_vhd)
+    provider.mgmt.update_scvmm_library()
 
 
 @pytest.mark.tier(0)
@@ -79,9 +189,9 @@ def test_vm_mac_scvmm(provider):
     assert mac_address in mac_addresses
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_create_appliance_on_scvmm_using_the_vhd_image():
+@pytest.mark.long_running
+def test_create_appliance_on_scvmm_using_the_vhd_image(scvmm_appliance):
     """
     View the documentation at access.redhat.com for help with this.
 
@@ -99,7 +209,10 @@ def test_create_appliance_on_scvmm_using_the_vhd_image():
             1.
             2. CFME should be running in SCVMM
     """
-    pass
+    # use appliance to get the stream so this test only runs once per test run
+    # this will always use the downstream stable build, not the version of the appliance
+    # configure the appliance
+    scvmm_appliance.configure(loosen_psql=False, fix_ntp_clock=False)
 
 
 @pytest.mark.tier(1)
