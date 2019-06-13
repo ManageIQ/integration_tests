@@ -211,7 +211,7 @@ def test_button_required(appliance, field):
             2. Assert flash message.
     """
     unassigned_gp = appliance.collections.button_groups.instantiate(
-        text="[Unassigned Buttons]", hover="Unassigned Buttons", type="Provider"
+        text="[Unassigned Buttons]", hover="Unassigned Buttons", type="VM and Instance"
     )
     button_coll = appliance.collections.buttons
     button_coll.group = unassigned_gp  # Need for supporting navigation
