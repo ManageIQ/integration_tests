@@ -370,9 +370,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         path = view.catalog_items.tree.read()
 
         # For 5.11+ no group tagging hover points group or button
-        path.extend(
-            ["Actions", "{}{}".format(name, " (Group)" if self.appliance.version < "5.11" else "")]
-        )
+        path.extend(["Actions", "{} (Group)".format(name)])
 
         try:
             view.catalog_items.tree.fill(path)
@@ -385,9 +383,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         path = view.catalog_items.tree.read()
 
         # For 5.11+ no group tagging hover points group or button
-        path.extend(
-            ["Actions", "{}{}".format(name, " (Group)" if self.appliance.version < "5.11" else "")]
-        )
+        path.extend(["Actions", "{} (Group)".format(name)])
         view.catalog_items.tree.fill(path)
         view.configuration.item_select("Remove this Button Group", handle_alert=True)
         view.flash.assert_no_error()
