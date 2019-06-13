@@ -417,6 +417,8 @@ def test_codename_in_log(appliance):
         else:
             return True
 
+    appliance.wait_for_web_ui()
+
 
 def test_codename_in_stdout(appliance):
     """
@@ -436,6 +438,8 @@ def test_codename_in_stdout(appliance):
         r = appliance.ssh_client.run_command(
             r'journalctl -u evmserverd -c "{}" | egrep -i "codename: \w+$"'.format(cursor))
         return r.success
+
+    appliance.wait_for_web_ui()
 
 
 @test_requirements.distributed
