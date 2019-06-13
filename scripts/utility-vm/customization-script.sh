@@ -51,4 +51,7 @@ systemctl enable vsftpd
 systemctl start vsftpd
 echo changeme | passwd --stdin backuper
 
+# Turn selinux off
+echo SELINUXTYPE=targeted > /etc/selinux/config
+
 touch /.unconfigured
