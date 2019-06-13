@@ -106,7 +106,7 @@ def test_storage_volume_backup_delete(backup):
 
 @pytest.mark.manual
 @test_requirements.storage
-def test_storage_volume_backup_restore_openstack():
+def test_storage_volume_backup_restore_openstack(backup):
     """
     Requires:
         test_storage_volume_backup[openstack]
@@ -131,7 +131,7 @@ def test_storage_volume_backup_restore_openstack():
 
 @pytest.mark.manual
 @test_requirements.storage
-def test_storage_volume_backup_restore_from_backup_page_openstack():
+def test_storage_volume_backup_restore_from_backup_page_openstack(backup):
     """
     Requires:
         test_storage_volume_backup[openstack]

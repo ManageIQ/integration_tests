@@ -41,28 +41,8 @@ def storage_object(appliance, provider):
         return objs[0]
 
 
-@test_requirements.tag
-def test_object_add_remove_tag(storage_object):
-    """
-    Polarion:
-        assignee: anikifor
-        initialEstimate: 1/4h
-        casecomponent: Tagging
-    """
-    # add tag with category Department and tag communication
-    added_tag = storage_object.add_tag()
-    tag_available = storage_object.get_tags()
-    assert tag_available[0].display_name == added_tag.display_name
-    assert tag_available[0].category.display_name == added_tag.category.display_name
-
-    # remove assigned tag
-    storage_object.remove_tag(added_tag)
-    tag_available = storage_object.get_tags()
-    assert not tag_available
-
-
 @pytest.mark.manual
-@test_requirements.storage
+@test_requirements.tag
 def test_storage_object_store_object_remove():
     """
     Requires:
@@ -88,9 +68,8 @@ def test_storage_object_store_object_remove():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.storage
-def test_storage_object_store_object_edit_tag_openstack():
+def test_storage_object_store_object_add_remove_tag_openstack():
     """
     Requires:
         OpenstackProvider
@@ -113,4 +92,13 @@ def test_storage_object_store_object_edit_tag_openstack():
             3. Verify the tag is assigned
             4. Verify the tag is removed
     """
-    pass
+    # add tag with category Department and tag communication
+    added_tag = storage_object.add_tag()
+    tag_available = storage_object.get_tags()
+    assert tag_available[0].display_name == added_tag.display_name
+    assert tag_available[0].category.display_name == added_tag.category.display_name
+
+    # remove assigned tag
+    storage_object.remove_tag(added_tag)
+    tag_available = storage_object.get_tags()
+    assert not tag_available
