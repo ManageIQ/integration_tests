@@ -21,7 +21,6 @@ pytestmark = [
 ]
 
 vddk_versions = [
-    ('v5_5'),
     ('v6_0'),
     ('v6_5'),
     ('v6_7')
