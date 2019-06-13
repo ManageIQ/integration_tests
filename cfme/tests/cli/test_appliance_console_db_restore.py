@@ -6,7 +6,11 @@ from paramiko_expect import SSHClientInteraction
 from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.fixtures.cli import configure_appliances_ha
+from cfme.fixtures.cli import configure_automatic_failover
 from cfme.fixtures.cli import provider_app_crud
+from cfme.fixtures.cli import reconfigure_primary_replication_node
+from cfme.fixtures.cli import reconfigure_standby_replication_node
 from cfme.fixtures.cli import replicated_appliances_with_providers
 from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -36,6 +40,17 @@ def provision_vm(request, provider):
         logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
     return vm
+
+
+def add_providers(appliances):
+    appl1, appl2, appl3 = appliances
+
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl3).setup()
+    provider_app_crud(EC2Provider, appl3).setup()
+    appl1.db.backup()
+
+    return appliances
 
 
 @pytest.fixture
@@ -146,30 +161,29 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     app1_ip = appl2.hostname
     pwd = app_creds['password']
     # Configure first appliance as dedicated database
-    command_set = ('ap', '', '7', '1', '2', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', '', '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), '')
     appl1.appliance_console.run_commands(command_set)
     wait_for(lambda: appl1.db.is_dedicated_active)
     # Configure EVM webui appliance with create region in dedicated database
     command_set = ('ap', '', '7', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
-        pwd, TimedCommand(pwd, 360), '')
+        TimedCommand(pwd, 360), '')
     appl3.appliance_console.run_commands(command_set)
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Configure primary replication node
-    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
+    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip,
         TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
+
     # Configure secondary replication node
-    command_set = ('ap', '', '8', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+    command_set = ('ap', '', '8', '2', '2', app0_ip, '', pwd, '', '2', '2', '', '', pwd, pwd,
                    app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
+    #
     # Configure automatic failover on EVM appliance
-    command_set = ('ap', '', '10', TimedCommand('1', 30), '')
-    appl3.appliance_console.run_commands(command_set)
-
     with waiting_for_ha_monitor_started(appl3, app1_ip, timeout=300):
         # Configure automatic failover on EVM appliance
-        command_set = ('ap', '', '8', TimedCommand('1', 30), '')
+        command_set = ('ap', '', '10', TimedCommand('1', 30), '')
         appl3.appliance_console.run_commands(command_set)
 
     # Add infra/cloud providers and create db backup
@@ -446,7 +460,7 @@ def test_appliance_console_restore_db_replicated(
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_providers):
+def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_creds):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
 
@@ -456,18 +470,25 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    appl1, appl2, appl3 = get_ha_appliances_with_providers
+    pwd = app_creds["password"]
+    appl1, appl2, appl3 = add_providers(
+        configure_appliances_ha(unconfigured_appliances, pwd))
     providers_before_restore = set(appl3.managed_provider_names)
     # Restore DB on the second appliance
     appl3.evmserverd.stop()
-    appl1.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
-    appl2.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
+    appl1.rh_postgresql95_repmgr.stop()
+    appl2.rh_postgresql95_repmgr.stop()
     appl1.db.drop()
     appl1.db.create()
     fetch_v2key(appl3, appl1)
     restore_db(appl1)
-    appl1.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
-    appl2.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
+
+    reconfigure_primary_replication_node(appl1, pwd)
+    reconfigure_standby_replication_node(appl2, pwd, appl1.hostname)
+
+    configure_automatic_failover(appl3, primary_ip=appl1.hostname)
+    appl3.evm_failover_monitor.restart()
+
     appl3.evmserverd.start()
     appl3.wait_for_web_ui()
     # Assert providers still exist after restore
@@ -479,9 +500,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
                       matched_patterns=['Starting to execute failover'],
                       hostname=appl3.hostname).waiting(timeout=450):
         # Cause failover to occur
-        result = appl1.ssh_client.run_command(
-            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+        appl1.db_service.stop()
 
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
