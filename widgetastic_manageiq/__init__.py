@@ -54,6 +54,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import NavDropdown
+from widgetastic_patternfly import SelectItemNotFound
 from widgetastic_patternfly import SelectorDropdown
 from widgetastic_patternfly import Tab
 from widgetastic_patternfly import VerticalNavigation
@@ -92,6 +93,85 @@ class ManageIQTree(BootstrapTreeview):
             return result
         else:
             return None
+
+
+class SectionedBootstrapSelect(BootstrapSelect):
+    """ Refactor to allow for bootstrap select that have sections. """
+
+    SectionOption = namedtuple("SectionOption", ["text", "value", "section_id"])
+    SECTIONS = ".//li[contains(@class, 'dropdown-header')]"
+    OPTIONS = ".//li[contains(@class, 'data-original-index') and contains(@class, 'data-optgroup')]"
+    OPTION_ITEMS = "./div/ul/li"
+    SECTION_ELEMENTS = './/li[@data-optgroup="{}"]'
+    GROUP_INDEX = "data-optgroup"
+    ITEM_INDEX = "data-original-index"
+    ITEM_TEXT = ".//span[contains(@class, 'text')]"
+
+    @property
+    def all_sections(self):
+        return [
+            self.Option(self.browser.text(el), el.get_attribute(self.GROUP_INDEX))
+            for el in self.browser.elements(self.SECTIONS, parent=self)
+        ]
+
+    @property
+    def all_options(self):
+        return [
+            self.SectionOption(
+                self.browser.text(self.browser.element(self.ITEM_TEXT, parent=el)),
+                el.get_attribute(self.ITEM_INDEX),
+                el.get_attribute(self.GROUP_INDEX),
+            )
+            for el in self.browser.elements(self.OPTION_ITEMS, parent=self)
+            if not el.get_attribute("class")
+        ]
+
+    def get_section_id_by_text(self, text):
+        for section in self.all_sections:
+            if section.text == text:
+                return section.value
+        raise NoSuchElementException("No section named {}".format(text))
+
+    def get_elements_in_section(self, text):
+        return self.browser.elements(
+            self.SECTION_ELEMENTS.format(self.get_section_id_by_text(text))
+        )
+
+    def select_item_in_section(self, section_text, item_text):
+        """ Selects an element in a section, only supports a single item
+
+        Args:
+            item_text: text of the item in the section
+            section_text: text of the section which contains the item
+        """
+        self.open()
+        # get the elements in the section
+        section_elements = self.get_elements_in_section(section_text.upper())
+        for el in section_elements:
+            try:
+                text_element = self.browser.element(self.ITEM_TEXT, parent=el)
+            except NoSuchElementException:
+                continue
+            if self.browser.text(text_element) == item_text:
+                self.browser.click(text_element)
+                self.close()
+                break
+        else:
+            raise SelectItemNotFound(
+                widget=self, item=item_text, options=[opt.text for opt in self.all_options]
+            )
+
+    def fill(self, values):
+        """ Values is assumed to have the tag category and the tag name """
+        before = self.selected_option
+        if len(values) == 3:
+            section_text = values[1]
+        else:
+            section_text = values[0]
+        item_text = values[-1]
+        self.select_item_in_section(section_text, item_text)
+        after = self.selected_option
+        return before != after
 
 
 class SummaryFormItem(Widget):

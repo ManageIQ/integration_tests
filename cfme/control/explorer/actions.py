@@ -19,9 +19,12 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import CheckboxSelect
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import MultiBoxSelect
+from widgetastic_manageiq import SectionedBootstrapSelect
 from widgetastic_manageiq import SummaryFormItem
 
 
@@ -63,7 +66,10 @@ class ActionFormCommon(ControlExplorerView):
     email_recipient = Input("to")
     vcenter_attr_name = Input("attribute")
     vcenter_attr_value = Input("value")
-    tag = ManageIQTree("action_tags_treebox")
+    tag = VersionPicker({
+        Version.lowest(): ManageIQTree("action_tags_treebox"),
+        "5.11": SectionedBootstrapSelect("tag")
+    })
     remove_tag = CheckboxSelect("action_options_div")
     run_ansible_playbook = View.nested(RunAnsiblePlaybookFromView)
     cancel_button = Button("Cancel")
