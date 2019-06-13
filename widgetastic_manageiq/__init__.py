@@ -101,12 +101,16 @@ class SectionedBootstrapSelect(BootstrapSelect):
     SectionOption = namedtuple("SectionOption", ["text", "value", "section_id"])
     SECTIONS = ".//li[contains(@class, 'dropdown-header')]"
     OPTIONS = ".//li[contains(@class, 'data-original-index') and contains(@class, 'data-optgroup')]"
+    OPTION_ITEMS = "./div/ul/li"
     SECTION_ELEMENTS = './/li[@data-optgroup="{}"]'
+    GROUP_INDEX = "data-optgroup"
+    ITEM_INDEX = "data-original-index"
+    ITEM_TEXT = ".//span[contains(@class, 'text')]"
 
     @property
     def all_sections(self):
         return [
-            self.Option(self.browser.text(el), el.get_attribute("data-optgroup"))
+            self.Option(self.browser.text(el), el.get_attribute(self.GROUP_INDEX))
             for el in self.browser.elements(self.SECTIONS, parent=self)
         ]
 
@@ -114,13 +118,11 @@ class SectionedBootstrapSelect(BootstrapSelect):
     def all_options(self):
         return [
             self.SectionOption(
-                self.browser.text(
-                    self.browser.element(".//span[contains(@class, 'text')]", parent=el)
-                ),
-                el.get_attribute("data-original-index"),
-                el.get_attribute("data-optgroup"),
+                self.browser.text(self.browser.element(self.ITEM_TEXT, parent=el)),
+                el.get_attribute(self.ITEM_INDEX),
+                el.get_attribute(self.GROUP_INDEX),
             )
-            for el in self.browser.elements("./div/ul/li", parent=self)
+            for el in self.browser.elements(self.OPTION_ITEMS, parent=self)
             if not el.get_attribute("class")
         ]
 
@@ -147,7 +149,7 @@ class SectionedBootstrapSelect(BootstrapSelect):
         section_elements = self.get_elements_in_section(section_text.upper())
         for el in section_elements:
             try:
-                text_element = self.browser.element(".//span[contains(@class, 'text')]", parent=el)
+                text_element = self.browser.element(self.ITEM_TEXT, parent=el)
             except NoSuchElementException:
                 continue
             if self.browser.text(text_element) == item_text:
