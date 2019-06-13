@@ -8,6 +8,7 @@ import fauxfactory
 import pytest
 import requests
 from lxml import etree
+from paramiko_expect import SSHClientInteraction
 
 import cfme.utils.auth as authutil
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -268,8 +269,7 @@ def ha_multiple_preupdate_appliances(appliance, old_version):
         yield apps
 
 
-@pytest.fixture
-def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
+def configure_appliances_ha(appliances, pwd):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
@@ -302,10 +302,9 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     monitor. wait 30 seconds for service to start '' finish.
 
     """
-    apps0, apps1, apps2 = ha_multiple_preupdate_appliances
+    apps0, apps1, apps2 = appliances
     app0_ip = apps0.hostname
     app1_ip = apps1.hostname
-    pwd = app_creds["password"]
 
     # Configure first appliance as dedicated database
     interaction = SSHExpect(apps0)
@@ -361,13 +360,31 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     apps2.evmserverd.wait_for_running()
     apps2.wait_for_web_ui()
 
+    configure_primary_replication_node(apps0, pwd)
+    configure_standby_replication_node(apps1, pwd, app0_ip)
+
+    configure_automatic_failover(apps2, primary_ip=None)
+
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, apps2).setup()
+    provider_app_crud(EC2Provider, apps2).setup()
+    return appliances
+
+
+def logging_callback(appliance):
+    def the_logger(m):
+        logger.debug('Appliance %s:\n%s', appliance.hostname, m)
+    return the_logger
+
+
+def configure_primary_replication_node(appl, pwd):
     # Configure primary replication node
-    interaction = SSHExpect(apps0)
+    interaction = SSHExpect(appl)
     interaction.send('ap')
     interaction.answer('Press any key to continue.', '', timeout=20)
     # 6/8 for Configure Database Replication
     interaction.answer('Choose the advanced setting: ',
-                       '6' if apps1.version < '5.10' else '8')
+                       '6' if appl.version < '5.10' else '8')
     interaction.answer('Choose the database replication operation: ', '1')
     interaction.answer('Enter the number uniquely identifying '
                        'this node in the replication cluster: ', '1')
@@ -379,26 +396,59 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     interaction.answer(r'Apply this Replication Server Configuration\? \(Y/N\): ', 'y')
     interaction.answer('Press any key to continue.', '')
 
-    if BZ(1732092, forced_streams=get_stream(apps1.version)).blocks:
-        assert apps1.ssh_client.run_command('setenforce 0').success
 
+def reconfigure_primary_replication_node(appl, pwd):
+    # Configure primary replication node
+    interaction = SSHClientInteraction(appl.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=20)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    # Configure Database Replication
+    interaction.send('6' if appl.version < '5.10' else '8')
+    interaction.expect('Choose the database replication operation: ')
+    interaction.send('1')
+    interaction.expect('Enter the number uniquely identifying '
+                       'this node in the replication cluster: ')
+    interaction.send('1')
+    interaction.expect('Enter the cluster database name: |vmdb_production| ')
+    interaction.send('')
+    interaction.expect('Enter the cluster database username: |root| ')
+    interaction.send('')
+    interaction.expect('Enter the cluster database password: ')
+    interaction.send(pwd)
+    interaction.expect('Enter the cluster database password: ')
+    interaction.send(pwd)
+    interaction.expect('Enter the primary database hostname or IP address: |.*| ')
+    interaction.send(appl.hostname)
+    # Warning: File /etc/repmgr.conf exists. Replication is already configured
+    interaction.expect(r'Continue with configuration\? \(Y/N\): ')
+    interaction.send('y')
+    interaction.expect(r'Apply this Replication Server Configuration\? \(Y/N\): ')
+    interaction.send('y')
+    interaction.expect('Press any key to continue.')
+    interaction.send('')
+
+
+def configure_standby_replication_node(appl, pwd, primary_ip):
     # Configure secondary (standby) replication node
-    interaction = SSHExpect(apps1)
+    interaction = SSHExpect(appl)
     interaction.send('ap')
     interaction.answer('Press any key to continue.', '', timeout=20)
     interaction.answer('Choose the advanced setting: ',
-                       '6' if apps1.version < '5.10' else '8')
+                       '6' if appl.version < '5.10' else '8')
     # 6/8 for Configure Database Replication
     # Configure Server as Standby
     interaction.answer('Choose the database replication operation: ', '2')
     interaction.answer('Choose the encryption key: |1| ', '2')
-    interaction.send(app0_ip)
+    interaction.send(primary_ip)
     interaction.answer('Enter the appliance SSH login: |root| ', '')
     interaction.answer('Enter the appliance SSH password: ', pwd)
     interaction.answer('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key|',
                        '')
     interaction.answer('Choose the standby database disk: |1| ',
-                       '1' if apps1.version < '5.10' else '2')
+                       '1' if appl.version < '5.10' else '2')
     # "Enter " ... is on line above.
     interaction.answer('.*the number uniquely identifying this '
                        'node in the replication cluster: ',
@@ -407,30 +457,82 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     interaction.answer('Enter the cluster database username: |root| ', '')
     interaction.answer('Enter the cluster database password: ', pwd)
     interaction.answer('Enter the cluster database password: ', pwd)
-    interaction.answer('Enter the primary database hostname or IP address: ', app0_ip)
-    interaction.answer('Enter the Standby Server hostname or IP address: |.*|', app1_ip)
+    interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
+    interaction.answer('Enter the Standby Server hostname or IP address: |.*|', appl.hostname)
+    if repmgr_reconfigure:
+        interaction.answer(r'Continue with configuration\? \(Y/N\): ', 'y')
     interaction.answer(r'Configure Replication Manager \(repmgrd\) for automatic '
                        r'failover\? \(Y/N\): ', 'y')
     interaction.answer(r'Apply this Replication Server Configuration\? \(Y/N\): ', 'y')
     interaction.answer('Press any key to continue.', '', timeout=5 * 60)
 
+
+def reconfigure_standby_replication_node(appl, pwd, primary_ip, repmgr_reconfigure=False):
+    # Configure secondary (standby) replication node
+    interaction = SSHClientInteraction(appl.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl))
+    interaction.send('ap')
+    # When reconfiguring, the ap command may hang for 60s even.
+    interaction.expect('Press any key to continue.', timeout=120)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    # Configure Database Replication
+    interaction.send('6' if appl.version < '5.10' else '8')
+    interaction.expect('Choose the database replication operation: ')
+    interaction.send('2')  # Configure Server as Standby
+    # Would you like to remove the existing database before configuring as a standby server?
+    # WARNING: This is destructive. This will remove all previous data from this server
+    interaction.expect(r'Continue\? \(Y/N\): ')
+    interaction.send('y')
+    interaction.expect('Choose the standby database disk: |1| ')
+    interaction.send('1' if appl.version < '5.10' else '2')  # Don't partition the disk
+    interaction.expect(r"Are you sure you don't want to partition the Standby "
+                       r"database disk\? \(Y/N\): ")
+    interaction.send('y')
+    interaction.expect('.*the number uniquely identifying this '
+                       'node in the replication cluster: ')
+    interaction.send('2')
+    interaction.expect('Enter the cluster database name: |vmdb_production| ')
+    interaction.send('')
+    interaction.expect('Enter the cluster database username: |root| ')
+    interaction.send('')
+    interaction.expect('Enter the cluster database password: ')
+    interaction.send(pwd)
+    interaction.expect('Enter the cluster database password: ')
+    interaction.send(pwd)
+    interaction.expect('Enter the primary database hostname or IP address: ')
+    interaction.send(primary_ip)
+    interaction.expect('Enter the Standby Server hostname or IP address: |.*|')
+    interaction.send('')
+    interaction.expect(r'Configure Replication Manager \(repmgrd\) for automatic '
+                       r'failover\? \(Y/N\): ')
+    interaction.send('y')
+    # Warning: File /etc/repmgr.conf exists. Replication is already configured
+    interaction.expect(r'Continue with configuration\? \(Y/N\): ')
+    interaction.send('y')
+    interaction.expect(r'Apply this Replication Server Configuration\? \(Y/N\): ')
+    interaction.send('y')
+    interaction.expect('Press any key to continue.', timeout=5 * 60)
+
+
+def configure_automatic_failover(appl, primary_ip):
     # Configure automatic failover on EVM appliance
-    interaction = SSHExpect(apps2)
+    interaction = SSHExpect(appl)
     interaction.send('ap')
     interaction.answer('Press any key to continue.', '', timeout=20)
     interaction.expect('Choose the advanced setting: ')
 
-    with waiting_for_ha_monitor_started(apps2, app1_ip, timeout=300):
+    with waiting_for_ha_monitor_started(appl, primary_ip, timeout=300):
         # Configure Application Database Failover Monitor
-        interaction.send('8' if apps2.version < '5.10' else '10')
+        interaction.send('8' if appl.version < '5.10' else '10')
         interaction.answer('Choose the failover monitor configuration: ', '1')
         # Failover Monitor Service configured successfully
         interaction.answer('Press any key to continue.', '')
 
-    # Add infra/cloud providers and create db backup
-    provider_app_crud(VMwareProvider, apps2).setup()
-    provider_app_crud(EC2Provider, apps2).setup()
-    return ha_multiple_preupdate_appliances
+
+@pytest.fixture
+def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
+    configure_appliances_ha(ha_multiple_preupdate_appliances, app_creds["password"])
 
 
 @pytest.fixture

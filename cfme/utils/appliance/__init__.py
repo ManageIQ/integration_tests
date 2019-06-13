@@ -316,6 +316,7 @@ class IPAppliance(object):
     merkyl = SystemdService.declare(unit_name='merkyl')
     nginx = SystemdService.declare(unit_name='nginx')
     rabbitmq_server = SystemdService.declare(unit_name='rabbitmq-server')
+    rh_postgresql95_repmgr = SystemdService.declare(unit_name='rh-postgresql95-repmgr')
     sssd = SystemdService.declare(unit_name='sssd')
     sshd = SystemdService.declare(unit_name='sshd')
     supervisord = SystemdService.declare(unit_name='supervisord')
