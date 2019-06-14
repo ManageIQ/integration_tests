@@ -309,7 +309,17 @@ def test_provision_from_template_using_rest(appliance, request, provider, vm_nam
 
     wait_for(
         lambda: instance.exists,
-        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
+        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name)
+    )
+
+    @request.addfinalizer
+    def _cleanup():
+        logger.info('Instance cleanup, deleting %s', instance.name)
+        try:
+            instance.cleanup_on_provider()
+        except Exception as ex:
+            logger.warning('Exception while deleting instance fixture, continuing: {}'
+                           .format(ex.message))
 
 
 VOLUME_METHOD = ("""
