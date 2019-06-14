@@ -169,6 +169,7 @@ class Element(BaseEntity):
         if add_element:
             dragged_element = second_element.get('element_information').get('choose_type')
             box_label = second_element.get('element_information').get('ele_label')
+            view.cancel_button.click()
             view.dd.drag_and_drop(dragged_element, box_label)
             view.element.edit_element(dragged_element)
             view.fill(second_element)
@@ -249,4 +250,6 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToAttribute('dialog', 'Edit')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.element.edit_element("Text Box")
+        self.prerequisite_view.element.edit_element(
+            self.obj.element_data[0]['element_information']['ele_label']
+        )

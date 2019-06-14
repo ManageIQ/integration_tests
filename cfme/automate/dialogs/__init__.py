@@ -8,6 +8,7 @@ from widgetastic_patternfly import Input
 from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import DialogButton
+from widgetastic_manageiq import DialogElement
 from widgetastic_manageiq import DragandDropElements
 from widgetastic_manageiq import ManageIQTree
 
@@ -35,6 +36,7 @@ class AutomateCustomizationView(BaseLoggedInPage):
 class DialogForm(AutomateCustomizationView):
     title = Text('//div[@id= "main-content"]//h1')
     sub_title = Text('//div[@id= "main-content"]//h2')
+    element = DialogElement()
 
     label = Input(id='name')
     description = Input(id="description")
