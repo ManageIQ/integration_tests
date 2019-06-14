@@ -36,49 +36,6 @@ def test_customize_request_security_group():
     pass
 
 
-@pytest.mark.tier(1)
-def test_automate_generic_object_service_associations():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/10h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.7
-        casecomponent: Automate
-        tags: automate
-        title: Test automate generic object service associations
-        testSteps:
-            1. Use the attached domain to test this bug:
-            2. Import end enable the domain
-            3. Have at least one service created (Generic is enough)
-            4. Run rails console and create the object definition:
-               GenericObjectDefinition.create(:name => "LoadBalancer", :properties => {
-               :attributes   => {:location => "string"}, :associations => {:vms => "Vm",
-               :services => "Service"},})
-            5. Run tail -fn0 log/automation.log | egrep "ERROR|XYZ"
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5.
-            6. Simulate Request/GOTest with method execution
-               In the tail"ed log:
-               There should be no ERROR lines related to the execution.
-               There should be these two lines:
-               <AEMethod gotest> XYZ go object: #<MiqAeServiceGenericObject....something...>
-               <AEMethod gotest> XYZ load balancer got service:
-               #<MiqAeServiceService:....something....>
-               If there is "XYZ load balancer got service: nil", then this bug was reproduced.
-
-    Bugzilla:
-        1410920
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_automate_git_domain_displayed_in_dialog():
     """

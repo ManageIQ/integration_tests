@@ -5,7 +5,9 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
+from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -348,3 +350,99 @@ def test_send_email_method(smtp_test, klass):
     # TODO(GH-8820): This issue should be fixed to check mails sent to person in 'cc' and 'bcc'
     # Check whether the mail sent via automate method really arrives
     wait_for(lambda: len(smtp_test.get_emails(to_address=mail_to)) > 0, num_sec=60, delay=10)
+
+
+@pytest.fixture(scope="module")
+def generic_object_definition(appliance):
+    # Creating generic object using REST
+    with appliance.context.use(ViaREST):
+        definition = appliance.collections.generic_object_definitions.create(
+            name="LoadBalancer_{}".format(fauxfactory.gen_numeric_string(3)),
+            description="LoadBalancer",
+            attributes={"location": "string"},
+            associations={"vms": "Vm", "services": "Service"}
+        )
+        yield definition
+        definition.delete_if_exists()
+
+
+@pytest.fixture
+def go_service_request(generic_catalog_item):
+    # Creating generic service
+    service_request = generic_catalog_item.appliance.rest_api.collections.service_templates.get(
+        name=generic_catalog_item.name
+    ).action.order()
+    yield
+    service_request.action.delete()
+
+
+@pytest.mark.tier(1)
+def test_automate_generic_object_service_associations(appliance, klass, go_service_request,
+                                                      generic_object_definition):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/10h
+        caseimportance: medium
+        startsin: 5.7
+        casecomponent: Automate
+
+    Bugzilla:
+        1410920
+    """
+    # Ruby code
+    script = 'go_class = $evm.vmdb(:generic_object_definition).find_by(:name => "{name}")\n'.format(
+        name=generic_object_definition.name
+    )
+    script = script + (
+        'load_balancer = go_class.create_object(:name => "Test Load Balancer", :location => '
+        '"Mahwah")\n'
+        '$evm.log("info", "XYZ go object: #{load_balancer.inspect}")\n'
+        'service = $evm.vmdb(:service).first\n'
+        'load_balancer.services = [service]\n'
+        'content_type = "message"\n'
+        'load_balancer.save!\n'
+        '$evm.log("info", "XYZ load balancer got service: #{load_balancer.services.first.inspect}")'
+        '\nexit MIQ_OK'
+    )
+    with appliance.context.use(ViaUI):
+        # Adding schema for executing method
+        klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+
+        # Adding method
+        method = klass.methods.create(
+            name=fauxfactory.gen_alphanumeric(),
+            display_name=fauxfactory.gen_alphanumeric(),
+            location='inline',
+            script=script)
+
+        # Adding instance to call automate method
+        instance = klass.instances.create(
+            name=fauxfactory.gen_alphanumeric(),
+            display_name=fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
+            fields={'execute': {'value': method.name}}
+        )
+
+        result = LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=[
+                r'.*XYZ go object: #<MiqAeServiceGenericObject.*',
+                r'.*XYZ load balancer got service: #<MiqAeServiceService.*'
+            ],
+        )
+        result.fix_before_start()
+
+        # Executing automate method using simulation
+        simulate(
+            appliance=klass.appliance,
+            attributes_values={
+                "namespace": klass.namespace.name,
+                "class": klass.name,
+                "instance": instance.name,
+            },
+            message="create",
+            request="Call_Instance",
+            execute_methods=True,
+        )
+        result.validate_logs()

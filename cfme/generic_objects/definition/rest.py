@@ -70,6 +70,12 @@ def delete(self):
         return
 
     definition = definition[0]
+    instances = self.appliance.rest_api.collections.generic_objects.find_by(
+        generic_object_definition_id=definition.id
+    )
+    for instance in instances:
+        instance.action.delete()
+
     definition.action.delete()
     assert_response(self.appliance)
     self.rest_response = self.appliance.rest_api.response
