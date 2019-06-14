@@ -197,7 +197,9 @@ def compliance_condition(appliance, virtualcenter_provider):
     try:
         vm_name = virtualcenter_provider.data["cap_and_util"]["capandu_vm"]
     except KeyError:
-        pytest.skip("No capandu_vm exists on virtualcenter_provider")
+        pytest.skip("Missing 'cap_and_util' field in {} provider data.".format(
+            virtualcenter_provider.key)
+        )
     expression = (
         "fill_field(VM and Instance : Name, =, {}); "
         "select_expression_text; "
@@ -556,7 +558,7 @@ def test_edit_action_buttons(action_for_testing):
     navigate_to(action_for_testing, "Details")
 
 
-@pytest.mark.meta(blockers=[BZ(1717483, forced_streams=["5.11"])], automates=[1711352])
+@pytest.mark.meta(blockers=[BZ(1717483)], automates=[1711352])
 def test_policy_condition_multiple_ors(
         appliance,
         virtualcenter_provider,
@@ -574,15 +576,15 @@ def test_policy_condition_multiple_ors(
         casecomponent: Control
         initialEstimate: 1/12h
     """
-    collection = virtualcenter_provider.appliance.provider_based_collection(virtualcenter_provider)
+    collection = appliance.provider_based_collection(virtualcenter_provider)
     all_vms = collection.all()
     all_vm_names = [vm.name for vm in all_vms]
 
     # we need to select out cu-24x7
-    try:
-        vm_name = virtualcenter_provider.data["cap_and_util"]["capandu_vm"]
-    except KeyError:
-        pytest.skip("No capandu_vm available on virtualcenter_provider")
+    vm_name = virtualcenter_provider.data["cap_and_util"]["capandu_vm"]
+    # check that it exists on provider
+    if not virtualcenter_provider.mgmt.does_vm_exist(vm_name):
+        pytest.skip("No capandu_vm available on virtualcenter_provider of name {}".format(vm_name))
 
     vms = [all_vms.pop(all_vm_names.index(vm_name))]
 
