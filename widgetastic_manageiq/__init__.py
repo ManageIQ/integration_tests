@@ -5456,3 +5456,68 @@ class AutomateRadioGroup(RadioGroup):
 
 class InputButton(Input, ClickableMixin):
     pass
+
+
+class EntryPoint(View, ClickableMixin):
+    """This widget for Dynamic Catalog and Dialog entry point
+
+    Args:
+        name: Name of Entry Point textbox
+        id: Id of Entry Point textbox
+        locator: If you have specific locator, use it here.
+    """
+
+    tree = ManageIQTree(tree_id=Parameter("@tree_id"))
+    textbox = TextInput(locator=Parameter("@locator"))
+    group_btn = Text(ParametrizedLocator("{@locator}/../span[@class='input-group-btn']"))
+    apply = Button("Apply")
+
+    def __init__(self, parent, id=None, name=None, locator=None, tree_id=None, logger=None):  # noqa
+        View.__init__(self, parent=parent, logger=logger)
+
+        self.tree_id = tree_id
+        base_locator = ".//*[(self::input or self::textarea) and @{}={}]"
+
+        if id:
+            self.locator = base_locator.format("id", quote(id))
+        elif name:
+            self.locator = base_locator.format("name", quote(name))
+        elif locator:
+            self.locator = locator
+        else:
+            raise TypeError("You need to specify either, id, name or locator for EntryPoint")
+
+    @property
+    def value(self):
+        return self.textbox.read()
+
+    def read(self):
+        return self.value
+
+    def fill(self, value):
+        """ Fill entry point path
+        Args:
+            value (list): path to for selection.
+        """
+
+        # `domain` not become part of value
+        if self.value and self.value in "/".join(value):
+            return False
+
+        if self.textbox.is_enabled:
+            self.browser.click(self.textbox)
+        else:
+            self.group_btn.click()
+
+        self.tree.wait_displayed("10s")
+        self.tree.click_path(*value)
+
+        # Some EntryPoint need to apply tree selection
+        if self.tree.is_displayed:
+            self.apply.click()
+
+        return True
+
+    @property
+    def is_displayed(self):
+        return self.textbox.is_displayed

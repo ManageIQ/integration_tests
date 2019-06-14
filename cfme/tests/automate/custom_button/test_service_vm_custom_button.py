@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import fauxfactory
 import pytest
 from widgetastic_patternfly import Dropdown
@@ -5,10 +7,13 @@ from widgetastic_patternfly import Dropdown
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.tests.automate.custom_button import DropdownDialogView
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
+from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import LogValidator
 
 
 pytestmark = [
@@ -29,6 +34,48 @@ def button_group(appliance):
     )
     yield button_gp
     button_gp.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def setup_dynamic_dialog(appliance, custom_instance):
+    # Create custom instance with ruby method
+    code = dedent(
+        """
+        @vm = $evm.root['vm']
+        dialog_hash = {}
+        dialog_hash[@vm.id] = @vm.name
+        $evm.object['default_value'] = dialog_hash.first[0]
+        $evm.object['values'] = dialog_hash
+        """
+    )
+    instance = custom_instance(ruby_code=code)
+
+    # Create dynamic dialog
+    service_dialog = appliance.collections.service_dialogs
+    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
+    ele_name = "ele_{}".format(fauxfactory.gen_alphanumeric())
+
+    element_data = {
+        "element_information": {
+            "ele_label": "ele_{}".format(fauxfactory.gen_alphanumeric()),
+            "ele_name": ele_name,
+            "ele_desc": fauxfactory.gen_alphanumeric(),
+            "dynamic_chkbox": True,
+            "choose_type": "Dropdown",
+        },
+        "options": {"entry_point": instance.tree_path, "field_required": True},
+    }
+    sd = service_dialog.create(label=dialog, description="my dialog")
+    tab = sd.tabs.create(
+        tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()), tab_desc="my tab desc"
+    )
+    box = tab.boxes.create(
+        box_label="box_{}".format(fauxfactory.gen_alphanumeric()), box_desc="my box desc"
+    )
+    box.elements.create(element_data=[element_data])
+
+    yield sd, ele_name
+    sd.delete_if_exists()
 
 
 def test_custom_button_display_service_vm(request, appliance, service_vm, button_group):
@@ -84,9 +131,11 @@ def test_custom_button_display_service_vm(request, appliance, service_vm, button
 
 
 @test_requirements.customer_stories
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_custom_button_with_dynamic_dialog_vm():
+@pytest.mark.meta(blockers=[BZ(1687061, forced_streams=["5.10"])], automates=[1687061])
+def test_custom_button_with_dynamic_dialog_vm(
+    appliance, provider, request, service_vm, setup_dynamic_dialog
+):
     """ Test custom button combination with dynamic dialog for VM entity.
 
     Polarion:
@@ -123,4 +172,54 @@ def test_custom_button_with_dynamic_dialog_vm():
     Bugzilla:
         1687061
     """
-    pass
+    dialog, ele_name = setup_dynamic_dialog
+    # Create button group
+    collection = appliance.collections.button_groups
+    button_gp = collection.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        type=getattr(collection, "VM_INSTANCE"),
+    )
+    request.addfinalizer(button_gp.delete_if_exists)
+
+    # Create custom button under group
+    button = button_gp.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        dialog=dialog.label,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    # Check service vm on UI and SSUI
+    service, _ = service_vm
+
+    for context in [ViaUI, ViaSSUI]:
+        with appliance.context.use(context):
+            nav_to = ssui_nav if context is ViaSSUI else ui_nav
+
+            # Navigate to VM Details page of service
+            view = nav_to(service, "VMDetails")
+
+            # Select button from custom button group dropdown
+            custom_button_group = Dropdown(view, button_gp.text)
+            assert custom_button_group.is_displayed
+            custom_button_group.item_select(button.text)
+
+            # Check default selected vm must destination vm
+            view = view.browser.create_view(DropdownDialogView)
+            serv = view.service_name(ele_name)
+            serv.dropdown.wait_displayed()
+            assert serv.dropdown.selected_option == service.vm_name
+
+            # execute button and check `InspectMe` method by Attributes - Begin` and
+            # `$evm.root['vm']` of dynamic dialog by expected service vm name in automation log
+            log = LogValidator(
+                "/var/www/miq/vmdb/log/automation.log",
+                matched_patterns=["Attributes - Begin", 'name = "{}"'.format(service.vm_name)],
+            )
+            log.fix_before_start()
+            submit = "submit" if context is ViaUI else "submit_request"
+            getattr(view, submit).click()
+            log.wait_for_log_validation()
