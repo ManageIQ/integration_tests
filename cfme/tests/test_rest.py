@@ -1160,3 +1160,35 @@ def test_rest_metric_rollups(appliance, interval, resource_type):
     )
     appliance.rest_api.get(url)
     assert_response(appliance)
+
+
+@pytest.mark.ignore_stream("5.10")
+def test_supported_provider_options(appliance, soft_assert):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        caseimportance: medium
+        initialEstimate: 1/10h
+        testSteps:
+            1. Send a request: OPTIONS /api/providers
+            2. Check if `supported_providers` is present in the response.
+            3. Check if `regions` is present in the response under data > supported_providers
+                > providers_that_support_regions such as EC2 and Azure.
+    """
+    data = appliance.rest_api.collections.providers.options()["data"]
+
+    soft_assert(
+        "supported_providers" in data,
+        "Supported Providers data not present in the response.",
+    )
+
+    for provider in data["supported_providers"]:
+        if provider["type"] in [
+            "ManageIQ::Providers::Azure::CloudManager",
+            "ManageIQ::Providers::Amazon::CloudManager",
+        ]:
+            soft_assert(
+                "regions" in provider,
+                "Regions information not present in the provider OPTIONS.",
+            )
