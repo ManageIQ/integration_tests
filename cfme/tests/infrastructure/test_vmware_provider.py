@@ -70,7 +70,7 @@ def test_appliance_scsi_control_vmware():
 
 
 @pytest.mark.tier(1)
-def test_vmware_vds_ui_display(appliance, provider, soft_assert):
+def test_vmware_vds_ui_display(appliance, provider):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
     to vds port groups.
@@ -253,7 +253,7 @@ def test_vmware_cdrom_dropdown_not_blank():
 
 
 @pytest.mark.tier(1)
-def test_vmware_inaccessible_datastore_vm_provisioning(appliance, provider):
+def test_vmware_inaccessible_datastore_vm_provisioning(request, appliance, provider):
     """
     VMware sometimes has datastores that are inaccessible, and CloudForms should not pick this
     during provisioning when using "Choose Automatically" as an option under environment tab.
@@ -284,14 +284,15 @@ def test_vmware_inaccessible_datastore_vm_provisioning(appliance, provider):
         logger.info("Found {} inaccessible_datastores".format(inaccessible_datastores))
     else:
         pytest.skip("This provider {} has no inaccessible_datastores.".format(provider.name))
-    vm = appliance.collections.infra_vms.create('test-vmware-' + fauxfactory.gen_alphanumeric(),
-        provider, find_in_cfme=True, wait=True,
+    vm = appliance.collections.infra_vms.create('test-vmware-{}'.format(
+        fauxfactory.gen_alphanumeric()), provider, find_in_cfme=True, wait=True,
         form_values={'environment': {'automatic_placement': True}})
+    request.addfinalizer(vm.delete)
     assert vm.datastore.name not in inaccessible_datastores
 
 
 @pytest.mark.tier(1)
-def test_vmware_provisioned_vm_host_relationship(appliance, provider):
+def test_vmware_provisioned_vm_host_relationship(request, appliance, provider):
     """
     VMware VMs provisioned through cloudforms should have host relationship.
 
@@ -313,11 +314,15 @@ def test_vmware_provisioned_vm_host_relationship(appliance, provider):
             2.See all available templates
             3.CFME Provisioned VM should have host relationship.
     """
-    vm = appliance.collections.infra_vms.create('test-vmware-' + fauxfactory.gen_alphanumeric(),
+    vm = appliance.collections.infra_vms.create('test-vmware-{}'
+        .format(fauxfactory.gen_alphanumeric()),
         provider, find_in_cfme=True, wait=True,
         form_values={'environment': {'automatic_placement': True}})
+    request.addfinalizer(vm.delete)
     # assert if Host property is set for VM.
     assert isinstance(vm.host, Host)
+    view = navigate_to(vm, "Details")
+    assert view.entities.summary('Relationships').get_text_of('Host') == vm.host.name
 
 
 @pytest.mark.tier(1)
@@ -347,7 +352,7 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
         expectedResults:
             1.Provider added successfully and is refreshed
             2.VM's uid_ems is modified
-            3.After a full refresh,VM is still active and usable in cfme,not archived/orphaned.
+            3.After a full refresh, VM is still active and usable in cfme, not archived/orphaned.
     """
     command = "'ems=ManageIQ::Providers::Vmware::InfraManager.find_by(:name =>\"" + provider.name + "\");\
                 vm = ems.vms.last;\
@@ -357,6 +362,7 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
     result = appliance.ssh_client.run_rails_command(command)
     logger.info("Output of Rails command was {}".format(result.output))
     provider.refresh_provider_relationships()
+    assert result.success, "SSH Command result was unsuccessful: {}".format(result)
     if not result.output:
         vm_name = re.findall(r"\[.+\]", result.output)[0].split('[')[1].split(']')[0]
         vm = appliance.collections.infra_vms.instantiate(name=vm_name, provider=provider)
