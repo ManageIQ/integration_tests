@@ -25,46 +25,6 @@ def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
 
 
 @pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_nor_cpu_values_correct_vsphere6():
-    """
-    NOR cpu values are correct.
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    vSphere 6 provider
-    Normal Operating Ranges widget displays correct values for CPU and CPU
-    Usage max, high, average, and low, if at least one days" worth of
-    metrics have been captured:
-    The Average reflects the most common value obtained during the past 30
-    days" worth of captured metrics.
-    The High and Low reflect the range of values obtained ~85% of the time
-    within the past 30 days.
-    The Max reflects the maximum value obtained within the past 30 days.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_nor_cpu_values_correct_rhv41():
-    """
-    NOR CPU values are correct.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_status_of_a_task_via_api_with_evmrole_administrator():
     """
@@ -126,22 +86,6 @@ def test_crosshair_op_cluster_vsphere65():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_field_zone_description_special():
-    """
-    Special Chars in description
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_proxy_remove_ec2():
     """
@@ -196,73 +140,6 @@ def test_proxy_remove_gce():
                You can also remove by setting host to false
         startsin: 5.7
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_verify_httpd_only_running_when_roles_require_it():
-    """
-    Provision preconfigured appliance A.
-    Provision non-preconfigured appliance B.
-    On appliance A, stop server processes:
-    # appliance_console
-    > Stop EVM Server Processes > Y
-    On appliance B, join to appliance A:
-    # appliance_console
-    > Configure Database > Fetch key from remote machine
-    > enter IP address of appliance A
-    > root > smartvm
-    > /var/www/miq/vmdb/certs/v2_key
-    > Join Region in External Database
-    > enter IP address of appliance A
-    > 5432 > vmdb_production > root > smartvm
-    On appliance A, restart server processes:
-    > Start EVM Server Processes > Y
-    Log in the web UI on appliance A, and disable roles on appliance B
-    that require httpd:
-    Administrator > Configuration
-    > click on appliance B in accordion menu"s list of servers
-    > under Server Control, disable all server roles > Save
-    On appliance B, verify that the httpd service stops:
-    # systemctl status httpd
-    ● httpd.service - The Apache HTTP Server
-    Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled;
-    vendor preset: disabled)
-    Active: inactive (dead) since Fri 2018-01-12 10:57:29 EST; 22s ago
-    [...]
-    Enable one of the following roles, and verify that httpd restarts:
-    Cockpit, Embedded Ansible, User Interface, Web Services, Websocket
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Verify httpd only running when roles require it
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_appliance_terminates_unresponsive_worker_process():
-    """
-    If a queue message consumes significant memory and takes longer than
-    the 10 minute queue timeout, the appliance will kill the worker after
-    the stopping_timeout.
-    Steps to test (see BZ below, comments 30 and 31).
-
-    Bugzilla:
-        1395736
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.8
-        title: Appliance terminates unresponsive worker process
     """
     pass
 
@@ -355,36 +232,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_2016_server():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_external_database_appliance():
-    """
-    Configure appliance to use external DB
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_cu_data_processor():
-    """
-    C & U Data Processor (multiple appliances can have this role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(3)
 def test_sui_stack_service_vm_detail_page_should_show_correct_data():
@@ -398,23 +245,6 @@ def test_sui_stack_service_vm_detail_page_should_show_correct_data():
         caseimportance: medium
         initialEstimate: 1/4h
         title: SUI : Stack Service VM detail page should show correct data
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.retirement
-@pytest.mark.tier(2)
-def test_retire_infra_vms_folder():
-    """
-    test the retire funtion of vm on infra providers, at least two vm,
-    retire now button vms page
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/2h
     """
     pass
 
@@ -460,22 +290,6 @@ def test_validate_chargeback_cost_weekly_rate_network_cost():
         assignee: nachandr
         casecomponent: CandU
         caseimportance: medium
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_validate_chargeback_cost_tiered_rate_fixedvariable_network_cost():
-    """
-    Validate network I/O used cost  for a tiered rate with fixed and
-    variable components
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -558,23 +372,6 @@ def test_validate_chargeback_cost_weekly_rate_disk_cost():
 
 @pytest.mark.manual
 @test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_validate_chargeback_cost_resource_allocation_cpu_allocated():
-    """
-    Validate CPU allocated cost in a Chargeback report based on resource
-    allocation. C&U data is not considered for these reports.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
 def test_validate_chargeback_cost_weekly_rate_cpu_cost():
     """
     Validate CPU usage cost in a daily Chargeback report by assigning
@@ -582,39 +379,6 @@ def test_validate_chargeback_cost_weekly_rate_cpu_cost():
 
     Polarion:
         assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_validate_chargeback_cost_tiered_rate_fixedvariable_cpu_cost():
-    """
-    Validate CPU usage cost for a tiered rate with fixed and variable
-    components
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_validate_chargeback_cost_resource_allocation_storage_allocated():
-    """
-    Validate storage allocated cost in a Chargeback report based on
-    resource allocation. C&U data is not considered for these reports.
-
-    Polarion:
-        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -730,39 +494,6 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_network_cost():
 
 @pytest.mark.manual
 @test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_validate_chargeback_cost_tiered_rate_fixedvariable_disk_cost():
-    """
-    Validate disk I/O used cost for a tiered rate with fixed and variable
-    components
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_validate_chargeback_cost_resource_allocation_memory_allocated():
-    """
-    Validate memory allocated cost in a Chargeback report based on
-    resource allocation. C&U data is not considered for these reports.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
 def test_validate_chargeback_cost_monthlyreport_hourly_rate_cpu_cost():
     """
     Validate CPU usage cost in a monthly Chargeback report
@@ -771,22 +502,6 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_cpu_cost():
         assignee: nachandr
         casecomponent: CandU
         caseimportance: medium
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_validate_chargeback_cost_tiered_rate_fixedvariable_memory_cost():
-    """
-    Validate memory usage cost  for a tiered rate with fixed and variable
-    components
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
         initialEstimate: 1/10h
     """
     pass
@@ -869,22 +584,6 @@ def test_osp_test_executing_previously_created_migration_plan():
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_chargeback_report_weekly():
-    """
-    Verify that 1)weekly chargeback reports can be generated and 2)that
-    the report contains relevant data for the relevant period.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_immediately_migration_after_migration_plan_creation():
     """
     OSP: Test immediately migration after migration plan creation
@@ -897,21 +596,6 @@ def test_osp_test_immediately_migration_after_migration_plan_creation():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test immediately migration after migration plan creation
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-def test_distributed_add_provider_to_remote_zone():
-    """
-    Adding a provider from the global region to a remote zone.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -1004,23 +688,6 @@ def test_osp_test_migrating_a_vm_using_migration_plan_with_name_which_has_all_sp
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_field_zone_description_long():
-    """
-    When creating a new zone, the description can be up to 50 characters
-    long, and displays correctly after saving.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_flavors_can_be_selected_creating_migration_plan():
     """
     OSP: Test flavors can be selected creating migration plan
@@ -1051,45 +718,6 @@ def test_osp_test_migration_plan_filtering_for_plans_table_list_on_overview_and_
         subcomponent: OSP
         title: OSP: Test Migration Plan Filtering for plans table/list on
                overview and details page
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.retirement
-def test_retirement_date_uses_correct_time_zone():
-    """
-    Bug 1565128 - Wrong timezone when selecting retirement time
-
-    Bugzilla:
-        1565128
-
-    After saving VM retirement date/time (using both "Specific Date and
-    Time" and "Time Delay from Now" options), the displayed Retirement
-    Date has the correct date and time-zone appropriate time.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/15h
-        startsin: 5.9
-        title: Retirement date uses correct time zone
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-def test_distributed_zone_add_provider_to_nondefault_zone():
-    """
-    Can a new provider be added the first time to a non default zone.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: critical
-        initialEstimate: 1/12h
     """
     pass
 
@@ -1188,22 +816,6 @@ def test_edit_provider_request_task():
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: Rest
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_delete_occupied():
-    """
-    Delete Zone that has appliances in it.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -1584,31 +1196,6 @@ def test_osp_test_if_non_csv_files_can_be_imported():
 
 
 @pytest.mark.manual
-@test_requirements.satellite
-def test_no_rbac_warnings_in_logs_when_viewing_satellite_provider():
-    """
-    RBAC-related warnings logged when viewing Satellite provider in web UI
-
-    Bugzilla:
-        1565266
-    1.) Add Satellite provider.
-    2.) Click on items under Providers accordion.
-    3.) View evm.log. No WARN-level messages should be logged.
-    [----] W, [2018-04-09T14:09:19.654859 #13384:84e658]  WARN -- :
-    MIQ(Rbac::Filterer#lookup_method_for_descendant_class) could not find
-    method name for ConfiguredSystem::ConfiguredSystem
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/15h
-        title: No RBAC warnings in logs when viewing Satellite provider
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_provider():
@@ -1692,28 +1279,6 @@ def test_osp_test_creating_multiple_migration_plans_with_same_name():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(3)
-def test_distributed_migrate_embedded_ansible_role():
-    """
-    Ansible role failsover/migrates when active service fails
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: critical
-        initialEstimate: 1/4h
-        setup: 1. Configure a 2 server installation (same region + zone)
-               2. Assign the embedded ansible role to both servers
-               5. Find the server the role is active on (for me it was Server 1 and I
-               used the diagnostics tab Zone view)
-               6. run `systemctl stop evmserverd` on Server 1
-               7. Observe that the role is started on Server 2
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_if_vm_name_with_special_characters_can_be_imported_it_should_allow_such_impo():
     """
     OSP: Test if VM name with special characters can be imported (It
@@ -1728,118 +1293,6 @@ def test_osp_test_if_vm_name_with_special_characters_can_be_imported_it_should_a
         subcomponent: OSP
         title: OSP: Test if VM name with special characters can be imported
                (It should allow such imports)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_usage_memory():
-    """
-    Validate cost for memory usage for a VM in a weekly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_allocation_storage():
-    """
-    Validate cost for VM storage allocation in a weekly report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_usage_disk():
-    """
-    Validate cost for disk io for a VM in a weekly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_usage_storage():
-    """
-    Validate cost for storage usage for a VM in a weekly report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_usage_cpu():
-    """
-    Validate cost for CPU usage for a VM in a weekly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_allocation_memory():
-    """
-    Validate cost for VM memory allocation in a weekly report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_usage_network():
-    """
-    Validate cost for network io for a VM  in a weekly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_weekly_allocation_cpu():
-    """
-    Validate cost for VM CPU allocation in a weekly report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
     """
     pass
 
@@ -1927,24 +1380,6 @@ def test_utilization_utilization_graphs():
             1.
             2.
             3. Verify that all graphs shows correctly
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_field_zone_name_special():
-    """
-    When creating a new zone, special characters can be used in the name,
-    including leading and trailing characters, and the name displays
-    correctly in the web UI after saving.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
     """
     pass
 
@@ -2040,44 +1475,6 @@ def test_puma_server():
 
 
 @pytest.mark.manual
-def test_session_purging_occurs_only_when_session_store_is_sql():
-    """
-    If Settings > server > session_store is set to "sql", then evm.log
-    shows that the Session.check_session_timeout worker gets regularly
-    queued (at a regular interval of Settings > workers > worker_base >
-    schedule_worker > session_timeout_interval). If session_store is not
-    set to "sql", then the worker does not get scheduled.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/10h
-        title: Session purging occurs only when session_store is sql
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.satellite
-def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
-    """
-    For the Satellite provider satellite_62, both the centos and fedora-
-    cloud configuration profiles show up in Configuration > Manage, in the
-    accordion menu under All Configuration Manager Providers > Red Hat
-    Satellite Providers > satellite_62 Configuration Manager.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/15h
-        title: Satellite host groups show up as Configuration Profiles [satellite_62]
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_if_no_password_is_exposed_in_logs_during_migration():
     """
     OSP: Test if no password is exposed in logs during migration
@@ -2123,22 +1520,6 @@ def test_bottleneck_host():
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_mixed_appliance_ip_versions():
-    """
-    IPv6 and IPv4 appliances
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1h
     """
     pass
 
@@ -2208,25 +1589,6 @@ def test_osp_test_delete_infra_mapping():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(3)
-def test_distributed_delete_offline_worker_appliance():
-    """
-    Steps to Reproduce:
-    have 3 servers .
-    Shutdown one server. This become inactive.
-    go to WebUI > Configuration > Diagnostics > Select "Zone: Default
-    zone" > Select worker > Configuration > Delete
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_playbook_with_already_existing_dialogs_name():
@@ -2245,23 +1607,6 @@ def test_playbook_with_already_existing_dialogs_name():
 
 
 @pytest.mark.manual
-@test_requirements.retirement
-@pytest.mark.tier(2)
-def test_retire_cloud_vms_date_folder():
-    """
-    test the retire funtion of vm on cloud providers, at leat two vm, set
-    retirement date button from vms page(without notification)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_utilization_provider():
@@ -2274,62 +1619,6 @@ def test_utilization_provider():
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_pg_stat_activity_view_in_postgres_should_show_worker_information():
-    """
-    pg_stat_activity view in postgres should show worker information.
-    Bug 1445928 - It is impossible to identify the source
-    process/appliance for each connection in pg_stat_activity
-
-    Bugzilla:
-        1445928
-
-    # su - postgres
-    # psql vmdb_production
-    vmdb_production=# select pid, application_name from pg_stat_activity;
-    pid  |                        application_name
-    -------+--------------------------------------------------------------
-    ---
-    17109 | MIQ 16946 Server[2], default[2]
-    17274 | MIQ 17236 Generic[49], s[2], default[2]
-    17264 | MIQ 17227 Generic[48], s[2], default[2]
-    17286 | MIQ 17266 Schedule[52], s[2], default[2]
-    17277 | MIQ 17245 Priority[50], s[2], default[2]
-    17280 | MIQ 17254 Priority[51], s[2], default[2]
-    17320 | MIQ 17298 Redhat::InfraManager::MetricsCollector[53], s[2],
-    d..
-    17329 | MIQ 17307 Redhat::InfraManager::MetricsCollector[54], s[2],
-    d..
-    [...]
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/10h
-        startsin: 5.7
-        title: pg_stat_activity view in postgres should show worker information
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_reporting():
-    """
-    Reporting (multiple)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -2452,22 +1741,6 @@ def test_switching_user_group_without_disconnecting():
             31. Verify that testusr"s group is testGrp
             32. Verify that testusr"s role is EvmRole-user
             33.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_cu_data_collector():
-    """
-    C & U Data Collector (multiple appliances can have this role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -2602,22 +1875,6 @@ def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_web_services():
-    """
-    Web Services (multiple)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_crosshair_op_vm_vsphere65():
@@ -2654,54 +1911,6 @@ def test_crosshair_op_vm_vsphere6():
         caseimportance: low
         initialEstimate: 1/12h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_rightsize_memory_values_correct_vsphere6():
-    """
-    Right-size memory values are correct.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_rightsize_memory_values_correct_rhv41():
-    """
-    Right-size memory values are correct.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_saved_chargeback_report():
-    """
-    Verify that saved Chargeback reports are saved in the "Saved
-    Chargeback Reports" folder on the Cloud Intelligence->Chargeback->
-    Report page.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -2813,67 +2022,6 @@ def test_bottleneck_cluster():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_verify_purging_of_old_records():
-    """
-    Verify that DriftState, MiqReportResult, EventStream, PolicyEvent,
-    VmdbMetric, Metric, and Container-related records are purged
-    regularly.
-    Bug 1348625 - We might not be purging all tables that we should be
-
-    Bugzilla:
-        1348625
-
-    [----] I, [2017-05-19T07:48:23.994536 #63471:985134]  INFO -- :
-    MIQ(DriftState.purge_by_date) Purging Drift states older than
-    [2016-11-20 11:48:20 UTC]...Complete - Deleted 0 records"
-    [----] I, [2017-09-21T06:09:57.911327 #1775:a53138]  INFO -- :
-    MIQ(MiqReportResult.atStartup) Purging adhoc report results...
-    complete
-    [----] I, [2017-09-21T06:15:31.118400 #2181:a53138]  INFO -- :
-    MIQ(EventStream.purge) Purging all events older than [2017-03-25
-    10:15:27 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T06:15:31.284846 #2181:a53138]  INFO -- :
-    MIQ(PolicyEvent.purge_by_date) Purging Policy events older than
-    [2017-03-25 10:15:31 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T06:50:25.643198 #2116:a53138]  INFO -- :
-    MIQ(VmdbMetric.purge_by_date) Purging hourly metrics older than
-    [2017-03-25 10:50:19 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T06:50:25.674445 #2116:a53138]  INFO -- :
-    MIQ(VmdbMetric.purge_by_date) Purging daily metrics older than
-    [2017-03-25 10:50:19 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T11:04:18.496532 #32143:a53138]  INFO -- :
-    MIQ(Metric::Purging.purge) Purging all realtime metrics older than
-    [2017-09-21 11:04:13 UTC]...Complete - Deleted 135 records and 0
-    associated tag values - Timings: {:purge_metrics=>0.23389387130737305,
-    :total_time=>0.23413729667663574}
-    [----] I, [2017-09-27T15:37:42.206807 #6336:39d140]  INFO -- :
-    MIQ(Container.purge_by_date) Purging Containers older than [2017-03-31
-    19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.264940 #6326:39d140]  INFO -- :
-    MIQ(ContainerGroup.purge_by_date) Purging Container groups older than
-    [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.281474 #6336:39d140]  INFO -- :
-    MIQ(ContainerImage.purge_by_date) Purging Container images older than
-    [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.340960 #6336:39d140]  INFO -- :
-    MIQ(ContainerDefinition.purge_by_date) Purging Container definitions
-    older than [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.392486 #6326:39d140]  INFO -- :
-    MIQ(ContainerProject.purge_by_date) Purging Container projects older
-    than [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        initialEstimate: 1/4h
-        startsin: 5.8
-        title: Verify purging of old records
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_prov_from_service_ansible_tower_310():
@@ -2896,86 +2044,6 @@ def test_config_manager_prov_from_service_ansible_tower_310():
         casecomponent: Provisioning
         initialEstimate: 1h
         startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_nor_cpu_vsphere6():
-    """
-    Test Normal Operating Range for CPU usage
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    vSphere 6 provider
-    Normal Operating Ranges widget displays values for CPU and CPU Usage
-    max, high, average, and low, if at least one days" worth of metrics
-    have been captured.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_nor_cpu_rhv41():
-    """
-    Normal Operating Ranges for CPU display correctly for RHV 4.1 VM.
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    RHV 4.1 provider
-    Normal Operating Ranges widget displays values for CPU and CPU Usage
-    max, high, average, and low, if at least one days" worth of metrics
-    have been captured.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_nor_cpu_vsphere55():
-    """
-    Test Normal Operating Range for CPU usage
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    vSphere 5.5 provider
-    Normal Operating Ranges widget displays values for CPU and CPU Usage
-    max, high, average, and low, if at least one days" worth of metrics
-    have been captured.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.retirement
-@pytest.mark.tier(2)
-def test_retire_infra_vms_notification_folder():
-    """
-    test the retire funtion of vm on infra providers, select at least two
-    vms and press retirement date button from vms main page and specify
-    retirement warning period (1week, 2weeks, 1 months).
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/2h
     """
     pass
 
@@ -3087,157 +2155,6 @@ def test_requests_in_ui_and_api():
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(3)
-def test_chargeback_report_compute_provider():
-    """
-    Assign compute rates to provider;Generate chargeback report and verify
-    that rates are applied to selected providers only
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(3)
-def test_chargeback_report_storage_tenants():
-    """
-    Assign storage rates to tenants;Generate chargeback report and verify
-    that rates are applied to the tenant.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(3)
-def test_chargeback_report_compute_tenants():
-    """
-    Assign compute rates to tenants;Generate chargeback report and verify
-    that rates are applied to the tenant.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_chargeback_report_storage_tagged_datastore():
-    """
-    Assign storage rates to tagged datastore;Generate chargeback report
-    and verify that rates are applied to selected datastores only
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_chargeback_report_storage_enterprise():
-    """
-    Assign storage rates to Enterprise;Generate chargeback report and
-    verify that rates are applied to Enterprise
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_chargeback_report_compute_cluster():
-    """
-    Assign compute rates to cluster;Generate chargeback report and verify
-    that rates are applied to selected clusters only
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_chargeback_report_compute_enterprise():
-    """
-    Assign compute rates to Enterprise;Generate chargeback report and
-    verify that rates are applied to Enterprise
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(3)
-def test_chargeback_report_compute_tagged_vm():
-    """
-    Assign compute rates to tagged Vms;Generate chargeback report and
-    verify that rates are applied to tagged VMs only
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(3)
-def test_chargeback_report_storage_datastore():
-    """
-    Assign storage rates to datastore;Generate chargeback report and
-    verify that rates are applied to selected datastores only
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 @pytest.mark.tier(2)
 def test_authorized_users_can_login():
@@ -3288,72 +2205,6 @@ def test_set_ownership_back_to_default():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Set Ownership back to default
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.configuration
-def test_can_only_select_this_regions_zones_when_changing_server_zone():
-    """
-    Bug 1470283 - zones of sub region show up as zones appliances of a
-    central region can move to
-
-    Bugzilla:
-        1470283
-
-    Configure 1 appliance for use as a reporting db server, with region
-    99. Create zones zone-99-a and zone-99-b.
-    Configure a 2nd appliance as a remote appliance, with region 0. Create
-    zones zone-0-a and zone-0-b.
-    In the web UI of the 1st appliance, change the zone of the appliance.
-    Verify that only the zones for this appliance"s region (i.e.,
-    zone-99-a and zone-99-b) appear in the drop-down list.
-    1.) Set up first appliance:
-    a.) Request appliance that isn"t pre-configured.
-    b.) ssh to appliance and run appliance_console.
-    c.) Choose:
-    > Configure Database
-    > Create key
-    > Create Internal Database
-    Should this appliance run as a standalone database server?    ? (Y/N):
-    |N|
-    Enter the database region number: 99
-    Enter the database password on 127.0.0.1: smartvm
-    d.) Log in to the web UI and enable only the following Server Roles:
-    Reporting
-    Scheduler
-    User Interface
-    Web Services
-    e.) Create two more zones: tpapaioa-99-a and tpapaioa-99-b
-    2.) set up second appliance:
-    a.) request appliance that is pre-configured.
-    b.) Log in to the web UI and enable replication:
-    Administrator > Configuration > Settings > Region 0 > Replication >
-    Type: Remote > Save
-    3.) on the first appliance:
-    a.) set up replication for the second appliance:
-    Administrator > Configuration > Settings > Region 99 > Replication >
-    Type: Global > Add Subscription >
-    Database    vmdb_production
-    Host        <ip address of 2nd appliance>
-    Username    root
-    Password    smartvm
-    Port        5432
-    > Accept > Save
-    4.) on the second appliance, create two more zones: tpapaioa-0-a and
-    tpapaioa-0-b.
-    5.) on the first appliance, click on the appliance"s Zone drop-down
-    menu, and verify that only tpapaioa-99-a and tpapaioa-99-b are
-    visible:
-    Administrator > Configuration > Server > Zone
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: Can only select this region's zones when changing server zone
     """
     pass
 
@@ -3721,45 +2572,6 @@ def test_osp_test_vm_owner_before_and_after_migration_remains_same():
 
 
 @pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_nor_memory_values_correct_vsphere6():
-    """
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    vSphere 6 provider
-    Normal Operating Ranges widget displays correct values for Memory and
-    Memory Usage max, high, average, and low, if at least one days" worth
-    of metrics have been captured:
-    The Average reflects the most common value obtained during the past 30
-    days" worth of captured metrics.
-    The High and Low reflect the range of values obtained ~85% of the time
-    within the past 30 days.
-    The Max reflects the maximum value obtained within the past 30 days.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_nor_memory_values_correct_rhv41():
-    """
-    NOR memory values are correct.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_migrating_a_vm_which_has_encrypted_disk():
     """
     OSP: Test migrating a VM which has encrypted disk
@@ -3786,22 +2598,6 @@ def test_group_by_tag_azone_azure():
         assignee: nachandr
         casecomponent: CandU
         caseimportance: low
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(3)
-def test_distributed_zone_create_new():
-    """
-    Create new zone in local region
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        caseimportance: critical
         initialEstimate: 1/12h
     """
     pass
@@ -3859,31 +2655,6 @@ def test_osp_vmware60_test_vm_with_multiple_disks():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
-def test_notification_window_events_show_in_timestamp_order():
-    """
-    Bug 1469534 - The notification events are out of order
-
-    Bugzilla:
-        1469534
-
-    If multiple event notifications are created near-simultaneously (e.g.,
-    several VM"s are provisioned), then clicking on the bell icon in the
-    top right of the web UI displays the event notifications in timestamp
-    order.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.9
-        title: Notification window events show in timestamp order
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_migration_plan_can_be_scheduled_to_run_at_later_date_time():
     """
     OSP: Test migration plan can be scheduled to run at later date/time
@@ -3895,58 +2666,6 @@ def test_osp_test_migration_plan_can_be_scheduled_to_run_at_later_date_time():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration plan can be scheduled to run at later date/time
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_rightsize_cpu_vsphere55():
-    """
-    Test Right size recommendation for cpu
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_rightsize_cpu_vsphere6():
-    """
-    Test Right size recommendation for cpu
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_rightsize_cpu_rhv41():
-    """
-    For a RHV 4.1 provider with C & U metrics collection configured and
-    running for >1 day, a VM that has been up and running for >1 day shows
-    values in all cells of the tables displayed on the Right-Size
-    Recommendations page:
-    Compute > Infrastructure > Virtual Machines > click on VM name >
-    Configuration > Right-Size Recommendations
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 
@@ -4017,26 +2736,6 @@ def test_osp_test_osp_volumes_are_cleaned_up_if_migration_fails_to_create_instan
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
-def test_consistent_capitalization_of_cpu_when_creating_compute_chargeback_rate():
-    """
-    Consistent capitalization of "CPU":
-    1.) When adding a Compute Chargeback Rate, the "CPU" group should not
-    change to "Cpu" when you click the "Add" button to add a second
-    tier/row.
-    2.) The "CPU Cores" group should not display as "Cpu Cores".
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/15h
-        title: Consistent capitalization of 'CPU' when creating compute chargeback rate
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_show_tag_info_for_playbook_services():
@@ -4050,22 +2749,6 @@ def test_show_tag_info_for_playbook_services():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Show tag info for playbook services
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_cu_coordinator_singleton():
-    """
-    C & U Coordinator (singleton role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -4105,127 +2788,6 @@ def test_osp_vmware65_test_vm_migration_with_windows_2012_server():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware65-Test VM migration with Windows 2012 server
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_usage_storage():
-    """
-    Validate cost for storage usage for a VM in a monthly chargeback
-    report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_usage_disk():
-    """
-    Validate cost for disk io for a VM in a monthly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_allocation_cpu():
-    """
-    Validate cost for VM cpu allocation in a monthly report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_allocation_storage():
-    """
-    Validate cost for VM storage allocation in a monthly report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_usage_cpu():
-    """
-    Validate cost for CPU usage for a VM in a monthly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_allocation_memory():
-    """
-    Validate cost for VM memory allocation in a monthly report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_usage_memory():
-    """
-    Validate cost for memory usage for a VM in a monthly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_cost_monthly_usage_network():
-    """
-    Validate cost for network io for a VM in a monthly chargeback report
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 
@@ -4537,22 +3099,6 @@ def test_osp_vmware60_test_vm_migration_from_iscsi_storage_vmware_to_osp():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_smartstate_analysis():
-    """
-    SmartState Analysis (multiple)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware_60_test_vm_name_with_punycode_characters():
     """
     OSP: vmware 60- Test VM name with Punycode characters
@@ -4582,40 +3128,6 @@ def test_multiple_stack_deployment():
         initialEstimate: 1/8h
         startsin: 5.5
         title: Multiple Stack deployment
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_field_zone_name_whitespace():
-    """
-    When creating a new zone, the name can have whitespace, including
-    leading and trailing characters. After saving, any leading or trailing
-    whitespace is not displayed in the web UI.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_create_duplicate():
-    """
-    Create Zone with name that is already in use.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -4682,79 +3194,6 @@ def test_osp_vmware60_test_vm_migration_with_windows_2016_server():
 
 
 @pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_rightsize_cpu_values_correct_rhv41():
-    """
-    For a RHV 4.1 provider with C & U metrics collection configured and
-    running for >1 day, a VM that has been up and running for >1 day shows
-    correct recommended CPU values on the Right-Size Recommendations page:
-    Compute > Infrastructure > Virtual Machines > click on VM name >
-    Configuration > Right-Size Recommendations
-    The correct Max, High, Average, and Low CPU and CPU Usage values in
-    the Normal Operating Ranges table should be determined by the maximum,
-    ~85th percentile, ~50th percentile, and ~15th percentile CPU (MHz) and
-    CPU Usage (%) realtime metric values from the past 30 days for this
-    VM.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_rightsize_cpu_values_correct_vsphere6():
-    """
-    Right-size recommended cpu values are correct.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_field_zone_name_long():
-    """
-    When creating a new zone, the name can be up to 50 characters long,
-    and displays correctly after saving.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.retirement
-@pytest.mark.tier(2)
-def test_retire_infra_vms_date_folder():
-    """
-    test the retire funtion of vm on infra providers, at least two vm, set
-    retirement date button from vms page(without notification)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware60_test_vm_migration_with_windows_10():
     """
     OSP: vmware60-Test VM migration with Windows 10
@@ -4767,70 +3206,6 @@ def test_osp_vmware60_test_vm_migration_with_windows_10():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware60-Test VM migration with Windows 10
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-def test_distributed_zone_in_different_networks():
-    """
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        initialEstimate: 1h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_verify_that_errored_out_queue_messages_are_removed():
-    """
-    Verify that errored-out queue messages are removed.
-    Bug 1460263 - shutdown_and_exit messages get marked as error and never
-    removed from miq_queue table
-
-    Bugzilla:
-        1460263
-
-    # appliance_console
-    -> Stop EVM Server Processes
-    -> Start EVM Server Processes
-    # cd /var/www/miq/vmdb/
-    # bin/rails c
-    irb(main):001:0> MiqQueue.where(:state => "error")
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/15h
-        title: Verify that errored-out queue messages are removed
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.satellite
-def test_satellite_credential_validation_times_out_with_error_message():
-    """
-    Bug 1564601 - Satellite credential validation times out with no error
-    message
-
-    Bugzilla:
-        1564601
-
-    When adding a new Satellite configuration provider, if the URL cannot
-    be accessed because of a firewall dropping packets, then credential
-    validation should time out after 2 minutes with a flash message.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/6h
-        title: Satellite credential validation times out with error message
     """
     pass
 
@@ -4912,22 +3287,6 @@ def test_osp_test_imports_with_non_existing_vm_name_should_give_error():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_scheduler_singleton():
-    """
-    Scheduler (singleton)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_vmware65_test_vm_migration_with_windows_2016_server():
     """
     OSP: vmware65-Test VM migration with Windows 2016 server
@@ -4980,39 +3339,6 @@ def test_bottleneck_summary_graph():
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_chargeback_report_filter_owner():
-    """
-    Verify that chargeback reports can be generated by filtering on
-    owners.Make sure to include the "owner" column in the report.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(3)
-def test_chargeback_report_filter_tag():
-    """
-    Verify that chargeback reports can be generated by filtering on tags
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.tag
 @pytest.mark.tier(2)
 def test_restricted_user_rbac_for_access_control():
@@ -5055,28 +3381,6 @@ def test_osp_vmware65_test_vm_migration_with_really_long_name_upto_64_chars_work
         subcomponent: OSP
         title: OSP: vmware65-Test VM migration with really long name(Upto
                64 chars worked, not 65 chars)
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.retirement
-def test_vms_retirement_state_field_is_capitalized_correctly():
-    """
-    Bug 1518926 - Inconsistent capitalization for Retirement State field
-
-    Bugzilla:
-        1518926
-
-    When a VM is retiring or retired, the VM should show a "Retirement
-    State" field, not "Retirement state".
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/15h
-        title: VM's Retirement State field is capitalized correctly
     """
     pass
 
@@ -5157,37 +3461,6 @@ def test_osp_vmware67_test_vm_migration_from_ubuntu():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_field_zone_description_leading_whitespace():
-    """
-    Leading whitespace in description
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_chargeback_report_monthly():
-    """
-    Verify that 1)monthly chargeback reports can be generated and 2)that
-    the report contains relevant data for the relevant period.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_duplicate_groups_when_setting_ownership_to_multiple_items():
     """
     Bugzilla:
@@ -5236,22 +3509,6 @@ def test_osp_vmware67_test_vm_migration_with_rhel_69():
         startsin: 5.10
         subcomponent: OSP
         title: OSP: vmware67-Test VM migration with RHEL 6.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_change_appliance_zone():
-    """
-    Move an appliance from one zone to another.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -5419,58 +3676,6 @@ def test_verify_invalid_user_login_fails():
 
 
 @pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_rightsize_memory_rhv41():
-    """
-    For a RHV 4.1 provider with C & U metrics collection configured and
-    running for >1 day, a VM that has been up and running for >1 day shows
-    values in all cells of the tables displayed on the Right-Size
-    Recommendations page:
-    Compute > Infrastructure > Virtual Machines > click on VM name >
-    Configuration > Right-Size Recommendations
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_rightsize_memory_vsphere55():
-    """
-    Test Right size recommendation for memory
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_rightsize_memory_vsphere6():
-    """
-    Test Right size recommendation for memory
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_credentials_change_password_leading_whitespace():
@@ -5483,23 +3688,6 @@ def test_credentials_change_password_leading_whitespace():
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.retirement
-@pytest.mark.tier(2)
-def test_retire_cloud_vms_folder():
-    """
-    test the retire funtion of vm on cloud providers, at leat two vm,
-    retire now button vms page
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/2h
     """
     pass
 
@@ -5571,43 +3759,6 @@ def test_osp_vmware65_test_vm_migration_with_rhel_69():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_active_tasks_get_timed_out_when_they_run_too_long():
-    """
-    active tasks get timed out when they run too long
-    Bug 1397600 - After killing reporting worker, report status still says
-    Running
-
-    Bugzilla:
-        1397600
-
-    ****
-    1.) Set task timeout check frequency and timeout values:
-    :task_timeout_check_frequency: 600
-    :active_task_timeout: 10.minutes
-    2.) Queue a bunch of reports.
-    3.) Kill the MiqReportingWorker pid(s).
-    4.) Repeat #2 and #3 a couple times, until one of the reports gets
-    stuck with a Running status.
-    5.) After ~10 minutes, see entries like the following in evm.log, and
-    verify that the reports show a status of Error in the web UI.
-    [----] I, [2017-06-12T16:05:14.491076 #18861:3bd134]  INFO -- :
-    MIQ(MiqTask#update_status) Task: [213] [Finished] [Error] [Task [213]
-    timed out - not active for more than 600 seconds]
-    ****
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.7
-        title: active tasks get timed out when they run too long
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_ordering_service_by_non_admin_user():
     """
@@ -5631,22 +3782,6 @@ def test_ordering_service_by_non_admin_user():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_provider_inventory_singleton():
-    """
-    Provider Inventory (singleton)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_deployment_multiple_instances():
@@ -5659,22 +3794,6 @@ def test_deployment_multiple_instances():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_provider_operations():
-    """
-    Provider Operations (multiple appliances can have this role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -8304,22 +6423,6 @@ def test_osp_test_cpu_cores_and_sockets_pre_vs_post_migration():
 
 
 @pytest.mark.manual
-@test_requirements.replication
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_notifier_singleton():
-    """
-    Notifier (singleton)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(1)
 def test_dialog_items_default_values_on_different_screens():
@@ -8366,21 +6469,6 @@ def test_credentials_change_password_with_special_characters():
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-def test_distributed_diagnostics_servers_view():
-    """
-    The above should all be shown as different regions 1-4
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -8441,31 +6529,6 @@ def test_osp_test_ds_and_volume_availiblity_in_source_and_target():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
-def test_notification_window_can_be_closed_by_clicking_x():
-    """
-    Bug 1427484 - Add "X" option to enable closing the Notification window
-    by it.
-
-    Bugzilla:
-        1427484
-
-    After clicking the bell icon in the top right of the web UI, the "x"
-    in the top right corner of the notification window can be clicked to
-    close it.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/15h
-        startsin: 5.9
-        title: Notification window can be closed by clicking 'x'
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_osp_test_earlier_infra_mapping_can_be_viewed_in_migration_plan_wizard():
     """
     OSP: Test earlier infra mapping can be viewed in migration plan wizard
@@ -8510,24 +6573,6 @@ def test_cluster_graph_by_host_tag_vsphere65():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.retirement
-@pytest.mark.tier(2)
-def test_retire_cloud_vms_notification_folder():
-    """
-    test the retire funtion of vm on cloud providers, one vm, set
-    retirement date button from vm summary page with notification for two
-    vms for one of the period (1week, 2weeks, 1 months)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1/2h
     """
     pass
 
@@ -8605,37 +6650,6 @@ def test_osp_test_migration_request_details_page_shows_vms_for_not_started_plans
         startsin: 5.10
         subcomponent: OSP
         title: OSP: Test migration request details page shows VMs for not started plans
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-@pytest.mark.tier(2)
-def test_chargeback_preview():
-    """
-    Verify that Chargeback Preview is generated for VMs
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.replication
-def test_distributed_zone_mixed_infra():
-    """
-    Azure,AWS, and local infra
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -8885,43 +6899,6 @@ def test_osp_vmware67_test_vm_migration_with_windows_2012_server():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_verify_benchmark_timings_are_correct():
-    """
-    Bug 1424716 - Benchmark timings are incorrect for all workers in
-    evm.log
-    Timings logged in evm.log are/seem to be reasonable values:
-    [----] I, [2017-09-21T14:53:01.220711 #23936:ded140]  INFO -- :
-    MIQ(ManageIQ::Providers::Vmware::InfraManager::Refresher#refresh) EMS:
-    [vsphere6], id: [2]
-    Refreshing targets for EMS...Complete - Timings
-    {:get_ems_data=>0.11566829681396484,
-    :get_vc_data=>0.7215437889099121,
-    :get_vc_data_ems_customization_specs=>0.014485597610473633,
-    :filter_vc_data=>0.0004775524139404297,
-    :get_vc_data_host_scsi=>0.5094377994537354,
-    :collect_inventory_for_targets=>1.363351821899414,
-    :parse_vc_data=>0.10647010803222656,
-    :parse_targeted_inventory=>0.10663747787475586,
-    :db_save_inventory=>9.141719341278076,
-    :save_inventory=>9.141741275787354,
-    :ems_refresh=>10.612204551696777}
-
-    Bugzilla:
-        1424716
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-        title: Verify benchmark timings are correct
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
     """
@@ -8946,178 +6923,6 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
             1. Login successful
             2. Group switch successful
             3. Dashboard items are updated from to reflect that access of the new group
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_chargeback_cost_resource_average_cpu():
-    """
-    Validate cost for allocated CPU with "Average" method for allocated
-    metrics.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_chargeback_cost_resource_average_memory():
-    """
-    Validate cost for allocated memory with "Average" method for allocated
-    metrics
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_chargeback_cost_resource_maximum_cpu():
-    """
-    Validate cost for allocated CPU with "Maximum" method for allocated
-    metrics
-    1))Let VM run for a few hours(3- 24 hours)
-    2)Sometime during that interval(3-24 hours),reconfigure VM to have
-    different resources from when it was created(add/remove
-    vCPU,memory,disk)
-    3)Validate that chargeback costs are appropriate for vCPU allocated
-    when method for allocated metrics is "Maximum".
-    Also, see RHCF3-34343, RHCF3-34344, RHCF3-34345, RHCF3-34346,
-    RHCF3-34347 .
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_chargeback_cost_resource_maximum_storage():
-    """
-    Validate cost for allocated storage with "Maximum" method for
-    allocated metrics
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_chargeback_cost_resource_average_stoarge():
-    """
-    Validate cost for allocated storage with "Average" method for
-    allocated metrics
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.chargeback
-def test_validate_chargeback_cost_resource_maximum_memory():
-    """
-    Validate cost for allocated memory with "Maximum" method for allocated
-    metrics
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_nor_memory_vsphere55():
-    """
-    Test Normal Operating Range for memory usage
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    vSphere 5.5 provider
-    Normal Operating Ranges widget displays values for Memory and Memory
-    Usage max, high, average, and low, if at least one days" worth of
-    metrics have been captured.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(1)
-def test_nor_memory_rhv41():
-    """
-    Normal Operating Ranges for memory display correctly for RHV 4.1 VM.
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    RHV 4.1 provider
-    Normal Operating Ranges widget displays values for Memory and Memory
-    Usage max, high, average, and low, if at least one days" worth of
-    metrics have been captured.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.right_size
-@pytest.mark.tier(2)
-def test_nor_memory_vsphere6():
-    """
-    Test Normal Operating Range for memory usage
-    Compute > Infrastructure > Virtual Machines > select a VM running on a
-    vSphere 6 provider
-    Normal Operating Ranges widget displays values for Memory and Memory
-    Usage max, high, average, and low, if at least one days" worth of
-    metrics have been captured.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: CandU
-        initialEstimate: 1/6h
     """
     pass
 
