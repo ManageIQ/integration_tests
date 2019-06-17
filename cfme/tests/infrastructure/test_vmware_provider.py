@@ -9,6 +9,7 @@ from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 pytestmark = [
@@ -222,6 +223,7 @@ def test_vmware_inaccessible_datastore():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1689369, forced_streams=['5.10', '5.11'])])
 def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     """
     Test CD/DVD Drives dropdown lists ISO files, dropdown is not blank
@@ -258,9 +260,21 @@ def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     vms_collections = appliance.collections.infra_vms
     vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
     view = navigate_to(vm, 'Reconfigure')
-    from IPython import embed
-    embed()
-    pass
+    actions_column = view.cd_dvd_table[0]['Actions']
+    # First disconnect if already connected
+    if actions_column.text == 'Connect Disconnect':
+        actions_column.click()
+    # Confirm disconnect
+    if actions_column.text == 'Confirm':
+        actions_column.click()
+    # if 'Connect' option is present, click it
+    if actions_column.text == 'Connect':
+        actions_column.click()
+    host_file_column = view.cd_dvd_table[0]['Host File']
+    assert host_file_column.widget.is_displayed  # Assert BootStrapSelect is displayed
+    assert not host_file_column.widget.all_options == []
+    all_isos = [opt.text for opt in host_file_column.widget.all_options if 'iso' in opt.text]
+    assert all_isos, "Dropdown for isos is empty"
 
 
 @pytest.mark.tier(1)

@@ -1,9 +1,5 @@
 from widgetastic.widget import Table as VanillaTable
-from widgetastic.xpath import quote
-from widgetastic_patternfly import BootstrapSelect
-from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import Input
 
 
 class DisksButton(Button):
@@ -22,6 +18,7 @@ class DisksButton(Button):
 
 class DisksTable(VanillaTable):
     """Table to add and remove Disks (in VM Reconfigure form)"""
+
     add_disk_btn = DisksButton("contains", "Add Disk", classes=[Button.PRIMARY])
     cancel_add_btn = DisksButton("contains", "Cancel Add", classes=[Button.DEFAULT])
 
