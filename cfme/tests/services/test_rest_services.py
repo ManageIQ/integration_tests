@@ -376,10 +376,10 @@ class TestServiceRESTAPI(object):
         vm = get_vms_in_service(vm_service).pop()
 
         if from_detail:
-            vm_service.action.retire()
+            vm_service.action.request_retire()
             assert_response(appliance)
         else:
-            collection.action.retire(vm_service)
+            collection.action.request_retire(vm_service)
             assert_response(appliance)
 
         wait_for_retired(vm_service)
@@ -424,6 +424,49 @@ class TestServiceRESTAPI(object):
                 num_sec=60,
                 delay=5
             )
+
+    @pytest.mark.parametrize(
+        "from_detail", [True, False], ids=["from_detail", "from_collection"]
+    )
+    @test_requirements.rest
+    def test_service_retirement_methods(self, request, appliance, services, from_detail):
+        """Test retiring a service with old method `retire` and new method `request_retire`.
+        Old method is no longer supported and it puts the service into `intializing` state.
+
+        Metadata:
+            test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Services
+            initialEstimate: 1/4h
+
+        Bugzilla:
+            1698480
+            1713477
+        """
+        service = services[0]
+        if from_detail:
+            service.action.retire()
+        else:
+            appliance.rest_api.collections.services.action.retire(service)
+
+        assert_response(appliance)
+        wait_for(
+            lambda: hasattr(service, "retirement_state"),
+            fail_func=service.reload,
+            num_sec=50,
+            delay=5,
+        )
+        assert service.retirement_state == "initializing"
+
+        if from_detail:
+            service.action.request_retire()
+        else:
+            appliance.rest_api.collections.services.action.request_retire(service)
+
+        assert_response(appliance)
+        wait_for_retired(service)
 
     def test_set_service_owner(self, appliance, services):
         """Tests set_ownership action on /api/services/:id.
@@ -739,7 +782,7 @@ class TestServiceRESTAPI(object):
         parent.action.add_resource(resource=child._ref_repr())
         assert_response(appliance)
 
-        parent.action.retire()
+        parent.action.request_retire()
         assert_response(appliance)
 
         wait_for_retired(parent)
