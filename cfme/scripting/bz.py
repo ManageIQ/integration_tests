@@ -31,9 +31,9 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 STATUS = {
-    "open_bzs": {"val": "true", "text": "are open"},
-    "closed_bzs": {"val": "false", "text": "are closed"},
-    "all_bzs": {"val": None, "text": "have coverage"}
+    "open_bzs": {"val": "true", "text": "are open", "coverage_text": " open"},
+    "closed_bzs": {"val": "false", "text": "are closed", "coverage_text": " closed"},
+    "all_bzs": {"val": None, "text": "have coverage", "coverage_text": ""}
 }
 
 
@@ -62,7 +62,7 @@ def get_report(directory):
     return info
 
 
-def get_qe_test_coverage(info, open_only=True):
+def get_qe_test_coverage(info, bz_status):
     """
     Given info (what is returned from yaml.load on bz-report.yaml),
     This function screens and returns only BZs which are OPEN, if open_only=True, otherwise it
@@ -72,8 +72,11 @@ def get_qe_test_coverage(info, open_only=True):
 
     bz_list = []
     for bug_id in info.keys():
-        if open_only and info[bug_id]["is_open"] == "false":
+        if bz_status == "open_bzs" and info[bug_id]["is_open"] == "false":
             continue
+        if bz_status == "closed_bzs" and info[bug_id]["is_open"] == "true":
+            continue
+
         # get qe_test_coverage_flag
         qe_test_coverage = "?"
         for flag in info[bug_id]["flags"]:
@@ -166,15 +169,47 @@ def list(directory, bz_status):
     default=False,
     show_default=True
 )
-def coverage(directory, set_bzs):
+@click.option(
+    "--all",
+    "-a",
+    "bz_status",
+    is_flag=True,
+    help="Audit test coverage on all BZs",
+    default=True,
+    show_default=True,
+    flag_value="all_bzs",
+)
+@click.option(
+    "--open",
+    "-o",
+    "bz_status",
+    is_flag=True,
+    help="Audit test coverage on only open BZs",
+    default=False,
+    show_default=True,
+    flag_value="open_bzs"
+)
+@click.option(
+    "--closed",
+    "-c",
+    "bz_status",
+    is_flag=True,
+    help="Audit test coverage on only closed BZs",
+    default=False,
+    show_default=True,
+    flag_value="closed_bzs"
+)
+def coverage(directory, set_bzs, bz_status):
     info = get_report(directory)
 
-    # get list of open BZs that are open and should have test coverage set
-    bz_list = get_qe_test_coverage(info, open_only=True)
+    # get list of bzs that should have test coverage set
+    bz_list = get_qe_test_coverage(info, bz_status)
 
-    click.echo("\nThe following BZs should have qe_test_coverage set to '+': ")
+    click.echo("\nThe following{} BZs should have qe_test_coverage set to '+': ".format(
+        STATUS[bz_status]["coverage_text"])
+    )
     for bz in bz_list:
-        click.echo("    id: {}, qe_test_coverage: {}\n".format(bz.id, bz.qe_test_coverage))
+        click.echo("    id: {}, qe_test_coverage: {}".format(bz.id, bz.qe_test_coverage))
 
     if set_bzs:
         click.echo("Setting qe_test_coverage on the above BZs to '+'...")

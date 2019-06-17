@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """Collection of fixtures for simplified work with bzs.
 
-The main purpose of this file is to add a pytest option for generates a BZ report, that
-gives information about the BZs that appear as coverage/automates metadata in the test_functions
+The main purpose of this file is to add a pytest option which generates a BZ report. This option
+gives information about the BZs that appear as coverage/automates metadata in test functions.
 """
-import pytest
 import yaml
 
 from cfme.fixtures.pytest_store import store
@@ -22,7 +21,6 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.mark.trylast
 def pytest_collection_modifyitems(session, config, items):
     if not config.getvalue("generate_bz_report"):
         return

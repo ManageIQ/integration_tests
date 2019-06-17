@@ -214,7 +214,8 @@ class Bugzilla(object):
 
         # login to bzapi
         if not bz_creds:
-            raise BugzillaError("No bugzilla creds available")
+            # error out if there are no creds available in yamls
+            raise BugzillaError("No creds available to log into Bugzilla")
         try:
             yield self.bugzilla.login(bz_creds.get("username"), bz_creds.get("password"))
         except BugzillaError:
