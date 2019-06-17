@@ -66,7 +66,6 @@ from widgetastic_manageiq import SnapshotMemorySwitch
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import TimelinesView
-from widgetastic_manageiq.vm_reconfigure import CDDVDTable
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
