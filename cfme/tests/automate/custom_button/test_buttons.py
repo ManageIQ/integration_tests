@@ -6,6 +6,7 @@ import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
+from cfme.automate.simulation import simulate
 from cfme.base.ui import AutomateSimulationView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -589,3 +590,62 @@ def test_attribute_override():
         1651099
     """
     pass
+
+
+@pytest.mark.meta(blockers=[BZ(1719282, unblock=lambda button_type: button_type != "User")])
+@pytest.mark.parametrize("button_type", ["User", "Provider"])
+@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
+def test_simulated_object_copy_on_button(appliance, provider, setup_provider, button_type):
+    """ Test copy of simulated object over custom button
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caseposneg: positive
+        casecomponent: CustomButton
+        tags: custom_button
+        testSteps:
+            1. simulate button with Automate -> Simulation
+            2. copy simulated data
+            3. paste simulated data on button from Automate -> Customizationn -> Buttons
+            4. check copy-paste working or not
+
+    Bugzilla:
+        1426390
+        1719282
+    """
+    if button_type == "User":
+        target_type = "{}User".format("EVM " if appliance.version < "5.11" else "")
+        target_obj = "Administrator"
+    else:
+        target_type = "Provider"
+        target_obj = provider.name
+
+    # simulate and copy
+    simulate(
+        appliance=appliance,
+        instance="Automation",
+        message="test_bz",
+        request="InspectMe",
+        target_type=target_type,
+        target_object=target_obj,
+        execute_methods=True,
+        pre_clear=True,
+    )
+
+    view = appliance.browser.create_view(AutomateSimulationView, wait="15s")
+    view.copy.click()
+
+    # paste data while creating button
+    button_coll = appliance.collections.buttons
+    button_coll.group = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]", hover="Unassigned buttons", type=button_type
+    )
+
+    view = navigate_to(button_coll, "Add")
+    view.paste.click()
+
+    assert view.advanced.system.read() == "Automation"
+    assert view.advanced.message.read() == "test_bz"
+    assert view.advanced.request.read() == "InspectMe"

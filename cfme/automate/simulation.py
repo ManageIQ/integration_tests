@@ -3,10 +3,30 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 def simulate(
-        instance=None, message=None, request=None, target_type=None, target_object=None,
-        execute_methods=None, attributes_values=None, pre_clear=True, appliance=None):
-    """Runs the simulation of specified Automate object."""
-    assert appliance is not None, "must pass appliance"
+    appliance,
+    instance=None,
+    message=None,
+    request=None,
+    target_type=None,
+    target_object=None,
+    execute_methods=True,
+    attributes_values=None,
+    pre_clear=True,
+):
+    """Runs the simulation of specified Automate object.
+
+    Args:
+        appliance: Appliance object
+        instance: Type of object from `/System/Process/` that will initiate the model
+        message: Message
+        request: Name of the instance where you like to point
+        target_type: Type of item you want to run the simulation
+        target_object: Name of target object from target type
+        execute_methods: True if you want to perform the model and not just simulate it else False
+        attributes_values: attribute value pair
+        pre_clear: clear before simulation
+    """
+
     view = navigate_to(appliance.server, 'AutomateSimulation')
     if pre_clear:
         view.avp.clear()
