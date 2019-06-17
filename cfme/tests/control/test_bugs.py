@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import random
 from collections import namedtuple
 from datetime import datetime
 
@@ -569,6 +570,7 @@ def test_policy_condition_multiple_ors(
 
     Bugzilla:
         1711352
+        1717483
 
     Polarion:
         assignee: jdupuy
@@ -588,16 +590,11 @@ def test_policy_condition_multiple_ors(
 
     vms = [all_vms.pop(all_vm_names.index(vm_name))]
 
-    # add some other vms to the list to run the policy simulation against
-    # we use this ugly logic in case there are not that many vms on the provider
-    if len(all_vms) > 3:
-        vms.extend(all_vms[0:4])
-    elif len(all_vms) > 2:
-        vms.extend(all_vms[0:3])
-    elif len(all_vms) > 1:
-        vms.extend(all_vms[0:2])
-    else:
-        vms.extend(all_vms[0])
+    # do not run the policy simulation against more that 4 VMs
+    try:
+        vms.extend(all_vms[0:min(random.randint(1, len(all_vms)), 4)])
+    except ValueError:
+        pytest.skip("No other vms exist on provider to run policy simulation against.")
 
     filtered_collection = collection.filter({"names": [vm.name for vm in vms]})
     # Now perform the policy simulation
