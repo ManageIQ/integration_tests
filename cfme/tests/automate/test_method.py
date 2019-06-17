@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import ViaUI
@@ -446,3 +447,29 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
             execute_methods=True,
         )
         result.validate_logs()
+
+
+@pytest.mark.tier(1)
+def test_automate_service_quota_runs_only_once(appliance, generic_catalog_item):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/4h
+        tags: automate
+
+    Bugzilla:
+        1317698
+    """
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[".*Getting Tenant Quota Values for:.*"]
+    )
+    result.fix_before_start()
+    service_catalogs = ServiceCatalogs(
+        appliance, catalog=generic_catalog_item.catalog, name=generic_catalog_item.name
+    )
+    provision_request = service_catalogs.order()
+    provision_request.wait_for_request()
+    assert result.match_count()[result.matched_patterns[0]] == 1

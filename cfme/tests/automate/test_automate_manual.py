@@ -306,30 +306,6 @@ def test_automate_git_import_deleted_tag():
 
 
 @pytest.mark.tier(1)
-def test_automate_service_quota_runs_only_once():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        tags: automate
-        testSteps:
-            1. Provision a service.
-            2. Check the automation.log to see both quota checks, one for
-               ServiceTemplateProvisionRequest_created,
-               and ServiceTemplateProvisionRequest_starting.
-        expectedResults:
-            1.
-            2. Quota executed once.
-
-    Bugzilla:
-        1317698
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_automate_state_method():
     """
     You can pass methods as states compared to the old method of passing

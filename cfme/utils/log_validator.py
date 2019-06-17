@@ -101,3 +101,12 @@ class LogValidator(object):
             except Failed:
                 return False
         wait_for(validate, delay=delay, num_sec=num_sec, message=message, **kwargs)
+
+    def match_count(self):
+        patterns = {key: 0 for key in self.matched_patterns}
+
+        for line in self._remote_file_tail:
+            for pattern, count in patterns.items():
+                if re.search(pattern, line):
+                    patterns[pattern] = count + 1
+        return patterns
