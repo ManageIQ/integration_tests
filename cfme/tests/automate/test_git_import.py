@@ -8,12 +8,12 @@ from cfme.automate.import_export import AutomateGitRepository
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.rest import assert_response
 
 
 pytestmark = [
     test_requirements.automate,
     pytest.mark.meta(server_roles="+git_owner"),
-    pytest.mark.meta(blockers=[BZ(1714493)])
 ]
 
 GIT_REPO_URL = "https://github.com/RedHatQE/ManageIQ-automate-git.git"
@@ -48,6 +48,7 @@ def new_user(appliance):
     user.delete_if_exists()
 
 
+@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(1)
 def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
     """
@@ -64,6 +65,7 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
         '[ ! -d "/var/www/vmdb/data/git_repos{}" ]'.format(repo_path)).success
 
 
+@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(2)
 def test_automate_git_domain_displayed_in_service(appliance, imported_domain):
     """Tests if a domain is displayed in a service.
@@ -96,6 +98,7 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain):
         "ServiceProvision_Template/CatalogItemInitialization".format(imported_domain.name))
 
 
+@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(3)
 def test_automate_git_import_multiple_domains(request, appliance):
     """
@@ -128,6 +131,7 @@ def test_automate_git_import_multiple_domains(request, appliance):
         assert not domain.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
     ("url", "param_type", "param_value", "verify_ssl"),
@@ -194,6 +198,7 @@ def test_domain_import_git(
     assert domain.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
@@ -224,6 +229,7 @@ def test_import_export_domain_with_ansible_method():
     pass
 
 
+@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(1)
 def test_refresh_git_current_user(imported_domain, new_user):
     """
@@ -296,10 +302,9 @@ def test_refresh_git_current_user(imported_domain, new_user):
 
 
 @test_requirements.rest
-@pytest.mark.manual
 @pytest.mark.tier(3)
 @pytest.mark.ignore_stream("5.10")
-def test_domain_import_git_rest():
+def test_domain_import_git_rest(appliance, request):
     """
     This test checks importing datastore from git via REST
 
@@ -324,4 +329,21 @@ def test_domain_import_git_rest():
     Bugzilla:
         1600961
     """
-    pass
+    collection = appliance.rest_api.collections.automate_domains
+    data = {
+        "git_url": GIT_REPO_URL,
+        "ref_type": "branch",
+        "ref_name": "origin/master"
+    }
+    collection.action.create_from_git(**data)
+    assert_response(appliance)
+
+    automate_domain = collection.get(name="testdomain")
+
+    @request.addfinalizer
+    def _cleanup():
+        # cannot delete a locked domain via REST, so doing it via UI
+        domain = appliance.collections.domains.instantiate(name="testdomain")
+        domain.delete_if_exists()
+
+    assert automate_domain.exists
