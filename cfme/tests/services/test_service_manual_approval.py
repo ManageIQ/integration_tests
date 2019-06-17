@@ -57,8 +57,6 @@ def modify_instance(create_domain):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
 def test_service_manual_approval(appliance, provider, modify_instance,
@@ -87,3 +85,6 @@ def test_service_manual_approval(appliance, provider, modify_instance,
                                                                  partial_check=True)
     service_request.update(method='ui')
     assert service_request.row.approval_state.text == 'Pending Approval'
+    service_request.approve_request(method='ui', reason="Approved")
+    assert service_request.row.approval_state.text == 'Approved'
+    service_request.wait_for_request(method='ui')
