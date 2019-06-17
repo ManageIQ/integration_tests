@@ -66,7 +66,6 @@ from widgetastic_manageiq import SnapshotMemorySwitch
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import TimelinesView
-from widgetastic_manageiq.vm_reconfigure import CDDVDTable
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
@@ -370,7 +369,7 @@ class InfraVmReconfigureView(BaseLoggedInPage):
     )
     cd_dvd_table = WTable('//div/table[./../h3[normalize-space(text())="CD/DVD Drives"]]',
         column_widgets={
-            "Host File": BootstrapSelect(id="isoNamde"),
+            "Host File": BootstrapSelect(id="isoName"),
             "Actions": Button(),
             # second action button, 'Cancel Add' or 'Delete' depending on context of row
             # https://github.com/RedHatQE/widgetastic.core/issues/95
