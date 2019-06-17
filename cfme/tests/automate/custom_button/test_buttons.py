@@ -493,7 +493,49 @@ def test_custom_button_order_sort(appliance, request, provider, setup_provider, 
     assert custom_button_group.items == shuffle_buttons
 
 
-@pytest.mark.manual('manualonly')
+@pytest.mark.tier(3)
+def test_custom_button_role_selection(appliance, request):
+    """Test custom button role selection
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/6h
+        caseimportance: medium
+        startsin: 5.8
+        casecomponent: CustomButton
+        testSteps:
+            1. Add custom button with specific roles and verify from summary page
+            2. Update roles and verify
+            3. Update button for role access to All and verify
+
+    Bugzilla:
+        1703588
+    """
+    test_roles = ["EvmRole-administrator", "EvmRole-security"]
+
+    unassigned_gp = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]", hover="Unassigned Buttons", type="Provider"
+    )
+    btn = unassigned_gp.buttons.create(
+        text="group_{}".format(fauxfactory.gen_alphanumeric(3)),
+        hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+        system="Request",
+        request="InspectMe",
+        roles=test_roles,
+    )
+    request.addfinalizer(btn.delete_if_exists)
+
+    assert btn.user_roles == test_roles
+
+    test_roles.append("EvmRole-user_self_service")
+    btn.update({"roles": test_roles})
+    assert btn.user_roles == test_roles
+
+    btn.update({"role_show": "<To All>"})
+    assert btn.user_roles == "To All"
+
+
+@pytest.mark.manual("manualonly")
 @pytest.mark.tier(3)
 def test_custom_button_language():
     """ There was bug with usecase before... (#1568417)
