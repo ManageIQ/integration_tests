@@ -2,7 +2,7 @@ FROM registry.fedoraproject.org/fedora:26
 
 RUN echo "tsflags=nodocs" >> /etc/yum.conf
 
-COPY docker-assets/google-chrome.repo /etc/yum.repos.d/
+COPY ../docker-assets/google-chrome.repo /etc/yum.repos.d/
 
 RUN dnf install -y http://linuxdownload.adobe.com/linux/x86_64/adobe-release-x86_64-1.0-1.noarch.rpm && \
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-adobe-linux && \
@@ -84,7 +84,7 @@ RUN virtualenv /cfme_venv
 RUN echo "source /cfme_venv/bin/activate" >> /root/.bashrc
 
 # Preinstall any python dependencies to keep it in an early layer
-COPY requirements/frozen.py2.txt frozen.py2.txt
+COPY ../requirements/frozen.py2.txt frozen.py2.txt
 RUN /cfme_venv/bin/pip install --no-cache-dir -U pip wheel setuptools_scm docutils && \
     /cfme_venv/bin/pip install --no-cache-dir -r frozen.py2.txt --no-binary pycurl && \
     rm -rf ~/.cache/pip && \
@@ -94,7 +94,7 @@ RUN /cfme_venv/bin/pip install --no-cache-dir -U pip wheel setuptools_scm docuti
 VOLUME /projects/cfme_env/cfme_vol
 WORKDIR /projects/cfme_env/cfme_vol
 
-COPY docker-assets/xstartup /xstartup
-COPY docker-assets/entrypoint /entrypoint
+COPY ../docker-assets/xstartup /xstartup
+COPY ../docker-assets/entrypoint /entrypoint
 
 ENTRYPOINT ["/entrypoint"]
