@@ -61,6 +61,7 @@ def _get_vm_name(request):
 @pytest.fixture(scope="module")
 def full_template_vm_modscope(setup_provider_modscope, request, full_template_modscope, provider):
     vm_name = _get_vm_name(request)
+    # This should trigger a message via lintbot =D
     return _create_vm(request, full_template_modscope, provider, vm_name)
 
 
