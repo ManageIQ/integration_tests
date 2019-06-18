@@ -47,18 +47,19 @@ class LogValidator(object):
         self.matched_patterns = kwargs.pop('matched_patterns', [])
 
         self._remote_file_tail = SSHTail(remote_filename, **kwargs)
-        self.matches = {}
+        self.matches = {key: 0 for key in self.matched_patterns}
 
     def fix_before_start(self):
+        """Start monitoring log before action"""
         self._remote_file_tail.set_initial_file_end()
 
-    def validate_logs(self):
+    def _validation(self):
         for line in self._remote_file_tail:
             if self._check_skip_logs(line):
                 continue
             self._check_fail_logs(line)
             self._check_match_logs(line)
-        self._verify_match_logs()
+        logger.info("Matches found: {}".format(self.matches))
 
     def _check_skip_logs(self, line):
         for pattern in self.skip_patterns:
@@ -77,12 +78,22 @@ class LogValidator(object):
         for pattern in self.matched_patterns:
             if re.search(pattern, line):
                 logger.info('Expected pattern {} was matched on line {}'.format(pattern, line))
-                self.matches[pattern] = True
+                self.matches[pattern] = self.matches[pattern] + 1
 
-    def _verify_match_logs(self):
-        for pattern in self.matched_patterns:
-            if pattern not in self.matches:
-                pytest.fail('Expected pattern {} did not match'.format(pattern))
+    def validate_logs(self):
+        """Validate log pattern"""
+        self._validation()
+        for pattern, count in self.matches.items():
+            if count == 0:
+                pytest.fail(
+                    'Expected pattern {} did not match; match count {}'.format(pattern, count)
+                )
+
+    @property
+    def patterns_match_count(self):
+        """It will return pattern match count dictionary"""
+        self._validation()
+        return self.matches
 
     def wait_for_log_validation(
             self, delay=5, num_sec=180, message="waiting for log validation", **kwargs
@@ -101,3 +112,25 @@ class LogValidator(object):
             except Failed:
                 return False
         wait_for(validate, delay=delay, num_sec=num_sec, message=message, **kwargs)
+
+    def wait_for_expected_patterns_match_count(
+        self,
+        expected_match,
+        timeout=180,
+        delay=5,
+        message="Check for expected match count",
+        **kwargs
+    ):
+        """ wait for expected match count found in respective log file.
+
+        Args:
+            expected_match (dir): expected patterns match count
+            timeout (int): timeout
+            delay (int): delay time
+            message (str): wait_for message
+        """
+
+        def _match():
+            return set(self.patterns_match_count) == set(expected_match)
+
+        wait_for(_match, timeout=timeout, message=message, delay=delay, **kwargs)

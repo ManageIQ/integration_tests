@@ -407,16 +407,7 @@ def test_codename_in_log(appliance):
                       hostname=appliance.hostname)
     lv.fix_before_start()
     appliance.ssh_client.run_command('appliance_console_cli --server=restart')
-
-    @wait_for_decorator
-    def codename_in_log():
-        try:
-            lv.validate_logs()
-        except pytest.Fail:
-            return False
-        else:
-            return True
-
+    lv.wait_for_log_validation()
     appliance.wait_for_web_ui()
 
 
