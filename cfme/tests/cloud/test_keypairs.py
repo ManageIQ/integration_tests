@@ -82,7 +82,7 @@ def test_keypair_create_cancel(provider, appliance):
     """ This will test cancelling on adding a keypair
     Polarion:
         assignee: mmojzis
-        casecomponent: WebUI
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/4h
         testSteps:
@@ -96,22 +96,61 @@ def test_keypair_create_cancel(provider, appliance):
     assert not keypair.exists
 
 
-@pytest.mark.provider([EC2Provider], override=True, scope="module", selector=ONE_PER_TYPE)
 @pytest.mark.tier(3)
-def test_keypair_create_validation(provider, appliance):
-    """ This will test validating the new of name of the key pair
+def test_keypair_create_name_validation(provider, appliance):
+    """ This will test validating that key pair without name cannot be created.
     Polarion:
         assignee: mmojzis
-        casecomponent: WebUI
+        casecomponent: Cloud
         caseimportance: low
         initialEstimate: 1/4h
         testSteps:
             1. Try to add key pair with empty name.
     """
+    # test empty name
     keypair_collection = appliance.collections.cloud_keypairs
     view = navigate_to(keypair_collection, 'Add')
     view.fill({'provider': provider})
     assert not view.form.add.active
+
+    # test invalid name - on ec2 any name can be specified so only testing openstack
+    if provider.one_of(OpenStackProvider):
+        view = navigate_to(keypair_collection, 'Add')
+        keypair_name = '.?!_'
+        view.form.fill({'name': keypair_name,
+                   'provider': provider.name})
+        view.form.add.click()
+        view = view.browser.create_view(KeyPairAllView)
+        view.flash.assert_message('Unable to create Key Pair "{}": Keypair data is invalid: '
+                                  'Keypair name contains unsafe characters'.format(keypair_name))
+
+
+@pytest.mark.tier(3)
+def test_keypair_create_invalid_key_validation(provider, appliance):
+    """ This will test validating that key pair with invalid public key cannot be created.
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Try to add key pair with invalid public key.
+    """
+    invalid_key = fauxfactory.gen_alphanumeric()
+    keypair_name = fauxfactory.gen_alphanumeric()
+    keypair_collection = appliance.collections.cloud_keypairs
+    view = navigate_to(keypair_collection, 'Add')
+    view.form.fill({'name': keypair_name,
+               'provider': provider.name,
+               'public_key': invalid_key})
+    view.form.add.click()
+    view = view.browser.create_view(KeyPairAllView)
+    if provider.one_of(EC2Provider):
+        view.flash.assert_message('Unable to create Key Pair "{}": Key is not in valid OpenSSH '
+                                  'public key format'.format(keypair_name))
+    elif provider.one_of(OpenStackProvider):
+        view.flash.assert_message('Unable to create Key Pair "{}": Keypair data is invalid: failed '
+                                  'to generate fingerprint'.format(keypair_name))
 
 
 @test_requirements.tag
