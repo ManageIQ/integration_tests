@@ -72,7 +72,7 @@ def test_appliance_scsi_control_vmware():
 
 
 @pytest.mark.tier(1)
-def test_vmware_vds_ui_display(appliance, provider):
+def test_vmware_vds_ui_display(soft_assert, appliance, provider):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
     to vds port groups.
@@ -98,7 +98,9 @@ def test_vmware_vds_ui_display(appliance, provider):
     except IndexError:
         pytest.skip("No hosts found")
     view = navigate_to(host, 'Networks')
-    assert 'DSwitch' in view.network_tree.all_options
+    soft_assert('DSwitch' in view.network_tree.all_options, "No DSwitches on Host Network page")
+    assert 'DSwitch' in [s.name for s in appliance.collections.infra_switches.all()], ('No DSwitch'
+        'on networking page')
 
 
 @pytest.mark.manual
@@ -175,9 +177,8 @@ def test_vmware_reconfigure_vm_controller_type(appliance, provider):
     assert not row.controller_type.read() == '', "Failed, as the Controller Type Column has no text"
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vmware_vds_ui_tagging():
+def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
     to vds port groups. Check to see if you can navigate to DSwitch and tag it.
@@ -191,16 +192,25 @@ def test_vmware_vds_ui_tagging():
         testtype: integration
         testSteps:
             1.Integrate VMware provider in CFME
-            2.Compute > Infrastructure > Host > [Select host] > Properties > Network
+            2.Compute > Infrastructure > Networkiong
             3.Check if host has Distributed Switch and it is displayed on this page
             4.If displayed, try to select Policy->Assign Tag to DSwitch.
         expectedResults:
             1.
-            2.Properties page for the host opens.
+            2.Networking Page opens
             3.If DSwitch exists it will be displayed on this page.
             4.You can assign tags to DSwitch.
     """
-    pass
+    switches_collection = appliance.collections.infra_switches
+    switches = [switch for switch in switches_collection.all() if switch.name == 'DSwitch']
+    assert switches, "There are no DSwitches on Networking Page"
+    s = switches[0]
+    s.add_tag((appliance.collections.categories.instantiate(display_name='Owner')
+            .collections.tags.instantiate(display_name='Production Linux Team')))
+    added_tags = [tag for tag in s.get_tags()
+                if (tag.name == 'Owner') and
+                (tag.display_name == 'Production Linux Team')]
+    assert added_tags, "Failed to retrieve correct tags"
 
 
 @pytest.mark.manual
