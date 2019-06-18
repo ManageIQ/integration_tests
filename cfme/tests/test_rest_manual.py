@@ -61,3 +61,88 @@ def test_custom_logos_via_api():
         1578076
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.rest
+def test_tenant_parent_name_rest():
+    """
+    When you change the main parent tenant"s name that change is not
+    reflected in api calls
+
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        upstream: yes
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rest
+def test_automation_request_task():
+    """
+    In this test we will try to edit a automation request using POST
+    request.
+    Note: Only Option field can be edited
+
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rest
+def test_edit_provider_request_task():
+    """
+    In this test we will try to edit a provider request using POST
+    request.
+    Note: Only Option field can be edited
+
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        initialEstimate: 1/4h
+        casecomponent: Rest
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rest
+def test_provider_specific_vm():
+    """
+    Steps:
+    1) Add multiple provider
+    2) Check for the vms specific to a provider
+    2) Repeat it for all the providers
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rest
+def test_edit_request_task():
+    """
+    In this test we will try to edit a request using POST request.
+    Note: Only Option field can be edited
+
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+    """
+    pass

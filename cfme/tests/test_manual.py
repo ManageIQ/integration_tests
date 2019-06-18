@@ -804,23 +804,6 @@ def test_crosshair_op_azone_ec2():
 
 
 @pytest.mark.manual
-@test_requirements.rest
-def test_edit_provider_request_task():
-    """
-    In this test we will try to edit a provider request using POST
-    request.
-    Note: Only Option field can be edited
-
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        initialEstimate: 1/4h
-        casecomponent: Rest
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_can_add_child_tenant_to_tenant():
     """
@@ -1346,24 +1329,6 @@ def test_candu_graphs_vm_compare_host_vsphere65():
 
 
 @pytest.mark.manual
-@test_requirements.rest
-def test_provider_specific_vm():
-    """
-    Steps:
-    1) Add multiple provider
-    2) Check for the vms specific to a provider
-    2) Repeat it for all the providers
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(1)
 def test_utilization_utilization_graphs():
@@ -1619,22 +1584,6 @@ def test_utilization_provider():
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-def test_edit_request_task():
-    """
-    In this test we will try to edit a request using POST request.
-    Note: Only Option field can be edited
-
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: Rest
-        initialEstimate: 1/4h
     """
     pass
 
@@ -2498,23 +2447,6 @@ def test_provider_refresh_via_api():
         initialEstimate: 1/4h
         tags: rbac
         title: Test provider refresh via API
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-def test_tenant_parent_name_rest():
-    """
-    When you change the main parent tenant"s name that change is not
-    reflected in api calls
-
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        upstream: yes
     """
     pass
 
@@ -3688,23 +3620,6 @@ def test_credentials_change_password_leading_whitespace():
         caseimportance: medium
         initialEstimate: 1/8h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-def test_automation_request_task():
-    """
-    In this test we will try to edit a automation request using POST
-    request.
-    Note: Only Option field can be edited
-
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: Rest
-        initialEstimate: 1/4h
     """
     pass
 
@@ -6578,25 +6493,6 @@ def test_cluster_graph_by_host_tag_vsphere65():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_verify_page_landing_cloud_subnets():
-    """
-    1. Login To CloudForms Operational Portal
-    2. Navigate to compute-> cloud -> instance -> click on any instance ->
-    Click on Cloud Networks (under relationships)
-    3. Check properly land on page or not.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/10h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(2)
 def test_monitor_ansible_playbook_logging_output():
@@ -6669,26 +6565,6 @@ def test_config_manager_add_multiple_times_ansible_tower_243():
         casecomponent: Ansible
         initialEstimate: 1/4h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual('manualonly')
-@pytest.mark.tier(1)
-def test_infrastructure_provider_left_panel_titles():
-    """
-    Requirement: Added and infrastructure provider
-    Navigate to Compute -> Infrastructure -> Providers
-    Select Properties on the panel and check all items, whether they do
-    have their titles.
-    Select Relationships on the panel and check all items, whether they do
-    have their titles.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/18h
     """
     pass
 

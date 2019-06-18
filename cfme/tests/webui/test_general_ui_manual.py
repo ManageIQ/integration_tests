@@ -56,3 +56,23 @@ def test_notification_window_can_be_closed_by_clicking_x():
         title: Notification window can be closed by clicking 'x'
     """
     pass
+
+
+@pytest.mark.manual('manualonly')
+@pytest.mark.tier(1)
+def test_infrastructure_provider_left_panel_titles():
+    """
+    Requirement: Added and infrastructure provider
+    Navigate to Compute -> Infrastructure -> Providers
+    Select Properties on the panel and check all items, whether they do
+    have their titles.
+    Select Relationships on the panel and check all items, whether they do
+    have their titles.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/18h
+    """
+    pass

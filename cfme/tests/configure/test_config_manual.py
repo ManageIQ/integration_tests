@@ -73,3 +73,22 @@ def test_configure_icons_roles_by_server():
             3. No icons are missing
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_verify_page_landing_cloud_subnets():
+    """
+    1. Login To CloudForms Operational Portal
+    2. Navigate to compute-> cloud -> instance -> click on any instance ->
+    Click on Cloud Networks (under relationships)
+    3. Check properly land on page or not.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Cloud
+        caseimportance: low
+        initialEstimate: 1/10h
+        startsin: 5.6
+    """
+    pass
