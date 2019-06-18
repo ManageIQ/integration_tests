@@ -135,9 +135,9 @@ def test_vmware_guests_linked_clone():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vmware_reconfigure_vm_controller_type():
+@pytest.mark.meta(blockers=[BZ(1650441, forced_streams=['5.10', '5.11'])])
+def test_vmware_reconfigure_vm_controller_type(appliance, provider):
     """
     Edit any VM which is provisioned for vSphere and select "Reconfigure this VM" option.
     In "Controller Type" column we do not see the Controller Type listed.
@@ -164,7 +164,11 @@ def test_vmware_reconfigure_vm_controller_type():
             3.Reconfigure VM opion should be enabled
             4.Controller type should be listed
     """
-    pass
+    vms_collections = appliance.collections.infra_vms
+    vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
+    view = navigate_to(vm, 'Reconfigure')
+    row = view.disks_table[0]
+    assert not row.controller_type.read() == '', "Failed, as the Controller Type Column has no text"
 
 
 @pytest.mark.manual
