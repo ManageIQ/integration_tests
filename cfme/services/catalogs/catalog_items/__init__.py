@@ -8,7 +8,6 @@ from navmazing import NavigateToSibling
 from widgetastic.utils import VersionPick
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
-from widgetastic.widget import ClickableMixin
 from widgetastic.widget import ColourInput
 from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import Select
@@ -34,25 +33,12 @@ from cfme.utils.update import Updateable
 from cfme.utils.version import LOWEST
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import AutomateRadioGroup
+from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import WaitTab
 from widgetastic_manageiq.expression_editor import ExpressionEditor
-
-
-class EntryPoint(Input, ClickableMixin):
-    def fill(self, value):
-        if super(EntryPoint, self).fill(value):
-            self.parent_view.modal.cancel.wait_displayed('20s')
-            self.parent_view.modal.cancel.click()
-            # After changing default path values of 'retirement_entry_point',
-            # 'reconfigure_entry_point' or 'provisioning_entry_point';
-            # 'Select Entry Point Instance'(pop up) occures which also helps to select these paths
-            # using tree structure. Here we have already filled these values through text input.
-            # So to ignore this pop up clicking on cancel button is required.
-            return True
-        return False
 
 
 # Views
@@ -72,9 +58,9 @@ class BasicInfoForm(ServicesCatalogView):
     display = Checkbox(name='display')
 
     subtype = BootstrapSelect('generic_subtype')
-    provisioning_entry_point = EntryPoint(name='fqname')
-    retirement_entry_point = EntryPoint(name='retire_fqname')
-    reconfigure_entry_point = EntryPoint(name='reconfigure_fqname')
+    provisioning_entry_point = EntryPoint(name='fqname', tree_id="automate_treebox")
+    retirement_entry_point = EntryPoint(name='retire_fqname', tree_id="automate_treebox")
+    reconfigure_entry_point = EntryPoint(name='reconfigure_fqname', tree_id="automate_treebox")
     select_resource = BootstrapSelect('resource_id')
 
     @View.nested
@@ -467,12 +453,9 @@ class CloudInfraCatalogItem(BaseCatalogItem):
     domain = attr.ib(default='ManageIQ (Locked)')
     provider = attr.ib(default=None)
     item_type = None
-    provisioning_entry_point = attr.ib(default=(
-        "/Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogItemInitialization"))
-    retirement_entry_point = attr.ib(
-        default="/Service/Retirement/StateMachines/ServiceRetirement/Default"
-    )
-    reconfigure_entry_point = attr.ib(default='')
+    provisioning_entry_point = attr.ib(default=None)
+    retirement_entry_point = attr.ib(default=None)
+    reconfigure_entry_point = attr.ib(default=None)
 
     @property
     def fill_dict(self):
