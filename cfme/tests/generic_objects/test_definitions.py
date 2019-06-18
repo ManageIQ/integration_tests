@@ -76,3 +76,30 @@ def test_generic_objects_class_accordion_should_display_when_locale_is_french():
         1594480
     """
     pass
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(blockers=[BZ(1650104)])
+def test_upload_image_generic_object_definition(appliance):
+    """
+    Bugzilla:
+        1650104
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/30h
+        caseimportance: medium
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.11
+        casecomponent: GenericObjects
+    """
+    view = navigate_to(appliance.collections.generic_object_definitions, "Add")
+    view.custom_image_file.upload_chosen_file.click()
+    # make sure the flash assertion appears
+    view.flash.assert_message("No file chosen.")
+    # click button again
+    view.custom_image_file.upload_chosen_file.click()
+    # make sure only a single message is present
+    assert len(view.flash.read()) == 1
+    view.cancel.click()
