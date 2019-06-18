@@ -65,4 +65,3 @@ def test_storage_object_store_container_add_remove_tag_openstack(container):
     container.remove_tag(added_tag)
     tag_available = container.get_tags()
     assert not tag_available
-

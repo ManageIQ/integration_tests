@@ -41,34 +41,7 @@ def storage_object(appliance, provider):
         return objs[0]
 
 
-@pytest.mark.manual
 @test_requirements.tag
-def test_storage_object_store_object_remove():
-    """
-    Requires:
-        OpenstackProvider
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.8
-        testSteps:
-            1. Navigate to Object Store Object [Storage > Object Storage > Object
-            Store Objects]
-            2. Select objects for removal
-            3. Remove [Configuration > Remove Object Storage Objects from
-            Inventory]
-        expectedResults:
-            1.
-            2.
-            3. Verify object removed or not
-    """
-    pass
-
-
-@test_requirements.storage
 def test_storage_object_store_object_add_remove_tag_openstack():
     """
     Requires:
