@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
@@ -279,4 +280,79 @@ def test_check_system_request_calls_depr_conf_mgmt(appliance, copy_instance):
         appliance=appliance,
         request=copy_instance.name
     )
+    result.validate_logs()
+
+
+@pytest.fixture(scope="module")
+def copy_quota_instance(domain):
+    """Copy the default instance 'quota' to custom domain"""
+    miq = domain.appliance.collections.domains.instantiate("ManageIQ")
+
+    original_instance = (
+        miq.namespaces.instantiate("System")
+        .namespaces.instantiate("CommonMethods")
+        .classes.instantiate("QuotaStateMachine")
+        .instances.instantiate("quota")
+    )
+    original_instance.copy_to(domain=domain)
+
+    instance = (
+        domain.namespaces.instantiate("System")
+        .namespaces.instantiate("CommonMethods")
+        .classes.instantiate("QuotaStateMachine")
+        .instances.instantiate("quota")
+    )
+    return instance
+
+
+@pytest.mark.tier(2)
+@pytest.mark.parametrize(
+    ("entity", "search"),
+    [
+        (
+            'group',
+            'Getting Quota Values for Model',
+        ),
+        (
+            'tenant',
+            'Getting Tenant Quota Values for',
+        ),
+    ],
+    ids=["group", "tenant"],
+)
+def test_quota_source_value(request, entity, search, copy_quota_instance, generic_catalog_item):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+
+    Bugzilla:
+        1319910
+    """
+    # Changing quota source value
+    copy_quota_instance.update({"fields": {'quota_source_type': {'value': entity}}})
+
+    # Setting cpu quota for 'My Company' tenant
+    root_tenant = copy_quota_instance.appliance.collections.tenants.get_root_tenant()
+    root_tenant.set_quota(**{"cpu_cb": True, "cpu": 3})
+    request.addfinalizer(lambda: root_tenant.set_quota(**{"cpu_cb": False}))
+
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(search)]
+    )
+    result.fix_before_start()
+    service_catalogs = ServiceCatalogs(
+        copy_quota_instance.appliance, catalog=generic_catalog_item.catalog,
+        name=generic_catalog_item.name
+    )
+    request_description = 'Provisioning Service [{name}] from [{name}]'.format(
+        name=service_catalogs.name)
+    provision_request = copy_quota_instance.appliance.collections.requests.instantiate(
+        description=request_description)
+    service_catalogs.order()
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(lambda: provision_request.remove_request(method="rest"))
     result.validate_logs()
