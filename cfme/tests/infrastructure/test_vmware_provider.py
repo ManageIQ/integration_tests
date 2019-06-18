@@ -19,7 +19,8 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider],
                         required_fields=[['provisioning', 'template'],
                                         ['provisioning', 'host'],
-                                        ['provisioning', 'datastore']],
+                                        ['provisioning', 'datastore'],
+                                        (["cap_and_util", "capandu_vm"], "cu-24x7")],
                         scope="module")
 ]
 
@@ -135,9 +136,9 @@ def test_vmware_guests_linked_clone():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_vmware_reconfigure_vm_controller_type():
+@pytest.mark.meta(blockers=[BZ(1650441, forced_streams=['5.10', '5.11'])])
+def test_vmware_reconfigure_vm_controller_type(appliance, provider):
     """
     Edit any VM which is provisioned for vSphere and select "Reconfigure this VM" option.
     In "Controller Type" column we do not see the Controller Type listed.
@@ -164,7 +165,14 @@ def test_vmware_reconfigure_vm_controller_type():
             3.Reconfigure VM opion should be enabled
             4.Controller type should be listed
     """
-    pass
+    vms_collections = appliance.collections.infra_vms
+    vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
+    if not vm.exists_on_provider:
+        pytest.skip("Skipping test, cu-24x7 VM does not exist")
+    view = navigate_to(vm, 'Reconfigure')
+    # grab the first row of the table
+    row = view.disks_table[0]
+    assert not row.controller_type.read() == '', "Failed, as the Controller Type Column has no text"
 
 
 @pytest.mark.manual
@@ -259,17 +267,24 @@ def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     iso_ds.run_smartstate_analysis()
     vms_collections = appliance.collections.infra_vms
     vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
+    if not vm.exists_on_provider:
+        pytest.skip("Skipping test, cu-24x7 VM does not exist")
     view = navigate_to(vm, 'Reconfigure')
-    actions_column = view.cd_dvd_table[0]['Actions']
+    # Fetch the actions_column for first row in the table
+    try:
+        actions_column = view.cd_dvd_table[0]['Actions']
+    except IndexError:
+        pytest.skip("CD DVD Table is empty, has no rows.")
     # First disconnect if already connected
-    if actions_column.text == 'Connect Disconnect':
-        actions_column.click()
+    assert actions_column.text == 'Connect Disconnect'
+    actions_column.click()
     # Confirm disconnect
-    if actions_column.text == 'Confirm':
-        actions_column.click()
+    assert actions_column.text == 'Confirm'
+    actions_column.click()
     # if 'Connect' option is present, click it
-    if actions_column.text == 'Connect':
-        actions_column.click()
+    assert actions_column.text == 'Connect'
+    actions_column.click()
+    # Fetch the host_file_column for first row in the table
     host_file_column = view.cd_dvd_table[0]['Host File']
     assert host_file_column.widget.is_displayed  # Assert BootStrapSelect is displayed
     assert not host_file_column.widget.all_options == []
