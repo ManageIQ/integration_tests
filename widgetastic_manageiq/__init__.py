@@ -2652,6 +2652,8 @@ class ReactSelect(Widget, ClickableMixin):
     ROOT = ParametrizedLocator('{@locator}')
     BASE_LOCATOR = ".//div[@id={}]"
     BY_VISIBLE_TEXT = './/*[self::span or self::div][contains(text(), {})]'
+    SELECTED_VALUE = './/div[contains(@class, "singleValue")]'
+    ALL_OPTIONS = './/*[self::span or self::div][normalize-space(text())]'
     # fmt: on
 
     def __init__(self, parent, id=None, locator=None, can_hide_on_select=False, logger=None):
@@ -2723,21 +2725,19 @@ class ReactSelect(Widget, ClickableMixin):
         self.close()
 
     @property
-    def all_selected_options(self):
-        return [
-            self.browser.text(e)
-            for e in self.browser.elements('//ul[@class="tag-category list-inline"]', parent=self)
-        ]
-
-    @property
     def all_options(self):
-        script = """return ManageIQ.component.getInstance(
-        "TaggingWrapperConnected", "TaggingWrapperConnected-0").props.tags"""
-        return self.browser.execute_script(script)
+        # need to open the dropdown to see all available options
+        self.open()
+        options = [self.browser.text(e) for e in self.browser.elements(self.ALL_OPTIONS)]
+        self.close()
+        return options
 
     @property
     def selected_option(self):
-        return self.all_selected_options[0]
+        try:
+            return self.browser.text(self.SELECTED_VALUE)
+        except NoSuchElementException:
+            return "No value is selected"
 
     def read(self):
         return self.selected_option
@@ -2748,7 +2748,7 @@ class ReactSelect(Widget, ClickableMixin):
         elif not isinstance(items, set):
             items = set(items)
 
-        if set(self.all_selected_options) == items:
+        if set(self.selected_option) == items:
             return False
         else:
             self.select_by_visible_text(*items)

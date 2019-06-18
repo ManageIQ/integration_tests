@@ -242,15 +242,29 @@ class ManagePolicies(CFMENavigateStep):
 
 
 class AssignedTags(ParametrizedView):
+    """
+    Represents the assigned tag in EditTags menu.
+    To remove the tag, you need to pass category name, e.g.: 'view.form.tags(category).remove()'.
+    To read the value of the tag, pass the category name, e.g.: 'view.form.tags(category).read()'.
+    """
     PARAMETERS = ("tag",)
     ALL_TAGS = ".//a[contains(@class, 'pf-remove-button')]"
-    tag = Text(ParametrizedLocator(
-        ".//div[@class='category-label']/parent::li/following-sibling::"
+    tag_remove = Text(ParametrizedLocator(
+        ".//div[@class='category-label'][@title={tag|quote}]/parent::li/following-sibling::"
         "li/descendant::a[contains(@class, 'pf-remove-button')]")
     )
 
+    tag_value = Text(ParametrizedLocator(
+        ".//div[@class='category-label'][@title={tag|quote}]/parent::li/following-sibling::li/span")
+    )
+
     def remove(self):
-        self.tag.click()
+        """Removes the assigned tag by clicking 'x' icon"""
+        self.tag_remove.click()
+
+    def read(self):
+        """Return the assigned value to a tag category"""
+        return self.browser.get_attribute("title", self.tag_value)
 
 
 class TagPageView(BaseLoggedInPage):
@@ -343,8 +357,7 @@ class TaggableCommonBase(object):
                 row = view.form.tags.row(category=category, assigned_value=tag)
             row[0].click()
         else:
-            view = view.form.tags(category)
-            view.remove()
+            view.form.tags(category).remove()
 
     def _tags_action(self, view, cancel, reset):
         """ Actions on edit tags page

@@ -33,6 +33,7 @@ from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 from widgetastic_manageiq import BootstrapSelect
+from widgetastic_manageiq import DetailsToolBarViewSelector
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import PaginationPane
@@ -174,6 +175,8 @@ class TenantDetailsView(TenantView):
     toolbar = View.nested(TenantDetailsToolbar)
     sidebar = View.nested(TenantDetailsAccordion)
     entities = View.nested(TenantDetailsEntities)
+
+    view_selector = View.nested(DetailsToolBarViewSelector)
 
     @property
     def is_displayed(self):
@@ -420,6 +423,9 @@ class TenantDetails(CFMENavigateStep):
         row = self.prerequisite_view.paginator.find_row_on_pages(
             self.prerequisite_view.table, name=self.obj.name)
         row.click()
+        if self.appliance.version > "5.11":
+            # in 5.11 TenantDetailsView has a dashboard view (5.10 doesn't) and it breaks navigation
+            self.view.view_selector.select("Summary View")
 
     def resetter(self, *args, **kwargs):
         """Reset the view"""
