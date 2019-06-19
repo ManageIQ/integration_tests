@@ -472,4 +472,4 @@ def test_automate_service_quota_runs_only_once(appliance, generic_catalog_item):
     )
     provision_request = service_catalogs.order()
     provision_request.wait_for_request()
-    assert result.match_count()[result.matched_patterns[0]] == 1
+    assert result.matches[result.matched_patterns[0]] == 1
