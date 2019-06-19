@@ -47,7 +47,7 @@ def clear_ntp_settings(appliance, empty_ntp_dict):
 def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/12h
@@ -69,7 +69,7 @@ def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
 def test_ntp_server_max_character(request, appliance, ntp_servers_keys, empty_ntp_dict):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/8h
@@ -88,7 +88,7 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         initialEstimate: 1/4h
     """
@@ -121,7 +121,7 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Configuration
     """
@@ -161,7 +161,7 @@ def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
 def test_clear_ntp_settings(request, appliance, empty_ntp_dict):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/30h

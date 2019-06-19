@@ -6,10 +6,11 @@ import fauxfactory
 import pytest
 from widgetastic_patternfly import SelectItemNotFound
 
+from cfme import test_requirements
 from cfme.common.host_views import HostsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3), test_requirements.filtering]
 
 
 @pytest.fixture(scope='module')

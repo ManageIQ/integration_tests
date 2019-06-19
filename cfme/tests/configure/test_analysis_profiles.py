@@ -7,7 +7,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import update
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3), test_requirements.configuration]
 
 # TODO parametrize this with some data fuzzing
 files_list = [{'Name': '/etc/test/true', 'Collect Contents?': True},
@@ -74,7 +74,7 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
     """CRUD for VM analysis profiles.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         caseimportance: medium
         casecomponent: Configuration
         initialEstimate: 1/2h
@@ -131,7 +131,7 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
     """CRUD for Host analysis profiles.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/12h
@@ -177,7 +177,7 @@ def test_vmanalysis_profile_description_validation(analysis_profile_collection):
     """ Test to validate description in vm profiles
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/20h
@@ -202,7 +202,7 @@ def test_analysis_profile_duplicate_name(analysis_profile_collection):
     """ Test to validate duplicate profiles name.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
@@ -234,7 +234,7 @@ def test_delete_default_analysis_profile(default_host_profile, appliance):
     """ Test to validate delete default profiles.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
@@ -259,7 +259,7 @@ def test_edit_default_analysis_profile(default_host_profile, appliance):
     """ Test to validate edit default profiles.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/10h
@@ -283,7 +283,7 @@ def test_analysis_profile_item_validation(analysis_profile_collection):
     """ Test to validate analysis profile items.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/15h
@@ -309,7 +309,7 @@ def test_analysis_profile_name_validation(analysis_profile_collection):
     """ Test to validate profile name.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/20h
@@ -336,7 +336,7 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
     """ Test to validate profile description.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         initialEstimate: 1/4h
     """

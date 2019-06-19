@@ -218,6 +218,7 @@ def test_storage_volume_attached_delete():
     pass
 
 
+@test_requirements.tag
 def test_storage_volume_edit_tag(volume):
     """ Test add and remove tag to storage volume
     prerequisites:
@@ -247,6 +248,7 @@ def test_storage_volume_edit_tag(volume):
     assert not tag_available
 
 
+@test_requirements.tag
 def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
     """Test tag can be added to multiple volumes at once
 

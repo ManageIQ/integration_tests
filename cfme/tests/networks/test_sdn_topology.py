@@ -2,6 +2,7 @@ import random
 
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
@@ -22,6 +23,7 @@ def elements_collection(setup_provider_modscope, appliance, provider):
     provider.wait_for_delete()
 
 
+@test_requirements.filtering
 def test_topology_search(request, elements_collection):
     """Testing search functionality in Topology view.
 

@@ -371,6 +371,7 @@ def test_user_email_error_validation(appliance, group_collection):
 
 
 @pytest.mark.tier(2)
+@test_requirements.tag
 def test_user_edit_tag(appliance, group_collection, tag):
     """
     Polarion:
@@ -392,6 +393,7 @@ def test_user_edit_tag(appliance, group_collection, tag):
 
 
 @pytest.mark.tier(3)
+@test_requirements.tag
 def test_user_remove_tag(appliance, group_collection):
     """
     Polarion:
@@ -462,6 +464,7 @@ def test_current_user_login_delete(appliance, request):
 
 
 @pytest.mark.tier(3)
+@test_requirements.tag
 def test_tagvis_user(user_restricted, check_item_visibility):
     """ Tests if group honour tag visibility feature
     Prerequirement:
@@ -502,6 +505,7 @@ def test_group_crud(group_collection):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
+@test_requirements.tag
 def test_group_crud_with_tag(provider, tag_value, group_collection):
     """Test for verifying group create with tag defined
 
@@ -561,6 +565,7 @@ def test_group_duplicate_name(group_collection):
 
 
 @pytest.mark.tier(2)
+@test_requirements.tag
 def test_group_edit_tag(group_collection):
     """
     Polarion:
@@ -582,6 +587,7 @@ def test_group_edit_tag(group_collection):
 
 
 @pytest.mark.tier(2)
+@test_requirements.tag
 def test_group_remove_tag(group_collection):
     """
     Polarion:
@@ -707,6 +713,7 @@ def test_edit_sequence_usergroups(request, group_collection):
 
 
 @pytest.mark.tier(3)
+@test_requirements.tag
 def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
     """ Tests if group honour tag visibility feature
     Prerequirement:
@@ -1176,7 +1183,7 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
     empty
 
     Polarion:
-        assignee: anikifor
+        assignee: apagac
         casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/15h

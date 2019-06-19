@@ -185,6 +185,7 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
 
 
 @pytest.mark.rhv3
+@test_requirements.filtering
 @pytest.mark.tier(3)
 def test_advanced_search_registry_element(request, appliance):
     """

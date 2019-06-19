@@ -223,6 +223,7 @@ def test_generic_objects_with_buttons_ui(appliance, request, add_generic_object_
             assert view.toolbar.button(generic_button.name).custom_button.is_displayed
 
 
+@test_requirements.tag
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'collection'])
 def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
     """Tests assigning and unassigning tags using UI.

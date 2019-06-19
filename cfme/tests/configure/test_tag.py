@@ -74,6 +74,7 @@ def tag(category):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
+@test_requirements.tag
 def test_tag_crud(tag):
     """
     Polarion:
@@ -89,6 +90,7 @@ def test_tag_crud(tag):
     })
 
 
+@test_requirements.tag
 def test_map_tagging_crud(appliance, category, soft_assert):
     """Test map tag crud with flash message assertion
     Polarion:
@@ -124,6 +126,7 @@ def test_map_tagging_crud(appliance, category, soft_assert):
                                           .format(map_tag_entity.label))
 
 
+@test_requirements.tag
 def test_updated_tag_name_on_vm(provider, tag, request):
     """
     This test checks that tags don't disappear from the UI after their name (not displayed name) is

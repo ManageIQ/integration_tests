@@ -29,7 +29,7 @@ DROPDOWNS = [
 def test_restart_workers(appliance):
     """
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         caseimportance: high
         initialEstimate: 1/4h
         casecomponent: Configuration
@@ -55,7 +55,7 @@ def test_set_memory_threshold_in_ui(appliance, dropdown):
         1656873
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/6h

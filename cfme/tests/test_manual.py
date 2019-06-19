@@ -272,7 +272,7 @@ def test_infrastructure_hosts_icons_states():
     Summary of the host
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/3h

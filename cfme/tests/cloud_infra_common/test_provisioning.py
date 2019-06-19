@@ -587,6 +587,7 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
                 provider.mgmt.delete_volume(volume_id)
 
 
+@test_requirements.tag
 def test_provision_with_tag(appliance, vm_name, tag, provider, request):
     """ Tests tagging instance using provisioning dialogs.
 

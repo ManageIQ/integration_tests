@@ -83,6 +83,7 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning):
 
 
 @pytest.mark.rhv1
+@test_requirements.rhev
 def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, setup_iso_datastore,
                                  catalog_item, request):
     """Tests RHEV ISO service catalog

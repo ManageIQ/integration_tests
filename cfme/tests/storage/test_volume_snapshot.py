@@ -188,6 +188,7 @@ def test_storage_volume_snapshot_crud(volume, provider, snapshot_create_from):
 
 
 @pytest.mark.tier(3)
+@test_requirements.tag
 def test_storage_volume_snapshot_edit_tag_from_detail(snapshot, tag):
     """ Test tags for snapshot
 

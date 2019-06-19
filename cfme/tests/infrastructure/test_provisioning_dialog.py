@@ -255,6 +255,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
 
 
 @pytest.mark.rhv3
+@test_requirements.tag
 def test_tag(provisioner, prov_data, provider, vm_name):
     """ Tests tagging VMs using provisioning dialogs.
 

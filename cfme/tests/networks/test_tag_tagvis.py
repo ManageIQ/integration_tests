@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.networks.views import BalancerView
@@ -13,7 +14,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([AzureProvider], selector=ONE_PER_CATEGORY, scope='module')
+    pytest.mark.provider([AzureProvider], selector=ONE_PER_CATEGORY, scope='module'),
+    test_requirements.tag
 ]
 
 network_collections = [

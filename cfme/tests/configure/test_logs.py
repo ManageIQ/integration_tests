@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -10,6 +11,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
+    test_requirements.log_depot,
     pytest.mark.provider(
         [AzureProvider, EC2Provider, RHEVMProvider, SCVMMProvider], scope="module"
     ),

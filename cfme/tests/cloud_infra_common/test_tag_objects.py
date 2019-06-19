@@ -9,7 +9,8 @@ from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider'),
+    test_requirements.tag
 ]
 
 
@@ -222,7 +223,6 @@ def test_tagvis_storage_provider_children():
 
 
 @pytest.mark.manual
-@test_requirements.tag
 @pytest.mark.tier(2)
 def test_tagvis_cluster_change():
     """
@@ -238,7 +238,6 @@ def test_tagvis_cluster_change():
 
 
 @pytest.mark.manual
-@test_requirements.tag
 @pytest.mark.tier(2)
 def test_tagvis_vm_and_template_modified():
     """
@@ -255,7 +254,6 @@ def test_tagvis_vm_and_template_modified():
 
 
 @pytest.mark.manual
-@test_requirements.tag
 @pytest.mark.tier(2)
 def test_tagvis_host_change():
     """
@@ -303,7 +301,6 @@ def test_tagvis_tag_cluster_vm_combination():
 
 
 @pytest.mark.manual
-@test_requirements.tag
 @pytest.mark.tier(2)
 def test_tagvis_cluster_and_vm_combination():
     """
@@ -354,7 +351,6 @@ def test_tagvis_tag_and_vm_combination():
 
 
 @pytest.mark.manual
-@test_requirements.tag
 @pytest.mark.tier(2)
 def test_tagvis_ldap_group_host():
     """

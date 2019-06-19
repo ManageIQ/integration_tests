@@ -1,5 +1,9 @@
 import pytest
 
+from cfme import test_requirements
+
+pytestmark = [test_requirements.tag]
+
 
 @pytest.mark.manual
 @pytest.mark.tier(2)

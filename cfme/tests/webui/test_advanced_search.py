@@ -14,8 +14,6 @@ from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
-pytestmark = [test_requirements.filtering]
-
 Param = namedtuple("Param", ["collection", "destination", "entity", "filter", "my_filters"])
 
 params_values = [
@@ -108,6 +106,7 @@ params_values = [
 ]
 
 pytestmark = [
+    test_requirements.filtering,
     pytest.mark.parametrize(
         'param', params_values,
         ids=['{}-{}'.format(param.entity, param.destination.lower()) for param in params_values]

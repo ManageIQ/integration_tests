@@ -14,7 +14,7 @@ def test_configure_vmdb_last_start_time(appliance):
         "journalctl -u rh-postgresql{}-postgresql.service  --boot=0 | sed '4!d'"
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h
@@ -46,7 +46,7 @@ def test_configuration_database_garbage_collection(appliance):
         Submit Run database Garbage Collection Now a check UI/logs for errors.
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/12h

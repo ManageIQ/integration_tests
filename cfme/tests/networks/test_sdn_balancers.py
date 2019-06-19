@@ -2,6 +2,7 @@ import random
 
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
@@ -68,6 +69,7 @@ def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
 
 # only one provider is needed for that test, used Azure as it has balancers
 @pytest.mark.provider([AzureProvider], scope='module', override=True)
+@test_requirements.tag
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_with_load_balancers):
     """ Tests network provider and its items honors tag visibility

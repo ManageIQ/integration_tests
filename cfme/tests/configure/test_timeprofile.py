@@ -61,7 +61,7 @@ def test_days_required_error_validation(appliance, soft_assert):
     This test case performs the error validation of days field.
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Settings
         caseimportance: low
         initialEstimate: 1/15h
@@ -83,7 +83,7 @@ def test_hours_required_error_validation(appliance, soft_assert):
     This test case performs the error validation of hours field.
 
     Polarion:
-        assignee: anikifor
+        assignee: pvala
         casecomponent: Settings
         caseimportance: low
         initialEstimate: 1/30h
