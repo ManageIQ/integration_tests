@@ -65,34 +65,29 @@ def test_custom_logos_via_api():
 
 @pytest.mark.manual
 @test_requirements.rest
-def test_tenant_parent_name_rest():
-    """
-    When you change the main parent tenant"s name that change is not
-    reflected in api calls
-
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
 def test_automation_request_task():
     """
-    In this test we will try to edit a automation request using POST
-    request.
-    Note: Only Option field can be edited
-
     Polarion:
         assignee: pvala
         caseimportance: medium
         casecomponent: Rest
         initialEstimate: 1/4h
+        testSteps:
+            1. Create an automation request.
+            2. Edit the automation request task:
+                POST /api/automation_requests/:id/request_tasks/:request_task_id
+                {
+                "action" : "edit",
+                "resource" : {
+                    "options" : {
+                    "request_param_a" : "value_a",
+                    "request_param_b" : "value_b"
+                    }
+                }
+        expectedResults:
+            1.
+            2. Task must be edited successfully.
+
     """
     pass
 
@@ -101,15 +96,26 @@ def test_automation_request_task():
 @test_requirements.rest
 def test_edit_provider_request_task():
     """
-    In this test we will try to edit a provider request using POST
-    request.
-    Note: Only Option field can be edited
-
     Polarion:
         assignee: pvala
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: Rest
+        testSteps:
+            1. Create a provision request.
+            2. Edit the provision request task:
+                POST /api/provision_requests/:id/request_tasks/:request_task_id
+                {
+                "action" : "edit",
+                "resource" : {
+                    "options" : {
+                    "request_param_a" : "value_a",
+                    "request_param_b" : "value_b"
+                    }
+                }
+        expectedResults:
+            1.
+            2. Task must be edited successfully.
     """
     pass
 
@@ -118,16 +124,16 @@ def test_edit_provider_request_task():
 @test_requirements.rest
 def test_provider_specific_vm():
     """
-    Steps:
-    1) Add multiple provider
-    2) Check for the vms specific to a provider
-    2) Repeat it for all the providers
-
     Polarion:
         assignee: pvala
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
+        testSteps:
+            1. Add multiple provider and query vms related to a specific provider.
+                GET /api/providers/:provider_id/vms
+        expectedResults:
+            1. Should receive all VMs related to the provider.
     """
     pass
 
@@ -136,13 +142,26 @@ def test_provider_specific_vm():
 @test_requirements.rest
 def test_edit_request_task():
     """
-    In this test we will try to edit a request using POST request.
-    Note: Only Option field can be edited
-
-    Polarion:
+        Polarion:
         assignee: pvala
         caseimportance: medium
         casecomponent: Rest
         initialEstimate: 1/4h
+        testSteps:
+            1. Create a service request.
+            2. Edit the service request task:
+                POST /api/service_requests/:id/request_tasks/:request_task_id
+                {
+                "action" : "edit",
+                "resource" : {
+                    "options" : {
+                    "request_param_a" : "value_a",
+                    "request_param_b" : "value_b"
+                    }
+                }
+        expectedResults:
+            1.
+            2. Task must be edited successfully.
+
     """
     pass
