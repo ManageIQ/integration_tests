@@ -9,6 +9,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.fixtures.soft_assert import soft_assert
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
@@ -130,41 +131,6 @@ def test_vmware_vds_ui_display(appliance, provider):
     switches_collection = appliance.collections.infra_switches
     switches = [switch.name for switch in switches_collection.all() if switch.name == 'DSwitch']
     soft_assert(not switches == [], "There are no DSwitches on Networking Page")
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_vmware_guests_linked_clone():
-    """
-    VMware guests are incorrectly marked as linked_clone true, remove attribute
-    VMs are incorrectly marked as Linked Clones.
-    Every VM discovered from VMware provider has "linked_clone": true.
-    However, none of the VMs is sharing a disk or has a snapshot.
-    Ideally they shouldn't mark them all as linked_clone=t
-
-    Bugzilla:
-        1588908
-
-    Polarion:
-        assignee: kkulkarn
-        casecomponent: Infra
-        caseimportance: critical
-        initialEstimate: 1/3h
-        testtype: integration
-        testSteps:
-            1.Integrate VMware provider in CFME
-            2.Check the total number of VMs present
-            # psql -U postgres -d vmdb_production -c "select name from vms where vendor='vmware';" |
-            wc -l
-            3.Now, check the total number of VMs having linked_clone set as True:
-            # psql -U postgres -d vmdb_production -c "select name from vms where vendor='vmware'
-            and linked_clone='t';" | wc -l
-        expectedResults:
-            1.
-            2.Should return VM count
-            3.Should return VM count where linked_clone='t' and should be less than count in step2.
-    """
-    pass
 
 
 @pytest.mark.tier(1)
