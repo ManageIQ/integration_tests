@@ -886,3 +886,130 @@ def test_git_refresh_with_renamed_yaml():
         1716443
     """
     pass
+
+
+@pytest.mark.tier(2)
+def test_upload_blank_line():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: negative
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Create blank zip(test.zip) and yaml(test.yml) file
+            2. Navigate to Automation > Automate > Import/Export and upload test.zip file
+            3. Navigate to Automation > Automate > Customization > Import/Export and upload test.yml
+        expectedResults:
+            1.
+            2. Error message should be displayed
+            3. Error message should be displayed
+
+    Bugzilla:
+        1720611
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+def test_initiate_retirement_automate_method():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Create a writeable domain
+            2. Create a /System/Request/retire_automation_service instance and set meth5 to
+               retire_automation_service.
+            3. Create a /System/Request/retire_automation_service method.
+               Sample code:
+               ```
+               service = $evm.root['service']
+               $evm.log(:info, "create_retire_request for  service #{service}")
+               request = $evm.execute(:create_retire_request, service)
+               $evm.log(:info, "Create request for create_retire_request for request #{request}")
+               ```
+            4. In Automation/Automate/Simulation:
+               >> Set Request => retire_automation_service
+               >> Select Object Attribute Type => Service
+               >> Selection => Service to be retired
+               and click on Submit
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Service should be retired from Automate method.
+
+    Bugzilla:
+        1700524
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+def test_git_refresh_with_rapid_updates():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Have a git backed domain that imported cleanly
+            2. Break the domain in Git, or notice a method isn't visible because its matching .yaml
+               was never added to git
+            3. Add an broken .yaml to git, push, etc, in a desperate attempt to fix the issue.
+               Note: There are different .yaml files for domain, namespace, class etc. So to break
+               this file; you can change file name from __domain__.yaml to __testdomain__.yaml(or
+               any) or you can change the code in the .yaml file
+            4. Go to CF UI, Automate, Domain, "Refresh with a new branch or tag"
+            5. Select suitable branch and "Save"
+            6. Check evm.log
+            7. Fix e.g. <method>.yaml, commit, push
+            8. Refresh page you never left
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Error message should be displayed in UI
+            6. Errors should be available in logs
+            7.
+            8. It should re-pull or force user to do something if (5) is updated to block
+
+    Bugzilla:
+        1696396
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+def test_simulation_copy_button():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Go to Automation > Automate > Simulation
+            2. Fill in any required fields to enable submit button and click on 'Submit'
+            4. Change any field - for example 'Object Attribute'
+            5. Select Copy button
+        expectedResults:
+            1. Copy button should be disabled
+            2. Copy button should be enabled
+            3.
+            4.
+            5. Copy button should be disabled until form is submitted
+
+    Bugzilla:
+        1630800
+    """
+    pass
