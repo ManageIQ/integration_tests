@@ -18,22 +18,20 @@ pytestmark = [test_requirements.automate]
 @pytest.fixture(scope="module")
 def new_users(appliance):
     """This fixture creates new users"""
-    users = []
-    for i in range(2):
-        user = appliance.collections.users.create(
-            name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-            credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
-                                  secret=fauxfactory.gen_alphanumeric(4)),
-            email=fauxfactory.gen_email(),
-            groups=appliance.collections.groups.instantiate(
-                description="EvmGroup-super_administrator"),
-            cost_center="Workload",
-            value_assign="Database",
-        )
-        users.append(user)
+    users = [appliance.collections.users.create(
+        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
+        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
+                              secret=fauxfactory.gen_alphanumeric(4)),
+        email=fauxfactory.gen_email(),
+        groups=appliance.collections.groups.instantiate(description="EvmGroup-super_administrator"),
+        cost_center="Workload",
+        value_assign="Database",
+    ) for i in range(2)]
+
     yield users
-    if not BZ(1720273).blocks and user in users:
-        user.delete_if_exists()
+    if not BZ(1720273).blocks:
+        for user in users:
+            user.delete_if_exists()
 
 
 @pytest.fixture(scope='function')
@@ -75,7 +73,7 @@ def service_validate_request(domain):
 
 @pytest.mark.tier(3)
 @pytest.mark.provider([VMwareProvider], scope="module")
-@pytest.mark.meta(blockers=[BZ(1671563, forced_streams=['5.10'])])
+@pytest.mark.ignore_stream("5.10")
 def test_user_requester_for_lifecycle_provision(request, appliance, provider, setup_provider,
                                                 new_users, generic_catalog_item,
                                                 infra_validate_request, service_validate_request,
@@ -90,6 +88,7 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
 
     Bugzilla:
          1671563
+         1720273
     """
     script = """
     user = $evm.root['user']
