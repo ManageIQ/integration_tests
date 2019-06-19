@@ -479,22 +479,6 @@ def test_automate_git_import_case_insensitive():
     pass
 
 
-@pytest.mark.tier(1)
-def test_assert_failed_substitution():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        tags: automate
-
-    Bigzilla:
-        1335669
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_automate_import_namespace_attributes_updated():
     """
