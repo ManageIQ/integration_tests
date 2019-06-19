@@ -1004,10 +1004,13 @@ def test_git_refresh_with_rapid_updates():
         startsin: 5.10
         casecomponent: Automate
         testSteps:
-            1. Have a git backed domain that imported cleanly (if possibly incompletely)
+            1. Have a git backed domain that imported cleanly
             2. Break the domain in Git, or notice a method isn't visible because its matching .yaml
                was never added to git
             3. Add an broken .yaml to git, push, etc, in a desperate attempt to fix the issue.
+               Note: There are different .yaml files for domain, namespace, class etc. So to break
+               this file; you can change file name from __domain__.yaml to __testdomain__.yaml(or
+               any) or you can change the code in the .yaml file
             4. Go to CF UI, Automate, Domain, "Refresh with a new branch or tag"
             5. Select suitable branch and "Save"
             6. Check evm.log
