@@ -7,6 +7,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -19,6 +20,15 @@ pytestmark = [
     pytest.mark.tier(2),
     test_requirements.rest,
     pytest.mark.provider([VMwareProvider, RHEVMProvider, OpenStackProvider], scope='module'),
+    pytest.mark.meta(
+        blockers=[
+            BZ(
+                1712850,
+                forced_streams=["5.11"],
+                unblock=lambda provider: not provider.one_of(OpenStackProvider),
+            )
+        ]
+    ),
 ]
 
 
