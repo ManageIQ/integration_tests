@@ -15,6 +15,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
 from cfme.common.vm_views import VMDetailsEntities
 from cfme.exceptions import displayed_not_implemented
+from cfme.exceptions import ItemNotFound
 from cfme.services.myservice import MyService
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -294,7 +295,7 @@ def exists(self):
     try:
         navigate_to(self, 'Details')
         return True
-    except CandidateNotFound:
+    except (CandidateNotFound, ItemNotFound):
         return False
 
 
