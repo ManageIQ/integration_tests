@@ -1,14 +1,27 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.utils.generators import random_vm_name
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.ec2,
+    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider(
+        [EC2Provider],
+        scope='module'
+    )
 ]
 
 
-@pytest.mark.manual
-def test_ec2_targeted_refresh_instance():
+def wait_for_power_state(vms_collection, instance_name, power_state):
+    wait_for(lambda: vms_collection.get(name=instance_name)["power_state"] == power_state, delay=15,
+             timeout=900, handle_exception=True)
+
+
+def test_targeted_refresh_instance(appliance, provider):
     """
     Polarion:
         assignee: mmojzis
@@ -20,9 +33,37 @@ def test_ec2_targeted_refresh_instance():
             2. Instance RUNNING
             3. Instance STOPPED
             4. Instance UPDATE
-            5. Instance DELETE - or - Instance TERMINATE
+            5. Instance RUNNING
+            6. Instance DELETE - or - Instance TERMINATE
     """
-    pass
+    vms_collection = appliance.rest_api.collections.vms
+    flavors_collection = appliance.rest_api.collections.flavors
+
+    # create
+    template_id = provider.mgmt.get_template(
+        provider.data.templates.get('small_template').name).uuid
+    instance = provider.mgmt.create_vm(template_id, vm_name=random_vm_name('refr'))
+
+    # running
+    wait_for_power_state(vms_collection, instance.name, "on")
+
+    # stopped
+    instance.stop()
+    wait_for_power_state(vms_collection, instance.name, "off")
+
+    # update
+    instance.rename(random_vm_name('refr'))
+    instance.change_type('t1.small')
+    wait_for(lambda: flavors_collection.get(id=vms_collection.get(name=instance.name)["flavor_id"])
+        ["name"] == instance.type, delay=15, timeout=900, handle_exception=True)
+
+    # start
+    instance.start()
+    wait_for_power_state(vms_collection, instance.name, "on")
+
+    # delete
+    instance.delete()
+    wait_for_power_state(vms_collection, instance.name, "terminated")
 
 
 @pytest.mark.manual
