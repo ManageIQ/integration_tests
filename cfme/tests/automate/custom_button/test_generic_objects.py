@@ -35,6 +35,7 @@ def button_group(appliance, request):
         hover=fauxfactory.gen_alphanumeric(),
         type=getattr(collection, request.param),
     )
+    # another change to detect
     yield button_gp, request.param
     button_gp.delete_if_exists()
 
