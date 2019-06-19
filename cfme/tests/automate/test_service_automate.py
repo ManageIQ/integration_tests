@@ -29,9 +29,12 @@ def new_users(appliance):
     ) for i in range(2)]
 
     yield users
-    if not BZ(1720273).blocks:
-        for user in users:
+    for user in users:
+        if not BZ(1720273).blocks:
             user.delete_if_exists()
+        else:
+            user = appliance.rest_api.collections.users.get(name=user.name)
+            user.action.delete()
 
 
 @pytest.fixture(scope='function')
