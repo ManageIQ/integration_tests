@@ -73,3 +73,24 @@ def test_configure_icons_roles_by_server():
             3. No icons are missing
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+def test_verify_page_landing_cloud_subnets():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Cloud
+        caseimportance: low
+        initialEstimate: 1/10h
+        startsin: 5.6
+        testSteps:
+            1. Navigate to compute-> cloud -> instance -> click on any instance ->
+            Click on Cloud Networks (under relationships)
+            2. Check if the page is displayed.
+        expectedResults:
+            1.
+            2. Page must be displayed correctly.
+    """
+    pass
