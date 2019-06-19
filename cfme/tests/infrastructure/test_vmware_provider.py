@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Manual VMware Provider tests"""
+import os
 import re
+import tarfile
+import urllib
 
 import fauxfactory
 import pytest
@@ -8,6 +11,7 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -53,9 +57,8 @@ def test_vmware_provider_filters(appliance, provider, soft_assert):
         soft_assert(esx_platform in all_options, "ESX Platform does not exists in options")
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
-def test_appliance_scsi_control_vmware():
+def test_appliance_scsi_control_vmware(request, appliance):
     """
     Appliance cfme-vsphere-paravirtual-*.ova has SCSI controller as Para
     Virtual
@@ -67,7 +70,33 @@ def test_appliance_scsi_control_vmware():
         initialEstimate: 1/4h
     #TODO: yet to test this, once done, I will add steps. Test was not written by me originally.
     """
-    pass
+    url = ("{}/{}/{}/cfme-vsphere-paravirtual-{}-1.x86_64.vsphere.ova"
+        .format(conf.cfme_data['basic_info']['cfme_images_url']['baseurl'],
+            appliance.version.series(), appliance.version, appliance.version))
+    logger.info("Downloading ova file for parvirtual vsphere scsi controller test from %s" % url)
+    ova_file = urllib.urlopen(url)
+    filename = "cfme-vsphere-paravirtual-{}.ova".format(appliance.version)
+    with open(filename, 'wb') as output:
+        output.write(ova_file.read())
+
+    @request.addfinalizer
+    def _cleanup():
+        if os.path.exists(filename):
+            os.remove(filename)
+    tar = tarfile.open(filename)
+    for member in tar.getmembers():
+        if member.name == 'desc.ovf':
+            f = tar.extractfile(member)
+            content = f.read()
+            assert content, "No content could be read from desc.ovf"
+            logger.debug("Desc file contains following text:%s" % content)
+            scsi_controller_types = ['lsilogic', 'buslogic', 'lsilogicsas', 'virtualscsi']
+            content = content.lower()
+            counter = 0  # Count any mention of scsi_controller_type in ova XML content
+            for scsi_controller_type in scsi_controller_types:
+                if scsi_controller_type in content:
+                    counter += 1
+    assert counter > 0, "Given OVA does not have paravirtual scsi controller"
 
 
 @pytest.mark.tier(1)
