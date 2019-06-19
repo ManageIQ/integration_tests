@@ -24,6 +24,7 @@ from cfme.rest.gen_data import services as _services
 from cfme.rest.gen_data import TEMPLATE_TORSO
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -429,7 +430,9 @@ class TestServiceRESTAPI(object):
         "from_detail", [True, False], ids=["from_detail", "from_collection"]
     )
     @test_requirements.rest
-    def test_service_retirement_methods(self, request, appliance, services, from_detail):
+    def test_service_retirement_methods(
+        self, request, appliance, services, from_detail
+    ):
         """Test retiring a service with old method `retire` and new method `request_retire`.
         Old method is no longer supported and it puts the service into `intializing` state.
 
@@ -446,6 +449,20 @@ class TestServiceRESTAPI(object):
             1713477
         """
         service = services[0]
+
+        auto_log = LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=[
+                ".*ERROR -- : <AEMethod start_retirement> Service retire task not found",
+                ".*ERROR -- : <AEMethod start_retirement> The old style retirement is incompatible"
+                " with the new retirement state machine.",
+                ".*ERROR -- : State=<StartRetirement> running  raised exception:"
+                " <Method exited with rc=MIQ_ABORT>",
+                ".*ERROR -- : <AEMethod update_service_retirement_status> Service Retire Error:",
+            ],
+        )
+        auto_log.fix_before_start()
+
         if from_detail:
             service.action.retire()
         else:
@@ -458,6 +475,8 @@ class TestServiceRESTAPI(object):
             num_sec=50,
             delay=5,
         )
+        auto_log.wait_for_log_validation()
+
         assert service.retirement_state == "initializing"
 
         if from_detail:
