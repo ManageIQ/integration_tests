@@ -105,6 +105,7 @@ def test_custom_button_display_evm_obj(request, display, setup_obj, button_group
 @pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
 def test_custom_button_automate_evm_obj(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
+    NOT A FIXTURE CHANGE
 
     Polarion:
         assignee: ndhandre
