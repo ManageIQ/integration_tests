@@ -6,6 +6,8 @@ from navmazing import NavigateToSibling
 from navmazing import NavigationDestinationNotFound
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.exceptions import RowNotFound
+from widgetastic.widget import ParametrizedLocator
+from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Table
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -31,6 +33,7 @@ from cfme.utils.version import VersionPicker
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
+from widgetastic_manageiq import ReactSelect
 
 
 class ManagePoliciesView(BaseLoggedInPage):
@@ -238,6 +241,32 @@ class ManagePolicies(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
+class AssignedTags(ParametrizedView):
+    """
+    Represents the assigned tag in EditTags menu.
+    To remove the tag, you need to pass category name, e.g.: 'view.form.tags(category).remove()'.
+    To read the value of the tag, pass the category name, e.g.: 'view.form.tags(category).read()'.
+    """
+    PARAMETERS = ("tag",)
+    ALL_TAGS = ".//a[contains(@class, 'pf-remove-button')]"
+    tag_remove = Text(ParametrizedLocator(
+        ".//div[@class='category-label'][@title={tag|quote}]/parent::li/following-sibling::"
+        "li/descendant::a[contains(@class, 'pf-remove-button')]")
+    )
+
+    tag_value = Text(ParametrizedLocator(
+        ".//div[@class='category-label'][@title={tag|quote}]/parent::li/following-sibling::li/span")
+    )
+
+    def remove(self):
+        """Removes the assigned tag by clicking 'x' icon"""
+        self.tag_remove.click()
+
+    def read(self):
+        """Return the assigned value to a tag category"""
+        return self.browser.get_attribute("title", self.tag_value)
+
+
 class TagPageView(BaseLoggedInPage):
     """Class represents common tag page in CFME UI"""
     title = Text('#explorer_title_text')
@@ -245,9 +274,18 @@ class TagPageView(BaseLoggedInPage):
 
     @View.nested
     class form(View):  # noqa
-        tags = Table("//div[@id='assignments_div']//table")
-        tag_category = BootstrapSelect(id='tag_cat')
-        tag_name = BootstrapSelect(id='tag_add')
+        tags = VersionPicker({
+            Version.lowest(): Table("//div[@id='assignments_div']//table"),
+            "5.11": ParametrizedView.nested(AssignedTags)
+        })
+        tag_category = VersionPicker({
+            Version.lowest(): BootstrapSelect(id='tag_cat'),
+            "5.11": ReactSelect(locator='.//div[@id="tag_cat"]')
+        })
+        tag_name = VersionPicker({
+            Version.lowest(): BootstrapSelect(id='tag_add'),
+            "5.11": ReactSelect(locator='.//div[@id="cat_tags_div"]')
+        })
         entities = View.nested(BaseNonInteractiveEntitiesView)
         save = Button('Save')
         reset = Button('Reset')
@@ -256,8 +294,9 @@ class TagPageView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (
-            self.table_title.text == 'Tag Assignment' and
-            self.form.tags.is_displayed
+            self.table_title.text == "Tag Assignment" and
+            self.form.tag_category.is_displayed and
+            self.form.tag_name.is_displayed
         )
 
 
@@ -311,11 +350,14 @@ class TaggableCommonBase(object):
         """
         category = tag.category.display_name
         tag = tag.display_name
-        try:
-            row = view.form.tags.row(category="{} *".format(category), assigned_value=tag)
-        except RowNotFound:
-            row = view.form.tags.row(category=category, assigned_value=tag)
-        row[0].click()
+        if self.appliance.version < '5.11':
+            try:
+                row = view.form.tags.row(category="{} *".format(category), assigned_value=tag)
+            except RowNotFound:
+                row = view.form.tags.row(category=category, assigned_value=tag)
+            row[0].click()
+        else:
+            view.form.tags(category).remove()
 
     def _tags_action(self, view, cancel, reset):
         """ Actions on edit tags page

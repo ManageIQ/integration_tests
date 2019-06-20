@@ -15,6 +15,7 @@ import six
 from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.keys import Keys
 from wait_for import TimedOutError
@@ -2713,6 +2714,127 @@ class UpDownSelect(View):
         for item in reversed(items):  # reversed because every new item at top pushes others down
             self.move_top(item)
         return True
+
+
+class ReactSelect(Widget, ClickableMixin):
+    """This view is used in 5.11 for tagging instead of BootstrapSelect.
+
+    Args:
+        id: id of the select, that is the ``data-id`` attribute on the ``button`` tag.
+        locator: If none of above apply, you can also supply a full locator.
+        can_hide_on_select: Whether the select can hide after selection, important for
+            :py:meth:`close` to work properly.
+
+       """
+
+    # fmt: off
+    ROOT = ParametrizedLocator('{@locator}')
+    BASE_LOCATOR = ".//div[@id={}]"
+    BY_VISIBLE_TEXT = './/*[self::span or self::div][contains(text(), {})]'
+    SELECTED_VALUE = './/div[contains(@class, "singleValue")]'
+    ALL_OPTIONS = './/*[self::span or self::div][normalize-space(text())]'
+    # fmt: on
+
+    def __init__(self, parent, id=None, locator=None, can_hide_on_select=False, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if id:
+            self.locator = self.BASE_LOCATOR.format(quote(id))
+        elif locator:
+            self.locator = locator
+        else:
+            raise TypeError("You need to specify a locator for ReactSelect")
+
+        self.can_hide_on_select = can_hide_on_select
+
+    @property
+    def is_open(self):
+        try:
+            return self.browser.is_displayed('//div[@class="css-1paxw40-menu"]')
+        except StaleElementReferenceException:
+            self.logger.warning(
+                "Got a StaleElementReferenceException in .is_open, but ignoring. Returned False."
+            )
+            return False
+
+    def open(self):
+        if not self.is_open:
+            self.click()
+            self.logger.debug("opened")
+
+    def close(self):
+        try:
+            if self.is_open:
+                self.click()
+                self.logger.debug("closed")
+        except NoSuchElementException:
+            if self.can_hide_on_select:
+                self.logger.info("While closing %r it disappeared, but ignoring.", self)
+            else:
+                raise
+
+    def select_by_visible_text(self, *items):
+        """Selects items in the select.
+
+        Args:
+            *items: Items to be selected. If the select does not support multiple selections and you
+                pass more than one item, it will raise an exception. If you want to select using
+                partial match, use the :py:class:`BootstrapSelect.partial` to wrap the value.
+        """
+        if len(items) > 1:
+            raise ValueError(
+                "The ReactSelect {} does not allow multiple selections".format(self.locator)
+            )
+        self.open()
+        for item in items:
+            item = item.split(" *")[0]
+            self.logger.info("selecting by visible text: %r", item)
+            try:
+                self.browser.click(
+                    self.BY_VISIBLE_TEXT.format(quote(item)), parent=self, force_scroll=True
+                )
+            except NoSuchElementException:
+                try:
+                    # Added this as for some views(some tags pages) dropdown is separated from
+                    # button and doesn't have exact id or name
+                    self.browser.click(self.BY_VISIBLE_TEXT.format(quote(item)), force_scroll=True)
+                except NoSuchElementException:
+                    raise SelectItemNotFound(
+                        widget=self, item=item, options=[opt.text for opt in self.all_options]
+                    )
+        self.close()
+
+    @property
+    def all_options(self):
+        # need to open the dropdown to see all available options
+        self.open()
+        options = [self.browser.text(e) for e in self.browser.elements(self.ALL_OPTIONS)]
+        self.close()
+        return options
+
+    @property
+    def selected_option(self):
+        try:
+            return self.browser.text(self.SELECTED_VALUE)
+        except NoSuchElementException:
+            return "No value is selected"
+
+    def read(self):
+        return self.selected_option
+
+    def fill(self, items):
+        if not isinstance(items, (list, tuple, set)):
+            items = {items}
+        elif not isinstance(items, set):
+            items = set(items)
+
+        if set(self.selected_option) == items:
+            return False
+        else:
+            self.select_by_visible_text(*items)
+            return True
+
+    def __repr__(self):
+        return "{}(locator={!r})".format(type(self).__name__, self.locator)
 
 
 class AlertEmail(View):

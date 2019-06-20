@@ -25,10 +25,12 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import Table
@@ -266,20 +268,22 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
                 delete_user_txt))
 
         view.toolbar.configuration.item_select(delete_user_txt, handle_alert=cancel)
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
+        if not BZ(1721424, forced_streams=["5.11"]).blocks:
+            try:
+                view.flash.assert_message(flash_blocked_msg)
+                raise RBACOperationBlocked(flash_blocked_msg)
+            except AssertionError:
+                pass
 
-        view.flash.assert_message(flash_success_msg)
+        if not BZ(1721424, forced_streams=["5.11"]).blocks:
+            view.flash.assert_message(flash_success_msg)
 
-        if cancel:
-            view = self.create_view(AllUserView)
-            view.flash.assert_success_message(flash_success_msg)
-        else:
-            view = self.create_view(DetailsUserView)
-        assert view.is_displayed
+            if cancel:
+                view = self.create_view(AllUserView)
+                view.flash.assert_success_message(flash_success_msg)
+            else:
+                view = self.create_view(DetailsUserView)
+            assert view.is_displayed
 
     # TODO update elements, after 1469035 fix
     def change_stored_password(self, changes=None, cancel=False):
@@ -441,6 +445,8 @@ class UserEdit(CFMENavigateStep):
 class MyCompanyTagsTree(View):
     tree_locator = 'tags_treebox'
     tree = CbTree(tree_locator)
+    tag_category = ReactSelect(locator='.//div[@id="tag_cat"]')
+    tag_name = ReactSelect(locator='.//div[@id="cat_tags_div"]')
 
 
 class MyCompanyTagsExpressionView(View):
@@ -721,24 +727,26 @@ class Group(BaseEntity, Taggable):
                 raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
                     delete_group_txt))
 
-        view.toolbar.configuration.item_select(delete_group_txt, handle_alert=cancel)
-        for flash_blocked_msg in flash_blocked_msg_list:
-            try:
-                view.flash.assert_message(flash_blocked_msg)
-                raise RBACOperationBlocked(flash_blocked_msg)
-            except AssertionError:
-                pass
+        if not BZ(1721424, forced_streams=["5.11"]).blocks:
+            # the user was not deleted, therefore the group cannot be deleted
+            view.toolbar.configuration.item_select(delete_group_txt, handle_alert=cancel)
+            for flash_blocked_msg in flash_blocked_msg_list:
+                try:
+                    view.flash.assert_message(flash_blocked_msg)
+                    raise RBACOperationBlocked(flash_blocked_msg)
+                except AssertionError:
+                    pass
 
-        view.flash.assert_no_error()
-        view.flash.assert_message(flash_success_msg)
+            view.flash.assert_no_error()
+            view.flash.assert_message(flash_success_msg)
 
-        if cancel:
-            view = self.create_view(AllGroupView)
-            view.flash.assert_success_message(flash_success_msg)
-        else:
-            view = self.create_view(DetailsGroupView)
-            assert view.is_displayed, (
-                "Access Control Group {} Detail View is not displayed".format(self.description))
+            if cancel:
+                view = self.create_view(AllGroupView)
+                view.flash.assert_success_message(flash_success_msg)
+            else:
+                view = self.create_view(DetailsGroupView)
+                assert view.is_displayed, (
+                    "Access Control Group {} Detail View is not displayed".format(self.description))
 
     def set_group_order(self, updated_order):
         """ Sets group order for group lookup
@@ -794,10 +802,16 @@ class Group(BaseEntity, Taggable):
                     path, action_type = item
                     if isinstance(path, list):
                         tab_form = getattr(tab_view, 'form', tab_view)
-                        tree_view = getattr(tab_form, 'tag_settings', tab_form)
-                        node = (tree_view.tree.CheckNode(path) if action_type else
-                                tree_view.tree.UncheckNode(path))
-                        updated_result = tree_view.tree.fill(node)
+                        view = getattr(tab_form, 'tag_settings', tab_form)
+                        if (tab_form.TAB_NAME == 'My Company Tags'
+                                and self.appliance.version > "5.11"):
+                            category = view.tag_category.fill(path[0])
+                            value = view.tag_name.fill(path[1])
+                            updated_result = category and value
+                        else:
+                            node = (view.tree.CheckNode(path) if action_type else
+                                    view.tree.UncheckNode(path))
+                            updated_result = view.tree.fill(node)
         return updated_result
 
     @property
@@ -1073,25 +1087,25 @@ class Role(Updateable, Pretty, BaseEntity):
         delete_role_txt = 'Delete this Role'
 
         view = navigate_to(self, 'Details')
+        if not BZ(1721424, forced_streams=["5.11"]).blocks:
+            if not view.toolbar.configuration.item_enabled(delete_role_txt):
+                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                    delete_role_txt))
 
-        if not view.toolbar.configuration.item_enabled(delete_role_txt):
-            raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                delete_role_txt))
+            view.toolbar.configuration.item_select(delete_role_txt, handle_alert=cancel)
+            try:
+                view.flash.assert_message(flash_blocked_msg)
+                raise RBACOperationBlocked(flash_blocked_msg)
+            except AssertionError:
+                pass
 
-        view.toolbar.configuration.item_select(delete_role_txt, handle_alert=cancel)
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
+            view.flash.assert_message(flash_success_msg)
 
-        view.flash.assert_message(flash_success_msg)
-
-        if cancel:
-            view = self.create_view(AllRolesView, wait=10)  # implicit assert
-            view.flash.assert_success_message(flash_success_msg)
-        else:
-            view = self.create_view(DetailsRoleView, wait=10)  # implicit assert
+            if cancel:
+                view = self.create_view(AllRolesView, wait=10)  # implicit assert
+                view.flash.assert_success_message(flash_success_msg)
+            else:
+                view = self.create_view(DetailsRoleView, wait=10)  # implicit assert
 
     def copy(self, name=None):
         """ Creates copy of existing role
