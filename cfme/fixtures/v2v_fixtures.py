@@ -12,6 +12,7 @@ from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
+from cfme.utils import ssh
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.version import Version
@@ -50,7 +51,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
         transformation_method = "VDDK"
 
     # set host credentials for Vmware and RHEV hosts
-    host_credentials(appliance, transformation_method, v2v_providers)
+    __host_credentials(appliance, transformation_method, v2v_providers)
 
     yield v2v_providers
     for v2v_provider in v2v_providers:
@@ -58,7 +59,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
             v2v_provider.delete_if_exists(cancel=False)
 
 
-def host_credentials(appliance, transformation_method, v2v_providers):
+def __host_credentials(appliance, transformation_method, v2v_providers): # noqa
     """ Sets up host credentials for vmware and rhv providers
         for RHEV migration.
         For migration with OSP only vmware(source) provider
@@ -92,15 +93,15 @@ def host_credentials(appliance, transformation_method, v2v_providers):
         pytest.skip("No data for hosts in providers, failed to retrieve hosts and add creds.")
     # Configure conversion host for RHEV migration
     if rhv_hosts is not None:
-        set_conversion_instance_for_rhev_ui(appliance,
-                                            v2v_providers.vmware_provider,
-                                            v2v_providers.rhv_provider, rhv_hosts,
-                                            transformation_method)
+        __set_conversion_instance_for_rhev_ui(appliance,
+                                              v2v_providers.vmware_provider,
+                                              v2v_providers.rhv_provider, rhv_hosts,
+                                              transformation_method)
     if v2v_providers.osp_provider is not None:
-        set_conversion_instance_for_osp_ui(appliance,
-                                           v2v_providers.vmware_provider,
-                                           v2v_providers.osp_provider,
-                                           transformation_method)
+        __set_conversion_instance_for_osp_ui(appliance,
+                                             v2v_providers.vmware_provider,
+                                             v2v_providers.osp_provider,
+                                             transformation_method)
 
 
 def _tag_cleanup(host_obj, tag1, tag2):
@@ -146,7 +147,7 @@ def create_tags(appliance, transformation_method):
     return tag1, tag2
 
 
-def vddk_url():
+def __vddk_url(): # noqa
     """Get vddk url from cfme_data"""
     vddk_version = "v2v_vddk"
     try:
@@ -160,19 +161,18 @@ def vddk_url():
     return url
 
 
-def configure_conversion_host_ui(appliance, target_provider, hostname, default,
-                                 conv_host_key, transformation_method,
-                                 vmware_ssh_key, osp_cert_switch=None, osp_ca_cert=None):
+def __configure_conversion_host_ui(appliance, target_provider, hostname, default,  # noqa
+                                   conv_host_key, transformation_method,
+                                   vmware_ssh_key, osp_cert_switch=None, osp_ca_cert=None):
 
     conv_host_collection = appliance.collections.v2v_conversion_hosts
     conv_host = conv_host_collection.create(
         target_provider=target_provider,
-        provider_name=target_provider.name,
         cluster=get_data(target_provider, "clusters", default),
         hostname=hostname,
         conv_host_key=conv_host_key,
         transformation_method=transformation_method,
-        vddk_library_path=vddk_url(),
+        vddk_library_path=__vddk_url(),
         vmware_ssh_key=vmware_ssh_key,
         osp_cert_switch=osp_cert_switch,
         osp_ca_cert=osp_ca_cert
@@ -181,9 +181,9 @@ def configure_conversion_host_ui(appliance, target_provider, hostname, default,
         pytest.skip("Failed to set conversion host/instance: {}".format(hostname))
 
 
-def set_conversion_instance_for_rhev_ui(appliance, source_provider,
-                                     target_provider, rhev_hosts,
-                                     transformation_method):
+def __set_conversion_instance_for_rhev_ui(appliance, source_provider,  # noqa
+                                          target_provider, rhev_hosts,
+                                          transformation_method):
     """
     Args:
         appliance:
@@ -203,25 +203,28 @@ def set_conversion_instance_for_rhev_ui(appliance, source_provider,
         ssh_key_name = source_provider.data['private-keys']['vmware-ssh-key']['credentials']
         vmware_ssh_key = conf.credentials[ssh_key_name]['password']
 
-    # Get rhev rsa key
-    rsa_key_name = target_provider.data['private-keys']['engine-rsa']['credentials']
-    key_attri = conf.credentials[rsa_key_name]['bag-attributes'].replace("\\n", "\n")
-    key_value = conf.credentials[rsa_key_name]['password']
+    # Get rhev rsa key from rhevm
+    credential = conf.credentials[target_provider.data["ssh_creds"]]
+    ssh_client = ssh.SSHClient(
+        hostname=target_provider.hostname,
+        username=credential.username,
+        password=credential.password,
+    )
+    private_key = ssh_client.run_command("cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
     temp_file = tempfile.NamedTemporaryFile('w')
     with open(temp_file.name, 'w') as f:
-        f.write(key_attri)
-        f.write(key_value)
+        f.write(private_key)
     conv_host_key = temp_file.name
 
     for host in rhev_hosts:
-        configure_conversion_host_ui(appliance,
-                                     target_provider, host.name, "Default",
-                                     conv_host_key, transformation_method,
-                                     vmware_ssh_key)
+        __configure_conversion_host_ui(appliance,
+                                       target_provider, host.name, "Default",
+                                       conv_host_key, transformation_method,
+                                       vmware_ssh_key)
 
 
-def set_conversion_instance_for_osp_ui(appliance, source_provider,
-                                    osp_provider, transformation_method):
+def __set_conversion_instance_for_osp_ui(appliance, source_provider,  # noqa
+                                         osp_provider, transformation_method):
     """
     Args:
         appliance:
@@ -258,11 +261,11 @@ def set_conversion_instance_for_osp_ui(appliance, source_provider,
     tls_cert_key = conf.credentials[tls_key_name]['password']
 
     for instance in conversion_instances:
-        configure_conversion_host_ui(appliance,
-                                     osp_provider, instance, "admin",
-                                     conv_host_key, transformation_method,
-                                     vmware_ssh_key, osp_cert_switch=True,
-                                     osp_ca_cert=tls_cert_key)
+        __configure_conversion_host_ui(appliance,
+                                       osp_provider, instance, "admin",
+                                       conv_host_key, transformation_method,
+                                       vmware_ssh_key, osp_cert_switch=True,
+                                       osp_ca_cert=tls_cert_key)
 
 
 def get_vm(request, appliance, source_provider, template, datastore='nfs'):

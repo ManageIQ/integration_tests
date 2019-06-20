@@ -1526,13 +1526,8 @@ class V2VBootstrapSwitch(BootstrapSwitch):
     )
 
     def fill(self, value):
-        value = bool(value)
-        current_value = self.selected
-        if value == current_value:
-            return False
-        else:
-            self.browser.click(self._clickable_el)
-            return True
+        self.browser.click(self._clickable_el)
+        return True
 
 
 class DragandDrop(View):
@@ -5136,9 +5131,6 @@ class ConversionHostProgress(Widget):
     OK_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
 
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
-
-    def __init__(self, parent, logger=None):
-        Widget.__init__(self, parent, logger=logger)
 
     def _conversion_host(self, hostname):
         for el in self.browser.elements(self.ITEM_LOCATOR):
