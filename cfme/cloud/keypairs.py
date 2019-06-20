@@ -220,7 +220,10 @@ class KeyPairCollection(BaseCollection):
                  fail_func=view.flush_widget_cache, handle_exception=True)
         assert view.is_displayed
         view.flash.assert_success_message(flash_message)
-        return self.instantiate(name, provider, public_key=public_key)
+        keypair = self.instantiate(name, provider, public_key=public_key)
+        if not cancel:
+            wait_for(lambda: keypair.exists, delay=2, timeout=240, fail_func=self.browser.refresh)
+        return keypair
 
     def all(self):
         view = navigate_to(self, 'All')
