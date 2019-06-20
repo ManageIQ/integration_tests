@@ -123,6 +123,7 @@ def get_obj(relationship, appliance, **kwargs):
 
 @pytest.fixture
 def host(appliance, provider):
+    # another fixture change
     host_collection = provider.hosts
     return random.choice(host_collection.all())
 
@@ -259,6 +260,8 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
     Steps:
         1. As admin add tag to provider
         2. Login as restricted user, providers child not visible for user
+
+    # new dcommit
 
     Polarion:
         assignee: anikifor

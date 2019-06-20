@@ -368,6 +368,9 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
 def test_action_prevent_ssa(request, configure_fleecing, vm, vm_on, policy_for_testing):
     """Tests preventing Smart State Analysis.
 
+    NOT A FIXTURE CHANGE
+    ALSO NOT A FIXTURE CHANGE
+
     This test sets the policy that prevents VM analysis.
 
     Bugzilla:

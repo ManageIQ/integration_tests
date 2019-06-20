@@ -88,6 +88,7 @@ class ApplianceHolderPlugin(object):
 
     @pytest.fixture(scope="session")
     def appliance(self):
+        # what happens when I change this fixture?
         return self.held_appliance
 
     def pytest_sessionstart(self):
