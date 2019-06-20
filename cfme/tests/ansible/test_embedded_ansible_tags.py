@@ -2,10 +2,12 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
+    pytest.mark.meta(blockers=[BZ(1677548, forced_streams=["5.11"])]),
     test_requirements.ansible,
     test_requirements.tag,
 ]
