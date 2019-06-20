@@ -7,8 +7,12 @@ from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -16,6 +20,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
+    pytest.mark.meta(blockers=[BZ(1677548, forced_streams=["5.11"])]),
     test_requirements.ansible,
 ]
 
@@ -23,8 +28,38 @@ pytestmark = [
 SERVICE_CATALOG_VALUES = [
     ("default", None, "localhost"),
     ("blank", "", "localhost"),
-    ("unavailable_host", "unavailable_host", "unavailable_host")
+    ("unavailable_host", "unavailable_host", "unavailable_host"),
 ]
+
+
+CREDENTIALS = [
+    ("Amazon", "", "list_ec2_instances.yml"),
+    ("VMware", "vcenter_host", "gather_all_vms_from_vmware.yml"),
+    ("Red Hat Virtualization", "host", "connect_to_rhv.yml"),
+]
+
+
+@pytest.fixture
+def provider_credentials(appliance, provider, credential):
+    cred_type, hostname, playbook = credential
+    creds = provider.get_credentials_from_config(provider.data["credentials"])
+    credentials = {}
+    if cred_type == "Amazon":
+        credentials["access_key"] = creds.principal
+        credentials["secret_key"] = creds.secret
+    else:
+        credentials["username"] = creds.principal
+        credentials["password"] = creds.secret
+        credentials[hostname] = provider.hostname
+
+    credential = appliance.collections.ansible_credentials.create(
+        "{}_credential_{}".format(cred_type, fauxfactory.gen_alpha()),
+        cred_type,
+        **credentials
+    )
+    yield credential
+
+    credential.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -33,21 +68,7 @@ def ansible_credential(appliance):
         fauxfactory.gen_alpha(),
         "Machine",
         username=fauxfactory.gen_alpha(),
-        password=fauxfactory.gen_alpha()
-    )
-    yield credential
-
-    credential.delete_if_exists()
-
-
-@pytest.fixture
-def ansible_amazon_credential(appliance, provider):
-    creds = provider.get_credentials_from_config(provider.data["credentials"])
-    credential = appliance.collections.ansible_credentials.create(
-        fauxfactory.gen_alpha(),
-        "Amazon",
-        access_key=creds.principal,
-        secret_key=creds.secret,
+        password=fauxfactory.gen_alpha(),
     )
     yield credential
 
@@ -105,7 +126,7 @@ def test_service_ansible_playbook_crud(appliance, ansible_repository):
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
         }
     )
     assert cat_item.exists
@@ -550,15 +571,29 @@ def test_ansible_group_id_in_payload(
     assert "group" in result_dict["manageiq"]
 
 
-@pytest.mark.provider([EC2Provider], scope="function")
-def test_embed_tower_exec_play_against_amazon(
+@pytest.mark.parametrize(
+    "credential", CREDENTIALS, ids=[cred[0] for cred in CREDENTIALS]
+)
+@pytest.mark.provider(
+    [RHEVMProvider, EC2Provider, VMwareProvider], selector=ONE_PER_TYPE
+)
+@pytest.mark.uncollectif(
+    lambda credential, provider: not (
+        (credential[0] == "Amazon" and provider.one_of(EC2Provider))
+        or (credential[0] == "VMware" and provider.one_of(VMwareProvider))
+        or (
+            credential[0] == "Red Hat Virtualization" and provider.one_of(RHEVMProvider)
+        )
+    )
+)
+def test_embed_tower_exec_play_against(
+    appliance,
     request,
-    provider,
-    setup_provider,
     ansible_catalog_item,
     ansible_service,
-    ansible_amazon_credential,
     ansible_service_catalog,
+    credential,
+    provider_credentials,
 ):
     """
     Polarion:
@@ -568,11 +603,12 @@ def test_embed_tower_exec_play_against_amazon(
         initialEstimate: 1/4h
         tags: ansible_embed
     """
+    playbook = credential[2]
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
-            "playbook": "list_ec2_instances.yml",
-            "cloud_type": "Amazon",
-            "cloud_credential": ansible_amazon_credential.name
+            "playbook": playbook,
+            "cloud_type": provider_credentials.credential_type,
+            "cloud_credential": provider_credentials.name,
         }
 
     @request.addfinalizer
@@ -580,10 +616,21 @@ def test_embed_tower_exec_play_against_amazon(
         with update(ansible_catalog_item):
             ansible_catalog_item.provisioning = {
                 "playbook": "dump_all_variables.yml",
-                "cloud_type": "<Choose>"
+                "cloud_type": "<Choose>",
             }
 
+        service = MyService(appliance, ansible_catalog_item.name)
+        if service_request.exists():
+            service_request.wait_for_request()
+            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+        if service.exists:
+            service.delete()
+
     service_request = ansible_service_catalog.order()
-    service_request.wait_for_request(method="ui", num_sec=300, delay=20)
+    service_request.wait_for_request(num_sec=300, delay=20)
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"

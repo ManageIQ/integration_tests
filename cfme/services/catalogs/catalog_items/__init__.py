@@ -340,7 +340,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
                                                     '5.11': 'Delete Catalog Item'}),
                                        handle_alert=True)
 
-        view = self.create_view(AllCatalogItemView)
+        view = self.create_view(AllCatalogItemView, wait="20s")
         assert view.is_displayed
         view.flash.assert_success_message(VersionPick(
             {LOWEST: 'The selected Catalog Item was deleted',

@@ -8,22 +8,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_exec_play_against_vmware():
-    """
-    User/Admin is able to execute playbook without creating Job Temaplate
-    and can execute it against vmware with vmware credentials
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_dashboard():
     """
