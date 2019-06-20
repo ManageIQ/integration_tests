@@ -20,6 +20,7 @@ from cfme.common.host_views import HostDiscoverView
 from cfme.common.host_views import HostDriftAnalysis
 from cfme.common.host_views import HostDriftHistory
 from cfme.common.host_views import HostEditView
+from cfme.common.host_views import HostNetworkDetailsView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostTimelinesView
 from cfme.common.host_views import ProviderAllHostsView
@@ -738,3 +739,12 @@ class HostSubnet(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Relationships').click_at('Cloud Subnets')
+
+
+@navigator.register(Host, 'Networks')
+class HostNetworks(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostNetworkDetailsView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Network')
