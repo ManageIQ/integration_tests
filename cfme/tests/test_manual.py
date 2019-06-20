@@ -8,9 +8,6 @@ from cfme import test_requirements
 pytestmark = [pytest.mark.ignore_stream('5.10', 'upstream')]
 
 
-
-
-
 @pytest.mark.manual
 @test_requirements.rbac
 def test_status_of_a_task_via_api_with_evmrole_administrator():
@@ -450,7 +447,6 @@ def test_config_manager_prov_from_service_survey_ansible_tower_310():
     pass
 
 
-
 @pytest.mark.manual
 @test_requirements.ssui
 @pytest.mark.tier(2)
@@ -571,8 +567,6 @@ def test_can_add_child_tenant_to_tenant():
         tags: rbac
     """
     pass
-
-
 
 
 @pytest.mark.manual
@@ -736,7 +730,6 @@ def test_host_credentials_web():
         upstream: yes
     """
     pass
-
 
 
 @pytest.mark.manual
@@ -5249,8 +5242,6 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
             3. Dashboard items are updated from to reflect that access of the new group
     """
     pass
-
-
 
 
 @pytest.mark.manual

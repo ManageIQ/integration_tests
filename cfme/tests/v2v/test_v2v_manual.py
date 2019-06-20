@@ -630,4 +630,3 @@ def test_osp_kill_the_v2v_process_in_the_middle_by_rebooting_miq_cfme_appliance_
             4. Migration should resume.
     """
     pass
-
