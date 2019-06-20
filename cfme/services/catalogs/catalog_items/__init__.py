@@ -31,6 +31,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import EntryPoint
@@ -58,9 +59,18 @@ class BasicInfoForm(ServicesCatalogView):
     display = Checkbox(name='display')
 
     subtype = BootstrapSelect('generic_subtype')
-    provisioning_entry_point = EntryPoint(name='fqname', tree_id="automate_treebox")
-    retirement_entry_point = EntryPoint(name='retire_fqname', tree_id="automate_treebox")
-    reconfigure_entry_point = EntryPoint(name='reconfigure_fqname', tree_id="automate_treebox")
+    provisioning_entry_point = VersionPicker({
+        LOWEST: EntryPoint(name='fqname', tree_id="automate_treebox"),
+        "5.11": EntryPoint(name='fqname', tree_id="automate_catalog_treebox")
+    })
+    retirement_entry_point = VersionPicker({
+        LOWEST: EntryPoint(name='retire_fqname', tree_id="automate_treebox"),
+        "5.11": EntryPoint(name='retire_fqname', tree_id="automate_catalog_treebox")
+    })
+    reconfigure_entry_point = VersionPicker({
+        LOWEST: EntryPoint(name='reconfigure_fqname', tree_id="automate_treebox"),
+        "5.11": EntryPoint(name='reconfigure_fqname', tree_id="automate_catalog_treebox")
+    })
     select_resource = BootstrapSelect('resource_id')
 
     @View.nested
