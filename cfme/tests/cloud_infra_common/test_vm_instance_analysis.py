@@ -28,6 +28,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
+from cfme.utils.update import update
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -157,19 +158,33 @@ def vm_analysis_provisioning_data(provider, analysis_type):
 
 def set_hosts_credentials(appliance, request, provider):
     hosts = provider.hosts.all()
+    host_collection = appliance.collections.hosts
     for host in hosts:
         try:
-            host_data, = [data for data in provider.data['hosts'] if data['name'] == host.name]
+            host_data, = [
+                data for data in provider.data["hosts"] if data["name"] == host.name
+            ]
         except ValueError:
-            pytest.skip('Multiple hosts with the same name found, only expecting one')
-
-        host.update_credentials_rest(credentials=host_data['credentials'])
+            pytest.skip("Multiple hosts with the same name found, only expecting one")
+        # TO DO: Remove Host credentials update via UI once BZ: 1718209 fix
+        # host.update_credentials_rest(credentials=host_data['credentials'])
+        host_obj = host_collection.instantiate(name=host.name, provider=provider)
+        with update(host_obj, validate_credentials=True):
+            host_obj.credentials = {
+                "default": Host.Credential.from_config(
+                    host_data["credentials"]["default"]
+                )
+            }
 
     @request.addfinalizer
     def _hosts_remove_creds():
         for host in hosts:
-            host.update_credentials_rest(
-                credentials={'default': Host.Credential(principal="", secret="")})
+            with update(host_obj):
+                host_obj.credentials = {
+                    'default': Host.Credential(
+                        principal="", secret="", verify_secret=""
+                    )
+                }
 
 
 def set_agent_creds(appliance, request, provider):
@@ -427,6 +442,11 @@ def detect_system_type(vm):
 
 
 @pytest.fixture(scope="module")
+def scanned_vm(ssa_vm):
+    ssa_vm.smartstate_scan(wait_for_task_result=True)
+
+
+@pytest.fixture(scope="module")
 def schedule_ssa(appliance, ssa_vm, wait_for_task_result=True):
     dt = datetime.utcnow()
     delta_min = 5 - (dt.minute % 5)
@@ -639,7 +659,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
+def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -652,7 +672,6 @@ def test_ssa_vm(ssa_vm, soft_assert, vm_system_type):
         initialEstimate: 1/2h
         tags: smartstate
     """
-    ssa_vm.smartstate_scan(wait_for_task_result=True)
     # Check release and quadricon
     quadicon_os_icon = ssa_vm.find_quadicon().data['os']
     view = navigate_to(ssa_vm, 'Details')
@@ -799,8 +818,6 @@ def test_ssa_packages(ssa_vm):
 
     expected = ssa_vm.ssh.run_command(package_number_command).output.strip('\n')
 
-    ssa_vm.smartstate_scan(wait_for_task_result=True)
-
     # Check that all data has been fetched
     view = navigate_to(ssa_vm, 'Details')
     current = view.entities.summary('Configuration').get_text_of('Packages')
@@ -829,8 +846,6 @@ def test_ssa_files(ssa_vm):
 
     if ssa_vm.system_type == WINDOWS:
         pytest.skip("We cannot verify Windows files yet")
-
-    ssa_vm.smartstate_scan(wait_for_task_result=True)
 
     # Check that all data has been fetched
     view = navigate_to(ssa_vm, 'Details')
