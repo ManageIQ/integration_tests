@@ -12,6 +12,7 @@ REDHAT_RELEASE_FILE = '/etc/redhat-release'
 HAS_DNF = os.path.exists('/usr/bin/dnf')
 HAS_YUM = os.path.exists('/usr/bin/yum')
 HAS_APT = os.path.exists('/usr/bin/apt-get')
+HAS_SUDO = os.path.exists('/usr/bin/sudo')
 
 OS_RELEASE_FILE = '/etc/os-release'
 OS_NAME_REGEX = r'^NAME="?([\w\s\/]*?)"?$'
@@ -36,7 +37,7 @@ elif HAS_APT:
 else:
     INSTALL_COMMAND = ''
 
-if not IS_ROOT:
+if not IS_ROOT and HAS_SUDO:
     INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
     DEBUG_INSTALL_COMMAND = 'sudo ' + DEBUG_INSTALL_COMMAND if DEBUG_INSTALL_COMMAND else None
 
@@ -58,7 +59,7 @@ print('OS_NAME: {}, OS_VERSION: {}'.format(OS_NAME, OS_VERSION))
 RH_BASE = (
     " python2-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel"
     " zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python-devel tesseract freetype-devel"
+    " libffi-devel python-devel tesseract freetype-devel iputils iproute"
     " python2-debuginfo python3-debuginfo git"
 )
 

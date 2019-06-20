@@ -1800,8 +1800,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
         if self.is_dev:
             return
-        wait_for(func=getattr,
-                 func_args=[self, 'is_ssh_running'],
+        wait_for(func=lambda: self.is_ssh_running,
                  message='appliance.is_ssh_running',
                  delay=5,
                  num_sec=timeout)
@@ -1841,8 +1840,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             timeout *= 2
 
         wait_for(
-            func=getattr,
-            func_args=[self, 'is_embedded_ansible_running'],
+            func=lambda: self.is_embedded_ansible_running,
             message='appliance.is_embedded_ansible_running',
             delay=60,
             num_sec=timeout
@@ -1860,8 +1858,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     def wait_for_host_address(self):
         try:
-            wait_for(func=getattr,
-                     func_args=[self, 'get_host_address'],
+            wait_for(func=lambda: self.get_host_address,
                      fail_condition=None,
                      delay=5,
                      num_sec=120,
@@ -1915,6 +1912,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @cached_property
     def build_datetime(self):
+        if self.is_dev:
+            return datetime.now()
         build_datetime_string = self.build.split('_', 1)[0]
         return datetime.strptime(build_datetime_string, '%Y%m%d%H%M%S')
 
