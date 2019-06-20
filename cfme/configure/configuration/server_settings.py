@@ -20,6 +20,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import WaitTab
 
@@ -40,6 +42,41 @@ USER_TYPES = {
 }
 
 
+# subclass this class as needed to add version-specific roles
+class BaseServerRolesView(View):
+    """ Class represents Server Roles Form """
+    automate = BootstrapSwitch(name="server_roles_automate")
+    ems_metrics_coordinator = BootstrapSwitch(name="server_roles_ems_metrics_coordinator")
+    ems_metrics_collector = BootstrapSwitch(name="server_roles_ems_metrics_collector")
+    ems_metrics_processor = BootstrapSwitch(name="server_roles_ems_metrics_processor")
+    cockpit_ws = BootstrapSwitch(name="server_roles_cockpit_ws")
+    database_operations = BootstrapSwitch(name="server_roles_database_operations")
+    embedded_ansible = BootstrapSwitch(name='server_roles_embedded_ansible')
+    event = BootstrapSwitch(name="server_roles_event")
+    git_owner = BootstrapSwitch(name="server_roles_git_owner")
+    notifier = BootstrapSwitch(name="server_roles_notifier")
+    ems_inventory = BootstrapSwitch(name="server_roles_ems_inventory")
+    ems_operations = BootstrapSwitch(name="server_roles_ems_operations")
+    reporting = BootstrapSwitch(name="server_roles_reporting")
+    scheduler = BootstrapSwitch(name="server_roles_scheduler")
+    smartproxy = BootstrapSwitch(name="server_roles_smartproxy")
+    smartstate = BootstrapSwitch(name="server_roles_smartstate")
+    user_interface = BootstrapSwitch(name="server_roles_user_interface")
+    web_services = BootstrapSwitch(name="server_roles_web_services")
+
+    default_smart_proxy = Text(
+        "//label[contains(text(), 'Default Repository SmartProxy')]/following-sibling::div")
+
+
+class ServerRolesView510(BaseServerRolesView):
+    websocket = BootstrapSwitch(name="server_roles_websocket")
+
+
+class ServerRolesView511(BaseServerRolesView):
+    internet_connectivity = BootstrapSwitch(name="server_roles_internet_connectivity")
+    remote_console = BootstrapSwitch(name="server_roles_remote_console")
+
+
 class ServerInformationView(View):
     """ Class represents full Server tab view"""
     title = Text("//div[@id='settings_server']/h3[1]")
@@ -58,42 +95,10 @@ class ServerInformationView(View):
         time_zone = BootstrapSelect(id='server_timezone')
         locale = BootstrapSelect(id='locale')
 
-    @View.nested
-    class server_roles(View):  # noqa
-        """ Class represents Server Roles Form """
-
-        embedded_ansible = BootstrapSwitch(name='server_roles_embedded_ansible')
-        ems_metrics_coordinator = BootstrapSwitch(name="server_roles_ems_metrics_coordinator")
-        ems_operations = BootstrapSwitch(name="server_roles_ems_operations")
-        ems_metrics_collector = BootstrapSwitch(name="server_roles_ems_metrics_collector")
-        reporting = BootstrapSwitch(name="server_roles_reporting")
-        ems_metrics_processor = BootstrapSwitch(name="server_roles_ems_metrics_processor")
-        scheduler = BootstrapSwitch(name="server_roles_scheduler")
-        smartproxy = BootstrapSwitch(name="server_roles_smartproxy")
-        database_operations = BootstrapSwitch(name="server_roles_database_operations")
-        smartstate = BootstrapSwitch(name="server_roles_smartstate")
-        event = BootstrapSwitch(name="server_roles_event")
-        user_interface = BootstrapSwitch(name="server_roles_user_interface")
-        web_services = BootstrapSwitch(name="server_roles_web_services")
-        ems_inventory = BootstrapSwitch(name="server_roles_ems_inventory")
-        notifier = BootstrapSwitch(name="server_roles_notifier")
-        automate = BootstrapSwitch(name="server_roles_automate")
-        rhn_mirror = BootstrapSwitch(name="server_roles_rhn_mirror")
-        database_synchronization_role = BootstrapSwitch(
-            name="server_roles_database_synchronization")
-        git_owner = BootstrapSwitch(name="server_roles_git_owner")
-        websocket = BootstrapSwitch(name="server_roles_websocket")
-        cockpit_ws = BootstrapSwitch(name="server_roles_cockpit_ws")
-        # STORAGE OPTIONS
-        storage_metrics_processor = BootstrapSwitch(name="server_roles_storage_metrics_processor")
-        storage_metrics_collector = BootstrapSwitch(name="server_roles_storage_metrics_collector")
-        storage_metrics_coordinator = BootstrapSwitch(
-            name="server_roles_storage_metrics_coordinator")
-        storage_inventory = BootstrapSwitch(name="server_roles_storage_inventory")
-        vmdb_storage_bridge = BootstrapSwitch(name="server_roles_vmdb_storage_bridge")
-
-        default_smart_proxy = Text(
-            "//label[contains(text(), 'Default Repository SmartProxy')]/following-sibling::div")
+    server_roles = VersionPicker(
+        {'5.11': View.nested(ServerRolesView511),
+         Version.lowest(): View.nested(ServerRolesView510)}
+    )
 
     @View.nested
     class vmware_console(View):  # noqa
@@ -169,13 +174,12 @@ class ServerInformation(Updateable, Pretty):
 
     * ServerControlForm (Server Roles):
 
-        * websocket, ems_metrics_coordinator, cockpit_ws, smartproxy,
-        * storage_metrics_collector, database_operations, smartstate, event,
-        * storage_inventory, storage_metrics_processor, web_services, automate,
-        * rhn_mirror, database_synchronization, ems_operations, ems_metrics_collector,
-        * reporting, ems_metrics_processor, scheduler, git_owner, user_interface,
-        * embedded_ansible, storage_metrics_coordinator, ems_inventory,
-        * vmdb_storage_bridge, notifier: set True/False to change the state
+        * automate, ems_metrics_coordinator, ems_metrics_collector,
+        * ems_metrics_processor, cockpit_ws, database_operations,
+        * embedded_ansible, event, git_owner, internet_connectivity [5.11],
+        * notifier, ems_inventory, ems_operations, remote_console [5.11],
+        * reporting, scheduler, smartproxy, smartstate, user_interface,
+        * web_services, websocket [5.10] : set True/False to change the state
 
     * VWwareConsoleSupportForm:
 
@@ -214,14 +218,12 @@ class ServerInformation(Updateable, Pretty):
     """
     CONSOLE_TYPES = ('VNC', 'VMware VMRC Plugin', 'VMware WebMKS')
     SERVER_ROLES = (
-        'embedded_ansible', 'ems_metrics_coordinator', 'ems_operations',
-        'ems_metrics_collector', 'reporting', 'ems_metrics_processor', 'scheduler',
-        'smartproxy', 'database_operations', 'smartstate', 'event', 'user_interface',
-        'web_services', 'ems_inventory', 'notifier', 'automate',
-        'rhn_mirror', 'remote_console', 'database_synchronization_role', 'git_owner',
-        'websocket', 'storage_metrics_processor', 'storage_metrics_collector',
-        'storage_metrics_coordinator', 'storage_inventory', 'vmdb_storage_bridge',
-        'cockpit_ws', 'remote_console', 'internet_connectivity'
+        'automate', 'ems_metrics_coordinator', 'ems_metrics_collector',
+        'ems_metrics_processor', 'cockpit_ws', 'database_operations',
+        'embedded_ansible', 'event', 'git_owner', 'internet_connectivity',
+        'notifier', 'ems_inventory', 'ems_operations', 'remote_console',
+        'reporting', 'scheduler', 'smartproxy', 'smartstate', 'user_interface',
+        'web_services', 'websocket'
     )
     _basic_information = ['hostname', 'company_name', 'appliance_name', 'appliance_zone',
                           'time_zone', 'locale']
