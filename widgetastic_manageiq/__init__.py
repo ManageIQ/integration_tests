@@ -1518,6 +1518,19 @@ class DialogBootstrapSwitch(BootstrapSwitch):
     )
 
 
+class V2VBootstrapSwitch(BootstrapSwitch):
+    """locator in v2v is different than BootstrapSwitch"""
+
+    ROOT = ParametrizedLocator(
+        ".//div[./preceding-sibling::label[normalize-space(.)={@label|quote}]]"
+        '/div/div[contains(@class, "bootstrap-switch-container")]'
+    )
+
+    def fill(self, value):
+        self.browser.click(self._clickable_el)
+        return True
+
+
 class DragandDrop(View):
     def __init__(self, parent, logger=None):
         View.__init__(self, parent=parent, logger=logger)
@@ -5228,6 +5241,34 @@ class HiddenFileInput(BaseFileInput):
     def is_displayed(self):
         self.browser.set_attribute("style", "display", self)
         return self.browser.is_displayed(self)
+
+
+class ConversionHostProgress(Widget):
+    """Represents the progress widget for conversion Host configuration"""
+
+    ROOT = './/div[contains(@id,"conversion_hosts")]'
+
+    ITEM_LOCATOR = './/div[contains(@class,"list-view-pf-main-info")]'
+    ERROR_LOCATOR = './/div/span[contains(@class,"pficon-error-circle-o")]'
+    OK_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
+
+    SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
+
+    def _conversion_host(self, hostname):
+        for el in self.browser.elements(self.ITEM_LOCATOR):
+            if hostname in self.browser.text(el):
+                return el
+        raise ItemNotFound("No host found with host name : {}".format(hostname))
+
+    def in_progress(self, hostname):
+        el = self._conversion_host(hostname)
+        return self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
+
+    def is_host_configured(self, hostname):
+        """Returns True if OK is displayed and spinner not present"""
+        el = self._conversion_host(hostname)
+        ok_displayed = self.browser.is_displayed(self.OK_LOCATOR, parent=el)
+        return ok_displayed
 
 
 class MigrationProgressBar(Widget):
