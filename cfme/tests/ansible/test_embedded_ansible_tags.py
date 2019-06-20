@@ -2,45 +2,17 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.wait import wait_for
 
-pytestmark = [test_requirements.ansible, test_requirements.tag]
+pytestmark = [
+    pytest.mark.long_running,
+    test_requirements.ansible,
+    test_requirements.tag,
+]
 
 
 @pytest.fixture(scope='module')
-def enabled_embedded_ansible(appliance):
-    """Enables embedded ansible role"""
-    appliance.server.settings.enable_server_roles("embedded_ansible")
-    appliance.wait_for_embedded_ansible()
-    yield
-    appliance.server.settings.disable_server_roles("embedded_ansible")
-
-
-@pytest.fixture(scope='module')
-def repository(enabled_embedded_ansible, appliance):
-    repositories = appliance.collections.ansible_repositories
-    try:
-        repository = repositories.create(
-            name=fauxfactory.gen_alpha(),
-            url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
-            description=fauxfactory.gen_alpha())
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
-    view = navigate_to(repository, "Details")
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
-        timeout=60,
-        fail_func=view.toolbar.refresh.click
-    )
-    yield repository
-
-    repository.delete_if_exists()
-
-
-@pytest.fixture(scope='module')
-def credential(enabled_embedded_ansible, appliance):
+def credential(wait_for_ansible, appliance):
     credentials_collection = appliance.collections.ansible_credentials
     _credential = credentials_collection.create(
         "{}_credential_{}".format('Machine', fauxfactory.gen_alpha()),
@@ -61,7 +33,7 @@ def credential(enabled_embedded_ansible, appliance):
 
 
 @pytest.fixture(scope='module')
-def playbook(appliance, repository):
+def playbook(appliance, ansible_repository):
     playbooks_collection = appliance.collections.ansible_playbooks
     return playbooks_collection.all()[0]
 
@@ -89,7 +61,7 @@ def check_tag_place(soft_assert):
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_ansible_repository(repository, tag_place, check_tag_place):
+def test_tag_ansible_repository(ansible_repository, tag_place, check_tag_place):
     """ Test for cloud items tagging action from list and details pages
 
     Polarion:
@@ -97,7 +69,7 @@ def test_tag_ansible_repository(repository, tag_place, check_tag_place):
         initialEstimate: 1/4h
         casecomponent: Tagging
     """
-    check_tag_place(repository, tag_place)
+    check_tag_place(ansible_repository, tag_place)
 
 
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
@@ -125,7 +97,7 @@ def test_tag_ansible_playbook(playbook, tag_place, check_tag_place):
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_ansible_repository(repository, check_item_visibility, visibility):
+def test_tagvis_ansible_repository(ansible_repository, check_item_visibility, visibility):
     """ Test for cloud items tagging action from list and details pages
 
     Polarion:
@@ -133,7 +105,7 @@ def test_tagvis_ansible_repository(repository, check_item_visibility, visibility
         initialEstimate: 1/4h
         casecomponent: Tagging
     """
-    check_item_visibility(repository, visibility)
+    check_item_visibility(ansible_repository, visibility)
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])

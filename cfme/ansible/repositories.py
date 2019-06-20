@@ -368,7 +368,7 @@ class EditTagsFromListCollection(CFMENavigateStep):
             row = self.prerequisite_view.paginator.find_row_on_pages(
                 table=self.prerequisite_view.entities,
                 name=self.obj.name)
-            row[0].click()
+            row[0].check()
         except NoSuchElementException:
             raise ItemNotFound('Could not locate ansible repository table row with name {}'
                                .format(self.obj.name))
