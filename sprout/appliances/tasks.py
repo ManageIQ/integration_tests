@@ -1387,7 +1387,7 @@ def retrieve_appliance_ip(self, appliance_id):
         # TODO: change after openshift wrapanapi refactor
         if appliance.is_openshift:
             ip_address, _ = wait_for(
-                appliance.provider_api.current_ip_address,
+                appliance.provider_api.get_appliance_url,
                 func_args=[appliance.name],
                 fail_condition=None,
                 delay=5,
