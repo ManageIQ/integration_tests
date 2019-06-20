@@ -66,3 +66,4 @@ def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
     assert view.basic_info.provisioning_entry_point.value == ("/Service/Provisioning/StateMachines/"
                                                               "ServiceProvision_Template/"
                                                               "CatalogItemInitialization")
+    view.cancel_button.click()

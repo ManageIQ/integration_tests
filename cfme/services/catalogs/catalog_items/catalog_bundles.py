@@ -50,6 +50,7 @@ class AddCatalogBundleView(CatalogBundleFormView):
 class EditCatalogBundleView(CatalogBundleFormView):
     save_button = Button('Save')
     reset_button = Button('Reset')
+    cancel_button = Button('Cancel')
 
     @property
     def is_displayed(self):
