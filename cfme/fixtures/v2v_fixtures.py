@@ -3,6 +3,7 @@ from collections import namedtuple
 
 import fauxfactory
 import pytest
+from manageiq_client.filters import Q
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
@@ -17,6 +18,7 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
+from cfme.utils.wait import wait_for
 from cfme.v2v.infrastructure_mapping import InfrastructureMapping as InfraMapping
 
 
@@ -73,10 +75,8 @@ def __host_credentials(appliance, transformation_method, v2v_providers): # noqa
         v2v_providers: vmware (and rhev in case of RHV migration ) , osp not needed.
     """
     provider_list = [v2v_providers.vmware_provider]
-    rhv_hosts = None
 
     if v2v_providers.rhv_provider is not None:
-        rhv_hosts = v2v_providers.rhv_provider.hosts.all()
         provider_list.append(v2v_providers.rhv_provider)
 
     try:
@@ -91,17 +91,14 @@ def __host_credentials(appliance, transformation_method, v2v_providers): # noqa
     except Exception:
         logger.exception("Exception when trying to add the host credentials.")
         pytest.skip("No data for hosts in providers, failed to retrieve hosts and add creds.")
+
     # Configure conversion host for RHEV migration
-    if rhv_hosts is not None:
-        __set_conversion_instance_for_rhev_ui(appliance,
-                                              v2v_providers.vmware_provider,
-                                              v2v_providers.rhv_provider, rhv_hosts,
-                                              transformation_method)
-    if v2v_providers.osp_provider is not None:
-        __set_conversion_instance_for_osp_ui(appliance,
-                                             v2v_providers.vmware_provider,
-                                             v2v_providers.osp_provider,
-                                             transformation_method)
+    target_provider = (
+        v2v_providers.osp_provider if v2v_providers.osp_provider else v2v_providers.rhv_provider)
+    set_conversion_host_api(appliance,
+                            transformation_method,
+                            v2v_providers.vmware_provider,
+                            target_provider)
 
 
 def _tag_cleanup(host_obj, tag1, tag2):
@@ -161,6 +158,80 @@ def __vddk_url(): # noqa
     return url
 
 
+def __conversion_data(target_provider):  # noqa
+    if target_provider.one_of(RHEVMProvider):
+        resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
+        engine_key = conf.credentials[target_provider.data["ssh_creds"]]
+        auth_user = engine_key.username
+        ssh_client = ssh.SSHClient(
+            hostname=target_provider.hostname,
+            username=engine_key.username,
+            password=engine_key.password,
+        )
+        private_key = ssh_client.run_command("cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
+        try:
+            hosts = [h.name for h in target_provider.hosts.all()]
+        except KeyError:
+            pytest.skip("No conversion host on provider")
+    else:
+        resource_type = "ManageIQ::Providers::Openstack::CloudManager::Vm"
+        instance_key = conf.credentials[
+            target_provider.data["private-keys"]["conversion_host_ssh_key"]["credentials"]]
+        auth_user = instance_key.username
+        private_key = instance_key.password
+        try:
+            hosts = target_provider.data["conversion_instances"]
+        except KeyError:
+            pytest.skip("No conversion instance on provider")
+    return {
+        "resource_type": resource_type,
+        "private_key": private_key,
+        "auth_user": auth_user,
+        "hosts": hosts
+    }
+
+
+def set_conversion_host_api(
+        appliance, transformation_method, source_provider, target_provider):
+    """Setting conversion host for RHV and OSP provider via REST"""
+    vmware_ssh_private_key = None
+    vmware_vddk_package_url = None
+
+    delete_hosts = appliance.ssh_client.run_rails_command(
+        "'MiqTask.delete_all; ConversionHost.delete_all'")
+    if not delete_hosts.success:
+        pytest.skip(
+            "Failed to delete all conversion hosts: {}".format(delete_hosts.output))
+
+    conversion_data = __conversion_data(target_provider)
+    if transformation_method == "SSH":
+        vmware_key = conf.credentials[
+            source_provider.data["private-keys"]["vmware-ssh-key"]["credentials"]]
+        vmware_ssh_private_key = vmware_key.password
+    else:
+        vmware_vddk_package_url = __vddk_url()
+
+    for host in conversion_data["hosts"]:
+        conversion_entity = "hosts" if target_provider.one_of(RHEVMProvider) else "vms"
+        host_id = (
+            getattr(appliance.rest_api.collections, conversion_entity).filter(
+                Q.from_dict({"name": host})).resources[0].id)
+        response = appliance.rest_api.collections.conversion_hosts.action.create(
+            resource_id=host_id,
+            resource_type=conversion_data["resource_type"],
+            vmware_vddk_package_url=vmware_vddk_package_url,
+            vmware_ssh_private_key=vmware_ssh_private_key,
+            conversion_host_ssh_private_key=conversion_data["private_key"],
+            auth_user=conversion_data["auth_user"])[0]
+        response.reload()
+        wait_for(
+            lambda: response.task.state == "Finished",
+            fail_func=response.task.reload,
+            num_sec=240,
+            delay=3,
+            message="Waiting for conversion configuration task to be finished")
+
+
 def __configure_conversion_host_ui(appliance, target_provider, hostname, default,  # noqa
                                    conv_host_key, transformation_method,
                                    vmware_ssh_key, osp_cert_switch=None, osp_ca_cert=None):
@@ -182,7 +253,7 @@ def __configure_conversion_host_ui(appliance, target_provider, hostname, default
 
 
 def __set_conversion_instance_for_rhev_ui(appliance, source_provider,  # noqa
-                                          target_provider, rhev_hosts,
+                                          rhv_provider, rhev_hosts,
                                           transformation_method):
     """
     Args:
@@ -195,7 +266,7 @@ def __set_conversion_instance_for_rhev_ui(appliance, source_provider,  # noqa
     # Delete all prior conversion hosts otherwise it creates duplicate entries
     delete_hosts = appliance.ssh_client.run_rails_command("ConversionHost.delete_all")
     if not delete_hosts.success:
-        pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
+        pytest.skip("Failed to delete all conversion hosts: {}".format(delete_hosts.output))
 
     # Fetch Vmware Key
     vmware_ssh_key = None
@@ -203,22 +274,15 @@ def __set_conversion_instance_for_rhev_ui(appliance, source_provider,  # noqa
         ssh_key_name = source_provider.data['private-keys']['vmware-ssh-key']['credentials']
         vmware_ssh_key = conf.credentials[ssh_key_name]['password']
 
-    # Get rhev rsa key from rhevm
-    credential = conf.credentials[target_provider.data["ssh_creds"]]
-    ssh_client = ssh.SSHClient(
-        hostname=target_provider.hostname,
-        username=credential.username,
-        password=credential.password,
-    )
-    private_key = ssh_client.run_command("cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
+    # Configuration in UI
     temp_file = tempfile.NamedTemporaryFile('w')
     with open(temp_file.name, 'w') as f:
-        f.write(private_key)
+        f.write(__conversion_data(rhv_provider)["private_key"])
     conv_host_key = temp_file.name
 
     for host in rhev_hosts:
         __configure_conversion_host_ui(appliance,
-                                       target_provider, host.name, "Default",
+                                       rhv_provider, host.name, "Default",
                                        conv_host_key, transformation_method,
                                        vmware_ssh_key)
 
@@ -236,12 +300,10 @@ def __set_conversion_instance_for_osp_ui(appliance, source_provider,  # noqa
     # Delete all prior conversion hosts otherwise it creates duplicate entries
     delete_hosts = appliance.ssh_client.run_rails_command("'ConversionHost.delete_all'")
     if not delete_hosts.success:
-        pytest.skip("Failed to delete all conversion hosts:".format(delete_hosts.output))
+        pytest.skip("Failed to delete all conversion hosts: {}".format(delete_hosts.output))
 
-    # transformation method needs to be lower case always
-    trans_method = transformation_method.lower()
     try:
-        conversion_instances = osp_provider.data['conversion_instances'][trans_method]
+        conversion_instances = osp_provider.data['conversion_instances']
     except KeyError:
         pytest.skip("No conversion instance on provider.")
 
@@ -250,11 +312,10 @@ def __set_conversion_instance_for_osp_ui(appliance, source_provider,  # noqa
         ssh_key_name = source_provider.data['private-keys']['vmware-ssh-key']['credentials']
         vmware_ssh_key = conf.credentials[ssh_key_name]['password']
 
-    osp_key_name = osp_provider.data['private-keys']['conversion_host_ssh_key']['credentials']
-    key_value = conf.credentials[osp_key_name]['password']
+    # Configuration in UI
     temp_file = tempfile.NamedTemporaryFile('w')
     with open(temp_file.name, 'w') as f:
-        f.write(key_value)
+        f.write(__conversion_data(osp_provider)["private_key"])
     conv_host_key = temp_file.name
 
     tls_key_name = osp_provider.data['private-keys']['tls_cert']['credentials']
