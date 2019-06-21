@@ -106,6 +106,8 @@ def get_obj(relationship, appliance, **kwargs):
         provider = kwargs.get("provider")
         view = navigate_to(host, "Details")
         cluster_name = view.entities.summary("Relationships").get_text_of("Cluster")
+        if cluster_name == "None":
+            pytest.skip("Host {} is not a clustered host".format(host.name))
         obj = cluster_col.instantiate(name=cluster_name, provider=provider)
     elif relationship in ["Datastores", "VMs", "Templates"]:
         obj = kwargs.get("host")
