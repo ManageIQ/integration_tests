@@ -12,6 +12,7 @@ from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 
@@ -246,8 +247,9 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
             entity_count = 1
 
         # start log check
+        request_pattern = "Attributes - Begin"
         log = LogValidator(
-            "/var/www/miq/vmdb/log/automation.log", matched_patterns=["Attributes - Begin"]
+            "/var/www/miq/vmdb/log/automation.log", matched_patterns=[request_pattern]
         )
         log.fix_before_start()
 
@@ -259,10 +261,19 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
         # Submit all: single request for all entity execution
         # One by one: separate requests for all entity execution
 
-        expected_count = {
-            "Attributes - Begin": 1 if submit == "Submit all" else entity_count
-        }
-        log.wait_for_expected_patterns_match_count(expected_count)
+        expected_count = 1 if submit == "Submit all" else entity_count
+
+        try:
+            wait_for(
+                lambda: log.matches[request_pattern] == expected_count,
+                timeout=300,
+                message="wait for expected match count",
+                delay=5,
+            )
+        except TimedOutError:
+            assert False, "Expected '{}' requests and '{}' requests found in automation log".format(
+                expected_count, log.matches[request_pattern]
+            )
 
 
 @pytest.mark.meta(
@@ -322,8 +333,9 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
     assert dialog_view.service_name.fill("Custom Button Execute")
 
     # start log check
+    request_pattern = "Attributes - Begin"
     log = LogValidator(
-        "/var/www/miq/vmdb/log/automation.log", matched_patterns=["Attributes - Begin"]
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[request_pattern]
     )
     log.fix_before_start()
 
@@ -332,7 +344,17 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
     view.flash.assert_message("Order Request was Submitted")
 
     # Check for request in automation log
-    log.wait_for_expected_patterns_match_count({"Attributes - Begin": 1})
+    try:
+        wait_for(
+            lambda: log.matches[request_pattern] == 1,
+            timeout=180,
+            message="wait for expected match count",
+            delay=5,
+        )
+    except TimedOutError:
+        assert False, "Expected '1' requests and '{}' requests found in automation log".format(
+            log.matches[request_pattern]
+        )
 
 
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
