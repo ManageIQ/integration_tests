@@ -93,7 +93,7 @@ automate = pytest.mark.requirement(
 azure = pytest.mark.requirement(
     'Azure Integration',
     description='Integration of Azure in MIQ/CFME',
-    assignee_id='anikior',
+    assignee_id='anikifor',
 )
 
 bottleneck = pytest.mark.requirement(
@@ -304,7 +304,7 @@ retirement = pytest.mark.requirement(
 rhev = pytest.mark.requirement(
     'RHEV Integration',
     description='Integration of RHEVM and RHEVH in MIQ/CFME',
-    assignee_id='anikior',
+    assignee_id='anikifor',
 )
 
 right_size = pytest.mark.requirement(
