@@ -83,8 +83,10 @@ def get_qe_test_coverage(info, bz_status):
             if flag["name"] == "qe_test_coverage":
                 qe_test_coverage = flag["status"]
                 break
-        # append the BZ
-        bz_list.append(BZTestCoverage(id=bug_id, qe_test_coverage=qe_test_coverage))
+
+        # append the BZ if its coverage isn't correct
+        if qe_test_coverage != "+":
+            bz_list.append(BZTestCoverage(id=bug_id, qe_test_coverage=qe_test_coverage))
 
     return bz_list
 
