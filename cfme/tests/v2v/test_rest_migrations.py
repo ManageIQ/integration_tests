@@ -4,10 +4,12 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.v2v_fixtures import set_conversion_host_api
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -123,7 +125,6 @@ def test_rest_mapping_create(request, appliance, get_clusters, get_datastores, g
     Polarion:
         assignee: ytale
         casecomponent: V2V
-        caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
         startsin: 5.9
@@ -155,7 +156,6 @@ def test_rest_mapping_bulk_delete_from_collection(
     Polarion:
         assignee: ytale
         casecomponent: V2V
-        caseimportance: high
         testtype: functional
         initialEstimate: 1/8h
         startsin: 5.9
@@ -189,3 +189,39 @@ def test_rest_mapping_bulk_delete_from_collection(
     results = appliance.rest_api.response.json()["results"]
     assert results[0]["success"] is False
     assert results[1]["success"] is True
+
+
+@pytest.mark.parametrize("transformation_method", ["SSH", "VDDK"])
+def test_rest_conversion_host_crud(appliance, source_provider, provider, transformation_method):
+    """
+    Tests conversion host crud via REST
+    Polarion:
+        assignee: ytale
+        casecomponent: V2V
+        testtype: functional
+        initialEstimate: 1/2h
+        startsin: 5.9
+        tags: V2V
+    """
+    # Test1: Create two conversion host
+    set_conversion_host_api(appliance, transformation_method, source_provider, provider)
+    conversion_collection = appliance.rest_api.collections.conversion_hosts
+    conv_host = conversion_collection.all
+
+    # Test2: Edit first conversion host
+    fixed_limit = 100
+    edited_conv_host = conversion_collection.action.edit(
+        id=conv_host[0].id,
+        max_concurrent_tasks=fixed_limit)[0]
+    assert edited_conv_host.max_concurrent_tasks == fixed_limit
+
+    # Test3: Delete both conversion host
+    for c in conv_host:
+        response = conversion_collection.action.delete(id=c.id)[0]
+        wait_for(
+            lambda: response.state == "Finished",
+            fail_func=response.reload,
+            num_sec=240,
+            delay=3,
+            message="Waiting for conversion host configuration task to be deleted")
+    assert not conversion_collection.all
