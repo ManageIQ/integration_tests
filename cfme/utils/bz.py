@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 import re
 from collections import Sequence
+from contextlib import contextmanager
 
 import six
 from bugzilla import Bugzilla as _Bugzilla
+from bugzilla.transport import BugzillaError
 from cached_property import cached_property
 from miq_version import LATEST
 from miq_version import Version
+from yaycl import AttrDict
 
 from cfme.utils.conf import credentials
 from cfme.utils.conf import env
@@ -204,6 +207,49 @@ class Bugzilla(object):
             if bug.release_flag and version.is_in_series(bug.release_flag):
                 return bug
         return None
+
+    @contextmanager
+    def logged_into_bugzilla(self):
+        bz_creds = credentials.get("bugzilla", None)
+
+        # login to bzapi
+        if not bz_creds:
+            # error out if there are no creds available in yamls
+            raise BugzillaError("No creds available to log into Bugzilla")
+        try:
+            yield self.bugzilla.login(bz_creds.get("username"), bz_creds.get("password"))
+        except BugzillaError:
+            logger.exception("Unable to login to Bugzilla with those creds.")
+            raise
+        else:
+            self.bugzilla.logout()
+
+    def set_flags(self, idlist, flags):
+        # set the flags
+        with self.logged_into_bugzilla():
+            for bug in self.bugzilla.getbugs(idlist):
+                result = bug.updateflags(flags)
+                logger.info("Got %s from updating %s", result, bug)
+
+    def get_bz_info(self, idlist):
+        """ Get information about the BZs in idlist """
+        logger.info("Getting information about the following BZ's: %s", idlist)
+
+        # build info
+        with self.logged_into_bugzilla():
+            info = {}
+            for bug_id, bug in zip(idlist, self.bugzilla.getbugs(idlist)):
+                # assign some attrs for each BZ
+                info[bug_id] = AttrDict()
+                info[bug_id].description = bug.description
+                info[bug_id].summary = bug.summary
+                info[bug_id].flags = bug.flags
+                info[bug_id].qa_contact = bug.qa_contact
+                info[bug_id].is_open = bug.is_open
+                info[bug_id].status = bug.status
+                info[bug_id].keywords = bug.keywords
+                info[bug_id].blocks = bug.blocks
+        return info
 
 
 def check_fixed_in(fixed_in, version_series):

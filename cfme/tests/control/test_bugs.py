@@ -234,7 +234,7 @@ def vm_compliance_policy_profile(appliance, compliance_condition):
     policy.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1155284)])
+@pytest.mark.meta(blockers=[BZ(1155284)], automates=[1155284])
 def test_scope_windows_registry_stuck(request, appliance, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable.
 
