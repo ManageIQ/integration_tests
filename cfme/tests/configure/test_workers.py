@@ -4,7 +4,6 @@ from collections import namedtuple
 import pytest
 
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 Dropdown = namedtuple('Dropdown', 'dropdown id')
@@ -48,7 +47,6 @@ def test_restart_workers(appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize("dropdown", [x.dropdown for x in DROPDOWNS], ids=[x.id for x in DROPDOWNS])
-@pytest.mark.meta(blockers=[BZ(1656873)])
 def test_set_memory_threshold_in_ui(appliance, dropdown):
     """
     Bugzilla:
