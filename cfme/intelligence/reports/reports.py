@@ -386,38 +386,23 @@ class Report(BaseEntity, Updateable):
     def saved_reports(self):
         return self.collections.saved_reports
 
-    def create_schedule(self, name=None, description=None, active=None,
-            timer=None, from_email=None, emails=None, email_options=None):
-
+    def create_schedule(self, **data):
         view = navigate_to(self, "ScheduleReport")
-        view.fill({
-            "name": name,
-            "description": description,
-            "active": active,
-            "run": timer.get("run"),
-            "time_zone": timer.get("time_zone"),
-            "starting_date": timer.get("starting_date"),
-            "hour": timer.get("hour"),
-            "minute": timer.get("minute"),
-            "emails_send": bool(emails),
-            "from_email": from_email,
-            "emails": emails,
-            "send_if_empty": email_options.get("send_if_empty"),
-            "send_txt": email_options.get("send_txt"),
-            "send_csv": email_options.get("send_csv"),
-            "send_pdf": email_options.get("send_pdf")
-        })
+        if "email" in data:
+            data["email"]["emails_send"] = True
+        view.fill(data)
 
         view.add_button.click()
         view.flash.assert_no_error()
-
+        data["report_filter"] = {
+            "filter_type": self.company_name,
+            "subfilter_type": self.subtype,
+            "report_type": self.menu_name,
+        }
         schedule = self.appliance.collections.schedules.instantiate(
-            name=name or self.menu_name,
-            description=description,
-            report_filter=(self.company_name, self.subtype, self.menu_name),
-            active=active,
-            emails=emails,
-            email_options=email_options,
+            name=data.pop("name", self.menu_name),
+            description=data.pop("description", self.menu_name),
+            **data
         )
 
         assert schedule.exists

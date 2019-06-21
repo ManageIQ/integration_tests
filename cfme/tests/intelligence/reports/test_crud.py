@@ -351,8 +351,10 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
         menu_name="Hardware Information for VMs",
     )
     data = {
-        "timer": {"starting_hour": "12", "starting_minute": "10"},
-        "emails": "test@example.com",
+        "timer": {"hour": "12", "minute": "10"},
+        "email": {
+            "to_emails": "test@example.com"
+        },
         "email_options": {
             "send_if_empty": True,
             "send_pdf": True,
@@ -377,11 +379,11 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
         caseimportance: high
         initialEstimate: 1/10h
     """
-    schedule_data["report_filter"] = (
-        "My Company (All Groups)",
-        "Custom",
-        get_custom_report.menu_name,
-    )
+    schedule_data["report_filter"] = {
+        "filter_type": "My Company (All Groups)",
+        "subfilter_type": "Custom",
+        "report_type": get_custom_report.menu_name,
+    }
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)
