@@ -15,6 +15,7 @@ from widgetastic.utils import Parameter
 from widgetastic.utils import partial_match
 from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import ParametrizedView
+from widgetastic.widget import Table as WTable
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
 from widgetastic.widget import View
@@ -351,7 +352,30 @@ class InfraVmReconfigureView(BaseLoggedInPage):
     cores_per_socket = BootstrapSelect(id='cores_per_socket_count')
     cpu_total = WInput()  # read-only, TODO widgetastic
 
-    disks_table = DisksTable()
+    disks_table = DisksTable('//div/table[./../h3[normalize-space(text())="Disks"]//button]',
+        column_widgets={
+            "Type": BootstrapSelect(id="hdType"),
+            "Mode": BootstrapSelect(id="hdMode"),
+            "Size": WInput(id="dvcSize"),
+            "ControllerType": BootstrapSelect(id="Controller"),
+            "Unit": BootstrapSelect(id="hdUnit"),
+            "Dependent": BootstrapSwitch(name="vm.cb_dependent"),
+            "Delete Backing": BootstrapSwitch(name="cb_deletebacking"),
+            "Actions": Button(),
+            # second action button, 'Cancel Add' or 'Delete' depending on context of row
+            # https://github.com/RedHatQE/widgetastic.core/issues/95
+            9: Button(),
+        }
+    )
+    cd_dvd_table = WTable('//div/table[./../h3[normalize-space(text())="CD/DVD Drives"]]',
+        column_widgets={
+            "Host File": BootstrapSelect(id="isoName"),
+            "Actions": Button(),
+            # second action button, 'Cancel Add' or 'Delete' depending on context of row
+            # https://github.com/RedHatQE/widgetastic.core/issues/95
+            3: Button('Connect'),
+        }
+    )
     affected_vms = Table('.//div[@id="records_div" or @id="miq-gtl-view"]//table')
 
     submit_button = Button('Submit', classes=[Button.PRIMARY])
