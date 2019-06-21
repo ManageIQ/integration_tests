@@ -5732,13 +5732,13 @@ class EntryPoint(View, ClickableMixin):
         if self.value and self.value in "/".join(value):
             return False
 
-        if self.textbox.is_enabled:
-            self.browser.click(self.textbox)
-        else:
-            self.group_btn.click()
-
-        self.tree.wait_displayed("10s")
-        self.tree.click_path(*value)
+        if value:
+            if self.textbox.is_enabled:
+                self.browser.click(self.textbox)
+            else:
+                self.group_btn.click()
+            self.tree.wait_displayed("10s")
+            self.tree.click_path(*value)
 
         # Some EntryPoint need to apply tree selection
         if self.tree.is_displayed:
