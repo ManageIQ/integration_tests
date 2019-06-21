@@ -2840,7 +2840,7 @@ class ReactSelect(Widget, ClickableMixin):
         elif not isinstance(items, set):
             items = set(items)
 
-        if set(self.selected_option) == items:
+        if {self.selected_option} == items:
             return False
         else:
             self.select_by_visible_text(*items)
