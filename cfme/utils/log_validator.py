@@ -47,18 +47,11 @@ class LogValidator(object):
         self.matched_patterns = kwargs.pop('matched_patterns', [])
 
         self._remote_file_tail = SSHTail(remote_filename, **kwargs)
-        self.matches = {}
+        self._matches = {key: 0 for key in self.matched_patterns}
 
     def fix_before_start(self):
+        """Start monitoring log before action"""
         self._remote_file_tail.set_initial_file_end()
-
-    def validate_logs(self):
-        for line in self._remote_file_tail:
-            if self._check_skip_logs(line):
-                continue
-            self._check_fail_logs(line)
-            self._check_match_logs(line)
-        self._verify_match_logs()
 
     def _check_skip_logs(self, line):
         for pattern in self.skip_patterns:
@@ -77,12 +70,28 @@ class LogValidator(object):
         for pattern in self.matched_patterns:
             if re.search(pattern, line):
                 logger.info('Expected pattern {} was matched on line {}'.format(pattern, line))
-                self.matches[pattern] = True
+                self._matches[pattern] = self._matches[pattern] + 1
 
-    def _verify_match_logs(self):
-        for pattern in self.matched_patterns:
-            if pattern not in self.matches:
-                pytest.fail('Expected pattern {} did not match'.format(pattern))
+    @property
+    def matches(self):
+        """It will return pattern match count dictionary"""
+
+        for line in self._remote_file_tail:
+            if self._check_skip_logs(line):
+                continue
+            self._check_fail_logs(line)
+            self._check_match_logs(line)
+
+        logger.info("Matches found: {}".format(self._matches))
+        return self._matches
+
+    def validate_logs(self):
+        """Validate log pattern"""
+        for pattern, count in self.matches.items():
+            if count == 0:
+                pytest.fail(
+                    'Expected pattern {} did not match; match count {}'.format(pattern, count)
+                )
 
     def wait_for_log_validation(
             self, delay=5, num_sec=180, message="waiting for log validation", **kwargs

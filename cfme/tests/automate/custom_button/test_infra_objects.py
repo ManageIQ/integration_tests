@@ -8,10 +8,10 @@ from widgetastic_patternfly import Dropdown
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.automate.custom_button import log_request_check
 from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
@@ -246,10 +246,12 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
         else:
             entity_count = 1
 
-        # Clear the automation log
-        assert appliance.ssh_client.run_command(
-            'echo -n "" > /var/www/miq/vmdb/log/automation.log'
+        # start log check
+        request_pattern = "Attributes - Begin"
+        log = LogValidator(
+            "/var/www/miq/vmdb/log/automation.log", matched_patterns=[request_pattern]
         )
+        log.fix_before_start()
 
         custom_button_group.item_select(button.text)
 
@@ -258,18 +260,19 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
 
         # Submit all: single request for all entity execution
         # One by one: separate requests for all entity execution
+
         expected_count = 1 if submit == "Submit all" else entity_count
+
         try:
             wait_for(
-                log_request_check,
-                [appliance, expected_count],
-                timeout=600,
-                message="Check for expected request count",
-                delay=20,
+                lambda: log.matches[request_pattern] == expected_count,
+                timeout=300,
+                message="wait for expected match count",
+                delay=5,
             )
         except TimedOutError:
-            assert False, "Expected {} requests not found in automation log".format(
-                str(expected_count)
+            assert False, "Expected '{}' requests and '{}' requests found in automation log".format(
+                expected_count, log.matches[request_pattern]
             )
 
 
@@ -329,8 +332,12 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
     dialog_view = view.browser.create_view(TextInputDialogView, wait="10s")
     assert dialog_view.service_name.fill("Custom Button Execute")
 
-    # Clear the automation log
-    assert appliance.ssh_client.run_command('echo -n "" > /var/www/miq/vmdb/log/automation.log')
+    # start log check
+    request_pattern = "Attributes - Begin"
+    log = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[request_pattern]
+    )
+    log.fix_before_start()
 
     # Submit order
     dialog_view.submit.click()
@@ -339,14 +346,15 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
     # Check for request in automation log
     try:
         wait_for(
-            log_request_check,
-            [appliance, 1],
-            timeout=300,
-            message="Check for expected request count",
-            delay=20,
+            lambda: log.matches[request_pattern] == 1,
+            timeout=180,
+            message="wait for expected match count",
+            delay=5,
         )
     except TimedOutError:
-        assert False, "Expected 1 requests not found in automation log"
+        assert False, "Expected '1' requests and '{}' requests found in automation log".format(
+            log.matches[request_pattern]
+        )
 
 
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
