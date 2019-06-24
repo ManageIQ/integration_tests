@@ -250,12 +250,13 @@ class AssignedTags(ParametrizedView):
     PARAMETERS = ("tag",)
     ALL_TAGS = ".//a[contains(@class, 'pf-remove-button')]"
     tag_remove = Text(ParametrizedLocator(
-        ".//div[@class='category-label'][@title={tag|quote}]/parent::li/following-sibling::"
-        "li/descendant::a[contains(@class, 'pf-remove-button')]")
+        ".//div[@class='category-label'][normalize-space(@title)={tag|quote}]/parent::li/"
+        "following-sibling::li/descendant::a[contains(@class, 'pf-remove-button')]")
     )
 
     tag_value = Text(ParametrizedLocator(
-        ".//div[@class='category-label'][@title={tag|quote}]/parent::li/following-sibling::li/span")
+        ".//div[@class='category-label'][normalize-space(@title)={tag|quote}]/parent::li/"
+        "following-sibling::li/span")
     )
 
     def remove(self):
