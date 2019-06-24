@@ -11,6 +11,8 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import providers
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.generators import random_vm_name
@@ -294,3 +296,28 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
 
     verify_retirement_date(retire_vm, expected_date=retire_date if retire_date else 'Never')
     assert retire_vm.is_retired is False
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@test_requirements.multi_region
+@test_requirements.retirement
+def test_vm_retirement_from_global_region(context):
+    """
+    retire a vm via CA
+
+    Polarion:
+        assignee: izapolsk
+        casecomponent: Provisioning
+        initialEstimate: 1/3h
+        testSteps:
+            1. Have a VM created in the provider in the Remote region
+               subscribed to Global.
+            2. Retire the VM using the Global appliance.
+        expectedResults:
+            1.
+            2. VM transitions to Retired state in the Global and Remote region.
+
+    """
+    pass

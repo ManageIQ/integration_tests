@@ -120,12 +120,6 @@ customer_stories = pytest.mark.requirement(
     assignee_id='ndhandre',
 )
 
-multi_tenancy = pytest.mark.requirement(
-    "MIQ Multi-Tenancy",
-    description='Support for Tenants in MIQ/CFME',
-    assignee_id='nachandr',
-)
-
 chargeback = pytest.mark.requirement(
     "Chargeback",
     description='Chargeback rates, calculations, and reports',
@@ -232,6 +226,18 @@ log_depot = pytest.mark.requirement(
     "Log Collection and Depot",
     description='MIQ/CFME Log collection and storage',
     assignee_id='anikifor',
+)
+
+multi_region = pytest.mark.requirement(
+    "MIQ Multi-Region deployments",
+    description='Multi-Region deployment and Central Administration',
+    assignee_id='izapolsk',
+)
+
+multi_tenancy = pytest.mark.requirement(
+    "MIQ Multi-Tenancy",
+    description='Support for Tenants in MIQ/CFME',
+    assignee_id='nachandr',
 )
 
 ownership = pytest.mark.requirement(

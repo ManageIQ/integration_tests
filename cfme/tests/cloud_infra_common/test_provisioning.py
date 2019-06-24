@@ -17,6 +17,8 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -616,3 +618,19 @@ def test_provision_with_tag(appliance, vm_name, tag, provider, request):
         instance_tag.category.display_name == tag.category.display_name and
         instance_tag.display_name == tag.display_name for instance_tag in tags), (
         "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@test_requirements.multi_region
+@test_requirements.provision
+def test_provision_from_template_from_global_region(context):
+    """
+    Polarion:
+        assignee: izapolsk
+        caseimportance: medium
+        casecomponent: Provisioning
+        initialEstimate: 1/3h
+    """
+    pass
