@@ -15,6 +15,8 @@ import fauxfactory
 
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.log import logger
+
 
 try:
     Pattern = re.Pattern
@@ -291,6 +293,7 @@ class FTPClient(object):
     def connect(self):
         self.ftp = ftplib.FTP(self.host)
         self.ftp.login(self.login, self.password)
+        logger.info("FTP Server login successful")
 
     def update_time_difference(self):
         """ Determine the time difference between the FTP server and this computer.
@@ -550,19 +553,8 @@ class FTPClientWrapper(FTPClient):
     files related to customer BZ testing directly or indirectly. This will help to easily download
     testing related files in a runtime environment.
 
-    The base directory is `miq` and under that, we have directories as per the automation entities;
-    which can be set at initialization.
-
-    Directory Structure:
-    /-miq/
-        /-Database/
-        /-Datastores/
-        /-Dialogs/
-        /-Others/
-        /-Reports/
-
     Args:
-        entity: entity which you want to access like `Datastores`, `Dialogs`, etc.
+        entity_path: entity which you want to access like `Datastores`, `Dialogs`.
         entrypoint: FTP server entry point
         host: FTP server host
         login: FTP user
@@ -570,13 +562,13 @@ class FTPClientWrapper(FTPClient):
 
     Usage:
         .. code-block:: python
-          # Entities
-          fs = FileServer()
+
+          fs = FileServer("miq")
           fs.directory_names    # list of current available entities
           fs.mkd("Dialogs")   # create new entity type
           fs.rmd("Dialogs")     # delete created entity type
 
-          fs = FileServer("Dialogs")
+          fs = FileServer("miq/Reports")
           fs.upload("foo.zip") # upload local file
           fs.file_names # return list of available files
           fs.files()  # return list of available file objects
@@ -588,21 +580,21 @@ class FTPClientWrapper(FTPClient):
           f.download()  # download file
     """
 
-    def __init__(self, entity=None, entrypoint=None, host=None, login=None, password=None):
+    def __init__(self, entity_path=None, entrypoint=None, host=None, login=None, password=None):
         ftp_data = cfme_data.ftpserver
         host = host or ftp_data.host
         login = login or credentials[ftp_data.credentials]["username"]
         password = password or credentials[ftp_data.credentials]["password"]
 
         self.entrypoint = entrypoint or ftp_data.entrypoint
-        self.entity = entity
+        self.entity_path = entity_path
 
         super(FTPClientWrapper, self).__init__(
             host=host, login=login, password=password, time_diff=False
         )
 
-        # Change working directory as per entity. `miq` is base directory
-        self.cwd(os.path.join(self.entrypoint, "miq", self.entity if entity else ""))
+        # Change working directory as per entity_path if provided
+        self.cwd(os.path.join(self.entrypoint, self.entity_path if entity_path else ""))
 
     @property
     def file_names(self):
@@ -642,6 +634,7 @@ class FTPClientWrapper(FTPClient):
 
         with open(target, "wb") as output:
             self.retrbinary(name, output.write)
+            logger.info("'%s' successfully downloaded to '%s'", name, target)
             return target
 
     def upload(self, path, name=None):
