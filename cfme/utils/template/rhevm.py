@@ -78,9 +78,10 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
             return
         rhevm_specs = cfme_data.template_upload.template_upload_rhevm
         disk_kwargs = dict(storage_domain=self.provider_data.template_upload.storage_domain,
-                           size=rhevm_specs.disk_size,
-                           interface=rhevm_specs.disk_interface,
-                           format=rhevm_specs.disk_format)
+                           size=rhevm_specs.get('disk_size', 5000000000),
+                           interface=rhevm_specs.get('disk_interface', 'virtio'),
+                           format=rhevm_specs.get('disk_format', 'cow'),
+                           name=rhevm_specs.get('disk_name'))
         temp_vm.add_disk(**disk_kwargs)
         # check, if there are two disks
         if temp_vm.get_disks_count() < 2:
