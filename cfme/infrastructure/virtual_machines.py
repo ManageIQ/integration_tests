@@ -124,7 +124,7 @@ class InfraVmDetailsToolbar(InfraGenericDetailsToolbar):
     """Toolbar for VM details differs from All VMs&TemplatesView
     """
     access = Dropdown("Access")
-    power = Dropdown('VM Power Functions')
+    power = Dropdown(text='Power')
 
 
 class VmsTemplatesAccordion(View):
