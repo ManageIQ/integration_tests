@@ -827,6 +827,50 @@ def test_domain_id_validation(request, provider):
     assert view.flash.messages[0].type == 'error'
 
 
+@test_requirements.azure
+@pytest.mark.meta(automates=[1315945])
+@pytest.mark.provider([AzureProvider], override=True, selector=ONE)
+def test_vpc_env_selection(setup_provider, request, provider, appliance, provisioning):
+    """
+    Test selection of components in environment page of cloud instances
+    with selected virtual private cloud
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: WebUI
+        initialEstimate: 1/2h
+        testSteps:
+            1. Provision an Azure Instance from an Image.
+            2. At the environment page, try to select components with vpc
+        expectedResults:
+            1. Instance provisioned and added successfully
+            2. Items are selected successfully
+
+    Bugzilla:
+        1315945
+    """
+    vm_name = random_vm_name('prov-az')
+    template = provisioning.get('image').get('name')
+    vm = appliance.collections.cloud_instances.instantiate(name=vm_name,
+                                                           provider=provider,
+                                                           template_name=template)
+    request.addfinalizer(vm.cleanup_on_provider)
+    # default args select vpc
+    data = vm.vm_default_args
+    data['template_name'] = template
+    data['provider_name'] = provider.name
+    view = navigate_to(vm.parent, 'Provision')
+    view.form.fill_with(data, on_change=view.form.submit_button)
+    view.flash.assert_no_error()
+
+    # make sure the request succeeds
+    request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui', num_sec=15 * 60)
+    assert provision_request.is_succeeded(method='ui'), "Provisioning failed: {}".format(
+        provision_request.row.last_message.text)
+
+
 @pytest.mark.manual
 @test_requirements.azure
 @pytest.mark.tier(1)

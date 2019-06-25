@@ -5,30 +5,6 @@ from cfme import test_requirements
 pytestmark = [pytest.mark.manual, test_requirements.azure]
 
 
-def test_vpc_env_selection():
-    """
-    Test selection of components in environment page of cloud instances
-    with and without selected virtual private cloud
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: WebUI
-        initialEstimate: 1/2h
-        testSteps:
-            1. Provision an Azure Instance from an Image.
-            2. At the environment page, try to select components without vpc
-            3. At the environment page, try to select components without vpc with vpc
-        expectedResults:
-            1. Instance provisioned and added successfully
-            2. Items are selected successfully
-            3. Items are selected successfully
-
-    Bugzilla:
-        1315945
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
     """
