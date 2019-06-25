@@ -80,3 +80,40 @@ def test_infrastructure_provider_left_panel_titles():
                 the correct page.
     """
     pass
+
+
+@pytest.mark.manual
+def test_infrastructure_hosts_icons_states():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/3h
+        setup:
+            1. Add a RHEVM provider.
+            2. SSH into appliance console and run `psql vmdb_production`
+        testSteps:
+            1. Check if the Quadicon and host power_state changes after running the command:
+                UPDATE hosts SET power_state = 'preparing_for_maintenance' WHERE
+                name='NAME OF THE TESTED HOST';
+            2. Check if the Quadicon and host power_state changes after running the command:
+                UPDATE hosts SET power_state = 'maintenance' WHERE name='NAME OF THE
+                TESTED HOST';
+            3. Check if the Quadicon and host power_state changes after running the command:
+                UPDATE hosts SET power_state = 'unknown' WHERE name='NAME OF THE
+                TESTED HOST';
+            4. Check if the Quadicon and host power_state changes after running the command:
+                UPDATE hosts SET power_state = 'on' WHERE name='NAME OF THE TESTED
+                HOST';
+            5. Check if the Quadicon and host power_state changes after running the command:
+                UPDATE hosts SET power_state = 'off' WHERE name='NAME OF THE TESTED
+                HOST';
+        expectedResults:
+            1. Quadicon and power_state must change to `preparing_for_maintence`
+            2. Quadicon and power_state must change to `maintence`
+            3. Quadicon and power_state must change to `unknown`
+            4. Quadicon and power_state must change to `on`
+            5. Quadicon and power_state must change to `off`
+    """
+    pass
