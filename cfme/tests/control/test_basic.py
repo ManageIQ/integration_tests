@@ -633,6 +633,7 @@ def test_control_alert_copy(alert):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1723815)], automates=[BZ(1723815)])
 def test_alert_profile_crud(request, appliance, alert_profile_class):
     """
     Polarion:
