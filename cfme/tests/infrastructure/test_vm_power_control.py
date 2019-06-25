@@ -432,7 +432,6 @@ def test_no_template_power_control(provider, soft_assert):
     blockers=[
         BZ(
             1723805,
-            forced_streams=["5.11"],
             unblock=lambda provider: not provider.one_of(SCVMMProvider),
         )
     ]
