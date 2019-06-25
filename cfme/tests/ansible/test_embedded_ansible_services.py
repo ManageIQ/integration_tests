@@ -639,7 +639,6 @@ def test_embed_tower_exec_play_against(
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[BZ(1460788)])
 def test_service_ansible_verbosity(
-    request,
     ansible_catalog_item,
     ansible_service_catalog,
     ansible_service_request,
@@ -662,15 +661,20 @@ def test_service_ansible_verbosity(
         ansible_catalog_item.provisioning = {"verbosity": "3 (Debug)"}
         ansible_catalog_item.retirement = {"verbosity": "3 (Debug)"}
 
-    @request.addfinalizer
-    def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {"verbosity": "0 (Normal)"}
-            ansible_catalog_item.retirement = {"verbosity": "0 (Normal)"}
-
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
     # '3' denotes Debug level verbosity which is passed in the catalog creation.
     assert "3" == view.provisioning.details.get_text_of("Verbosity")
     assert "3" == view.retirement.details.get_text_of("Verbosity")
+    # Resetting verbosity value back to '0'
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"verbosity": "0 (Normal)"}
+        ansible_catalog_item.retirement = {"verbosity": "0 (Normal)"}
+
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
+    # '0' denotes  level verbosity which is passed in the catalog creation.
+    assert "0" == view.provisioning.details.get_text_of("Verbosity")
+    assert "0" == view.retirement.details.get_text_of("Verbosity")
