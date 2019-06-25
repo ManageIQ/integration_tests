@@ -428,6 +428,15 @@ def test_no_template_power_control(provider, soft_assert):
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1723805,
+            forced_streams=["5.11"],
+            unblock=lambda provider: not provider.one_of(SCVMMProvider),
+        )
+    ]
+)
 def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
