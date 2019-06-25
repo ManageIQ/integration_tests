@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 import pytest
 
 from cfme import test_requirements
@@ -15,14 +17,14 @@ pytestmark = [pytest.mark.tier(1), test_requirements.report]
 
 @pytest.fixture()
 def widget_file(appliance):
-
+    yaml_name = "import_widget.yaml"
     try:
         fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
-        file_path = fs.download("import_widget.yaml", "/tmp/import_widget.yaml")
-    except (FTPException, AttributeError) as e:
-        logger.warning("'import_widget.yaml' download failed with FTP: %s", e)
+        file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
+    except (FTPException, AttributeError):
+        logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
         file_path = data_path.join("ui/intelligence/import_widget.yaml").realpath().strpath
-        logger.info("Selecting from data path: %s", file_path)
+        logger.info("Importing from data path: %s", file_path)
 
     widget = appliance.collections.dashboard_report_widgets.instantiate(
         appliance.collections.dashboard_report_widgets.CHART,
@@ -40,14 +42,14 @@ def widget_file(appliance):
 
 @pytest.fixture(scope="function")
 def report_file(appliance):
-
+    yaml_name = "import_report.yaml"
     try:
         fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
-        file_path = fs.download("import_report.yaml", "/tmp/import_report.yaml")
-    except (FTPException, AttributeError) as e:
-        logger.warning("'import_report.yaml' download failed with FTP: %s", e)
+        file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
+    except (FTPException, AttributeError):
+        logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
         file_path = data_path.join("ui/intelligence/import_report.yaml").realpath().strpath
-        logger.info("Selecting from data path: %s", file_path)
+        logger.info("Importing from data path: %s", file_path)
 
     report = appliance.collections.reports.instantiate(
         type="My Company (All Groups)",
