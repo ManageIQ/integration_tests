@@ -370,16 +370,3 @@ def test_distributed_vm_power_control(request, vm_obj, virtualcenter_provider, e
         soft_assert(
             not vm_obj.mgmt.is_running,
             "vm running")
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_replication_central_admin_adhoc_provision_template():
-    """
-    Polarion:
-        assignee: jhenner
-        caseimportance: medium
-        casecomponent: Replication
-        initialEstimate: 1/6h
-    """
-    pass

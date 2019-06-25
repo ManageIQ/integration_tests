@@ -3,6 +3,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 
 
 @pytest.mark.manual
@@ -411,5 +413,58 @@ def test_report_new_tags():
     Bugzilla:
         1546927
         1504155
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@test_requirements.multi_region
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+def test_reports_create_in_global_region(context):
+    """
+    This test case tests report creation and rendering from global region
+    based on data from remote regions.
+
+    Polarion:
+        assignee: izapolsk
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testSteps:
+            1. Set up Multi-Region deployment
+            2. Add provider to remote appliance
+            3. Create and render report in global region
+        expectedResults:
+            1. Report should be created and rendered successfully.
+
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.report
+@test_requirements.multi_region
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+def test_reports_use_remote_in_global_region(context):
+    """
+    This test case tests report creation in remote region and rendering it in global region
+    based on data from remote regions.
+
+    Polarion:
+        assignee: izapolsk
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testSteps:
+            1. Set up Multi-Region deployment
+            2. Add provider to remote appliance
+            3. Create report in remote region
+            4. Render report in global region
+        expectedResults:
+            1. Report should be created and rendered successfully.
+
     """
     pass

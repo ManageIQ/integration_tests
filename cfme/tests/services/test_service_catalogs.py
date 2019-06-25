@@ -7,6 +7,8 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
@@ -543,5 +545,37 @@ def test_generic_object_details_displayed_from_a_service_do_not_include_associat
         tags: service
     Bugzilla:
         1576828
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@test_requirements.multi_region
+@test_requirements.service
+def test_service_provisioning_from_global_region(context):
+    """
+    Polarion:
+        assignee: izapolsk
+        caseimportance: medium
+        casecomponent: Services
+        initialEstimate: 1/4h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@test_requirements.multi_region
+@test_requirements.service
+def test_service_retirement_from_global_region(context):
+    """
+    Polarion:
+        assignee: izapolsk
+        caseimportance: medium
+        casecomponent: Services
+        initialEstimate: 1/4h
     """
     pass

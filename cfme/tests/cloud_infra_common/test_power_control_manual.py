@@ -2,6 +2,9 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
+
 
 pytestmark = [test_requirements.power, pytest.mark.manual]
 
@@ -221,16 +224,19 @@ def test_power_controls_on_vm_in_stack_cloud():
     pass
 
 
+@pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.manual('manualonly')
-def test_power_operations_from_global_region():
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@test_requirements.multi_region
+@test_requirements.power
+def test_power_operations_from_global_region(context):
     """
     This test case is to check power operations from Global region
     Setup is 2 or more appliances(DB should be configured manually). One
     is Global region, others are Remote. To get this working enable Central Admin.
 
     Polarion:
-        assignee: ghubale
+        assignee: izapolsk
         initialEstimate: 1/2h
         caseimportance: medium
         caseposneg: positive

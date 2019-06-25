@@ -30,40 +30,6 @@ def test_replication_powertoggle():
 
 
 @pytest.mark.manual
-def test_replication_central_admin_vm_retirement():
-    """
-    retire a vm via CA
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Replication
-        initialEstimate: 1/12h
-        testSteps:
-            1. Have a VM created in the provider in the Remote region
-               subscribed to Global.
-            2. Retire the VM using the Global appliance.
-        expectedResults:
-            1.
-            2. VM transitions to Retired state in the Global and Remote region.
-
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_replication_central_admin_service_provisioning():
-    """
-    Polarion:
-        assignee: mnadeem
-        caseimportance: medium
-        casecomponent: Replication
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_replication_appliance_add_single_subscription():
     """
@@ -147,7 +113,7 @@ def test_replication_central_admin_ansible_playbook_service_from_global():
     Playbook service is ordered from the master region catalog.
 
     Polarion:
-        assignee: mnadeem
+        assignee: izapolsk
         casecomponent: Replication
         subcomponent: Ansible
         caseimportance: medium
@@ -280,40 +246,6 @@ def test_replication_global_to_remote_new_vm_from_template():
             1.
             2.
             3. VM created in the Remote, no errors.
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_replication_central_admin_vm_reconfigure():
-    """
-    reconfigure a VM via CA
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Replication
-        initialEstimate: 1/12h
-        testSteps:
-            1. Have a VM created in the provider in the Remote region which is
-               subscribed to Global.
-            2. Reconfigure the VM using the Global appliance.
-        expectedResults:
-            1.
-            2.
-            3. VM reconfigured, no errors.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_replication_central_admin_adhoc_provision_template():
-    """
-    Polarion:
-        assignee: mnadeem
-        caseimportance: medium
-        initialEstimate: 1/6h
-        casecomponent: Replication
     """
     pass
 
