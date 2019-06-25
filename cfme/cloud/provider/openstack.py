@@ -66,15 +66,17 @@ class OpenStackProvider(CloudProvider):
             infra_provider_name = "---"
         else:
             infra_provider_name = self.infra_provider.name
-        return {
+        mapping = {
             'name': self.name,
             'prov_type': 'OpenStack',
             'region': None,
             'infra_provider': infra_provider_name,
             'tenant_mapping': getattr(self, 'tenant_mapping', None),
             'api_version': self.api_version,
-            'keystone_v3_domain_id': self.keystone_v3_domain_id
         }
+        if '3' in self.api_version:
+            mapping.update({'keystone_v3_domain_id': self.keystone_v3_domain_id})
+        return mapping
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
