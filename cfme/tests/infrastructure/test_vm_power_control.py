@@ -559,15 +559,6 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1571895,
-            forced_streams=["5.10"],
-            unblock=lambda provider: not provider.one_of(RHEVMProvider),
-        )
-    ]
-)
 def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
@@ -593,8 +584,10 @@ def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_
 
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_OFF, timeout=720, from_details=True)
+    import ipdb;ipdb.set_trace()
     soft_assert(
         not testing_vm_tools.mgmt.is_running, "vm running")
-    new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
-    soft_assert(new_last_boot_time == last_boot_time,
-                "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+    if not BZ(1571895).blocks:
+        new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
+        soft_assert(new_last_boot_time == last_boot_time,
+                    "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
