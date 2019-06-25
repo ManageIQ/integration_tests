@@ -24,6 +24,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BootstrapSwitchSelect
 from widgetastic_manageiq import Dropdown
@@ -544,7 +546,7 @@ class ProviderCompliancePolicy(BasePolicy):
 class PhysicalInfrastructureCompliancePolicy(BasePolicy):
 
     TYPE = "Compliance"
-    TREE_NODE = "Physical Infrastructure"
+    TREE_NODE = VersionPicker({LOWEST: "Physical Infrastructure", "5.11": "Physical Server"})
     PRETTY = "Physical Server"
 
 
@@ -597,7 +599,7 @@ class ProviderControlPolicy(BasePolicy):
 class PhysicalInfrastructureControlPolicy(BasePolicy):
 
     TYPE = "Control"
-    TREE_NODE = "Physical Infrastructure"
+    TREE_NODE = VersionPicker({LOWEST: "Physical Infrastructure", "5.11": "Physical Server"})
     PRETTY = "Physical Server"
 
 
