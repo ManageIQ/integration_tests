@@ -34,8 +34,10 @@ from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
+from cfme.utils.update import update
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseEntitiesView
@@ -202,7 +204,14 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
                 if data['name'] == host.name:
                     host_data = data
                     break
-            host.update_credentials_rest(credentials=host_data['credentials'])
+            if BZ(1718209).blocks:
+                # this BZ doesn't allow us to use REST to update creds, so use UI
+                with update(host, validate_credentials=True):
+                    host.credentials = {
+                        "default": host.Credential.from_config(host_data["credentials"]["default"])
+                    }
+            else:
+                host.update_credentials_rest(credentials=host_data['credentials'])
 
     def remove_hosts_credentials(self):
         for host in self.hosts.all():
