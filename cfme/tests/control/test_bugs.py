@@ -243,6 +243,9 @@ def test_scope_windows_registry_stuck(request, appliance, infra_provider):
         casecomponent: Control
         caseimportance: low
         initialEstimate: 1/6h
+
+    Bugzilla:
+        1155284
     """
     policy = appliance.collections.policies.create(
         VMCompliancePolicy,
@@ -281,6 +284,9 @@ def test_invoke_custom_automation(request, appliance):
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/6h
+
+    Bugzilla:
+        1243357
     """
     # The action is to have all possible fields filled, that way we can ensure it is good
     action = appliance.collections.actions.create(
@@ -323,6 +329,9 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, ap
         assignee: jdupuy
         initialEstimate: 1/4h
         casecomponent: Control
+
+    Bugzilla:
+        1375093
     """
     policy = appliance.collections.policies.create(
         VMCompliancePolicy,
@@ -346,7 +355,7 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, ap
         vmware_vm.name)
 
 
-@pytest.mark.meta(blockers=[BZ(1395965), BZ(1491576)])
+@pytest.mark.meta(blockers=[BZ(1395965), BZ(1491576)], automates=[1395965])
 def test_delete_all_actions_from_compliance_policy(request, appliance):
     """We should not allow a compliance policy to be saved
     if there are no actions on the compliance event.
@@ -364,6 +373,10 @@ def test_delete_all_actions_from_compliance_policy(request, appliance):
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/12h
+
+    Bugzilla:
+        1395965
+        1491576
     """
     policy = appliance.collections.policies.create(
         VMCompliancePolicy, fauxfactory.gen_alphanumeric()
@@ -446,6 +459,7 @@ def test_alert_ram_reconfigured(hardware_reconfigured_alert):
 
 @pytest.mark.tier(2)
 @test_requirements.alert
+@pytest.mark.meta(automates=[1658670, 1672698])
 def test_alert_for_disk_usage(setup_disk_usage_alert):
     """
     Bugzilla:
@@ -508,6 +522,7 @@ def test_alert_for_disk_usage(setup_disk_usage_alert):
 @pytest.mark.parametrize(
     "condition_class", CONDITIONS, ids=lambda condition_class: condition_class.__name__
 )
+@pytest.mark.meta(automates=[1683697])
 def test_accordion_after_condition_creation(appliance, condition_class):
     """
     Bugzilla:

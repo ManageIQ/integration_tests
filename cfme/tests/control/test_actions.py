@@ -320,7 +320,7 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
-@pytest.mark.meta(blockers=[BZ(1702018)])
+@pytest.mark.meta(blockers=[BZ(1702018)], automates=[1702018])
 def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
     """This test sets the policy that prevents VM retiring.
 
@@ -360,6 +360,7 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
 
 
 @pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.meta(automates=[1433084])
 def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, policy_for_testing):
     """Tests preventing Smart State Analysis.
 
@@ -402,6 +403,7 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+@pytest.mark.meta(automates=[1437910])
 def test_action_prevent_host_ssa(request, appliance, host, host_policy):
     """Tests preventing Smart State Analysis on a host.
 
