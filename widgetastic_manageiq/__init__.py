@@ -2743,7 +2743,7 @@ class ReactSelect(Widget, ClickableMixin):
     # fmt: off
     ROOT = ParametrizedLocator('{@locator}')
     BASE_LOCATOR = ".//div[@id={}]"
-    BY_VISIBLE_TEXT = './/*[self::span or self::div][contains(text(), {})]'
+    BY_VISIBLE_TEXT = './/div[contains(@id, "react-select") and contains(normalize-space(.), {})]'
     SELECTED_VALUE = './/div[contains(@class, "singleValue")]'
     ALL_OPTIONS = './/*[self::span or self::div][normalize-space(text())]'
     # fmt: on
