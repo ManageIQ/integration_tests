@@ -44,14 +44,7 @@ CREDENTIALS = [
 
 
 @pytest.fixture()
-def action_collection(appliance):
-    return appliance.collections.actions
-
-
-@pytest.fixture()
-def ansible_linked_vm_action(
-    appliance, ansible_catalog_item, action_collection, new_vm
-):
+def ansible_linked_vm_action(appliance, ansible_catalog_item, new_vm):
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
 
@@ -62,7 +55,7 @@ def ansible_linked_vm_action(
         }
     }
 
-    action = action_collection.create(
+    action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values=action_values,
@@ -105,7 +98,7 @@ def ansible_policy_linked_vm(appliance, new_vm, ansible_linked_vm_action):
     if policy.exists:
         policy.unassign_events("Tag Complete")
         new_vm.unassign_policy_profiles(policy_profile.description)
-        policy_profile.delete()
+        policy_profile.delete_if_exists()
         policy.delete()
 
 
