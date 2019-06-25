@@ -148,7 +148,6 @@ EVENTS = [
     "Container Node Schedulable",
     "Pod Deadline Exceeded",
     "Pod Failed Scheduling",
-    "Pod Failed Sync",
     "Pod Failed Validation",
     "Pod Insufficient Free CPU",
     "Pod Insufficient Free Memory",
