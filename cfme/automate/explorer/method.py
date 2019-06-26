@@ -319,14 +319,14 @@ class MethodEditView(AutomateExplorerView):
 
     @property
     def is_displayed(self):
-        return (
-            self.in_explorer and
-            self.datastore.is_opened and
-            'Editing Automate Method "{}"'.format(self.context['object'].name) in self.title.text
-            and (BZ(1704439).blocks or check_tree_path(
-                self.datastore.tree.currently_selected,
-                self.context['object'].tree_path, partial=True))
-        )
+        return (self.in_explorer
+                and self.datastore.is_opened
+                and ('Editing Automate Method "{}"'.format(self.context["object"].name)
+                     in self.title.text)
+                and check_tree_path(self.datastore.tree.currently_selected,
+                                    self.context["object"].tree_path, partial=True
+                                    )
+                )
 
 
 class Method(BaseEntity, Copiable):
@@ -409,10 +409,6 @@ class Method(BaseEntity, Copiable):
 
     def update(self, updates):
 
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
-
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -457,9 +453,7 @@ class MethodCollection(BaseCollection):
 
         add_page = navigate_to(self, 'Add')
 
-        if self.browser.product_version < '5.11':
-            location = location
-        else:
+        if self.browser.product_version > '5.11' and location.islower():
             location = location.capitalize()
 
         add_page.fill({'location': location})
@@ -473,7 +467,8 @@ class MethodCollection(BaseCollection):
                 'inputs': inputs,
                 'embedded_method': embedded_method
             })
-        if location == 'playbook':
+        if location.lower() == 'playbook':
+            add_page.wait_displayed()
             add_page.fill({
                 'playbook_name': name,
                 'playbook_display_name': display_name,

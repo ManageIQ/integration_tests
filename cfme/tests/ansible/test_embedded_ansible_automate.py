@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
@@ -34,54 +35,6 @@ def ansible_credential(appliance, ansible_repository, full_template_modscope):
     )
     yield credential
     credential.delete_if_exists()
-
-
-@pytest.fixture(scope='module')
-def domain(appliance):
-    dc = appliance.collections.domains
-    _domain = dc.create(
-        name='test_{}'.format(fauxfactory.gen_alpha()),
-        enabled=True)
-    yield _domain
-    _domain.delete_if_exists()
-
-
-@pytest.fixture(scope="module")
-def namespace(domain):
-    return domain.namespaces.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
-
-
-@pytest.fixture(scope="module")
-def klass(namespace):
-    klass_ = namespace.classes.create(
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
-    klass_.schema.add_field(name="execute", type="Method", data_type="String")
-    return klass_
-
-
-@pytest.fixture(scope="module")
-def method(klass, ansible_repository):
-    return klass.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
-        location="playbook",
-        repository=ansible_repository.name,
-        playbook="copy_file_example.yml",
-        machine_credential="CFME Default Credential",
-        playbook_input_parameters=[("key", "value", "string")]
-    )
-
-
-@pytest.fixture(scope="module")
-def instance(klass, method):
-    return klass.instances.create(
-        name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
-        fields={"execute": {"value": method.name}})
 
 
 @pytest.fixture
@@ -162,14 +115,17 @@ def alert_profile(appliance, alert, full_template_vm_modscope):
     _alert_profile.delete_if_exists()
 
 
-def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repository, domain,
-        namespace, klass):
+@pytest.mark.meta(automates=[BZ(1729999)])
+@pytest.mark.meta(blockers=[BZ(1729999, forced_streams=['5.10'])])
+def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repository, klass):
     """CRUD test for ansible playbook method.
 
+    Bugzilla:
+        1729999
+
     Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
+        assignee: ghubale
+        casecomponent: Automate
         initialEstimate: 1/12h
     """
     method = klass.methods.create(
@@ -182,20 +138,32 @@ def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repositor
     )
     with update(method):
         method.name = fauxfactory.gen_alphanumeric()
-        method.playbook = "dump_all_variables.yml"
     method.delete()
 
 
-def test_automate_ansible_playbook_method_type(request, appliance, domain, namespace, klass,
-        instance, method):
+def test_automate_ansible_playbook_method_type(request, appliance, ansible_repository, domain,
+                                               namespace, klass):
     """Tests execution an ansible playbook via ansible playbook method using Simulation.
 
     Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
+        assignee: ghubale
+        casecomponent: Automate
         initialEstimate: 1/4h
     """
+    klass.schema.add_field(name="execute", type="Method", data_type="String")
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        location="playbook",
+        repository=ansible_repository.name,
+        playbook="copy_file_example.yml",
+        machine_credential="CFME Default Credential",
+        playbook_input_parameters=[("key", "value", "string")]
+    )
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={"execute": {"value": method.name}})
+
     simulate(
         appliance=appliance,
         request="Call_Instance",
