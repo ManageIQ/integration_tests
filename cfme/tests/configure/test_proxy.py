@@ -187,9 +187,7 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
             3. Wait for the provider refresh to complete to check the settings causes error.
     """
     provider.refresh_provider_relationships()
-
     view = navigate_to(provider, 'Details')
-
     view.toolbar.view_selector.select('Summary View')
 
     def last_refresh_failed():
@@ -197,7 +195,12 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
         return 'Timed out connecting to server' in (
             view.entities.summary('Status').get_text_of('Last Refresh'))
 
-    wait_for(last_refresh_failed, fail_condition=False, num_sec=240, delay=5)
+    wait_for(last_refresh_failed,
+             fail_condition=False,
+             num_sec=240,
+             delay=20,
+             fail_func=provider.refresh_provider_relationships
+             )
 
 
 @pytest.mark.manual
