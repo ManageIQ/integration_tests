@@ -19,7 +19,8 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.vm_migrate,
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module",
+                         required_fields=[["provisioning", "template"]], selector=ONE_PER_TYPE)
 ]
 
 
