@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
+import os
+
 import pytest
 
 from cfme import test_requirements
 from cfme.intelligence.reports.reports import ImportExportCustomReportsView
 from cfme.intelligence.reports.widgets import ImportExportWidgetsCommitView
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
+from cfme.utils.ftp import FTPException
+from cfme.utils.log import logger
 from cfme.utils.path import data_path
 
 pytestmark = [pytest.mark.tier(1), test_requirements.report]
@@ -11,7 +17,15 @@ pytestmark = [pytest.mark.tier(1), test_requirements.report]
 
 @pytest.fixture()
 def widget_file(appliance):
-    file_path = data_path.join("ui/intelligence/import_widget.yaml").realpath().strpath
+    yaml_name = "import_widget.yaml"
+    try:
+        fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
+        file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
+    except (FTPException, AttributeError):
+        logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
+        file_path = data_path.join("ui/intelligence/import_widget.yaml").realpath().strpath
+        logger.info("Importing from data path: %s", file_path)
+
     widget = appliance.collections.dashboard_report_widgets.instantiate(
         appliance.collections.dashboard_report_widgets.CHART,
         "testing widget",
@@ -28,7 +42,15 @@ def widget_file(appliance):
 
 @pytest.fixture(scope="function")
 def report_file(appliance):
-    file_path = data_path.join("ui/intelligence/import_report.yaml").realpath().strpath
+    yaml_name = "import_report.yaml"
+    try:
+        fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
+        file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
+    except (FTPException, AttributeError):
+        logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
+        file_path = data_path.join("ui/intelligence/import_report.yaml").realpath().strpath
+        logger.info("Importing from data path: %s", file_path)
+
     report = appliance.collections.reports.instantiate(
         type="My Company (All Groups)",
         subtype="Custom",
