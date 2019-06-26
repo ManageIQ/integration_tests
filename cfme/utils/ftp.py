@@ -69,10 +69,7 @@ class FTPDirectory(object):
             whole path for this directory
 
         """
-        if self.parent_dir:
-            return self.parent_dir.path + self.name + "/"
-        else:
-            return self.name
+        return os.path.join(self.parent_dir.path if self.parent_dir else "", self.name)
 
     def __repr__(self):
         return "<FTPDirectory {}>".format(self.path)
@@ -178,10 +175,10 @@ class FTPFile(object):
             whole path for this file
 
         """
-        if isinstance(self.parent_dir, FTPDirectory):
-            return self.parent_dir.path + self.name
-        else:
-            return os.path.join(self.parent_dir, self.name)
+        parent_dir = (
+            self.parent_dir.path if isinstance(self.parent_dir, FTPDirectory) else self.parent_dir
+        )
+        return os.path.join(parent_dir, self.name)
 
     @property
     def local_time(self):
