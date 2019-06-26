@@ -417,3 +417,47 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
         power_state = view.entities.summary('Power Management').get_text_of('Power State')
         assert not power_state == 'orphaned'
         assert not power_state == 'archived'
+
+
+# Add test for 1719399
+
+@pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.meta(automates=[1688900])
+def test_switches_class_present_ems(appliance, provider):
+    """
+    Under this customer requested enhancement, ems should have switches class.
+
+    Bugzilla:
+        1688900
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testtype: integration
+        testSteps:
+            1.Add VMware provider to CFME
+            2.SSH to CFME appliance and perform following steps in rails console
+                '''
+                $evm = MiqAeMethodService::MiqAeService.new(MiqAeEngine::MiqAeWorkspaceRuntime.new)
+                p = $evm.vmdb(:ems_infra).first
+                p.class.name
+                p.switches.first.class.name
+                '''
+        expectedResults:
+            1.Provider added successfully and is refreshed
+            2.p.switches.first.class.name returns exit status 0(success) and lists class name
+            containing HostVirtualSwitch
+    """
+    command = """'$evm = MiqAeMethodService::MiqAeService.new(MiqAeEngine::MiqAeWorkspaceRuntime.new);\
+                p = $evm.vmdb(:ems_infra).first;\
+                p.class.name;\
+                puts "class name [#{p.switches.first.class.name}]"'
+                """
+    result = appliance.ssh_client.run_rails_command(command)
+    logger.info("Output of Rails command was {}".format(result.output))
+    assert result.success, "SSH Command result was unsuccessful: {}".format(result)
+    if not result.output:
+        assert 'HostVirtualSwitch' in result.output
