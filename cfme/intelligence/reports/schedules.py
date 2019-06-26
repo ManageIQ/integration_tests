@@ -169,16 +169,12 @@ class Schedule(Updateable, Pretty, BaseEntity):
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
+            view.flash.assert_no_error()
         else:
             view.cancel_button.click()
-        view = self.create_view(ScheduleDetailsView, override=updates, wait='10s')
-        view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Schedule "{}" was saved'.format(updates.get("name", self.name)))
-        else:
-            view.flash.assert_message(
-                'Edit of Schedule "{}" was cancelled by the user'.format(self.name))
+
+        view = self.create_view(ScheduleDetailsView)
+        assert view.is_displayed
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
@@ -211,15 +207,16 @@ class ScheduleCollection(BaseCollection):
     def create(self, **data):
         if "email" in data:
             data["email"]["emails_send"] = True
-        schedule = self.instantiate(**data)
+
         view = navigate_to(self, "Add")
         view.fill(data)
         view.add_button.click()
+        view.flash.assert_no_error()
+
+        schedule = self.instantiate(**data)
         view = schedule.create_view(ScheduleDetailsView)
         assert view.is_displayed
-        view.flash.assert_success_message(
-            'Schedule "{}" was added'.format(data.get("name"))
-        )
+
         return schedule
 
     def _select_schedules(self, schedules):
@@ -313,7 +310,7 @@ class ScheduleNew(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self, *args, **kwargs):
-        self.view.configuration.item_select("Add a new Schedule")
+        self.prerequisite_view.configuration.item_select("Add a new Schedule")
 
 
 @navigator.register(Schedule, "Details")
