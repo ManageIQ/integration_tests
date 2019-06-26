@@ -1395,11 +1395,13 @@ def retrieve_appliance_ip(self, appliance_id):
             )
         else:
             if appliance.vm_mgmt is None:
-                self.logger.error(
-                    'Appliance %s vm_mgmt is None, skipping retrieve IP on orphaned appliance',
+                self.logger.warning(
+                    'Appliance %s vm_mgmt is None, probably appliance is renamed or '
+                    'we try retrieving IP on orphaned appliance',
                     appliance_id
                 )
-                return
+                self.retry(args=(appliance_id,), countdown=2, max_retries=10)
+
             ip_address = wait_pingable(appliance.vm_mgmt)
         self.logger.info('Updating with reachable IP %s for appliance %s',
                          ip_address, appliance_id)
