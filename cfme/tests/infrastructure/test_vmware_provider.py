@@ -202,11 +202,13 @@ def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
     switches = [switch for switch in switches_collection.all() if switch.name == 'DSwitch']
     assert switches, "There are no DSwitches on Networking Page"
     s = switches[0]
-    s.add_tag((appliance.collections.categories.instantiate(display_name='Owner')
-            .collections.tags.instantiate(display_name='Production Linux Team')))
+    s.add_tag(
+        appliance.collections.categories.instantiate(display_name='Owner')
+        .collections.tags.instantiate(display_name='Production Linux Team')
+    )
     added_tags = [tag for tag in s.get_tags()
-                if (tag.name == 'Owner') and
-                (tag.display_name == 'Production Linux Team')]
+                  if (tag.category.display_name == 'Owner') and
+                  (tag.display_name == 'Production Linux Team')]
     assert added_tags, "Failed to retrieve correct tags"
 
 

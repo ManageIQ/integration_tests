@@ -420,6 +420,9 @@ class Taggable(TaggableCommonBase):
                             default is details page
             dashboard (bool): Set to True if tag should be added via the Dashboard view
         """
+        if tag and tag in self.get_tags():
+            logger.warning('Trying to add tag [%s] already assigned to entity [%s]', tag, self)
+            return tag
         if details and not dashboard:
             step = 'EditTagsFromDetails'
         elif dashboard:
@@ -488,7 +491,7 @@ class Taggable(TaggableCommonBase):
             raise ItemNotFound('Details page does not exist for: {}'.format(self))
         except TimedOutError:
             raise ItemNotFound('Timed out navigating to details for: {}'.format(self))
-        tags = []
+        tags_objs = []
         entities = view.entities
         if hasattr(entities, 'smart_management'):
             tag_table = entities.smart_management
@@ -499,12 +502,12 @@ class Taggable(TaggableCommonBase):
             # check for users/groups page in case one tag string is returned
             for tag in [tags_text] if isinstance(tags_text, six.string_types) else list(tags_text):
                 tag_category, tag_name = tag.split(':')
-                category = self.appliance.collections.categories.instantiate(
-                    display_name=tag_category)
-                tags.append(category.collections.tags.instantiate(
-                    display_name=tag_name.strip(),
-                    name=tag_category.strip()))
-        return tags
+                # instantiate category first, then use its tags collection to instantiate tag
+                tags_objs.append(
+                    self.appliance.collections.categories.instantiate(display_name=tag_category)
+                    .collections.tags.instantiate(display_name=tag_name.strip())
+                )
+        return tags_objs
 
 
 class TaggableCollection(TaggableCommonBase):
