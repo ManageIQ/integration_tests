@@ -95,11 +95,8 @@ def ansible_policy_linked_vm(appliance, new_vm, ansible_linked_vm_action):
     new_vm.assign_policy_profiles(policy_profile.description)
     yield
 
-    if policy.exists:
-        policy.unassign_events("Tag Complete")
-        new_vm.unassign_policy_profiles(policy_profile.description)
-        policy_profile.delete_if_exists()
-        policy.delete()
+    policy_profile.delete_if_exists()
+    policy.delete_if_exists()
 
 
 @pytest.fixture
