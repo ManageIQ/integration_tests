@@ -289,7 +289,9 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
 
 
 @pytest.mark.tier(4)
-def test_migration_restart(appliance, provider, mapping_data_vm_obj_mini):
+@pytest.mark.parametrize(
+    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", ubuntu16_template]], indirect=True)
+def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_single_datastore):
     """
     Test migration by restarting evmserverd in middle of the process
 
@@ -302,14 +304,22 @@ def test_migration_restart(appliance, provider, mapping_data_vm_obj_mini):
         startsin: 5.10
         casecomponent: V2V
     """
-    src_vm_obj = mapping_data_vm_obj_mini.vm_list[0]
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
+    mapping = infrastructure_mapping_collection.create(**mapping_data)
+    src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
-        infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
+        infra_map=mapping.name,
         target_provider=provider,
-        vm_list=mapping_data_vm_obj_mini.vm_list
+        vm_list=mapping_data_vm_obj_single_datastore.vm_list,
     )
     view = navigate_to(migration_plan, "InProgress")
     assert migration_plan.wait_for_state("Started")
@@ -317,9 +327,8 @@ def test_migration_restart(appliance, provider, mapping_data_vm_obj_mini):
     def _system_reboot():
         # reboot system when migrated percentage greater than 20%
         ds_percent = int(view.progress_card.get_progress_percent(migration_plan.name)["datastores"])
-        if ds_percent > 20:
+        if ds_percent > 10:
             appliance.restart_evm_rude()
-            appliance.wait_for_web_ui()
             return True
         else:
             return False
@@ -331,6 +340,7 @@ def test_migration_restart(appliance, provider, mapping_data_vm_obj_mini):
         delay=10,
         num_sec=1800
     )
+    appliance.wait_for_web_ui()
     try:
         assert migration_plan.wait_for_state("In_Progress")
     except WebDriverException:
