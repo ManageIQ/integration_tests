@@ -145,10 +145,7 @@ def test_config_system_tag(request, config_system, tag):
         casecomponent: Ansible
     """
     config_system.add_tag(tag=tag, details=False)
-    tags = config_system.get_tags()
-    msg = "Failed to setup a configuration system's tag"
-    tag_info = '{}: {}'.format(tag.category.display_name, tag.display_name)
-    assert tag_info in ['{}: {}'.format(t.category.display_name, t.display_name) for t in tags], msg
+    assert tag in config_system.get_tags(), "Tag not found on configuration system after adding"
 
 
 @pytest.mark.tier(3)
@@ -165,17 +162,13 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
     Bugzilla:
         1673104
     """
-    collection = config_manager.appliance.collections.ansible_tower_job_templates
     try:
-        job_template = collection.all()[0]
+        job_template = config_manager.appliance.collections.ansible_tower_job_templates.all()[0]
     except IndexError:
         pytest.skip("No job template was found")
     job_template.add_tag(tag=tag, details=False)
     request.addfinalizer(lambda: job_template.remove_tag(tag=tag))
-    tags = job_template.get_tags()
-    msg = "Failed to setup a configuration system's tag"
-    tag_info = '{}: {}'.format(tag.category.display_name, tag.display_name)
-    assert tag_info in ['{}: {}'.format(t.category.display_name, t.display_name) for t in tags], msg
+    assert tag in job_template.get_tags(), "Tag not found on configuration system after adding"
 
 
 # def test_config_system_reprovision(config_system):
