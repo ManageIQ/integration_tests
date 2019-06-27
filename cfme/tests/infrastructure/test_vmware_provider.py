@@ -505,3 +505,29 @@ def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
     # Using appliance.rest_api as hosts.all() do not return archived hosts, I need those too
     hosts_after = len(appliance.rest_api.collections.hosts.all)
     assert hosts_before == hosts_after
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1686101])
+def test_network_attributes_vmware_automate_api():
+    """
+    Collect custom network attributes on VMware provider and expose them via Automate API
+
+    Bugzilla:
+        1686101
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testtype: integration
+        testSteps:
+            1.Add VMware provider to CFME
+            2.
+        expectedResults:
+            1.Provider added successfully and is refreshed
+            2.
+    """
+    # TODO: Add rest of the testSteps once BZ moves to ON_DEV and implementation details are clear.
+    pass
