@@ -34,11 +34,12 @@ def set_default(provider, request):
        be created with specific values for these entries.
     """
     with_prov = (
-        "/ManageIQ (Locked)/{}/VM/Provisioning/StateMachines/ProvisionRequestApproval/Default"
-        .format(provider.string_name)
+        "Datastore", "ManageIQ (Locked)", "{}".format(provider.string_name), "VM", "Provisioning",
+        "StateMachines", "ProvisionRequestApproval", "Default (Default)"
     )
     default = (
-        "/Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogItemInitialization"
+        "Service", "Provisioning", "StateMachines", "ServiceProvision_Template",
+        "CatalogItemInitialization"
     )
     return with_prov if request.param else default
 
