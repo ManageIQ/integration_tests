@@ -5,6 +5,7 @@ import time
 import pytest
 
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
@@ -85,12 +86,16 @@ def test_manage_nsg_group(appliance, provider, register_event):
     provider.mgmt.remove_netsec_group(nsg_name, resource_group)
 
 
+@pytest.mark.meta(blockers=[BZ(1724312)], automates=[1724312])
 def test_vm_capture(appliance, request, provider, register_event):
     """
     tests that generalize and capture vm azure events are received and parsed by CFME
 
     Metadata:
         test_flag: events, provision
+
+    Bugzilla:
+        1724312
 
     Polarion:
         assignee: jdupuy
