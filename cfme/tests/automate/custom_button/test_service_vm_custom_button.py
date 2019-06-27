@@ -12,14 +12,18 @@ from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
-from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 
 
 pytestmark = [
     pytest.mark.tier(2),
     test_requirements.custom_button,
-    pytest.mark.provider([VMwareProvider], selector=ONE, scope="module"),
+    pytest.mark.provider(
+        [VMwareProvider],
+        selector=ONE,
+        required_fields=[["provisioning", "template"]],
+        scope="module",
+    ),
     pytest.mark.usefixtures("setup_provider_modscope"),
 ]
 
@@ -132,7 +136,7 @@ def test_custom_button_display_service_vm(request, appliance, service_vm, button
 
 @test_requirements.customer_stories
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1687061, forced_streams=["5.10"])], automates=[1687061])
+@pytest.mark.meta(automates=[1687061])
 def test_custom_button_with_dynamic_dialog_vm(
     appliance, provider, request, service_vm, setup_dynamic_dialog
 ):
@@ -171,6 +175,7 @@ def test_custom_button_with_dynamic_dialog_vm(
 
     Bugzilla:
         1687061
+        1722817
     """
     dialog, ele_name = setup_dynamic_dialog
     # Create button group
