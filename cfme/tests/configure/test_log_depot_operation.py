@@ -397,8 +397,7 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
         collect_logs.depot_name = fauxfactory.gen_alphanumeric()
         collect_logs.uri = uri
         collect_logs.username = log_depot.credentials.username
-        # password update needs EditView fill fix
-        # collect_logs.password = log_depot.credentials.password
+        collect_logs.password = log_depot.credentials.password
     request.addfinalizer(collect_logs.clear)
     if collect_type == 'all':
         collect_logs.collect_all()
