@@ -446,7 +446,7 @@ class MethodCollection(BaseCollection):
             location = location.capitalize()
 
         add_page.fill({'location': location})
-        if location == 'inline' or 'Inline':
+        if location in ['inline', 'Inline']:
             add_page.wait_displayed()
             add_page.fill({
                 'inline_name': name,
