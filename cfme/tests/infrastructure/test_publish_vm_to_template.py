@@ -61,6 +61,10 @@ def test_publish_vm_to_template(request, setup_provider, vm_crud):
     template_name = random_vm_name(context='pblsh')
     template = vm_crud.publish_to_template(template_name)
 
-    request.addfinalizer(template.delete)
+    @request.addfinalizer
+    def _cleanup():
+        template.delete()
+        # also delete the template from the provider
+        template.mgmt.delete()
 
     assert template.exists, 'Published template does not exist.'
