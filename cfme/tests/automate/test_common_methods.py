@@ -7,11 +7,13 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Dropdown
 
@@ -119,3 +121,62 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
         message="Check for extension of the VM retirement date by {} days".format(
             extend_duration_days)
     )
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1720432])
+def test_miq_password_decrypt(klass):
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        initialEstimate: 1/3h
+
+    Bugzilla:
+        1720432
+    """
+    # Ruby script for decrypting password
+    script = (
+        'require "manageiq-password"\n'
+        'root_password = MiqPassword.encrypt("abc")\n'
+        '$evm.log("info", "Root Password is #{root_password}")\n'
+        'root_password_decrypted = MiqPassword.decrypt(root_password)\n'
+        '$evm.log("info", "Decrypted password is #{root_password_decrypted}")'
+    )
+
+    # Adding schema for executing method
+    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+
+    # Adding automate method
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script=script)
+
+    # Adding instance to call automate method
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={'execute': {'value': method.name}}
+    )
+
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*Decrypted password is abc.*"],
+    )
+    result.fix_before_start()
+
+    # Executing method via simulation to check decrypted password
+    simulate(
+        appliance=klass.appliance,
+        attributes_values={
+            "namespace": klass.namespace.name,
+            "class": klass.name,
+            "instance": instance.name,
+        },
+        message="create",
+        request="Call_Instance",
+        execute_methods=True,
+    )
+    result.validate_logs()
