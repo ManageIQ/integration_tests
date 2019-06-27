@@ -44,7 +44,7 @@ general_list_pages = [
     ('zones', None, 'Advanced', False),
     ('zones', None, 'Diagnostics', False),
     ('zones', None, 'ServersByRoles', False),
-    ('zones', None, 'Servers', False),
+    ('zones', None, 'Servers', True),
     ('zones', None, 'CANDUGapCollection', False),
     ('zones', None, 'RolesByServers', False),
     ('zones', None, 'ZoneCollectLogs', False),
