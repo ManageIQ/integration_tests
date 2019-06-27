@@ -200,16 +200,14 @@ def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
     """
     switches_collection = appliance.collections.infra_switches
     switches = [switch for switch in switches_collection.all() if switch.name == 'DSwitch']
-    assert switches, "There are no DSwitches on Networking Page"
-    s = switches[0]
-    s.add_tag(
-        appliance.collections.categories.instantiate(display_name='Owner')
-        .collections.tags.instantiate(display_name='Production Linux Team')
-    )
-    added_tags = [tag for tag in s.get_tags()
-                  if (tag.category.display_name == 'Owner') and
-                  (tag.display_name == 'Production Linux Team')]
-    assert added_tags, "Failed to retrieve correct tags"
+    try:
+        switch = switches[0]
+    except IndexError:
+        pytest.skip("There are no DSwitches for provider %s", provider)
+    owner_tag = appliance.collections.categories.instantiate(
+        display_name='Owner').collections.tags.instantiate(display_name='Production Linux Team')
+    switch.add_tag(owner_tag)
+    assert owner_tag in switch.get_tags(), "Failed to retrieve correct tags"
 
 
 @pytest.mark.manual
