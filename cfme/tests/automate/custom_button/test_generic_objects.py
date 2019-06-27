@@ -303,11 +303,11 @@ def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_
     else:
         if expression == "enablement":
             assert not custom_button_group.is_enabled
+            assert re.search(disabled_txt, custom_button_group.hover)
             setup_obj.add_tag(tag)
             assert custom_button_group.item_enabled(button.text)
         elif expression == "visibility":
             assert not custom_button_group.is_displayed
-            assert re.search(disabled_txt, custom_button_group.hover)
             setup_obj.add_tag(tag)
             assert button.text in custom_button_group.items
 
