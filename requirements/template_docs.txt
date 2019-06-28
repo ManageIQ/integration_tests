@@ -54,7 +54,7 @@ pytest-polarion-collect
 python-bugzilla>=1.2.0
 python-dateutil
 python-jenkins
-pywinrm
+py3winrm
 PyYAML
 requests
 riggerlib>=3.1.2
