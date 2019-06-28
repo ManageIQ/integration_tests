@@ -6,6 +6,7 @@ import yaml
 from cfme import test_requirements
 from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.intelligence.reports.schedules import ScheduleDetailsView
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.path import data_path
 from cfme.utils.wait import wait_for
 
@@ -178,4 +179,25 @@ def test_reports_disable_enable_schedule(appliance, schedule):
     schedules.disable_schedules(schedule)
     assert not schedule.enabled
     schedules.enable_schedules(schedule)
+    assert schedule.enabled
+
+
+@pytest.mark.ignore_stream("5.10")
+def test_reports_disable_enable_schedule_from_summary(appliance, schedule):
+    """
+    This test checks if schedule can be enabled/disabled from it's summary page.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/10h
+    Bugzilla:
+        1559335
+    """
+    view = navigate_to(schedule, "Details")
+    view.configuration.item_select("Disable this Schedule")
+    assert not schedule.enabled
+    # enabled directs to Schedules `All` page, we need to navigate back to Details page
+    navigate_to(schedule, "Details")
+    view.configuration.item_select("Enable this Schedule")
     assert schedule.enabled

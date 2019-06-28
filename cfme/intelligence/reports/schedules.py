@@ -22,6 +22,7 @@ from cfme.utils.update import Updateable
 from widgetastic_manageiq import AlertEmail
 from widgetastic_manageiq import Calendar
 from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import Table
 
 
@@ -111,6 +112,7 @@ class EditScheduleView(SchedulesFormCommon):
 
 class ScheduleDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
+    schedule_info = SummaryForm("Schedule Info")
 
     @property
     def is_displayed(self):
