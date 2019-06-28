@@ -71,19 +71,15 @@ class Tag(Pretty, BaseEntity, Updateable):
 
     def __eq__(self, other):
         # compare the display_name attributes of the tag and its parent category
-        display_name_match = (
+        # display name itself is unique in MIQ
+        # use getattr in case other is not actually a tag
+        # provide default Category object so we can call display_name regardless
+        return (
             self.display_name == getattr(other, 'display_name') and
             self.category.display_name == getattr(other, 'category',
                                                   Category(parent=None, display_name=None)
                                                   ).display_name
         )
-        name_match = (
-            self.name == getattr(other, 'name') and
-            self.category.name == getattr(other, 'category',
-                                          Category(parent=None, display_name=None)
-                                          ).name
-        )
-        return display_name_match and name_match
 
     def update(self, updates):
         """ Update category method """

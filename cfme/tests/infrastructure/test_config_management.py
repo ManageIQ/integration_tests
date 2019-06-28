@@ -24,29 +24,6 @@ def config_system(config_manager):
     return fauxfactory.gen_choice(config_manager.systems)
 
 
-@pytest.fixture(scope="module")
-def category(appliance):
-    cg = appliance.collections.categories.create(
-        name=fauxfactory.gen_alphanumeric(8).lower(),
-        description=fauxfactory.gen_alphanumeric(32),
-        display_name=fauxfactory.gen_alphanumeric(32)
-    )
-    yield cg
-    if cg.exists:
-        cg.delete()
-
-
-@pytest.fixture(scope="module")
-def tag(category):
-    tag = category.collections.tags.create(
-        name=fauxfactory.gen_alphanumeric(8).lower(),
-        display_name=fauxfactory.gen_alphanumeric(32)
-    )
-    yield tag
-    if tag.exists:
-        tag.delete()
-
-
 @pytest.mark.tier(3)
 def test_config_manager_detail_config_btn(request, config_manager):
     """
@@ -137,7 +114,7 @@ def test_config_manager_remove(config_manager):
 @pytest.mark.tier(3)
 @test_requirements.tag
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-def test_config_system_tag(request, config_system, tag):
+def test_config_system_tag(request, config_system, tag, appliance):
     """
     Polarion:
         assignee: anikifor
@@ -145,7 +122,7 @@ def test_config_system_tag(request, config_system, tag):
         casecomponent: Ansible
     """
     config_system.add_tag(tag=tag, details=False)
-    assert tag in config_system.get_tags(), "Tag not found on configuration system after adding"
+    assert tag in config_system.get_tags(), "Added tag not found on configuration system"
 
 
 @pytest.mark.tier(3)
@@ -168,7 +145,7 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
         pytest.skip("No job template was found")
     job_template.add_tag(tag=tag, details=False)
     request.addfinalizer(lambda: job_template.remove_tag(tag=tag))
-    assert tag in job_template.get_tags(), "Tag not found on configuration system after adding"
+    assert tag in job_template.get_tags(), "Added tag not found on configuration system"
 
 
 # def test_config_system_reprovision(config_system):
