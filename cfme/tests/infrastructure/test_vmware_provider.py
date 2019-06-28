@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 """Manual VMware Provider tests"""
+import os
 import re
+import tarfile
 
 import fauxfactory
 import pytest
+from six.moves.urllib import request as url_request
 
 from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -54,9 +59,11 @@ def test_vmware_provider_filters(appliance, provider, soft_assert):
         soft_assert(esx_platform in all_options, "ESX Platform does not exists in options")
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
-def test_appliance_scsi_control_vmware():
+@pytest.mark.long_running
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+def test_appliance_scsi_control_vmware(request, appliance):
     """
     Appliance cfme-vsphere-paravirtual-*.ova has SCSI controller as Para
     Virtual
@@ -66,9 +73,34 @@ def test_appliance_scsi_control_vmware():
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/4h
-    #TODO: yet to test this, once done, I will add steps. Test was not written by me originally.
     """
-    pass
+    try:
+        url = (conf.cfme_data.basic_info.cfme_images_url.cfme_paravirtual_url_format
+            .format(
+                baseurl=conf.cfme_data.basic_info.cfme_images_url.baseurl,
+                series=appliance.version.series(), ver=appliance.version
+            )
+        )
+    except AttributeError:
+        pytest.skip('Skipping as one of the keys might be missing in cfme_yamls.')
+    logger.info("Downloading ova file for parvirtual vsphere scsi controller test from %s", url)
+    filename = os.path.basename(url)
+
+    url_request.urlretrieve(url, filename)
+
+    @request.addfinalizer
+    def _cleanup():
+        if os.path.exists(filename):
+            os.remove(filename)
+
+    with tarfile.open(filename) as tar:
+        desc_member = tar.getmember("desc.ovf")
+        f = tar.extractfile(desc_member)
+        content = f.read()
+    assert content, "No content could be read from desc.ovf"
+    logger.debug("Desc file contains following text:%s" % content)
+    check_string = '<rasd:ResourceSubType>VirtualSCSI</rasd:ResourceSubType>'
+    assert check_string in str(content), "Given OVA does not have paravirtual scsi controller"
 
 
 @pytest.mark.tier(1)
