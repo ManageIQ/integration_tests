@@ -17,7 +17,6 @@ from cfme.fixtures.provider import win7_template
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     test_requirements.v2v,
