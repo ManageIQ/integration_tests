@@ -185,12 +185,16 @@ def vm_off(vm):
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
 )
+@pytest.mark.meta(blockers=[BZ(1531547)], automates=[1531547])
 def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_for_testing):
     """ This test tests action 'Start Virtual Machine'
 
     This test sets the policy that it turns on the VM when it is turned off
     (https://www.youtube.com/watch?v=UOn4gxj2Dso), then turns the VM off and waits for it coming
     back alive.
+
+    Bugzilla:
+        1531547
 
     Metadata:
         test_flag: actions, provision
