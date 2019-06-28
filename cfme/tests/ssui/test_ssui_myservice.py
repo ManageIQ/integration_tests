@@ -243,3 +243,27 @@ def test_suspend_vm_service_details(context):
         1670373
     """
     pass
+
+
+@pytest.mark.meta(coverage=[1677744])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_no_error_while_fetching_the_service():
+    """
+
+    Bugzilla:
+        1677744
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.11
+        casecomponent: SelfServiceUI
+        initialEstimate: 1/6h
+        testSteps:
+            1. Provision service in regular UI with user that isn't admin
+            2. Delete user, then go view the service in the SUI and see if it blows up.
+        expectedResults:
+            1.
+            2. In SUI click on provisioned service
+    """
+    pass
