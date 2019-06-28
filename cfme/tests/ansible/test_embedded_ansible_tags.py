@@ -47,17 +47,15 @@ def check_tag_place(soft_assert):
         tag = item.add_tag(details=tag_place)
         tags = item.get_tags()
         soft_assert(
-            [object_tags if object_tags.category.display_name == tag.category.display_name and
-             object_tags.display_name == tag.display_name else None for object_tags in tags], (
-                "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+            tag in tags,
+            "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, tags)
         )
 
         item.remove_tag(tag=tag, details=tag_place)
         tags = item.get_tags()
         soft_assert(
-            not [object_tags if object_tags.category.display_name == tag.category.display_name and
-                 object_tags.display_name == tag.display_name else None for object_tags in tags], (
-                "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+            tag not in tags,
+            "{}: {} should not be in ({})".format(tag.category.display_name, tag.display_name, tags)
         )
     return _check_tag_place
 
