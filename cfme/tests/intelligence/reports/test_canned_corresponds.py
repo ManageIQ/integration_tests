@@ -107,8 +107,7 @@ def test_cluster_relationships(appliance, soft_assert):
             # Don't check
             continue
 
-        host_list = provider.mgmt.list_hosts() if isinstance(
-            provider, SCVMMProvider) else provider.mgmt.list_host()
+        host_list = provider.mgmt.list_host()
         for host in host_list:
             if ip_address.match(host) is None:
                 host_is_ip = False
