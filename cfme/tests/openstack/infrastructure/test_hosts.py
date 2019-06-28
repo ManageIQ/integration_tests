@@ -187,7 +187,7 @@ def test_hypervisor_hostname(host_collection, provider, soft_assert):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    hvisors = provider.mgmt.list_hosts()
+    hvisors = provider.mgmt.list_host()
     hosts = host_collection.all()
     for host in hosts:
         view = navigate_to(host, 'Details')
@@ -205,7 +205,7 @@ def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_as
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    hvisors = provider.mgmt.list_hosts()
+    hvisors = provider.mgmt.list_host()
     view = navigate_to(host_collection, 'All')
     view.toolbar.view_selector.select(view_type)
     items = view.entities.get_all()
