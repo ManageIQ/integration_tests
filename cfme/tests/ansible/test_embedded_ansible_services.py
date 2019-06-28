@@ -673,36 +673,37 @@ def test_service_ansible_verbosity(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
+    # Adding index 0 which will give pattern for e.g. pattern = "verbosity"=>0.
     pattern = '"verbosity"=>{}'.format(verbosity[0])
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"verbosity": verbosity}
         ansible_catalog_item.retirement = {"verbosity": verbosity}
     # Log Validator
-    log = LogValidator(
-        "/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern]
-    )
+    log = LogValidator("/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern])
     # Start Log check or given pattern
     log.fix_before_start()
 
     @request.addfinalizer
     def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {"verbosity": "0 (Normal)"}
-            ansible_catalog_item.retirement = {"verbosity": "0 (Normal)"}
-
         service = MyService(appliance, ansible_catalog_item.name)
         if ansible_service_request.exists():
             ansible_service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+            appliance.rest_api.collections.service_requests.action.delete(
+                id=service_request.id
+            )
         if service.exists:
             service.delete()
 
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
+    # 'request_descr' and 'service_request' being used in finalizer to remove
+    # first service request
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-    # Searching string '"verbosity"=>0' in evm.log as Standard Output is being
-    # logging in evm.log
+    service_request = appliance.rest_api.collections.service_requests.get(
+        description=request_descr
+    )
+    # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
+    # is being logging in evm.log
     log.validate_logs()
     logger.info("Pattern found {}".format(log.matched_patterns))
 
