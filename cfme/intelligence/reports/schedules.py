@@ -140,16 +140,15 @@ class Schedule(Updateable, Pretty, BaseEntity):
     """Represents a schedule in Cloud Intel/Reports/Schedules.
 
     Args:
-        name: Schedule name.
-        description: Schedule description.
-        report_filter: 3-tuple with filter selection (see the UI).
-        active: Whether is this schedule active.
-        timer: Specifies how often this schedule runs. It can be a dictionary that contains
-                run, run_interval, starting_date, timezone, starting_hour and starting_minute
-        from_email: Email from which scheduled report will be sent.
-        email: Contains list of emails where schedules emails will be sent.
-                If specified, turns on e-mail sending. Can be string, or list or set.
-        email_options: Tuple containing send_if_empty, send_csv, send_txt, send_pdf.
+        name (str): Schedule name.
+        description (str): Schedule description.
+        report_filter (dict): Contains filter_type, subfilter_type and report_type.
+        active (bool): Whether is this schedule active.
+        timer (dict): Specifies how often this schedule runs. Contains
+                run, run_interval(timer_hour, timer_day, timer_week, timer_month),
+                starting_date, timezone, hour and minute
+        email (dict): Contains to_email and from_email(list). If specified, turns on e-mail sending
+        email_options (dict): Contains send_if_empty, send_csv, send_txt, send_pdf.
     """
     pretty_attrs = ["name", "report_filter"]
 
@@ -204,12 +203,33 @@ class ScheduleCollection(BaseCollection):
 
     ENTITY = Schedule
 
-    def create(self, **data):
-        if "email" in data:
-            data["email"]["emails_send"] = True
+    def create(
+        self,
+        name,
+        description,
+        report_filter,
+        active=True,
+        timer=None,
+        email=None,
+        email_options=None,
+        cancel=False,
+    ):
+        if email:
+            email["emails_send"] = True
+        data = {
+            "name": name,
+            "description": description,
+            "active": active,
+            "report_filter": report_filter,
+            "timer": timer,
+            "email": email,
+            "email_options": email_options,
+        }
 
         view = navigate_to(self, "Add")
         view.fill(data)
+        if cancel:
+            view.cancel_button.click()
         view.add_button.click()
         view.flash.assert_no_error()
 

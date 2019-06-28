@@ -386,22 +386,44 @@ class Report(BaseEntity, Updateable):
     def saved_reports(self):
         return self.collections.saved_reports
 
-    def create_schedule(self, **data):
+    def create_schedule(
+        self,
+        name=None,
+        description=None,
+        active=True,
+        timer=None,
+        email=None,
+        email_options=None,
+        cancel=False,
+    ):
         view = navigate_to(self, "ScheduleReport")
-        if "email" in data:
-            data["email"]["emails_send"] = True
+        if email:
+            email["emails_send"] = True
+
+        data = {
+            "name": name,
+            "description": description,
+            "active": active,
+            "report_filter": {
+                "filter_type": self.company_name,
+                "subfilter_type": self.subtype,
+                "report_type": self.menu_name,
+            },
+            "timer": timer,
+            "email": email,
+            "email_options": email_options,
+        }
         view.fill(data)
+
+        if cancel:
+            view.cancel_button.click()
 
         view.add_button.click()
         view.flash.assert_no_error()
-        data["report_filter"] = {
-            "filter_type": self.company_name,
-            "subfilter_type": self.subtype,
-            "report_type": self.menu_name,
-        }
+
         schedule = self.appliance.collections.schedules.instantiate(
-            name=data.pop("name", self.menu_name),
-            description=data.pop("description", self.menu_name),
+            name=data.pop("name") or self.menu_name,
+            description=data.pop("description") or self.menu_name,
             **data
         )
 

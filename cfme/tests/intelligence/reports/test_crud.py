@@ -370,6 +370,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
         },
     }
     schedule = report.create_schedule(**data)
+    request.addfinalizer(schedule.delete_if_exists)
 
     assert schedule.enabled
     schedule.delete(cancel=False)
