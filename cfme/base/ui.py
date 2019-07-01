@@ -1309,43 +1309,41 @@ class ZoneForm(ConfigurationView):
     cancel_button = Button('Cancel')
 
 
-class ZoneView(ConfigurationView):
-
+class ZoneSettingsView(ConfigurationView):
     @View.nested
     class zone(WaitTab):  # noqa
         TAB_NAME = "Zone"
+        configuration = Dropdown('Configuration')
 
     @View.nested
     class smart_proxy_affinity(WaitTab):  # noqa
         TAB_NAME = "SmartProxy Affinity"
+        smartproxy_affinity = CheckableBootstrapTreeview(tree_id='smartproxy_affinitybox')
+        save = Button(title='Save Changes')
 
     @View.nested
     class advanced(WaitTab):  # noqa
         TAB_NAME = "Advanced"
 
-
-# Zone Details #
-class ZoneDetailsView(ZoneView):
-    configuration = Dropdown('Configuration')
-
     @property
     def is_displayed(self):
-        return self.title.text.startswith(
-            'Settings Zone "{}"'.format(self.context['object'].description))
+        expected_list = [
+            self.context['object'].region.settings_string,
+            "Zones",
+            "Zone: {} (current)".format(self.context['object'].description)
+        ]
+        return (
+            self.accordions.settings.is_opened and
+            self.accordions.settings.tree.currently_selected == expected_list and
+            self.title.text == 'Settings Zone "{}" (current)'.format(
+                self.context['object'].description)
+        )
 
 
-class ZoneSmartProxyAffinityView(ZoneView):
-    smartproxy_affinity = CheckableBootstrapTreeview(tree_id='smartproxy_affinitybox')
-    save = Button(title='Save Changes')
-
-    @property
-    def is_displayed(self):
-        return self.smart_proxy_affinity.is_active()
-
-
-@navigator.register(Zone, 'Details')
-class ZoneDetails(CFMENavigateStep):
-    VIEW = ZoneDetailsView
+# Zone Settings #
+@navigator.register(Zone, 'Settings')
+class ZoneSettings(CFMENavigateStep):
+    VIEW = ZoneSettingsView
 
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 
@@ -1354,46 +1352,58 @@ class ZoneDetails(CFMENavigateStep):
             self.obj.description))))
         for row in rows:
             row.click()
-            self.view.zone.select()
             break
         else:
             raise ItemNotFound(
-                "No unique Zones with the description '{}'".format(self.obj.description))
+                "No unique Zone with the description '{}'".format(self.obj.description))
+
+
+@navigator.register(Zone, 'Zone')
+class ZoneZone(CFMENavigateStep):
+    VIEW = ZoneSettingsView
+
+    prerequisite = NavigateToSibling('Settings')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.zone.is_displayed and
+            self.view.zone.is_active()
+        )
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.zone.select()
 
 
 @navigator.register(Zone, 'SmartProxyAffinity')
-class SmartProxyAffinity(CFMENavigateStep):
-    VIEW = ZoneSmartProxyAffinityView
+class ZoneSmartProxyAffinity(CFMENavigateStep):
+    VIEW = ZoneSettingsView
 
-    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
+    prerequisite = NavigateToSibling('Settings')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.smart_proxy_affinity.is_displayed and
+            self.view.smart_proxy_affinity.is_active()
+        )
 
     def step(self, *args, **kwargs):
-        rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
-            self.obj.description))))
-        for row in rows:
-            row.click()
-            self.view.smart_proxy_affinity.select()
-            break
-        else:
-            raise ItemNotFound(
-                "No unique Zones with the description '{}'".format(self.obj.description))
+        self.prerequisite_view.smart_proxy_affinity.select()
 
 
 @navigator.register(Zone, 'Advanced')
 class ZoneAdvanced(CFMENavigateStep):
-    VIEW = ZoneDetailsView
-    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
+    VIEW = ZoneSettingsView
+
+    prerequisite = NavigateToSibling('Settings')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.advanced.is_displayed and
+            self.view.advanced.is_active()
+        )
 
     def step(self, *args, **kwargs):
-        rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
-            self.obj.description))))
-        for row in rows:
-            row.click()
-            self.view.advanced.select()
-            break
-        else:
-            raise ItemNotFound(
-                "No unique Zones with the description '{}'".format(self.obj.description))
+        self.prerequisite_view.advanced.select()
 
 
 # Zone Add #
@@ -1432,7 +1442,7 @@ class ZoneEdit(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select("Edit this Zone")
 
 
-# Zone Diags #
+# Zone Diagnostics #
 class ZoneDiagnosticsView(ConfigurationView):
     @View.nested
     class rolesbyservers(WaitTab):  # noqa
@@ -1459,15 +1469,16 @@ class ZoneDiagnosticsView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        expected_list = [
+            self.context['object'].region.settings_string,
+            "Zone: {} (current)".format(self.context['object'].description)
+        ]
         return (
+            self.accordions.diagnostics.is_opened and
+            self.accordions.diagnostics.tree.currently_selected == expected_list and
             self.title.text == 'Diagnostics Zone "{}" (current)'.format(
-                self.context['object'].description))
-
-
-class ZoneCollectLogsView(ZoneDiagnosticsView):
-    @property
-    def is_displayed(self):
-        return self.collectlogs.is_active()
+                self.context['object'].description)
+        )
 
 
 @navigator.register(Zone, 'Diagnostics')
@@ -1486,6 +1497,12 @@ class ZoneDiagnosticsRolesByServers(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.rolesbyservers.is_displayed and
+            self.view.rolesbyservers.is_active()
+        )
+
     def step(self, *args, **kwargs):
         self.prerequisite_view.rolesbyservers.select()
 
@@ -1494,6 +1511,12 @@ class ZoneDiagnosticsRolesByServers(CFMENavigateStep):
 class ZoneDiagnosticsServersByRoles(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.serversbyroles.is_displayed and
+            self.view.serversbyroles.is_active()
+        )
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.serversbyroles.select()
@@ -1504,8 +1527,29 @@ class ZoneDiagnosticsServers(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.servers.is_displayed and
+            self.view.servers.is_active()
+        )
+
     def step(self, *args, **kwargs):
         self.prerequisite_view.servers.select()
+
+
+@navigator.register(Zone, 'CollectLogs')
+class ZoneCollectLogs(CFMENavigateStep):
+    VIEW = ZoneDiagnosticsView
+    prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.collectlogs.is_displayed and
+            self.view.collectlogs.is_active()
+        )
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.collectlogs.select()
 
 
 @navigator.register(Zone, 'CANDUGapCollection')
@@ -1513,17 +1557,14 @@ class ZoneCANDUGapCollection(CFMENavigateStep):
     VIEW = ZoneDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.candugapcollection.is_displayed and
+            self.view.candugapcollection.is_active()
+        )
+
     def step(self, *args, **kwargs):
         self.prerequisite_view.candugapcollection.select()
-
-
-@navigator.register(Zone)
-class ZoneCollectLogs(CFMENavigateStep):
-    VIEW = ZoneCollectLogsView
-    prerequisite = NavigateToSibling('Diagnostics')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.collectlogs.select()
 
 
 @Zone.exists.external_getter_implemented_for(ViaUI)
@@ -1543,7 +1584,7 @@ def update(self, updates):
         view.save_button.click()
     else:
         view.cancel_button.click()
-    view = self.create_view(ZoneDetailsView)
+    view = self.create_view(ZoneSettingsView)
     # assert view.is_displayed
     view.flash.assert_no_error()
     if changed:

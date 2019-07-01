@@ -6,6 +6,7 @@ from widgetastic_patternfly import Dropdown
 from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 general_list_pages = [
     ('servers', None, 'Details', False),
@@ -27,29 +28,24 @@ general_list_pages = [
     ('servers', None, 'DatabaseSettings', True),
     ('servers', None, 'DatabaseClientConnections', True),
     ('servers', None, 'DatabaseUtilization', False),
-
     ('regions', None, 'Details', False),
     ('regions', None, 'ImportTags', False),
     ('regions', None, 'Import', False),
     ('regions', None, 'HelpMenu', False),
     ('regions', None, 'Advanced', False),
-    ('regions', None, 'Diagnostics', False),
     ('regions', None, 'DiagnosticsZones', False),
     ('regions', None, 'OrphanedData', False),
     ('regions', None, 'Servers', True),
     ('regions', None, 'ServersByRoles', False),
     ('regions', None, 'RolesByServers', False),
-    ('zones', None, 'Details', False),
+    ('zones', None, 'Zone', False),
     ('zones', None, 'SmartProxyAffinity', False),
     ('zones', None, 'Advanced', False),
-    ('zones', None, 'Diagnostics', False),
     ('zones', None, 'ServersByRoles', False),
     ('zones', None, 'Servers', True),
     ('zones', None, 'CANDUGapCollection', False),
     ('zones', None, 'RolesByServers', False),
-    ('zones', None, 'ZoneCollectLogs', False),
-
-
+    ('zones', None, 'CollectLogs', False),
     ('candus', None, 'Details', False),
     ('map_tags', None, 'All', False),
     ('categories', None, 'All', False),
@@ -101,6 +97,13 @@ def schedule(appliance):
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
+@pytest.mark.meta(blockers=[BZ(1724747, forced_streams=['5.11'], unblock=lambda place_info:
+                      '{}_{}'.format(place_info[0], place_info[2].lower())
+                      not in ['zones_diagnostics', 'zones_serversbyroles', 'zones_servers',
+                      'zones_candugapcollection', 'zones_rolesbyservers', 'zones_collectlogs']),
+                  BZ(1726345, forced_streams=['5.11'], unblock=lambda place_info:
+                      '{}_{}'.format(place_info[0], place_info[2].lower())
+                      not in ['regions_serversbyroles'])])
 def test_paginator_config_pages(appliance, place_info):
     """
         Check paginator is visible for config pages
