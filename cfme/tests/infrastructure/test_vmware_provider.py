@@ -407,13 +407,101 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
                 vm.update_attributes(:uid_ems => SecureRandom.uuid);\
                 puts \"VM_ID=#{vm.id} name=[#{vm.name}] uid=#{vm.uid_ems}\"'"
     result = appliance.ssh_client.run_rails_command(command)
-    logger.info("Output of Rails command was {}".format(result.output))
     provider.refresh_provider_relationships()
     assert result.success, "SSH Command result was unsuccessful: {}".format(result)
     if not result.output:
+        logger.info("Output of Rails command was {}".format(result.output))
         vm_name = re.findall(r"\[.+\]", result.output)[0].split('[')[1].split(']')[0]
         vm = appliance.collections.infra_vms.instantiate(name=vm_name, provider=provider)
         view = vm.load_details(from_any_provider=True)
         power_state = view.entities.summary('Power Management').get_text_of('Power State')
         assert not power_state == 'orphaned'
         assert not power_state == 'archived'
+
+
+@pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.meta(automates=[1688900])
+def test_switches_class_present_ems(appliance, provider):
+    """
+    Under this customer requested enhancement, ems should have switches class.
+
+    Bugzilla:
+        1688900
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testtype: integration
+        testSteps:
+            1.Add VMware provider to CFME
+            2.SSH to CFME appliance and perform following steps in rails console
+                '''
+                $evm = MiqAeMethodService::MiqAeService.new(MiqAeEngine::MiqAeWorkspaceRuntime.new)
+                p = $evm.vmdb(:ems_infra).first
+                p.class.name
+                p.switches.first.class.name
+                '''
+        expectedResults:
+            1.Provider added successfully and is refreshed
+            2.p.switches.first.class.name returns exit status 0(success) and lists class name
+            containing HostVirtualSwitch
+    """
+    command = """'$evm = MiqAeMethodService::MiqAeService.new(MiqAeEngine::MiqAeWorkspaceRuntime.new);\
+                p = $evm.vmdb(:ems_infra).first;\
+                p.class.name;\
+                puts "class name [#{p.switches.first.class.name}]"'
+                """
+    result = appliance.ssh_client.run_rails_command(command)
+    assert result.success, "SSH Command result was unsuccessful: {}".format(result)
+    logger.info('output of rails command: %s', result.output)
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1688900#c19
+    # due to above comment, and since list of Switch classes that can be returned would differ based
+    # on version of CFME builds, we just need to check if the command succeeds and `switch` is in
+    # the class name that is returned
+    assert 'switch' in result.output.lower()
+
+
+@pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.meta(automates=[1719399])
+def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
+    """
+    If vCenter rebuilt without removing from CFME, hosts should not be archived and
+    duplicate records should not be created.
+
+    Bugzilla:
+        1719399
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testtype: integration
+        testSteps:
+            1.Add VMware provider to CFME
+            2.Check hosts count on hosts page
+            3.SSH to CFME appliance & run given steps in rails console(to mimic vCenter rebuild)
+                '''
+                Host.all.each { |h| h.ems_id = nil; h.ems_ref = h.id.to_s; h.save! }
+                '''
+            4.Refresh provider and check hosts count/name.
+        expectedResults:
+            1.Provider added successfully and is refreshed
+            2.Note hosts count
+            3.Command runs successfully
+            4.Host count does not change, no duplicate hosts found.
+    """
+    # Using appliance.rest_api as hosts.all() do not return archived hosts, I need those too
+    hosts_before = len(appliance.rest_api.collections.hosts.all)
+    command = "'Host.all.each { |h| h.ems_id = nil; h.ems_ref = h.id.to_s; h.save! }'"
+    result = appliance.ssh_client.run_rails_command(command)
+    assert result.success, "SSH Command result was unsuccessful: {}".format(result)
+    logger.info('output of rails command: %s', result.output)
+    provider.refresh_provider_relationships()
+    # Using appliance.rest_api as hosts.all() do not return archived hosts, I need those too
+    hosts_after = len(appliance.rest_api.collections.hosts.all)
+    assert hosts_before == hosts_after
