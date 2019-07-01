@@ -13,6 +13,8 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -634,3 +636,77 @@ def test_embed_tower_exec_play_against(
 
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(2)
+@pytest.mark.parametrize(
+    "verbosity",
+    [
+        "1 (Verbose)",
+        "2 (More Verbose)",
+        "3 (Debug)",
+        "4 (Connection Debug)",
+        "5 (WinRM Debug)",
+        "0 (Normal)",
+    ],
+)
+@pytest.mark.meta(automates=[BZ(1460788)])
+def test_service_ansible_verbosity(
+    appliance,
+    request,
+    ansible_catalog_item,
+    ansible_service_catalog,
+    ansible_service_request,
+    ansible_service,
+    verbosity,
+):
+    """Check if the different Verbosity levels can be applied to service and
+    monitor the std out
+
+    Bugzilla:
+        1460788
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    # Adding index 0 which will give pattern for e.g. pattern = "verbosity"=>0.
+    pattern = '"verbosity"=>{}'.format(verbosity[0])
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"verbosity": verbosity}
+        ansible_catalog_item.retirement = {"verbosity": verbosity}
+    # Log Validator
+    log = LogValidator("/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern])
+    # Start Log check or given pattern
+    log.fix_before_start()
+
+    @request.addfinalizer
+    def _revert():
+        service = MyService(appliance, ansible_catalog_item.name)
+        if ansible_service_request.exists():
+            ansible_service_request.wait_for_request()
+            appliance.rest_api.collections.service_requests.action.delete(
+                id=service_request.id
+            )
+        if service.exists:
+            service.delete()
+
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+    # 'request_descr' and 'service_request' being used in finalizer to remove
+    # first service request
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request = appliance.rest_api.collections.service_requests.get(
+        description=request_descr
+    )
+    # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
+    # is being logging in evm.log
+    log.validate_logs()
+    logger.info("Pattern found {}".format(log.matched_patterns))
+
+    view = navigate_to(ansible_service, "Details")
+    assert verbosity[0] == view.provisioning.details.get_text_of("Verbosity")
+    assert verbosity[0] == view.retirement.details.get_text_of("Verbosity")

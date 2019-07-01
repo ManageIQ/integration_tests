@@ -138,22 +138,6 @@ def test_embed_tower_monitor_resources():
     pass
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_exec_play_stdout():
-    """
-    User/Admin is able to execute playbook and see stdout of it once
-    completed.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_embed_ansible_next_gen():
     """
@@ -370,21 +354,6 @@ def test_embed_tower_exec_play_against_openstack():
     pass
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_add_public_repo():
-    """
-    Ability to add public repo (without SCM credentials).
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_ui_requests_notifications():
     """
@@ -448,25 +417,6 @@ def test_embed_tower_credentials():
         caseimportance: critical
         initialEstimate: 1/12h
         tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_embed_tower_enhanced_playbook_debug():
-    """
-    Enable Embedded Ansible and add repo with playbooks. Try to create new
-    service dialog and try to order the service. In the dialog, there
-    should be option to enable debugging of the playbook (I believe the
-    playbook is executed with -vvv option).
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
-        tags: ansible_embed
-        upstream: yes
     """
     pass
 
@@ -732,23 +682,6 @@ def test_service_ansible_playbook_with_already_existing_catalog_item_name():
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_service_ansible_verbosity():
-    """
-    BZ 1460788
-    Check if the different Verbosity levels can be applied to service and
-    monitor the std out
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/2h
         tags: ansible_embed
     """
     pass
