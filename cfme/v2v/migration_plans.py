@@ -43,7 +43,11 @@ class MigrationView(BaseLoggedInPage):
 
     @property
     def in_explorer(self):
-        nav_menu = ["Compute", "Migration", "Migration Plans"]
+        nav_menu = (
+            ["Compute", "Migration", "Migration Plans"]
+            if self.context["object"].appliance.version < "5.11"
+            else ["Migration", "Migration Plans"]
+        )
         return self.logged_in_as_current_user and self.navigation.currently_selected == nav_menu
 
     @property
@@ -557,7 +561,10 @@ class All(CFMENavigateStep):
     VIEW = MigrationPlanView
 
     def step(self):
-        self.prerequisite_view.navigation.select("Compute", "Migration", "Migration Plans")
+        if self.obj.appliance.version < "5.11":
+            self.prerequisite_view.navigation.select("Compute", "Migration", "Migration Plans")
+        else:
+            self.prerequisite_view.navigation.select("Migration", "Migration Plans")
 
 
 @navigator.register(MigrationPlanCollection, "Add")
