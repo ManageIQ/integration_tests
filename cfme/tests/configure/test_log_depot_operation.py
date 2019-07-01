@@ -22,7 +22,8 @@ from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 
-pytestmark = [pytest.mark.long_running, test_requirements.log_depot]
+pytestmark = [pytest.mark.long_running, test_requirements.log_depot,
+              pytest.mark.meta(blockers=[BZ(1706903)])]
 
 
 class LogDepotType(object):
