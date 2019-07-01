@@ -16,19 +16,15 @@ pytestmark = [pytest.mark.tier(1), test_requirements.report]
 
 
 def yaml_path(yaml_name):
-    """ Returns yaml path of the file with yaml_name name
-    """
-    yaml_name = yaml_name + ".yaml"
+    """ Returns yaml path of the file with yaml_name name"""
+    yaml_name = "{}.yaml".format(yaml_name)
+
     try:
         fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
         file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
     except (FTPException, AttributeError):
-        logger.exception(
-            "FTP download or YAML lookup of %s failed, defaulting to local", yaml_name
-        )
-        file_path = (
-            data_path.join("ui/intelligence/{}".format(yaml_name)).realpath().strpath
-        )
+        logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
+        file_path = (data_path.join("ui/intelligence/{}".format(yaml_name)).realpath().strpath)
         logger.info("Importing from data path: %s", file_path)
 
     return file_path
@@ -178,6 +174,7 @@ def test_reports_invalid_file(appliance, yaml_name):
         assignee: pvala
         casecomponent: Reporting
         caseimportance: medium
+        caseposneg: negative
         initialEstimate: 1/16h
     """
     with pytest.raises(AssertionError, match="Error", partial=True):
@@ -191,6 +188,7 @@ def test_widgets_invalid_file(appliance, yaml_name):
         assignee: pvala
         casecomponent: Reporting
         caseimportance: medium
+        caseposneg: negative
         initialEstimate: 1/16h
     """
     with pytest.raises(AssertionError, match="Error", partial=True):

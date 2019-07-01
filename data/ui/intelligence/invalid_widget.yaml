@@ -1,8 +1,0 @@
----
-- MiqWidget
-    description: testing widget description
-    title: testing widget
-    - MiqReport:
-        title: Guest OS Information - any OS
-        rpt_group: Configuration Management - Virtual Machines
-
