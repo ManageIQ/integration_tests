@@ -228,3 +228,54 @@ def test_custom_button_with_dynamic_dialog_vm(
             submit = "submit" if context is ViaUI else "submit_request"
             getattr(view, submit).click()
             log.wait_for_log_validation()
+
+
+@pytest.mark.meta(automates=[1427430, 1450473, 1454910])
+def test_custom_button_automate_service_vm(request, appliance, service_vm, button_group):
+    """ Test custom button execution on SSUI vm resource detail page
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/2h
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: CustomButton
+        tags: custom_button
+
+    Bugzilla:
+        1427430
+        1450473
+        1454910
+    """
+
+    service, _ = service_vm
+    with appliance.context.use(ViaUI):
+        button = button_group.buttons.create(
+            text=fauxfactory.gen_alphanumeric(),
+            hover=fauxfactory.gen_alphanumeric(),
+            system="Request",
+            request="InspectMe",
+        )
+        request.addfinalizer(button.delete_if_exists)
+
+    # Check for UI and SSUI destinations.
+    for context in [ViaUI, ViaSSUI]:
+        with appliance.context.use(context):
+            nav_to = ssui_nav if context is ViaSSUI else ui_nav
+
+            # Navigate to VM Details page of service
+            view = nav_to(service, "VMDetails")
+
+            # start log check
+            log = LogValidator(
+                "/var/www/miq/vmdb/log/automation.log", matched_patterns=["Attributes - Begin"]
+            )
+            log.fix_before_start()
+
+            # Execute custom button on service vm
+            custom_button_group = Dropdown(view, button_group.text)
+            custom_button_group.item_select(button.text)
+
+            # validate request in log
+            log.wait_for_log_validation()
