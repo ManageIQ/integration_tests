@@ -9,22 +9,6 @@ pytestmark = [pytest.mark.ignore_stream('5.10', 'upstream')]
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_with_rhel_75_last_time_74():
-    """
-    OSP: vmware65-Test VM migration with RHEL 7.5 (last time 7.4)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration with RHEL 7.5 (last time 7.4)
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_status_of_a_task_via_api_with_evmrole_administrator():
     """
@@ -140,93 +124,6 @@ def test_proxy_remove_gce():
                You can also remove by setting host to false
         startsin: 5.7
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_saving_migration_plan_after_creation():
-    """
-    OSP: Test saving migration plan after creation
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test saving migration plan after creation
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_with_really_long_name_upto_64_chars_worked_not_65_char():
-    """
-    OSP: vmware60-Test VM migration with really long name(Upto 64 chars
-    worked, not 65 chars)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration with really long name(Upto
-               64 chars worked, not 65 chars)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_with_rhel_69():
-    """
-    OSP: vmware60-Test VM migration with RHEL 6.9
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration with RHEL 6.9
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_datastore_allocation_summary_before_and_after_migration_disk_memory():
-    """
-    OSP: Test Datastore Allocation Summary before and after migration
-    (Disk, Memory)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test Datastore Allocation Summary before and after migration (Disk, Memory)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_with_windows_2016_server():
-    """
-    OSP: vmware67-Test VM migration with Windows 2016 server
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration with Windows 2016 server
     """
     pass
 
@@ -523,22 +420,6 @@ def test_validate_chargeback_cost_monthly_rate_memory_cost():
 
 
 @pytest.mark.manual
-def test_osp_vmware_67_test_vm_name_with_punycode_characters():
-    """
-    OSP: vmware 67- Test VM name with Punycode characters
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware 67- Test VM name with Punycode characters
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_prov_from_service_survey_ansible_tower_310():
@@ -562,40 +443,6 @@ def test_config_manager_prov_from_service_survey_ansible_tower_310():
         casecomponent: Provisioning
         initialEstimate: 1h
         startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_executing_previously_created_migration_plan():
-    """
-    OSP: Test executing previously created migration plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test executing previously created migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_immediately_migration_after_migration_plan_creation():
-    """
-    OSP: Test immediately migration after migration plan creation
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test immediately migration after migration plan creation
     """
     pass
 
@@ -633,96 +480,6 @@ def test_that_non_admin_users_can_view_catalog_items_in_ssui():
 
 
 @pytest.mark.manual
-def test_osp_kill_the_v2v_process_in_the_middle_restart_evmserverd_should_resume_migration_pos():
-    """
-    OSP: kill the v2v process in the middle(restart evmserverd) - should
-    resume migration post restart
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: kill the v2v process in the middle(restart evmserverd)
-               - should resume migration post restart
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_with_really_long_name_upto_64_chars_worked_not_65_char():
-    """
-    OSP: vmware67-Test VM migration with really long name(Upto 64 chars
-    worked, not 65 chars)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration with really long name(Upto
-               64 chars worked, not 65 chars)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migrating_a_vm_using_migration_plan_with_name_which_has_all_special_characte():
-    """
-    OSP: Test migrating a VM using migration plan with name which has all
-    special characters
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migrating a VM using migration plan with name
-               which has all special characters
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_flavors_can_be_selected_creating_migration_plan():
-    """
-    OSP: Test flavors can be selected creating migration plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test flavors can be selected creating migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migration_plan_filtering_for_plans_table_list_on_overview_and_details_page():
-    """
-    OSP: Test Migration Plan Filtering for plans table/list on overview
-    and details page
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test Migration Plan Filtering for plans table/list on
-               overview and details page
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_orchestration_link_mismatch():
     """
 
@@ -750,22 +507,6 @@ def test_service_chargeback_multiple_vms():
         assignee: nachandr
         casecomponent: CandU
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_with_windows_7():
-    """
-    OSP: vmware67-Test VM migration with Windows 7
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration with Windows 7
     """
     pass
 
@@ -824,23 +565,6 @@ def test_can_add_child_tenant_to_tenant():
         casecomponent: Configuration
         initialEstimate: 1/10h
         tags: rbac
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_in_progress_migrations_can_be_cancelled():
-    """
-    OSP: Test in-progress Migrations can be cancelled
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test in-progress Migrations can be cancelled
     """
     pass
 
@@ -912,56 +636,6 @@ def test_verify_only_groups_with_ssui_access_can_access_the_ssui_when_switching_
 
 
 @pytest.mark.manual
-def test_osp_edit_migration_plan_before_and_after_deletion_soon_in_510():
-    """
-    OSP: Edit migration plan before and after deletion (soon in 5.10)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Edit migration plan before and after deletion (soon in 5.10)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_with_windows_7():
-    """
-    OSP: vmware60-Test VM migration with Windows 7
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration with Windows 7
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_with_windows_2012_server():
-    """
-    OSP: vmware60-Test VM migration with Windows 2012 server
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration with Windows 2012 server
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_verify_that_changing_groups_while_in_ssui_updates_dashboard_items():
     """
@@ -987,22 +661,6 @@ def test_verify_that_changing_groups_while_in_ssui_updates_dashboard_items():
             1. Login successful
             2. Group switch successful
             3. Dashboard items are updated from to reflect that access of the new group
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware_65_test_vm_name_with_punycode_characters():
-    """
-    OSP: vmware 65- Test VM name with Punycode characters
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware 65- Test VM name with Punycode characters
     """
     pass
 
@@ -1070,23 +728,6 @@ def test_host_credentials_web():
         caseimportance: medium
         initialEstimate: 1/4h
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_from_nfs_storage_in_vmware_to_nfs_on_osp():
-    """
-    OSP: vmware67-Test VM migration from NFS Storage in VMware to NFS on
-    OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration from NFS Storage in VMware to NFS on OSP
     """
     pass
 
@@ -1161,24 +802,6 @@ def test_can_add_project_to_tenant():
 
 
 @pytest.mark.manual
-def test_osp_test_if_non_csv_files_can_be_imported():
-    """
-    OSP: Test if non-csv files can be imported
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test if non-csv files can be imported
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_provider():
@@ -1191,27 +814,6 @@ def test_bottleneck_provider():
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_multi_host_migration_execution_if_more_than_one_host_present_migration_of_mu():
-    """
-    OSP: Test Multi-host migration execution, if more than one host
-    present, migration of muliple VMs should be spread across all
-    available hosts
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test Multi-host migration execution, if more than one
-               host present, migration of muliple VMs should be spread
-               across all available hosts
     """
     pass
 
@@ -1239,59 +841,6 @@ def test_config_manager_prov_from_service_limit_ansible_tower_310():
         casecomponent: Provisioning
         initialEstimate: 1h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_creating_multiple_migration_plans_with_same_name():
-    """
-    OSP: Test flavors can be selected creating migration plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test creating multiple migration plans with same name
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_if_vm_name_with_special_characters_can_be_imported_it_should_allow_such_impo():
-    """
-    OSP: Test if VM name with special characters can be imported (It
-    should allow such imports)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: low
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test if VM name with special characters can be imported
-               (It should allow such imports)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_ssh_creds_can_be_added_while_adding_osp_provider():
-    """
-    OSP: Test SSH Creds can be added while adding OSP provider
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test SSH Creds can be added while adding OSP provider
     """
     pass
 
@@ -1385,23 +934,6 @@ def test_service_chargeback_retired_service():
 
 
 @pytest.mark.manual
-def test_osp_test_networking_before_and_after_migration_mac_address():
-    """
-    OSP: Test networking before and after migration (MAC Address)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test networking before and after migration (MAC Address)
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_puma_server():
     """
@@ -1435,22 +967,6 @@ def test_puma_server():
         assignee: jhenner
         casecomponent: WebUI
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_if_no_password_is_exposed_in_logs_during_migration():
-    """
-    OSP: Test if no password is exposed in logs during migration
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test if no password is exposed in logs during migration
     """
     pass
 
@@ -1490,22 +1006,6 @@ def test_bottleneck_host():
 
 
 @pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_from_ubuntu():
-    """
-    OSP: vmware60-Test VM migration from ubuntu
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration from ubuntu
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_rhn_mirror_role_packages():
     """
     Test the RHN mirror role by adding a repo and checking if the contents
@@ -1516,39 +1016,6 @@ def test_rhn_mirror_role_packages():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 3/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_from_nfs_storage_in_vmware_to_osp():
-    """
-    OSP: vmware65-Test VM migration from NFS Storage in VMware to iSCSI on
-    OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration from NFS Storage in VMware to OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_delete_infra_mapping():
-    """
-    OSP: Test delete infra mapping
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test delete infra mapping
     """
     pass
 
@@ -1584,22 +1051,6 @@ def test_utilization_provider():
         caseimportance: medium
         initialEstimate: 1/8h
         testtype: integration
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migration_plan_can_be_unscheduled():
-    """
-    OSP: Test migration plan can be unscheduled
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migration plan can be unscheduled
     """
     pass
 
@@ -1695,39 +1146,6 @@ def test_switching_user_group_without_disconnecting():
 
 
 @pytest.mark.manual
-def test_osp_test_multiple_sources_to_single_target_mapping_for_clusters_ds_network():
-    """
-    OSP: Test multiple sources to single target mapping (For Clusters, DS,
-    Network)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test multiple sources to single target mapping (For Clusters, DS, Network)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_with_rhel_7x():
-    """
-    OSP: vmware67-Test VM migration with RHEL 7.x
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration with RHEL 7.x
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_credentials_change_password_trailing_whitespace():
@@ -1781,25 +1199,6 @@ def test_api_edit_user_no_groups():
         expectedResults:
             1. PASS
             2. FAIL
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_associated_tags_before_and_after_migration_department_accounting_kind():
-    """
-    OSP: Test associated tags before and after migration
-    (Department:Accounting kind)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test associated tags before and after migration
-               (Department:Accounting kind)
     """
     pass
 
@@ -1865,39 +1264,6 @@ def test_crosshair_op_vm_vsphere6():
 
 
 @pytest.mark.manual
-def test_osp_test_create_migration_plan_create_and_read():
-    """
-    OSP: Test create migration plan - Create and Read
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test create migration plan - Create and Read
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_warnings_after_bad_failed_imports():
-    """
-    OSP: Test warnings after bad/failed imports
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test warnings after bad/failed imports
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_utilization_cluster():
@@ -1915,20 +1281,21 @@ def test_utilization_cluster():
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_with_multiple_nics_with_single_ip_ipv6_to_first_nic_and_ipv4_to_():
+@test_requirements.service
+@pytest.mark.tier(3)
+def test_add_cloud_key_pair():
     """
-    OSP: vmware65-Test VM with multiple NICs with single IP (IPv6 to first
-    NIC and IPv4 to second)
+    Add Cloud key pair
+    Add Ec2 provider, Clouds - Key pair, Give any name , select provider.
+    Click on Add .
 
     Polarion:
-        assignee: ytale
-        casecomponent: V2V
+        assignee: mmojzis
+        casecomponent: Services
         caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM with multiple NICs with single IP
-               (IPv6 to first NIC and IPv4 to second)
+        initialEstimate: 1/16h
+        startsin: 5.5
+        title: Add Cloud Key pair
     """
     pass
 
@@ -1978,39 +1345,6 @@ def test_config_manager_prov_from_service_ansible_tower_310():
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_from_iscsi_storage_in_vmware_osp():
-    """
-    OSP: vmware65-Test VM migration from iSCSI Storage in VMware to NFS on
-    OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration from iSCSI Storage in VMware OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_retry_plan():
-    """
-    OSP: Test retry plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test retry plan
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 @pytest.mark.tier(2)
 def test_verify_that_users_can_access_help_documentation():
@@ -2040,22 +1374,6 @@ def test_verify_that_users_can_access_help_documentation():
             2. Help documents are visible
             3. User created
             4. Help document are visible
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_user_can_download_post_migration_ansible_playbook_log():
-    """
-    OSP: Test user can download post migration ansible playbook log
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test user can download post migration ansible playbook log
     """
     pass
 
@@ -2139,39 +1457,6 @@ def test_set_ownership_back_to_default():
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_with_windows_7():
-    """
-    OSP: vmware65-Test VM migration with Windows 7
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration with Windows 7
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_with_windows_10():
-    """
-    OSP: vmware67-Test VM migration with Windows 10
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration with Windows 10
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_candu_graphs_vm_compare_cluster_vsphere6():
@@ -2243,22 +1528,6 @@ def test_crosshair_op_instance_ec2():
 
 
 @pytest.mark.manual
-def test_osp_test_edit_migration_plan():
-    """
-    OSP: Test edit migration plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test edit migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 @pytest.mark.tier(2)
 def test_chargeback_resource_allocation_cpu_allocated():
@@ -2321,23 +1590,6 @@ def test_optimize_memory_usage_by_making_object_in_hash():
         casecomponent: Appliance
         initialEstimate: 1h
         title: Optimize memory usage by making object in hash
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_from_nfs_storage_in_vmware_to_iscsi_on_osp():
-    """
-    OSP: vmware67-Test VM migration from NFS Storage in VMware to iSCSI on
-    OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration from NFS Storage in VMware to iSCSI on OSP
     """
     pass
 
@@ -2467,39 +1719,6 @@ def test_credentials_login_password_blank():
 
 
 @pytest.mark.manual
-def test_osp_test_vm_owner_before_and_after_migration_remains_same():
-    """
-    OSP: Test VM owner before and after migration remains same
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test VM owner before and after migration remains same
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migrating_a_vm_which_has_encrypted_disk():
-    """
-    OSP: Test migrating a VM which has encrypted disk
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migrating a VM which has encrypted disk
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_group_by_tag_azone_azure():
@@ -2511,22 +1730,6 @@ def test_group_by_tag_azone_azure():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_with_rhel_74_5():
-    """
-    OSP: vmware60-Test VM migration with RHEL 7.4/5
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration with RHEL 7.4/5
     """
     pass
 
@@ -2545,39 +1748,6 @@ def test_verify_smart_mgmt_orchest_template():
         initialEstimate: 1/4h
         startsin: 5.5
         testtype: structural
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_with_multiple_disks():
-    """
-    OSP: vmware60-Test VM with multiple Disks
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM with multiple Disks
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migration_plan_can_be_scheduled_to_run_at_later_date_time():
-    """
-    OSP: Test migration plan can be scheduled to run at later date/time
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migration plan can be scheduled to run at later date/time
     """
     pass
 
@@ -2628,26 +1798,6 @@ def test_verify_orchestration_catalog_items_can_only_use_providers_that_are_visi
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_osp_test_osp_volumes_are_cleaned_up_if_migration_fails_to_create_instance():
-    """
-    V2V Test following BZs
-
-    Bugzilla:
-        1651352
-        1653412
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: OSP: Test OSP Volumes are cleaned up if migration fails to create instance
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_show_tag_info_for_playbook_services():
@@ -2689,22 +1839,6 @@ def test_stack_parent():
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_with_windows_2012_server():
-    """
-    OSP: vmware65-Test VM migration with Windows 2012 server
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration with Windows 2012 server
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_vm_tempate_ownership_nogroup():
     """
@@ -2724,23 +1858,6 @@ def test_vm_tempate_ownership_nogroup():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_with_multiple_disks():
-    """
-    OSP: vmware67-Test VM with multiple Disks
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM with multiple Disks
     """
     pass
 
@@ -2801,24 +1918,6 @@ def test_azone_group_by_tag_ec2():
 
 
 @pytest.mark.manual
-def test_osp_test_policy_to_prevent_source_vm_from_starting_if_migration_is_comaplete():
-    """
-    OSP: Test policy to prevent source VM from starting if migration is
-    comAplete
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test policy to prevent source VM from starting if migration is comAplete
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_verify_that_when_modifying_rbac_roles_existing_enabled_disabled_product_features_dont():
     """
@@ -2866,24 +1965,6 @@ def test_check_all_availability_zones_for_amazon_provider():
         initialEstimate: 1/8h
         startsin: 5.5
         title: Check all availability zones for amazon provider
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_with_mutliple_nics_with_single_ip_ipv6_to_first_nic_and_ipv4_to_():
-    """
-    vmware67-Test VM with mutliple NICs with single IP (IPv6 to first NIC
-    and IPv4 to second
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM with mutliple NICs with single IP
-               (IPv6 to first NIC and IPv4 to second)
     """
     pass
 
@@ -2959,74 +2040,6 @@ def test_candu_graphs_datastore_vsphere6():
 
 
 @pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_from_iscsi_storage_in_vmware_to_nfs_on_osp():
-    """
-    OSP: vmware67-Test VM migration from iSCSI Storage in VMware to NFS on
-    OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration from iSCSI Storage in VMware to NFS on OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware65_test_vm_with_multiple_disks():
-    """
-    OSP: vmware65-Test VM with multiple Disks
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM with multiple Disks
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_from_iscsi_storage_vmware_to_osp():
-    """
-    OSP: vmware60-Test VM migration from iSCSI Storage VMware to iSCSI in
-    OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration from iSCSI Storage VMware to OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware_60_test_vm_name_with_punycode_characters():
-    """
-    OSP: vmware 60- Test VM name with Punycode characters
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware 60- Test VM name with Punycode characters
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_multiple_stack_deployment():
@@ -3066,58 +2079,6 @@ def test_edit_vm():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_from_nfs_storage_in_vmware_to_osp():
-    """
-    OSP: vmware60-Test VM migration from NFS Storage in VMware to iSCSI on
-    OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration from NFS Storage in VMware to OSP
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_with_windows_2016_server():
-    """
-    OSP: vmware60-Test VM migration with Windows 2016 server
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration with Windows 2016 server
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware60_test_vm_migration_with_windows_10():
-    """
-    OSP: vmware60-Test VM migration with Windows 10
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware60-Test VM migration with Windows 10
     """
     pass
 
@@ -3176,40 +2137,6 @@ def test_default_value_on_dropdown_inside_dialog():
         caseimportance: medium
         initialEstimate: 1/4h
         title: Test default value on Dropdown inside Dialog
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_imports_with_non_existing_vm_name_should_give_error():
-    """
-    OSP: Test imports with non-existing VM name (Should give error)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test imports with non-existing VM name (Should give error)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_with_windows_2016_server():
-    """
-    OSP: vmware65-Test VM migration with Windows 2016 server
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration with Windows 2016 server
     """
     pass
 
@@ -3279,57 +2206,6 @@ def test_restricted_user_rbac_for_access_control():
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_with_really_long_name_upto_64_chars_worked_not_65_char():
-    """
-    OSP: vmware65-Test VM migration with really long name(Upto 64 chars
-    worked, not 65 chars)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration with really long name(Upto
-               64 chars worked, not 65 chars)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_user_can_run_post_migration_ansible_playbook():
-    """
-    OSP: Test user can run post migration ansible playbook
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test user can run post migration ansible playbook
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_user_can_download_pre_migration_ansible_playbook_log():
-    """
-    OSP: Test user can download pre migration ansible playbook log
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test user can download pre migration ansible playbook log
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.html5
 @pytest.mark.tier(2)
 def test_html5_console_disabled_vsphere65_opsui_ssui():
@@ -3352,22 +2228,6 @@ def test_html5_console_disabled_vsphere65_opsui_ssui():
         expectedResults:
             1. VM Console button is disabled
             2. VM Console is disabled
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_from_ubuntu():
-    """
-    OSP: vmware67-Test VM migration from ubuntu
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration from ubuntu
     """
     pass
 
@@ -3409,100 +2269,19 @@ def test_saved_chargeback_report_show_full_screen():
 
 
 @pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_with_rhel_69():
+@test_requirements.service
+@pytest.mark.tier(3)
+def test_cloud_key_pair_validation():
     """
-    OSP: vmware67-Test VM migration with RHEL 6.9
+    Cloud - Key pair - without filling data , click on add
 
     Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration with RHEL 6.9
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_creating_multiple_mappings_with_same_name():
-    """
-    OSP: Test creating multiple mappings with same name
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
+        assignee: mmojzis
+        casecomponent: Services
         caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test creating multiple mappings with same name
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migrations_with_multi_zonal_setup():
-    """
-    OSP: Test migrations with multi-zonal setup
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migrations with multi-zonal setup
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migration_using_vddk_connection_type_for_vmware():
-    """
-    OSP: Test Migration using VDDK (Connection type for VMware)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test Migration using VDDK (Connection type for VMware)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_mapping_can_be_created_with_name_including_international_chars():
-    """
-    OSP: Test mapping can be created with name including international
-    chars
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test mapping can be created with name including international chars
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_cluster_and_project_availablity_in_source_and_target():
-    """
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: RHV
-        title: Test cluster and project availablity in source and target
+        initialEstimate: 1/16h
+        startsin: 5.5
+        title: Cloud Key pair validation
     """
     pass
 
@@ -3603,39 +2382,6 @@ def test_service_chargeback_vm_poweredoff():
 
 
 @pytest.mark.manual
-def test_osp_test_scheduled_retirement_remains_same_in_migrated_vm():
-    """
-    OSP: Test scheduled retirement remains same in migrated VM
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test scheduled retirement remains same in migrated VM
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_with_rhel_69():
-    """
-    OSP: vmware65-Test VM migration with RHEL 6.9
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration with RHEL 6.9
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_ordering_service_by_non_admin_user():
     """
@@ -3676,41 +2422,6 @@ def test_deployment_multiple_instances():
 
 
 @pytest.mark.manual
-def test_osp_test_archive_completed_migration_plan():
-    """
-    OSP: Test Archive completed migration plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test Archive completed migration plan
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migration_logs_from_conversion_host_can_be_retrieved_from_miq_appliance():
-    """
-    OSP: Test migration logs from conversion host can be retrieved from
-    miq appliance
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migration logs from conversion host can be
-               retrieved from miq appliance
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_evmgroup_self_service_user_can_access_the_self_service_ui():
@@ -3731,22 +2442,6 @@ def test_evmgroup_self_service_user_can_access_the_self_service_ui():
         expectedResults:
             1. User created successfully
             2. SSUI access granted
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_user_can_run_pre_migration_ansible_playbook():
-    """
-    OSP: Test user can run pre migration ansible playbook
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test user can run pre migration ansible playbook
     """
     pass
 
@@ -6177,24 +4872,6 @@ def test_html5_console_firefox_vsphere6_rhel7x():
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_with_multiple_nics_each_of_those_two_nic_can_have_only_2_ip_addr():
-    """
-    OSP: vmware65-Test VM with multiple NICs with single IP (IPv6 to first
-    NIC and IPv4 to second)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM with multiple NICs (Each of those two
-               NIC can have only 2 IP addresses, 1 IPv4 and 1 IPv6)
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.tower
 @pytest.mark.tier(1)
 def test_config_manager_override_extra_vars_dialog_vsphere():
@@ -6284,22 +4961,6 @@ def test_monitor_ansible_playbook_std_output():
 
 
 @pytest.mark.manual
-def test_osp_test_cpu_cores_and_sockets_pre_vs_post_migration():
-    """
-    OSP: Test CPU Cores and Sockets Pre vs Post migration
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test CPU Cores and Sockets Pre vs Post migration
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(1)
 def test_dialog_items_default_values_on_different_screens():
@@ -6313,22 +4974,6 @@ def test_dialog_items_default_values_on_different_screens():
         caseimportance: medium
         initialEstimate: 1/3h
         title: Test dialog items default values on different screens
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_security_group_can_be_selected_while_creating_migration_plan():
-    """
-    OSP: Test security group can be selected while creating migration plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test security group can be selected while creating migration plan
     """
     pass
 
@@ -6369,55 +5014,6 @@ def test_crosshair_op_datastore_vsphere6():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migration_plan_delete():
-    """
-    OSP: Test migration plan delete
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migration plan delete
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_ds_and_volume_availiblity_in_source_and_target():
-    """
-    OSP: Test DS and Volume availiblity in source and target
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test DS and Volume availiblity in source and target
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_earlier_infra_mapping_can_be_viewed_in_migration_plan_wizard():
-    """
-    OSP: Test earlier infra mapping can be viewed in migration plan wizard
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test earlier infra mapping can be viewed in migration plan wizard
     """
     pass
 
@@ -6491,23 +5087,6 @@ def test_candu_collection_tab():
         assignee: nachandr
         casecomponent: CandU
         initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_migration_request_details_page_shows_vms_for_not_started_plans():
-    """
-    OSP: Test migration request details page shows VMs for not started
-    plans
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test migration request details page shows VMs for not started plans
     """
     pass
 
@@ -6589,55 +5168,6 @@ def test_cluster_tagged_crosshair_op_vsphere55():
 
 
 @pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_from_ubuntu():
-    """
-    OSP: vmware65-Test VM migration from ubuntu
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration from ubuntu
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware65_test_vm_migration_with_windows_10():
-    """
-    OSP: vmware65-Test VM migration with Windows 10
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware65-Test VM migration with Windows 10
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_in_progress_migrations_can_be_canceled():
-    """
-    OSP: Test in-progress Migrations can be canceled
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test in-progress Migrations can be canceled
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.tower
 def test_config_manager_job_template_refresh():
     """
@@ -6649,41 +5179,6 @@ def test_config_manager_job_template_refresh():
         assignee: nachandr
         casecomponent: Ansible
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_test_networking_before_and_after_migration_ip_address():
-    """
-    OSP: Test networking before and after migration (IP Address)
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: critical
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: Test networking before and after migration (IP Address)
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_kill_the_v2v_process_in_the_middle_by_rebooting_miq_cfme_appliance_should_resume_():
-    """
-    OSP: kill the v2v process in the middle- by rebooting miq/cfme
-    appliance- should resume migration post restart
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: kill the v2v process in the middle- by rebooting
-               miq/cfme appliance- should resume migration post restart
     """
     pass
 
@@ -6721,22 +5216,6 @@ def test_black_console_ext_auth_options_all():
 
 
 @pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_with_windows_2012_server():
-    """
-    OSP: vmware67-Test VM migration with Windows 2012 server
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration with Windows 2012 server
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.rbac
 def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
     """
@@ -6761,23 +5240,6 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
             1. Login successful
             2. Group switch successful
             3. Dashboard items are updated from to reflect that access of the new group
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_osp_vmware67_test_vm_migration_from_iscsi_storage_in_vmware_to_iscsi_on_osp():
-    """
-    OSP: vmware67-Test VM migration from iSCSI Storage in VMware to iSCSI
-    on OSP
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        title: OSP: vmware67-Test VM migration from iSCSI Storage in VMware to iSCSI on OSP
     """
     pass
 
