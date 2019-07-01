@@ -183,6 +183,7 @@ def test_reports_disable_enable_schedule(appliance, schedule):
 
 
 @pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1559335])
 def test_reports_disable_enable_schedule_from_summary(appliance, schedule):
     """
     This test checks if schedule can be enabled/disabled from it's summary page.
@@ -191,6 +192,7 @@ def test_reports_disable_enable_schedule_from_summary(appliance, schedule):
         assignee: pvala
         casecomponent: Reporting
         initialEstimate: 1/10h
+
     Bugzilla:
         1559335
     """
