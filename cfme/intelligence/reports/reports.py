@@ -399,33 +399,25 @@ class Report(BaseEntity, Updateable):
         view = navigate_to(self, "ScheduleReport")
         if email:
             email["emails_send"] = True
-
-        data = {
-            "name": name,
-            "description": description,
-            "active": active,
-            "report_filter": {
+        schedule = self.appliance.collections.schedules.instantiate(
+            name=name or self.menu_name,
+            description=description or self.menu_name,
+            active=active,
+            report_filter={
                 "filter_type": self.company_name,
                 "subfilter_type": self.subtype,
                 "report_type": self.menu_name,
             },
-            "timer": timer,
-            "email": email,
-            "email_options": email_options,
-        }
-        view.fill(data)
+            email=email,
+            email_options=email_options
+        )
+        view.fill(schedule.fill_dict)
 
         if cancel:
             view.cancel_button.click()
 
         view.add_button.click()
         view.flash.assert_no_error()
-
-        schedule = self.appliance.collections.schedules.instantiate(
-            name=data.pop("name") or self.menu_name,
-            description=data.pop("description") or self.menu_name,
-            **data
-        )
 
         assert schedule.exists
         return schedule

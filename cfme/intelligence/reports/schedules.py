@@ -197,6 +197,18 @@ class Schedule(Updateable, Pretty, BaseEntity):
             if item['Name'] == self.name:
                 return item['Active'] == 'True'
 
+    @property
+    def fill_dict(self):
+        return ({
+            "name": self.name,
+            "description": self.description,
+            "active": self.active,
+            "report_filter": self.report_filter,
+            "timer": self.timer,
+            "email": self.email,
+            "email_options": self.email_options,
+        })
+
 
 @attr.s
 class ScheduleCollection(BaseCollection):
@@ -216,24 +228,22 @@ class ScheduleCollection(BaseCollection):
     ):
         if email:
             email["emails_send"] = True
-        data = {
-            "name": name,
-            "description": description,
-            "active": active,
-            "report_filter": report_filter,
-            "timer": timer,
-            "email": email,
-            "email_options": email_options,
-        }
+        schedule = self.instantiate(
+            name=name,
+            description=description,
+            active=active,
+            report_filter=report_filter,
+            email=email,
+            email_options=email_options
+        )
 
         view = navigate_to(self, "Add")
-        view.fill(data)
+        view.fill(schedule.fill_dict)
         if cancel:
             view.cancel_button.click()
         view.add_button.click()
         view.flash.assert_no_error()
 
-        schedule = self.instantiate(**data)
         view = schedule.create_view(ScheduleDetailsView)
         assert view.is_displayed
 
