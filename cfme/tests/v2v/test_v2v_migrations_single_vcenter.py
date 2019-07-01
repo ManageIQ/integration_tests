@@ -1,6 +1,7 @@
 """Test to validate End-to-End migrations- functional testing."""
 import fauxfactory
 import pytest
+from widgetastic.exceptions import WebDriverException
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -14,6 +15,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -282,5 +284,68 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
 
+    migrated_vm = get_migrated_vm(src_vm_obj, provider)
+    assert src_vm_obj.mac_address == migrated_vm.mac_address
+
+
+@pytest.mark.tier(4)
+@pytest.mark.parametrize(
+    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", ubuntu16_template]], indirect=True)
+def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_single_datastore):
+    """
+    Test migration by restarting evmserverd in middle of the process
+
+    Polarion:
+        assignee: ytale
+        initialEstimate: 1h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+    """
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
+    mapping = infrastructure_mapping_collection.create(**mapping_data)
+    src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    migration_plan = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        target_provider=provider,
+        vm_list=mapping_data_vm_obj_single_datastore.vm_list,
+    )
+    view = navigate_to(migration_plan, "InProgress")
+    assert migration_plan.wait_for_state("Started")
+
+    def _system_reboot():
+        # reboot system when migrated percentage greater than 20%
+        ds_percent = int(view.progress_card.get_progress_percent(migration_plan.name)["datastores"])
+        if ds_percent > 10:
+            appliance.restart_evm_rude()
+            return True
+        else:
+            return False
+
+    # wait until system restarts
+    wait_for(
+        func=_system_reboot,
+        message="migration plan is in progress, be patient please",
+        delay=10,
+        num_sec=1800
+    )
+    appliance.wait_for_web_ui()
+    try:
+        assert migration_plan.wait_for_state("In_Progress")
+    except WebDriverException:
+        pass
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
