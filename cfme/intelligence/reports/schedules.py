@@ -59,7 +59,7 @@ class SchedulesFormCommon(CloudIntelReportsView):
     cancel_button = Button("Cancel")
 
     @View.nested
-    class timer(View):                      # noqa
+    class timer(View):  # noqa
         run = BootstrapSelect("timer_typ")
         # Adding timer for hour, day, week, and zone because there is no single element
         # for the timer_interval.
@@ -73,21 +73,21 @@ class SchedulesFormCommon(CloudIntelReportsView):
         minute = BootstrapSelect("start_min")
 
     @View.nested
-    class report_filter(View):                      # noqa
+    class report_filter(View):  # noqa
         # Report Selection
         filter_type = BootstrapSelectRetry("filter_typ")
         subfilter_type = BootstrapSelectRetry("subfilter_typ")
         report_type = BootstrapSelectRetry("repfilter_typ")
 
     @View.nested
-    class email(View):                      # noqa
+    class email(View):  # noqa
         # Email
         emails_send = Checkbox("send_email_cb")
         from_email = TextInput(name="from")
         to_emails = AlertEmail()
 
     @View.nested
-    class email_options(View):                      # noqa
+    class email_options(View):  # noqa
         # Email Options
         send_if_empty = Checkbox("send_if_empty")
         send_txt = Checkbox("send_txt")
@@ -168,11 +168,12 @@ class Schedule(Updateable, Pretty, BaseEntity):
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
-            view.flash.assert_no_error()
         else:
             view.cancel_button.click()
 
-        view = self.create_view(ScheduleDetailsView)
+        view.flash.assert_no_error()
+
+        view = self.create_view(ScheduleDetailsView, override=updates)
         assert view.is_displayed
 
     def delete(self, cancel=False):
@@ -241,7 +242,8 @@ class ScheduleCollection(BaseCollection):
         view.fill(schedule.fill_dict)
         if cancel:
             view.cancel_button.click()
-        view.add_button.click()
+        else:
+            view.add_button.click()
         view.flash.assert_no_error()
 
         view = schedule.create_view(ScheduleDetailsView)

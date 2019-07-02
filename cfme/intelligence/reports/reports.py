@@ -415,8 +415,8 @@ class Report(BaseEntity, Updateable):
 
         if cancel:
             view.cancel_button.click()
-
-        view.add_button.click()
+        else:
+            view.add_button.click()
         view.flash.assert_no_error()
 
         assert schedule.exists
