@@ -418,7 +418,7 @@ def test_custom_button_expression_service_obj(
 
     # Check without tag
     with appliance.context.use(ViaUI):
-        if tag.display_name in [item.display_name for item in obj.get_tags()]:
+        if tag in obj.get_tags():
             obj.remove_tag(tag)
 
     with appliance.context.use(context):
@@ -441,8 +441,7 @@ def test_custom_button_expression_service_obj(
 
     # Check with tag
     with appliance.context.use(ViaUI):
-        if tag.display_name not in [item.display_name for item in obj.get_tags()]:
-            obj.add_tag(tag)
+        obj.add_tag(tag)  # add_tag checks if its there first
 
     with appliance.context.use(context):
         view = navigate_to(obj, dest_name)

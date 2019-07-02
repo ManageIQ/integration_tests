@@ -54,14 +54,14 @@ def role(appliance):
 
 
 @pytest.fixture(scope="module")
-def group_with_tag(appliance, role, category, tag):
+def group_with_tag(appliance, role, tag):
     """
         Returns group object with set up tag filter used in test module
     """
     group = appliance.collections.groups.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role=role.name,
-        tag=([category.display_name, tag.display_name], True)
+        tag=([tag.category.display_name, tag.display_name], True)
     )
     yield group
     appliance.server.login_admin()
@@ -106,14 +106,9 @@ def check_item_visibility(tag, user_restricted):
         Returns: None
         """
         if vis_expect:
-            vis_object.add_tag(tag=tag)
+            vis_object.add_tag(tag=tag, exists_check=True)
         else:
-            tags = vis_object.get_tags()
-            tag_assigned = any(
-                object_tags.category.display_name == tag.category.display_name and
-                object_tags.display_name == tag.display_name for object_tags in tags
-            )
-            if tag_assigned:
+            if tag in vis_object.get_tags():
                 vis_object.remove_tag(tag=tag)
         with user_restricted:
             try:

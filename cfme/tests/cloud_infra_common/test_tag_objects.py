@@ -87,12 +87,13 @@ def tagging_check(tag, request):
         """
         test_item.add_tag(tag=tag, details=tag_place)
         tags = test_item.get_tags()
-        assert any(
-            object_tags.category.display_name == tag.category.display_name and
-            object_tags.display_name == tag.display_name for object_tags in tags), (
-            "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
+        assert tag in tags, (
+            "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, tags))
 
         test_item.remove_tag(tag=tag, details=tag_place)
+        tags = test_item.get_tags()
+        assert tag not in tags, (
+            "{}: {} in ({})".format(tag.category.display_name, tag.display_name, tags))
         request.addfinalizer(lambda: tag_cleanup(test_item, tag))
 
     return _tagging_check

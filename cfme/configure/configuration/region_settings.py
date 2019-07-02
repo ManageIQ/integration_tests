@@ -54,7 +54,7 @@ class CompanyTagsAllView(RegionView):
         )
 
 
-@attr.s
+@attr.s(cmp=False)
 class Tag(Pretty, BaseEntity, Updateable):
     """ Class represents a category in CFME UI
 
@@ -68,6 +68,18 @@ class Tag(Pretty, BaseEntity, Updateable):
 
     display_name = attr.ib()
     name = attr.ib(default=None)
+
+    def __eq__(self, other):
+        # compare the display_name attributes of the tag and its parent category
+        # display name itself is unique in MIQ
+        # use getattr in case other is not actually a tag
+        # provide default Category object so we can call display_name regardless
+        return (
+            self.display_name == getattr(other, 'display_name') and
+            self.category.display_name == getattr(other, 'category',
+                                                  Category(parent=None, display_name=None)
+                                                  ).display_name
+        )
 
     def update(self, updates):
         """ Update category method """

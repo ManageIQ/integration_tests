@@ -171,18 +171,9 @@ def test_keypair_add_and_remove_tag(keypair):
             5. Delete keypair.
     """
     added_tag = keypair.add_tag()
-    tagged_value = keypair.get_tags()
-    assert (
-        tag.category.display_name == added_tag.category.display_name and
-        tag.display_name == added_tag.display_name
-        for tag in keypair.get_tags()), (
-        'Assigned tag was not found on the details page')
-
+    assert added_tag in keypair.get_tags(), 'Assigned tag was not found on keypair'
     keypair.remove_tag(added_tag)
-    tagged_value1 = keypair.get_tags()
-    assert tagged_value1 != tagged_value, "Remove tag failed."
-    # Above small conversion in assert statement convert 'tagged_value' in tuple("a","b") and then
-    # compare with tag which is tuple. As get_tags will return assigned tag in list format["a: b"].
+    assert added_tag not in keypair.get_tags(), "Remove tag failed."
 
     keypair.delete(wait=True)
 
