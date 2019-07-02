@@ -24,7 +24,7 @@ def yaml_path(yaml_name):
         file_path = fs.download(yaml_name, os.path.join("/tmp", yaml_name))
     except (FTPException, AttributeError):
         logger.exception("FTP download or YAML lookup of %s failed, defaulting to local", yaml_name)
-        file_path = (data_path.join("ui/intelligence/{}".format(yaml_name)).realpath().strpath)
+        file_path = data_path.join("ui", "intelligence", yaml_name).realpath().strpath
         logger.info("Importing from data path: %s", file_path)
 
     return file_path
@@ -139,7 +139,7 @@ def test_export_report(appliance, report):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.parametrize("overwrite", [True, False], ids=("overwrite", "replace"))
+@pytest.mark.parametrize("overwrite", [True, False], ids=("overwrite", "skipped"))
 def test_import_duplicate_report(appliance, report, overwrite):
     """
     This case tests appliance behavior when a duplicate report is imported.
@@ -177,7 +177,12 @@ def test_reports_invalid_file(appliance, yaml_name):
         caseposneg: negative
         initialEstimate: 1/16h
     """
-    with pytest.raises(AssertionError, match="Error", partial=True):
+    if yaml_name == "invalid_yaml":
+        message = "Error during 'upload': undefined method `keys' for \"i\":String"
+    else:
+        message = "Error during 'upload': Invalid YAML file"
+
+    with pytest.raises(AssertionError, match=message):
         appliance.collections.reports.import_report(yaml_path(yaml_name))
 
 
@@ -191,7 +196,11 @@ def test_widgets_invalid_file(appliance, yaml_name):
         caseposneg: negative
         initialEstimate: 1/16h
     """
-    with pytest.raises(AssertionError, match="Error", partial=True):
+    if yaml_name == "invalid_yaml":
+        message = "Error: the file uploaded contains no widgets"
+    else:
+        message = "Error: the file uploaded is not of the supported format"
+    with pytest.raises(AssertionError, match=message):
         appliance.collections.dashboard_report_widgets.import_widget(
             yaml_path(yaml_name)
         )
