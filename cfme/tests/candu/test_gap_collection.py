@@ -17,7 +17,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider],
     scope='module',
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')]),
-    pytest.mark.meta(blockers=[BZ(1635126, forced_streams=['5.10'])])
+    pytest.mark.meta(blockers=[BZ(1726391, forced_streams=['5.11'])])
 ]
 
 
