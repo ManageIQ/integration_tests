@@ -176,6 +176,10 @@ def test_reports_invalid_file(appliance, yaml_name):
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/16h
+        testSteps:
+            1. Import `invalid_report` yaml that has some yaml data,
+            but might have a syntax error.
+            2. Import `invalid_yaml` yaml that has no yaml data.
     """
     if yaml_name == "invalid_yaml":
         message = "Error during 'upload': undefined method `keys' for \"i\":String"
@@ -195,6 +199,10 @@ def test_widgets_invalid_file(appliance, yaml_name):
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/16h
+        testSteps:
+            1. Import `invalid_widget` yaml that has some yaml data,
+            but might have a syntax error.
+            2. Import `invalid_yaml` yaml that has no yaml data.
     """
     if yaml_name == "invalid_yaml":
         message = "Error: the file uploaded contains no widgets"
