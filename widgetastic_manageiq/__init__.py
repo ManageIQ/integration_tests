@@ -260,13 +260,12 @@ class SummaryForm(Widget):
         """
 
         multiple_lines = self.get_item(item_name).text.splitlines()
-        if multiple_lines:
-            if len(multiple_lines) > 1:
-                return multiple_lines
-            else:
-                return multiple_lines[0]
-        else:
+        if not multiple_lines:
             return ""
+        elif len(multiple_lines) == 1:
+            return multiple_lines[0]
+        else:
+            return multiple_lines
 
     def read(self):
         return {item: self.get_text_of(item) for item in self.items}
