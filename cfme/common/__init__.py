@@ -409,7 +409,8 @@ class Taggable(TaggableCommonBase):
     standardized widgetastic views
     """
 
-    def add_tag(self, tag=None, cancel=False, reset=False, details=True, dashboard=False):
+    def add_tag(self, tag=None, cancel=False, reset=False, details=True, dashboard=False,
+                exists_check=False):
         """ Add tag to tested item
 
         Args:
@@ -419,8 +420,9 @@ class Taggable(TaggableCommonBase):
             details (bool): set False if tag should be added for list selection,
                             default is details page
             dashboard (bool): Set to True if tag should be added via the Dashboard view
+            exists_check (bool): Set to True to check if tag exists before trying to add
         """
-        if tag and tag in self.get_tags():
+        if exists_check and tag and tag in self.get_tags():
             logger.warning('Trying to add tag [%s] already assigned to entity [%s]', tag, self)
             return tag
         if details and not dashboard:

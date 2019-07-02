@@ -63,7 +63,7 @@ def candu_tag_vm(provider, enable_candu_category):
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate('cu-24x7', provider)
     tag = enable_candu_category.collections.tags.instantiate(name="london", display_name="London")
-    vm.add_tag(tag)  # add _tag checks if its there first
+    vm.add_tag(tag, exists_check=True)
     return vm
 
 
