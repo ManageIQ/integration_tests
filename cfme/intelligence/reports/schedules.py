@@ -173,8 +173,8 @@ class Schedule(Updateable, Pretty, BaseEntity):
 
         view.flash.assert_no_error()
 
-        view = self.create_view(ScheduleDetailsView, override=updates)
-        assert view.is_displayed
+        # using `wait` kwarg to trigger is_displayed check for the required view
+        self.create_view(ScheduleDetailsView, override=updates, wait="10s")
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")

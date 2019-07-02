@@ -161,7 +161,7 @@ def test_reports_create_schedule_send_report(smtp_test, schedule):
             1. Queueing the schedule must send the report via email to all the users.
     """
     schedule.queue()
-    emails_sent = ",".join(schedule.email.get("to_emails"))
+    emails_sent = ",".join(schedule.email.get("to_emails", []))
     # take initial count of sent emails in account
     initial_count = len(smtp_test.get_emails())
     # wait for emails to appear
