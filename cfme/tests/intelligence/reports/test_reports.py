@@ -23,7 +23,9 @@ def create_custom_tag(appliance):
     tag = appliance.rest_api.collections.tags.action.create(
         {
             "name": "{cat_name}_entry".format(cat_name=category_name),
-            "description": "{cat_name}_entry_description".format(cat_name=category_name),
+            "description": "{cat_name}_entry_description".format(
+                cat_name=category_name
+            ),
             "category": {"href": category.href},
         }
     )[0]
@@ -104,4 +106,46 @@ def test_reports_custom_tags(appliance, request, create_custom_tag):
     }
     report = appliance.collections.reports.create(**report_data)
     request.addfinalizer(report.delete)
+    assert report.exists
+
+
+@test_requirements.report
+@pytest.mark.tier(0)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize(
+    "based_on",
+    [
+        ("Floating IPs", ["Address", "Status", "Cloud Manager : Name"]),
+        (
+            "Cloud Tenants",
+            ["Name", "My Company Tags : Owner", "My Company Tags : Cost Center"],
+        ),
+    ],
+)
+@pytest.mark.meta(automates=[1546927, 1504155])
+def test_new_report_fields(appliance, based_on, request):
+    """
+    This test case tests report creation with new fields and values.
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/3h
+        testSteps:
+            1. Create a report with the parametrized tags.
+        expectedResults:
+            1. Report should be created successfully.
+
+    Bugzilla:
+        1546927
+        1504155
+    """
+    data = {
+        "menu_name": "testing report",
+        "title": "Testing report",
+        "base_report_on": based_on[0],
+        "report_fields": based_on[1],
+    }
+    report = appliance.collections.reports.create(**data)
+    request.addfinalizer(report.delete_if_exists)
     assert report.exists

@@ -344,32 +344,6 @@ def test_reports_timezone():
 
 @pytest.mark.manual
 @test_requirements.report
-@pytest.mark.tier(0)
-def test_report_new_tags():
-    """
-    This test case tests report creation with new tags.
-
-    TODO: New tags are often added as an RFE, parametrize and design the test
-    such that it can accommodate any new tags added in the future.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        initialEstimate: 1/3h
-        testSteps:
-            1. Create a report with the parametrized tags.
-        expectedResults:
-            1. Report should be created successfully.
-
-    Bugzilla:
-        1546927
-        1504155
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
 @test_requirements.multi_region
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
