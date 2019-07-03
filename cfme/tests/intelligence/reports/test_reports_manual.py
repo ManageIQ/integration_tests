@@ -10,30 +10,6 @@ from cfme.utils.appliance import ViaUI
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_reports_import_invalid_file():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/16h
-        setup:
-            1. Navigate to Cloud > Intel > Reports > Import / Export > Custom Reports
-        testSteps:
-            1. Import invalid file like txt, pdf.
-            2. Import yaml file with wrong data.
-        expectedResults:
-            1. Flash message:`Error: the file uploaded is not of the supported format`
-            should be displayed.
-            2. Flash message:`Error: the file uploaded is not of the supported format`
-            should be displayed.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_reports_generate_custom_conditional_filter_report():
     """
     Bugzilla:
@@ -55,31 +31,6 @@ def test_reports_generate_custom_conditional_filter_report():
             1. Queue the report.
         expectedResults:
             1. Report must be generated successfully.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(3)
-def test_import_duplicate_report():
-    """
-    This case tests appliance behavior when a duplicate report is imported.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup:
-            1. Create a custom report.
-            2. Go to Import/Export accordion and click on `Custom Reports`.
-            3. Export the available report(newly created custom report from step
-        testSteps:
-            1. Import the same exported yaml file.
-        expectedResults:
-            1. A flash message should appear: `Skipping Report (already in DB):
-            [report_name]`
     """
     pass
 
