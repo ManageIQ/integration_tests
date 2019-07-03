@@ -257,69 +257,6 @@ def test_embed_tower_repo_tag():
 
 
 @pytest.mark.tier(3)
-def test_embed_tower_repo_links():
-    """
-    test clicking #of playbooks cell will navigate to the Playbooks area,
-    filtered by the associated repo name.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_add_branch_repo():
-    """
-    Ability to add repo with branch (without SCM credentials).
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_repo_list():
-    """
-    After all processes are running add a few repo"s for playbooks. Check
-    that all these repos appear in the repo list section in the ui, With
-    the correct status and the correct quantity of playbooks.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_repos_available():
-    """
-    Repositories are included under Ansible, Check Empty State pattern is
-    displayed when none exist.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_embed_tower_repo_details():
     """
     test clicking on a repo name should show details of the repository.
