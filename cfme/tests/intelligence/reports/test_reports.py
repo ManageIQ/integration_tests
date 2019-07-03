@@ -7,14 +7,6 @@ from cfme.utils.rest import assert_response
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
-REPORT_BASED_ON = [
-    ("Floating IPs", ["Address", "Status", "Cloud Manager : Name"]),
-    (
-        "Cloud Tenants",
-        ["Name", "My Company Tags : Owner", "My Company Tags : Cost Center"],
-    ),
-]
-
 
 @pytest.fixture
 def create_custom_tag(appliance):
@@ -120,8 +112,17 @@ def test_reports_custom_tags(appliance, request, create_custom_tag):
 @test_requirements.report
 @pytest.mark.tier(0)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.parametrize("based_on", REPORT_BASED_ON)
-@pytest.mark.meta(automates=["1546927", "1504155"])
+@pytest.mark.parametrize(
+    "based_on",
+    [
+        ("Floating IPs", ["Address", "Status", "Cloud Manager : Name"]),
+        (
+            "Cloud Tenants",
+            ["Name", "My Company Tags : Owner", "My Company Tags : Cost Center"],
+        ),
+    ],
+)
+@pytest.mark.meta(automates=[1546927, 1504155])
 def test_new_report_fields(appliance, based_on, request):
     """
     This test case tests report creation with new fields and values.
