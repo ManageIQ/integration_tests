@@ -2,6 +2,7 @@ from timeit import timeit
 
 import pytest
 
+from cfme import test_requirements
 from cfme.base.ui import navigate_to
 from cfme.services.myservice import MyService
 from cfme.tests.test_db_migrate import download_and_migrate_db
@@ -17,6 +18,7 @@ def appliance_with_performance_db(temp_appliance_extended_db):
     yield app
 
 
+@test_requirements.service
 def test_services_performance(appliance_with_performance_db):
     """
     Polarion:
