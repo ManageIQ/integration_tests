@@ -7,6 +7,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
+from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import FlashMessages
@@ -55,32 +56,44 @@ class SchedulesFormCommon(CloudIntelReportsView):
     name = TextInput(name="name")
     description = TextInput(name="description")
     active = Checkbox("enabled")
-    # Report Selection
-    filter1 = BootstrapSelectRetry("filter_typ")
-    filter2 = BootstrapSelectRetry("subfilter_typ")
-    filter3 = BootstrapSelectRetry("repfilter_typ")
-    # Timer
-    run = BootstrapSelect("timer_typ")
-    # Adding timer for hour, day, week, and zone because there is no single element
-    #  for the timer_interval.
-    timer_hour = BootstrapSelect("timer_hours")
-    timer_day = BootstrapSelect("timer_days")
-    timer_month = BootstrapSelect("timer_months")
-    timer_week = BootstrapSelect("timer_weeks")
-    time_zone = BootstrapSelect("time_zone")
-    starting_date = Calendar("miq_date_1")
-    hour = BootstrapSelect("start_hour")
-    minute = BootstrapSelect("start_min")
-    # Email
-    emails_send = Checkbox("send_email_cb")
-    from_email = TextInput(name="from")
-    emails = AlertEmail()
-    send_if_empty = Checkbox("send_if_empty")
-    send_txt = Checkbox("send_txt")
-    send_csv = Checkbox("send_csv")
-    send_pdf = Checkbox("send_pdf")
     # Buttons
     cancel_button = Button("Cancel")
+
+    @View.nested
+    class timer(View):  # noqa
+        run = BootstrapSelect("timer_typ")
+        # Adding timer for hour, day, week, and zone because there is no single element
+        # for the timer_interval.
+        timer_hour = BootstrapSelect("timer_hours")
+        timer_day = BootstrapSelect("timer_days")
+        timer_month = BootstrapSelect("timer_months")
+        timer_week = BootstrapSelect("timer_weeks")
+        time_zone = BootstrapSelect("time_zone")
+        starting_date = Calendar("miq_date_1")
+        hour = BootstrapSelect("start_hour")
+        minute = BootstrapSelect("start_min")
+
+    @View.nested
+    class report_filter(View):  # noqa
+        # Report Selection
+        filter_type = BootstrapSelectRetry("filter_typ")
+        subfilter_type = BootstrapSelectRetry("subfilter_typ")
+        report_type = BootstrapSelectRetry("repfilter_typ")
+
+    @View.nested
+    class email(View):  # noqa
+        # Email
+        emails_send = Checkbox("send_email_cb")
+        from_email = TextInput(name="from")
+        to_emails = AlertEmail()
+
+    @View.nested
+    class email_options(View):  # noqa
+        # Email Options
+        send_if_empty = Checkbox("send_if_empty")
+        send_txt = Checkbox("send_txt")
+        send_csv = Checkbox("send_csv")
+        send_pdf = Checkbox("send_pdf")
 
 
 class NewScheduleView(SchedulesFormCommon):
@@ -129,16 +142,15 @@ class Schedule(Updateable, Pretty, BaseEntity):
     """Represents a schedule in Cloud Intel/Reports/Schedules.
 
     Args:
-        name: Schedule name.
-        description: Schedule description.
-        report_filter: 3-tuple with filter selection (see the UI).
-        active: Whether is this schedule active.
-        timer: Specifies how often this schedule runs. It can be a dictionary that contains
-                run, run_interval, starting_date, timezone, starting_hour and starting_minute
-        from_email: Email from which scheduled report will be sent.
-        emails: Contains list of emails where schedules emails will be sent.
-                If specified, turns on e-mail sending. Can be string, or list or set.
-        email_options: Tuple containing send_if_empty, send_csv, send_txt, send_pdf.
+        name (str): Schedule name.
+        description (str): Schedule description.
+        report_filter (dict): Contains filter_type, subfilter_type and report_type.
+        active (bool): Whether is this schedule active.
+        timer (dict): Specifies how often this schedule runs. Contains
+                run, run_interval(timer_hour, timer_day, timer_week, timer_month),
+                starting_date, timezone, hour and minute
+        email (dict): Contains to_email and from_email(list). If specified, turns on e-mail sending
+        email_options (dict): Contains send_if_empty, send_csv, send_txt, send_pdf.
     """
     pretty_attrs = ["name", "report_filter"]
 
@@ -150,17 +162,8 @@ class Schedule(Updateable, Pretty, BaseEntity):
     report_filter = attr.ib()
     active = attr.ib(default=None)
     timer = attr.ib(default=None)
-    from_email = attr.ib(default=None)
-    emails = attr.ib(default=None)
+    email = attr.ib(default=None)
     email_options = attr.ib(default=None)
-
-    @property
-    def exists(self):
-        schedules = self.appliance.db.client["miq_schedules"]
-        return self.appliance.db.client.session\
-            .query(schedules.name)\
-            .filter(schedules.name == self.name)\
-            .count() > 0
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
@@ -169,14 +172,11 @@ class Schedule(Updateable, Pretty, BaseEntity):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ScheduleDetailsView, override=updates, wait='10s')
+
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Schedule "{}" was saved'.format(updates.get("name", self.name)))
-        else:
-            view.flash.assert_message(
-                'Edit of Schedule "{}" was cancelled by the user'.format(self.name))
+
+        # using `wait` kwarg to trigger is_displayed check for the required view
+        self.create_view(ScheduleDetailsView, override=updates, wait="10s")
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
@@ -200,49 +200,57 @@ class Schedule(Updateable, Pretty, BaseEntity):
             if item['Name'] == self.name:
                 return item['Active'] == 'True'
 
+    @property
+    def fill_dict(self):
+        return ({
+            "name": self.name,
+            "description": self.description,
+            "active": self.active,
+            "report_filter": self.report_filter,
+            "timer": self.timer,
+            "email": self.email,
+            "email_options": self.email_options,
+        })
+
 
 @attr.s
 class ScheduleCollection(BaseCollection):
 
     ENTITY = Schedule
 
-    def create(self, name=None, description=None, report_filter=None, active=None,
-               timer=None, from_email=None, emails=None, email_options=None):
-        schedule = self.instantiate(name, description, report_filter, active=active, timer=timer,
-            emails=emails, email_options=email_options)
-        view = navigate_to(self, "Add")
-
-        view.fill(
-            {
-                "name": name,
-                "description": description,
-                "active": active,
-                "filter1": report_filter[0],
-                "filter2": report_filter[1],
-                "filter3": report_filter[2],
-                "run": timer.get("run"),
-                "timer_hour": timer.get("run_hour"),
-                "timer_day": timer.get("run_day"),
-                "timer_week": timer.get("run_week"),
-                "timer_month": timer.get("run_month"),
-                "time_zone": timer.get("time_zone"),
-                "starting_date": timer.get("starting_date"),
-                "hour": timer.get("starting_hour"),
-                "minute": timer.get("starting_minute"),
-                "emails_send": bool(emails),
-                "from_email": from_email,
-                "emails": emails,
-                "send_if_empty": email_options.get("send_if_empty"),
-                "send_txt": email_options.get("send_txt"),
-                "send_csv": email_options.get("send_csv"),
-                "send_pdf": email_options.get("send_pdf"),
-            }
+    def create(
+        self,
+        name,
+        description,
+        report_filter,
+        active=True,
+        timer=None,
+        email=None,
+        email_options=None,
+        cancel=False,
+    ):
+        if email:
+            email["emails_send"] = True
+        schedule = self.instantiate(
+            name=name,
+            description=description,
+            active=active,
+            report_filter=report_filter,
+            email=email,
+            email_options=email_options
         )
 
-        view.add_button.click()
+        view = navigate_to(self, "Add")
+        view.fill(schedule.fill_dict)
+        if cancel:
+            view.cancel_button.click()
+        else:
+            view.add_button.click()
+        view.flash.assert_no_error()
+
         view = schedule.create_view(ScheduleDetailsView)
         assert view.is_displayed
-        view.flash.assert_success_message('Schedule "{}" was added'.format(name))
+
         return schedule
 
     def _select_schedules(self, schedules):
@@ -336,7 +344,7 @@ class ScheduleNew(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self, *args, **kwargs):
-        self.view.configuration.item_select("Add a new Schedule")
+        self.prerequisite_view.configuration.item_select("Add a new Schedule")
 
 
 @navigator.register(Schedule, "Details")

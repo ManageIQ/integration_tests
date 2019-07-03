@@ -4,6 +4,7 @@ import pytest
 import yaml
 
 from cfme import test_requirements
+from cfme.intelligence.reports.schedules import ScheduleDetailsView
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -94,10 +95,16 @@ def test_reports_schedule_crud(schedule_data, appliance):
         initialEstimate: 1/16h
     """
     schedule = appliance.collections.schedules.create(**schedule_data)
+    view = schedule.create_view(ScheduleDetailsView)
+    view.flash.assert_success_message('Schedule "{}" was added'.format(schedule.name))
     with update(schedule):
         schedule.description = "badger badger badger"
+    view.flash.assert_message('Schedule "{}" was saved'.format(schedule.name))
+
     schedule.queue()
+    view.flash.assert_message("The selected Schedule has been queued to run")
     schedule.delete()
+    view.flash.assert_message("Schedule {} was deleted".format(schedule.name))
 
 
 @pytest.mark.sauce
@@ -351,8 +358,10 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
         menu_name="Hardware Information for VMs",
     )
     data = {
-        "timer": {"starting_hour": "12", "starting_minute": "10"},
-        "emails": "test@example.com",
+        "timer": {"hour": "12", "minute": "10"},
+        "email": {
+            "to_emails": "test@example.com"
+        },
         "email_options": {
             "send_if_empty": True,
             "send_pdf": True,
@@ -361,6 +370,7 @@ def test_reports_crud_schedule_for_base_report_once(appliance, request):
         },
     }
     schedule = report.create_schedule(**data)
+    request.addfinalizer(schedule.delete_if_exists)
 
     assert schedule.enabled
     schedule.delete(cancel=False)
@@ -377,11 +387,11 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
         caseimportance: high
         initialEstimate: 1/10h
     """
-    schedule_data["report_filter"] = (
-        "My Company (All Groups)",
-        "Custom",
-        get_custom_report.menu_name,
-    )
+    schedule_data["report_filter"] = {
+        "filter_type": "My Company (All Groups)",
+        "subfilter_type": "Custom",
+        "report_type": get_custom_report.menu_name,
+    }
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)

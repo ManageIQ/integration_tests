@@ -386,39 +386,38 @@ class Report(BaseEntity, Updateable):
     def saved_reports(self):
         return self.collections.saved_reports
 
-    def create_schedule(self, name=None, description=None, active=None,
-            timer=None, from_email=None, emails=None, email_options=None):
-
+    def create_schedule(
+        self,
+        name=None,
+        description=None,
+        active=True,
+        timer=None,
+        email=None,
+        email_options=None,
+        cancel=False,
+    ):
         view = navigate_to(self, "ScheduleReport")
-        view.fill({
-            "name": name,
-            "description": description,
-            "active": active,
-            "run": timer.get("run"),
-            "time_zone": timer.get("time_zone"),
-            "starting_date": timer.get("starting_date"),
-            "hour": timer.get("hour"),
-            "minute": timer.get("minute"),
-            "emails_send": bool(emails),
-            "from_email": from_email,
-            "emails": emails,
-            "send_if_empty": email_options.get("send_if_empty"),
-            "send_txt": email_options.get("send_txt"),
-            "send_csv": email_options.get("send_csv"),
-            "send_pdf": email_options.get("send_pdf")
-        })
-
-        view.add_button.click()
-        view.flash.assert_no_error()
-
+        if email:
+            email["emails_send"] = True
         schedule = self.appliance.collections.schedules.instantiate(
             name=name or self.menu_name,
-            description=description,
-            report_filter=(self.company_name, self.subtype, self.menu_name),
+            description=description or self.menu_name,
             active=active,
-            emails=emails,
-            email_options=email_options,
+            report_filter={
+                "filter_type": self.company_name,
+                "subfilter_type": self.subtype,
+                "report_type": self.menu_name,
+            },
+            email=email,
+            email_options=email_options
         )
+        view.fill(schedule.fill_dict)
+
+        if cancel:
+            view.cancel_button.click()
+        else:
+            view.add_button.click()
+        view.flash.assert_no_error()
 
         assert schedule.exists
         return schedule

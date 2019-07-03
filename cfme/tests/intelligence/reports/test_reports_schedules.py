@@ -18,36 +18,36 @@ SCHEDULES_REPORT_DIR = data_path.join("schedules_crud")
 TIMER = {
     "monthly": {
         "run": "Monthly",
-        "run_month": "2 Months",
-        "starting_hour": "12",
-        "starting_minute": "5",
+        "timer_month": "2 Months",
+        "hour": "12",
+        "minute": "5",
         "time_zone": "(GMT+10:00) Melbourne",
     },
     "hourly": {
         "run": "Hourly",
-        "run_hour": "6 Hours",
-        "starting_hour": "12",
-        "starting_minute": "5",
+        "timer_hour": "6 Hours",
+        "hour": "12",
+        "minute": "5",
         "time_zone": "(GMT+10:00) Melbourne",
     },
     "daily": {
         "run": "Daily",
-        "run_day": "2 Days",
-        "starting_hour": "12",
-        "starting_minute": "5",
+        "timer_day": "2 Days",
+        "hour": "12",
+        "minute": "5",
         "time_zone": "(GMT+10:00) Melbourne",
     },
     "weekly": {
         "run": "Weekly",
-        "run_week": "3 Weeks",
-        "starting_hour": "12",
-        "starting_minute": "5",
+        "timer_week": "3 Weeks",
+        "hour": "12",
+        "minute": "5",
         "time_zone": "(GMT+10:00) Melbourne",
     },
     "once": {
         "run": "Once",
-        "starting_hour": "12",
-        "starting_minute": "5",
+        "hour": "12",
+        "minute": "5",
         "time_zone": "(GMT+10:00) Melbourne",
     },
 }
@@ -76,8 +76,10 @@ def schedule_files():
     return result
 
 
-@pytest.fixture(params=schedule_files(),
-                ids=[schedule.split(".")[0] for schedule in schedule_files()])
+@pytest.fixture(
+    params=schedule_files(),
+    ids=[schedule.split(".")[0] for schedule in schedule_files()],
+)
 def schedule_data(request):
     with SCHEDULES_REPORT_DIR.join(request.param).open(mode="r") as rep_yaml:
         return yaml.safe_load(rep_yaml)
@@ -128,7 +130,9 @@ def test_report_schedules_invalid_email(appliance, schedule_data, email):
         initialEstimate: 1/12h
         tags: report
     """
-    schedule_data["emails"] = schedule_data["from_email"] = INVALID_EMAILS[email]
+    schedule_data["email"]["to_emails"] = schedule_data["email"][
+        "from_email"
+    ] = INVALID_EMAILS[email]
     with pytest.raises(AssertionError):
         appliance.collections.schedules.create(**schedule_data)
     view = appliance.collections.schedules.create_view(NewScheduleView)
@@ -158,7 +162,7 @@ def test_reports_create_schedule_send_report(smtp_test, schedule):
             1. Queueing the schedule must send the report via email to all the users.
     """
     schedule.queue()
-    emails_sent = ",".join(schedule.emails)
+    emails_sent = ",".join(schedule.email.get("to_emails", []))
     # take initial count of sent emails in account
     initial_count = len(smtp_test.get_emails())
     # wait for emails to appear
