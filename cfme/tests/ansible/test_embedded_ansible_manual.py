@@ -39,22 +39,6 @@ def test_embed_tower_retire_service_with_instances_ec2():
 
 
 @pytest.mark.tier(3)
-def test_embed_tower_playbook_links():
-    """
-    There are links to repo"s within the playbook table. Clicking in this
-    cell will navigate to the details of the Repo.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_embed_tower_exec_play_against_machine_multi_appliance():
     """
     User/Admin is able to execute playbook without creating Job Temaplate

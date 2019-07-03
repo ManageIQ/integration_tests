@@ -75,6 +75,16 @@ class RepositoryDetailsView(RepositoryBaseView):
         )
 
 
+class PlaybookRepositoryView(RepositoryDetailsView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_ansible_repositories and
+            self.title.text == "{} (All Playbooks)".format(self.context['object'].name)
+        )
+
+
 class RepositoryFormView(RepositoryBaseView):
     name = Input(name="name")
     description = Input(name="description")
@@ -355,6 +365,15 @@ class Edit(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this Repository")
+
+
+@navigator.register(Repository, "Playbooks")
+class PlaybookRepository(CFMENavigateStep):
+    VIEW = PlaybookRepositoryView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary("Relationships").click_at("Playbooks")
 
 
 @navigator.register(Repository, 'EditTags')

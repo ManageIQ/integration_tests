@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -11,6 +12,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
+    pytest.mark.meta(blockers=[BZ(1677548, forced_streams=["5.11"])]),
     test_requirements.ansible,
 ]
 
@@ -129,6 +131,35 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     view = navigate_to(ansible_repository, "Edit")
     wait_for(lambda: view.description.value != "", delay=1, timeout=5)
     assert view.description.value == updated_description
+
+
+@pytest.mark.rhel_testing
+@pytest.mark.tier(1)
+def test_embedded_ansible_repository_branch_crud(appliance, wait_for_ansible):
+    """
+    Ability to add repo with branch (without SCM credentials).
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/12h
+        tags: ansible_embed
+    """
+    repositories = appliance.collections.ansible_repositories
+    repository = repositories.create(
+        name=fauxfactory.gen_alpha(),
+        url="https://github.com/ManageIQ/integration_tests_playbooks.git",
+        description=fauxfactory.gen_alpha(),
+        scm_branch="second_playbook_branch",
+    )
+    view = navigate_to(repository, "Details")
+    assert (
+        view.entities.summary("Repository Options").get_text_of("SCM Branch")
+        == repository.scm_branch
+    )
+
+    repository.delete()
 
 
 @pytest.mark.rhel_testing
@@ -339,3 +370,21 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
     )
     request.addfinalizer(credential.delete)
     assert credential.exists
+
+
+@pytest.mark.tier(2)
+def test_embedded_ansible_repository_playbook_link(ansible_repository):
+    """
+    Test clicking on playbooks cell from repository page and
+    check it will navigate to the Playbooks area.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    view = navigate_to(ansible_repository, "Playbooks")
+    # Asserting 'PlaybookRepositoryView' which is navigated from Repository to Playbooks view.
+    # Playbooks view is coming from Repository view which is not existing Playbooks view.
+    assert view.is_displayed
