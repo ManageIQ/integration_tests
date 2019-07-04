@@ -540,7 +540,7 @@ def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
     view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
-    if not (BZ(1571830, forced_streams=["5.10", "5.11"]).blocks and provider.one_of(RHEVMProvider)):
+    if not (provider.one_of(RHEVMProvider) and BZ(1571830, forced_streams=["5.10", "5.11"]).blocks):
         soft_assert(
             wait_for_last_boot_timestamp_refresh(testing_vm_tools, last_boot_time),
             "Last Boot Time value has not been refreshed",
@@ -552,7 +552,7 @@ def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running
     soft_assert(testing_vm_tools.mgmt.is_running, "vm not running")
 
 
-@pytest.mark.meta(automates=[1723485])
+@pytest.mark.meta(automates=[1723485, 1571895])
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
 @pytest.mark.meta(blockers=[BZ(1723485, forced_streams=["5.11"],
                                unblock=lambda provider: not (provider.one_of(RHEVMProvider)
