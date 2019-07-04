@@ -261,7 +261,7 @@ def test_task_id_for_method_automation_log(request, generic_catalog_item):
     result = LogValidator(
         "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*Q-task_id.*"]
     )
-    result.fix_before_start()
+    result.start_monitoring()
     service_request = generic_catalog_item.appliance.rest_api.collections.service_templates.get(
         name=generic_catalog_item.name
     ).action.order()
@@ -271,7 +271,7 @@ def test_task_id_for_method_automation_log(request, generic_catalog_item):
     # service_request becomes active.
     wait_for(lambda: service_request.request_state == "active", fail_func=service_request.reload,
              timeout=60, delay=3)
-    result.validate_logs()
+    assert result.validate()
 
 
 @pytest.mark.meta(blockers=[BZ(1704439)])
@@ -332,7 +332,7 @@ def test_send_email_method(smtp_test, klass):
             )
         ],
     )
-    result.fix_before_start()
+    result.start_monitoring()
 
     # Executing automate method - send_email using simulation
     simulate(
@@ -346,7 +346,7 @@ def test_send_email_method(smtp_test, klass):
         request="Call_Instance",
         execute_methods=True,
     )
-    result.validate_logs()
+    assert result.validate()
 
     # TODO(GH-8820): This issue should be fixed to check mails sent to person in 'cc' and 'bcc'
     # Check whether the mail sent via automate method really arrives
@@ -432,7 +432,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
                 r'.*XYZ load balancer got service: #<MiqAeServiceService.*'
             ],
         )
-        result.fix_before_start()
+        result.start_monitoring()
 
         # Executing automate method using simulation
         simulate(
@@ -446,7 +446,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
             request="Call_Instance",
             execute_methods=True,
         )
-        result.validate_logs()
+        assert result.validate()
 
 
 @pytest.mark.tier(1)
@@ -467,7 +467,7 @@ def test_automate_service_quota_runs_only_once(appliance, generic_catalog_item):
         "/var/www/miq/vmdb/log/automation.log",
         matched_patterns=[pattern]
     )
-    result.fix_before_start()
+    result.start_monitoring()
     service_catalogs = ServiceCatalogs(
         appliance, catalog=generic_catalog_item.catalog, name=generic_catalog_item.name
     )

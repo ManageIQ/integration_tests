@@ -461,7 +461,7 @@ class TestServiceRESTAPI(object):
                 ".*ERROR -- : <AEMethod update_service_retirement_status> Service Retire Error:",
             ],
         )
-        auto_log.fix_before_start()
+        auto_log.start_monitoring()
 
         if from_detail:
             service.action.retire()
@@ -475,7 +475,7 @@ class TestServiceRESTAPI(object):
             num_sec=50,
             delay=5,
         )
-        auto_log.wait_for_log_validation()
+        assert auto_log.validate(wait="180s")
 
         assert service.retirement_state == "initializing"
 

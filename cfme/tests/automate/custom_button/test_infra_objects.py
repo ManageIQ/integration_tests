@@ -251,7 +251,7 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
         log = LogValidator(
             "/var/www/miq/vmdb/log/automation.log", matched_patterns=[request_pattern]
         )
-        log.fix_before_start()
+        log.start_monitoring()
 
         custom_button_group.item_select(button.text)
 
@@ -337,7 +337,7 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
     log = LogValidator(
         "/var/www/miq/vmdb/log/automation.log", matched_patterns=[request_pattern]
     )
-    log.fix_before_start()
+    log.start_monitoring()
 
     # Submit order
     dialog_view.submit.click()

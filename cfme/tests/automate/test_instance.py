@@ -272,13 +272,13 @@ def test_check_system_request_calls_depr_conf_mgmt(appliance, copy_instance):
     result = LogValidator(
         "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(search)]
     )
-    result.fix_before_start()
+    result.start_monitoring()
     # Executing the automate instance - 'ansible_tower_job' using simulation
     simulate(
         appliance=appliance,
         request=copy_instance.name
     )
-    result.validate_logs()
+    assert result.validate()
 
 
 @pytest.fixture(scope="module")
@@ -341,7 +341,7 @@ def test_quota_source_value(request, entity, search, copy_quota_instance, generi
     result = LogValidator(
         "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(search)]
     )
-    result.fix_before_start()
+    result.start_monitoring()
     service_catalogs = ServiceCatalogs(
         copy_quota_instance.appliance, catalog=generic_catalog_item.catalog,
         name=generic_catalog_item.name
@@ -353,4 +353,4 @@ def test_quota_source_value(request, entity, search, copy_quota_instance, generi
     service_catalogs.order()
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(lambda: provision_request.remove_request(method="rest"))
-    result.validate_logs()
+    assert result.validate()

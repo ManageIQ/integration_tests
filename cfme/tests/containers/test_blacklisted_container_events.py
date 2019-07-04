@@ -157,7 +157,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
         '/var/www/miq/vmdb/log/evm.log',
         matched_patterns=[r'.*event\_type\=\>\"POD\_CREATED\".*']
     )
-    evm_tail_no_blacklist.fix_before_start()
+    evm_tail_no_blacklist.start_monitoring()
 
     create_pod(provider=provider, namespace=project_name)
 
@@ -165,7 +165,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
 
     assert "POD_CREATED" not in rails_result_no_blacklist
 
-    evm_tail_no_blacklist.validate_logs()
+    assert evm_tail_no_blacklist.validate()
 
     delete_pod(provider=provider, namespace=project_name)
 
@@ -186,11 +186,11 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
         username=app_creds['sshlogin'],
         password=app_creds['password'])
 
-    evm_tail_blacklist.fix_before_start()
+    evm_tail_blacklist.start_monitoring()
 
     create_pod(provider=provider, namespace=project_name)
 
-    evm_tail_blacklist.validate_logs()
+    assert evm_tail_blacklist.validate()
 
     delete_pod(provider=provider, namespace=project_name)
 
@@ -205,7 +205,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
     appliance.evmserverd.restart()
     appliance.wait_for_web_ui()
 
-    evm_tail_no_blacklist.fix_before_start()
+    evm_tail_no_blacklist.start_monitoring()
 
     create_pod(provider=provider, namespace=project_name)
 
@@ -215,4 +215,4 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
     # catch. Only option was to add a short sleep here.
     time.sleep(10)
 
-    evm_tail_no_blacklist.validate_logs()
+    assert evm_tail_no_blacklist.validate()

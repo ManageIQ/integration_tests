@@ -106,7 +106,7 @@ def test_domain_lock_disabled(klass):
         "/var/www/miq/vmdb/log/automation.log",
         matched_patterns=[r".*ERROR.*"],
     )
-    result.fix_before_start()
+    result.start_monitoring()
 
     # Executing automate method using simulation
     simulate(
@@ -120,7 +120,7 @@ def test_domain_lock_disabled(klass):
         request="Call_Instance",
         execute_methods=True,
     )
-    result.validate_logs()
+    assert result.validate(wait="60s")
 
     klass.namespace.domain.lock()
     view = navigate_to(klass.namespace.domain, 'Details')
