@@ -199,6 +199,15 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
     )
     request.addfinalizer(instance2.delete_if_exists)
 
+    # Checking if automation log is giving resolution error or not by searching 'ERROR'.
+    # Also checking if method1 of klass1 is executed successfully or not by searching 'catch_string'
+    # in automation log.
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(catch_string)],
+        failure_patterns=[".*ERROR.*"]
+    )
+    result.fix_before_start()
+
     # Executing the automate method of klass1 using simulation
     simulate(
         appliance=klass.appliance,
@@ -209,18 +218,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
             "instance": instance2.name,
         },
     )
-
-    # Checking if automation log is giving resolution error or not by searching 'E,'.
-    # Also checking if method1 of klass1 is executed successfully or not by searching 'catch_string'
-    # in automation log.
-    for search in ['E,', catch_string]:
-        result = klass.appliance.ssh_client.run_command(
-            "grep {} /var/www/miq/vmdb/log/automation.log".format(search)
-        )
-        if search == 'E,':
-            assert result.output == ""
-        else:
-            assert search in result.output
+    result.validate_logs()
 
 
 @pytest.fixture(scope="module")
