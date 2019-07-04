@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Test Service Details page functionality."""
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -29,14 +30,70 @@ pytestmark = [
         gen_func=providers,
         filters=[ProviderFilter(
             classes=[InfraProvider, CloudProvider],
-            required_fields=['provisioning'])])
+            required_fields=['provisioning'])]),
+    pytest.mark.usefixtures("setup_provider")
 ]
+
+
+@pytest.fixture(scope='module')
+def new_role(appliance):
+    role = appliance.collections.roles.instantiate(name='EvmRole-user_self_service')
+    copied_role = role.copy(name="{role}_{name}".format(
+        role=role.name, name=fauxfactory.gen_alpha()), restriction="None")
+
+    yield copied_role
+    copied_role.delete_if_exists()
+
+
+@pytest.fixture(scope='module')
+def new_group(appliance, new_role):
+    collection = appliance.collections.groups
+    group = collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
+                              role=new_role.name,
+                              tenant=appliance.collections.tenants.get_root_tenant().name)
+    yield group
+    group.delete_if_exists()
+
+
+@pytest.fixture(scope='module')
+def new_user(appliance, new_group, new_credential):
+    collection = appliance.collections.users
+    user = collection.create(
+        name='user_{}'.format(fauxfactory.gen_alphanumeric()),
+        credential=new_credential,
+        email=fauxfactory.gen_email(),
+        groups=new_group,
+        cost_center='Workload',
+        value_assign='Database')
+    yield user
+    user.delete_if_exists()
+
+
+@pytest.mark.meta(automates=[1699943])
+@pytest.mark.ignore_stream('5.10')
+def test_retire_service_ssui_user(appliance, new_user, service_vm):
+    """Test retire service by non-admin user
+
+    Metadata:
+        test_flag: ssui, services
+
+    Polarion:
+        assignee: nansari
+        casecomponent: SelfServiceUI
+        initialEstimate: 1/4h
+        tags: ssui
+    """
+    service, _ = service_vm
+    with new_user:
+        with appliance.context.use(ViaSSUI):
+            appliance.server.login(new_user)
+            service.retire()
 
 
 @pytest.mark.rhel_testing
 @pytest.mark.rhv1
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_myservice_crud(appliance, setup_provider, context, order_service):
+def test_myservice_crud(appliance, context, order_service):
     """Test Myservice crud in SSUI.
 
     Metadata:
@@ -58,7 +115,7 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_retire_service_ssui(appliance, setup_provider,
+def test_retire_service_ssui(appliance,
                         context, order_service, request):
     """Test retire service.
 
@@ -83,7 +140,7 @@ def test_retire_service_ssui(appliance, setup_provider,
 
 @pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_service_start(appliance, setup_provider, context,
+def test_service_start(appliance, context,
                        order_service, provider, request):
     """Test service stop
 
@@ -125,7 +182,7 @@ def test_service_start(appliance, setup_provider, context,
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
-def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
+def test_vm_console(request, appliance, context, configure_websocket,
         configure_console_vnc, order_service, take_screenshot,
         console_template, provider):
     """Test Myservice VM Console in SSUI.
