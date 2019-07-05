@@ -587,21 +587,6 @@ def test_embed_tower_event_catcher_process():
 
 
 @pytest.mark.tier(1)
-def test_embed_tower_add_machine_credentials_vault():
-    """
-    Add vault password and test in the playbook that encrypted yml can be
-    decrypted.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_embed_tower_add_machine_credentials_escalate_perm_sudo():
     """
     Allow user/admin to create/import credentials for machines which will
