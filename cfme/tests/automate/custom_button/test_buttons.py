@@ -569,7 +569,7 @@ def test_custom_button_language():
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1651099])
 @pytest.mark.provider([VMwareProvider], override=True, selector=ONE_PER_TYPE)
-def test_attribute_override(appliance, request, provider, buttongroup):
+def test_attribute_override(appliance, request, provider, setup_provider, buttongroup):
     """ Test custom button attribute override
 
     Polarion:
@@ -598,7 +598,11 @@ def test_attribute_override(appliance, request, provider, buttongroup):
         ("namespace", "/System"),
     ]
     req = "call_instance_with_message"
-    executions = {"simulation": "create", "execution": "digitronik_msg"}
+    patterns = [
+        "[miqaedb:/System/Request/TestNotification#create]",
+        "[miqaedb:/System/Request/TestNotification#digitronik_msg]"
+    ]
+
     group = buttongroup("PROVIDER")
     button = group.buttons.create(
         text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
@@ -609,20 +613,20 @@ def test_attribute_override(appliance, request, provider, buttongroup):
     )
     request.addfinalizer(button.delete_if_exists)
 
-    # Check msg override for simulation and actual execution
-    for exe, msg in executions.items():
-        pattern = "[miqaedb:/System/Request/TestNotification#{msg}]".format(msg=msg)
-        log = LogValidator("/var/www/miq/vmdb/log/automation.log", matched_patterns=[pattern])
-        log.fix_before_start()
+    # Initialize Log Checks
+    log = LogValidator("/var/www/miq/vmdb/log/automation.log", matched_patterns=patterns)
+    log.fix_before_start()
 
-        if exe == "simulation":
-            button.simulate(provider.name, request="call_instance_with_message")
-        else:
-            view = navigate_to(provider, "Details")
-            custom_button_group = Dropdown(view, group.hover)
-            custom_button_group.item_select(button.text)
+    # Execute button
+    view = navigate_to(provider, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    custom_button_group.item_select(button.text)
 
-        log.wait_for_log_validation()
+    # Simulate button
+    button.simulate(provider.name, request=req)
+
+    # validate log requests for simulation and actual execution
+    log.wait_for_log_validation()
 
 
 @pytest.mark.meta(blockers=[BZ(1719282, unblock=lambda button_type: button_type != "User")])
