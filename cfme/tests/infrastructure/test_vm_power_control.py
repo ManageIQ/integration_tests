@@ -525,16 +525,8 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope='function')
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1571830,
-            forced_streams=["5.10"],
-            unblock=lambda provider: not provider.one_of(RHEVMProvider),
-        )
-    ]
-)
-def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
+@pytest.mark.meta(automates=[1571830])
+def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
     Metadata:
@@ -556,27 +548,24 @@ def test_guest_os_reset(appliance, testing_vm_tools, ensure_vm_running, soft_ass
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
     view.flash.assert_success_message(text='Restart Guest initiated', partial=True)
-
-    soft_assert(
-        wait_for_last_boot_timestamp_refresh(testing_vm_tools, last_boot_time),
-        "Last Boot Time value has not been refreshed")
+    if not (provider.one_of(RHEVMProvider) and BZ(1571830, forced_streams=["5.10", "5.11"]).blocks):
+        soft_assert(
+            wait_for_last_boot_timestamp_refresh(testing_vm_tools, last_boot_time),
+            "Last Boot Time value has not been refreshed",
+        )
     soft_assert(
         ensure_state_changed_on_unchanged(testing_vm_tools, state_changed_on),
-        "Value of 'State Changed On' has changed after guest restart")
+        "Value of 'State Changed On' has changed after guest restart",
+    )
     soft_assert(testing_vm_tools.mgmt.is_running, "vm not running")
 
 
+@pytest.mark.meta(automates=[1723485, 1571895])
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1571895,
-            forced_streams=["5.10"],
-            unblock=lambda provider: not provider.one_of(RHEVMProvider),
-        )
-    ]
-)
-def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_assert):
+@pytest.mark.meta(blockers=[BZ(1723485, forced_streams=["5.11"],
+                               unblock=lambda provider: not (provider.one_of(RHEVMProvider)
+                                                             and not provider.version < 4.3))])
+def test_guest_os_shutdown(appliance, provider, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
     Polarion:
@@ -587,6 +576,7 @@ def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_
         tags: power
 
     Bugzilla:
+        1723485
         1571895
     """
     testing_vm_tools.wait_for_vm_state_change(
@@ -603,6 +593,9 @@ def test_guest_os_shutdown(appliance, testing_vm_tools, ensure_vm_running, soft_
         desired_state=testing_vm_tools.STATE_OFF, timeout=720, from_details=True)
     soft_assert(
         not testing_vm_tools.mgmt.is_running, "vm running")
-    new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
-    soft_assert(new_last_boot_time == last_boot_time,
-                "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+
+    # Blocking this assertion for RHEV providers because of BZ(1571895) not fixed yet
+    if not (BZ(1571895, forced_streams=["5.10", "5.11"]).blocks and provider.one_of(RHEVMProvider)):
+        new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
+        soft_assert(new_last_boot_time == last_boot_time,
+                    "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
