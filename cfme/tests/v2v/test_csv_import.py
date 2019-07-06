@@ -100,8 +100,8 @@ def check_vm_status(appliance, infra_map, error_text=None, filetype='csv', conte
         plan_view.instance_properties.table.wait_displayed()
         table_data = plan_view.instance_properties.table.read()[0]
         error_msg = {
-            "security_group": table_data["OpenStack Security Group"],
-            "flavor": table_data["OpenStack Flavor"]}
+            "security_group": str(table_data["OpenStack Security Group"]),
+            "flavor": str(table_data["OpenStack Flavor"])}
     plan_view.cancel_btn.click()
     return error_msg
 
