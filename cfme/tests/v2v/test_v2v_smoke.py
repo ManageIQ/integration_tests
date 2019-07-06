@@ -17,7 +17,7 @@ pytestmark = [
         classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
         required_flags=["v2v"],
-        scope="module"
+        scope="module",
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
@@ -26,13 +26,20 @@ pytestmark = [
         required_flags=["v2v"],
         scope="module",
     ),
-    pytest.mark.usefixtures("v2v_provider_setup")
+    pytest.mark.usefixtures("v2v_provider_setup"),
 ]
 
 
 @pytest.mark.parametrize(
     "v2v_provider_setup, mapping_data_multiple_vm_obj_single_datastore",
-    [["SSH", ["nfs", "nfs", [rhel7_minimal]]], ["VDDK", ["nfs", "nfs", [rhel7_minimal]]]],
+    [
+        [
+            "SSH", ["nfs", "nfs", [rhel7_minimal]]
+        ],
+        [
+            "VDDK", ["nfs", "nfs", [rhel7_minimal]]
+        ]
+    ],
     indirect=True,
 )
 def test_single_vm_migration_with_ssh_and_vddk(
