@@ -53,7 +53,6 @@ from cfme.utils.path import conf_path
 from cfme.utils.path import data_path
 from cfme.utils.path import patches_path
 from cfme.utils.path import scripts_path
-from cfme.utils.single import single
 from cfme.utils.ssh import SSHTail
 from cfme.utils.version import get_stream
 from cfme.utils.version import Version
@@ -454,7 +453,8 @@ class IPAppliance(object):
     def _rest_api_server(self):
         shref = self.appliance.rest_api.server_info['server_href']
         results = self.appliance.rest_api.collections.servers.all
-        return single(r for r in results if r.href == shref)
+        server, = (r for r in results if r.href == shref)
+        return server
 
     @property
     def user(self):

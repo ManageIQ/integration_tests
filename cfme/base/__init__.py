@@ -13,8 +13,6 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 
-from cfme.utils.single import single
-
 
 @attr.s
 class Server(BaseEntity, sentaku.modeling.ElementMixin):
@@ -68,7 +66,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     @property
     def zone(self):
         server_res = self.appliance.rest_api.collections.servers.find_by(id=self.sid)
-        server = single(server_res)
+        server, = server_res
         server.reload(attributes=['zone'])
         zone = server.zone
         zone_obj = self.appliance.collections.zones.instantiate(
@@ -168,7 +166,7 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
         """
         collect = self.appliance.rest_api.collections.servers
         servers = collect.all if self.appliance.is_dev else collect.find_by(is_master=True)
-        server = single(servers)
+        server, = servers
 
         if not hasattr(server, 'name'):
             logger.warning('rest_api server object has no name attribute')
@@ -207,7 +205,7 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
     @property
     def region(self):
         zone_res = self.appliance.rest_api.collections.zones.find_by(id=self.id)
-        zone = single(zone_res)
+        zone, = zone_res
         zone.reload(attributes=['region_number'])
         region_obj = self.appliance.collections.regions.instantiate(number=zone.region_number)
         return region_obj
@@ -299,9 +297,9 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         region_filter = self.appliance.rest_api.get(
             '{}{}'.format(self.appliance.rest_api.collections.regions._href, filter_query)
         )
-        region_id = single(region_filter['resources'])['id']
+        region, = region_filter['resources']
         return '/'.join([self.appliance.rest_api.collections.regions._href,
-                         str(region_id),
+                         str(region['id']),
                          'settings'])
 
     @property

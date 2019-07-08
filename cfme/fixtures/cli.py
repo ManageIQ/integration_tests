@@ -24,10 +24,8 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class
-from cfme.utils.single import single
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-
 
 try:
     from StringIO import StringIO
@@ -191,16 +189,16 @@ def get_puddle_cfme_version(repo_file_path):
     repomd_response = requests.get(urljoin(cfme_baseurl, './repodata/repomd.xml'))
     assert repomd_response.ok
     repomd_root = etree.fromstring(repomd_response.content)
-    cfme_primary_path = single(repomd_root.xpath(
+    cfme_primary_path, = repomd_root.xpath(
         "repo:data[@type='primary']/repo:location/@href",
-        namespaces=namespaces))
+        namespaces=namespaces)
     cfme_primary_response = requests.get(urljoin(cfme_baseurl, cfme_primary_path))
     assert cfme_primary_response.ok
     primary_xml = zlib.decompress(cfme_primary_response.content, zlib.MAX_WBITS | 16)
     fl_root = etree.fromstring(primary_xml)
-    repo_cfme_version = single(fl_root.xpath(
+    repo_cfme_version, = fl_root.xpath(
         "common:package[common:name='cfme']/common:version/@ver",
-        namespaces=namespaces))
+        namespaces=namespaces)
     return repo_cfme_version
 
 
