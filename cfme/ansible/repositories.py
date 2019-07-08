@@ -75,7 +75,7 @@ class RepositoryDetailsView(RepositoryBaseView):
         )
 
 
-class PlaybookRepositoryView(RepositoryDetailsView):
+class RepositoryPlaybooksView(RepositoryDetailsView):
 
     @property
     def is_displayed(self):
@@ -368,8 +368,8 @@ class Edit(CFMENavigateStep):
 
 
 @navigator.register(Repository, "Playbooks")
-class PlaybookRepository(CFMENavigateStep):
-    VIEW = PlaybookRepositoryView
+class RepositoryPlaybooks(CFMENavigateStep):
+    VIEW = RepositoryPlaybooksView
     prerequisite = NavigateToSibling("Details")
 
     def step(self, *args, **kwargs):

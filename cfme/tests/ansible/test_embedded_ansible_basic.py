@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -135,7 +136,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
-def test_embedded_ansible_repository_branch_crud(appliance, wait_for_ansible):
+def test_embedded_ansible_repository_branch_crud(appliance, request, wait_for_ansible):
     """
     Ability to add repo with branch (without SCM credentials).
 
@@ -147,19 +148,28 @@ def test_embedded_ansible_repository_branch_crud(appliance, wait_for_ansible):
         tags: ansible_embed
     """
     repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
-        url="https://github.com/ManageIQ/integration_tests_playbooks.git",
-        description=fauxfactory.gen_alpha(),
-        scm_branch="second_playbook_branch",
-    )
+    try:
+        playbooks_yaml = cfme_data.ansible_links.playbook_repositories
+        playbook_name = getattr(request, 'param', 'embedded_ansible')
+        repository = repositories.create(
+            name=fauxfactory.gen_alpha(),
+            url=getattr(playbooks_yaml, playbook_name),
+            description=fauxfactory.gen_alpha(),
+            scm_branch="second_playbook_branch"
+        )
+    except (KeyError, AttributeError):
+        message = "Missing ansible_links content in cfme_data, cannot setup repository"
+        logger.exception(message)  # log the exception for debug of the missing content
+        pytest.fail(message)
+
+    request.addfinalizer(lambda: repository.delete_if_exists())
+
     view = navigate_to(repository, "Details")
-    assert (
-        view.entities.summary("Repository Options").get_text_of("SCM Branch")
-        == repository.scm_branch
-    )
+    scm_branch = view.entities.summary("Repository Options").get_text_of("SCM Branch")
+    assert scm_branch == repository.scm_branch
 
     repository.delete()
+    assert not repository.exists
 
 
 @pytest.mark.rhel_testing
