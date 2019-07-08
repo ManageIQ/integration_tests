@@ -10,7 +10,6 @@ from lxml import etree
 from paramiko_expect import SSHClientInteraction
 from six import iteritems
 from six import StringIO
-from six.moves.urllib.parse import urljoin
 
 import cfme.utils.auth as authutil
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -178,13 +177,18 @@ def get_puddle_cfme_version(repo_file_path):
     cp.readfp(StringIO(repofile))
 
     cfme_baseurl = cp.get('cfme', 'baseurl')
-    repomd_response = requests.get(urljoin(cfme_baseurl, './repodata/repomd.xml'))
+    # The urljoin does replace the last bit of url when there is no slash on
+    # the end, which does happen with the repos we get, therefore we better
+    # join the urls just by string concatenation.
+    repomd_url = '{}/repodata/repomd.xml'.format(cfme_baseurl)
+    repomd_response = requests.get(repomd_url)
     assert repomd_response.ok
     repomd_root = etree.fromstring(repomd_response.content)
     cfme_primary_path, = repomd_root.xpath(
         "repo:data[@type='primary']/repo:location/@href",
         namespaces=namespaces)
-    cfme_primary_response = requests.get(urljoin(cfme_baseurl, cfme_primary_path))
+    cfme_primary_url = '{}/{}'.format(cfme_baseurl, cfme_primary_path)
+    cfme_primary_response = requests.get(cfme_primary_url)
     assert cfme_primary_response.ok
     primary_xml = zlib.decompress(cfme_primary_response.content, zlib.MAX_WBITS | 16)
     fl_root = etree.fromstring(primary_xml)
