@@ -382,31 +382,13 @@ def test_service_reconfigure_in_distributed_environment():
     pass
 
 
-@test_requirements.service
-@pytest.mark.tier(0)
-@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1678149])
+@pytest.mark.manual
+@pytest.mark.tier(2)
 def test_copy_catalog_item():
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.11
-        testSteps:
-            1. Create catalog and catalog item
-            2. Make a copy of catalog item
-
     Bugzilla:
         1678149
-    """
-    pass
-
-
-@test_requirements.service
-@pytest.mark.tier(1)
-@pytest.mark.ignore_stream("5.10")
-def test_service_select_tenants():
-    """
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -414,11 +396,36 @@ def test_service_select_tenants():
         startsin: 5.11
         testSteps:
             1. Create catalog
-            2. Create catalog item with tenants
-            3. login with tenant and check the services
+            2. Create catalog item
+            3. Make a copy of catalog item
+        expectedResults:
+            1.
+            2.
+            3. Able to copy catalog item
+    """
+    pass
 
+
+@pytest.mark.meta(coverage=[1678123])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_service_select_tenants():
+    """
     Bugzilla:
         1678123
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog
+            2. Create catalog item with tenants
+            3. login with tenant and check the services
+        expectedResults:
+            1.
+            2.
+            3. Services Should be visible to Tenant
     """
     pass
 
