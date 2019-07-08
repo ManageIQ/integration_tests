@@ -271,7 +271,7 @@ def test_task_id_for_method_automation_log(request, generic_catalog_item):
     # service_request becomes active.
     wait_for(lambda: service_request.request_state == "active", fail_func=service_request.reload,
              timeout=60, delay=3)
-    assert result.validate()
+    assert result.validate(wait="60s")
 
 
 @pytest.mark.meta(blockers=[BZ(1704439)])
@@ -346,7 +346,7 @@ def test_send_email_method(smtp_test, klass):
         request="Call_Instance",
         execute_methods=True,
     )
-    assert result.validate()
+    assert result.validate(wait="60s")
 
     # TODO(GH-8820): This issue should be fixed to check mails sent to person in 'cc' and 'bcc'
     # Check whether the mail sent via automate method really arrives
@@ -446,7 +446,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
             request="Call_Instance",
             execute_methods=True,
         )
-        assert result.validate()
+        assert result.validate(wait="60s")
 
 
 @pytest.mark.tier(1)

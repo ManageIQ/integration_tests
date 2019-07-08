@@ -470,7 +470,7 @@ def test_appliance_console_external_auth(auth_type, ipa_crud, configured_applian
     evm_tail.start_monitoring()
     command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
-    assert evm_tail.validate()
+    assert evm_tail.validate(wait="30s")
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to false.*'.format(auth_type.option)],
@@ -479,7 +479,7 @@ def test_appliance_console_external_auth(auth_type, ipa_crud, configured_applian
     evm_tail.start_monitoring()
     command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
-    assert evm_tail.validate()
+    assert evm_tail.validate(wait="30s")
 
 
 def test_appliance_console_external_auth_all(configured_appliance):
@@ -506,7 +506,7 @@ def test_appliance_console_external_auth_all(configured_appliance):
     command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),
                    RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
-    assert evm_tail.validate()
+    assert evm_tail.validate("30s")
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to false.*',
@@ -518,7 +518,7 @@ def test_appliance_console_external_auth_all(configured_appliance):
     command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),
                    RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set)
-    assert evm_tail.validate()
+    assert evm_tail.validate(wait="30s")
 
 
 @pytest.mark.rhel_testing

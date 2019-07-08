@@ -407,7 +407,7 @@ def test_codename_in_log(appliance):
                       hostname=appliance.hostname)
     lv.start_monitoring()
     appliance.ssh_client.run_command('appliance_console_cli --server=restart')
-    assert lv.validate()
+    assert lv.validate(wait="60s")
     appliance.wait_for_web_ui()
 
 

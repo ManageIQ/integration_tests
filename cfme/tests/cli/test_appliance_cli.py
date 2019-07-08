@@ -148,7 +148,7 @@ def test_appliance_console_cli_external_auth(auth_type, ipa_crud, configured_app
     evm_tail.start_monitoring()
     cmd_set = 'appliance_console_cli --extauth-opts="/authentication/{}=true"'.format(auth_type)
     assert configured_appliance.ssh_client.run_command(cmd_set)
-    assert evm_tail.validate()
+    assert evm_tail.validate(wait="30s")
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to false.*'.format(auth_type)],
@@ -157,7 +157,7 @@ def test_appliance_console_cli_external_auth(auth_type, ipa_crud, configured_app
     evm_tail.start_monitoring()
     cmd_unset = 'appliance_console_cli --extauth-opts="/authentication/{}=false"'.format(auth_type)
     assert configured_appliance.ssh_client.run_command(cmd_unset)
-    assert evm_tail.validate()
+    assert evm_tail.validate(wait="30s")
 
 
 @pytest.fixture(scope='function')

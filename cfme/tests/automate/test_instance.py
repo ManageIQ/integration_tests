@@ -127,6 +127,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
         initialEstimate: 1/10h
         caseimportance: medium
         caseposneg: positive
+        caseposneg: positive
         testtype: functional
         startsin: 5.9
         casecomponent: Automate
@@ -206,7 +207,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
         "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(catch_string)],
         failure_patterns=[".*ERROR.*"]
     )
-    result.fix_before_start()
+    result.start_monitoring()
 
     # Executing the automate method of klass1 using simulation
     simulate(
@@ -218,7 +219,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
             "instance": instance2.name,
         },
     )
-    result.validate_logs()
+    assert result.validate(wait="60s")
 
 
 @pytest.fixture(scope="module")
@@ -278,7 +279,7 @@ def test_check_system_request_calls_depr_conf_mgmt(appliance, copy_instance):
         appliance=appliance,
         request=copy_instance.name
     )
-    assert result.validate()
+    assert result.validate(wait="60s")
 
 
 @pytest.fixture(scope="module")
@@ -353,4 +354,4 @@ def test_quota_source_value(request, entity, search, copy_quota_instance, generi
     service_catalogs.order()
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(lambda: provision_request.remove_request(method="rest"))
-    assert result.validate()
+    assert result.validate(wait="60s")

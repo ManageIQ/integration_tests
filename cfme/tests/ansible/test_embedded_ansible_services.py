@@ -701,7 +701,7 @@ def test_service_ansible_verbosity(
     )
     # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
     # is being logging in evm.log
-    assert log.validate()
+    assert log.validate(wait="60s")
     logger.info("Pattern found {}".format(log.matched_patterns))
 
     view = navigate_to(ansible_service, "Details")

@@ -448,4 +448,4 @@ def test_service_provisioning_email(request, appliance, catalog_item):
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
-    assert result.validate()
+    assert result.validate(wait="60s")

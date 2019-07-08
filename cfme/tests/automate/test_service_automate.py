@@ -117,7 +117,7 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
         )
         provision_request = service_catalogs.order()
         provision_request.wait_for_request()
-        assert result.validate()
+        assert result.validate(wait="60s")
 
     with new_users[1]:
         # Log in with second user and provision instance via lifecycle
@@ -141,4 +141,4 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
         provision_request = appliance.collections.requests.instantiate(request_description)
         provision_request.wait_for_request(method='ui')
         request.addfinalizer(provision_request.remove_request)
-        assert result.validate()
+        assert result.validate(wait="60s")

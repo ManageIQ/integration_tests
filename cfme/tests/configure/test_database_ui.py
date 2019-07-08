@@ -60,4 +60,4 @@ def test_configuration_database_garbage_collection(appliance):
     view = navigate_to(appliance.server.zone.region, 'Database')
     view.submit_db_garbage_collection_button.click()
     view.flash.assert_message('Database Garbage Collection successfully initiated')
-    assert evm_tail.validate()
+    assert evm_tail.validate(wait="30s")

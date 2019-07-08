@@ -1,5 +1,3 @@
-import time
-
 import fauxfactory
 import pytest
 from wrapanapi.systems.container.rhopenshift import ApiException
@@ -208,11 +206,4 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
     evm_tail_no_blacklist.start_monitoring()
 
     create_pod(provider=provider, namespace=project_name)
-
-    # After restarting evm, there was a delay in logging for a brief period. validate_logs() was
-    # being called before the log event was created and causing the test to fail. validate_logs()
-    # calls pytest.fail, so using wait_for() here was not possible since there is no exception to
-    # catch. Only option was to add a short sleep here.
-    time.sleep(10)
-
-    assert evm_tail_no_blacklist.validate()
+    assert evm_tail_no_blacklist.validate(wait="120s")
