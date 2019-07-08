@@ -10,6 +10,7 @@ from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import FailPatternMatchError
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -491,7 +492,7 @@ def test_embedded_method_selection():
         expectedResults:
             1.
             2. Selected embedded method should be visible
-            
+
     Bugzilla:
         1718495
     """
@@ -590,9 +591,10 @@ def test_method_for_log_and_notify(request, klass, notify_level, log_level):
                (:info, "Hello Testing Log & Notify", $evm.root['vm'], $evm)
             4. Check the logs and In your UI session you should see a notification
     """
+    schema_name = fauxfactory.gen_alpha()
     # Adding schema for executing method
-    klass.schema.add_fields({'name': "execute", 'type': 'Method', 'data_type': 'String'})
-    request.addfinalizer(lambda: klass.schema.delete_field("execute"))
+    klass.schema.add_fields({'name': schema_name, 'type': 'Method', 'data_type': 'String'})
+    request.addfinalizer(lambda: klass.schema.delete_field(schema_name))
 
     # Adding automate method with embedded method
     method = klass.methods.create(
@@ -615,7 +617,7 @@ def test_method_for_log_and_notify(request, klass, notify_level, log_level):
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
-        fields={"execute": {'value': method.name}}
+        fields={schema_name: {'value': method.name}}
     )
     request.addfinalizer(instance.delete_if_exists)
 
@@ -626,8 +628,9 @@ def test_method_for_log_and_notify(request, klass, notify_level, log_level):
             ".*Calling Create Notification type: automate_user_{}.*".format(log_level),
             ".*Hello Testing Log & Notify.*"
         ],
+        failure_patterns=[".*ERROR.*"]
     )
-    result.fix_before_start()
+    result.start_monitoring()
 
     # Executing automate method using simulation
     simulate(
@@ -641,4 +644,9 @@ def test_method_for_log_and_notify(request, klass, notify_level, log_level):
             "instance": instance.name,
         }
     )
-    result.wait_for_log_validation()
+    if log_level == "error":
+        with pytest.raises(FailPatternMatchError,
+                           match="Pattern '.*ERROR.*': Expected failure pattern found in log."):
+            result.validate(wait="60s")
+    else:
+        result.validate(wait="60s")

@@ -31,6 +31,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import Input
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import ScriptBox
@@ -231,23 +232,6 @@ class PlaybookInputParameters(View):
         return self.all_vars
 
 
-class EntryPoint(Text, ClickableMixin):
-    def fill(self, value):
-        """Used to select the automate method from automate domain"""
-        if not self.parent_view.embedded_method_table.is_displayed:
-            table = []
-        else:
-            table = self.parent_view.embedded_method_table.read()
-        for current_value in table:
-            if value == current_value['Path']:
-                return False
-        else:
-            self.parent_view.embedded_method.click()
-            self.parent_view.embedded_view.wait_displayed('15s')
-            self.parent_view.embedded_view.tree.click_path(*value)
-            return True
-
-
 class EmbeddedView(Modal):
     """This view is for embedding automate method"""
     title = Text(
@@ -262,9 +246,8 @@ class EmbeddedView(Modal):
 
     @property
     def is_displayed(self):
-        return (self.title.text == "Select Item" and
-                self.tree.has_path("Datastore", "RedHat (Locked)") and
-                self.tree.has_path("Datastore", "ManageIQ (Locked)")
+        return (self.title.text == "Select Item"
+                and self.tree.has_path("Datastore", "ManageIQ (Locked)")
                 )
 
 
@@ -293,9 +276,11 @@ class MethodAddView(AutomateExplorerView):
     playbook_input_parameters = PlaybookInputParameters()
 
     # Add embedded method
-    embedded_method = EntryPoint('//*[@id="automate-inline-method-select"]//button')
-    embedded_view = View.nested(EmbeddedView)
+    # TODO(ghubale@redhat.com): Make use of this table once this BZ(1718495) got fixed
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
+    embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
+                                 tree_id="treeview-entrypoint_selection")
+    embedded_view = View.nested(EmbeddedView)
 
     add_button = Button('Add')
     cancel_button = Button('Cancel')
@@ -336,9 +321,11 @@ class MethodEditView(AutomateExplorerView):
     playbook_input_parameters = PlaybookInputParameters()
 
     # Edit embedded method
-    embedded_method = EntryPoint('//*[@id="automate-inline-method-select"]//button')
-    embedded_view = View.nested(EmbeddedView)
+    # TODO(ghubale@redhat.com): Make use of this table once this BZ(1718495) got fixed
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
+    embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
+                                 tree_id="treeview-entrypoint_selection")
+    embedded_view = View.nested(EmbeddedView)
 
     save_button = Button('Save')
     reset_button = Button('Reset')
