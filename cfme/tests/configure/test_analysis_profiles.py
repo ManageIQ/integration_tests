@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3), test_requirements.configuration]
@@ -70,6 +71,7 @@ def analysis_profile_collection(appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1727929)])
 def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_collection):
     """CRUD for VM analysis profiles.
 
