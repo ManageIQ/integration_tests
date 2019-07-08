@@ -31,10 +31,12 @@ class InfrastructureMappingView(BaseLoggedInPage):
 
     @property
     def in_mapping_explorer(self):
-        return self.logged_in_as_current_user and (
-            self.navigation.currently_selected
-            == ["Compute", "Migration", "Infrastructure Mappings"]
+        nav_menu = (
+            ["Compute", "Migration", "Infrastructure Mappings"]
+            if self.context["object"].appliance.version < "5.11"
+            else ["Migration", "Infrastructure Mappings"]
         )
+        return self.logged_in_as_current_user and (self.navigation.currently_selected == nav_menu)
 
     @property
     def is_displayed(self):
@@ -288,12 +290,12 @@ class AllMappings(CFMENavigateStep):
     VIEW = AllInfraMappingView
 
     def step(self):
-        if self.obj.appliance.version < "5.10":
-            self.prerequisite_view.navigation.select("Compute", "Migration")
-        else:
+        if self.obj.appliance.version < "5.11":
             self.prerequisite_view.navigation.select(
                 "Compute", "Migration", "Infrastructure Mappings"
             )
+        else:
+            self.prerequisite_view.navigation.select("Migration", "Infrastructure Mappings")
 
 
 @navigator.register(InfrastructureMappingCollection, "Add")

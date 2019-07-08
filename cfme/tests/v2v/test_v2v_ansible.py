@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
+from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -34,13 +35,6 @@ pytestmark = [
     ),
     pytest.mark.usefixtures("v2v_provider_setup"),
 ]
-
-
-def get_migrated_vm_obj(src_vm_obj, target_provider):
-    """Returns migrated_vm obj from target_provider"""
-    collection = target_provider.appliance.provider_based_collection(target_provider)
-    migrated_vm = collection.instantiate(src_vm_obj.name, target_provider)
-    return migrated_vm
 
 
 @pytest.fixture(scope="module")
@@ -168,5 +162,5 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
 
-    migrated_vm = get_migrated_vm_obj(src_vm_obj, provider)
+    migrated_vm = get_migrated_vm(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address

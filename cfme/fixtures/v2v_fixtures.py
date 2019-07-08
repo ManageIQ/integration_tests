@@ -10,12 +10,15 @@ from widgetastic.utils import partial_match
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.fixtures.provider import setup_or_skip
+from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils import ssh
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.update import update
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
@@ -83,11 +86,26 @@ def __host_credentials(appliance, transformation_method, v2v_providers): # noqa
         for v2v_provider in provider_list:
             hosts = v2v_provider.hosts.all()
             for host in hosts:
-                host_data = [data for data in v2v_provider.data['hosts']
-                             if data['name'] == host.name]
-                if not host_data:
+                try:
+                    host_data, = [
+                        data for data in v2v_provider.data["hosts"] if data["name"] == host.name]
+                except ValueError:
                     pytest.skip("No host data")
-                host.update_credentials_rest(credentials=host_data[0]['credentials'])
+
+                # TODO(BZ-1718209): Remove UI host authentication
+                if not BZ(1718209).blocks:
+                    host.update_credentials_rest(credentials=host_data['credentials'])
+                else:
+                    host_obj = appliance.collections.hosts.instantiate(
+                        name=host.name,
+                        provider=v2v_provider
+                    )
+                    with update(host_obj, validate_credentials=True):
+                        host_obj.credentials = {
+                            "default": Host.Credential.from_config(
+                                host_data["credentials"]["default"]
+                            )
+                        }
     except Exception:
         logger.exception("Exception when trying to add the host credentials.")
         pytest.skip("No data for hosts in providers, failed to retrieve hosts and add creds.")

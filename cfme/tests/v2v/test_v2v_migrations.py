@@ -14,6 +14,7 @@ from cfme.fixtures.provider import win10_template
 from cfme.fixtures.provider import win2012_template
 from cfme.fixtures.provider import win2016_template
 from cfme.fixtures.provider import win7_template
+from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
@@ -36,13 +37,6 @@ pytestmark = [
     ),
     pytest.mark.usefixtures("v2v_provider_setup"),
 ]
-
-
-def get_migrated_vm_obj(src_vm_obj, target_provider):
-    """Returns the migrated_vm obj from target_provider."""
-    collection = target_provider.appliance.provider_based_collection(target_provider)
-    migrated_vm = collection.instantiate(src_vm_obj.name, target_provider)
-    return migrated_vm
 
 
 @pytest.mark.parametrize(
@@ -95,7 +89,7 @@ def test_single_datastore_single_vm_migration(
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
 
-    migrated_vm = get_migrated_vm_obj(src_vm_obj, provider)
+    migrated_vm = get_migrated_vm(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
 
 
@@ -142,7 +136,7 @@ def test_single_network_single_vm_migration(
     )
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_single_network.vm_list.pop()
-    migrated_vm = get_migrated_vm_obj(src_vm, provider)
+    migrated_vm = get_migrated_vm(src_vm, provider)
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
@@ -191,7 +185,7 @@ def test_dual_datastore_dual_vm_migration(
     src_vms_list = mapping_data_dual_vm_obj_dual_datastore.vm_list
     # validate MAC address matches between source and target VMs
     for src_vm in src_vms_list:
-        migrated_vm = get_migrated_vm_obj(src_vm, provider)
+        migrated_vm = get_migrated_vm(src_vm, provider)
         soft_assert(src_vm.mac_address == migrated_vm.mac_address)
 
 
@@ -233,7 +227,7 @@ def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_d
     assert migration_plan.wait_for_state("Successful")
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_dual_nics.vm_list.pop()
-    migrated_vm = get_migrated_vm_obj(src_vm, provider)
+    migrated_vm = get_migrated_vm(src_vm, provider)
     assert set(src_vm.mac_address.split(", ")) == set(migrated_vm.mac_address.split(", "))
 
 
@@ -276,7 +270,7 @@ def test_dual_disk_vm_migration(
 
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_single_datastore.vm_list.pop()
-    migrated_vm = get_migrated_vm_obj(src_vm, provider)
+    migrated_vm = get_migrated_vm(src_vm, provider)
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
@@ -331,7 +325,7 @@ def test_migrations_different_os_templates(
     src_vms_list = mapping_data_multiple_vm_obj_single_datastore.vm_list
     # validate MAC address matches between source and target VMs
     for src_vm in src_vms_list:
-        migrated_vm = get_migrated_vm_obj(src_vm, provider)
+        migrated_vm = get_migrated_vm(src_vm, provider)
         soft_assert(src_vm.mac_address == migrated_vm.mac_address)
 
 
@@ -378,5 +372,5 @@ def test_single_vm_migration_with_ssh(
 
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_multiple_vm_obj_single_datastore.vm_list.pop()
-    migrated_vm = get_migrated_vm_obj(src_vm, provider)
+    migrated_vm = get_migrated_vm(src_vm, provider)
     assert src_vm.mac_address == migrated_vm.mac_address
