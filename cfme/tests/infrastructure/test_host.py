@@ -276,35 +276,40 @@ def test_infrastructure_hosts_icons_states(
     host = provider.hosts.all()[0]
     host_name = host.name
     reset_state = host.rest_api_entity.power_state
+    hosts = appliance.db.client["hosts"]
 
-    command = (
-        "psql vmdb_production -c \"UPDATE hosts SET power_state='{state}'"
-        " WHERE name='{name}'\";"
-    )
     # change host power_state
-    result = appliance.ssh_client.run_command(
-        command.format(state=power_state, name=host_name)
+    result = (
+        appliance.db.client.session.query(hosts)
+        .filter(hosts.name == host_name)
+        .update({hosts.power_state: power_state})
     )
-    assert result.success
+    assert result == 1
 
     # reset host power_state
-    request.addfinalizer(
-        lambda: appliance.ssh_client.run_command(
-            command.format(state=reset_state, name=host_name)
+    @request.addfinalizer
+    def _finalize():
+        appliance.db.client.session.query(hosts).filter(hosts.name == host_name).update(
+            {hosts.power_state: reset_state}
         )
-    )
 
     # assert power_state from quadicon
     view = navigate_to(appliance.collections.hosts, "All")
     host_entity = view.entities.get_entity(name=host_name)
+    actual_state = host_entity.data["quad"]["topRight"]["tooltip"]
     soft_assert(
-        host_entity.data["quad"]["topRight"]["tooltip"] == power_state,
-        "Power state in the quadicon did not match.",
+        actual_state == power_state,
+        "Power state in the quadicon[{}] did not match with {}.".format(
+            actual_state, power_state
+        ),
     )
 
     # assert power_state from Details page
     view = navigate_to(host, "Details")
+    actual_state = view.entities.summary("Properties").get_text_of("Power State")
     soft_assert(
-        view.entities.summary("Properties").get_text_of("Power State") == power_state,
-        "Power state in the summary table did not match.",
+        actual_state == power_state,
+        "Power state in the summary table[{}] did not match with {}.".format(
+            actual_state, power_state
+        ),
     )
