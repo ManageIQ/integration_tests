@@ -137,7 +137,8 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
 
 @pytest.mark.rhv2
 @pytest.mark.meta(
-    blockers=[BZ(1724415, unblock=lambda provider: not provider.one_of(AzureProvider))]
+    blockers=[BZ(1724415, forced_streams=['5.10', '5.11'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
 )
 @pytest.mark.uncollectif(
     lambda provider: provider.one_of(EC2Provider) or provider.one_of(GCEProvider))
