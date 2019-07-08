@@ -370,3 +370,50 @@ def test_copying_customization_dialog():
             in alphanumerical sort
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.service
+@pytest.mark.tier(1)
+def test_default_value_on_dropdown_inside_dialog():
+    """
+    Test default value of a dropdown element in the service dialog.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Create new service dialog (Automation > Automate > Customization > Service Dialog)
+            2. Select a dropdown element and add it to the dialog
+            3. In dropdown settings on Options tab, make sure there are multiple key/value entries
+            4. On the same tab, select a 'Default value' for the dropdown element and save
+            5. Navigate Automation > Automate > Customization > Service Dialog and select the
+                newly created dialog
+            6. Make sure the default value is displayed on the dropdown element
+        expectedResults:
+            4. Dialog created and saved successfully
+            6. Correct default value displayed on the dropdown element
+    Bugzilla:
+        1516721
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.service
+@pytest.mark.tier(1)
+def test_dialog_items_default_values_on_different_screens():
+    """
+    Bugzilla:
+        1540273
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/3h
+        title: Test dialog items default values on different screens
+    """
+    pass

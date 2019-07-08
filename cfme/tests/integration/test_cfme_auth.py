@@ -1516,3 +1516,22 @@ def test_login_page_redirects_to_saml():
                successful configuration
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_session_timeout():
+    """
+    As admin change the session timeout in cfme webui.
+    Login as ldap user and verify session times out after the specified
+    timeout value.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: low
+        initialEstimate: 1/6h
+        title: Verify session timeout works fine for external auth.
+    """
+    pass

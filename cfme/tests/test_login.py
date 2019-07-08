@@ -122,3 +122,120 @@ def test_update_password(context, request, appliance):
 
     # Delete the user we created
     user.delete()
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_pwd_trailing_whitespace():
+    """
+    Test changing password to one with trailing whitespace.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_pwd_special_chars():
+    """
+    Test password with special characters.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_pwd_blank():
+    """
+    Test changing password to a blank one.
+    Test creating user with a blank password.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_pwd_16_chars():
+    """
+    Password > 16 char
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_login_invalid_user():
+    """
+    Login with invalid user
+    Authentication expected to fail, check audit.log and evm.log for
+    correct log messages.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Auth
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/4h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_pwd_leading_whitespace():
+    """
+    Password with leading whitespace
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_credentials_change_password_with_special_characters():
+    """
+    Password with only special characters
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/8h
+        tags: rbac
+    """
+    pass
