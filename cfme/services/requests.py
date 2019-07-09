@@ -15,6 +15,7 @@ from widgetastic_patternfly import Input
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import BasicProvisionFormView
 from cfme.common.vm_views import ProvisionView
+from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import RequestException
 from cfme.modeling.base import BaseCollection
@@ -223,7 +224,7 @@ class Request(BaseEntity):
 
     @is_succeeded.variant('ui')
     def is_succeeded_ui(self):
-        return self.is_finished(method=('ui')) and self.row.status.text == 'Ok'
+        return self.is_finished(method='ui') and self.row.status.text == 'Ok'
 
     def copy_request(self, values=None, cancel=False):
         """Copies the request  and edits if needed
@@ -277,9 +278,10 @@ class RequestBasicView(BaseLoggedInPage):
 
     @property
     def in_requests(self):
-        return self.logged_in_as_current_user
-        # TODO uncomment after BZ 1472844 is fixed
-        # and  self.navigation.currently_selected == ['Services', 'Requests'] and
+        return (
+            self.logged_in_as_current_user
+            and self.navigation.currently_selected == ['Services', 'Requests']
+        )
 
 
 class RequestsView(RequestBasicView):
@@ -309,15 +311,15 @@ class RequestsView(RequestBasicView):
                 # it might be nice to add an option to fail at this point
                 continue
             elif len(rows) > 1:
-                raise RequestException(
-                    'Multiple requests with matching content found - be more specific!')
+                raise RequestException('Multiple requests with matching content found - '
+                                       'be more specific!')
             else:
                 # found the row!
                 row = rows[0]
                 logger.debug(' Request Message: %s', row.last_message.text)
                 return row
         else:
-            raise Exception("The requst specified by {} not found!".format(str(cells)))
+            raise Exception("The request specified by {} not found!".format(str(cells)))
 
     @property
     def is_displayed(self):
@@ -430,8 +432,12 @@ class RequestDetailsView(RequestsView):
 
     @property
     def is_displayed(self):
-        return (self.in_requests and
-                self.title.text == self.context['object'].rest.description)
+        expected_description = self.context['object'].rest.description
+        return (
+            self.in_requests and
+            self.breadcrumb.locations[-1] == expected_description and
+            self.title.text == expected_description
+        )
 
     breadcrumb = BreadCrumb()
     toolbar = RequestDetailsToolBar()
@@ -447,8 +453,9 @@ class RequestApprovalView(RequestDetailsView):
     def is_displayed(self):
         try:
             return (
-                self.breadcrumb.locations[1] == self.context['object'].rest.description and
-                self.breadcrumb.locations[2] == 'Request Approval')
+                self.breadcrumb.locations[-1] == 'Request Approval' and
+                self.breadcrumb.locations[-2] == self.context['object'].rest.description
+            )
         except Exception:
             return False
 
@@ -463,8 +470,9 @@ class RequestDenialView(RequestDetailsView):
     def is_displayed(self):
         try:
             return (
-                self.breadcrumb.locations[1] == self.context['object'].rest.description and
-                self.breadcrumb.locations[2] == 'Request Denial')
+                self.breadcrumb.locations[-1] == 'Request Denial' and
+                self.breadcrumb.locations[-2] == self.context['object'].rest.description
+            )
         except Exception:
             return False
 
@@ -479,33 +487,35 @@ class RequestProvisionView(ProvisionView):
     @property
     def is_displayed(self):
         try:
-            return self.breadcrumb.locations[1] == self.context['object'].rest.description
+            return self.breadcrumb.locations[-1] == self.context['object'].rest.description
         except Exception:
             return False
 
 
 class RequestEditView(RequestProvisionView):
-
-    @property
-    def is_displayed(self):
-        try:
-            return (
-                self.breadcrumb.locations[1] == self.context['object'].rest.description and
-                self.breadcrumb.locations[2] == 'Edit VM Provision')
-        except Exception:
-            return False
+    # BZ 1726741 will impact the breadcrumb items
+    is_displayed = displayed_not_implemented
+    # @property
+    # def is_displayed(self):
+    #     try:
+    #         return (
+    #             self.breadcrumb.locations[-2] == self.context['object'].rest.description and
+    #             self.breadcrumb.locations[-1] == 'Edit VM Provision')
+    #     except Exception:
+    #         return False
 
 
 class RequestCopyView(RequestProvisionView):
-
-    @property
-    def is_displayed(self):
-        try:
-            return (
-                self.breadcrumb.locations[1] == self.context['object'].rest.description and
-                self.breadcrumb.locations[2] == 'Copy of VM Provision Request')
-        except Exception:
-            return False
+    # BZ 1726741 will impact the breadcrumb items
+    is_displayed = displayed_not_implemented
+    # @property
+    # def is_displayed(self):
+    #     try:
+    #         return (
+    #             self.breadcrumb.locations[-2] == self.context['object'].rest.description and
+    #             self.breadcrumb.locations[-1] == 'Copy of VM Provision Request')
+    #     except Exception:
+    #         return False
 
 
 @navigator.register(RequestCollection, 'All')
