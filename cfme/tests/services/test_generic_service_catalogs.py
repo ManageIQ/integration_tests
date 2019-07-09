@@ -270,22 +270,25 @@ class TestServiceCatalogViaREST(object):
             assert scl.name == new_names[index]
 
 
-@test_requirements.service
-@pytest.mark.tier(0)
-@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1678149])
+@pytest.mark.manual
+@pytest.mark.tier(2)
 def test_copy_catalog_bundle():
     """
+    Bugzilla:
+        1678149
     Polarion:
         assignee: nansari
         casecomponent: Services
-        initialEstimate: 1/4h
+        initialEstimate: 1/16h
         startsin: 5.11
         testSteps:
             1. Create catalog and catalog item
             2. Create catalog bundle
             3. Make a copy of catalog bundle
-
-    Bugzilla:
-        1678149
+        expectedResults:
+            1.
+            2.
+            3. Able to copy catalog Bundle
     """
     pass

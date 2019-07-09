@@ -185,22 +185,27 @@ def test_retire_on_date_for_multiple_service():
     pass
 
 
-@test_requirements.service
-@pytest.mark.tier(0)
-@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1678123])
+@pytest.mark.manual
+@pytest.mark.tier(2)
 def test_service_state():
     """
+    Bugzilla:
+        1678123
     Polarion:
         assignee: nansari
         casecomponent: Services
-        initialEstimate: 1/4h
+        initialEstimate: 1/16h
         startsin: 5.11
         testSteps:
             1. Create catalog and catalog item
             2. Order the catalog item
-            3. Go to My services and check service state
-
-    Bugzilla:
-        1678123
+            3. Provision the service catalog item or fail the service catalog item
+            4. Go to My services and check service state
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Service State should be Provisioned or Failed
     """
     pass
