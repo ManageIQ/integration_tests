@@ -121,7 +121,7 @@ def test_map_tagging_crud(appliance, category, soft_assert):
 
     map_tag_entity.delete()
     view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
-    if not BZ(1707328).blocks:
+    if not BZ(1707328, forced_streams=["5.11"]).blocks:
         view.flash.assert_success_message('Container Label Tag Mapping "{}": Delete successful'
                                           .format(map_tag_entity.label))
 
