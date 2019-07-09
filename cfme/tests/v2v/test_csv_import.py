@@ -2,12 +2,16 @@ import tempfile
 
 import fauxfactory
 import pytest
+from deepdiff import DeepDiff
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
@@ -16,11 +20,14 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.v2v,
     pytest.mark.provider(
-        classes=[RHEVMProvider], selector=ONE_PER_VERSION, required_flags=["v2v"], scope="module"
+        classes=[RHEVMProvider, OpenStackProvider],
+        selector=ONE_PER_VERSION,
+        required_flags=["v2v"],
+        scope="module",
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
-        selector=ONE_PER_VERSION,
+        selector=ONE_PER_TYPE,
         fixture_name="source_provider",
         required_flags=["v2v"],
         scope="module",
@@ -57,8 +64,9 @@ def migration_plan(appliance, infra_map, csv=True):
     return view
 
 
-def import_and_check(appliance, infra_map, error_text=None,
-                     filetype='csv', content=False, table_hover=False, alert=False):
+def check_vm_status(appliance, infra_map, error_text=None, filetype='csv', content=False,
+                    table_hover=False, alert=False, security_group=False):
+    """Function to import csv, select vm and return hover error from migration plan table"""
     plan_view = migration_plan(appliance, infra_map)
     temp_file = tempfile.NamedTemporaryFile(suffix='.{}'.format(filetype))
     if content:
@@ -76,15 +84,26 @@ def import_and_check(appliance, infra_map, error_text=None,
         else:
             # click on the checkbox to select VM (column 0)
             plan_view.vms.table[0][1].widget.click()
-        error_msg = plan_view.vms.popover_text.read()
+        if not security_group:
+            error_msg = plan_view.vms.popover_text.read()
     else:
         if alert:
             error_msg = plan_view.browser.get_alert().text
-            plan_view.browser.handle_alert()
+            try:
+                plan_view.browser.handle_alert()
+            except NoSuchElementException:
+                pass
         else:
             error_msg = plan_view.vms.error_text.text
+    if security_group:
+        plan_view.next_btn.click()
+        plan_view.instance_properties.table.wait_displayed()
+        table_data = plan_view.instance_properties.table.read()[0]
+        error_msg = {
+            "security_group": str(table_data["OpenStack Security Group"]),
+            "flavor": str(table_data["OpenStack Flavor"])}
     plan_view.cancel_btn.click()
-    return bool(error_msg == error_text)
+    return error_msg
 
 
 @pytest.fixture(scope="function")
@@ -115,171 +134,171 @@ def test_non_csv(appliance, infra_map):
     """Test non-csv file import
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: negative
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     error_text = "Invalid file extension. Only .csv files are accepted."
-    assert import_and_check(appliance, infra_map, error_text, filetype='txt', alert=True)
+    hover_error = check_vm_status(appliance, infra_map, error_text, filetype='txt', alert=True)
+    assert error_text == hover_error
 
 
 def test_blank_csv(appliance, infra_map):
     """Test csv with blank file
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: negative
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     error_msg = "Error: Possibly a blank .CSV file"
-    assert import_and_check(appliance, infra_map, error_msg)
+    hover_error = check_vm_status(appliance, infra_map, error_msg)
+    assert error_msg == hover_error
 
 
 def test_column_headers(appliance, infra_map):
     """Test csv with unsupported column header
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: positive
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     content = fauxfactory.gen_alpha(10)
     error_msg = "Error: Required column 'Name' does not exist in the .CSV file"
-    assert import_and_check(appliance, infra_map, error_msg, content=content)
+    hover_error = check_vm_status(appliance, infra_map, error_msg, content=content)
+    assert error_msg == hover_error
 
 
 def test_inconsistent_columns(appliance, infra_map):
     """Test csv with extra inconsistent column value
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: negative
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     content = "Name\n{}, {}".format(fauxfactory.gen_alpha(10), fauxfactory.gen_alpha(10))
     error_msg = "Error: Number of columns is inconsistent on line 2"
-    assert import_and_check(appliance, infra_map, error_msg, content=content)
+    hover_error = check_vm_status(appliance, infra_map, error_msg, content=content)
+    assert error_msg == hover_error
 
 
 def test_csv_empty_vm(appliance, infra_map):
     """Test csv with empty column value
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: positive
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     content = "Name\n\n"
     error_msg = "Empty name specified"
-    assert import_and_check(appliance, infra_map, error_msg,
-                            content=content, table_hover=True)
+    hover_error = check_vm_status(
+        appliance, infra_map, error_msg, content=content, table_hover=True)
+    assert error_msg == hover_error
 
 
 def test_csv_invalid_vm(appliance, infra_map):
     """Test csv with invalid vm name
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: negative
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     content = "Name\n{}".format(fauxfactory.gen_alpha(10))
     error_msg = "VM does not exist"
-    assert import_and_check(appliance, infra_map, error_msg,
-                            content=content, table_hover=True)
+    hover_error = check_vm_status(
+        appliance, infra_map, error_msg, content=content, table_hover=True)
+    assert error_msg == hover_error
 
 
 def test_csv_valid_vm(appliance, infra_map, valid_vm):
     """Test csv with valid vm name
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: positive
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     content = "Name\n{}".format(valid_vm)
     error_msg = "VM available for migration"
-    assert import_and_check(appliance, infra_map, error_msg,
-                            content=content, table_hover=True)
+    hover_error = check_vm_status(
+        appliance, infra_map, error_msg, content=content, table_hover=True)
+    assert error_msg == hover_error
 
 
 def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
     """Test csv with duplicate vm name
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: positive
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     content = "Name\n{}\n{}".format(valid_vm, valid_vm)
     error_msg = "Duplicate VM"
-    assert import_and_check(appliance, infra_map, error_msg, content=content,
-                            table_hover='duplicate')
+    hover_error = check_vm_status(
+        appliance, infra_map, error_msg, content=content, table_hover='duplicate')
+    assert error_msg == hover_error
 
 
 def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name
     Polarion:
         assignee: ytale
-        caseimportance: high
         caseposneg: positive
-        testtype: functional
         startsin: 5.10
         casecomponent: V2V
         customerscenario: true
         initialEstimate: 1/8h
-        subcomponent: RHV
-        upstream: yes
     """
     content = "Name\n{}".format(archived_vm)
     error_msg = "VM is inactive"
-    assert import_and_check(appliance, infra_map, error_msg,
-                            content=content, table_hover=True)
+    hover_error = check_vm_status(
+        appliance, infra_map, error_msg, content=content, table_hover=True)
+    assert error_msg == hover_error
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
+def test_csv_security_group_flavor(appliance, infra_map, valid_vm, provider):
+    """Test csv with secondary openstack security group and flavor
+    Polarion:
+        assignee: ytale
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: V2V
+        customerscenario: true
+        initialEstimate: 1/4h
+    """
+    try:
+        security_group = provider.data.security_groups.admin[1]
+        flavor = provider.data.flavors[1]
+    except (AttributeError, KeyError):
+        pytest.skip("No provider data found.")
+    content = "Name,Security Group,Flavor\n{valid_vm},{security_group},{flavor}".format(
+        valid_vm=valid_vm,
+        security_group=security_group,
+        flavor=flavor,
+    )
+    actual_attributes = {"security_group": security_group, "flavor": flavor}
+    expected_attributes = check_vm_status(appliance, infra_map, actual_attributes, content=content,
+                                          table_hover=True, security_group=True)
+    assert not DeepDiff(actual_attributes, expected_attributes)
