@@ -203,6 +203,18 @@ class ExpressionEditor(View, Pretty):
         # select first element (first_expression) of the elements in the result
         self.browser.click(els[0][0])
 
+    def select_last_expression(self):
+        """There is always at least one (???), so no checking of bounds.
+        Could be the same as first expression but is needed for complex expression tests"""
+        els = wait_for(
+            lambda: self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root),
+            fail_condition=[],
+            timeout=5,
+        )
+        # els[0] is the result of wait_for and els[1] is the duration
+        # select first element (first_expression) of the elements in the result
+        self.browser.click(els[0][-1])
+
     def select_expression_text(self):
         self.expression_text_widget.wait_displayed()
         self.expression_text_widget.click()
