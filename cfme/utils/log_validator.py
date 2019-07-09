@@ -5,8 +5,8 @@ from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
-class LogValidatorException(Exception):
-    """Its custom exception related to LogValidator"""
+class FailPatternMatchError(Exception):
+    """Custom exception for LogValidator"""
 
     def __init__(self, pattern, message, line):
         self.pattern = pattern
@@ -34,7 +34,7 @@ class LogValidator(object):
     to be possible to skip particular ERROR log,
     but fail for wider range of other ERRORs.
 
-    Note: If failures pattern matched in log; It will raise `LogValidatorException`
+    Note: If failures pattern matched in log; It will raise `FailPatternMatchError`
 
     Args:
         remote_filename: path to the remote log file
@@ -78,7 +78,7 @@ class LogValidator(object):
         for pattern in self.failure_patterns:
             if re.search(pattern, line):
                 logger.error("Failure pattern %s was matched on line %s", pattern, line)
-                raise LogValidatorException(pattern, "Expected failure pattern found in log.", line)
+                raise FailPatternMatchError(pattern, "Expected failure pattern found in log.", line)
 
     def _check_match_logs(self, line):
         for pattern in self.matched_patterns:
@@ -87,7 +87,7 @@ class LogValidator(object):
                 self._matches[pattern] = self._matches[pattern] + 1
 
     @property
-    def _validate(self):
+    def _is_valid(self):
         for pattern, count in self.matches.items():
             if count == 0:
                 logger.info("Expected '%s' pattern not found", pattern)
@@ -118,14 +118,12 @@ class LogValidator(object):
             message: Specific message.
         Returns (bool): True if expected pattern matched in log else False
         Raise:
-            TimeOutError: If failed to match pattern in respective timeout
-            LogValidatorException: If failure pattern matched
+            TimedOutError: If failed to match pattern in respective timeout
+            FailPatternMatchError: If failure pattern matched
         """
 
         if wait:
-            ret, _ = wait_for(
-                lambda: self._validate, delay=5, timeout=wait, message=message, **kwargs
-            )
-            return ret
+            wait_for(lambda: self._is_valid, delay=5, timeout=wait, message=message, **kwargs)
+            return True
         else:
-            return self._validate
+            return self._is_valid

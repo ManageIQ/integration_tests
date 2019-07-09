@@ -127,7 +127,6 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
         initialEstimate: 1/10h
         caseimportance: medium
         caseposneg: positive
-        caseposneg: positive
         testtype: functional
         startsin: 5.9
         casecomponent: Automate
