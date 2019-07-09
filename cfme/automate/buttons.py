@@ -519,8 +519,8 @@ class ButtonCollection(BaseCollection):
         view.fill({"advanced": {"system": system, "request": request}})
 
         if attributes is not None:
-            for i, dict_ in enumerate(attributes, 1):
-                view.advanced.attribute(i).fill(dict_)
+            for i, attribute in enumerate(attributes, 1):
+                view.advanced.attribute(i).fill({"key": attribute[0], "value": attribute[1]})
 
         if roles:
             view.advanced.role_show.fill("<By Role>")
