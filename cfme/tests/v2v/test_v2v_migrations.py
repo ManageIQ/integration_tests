@@ -44,9 +44,13 @@ pytestmark = [
         ["nfs", "iscsi", rhel7_minimal],
         ["iscsi", "iscsi", rhel7_minimal],
         ["iscsi", "nfs", rhel7_minimal],
-        ["iscsi", "local", rhel7_minimal],
+        ["local", "nfs", rhel7_minimal],
     ],
     indirect=True,
+)
+@pytest.mark.uncollectif(
+    lambda source_provider, mapping_data_vm_obj_single_datastore:
+    source_provider.version == 6.5 and "local" in mapping_data_vm_obj_single_datastore
 )
 def test_single_datastore_single_vm_migration(
     request, appliance, provider, mapping_data_vm_obj_single_datastore
