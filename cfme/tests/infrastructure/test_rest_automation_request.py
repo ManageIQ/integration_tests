@@ -8,6 +8,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data as _automation_requests_data
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
@@ -256,6 +257,23 @@ class TestAutomationRequestsRESTAPI(object):
         """
         # testing BZ 1418338
         edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
+
+    @pytest.mark.tier(1)
+    @pytest.mark.meta(automates=[BZ(1723830)])
+    def test_multiple_automation_requests(self, collection, appliance, vm):
+        """
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/30h
+            casecomponent: Automate
+
+        Bugzilla:
+            1723830
+        """
+        requests_data = _automation_requests_data(vm, approve=False, num=2000)
+        response = collection.action.create(*requests_data)
+        create_pending_requests(collection, appliance.rest_api, response)
+        deny_requests(collection, appliance.rest_api, response, from_detail=False)
 
 
 class TestAutomationRequestsCommonRESTAPI(object):
