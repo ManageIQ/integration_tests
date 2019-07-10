@@ -62,10 +62,10 @@ def vporizer(appliance):
     created_at = datetime.now()
     vpor_data_list = []
 
-    tables_2_names = zip(
+    tables_2_names = list(zip(
         (container_nodes, container_projects, container_pods),
         ('ContainerNode', 'ContainerProject', 'ContainerGroup')
-    )
+    ))
     for table, resource_type in tables_2_names:
         ids = []
         for resource in db.session.query(table).all():

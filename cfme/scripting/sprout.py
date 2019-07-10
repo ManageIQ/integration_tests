@@ -1,23 +1,22 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from __future__ import print_function
-
 """Script to checkout a sprout appliance
 
 Usage:
 
    sprout.py checkout
 """
-import click
-
 import os
 import signal
 import sys
 import time
+
+import click
 import yaml
 
 from cfme.test_framework.sprout.client import AuthException
-from cfme.test_framework.sprout.plugin import SproutManager, SproutProvisioningRequest
+from cfme.test_framework.sprout.plugin import SproutManager
+from cfme.test_framework.sprout.plugin import SproutProvisioningRequest
 from cfme.utils.path import conf_path
 
 

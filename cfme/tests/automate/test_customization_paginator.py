@@ -15,7 +15,7 @@ pytestmark = [
 @pytest.fixture(scope="module")
 def some_dialogs(appliance, request):
     to_delete = []
-    request.addfinalizer(lambda: map(lambda obj: obj.delete(), to_delete))
+    request.addfinalizer(lambda: [obj.delete() for obj in to_delete])
     for i in range(6):
         random_str = fauxfactory.gen_alphanumeric(16)
         element_data = {

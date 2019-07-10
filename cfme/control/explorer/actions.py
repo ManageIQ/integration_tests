@@ -168,7 +168,7 @@ class Action(BaseEntity, Updateable, Pretty):
         self.run_ansible_playbook = action_values.get("run_ansible_playbook")
 
     def __str__(self):
-        return self.description
+        return str(self.description)
 
     @cached_property
     def alerts_to_evaluate(self):

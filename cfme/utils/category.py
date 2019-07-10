@@ -12,7 +12,7 @@ class CategoryBase(object):
         self.value = value
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
     def __repr__(self):
         return "{}({})".format(type(self).__name__, str(repr(self.value)))

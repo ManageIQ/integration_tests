@@ -85,7 +85,7 @@ run_pip_update () {
     if [ -n "$WHEEL_HOST_URL" ]; then
         export PIP_TRUSTED_HOST="$WHEEL_HOST" PIP_FIND_LINKS="$WHEEL_HOST_URL"
     fi
-    gate "pip_install.txt" "pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+    gate "pip_install.txt" "pip3 install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
     # ensures entrypoint updates
     run_n_log "pip install -e ."
 }
@@ -257,7 +257,7 @@ then
 
     run_n_log "miq sprout checkout --populate-yaml --user-key sprout" &
     sleep 5
-    do_or_die "python /check_provisioned.py >> $ARTIFACTOR_DIR/setup.txt" 5 60 "Sprout failed to provision appliance"
+    do_or_die "python3 /check_provisioned.py >> $ARTIFACTOR_DIR/setup.txt" 5 60 "Sprout failed to provision appliance"
 else
     log "no sprout used"
     log "invoking complete collectonly with given appliance instance before test"

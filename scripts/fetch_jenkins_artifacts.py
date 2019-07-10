@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Collect artifacts after jenkins run
 """
 import argparse

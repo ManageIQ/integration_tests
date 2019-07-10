@@ -290,7 +290,7 @@ def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
                            '/usr/share/ansible/openshift-ansible/playbooks/'
                            'openshift-management/config.yml').format(inventory_file=remote_file)
             cmd_result = ssh_client.run_command(ansible_cmd, ensure_host=True)
-            logger.info(u"deployment result: {result}".format(result=cmd_result.output))
+            logger.info("deployment result: {result}".format(result=cmd_result.output))
             ssh_client.run_command('rm -f {f}'.format(f=remote_file))
 
             assert cmd_result.success

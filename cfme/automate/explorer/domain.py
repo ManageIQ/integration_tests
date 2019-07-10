@@ -330,8 +330,13 @@ class DomainCollection(BaseCollection):
         add_page = navigate_to(self, 'Add')
         fill_dict = {
             k: v
-            for k, v in {'name': name, 'description': description, 'enabled': enabled}.items()
-            if v is not None}
+            for k, v in {
+                'name': name,
+                'description': description,
+                'enabled': enabled
+            }.items()
+            if v is not None
+        }
         add_page.fill(fill_dict)
         if cancel:
             add_page.cancel_button.click()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Create CU VMs on a given provider.
 Where possible, defaults will come from cfme_data

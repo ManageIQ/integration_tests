@@ -45,18 +45,18 @@ def get_clusters(appliance, provider, source_provider):
     }
 
     try:
-        if source_cluster in cluster_db.keys():
+        if source_cluster in list(cluster_db.keys()):
             clusters["source"] = cluster_db[source_cluster].href
     except KeyError:
         pytest.skip("Cluster:{source_cluster} not found in {cluster_list}".format(
-            source_cluster=source_cluster, cluster_list=cluster_db.keys()))
+            source_cluster=source_cluster, cluster_list=list(cluster_db.keys())))
 
     try:
-        if target_cluster in cluster_db.keys():
+        if target_cluster in list(cluster_db.keys()):
             clusters["destination"] = cluster_db[target_cluster].href
     except KeyError:
         pytest.skip("Cluster:{target_cluster} not found in {cluster_list}".format(
-            target_cluster=target_cluster, cluster_list=cluster_db.keys()))
+            target_cluster=target_cluster, cluster_list=list(cluster_db.keys())))
     return clusters
 
 
@@ -75,18 +75,18 @@ def get_datastores(appliance, provider, source_provider):
     }
 
     try:
-        if source_ds in datastore_db.keys():
+        if source_ds in list(datastore_db.keys()):
             datastores["source"] = datastore_db[source_ds].href
     except KeyError:
         pytest.skip("Datastore:{source_ds} not found in {ds_list}".format(
-            source_ds=source_ds, ds_list=datastore_db.keys()))
+            source_ds=source_ds, ds_list=list(datastore_db.keys())))
 
     try:
-        if target_ds in datastore_db.keys():
+        if target_ds in list(datastore_db.keys()):
             datastores["destination"] = datastore_db[target_ds].href
     except KeyError:
         pytest.skip("Datastore:{target_ds} not found in {ds_list}".format(
-            target_ds=target_ds, ds_list=datastore_db.keys()))
+            target_ds=target_ds, ds_list=list(datastore_db.keys())))
     return datastores
 
 
@@ -103,18 +103,18 @@ def get_networks(appliance, provider, source_provider):
     }
 
     try:
-        if source_network in network_db.keys():
+        if source_network in list(network_db.keys()):
             networks["source"] = network_db[source_network].href
     except KeyError:
         pytest.skip("Network:{source_network} not found in {network_list}".format(
-            source_network=source_network, network_list=network_db.keys()))
+            source_network=source_network, network_list=list(network_db.keys())))
 
     try:
-        if target_network in network_db.keys():
+        if target_network in list(network_db.keys()):
             networks["destination"] = network_db[target_network].href
     except KeyError:
         pytest.skip("Network:{target_network} not found in {network_list}".format(
-            target_network=target_network, network_list=network_db.keys()))
+            target_network=target_network, network_list=list(network_db.keys())))
     return networks
 
 

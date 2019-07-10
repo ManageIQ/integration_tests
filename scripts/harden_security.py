@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """SSH into a running appliance and configure security.
 
 Configures security on appliance(s) according to this document:

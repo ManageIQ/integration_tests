@@ -47,7 +47,7 @@ def soft_get(obj,
         if not isinstance(obj, collections.Mapping):
             raise TypeError('{}: {} is not a dict (type={}). '
                             .format(signature, obj, type(obj)))
-        all_fields = obj.keys()
+        all_fields = list(obj.keys())
     else:
         all_fields = dir(obj)
     found_fields = []

@@ -1,9 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Clone a template on a given provider to a VM instance
 
 Where possible, defaults will come from cfme_data"""
-from __future__ import print_function
-
 import argparse
 import sys
 
@@ -205,7 +203,7 @@ def main(**kwargs):
         # filter openstack flavors based on what's available
         available_flavors = provider.list_flavor()
         logger.info("Available flavors on provider: %s", available_flavors)
-        generic_flavors = filter(lambda f: f in available_flavors, yaml_flavor)
+        generic_flavors = [f for f in yaml_flavor if f in available_flavors]
 
         try:
             # TODO py3 filter needs next() instead of indexing

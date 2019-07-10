@@ -234,9 +234,9 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
     new_names = []
     for _ in range(num):
         if provider:
-            template, host, datastore, vlan = map(
+            template, host, datastore, vlan = list(map(
                 provider.data.get('provisioning').get,
-                ('template', 'host', 'datastore', 'vlan'))
+                ('template', 'host', 'datastore', 'vlan')))
 
             vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
 

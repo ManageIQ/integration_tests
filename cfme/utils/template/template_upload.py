@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import argparse
 import sys
 from threading import Thread
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     for provider_type in provider_types:
         provider_keys = list_provider_keys(provider_type)
         if cmd_args.provider:
-            provider_keys = filter(lambda x: x in provider_keys, cmd_args.provider)
+            provider_keys = [x for x in cmd_args.provider if x in provider_keys]
 
         for provider_key in provider_keys:
             if provider_key not in list_provider_keys(provider_type):

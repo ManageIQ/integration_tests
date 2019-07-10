@@ -4,12 +4,12 @@ import attr
 import fauxfactory
 from cached_property import cached_property
 
-from .plugin import AppliancePlugin
-from .plugin import AppliancePluginException
 from cfme.utils import clear_property_cache
 from cfme.utils import conf
 from cfme.utils import datafile
 from cfme.utils import db
+from cfme.utils.appliance.plugin import AppliancePlugin
+from cfme.utils.appliance.plugin import AppliancePluginException
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
 from cfme.utils.version import VersionPicker

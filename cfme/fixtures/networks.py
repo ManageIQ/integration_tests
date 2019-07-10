@@ -53,7 +53,7 @@ def targeted_refresh(merkyl_setup, merkyl_inspector):
             wait_for(check_log, delay=5, num_sec=60)
         except TimedOutError:
             raise NeedleNotFoundInLog('Targeted refresh did not trigger for:\n{}'.format(
-                                      ',\n'.join(map(lambda t: '- ' + t[1], targets))))
+                                      ',\n'.join(['- ' + t[1] for t in targets])))
 
     def register_target(ems_ref, comment):
         targets.add((re.compile(needle_template.format(ems_ref), re.MULTILINE), comment))

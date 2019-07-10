@@ -179,7 +179,9 @@ class BlockManagerCollection(BaseCollection):
         blocks = ("Cinder Manager", "EBS Storage Manager")
         prov_db = {prov.id: prov for prov in self.appliance.rest_api.collections.providers.all}
         managers = [
-            prov for prov in prov_db.values() if any(block in prov.name for block in blocks)
+            prov
+            for prov in prov_db.values()
+            if any(block in prov.name for block in blocks)
         ]
 
         if provider:
@@ -209,7 +211,9 @@ class ObjectManagerCollection(BaseCollection):
         provider = self.filters.get("provider")
         prov_db = {prov.id: prov for prov in self.appliance.rest_api.collections.providers.all}
         managers = [
-            prov for prov in prov_db.values() if "Swift Manager" in prov.name
+            prov
+            for prov in prov_db.values()
+            if "Swift Manager" in prov.name
         ]
 
         if provider:

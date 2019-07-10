@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Clone an Automate Domain
 
 eg, clone_domain.py xx.xx.xx.xx ManageIQ Default

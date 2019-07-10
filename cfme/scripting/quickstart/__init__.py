@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import hashlib
 import json
@@ -11,19 +9,12 @@ from .proc import PRISTINE_ENV
 from .proc import run_cmd_or_exit
 from .system import install_system_packages
 
-LEGACY_BASENAMES = ('cfme_tests', 'integration_tests')
-
-PY3 = sys.version_info[0] == 3
-CWD = os.getcwd()  # we expect to be in the workdir
-
-USE_LEGACY_VENV_PATH = not PY3 and os.path.basename(CWD) in LEGACY_BASENAMES
-
 CREATED = object()
 
-if PY3:
-    REQUIREMENT_FILE = 'requirements/frozen.py3.txt'
-else:
-    REQUIREMENT_FILE = 'requirements/frozen.py2.txt'
+REQUIREMENT_FILE = 'requirements/frozen.py3.txt'
+if sys.version_info.major != 3 and sys.version_info.minor >= 7:
+    print("ERROR: quickstart only runs in python 3.7+")
+    sys.exit(2)
 
 
 IN_VENV = os.path.exists(os.path.join(sys.prefix, 'pyvenv.cfg'))
@@ -49,7 +40,7 @@ def args_for_current_venv():
 def pip_json_list(venv):
     os.environ.pop('PYTHONHOME', None)
     proc = subprocess.Popen([
-        os.path.join(venv, 'bin/pip'),
+        os.path.join(venv, 'bin/pip3'),
         'list', '--format=json',
     ], stdout=subprocess.PIPE)
     return json.load(proc.stdout)
@@ -59,14 +50,13 @@ def setup_virtualenv(target, use_site):
     # check for bin in case "venv" is a precreated empty folder
     if os.path.isdir(os.path.join(target, 'bin')):
         print("INFO: Virtualenv", target, "already exists, skipping creation")
-        return CREATED
-    add = ['--system-site-packages'] if use_site else []
-    if PY3:
-        run_cmd_or_exit([sys.executable, '-m', 'venv', target] + add)
+        ret = CREATED  # object that can be checked against to see if the venv exists
     else:
-        run_cmd_or_exit([sys.executable, '-m', 'virtualenv', target] + add)
+        add = ['--system-site-packages'] if use_site else []
+        run_cmd_or_exit([sys.executable, '-m', 'venv', target] + add)
+        ret = None
     venv_call(target,
-              'pip', 'install', '-U',
+              'pip3', 'install', '-U',
               # pip wheel and setuptools are updated just in case
               # since enterprise distros ship versions that are too stable
               # for our purposes
@@ -74,6 +64,7 @@ def setup_virtualenv(target, use_site):
               # setuptools_scm and docutils installation prevents
               # missbehaved packages from failing
               'setuptools_scm', 'docutils', 'pbr')
+    return ret  # used for venv state
 
 
 def venv_call(venv_path, command, *args, **kwargs):
@@ -112,11 +103,9 @@ def install_requirements(venv_path, quiet=False):
 
     venv_call(
         venv_path,
-        'pip', 'install',
+        'pip3', 'install',
         '-r', REQUIREMENT_FILE,
         '--no-binary', 'pycurl',
-        # needed until https://github.com/Azure/azure-cosmosdb-python/pull/23 is released
-        '--no-binary', 'azure-cosmosdb-table',
         *(['-q'] if quiet else []), long_running=quiet)
 
     with open(remember_file, 'w') as fp:
@@ -161,32 +150,29 @@ def print_version_diff(old, new):
 
 
 def self_install(venv_path):
-    venv_call(venv_path, 'pip', 'install', '-q', '-e', '.')
+    venv_call(venv_path, 'pip3', 'install', '-q', '-e', '.')
 
 
 def disable_bytecode(venv_path):
-    venv_call(venv_path, 'python', '-m', 'cfme.scripting.disable_bytecode')
+    venv_call(venv_path, 'python3', '-m', 'cfme.scripting.disable_bytecode')
 
 
 def link_config_files(venv_path, src, dest):
-    venv_call(venv_path, 'python', '-m', 'cfme.scripting.link_config', src, dest)
+    venv_call(venv_path, 'python3', '-m', 'cfme.scripting.link_config', src, dest)
 
 
 def ensure_pycurl_works(venv_path):
-    venv_call(venv_path, 'python', '-c', 'import curl', env=PRISTINE_ENV)
+    venv_call(venv_path, 'python3', '-c', 'import curl', env=PRISTINE_ENV)
 
 
 def main(args):
     if __package__ is None:
         print("ERROR: quickstart must be invoked as module")
         sys.exit(1)
-    if not IN_VIRTUAL_ENV:
-        # invoked from outside, its ok to be slow
-        install_system_packages(args.debuginfo_install)
-    else:
-        print("INFO: skipping installation of system packages from inside of virtualenv")
+    install_system_packages(args.debuginfo_install)
     venv_state = setup_virtualenv(args.mk_virtualenv, args.system_site_packages)
-    install_requirements(args.mk_virtualenv, quiet=(venv_state is CREATED))
+    install_requirements(args.mk_virtualenv,
+                         quiet=(venv_state is CREATED))  # quiet if the venv already existed
     disable_bytecode(args.mk_virtualenv)
     self_install(args.mk_virtualenv)
     link_config_files(args.mk_virtualenv, args.config_path, 'conf')

@@ -24,7 +24,7 @@ class MarkFromMap(object):
 
     @classmethod
     def from_parsed_list(cls, parsed, key, map_value):
-        data = dict(map(itemgetter('id', key), parsed))
+        data = dict(list(map(itemgetter('id', key), parsed)))
         mark_map = dict((k, map_value(v)) for k, v in data.items())
         return cls(mark_map)
 
@@ -129,7 +129,7 @@ def parse(path):
     if not path.check():
         return []
     with path.open() as fp:
-        return filter(None, map(_clean, csv.DictReader(fp)))
+        return [_f for _f in map(_clean, csv.DictReader(fp)) if _f]
 
 
 if __name__ == '__main__':

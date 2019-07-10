@@ -877,10 +877,9 @@ class VM(BaseVM):
         elif offset is not None:
             # retirement by offset
             fill_date = None
-            fill_offset = {k: v for k, v in offset.items() if k in ['months',
-                                                                    'weeks',
-                                                                    'days',
-                                                                    'hours']}
+            fill_offset = {k: v
+                           for k, v in offset.items()
+                           if k in ['months', 'weeks', 'days', 'hours']}
             # hack together an offset
             # timedelta can take weeks, but not months
             # copy and pop, only used to generate message, not used for form fill
@@ -949,9 +948,9 @@ class VM(BaseVM):
             # so when selecting all, we have to limit it to the latest 10
             rows_number = len(list(drift_history_view.history_table.rows()))
             if rows_number > 10:
-                _select_rows(range(10))
+                _select_rows(list(range(10)))
             else:
-                _select_rows(range(rows_number))
+                _select_rows(list(range(rows_number)))
         drift_history_view.analyze_button.click()
         drift_analysis_view = self.create_view(DriftAnalysis, wait='10s')
         drift_analysis_view.drift_sections.check_node(section)

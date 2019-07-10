@@ -239,7 +239,7 @@ class Alert(BaseEntity, Updateable, Pretty):
 
     def __str__(self):
         """Conversion to string used when assigning in multibox selector."""
-        return self.description
+        return str(self.description)
 
     def update(self, updates):
         """Update this Alert in UI.

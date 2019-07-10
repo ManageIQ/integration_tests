@@ -54,7 +54,7 @@ def _load_firefox_profile():
     profile_dict = json.loads(profile_json)
 
     profile = FirefoxProfile(firefox_profile_tmpdir)
-    for pref in profile_dict.items():
+    for pref, _ in profile_dict.items():
         profile.set_preference(*pref)
     profile.update_preferences()
     return profile
@@ -83,7 +83,7 @@ class Wharf(object):
         if self.docker_id is not None:
             return self.docker_id
         checkout = self._get('checkout')
-        self.docker_id, self.config = next(iter(checkout.items()))
+        self.docker_id, self.config = next(iter(list(checkout.items())))
         self._start_renew_thread()
         log.info('Checked out webdriver container %s', self.docker_id)
         log.debug("%r", checkout)
@@ -119,7 +119,7 @@ class Wharf(object):
             self.config.update(expiry_info)
             log.info('Renewed webdriver container %s', self.docker_id)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.docker_id is not None
 
 

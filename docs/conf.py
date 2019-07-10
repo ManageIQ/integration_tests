@@ -75,8 +75,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"cfme_tests"
-copyright = u"2013, RedHat QE"
+project = "cfme_tests"
+copyright = "2013, RedHat QE"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -215,9 +215,7 @@ latex_elements = {
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-    ("index", "cfme_tests.tex", u"cfme\\_tests Documentation", u"RedHat QE", "manual")
-]
+latex_documents = [("index", "cfme_tests.tex", "cfme\\_tests Documentation", "RedHat QE", "manual")]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -244,7 +242,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("guides/dev_guide", "cfme_tests", u"cfme_tests Documentation", [u"RedHat QE"], 1)]
+man_pages = [("guides/dev_guide", "cfme_tests", "cfme_tests Documentation", ["RedHat QE"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -260,7 +258,7 @@ texinfo_documents = [
         "index",
         "cfme_tests",
         "cfme_tests Documentation",
-        u"RedHat QE",
+        "RedHat QE",
         "cfme_tests",
         "cfme_tests Documentation",
         "Miscellaneous",

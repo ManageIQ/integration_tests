@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Script creates self signed SSL cert and the key necessary to sign it.
 # This is based off of the code in this article:

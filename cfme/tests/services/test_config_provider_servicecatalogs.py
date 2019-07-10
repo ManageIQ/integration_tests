@@ -26,7 +26,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
 
         if not args['config_manager_obj'].yaml_data['provisioning']:
             continue

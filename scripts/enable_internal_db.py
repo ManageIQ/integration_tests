@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """SSH in to a running appliance and set up an internal DB.
 
 An optional region can be specified (default 0), and the script

@@ -29,10 +29,10 @@ def report_vms(appliance, infra_provider):
         ]
     )
     report.queue(wait_for_finish=True)
-    yield sample(
-        filter(
-            lambda i: len(i["Provider Name"].strip()) > 0,
-            list(report.saved_reports.all()[0].data.rows)), 2)
+    yield sample([i for i in
+                 list(report.saved_reports.all()[0].data.rows)
+                 if len(i["Provider Name"].strip()) > 0],
+                 2)
     report.delete()
 
 

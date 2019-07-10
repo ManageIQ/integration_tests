@@ -100,7 +100,7 @@ def generate_system_file(ssh_client, directory):
 
     file_name = str(os.path.join(directory, 'system.csv'))
     with open(file_name, 'w') as csv_file:
-        for key in sorted(system_info.keys(), key=lambda s: s.lower()):
+        for key in sorted(list(system_info.keys()), key=lambda s: s.lower()):
             csv_file.write('{}, {} \n'.format(key, system_info[key]))
 
     timediff = time.time() - starttime
@@ -113,7 +113,7 @@ def generate_processes_file(ssh_client, directory):
 
     file_name = str(os.path.join(directory, 'processes.csv'))
     with open(file_name, 'w') as csv_file:
-        for key in sorted(process_info.keys(), key=lambda s: s.lower()):
+        for key in sorted(list(process_info.keys()), key=lambda s: s.lower()):
             csv_file.write('{}, {} \n'.format(key, process_info[key]))
 
     timediff = time.time() - starttime
@@ -126,7 +126,7 @@ def generate_gems_file(ssh_client, directory):
 
     file_name = str(os.path.join(directory, 'gems.csv'))
     with open(file_name, 'w') as csv_file:
-        for key in sorted(gem_info.keys(), key=lambda s: s.lower()):
+        for key in sorted(list(gem_info.keys()), key=lambda s: s.lower()):
             csv_file.write('{}, {} \n'.format(key, gem_info[key]))
 
     timediff = time.time() - starttime

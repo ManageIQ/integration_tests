@@ -143,7 +143,7 @@ class ProvisioningDialog(Updateable, Pretty, BaseEntity):
                             .format(self.parent.ALLOWED_TYPES))
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     def update(self, updates, cancel=False, reset=False):
         view = navigate_to(self, 'Edit')

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Set up an external DB on an appliance over SSH.
 
 Appliance address and database address are required.

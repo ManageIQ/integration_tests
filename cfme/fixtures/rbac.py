@@ -228,7 +228,7 @@ def pytest_generate_tests(metafunc):
         if enable_rbac:
             try:
                 meta_data = metafunc.function.meta
-                roles = meta_data.kwargs['from_docs']['rbac']['roles'].keys()
+                roles = list(meta_data.kwargs['from_docs']['rbac']['roles'].keys())
             except (KeyError, AttributeError):
                 raise ValueError("Test {} should have metadata describing RBAC roles")
 

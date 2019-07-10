@@ -113,7 +113,7 @@ def _param_check(metafunc, argnames, argvalues):
         classname = getattr(metafunc.cls, '__name__', None)
         funcname = metafunc.function.__name__
 
-        test_name = '.'.join(filter(None, (modname, classname, funcname)))
+        test_name = '.'.join([_f for _f in (modname, classname, funcname) if _f])
         uncollect_msg = 'Parametrization for {} yielded no values,'\
             ' marked for uncollection'.format(test_name)
         logger.warning(uncollect_msg)
@@ -218,7 +218,7 @@ def all_required(miq_version, filters=None):
     nfilters = [DPFilter(classes=pf.classes, inverted=pf.inverted)
                 for pf in filters if isinstance(pf, ProviderFilter)]
     for prov_filter in nfilters:
-        dprovs = filter(prov_filter, dprovs)
+        dprovs = list(filter(prov_filter, dprovs))
     return dprovs
 
 

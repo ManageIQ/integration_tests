@@ -129,7 +129,7 @@ class DelayedProvisionTask(MetadataMixin):
         "Provider", null=True, blank=True, on_delete=models.CASCADE)
 
     def __unicode__(self):
-        return u"Task {}: Provision on {}, lease time {}, avoid provider {}".format(
+        return "Task {}: Provision on {}, lease time {}, avoid provider {}".format(
             self.id, self.pool.id, self.lease_time,
             self.provider_to_avoid.id if self.provider_to_avoid is not None else "---")
 
@@ -276,7 +276,7 @@ class Provider(MetadataMixin):
 
     @classmethod
     def get_available_provider_keys(cls):
-        return cfme_data.get("management_systems", {}).keys()
+        return list(cfme_data.get("management_systems", {}).keys())
 
     @classmethod
     def get_available_provider_types(cls, user=None):
@@ -354,7 +354,7 @@ class Provider(MetadataMixin):
                 per_user_usage[owner] = 1
             else:
                 per_user_usage[owner] += 1
-        per_user_usage = per_user_usage.items()
+        per_user_usage = list(per_user_usage.items())
         per_user_usage.sort(key=lambda item: item[1], reverse=True)
         return per_user_usage
 
@@ -375,7 +375,7 @@ class Provider(MetadataMixin):
                 if user not in result:
                     result[user] = 0
                 result[user] += count
-        result = result.items()
+        result = list(result.items())
         result.sort(key=lambda item: item[1], reverse=True)
         return result
 
@@ -1418,7 +1418,7 @@ class AppliancePool(MetadataMixin):
     @property
     def possible_provisioning_templates(self):
         return sorted(
-            filter(lambda tpl: tpl.provider.free, self.possible_templates),
+            [tpl for tpl in self.possible_templates if tpl.provider.free],
             # Sort by date and load to pick the best match (least loaded provider)
             key=lambda tpl: (tpl.date, 1.0 - tpl.provider.appliance_load), reverse=True)
 
@@ -1463,7 +1463,7 @@ class AppliancePool(MetadataMixin):
 
     @property
     def appliance_ips(self):
-        return [ap.ip_address for ap in filter(lambda a: a.ip_address is not None, self.appliances)]
+        return [ap.ip_address for ap in [a for a in self.appliances if a.ip_address is not None]]
 
     @property
     def fulfilled(self):

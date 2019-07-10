@@ -256,9 +256,12 @@ class ClassCollection(BaseCollection):
         fill_dict = {
             k: v
             for k, v in {
-                'name': name, 'display_name': display_name, 'description': description
+                'name': name,
+                'display_name': display_name,
+                'description': description
             }.items()
-            if v is not None}
+            if v is not None
+        }
         add_page.fill(fill_dict)
         if cancel:
             add_page.cancel_button.click()
@@ -473,7 +476,7 @@ class ClassSchema(Navigatable):
 
         if fields:
             raise TypeError(
-                'Unexpected fields passed to schema: {}'.format(', '.join(fields.keys())))
+                'Unexpected fields passed to schema: {}'.format(', '.join(list(fields.keys()))))
 
         result = page.schema.fill(fill_dict)
 

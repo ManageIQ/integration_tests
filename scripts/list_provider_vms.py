@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import argparse
 from multiprocessing import Process
 from multiprocessing import Queue

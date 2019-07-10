@@ -82,7 +82,7 @@ def test_queue_tenant_quota_reports(set_and_get_tenant_quota, tenant_report):
     """
     report_data = dict()
     for row in tenant_report.data.rows:
-        if row["Quota Name"] in PROPERTY_MAPPING.values():
+        if row["Quota Name"] in list(PROPERTY_MAPPING.values()):
             report_data[row["Quota Name"]] = row["Total Quota"]
     assert report_data == set_and_get_tenant_quota
 

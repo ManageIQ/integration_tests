@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+
 
 import diaper
 import fauxfactory
@@ -26,7 +26,8 @@ from lxml import etree
 from miq_version import Version, TemplateName
 from novaclient.exceptions import OverLimit as OSOverLimit
 from paramiko import SSHException
-from urllib2 import urlopen, HTTPError
+from urllib.request import urlopen
+from urllib.error import HTTPError
 from wrapanapi import VmState, Openshift, VMWareSystem
 import socket
 
@@ -392,7 +393,7 @@ def poke_trackerbot(self):
             if per_group[key]:
                 objects.append(per_group[key].pop(0))
     for template in objects:
-        if template["provider"]["key"] not in conf.cfme_data.management_systems.keys():
+        if template["provider"]["key"] not in list(conf.cfme_data.management_systems.keys()):
             # If we don't use that provider in yamls, set the template as not usable
             # 1) It will prevent adding this template if not added
             # 2) It'll mark the template as unusable if it already exists
@@ -918,7 +919,7 @@ def process_delayed_provision_tasks(self):
             # No free appliance in shepherd, so do it on our own
             tpls = task.pool.possible_provisioning_templates
             if task.provider_to_avoid is not None:
-                filtered_tpls = filter(lambda tpl: tpl.provider != task.provider_to_avoid, tpls)
+                filtered_tpls = [tpl for tpl in tpls if tpl.provider != task.provider_to_avoid]
                 if filtered_tpls:
                     # There are other providers to provision on, so try one of them
                     tpls = filtered_tpls
@@ -952,7 +953,7 @@ def replace_clone_to_pool(
         return
     exclude_template = Template.objects.get(id=exclude_template_id)
     templates = appliance_pool.possible_templates
-    templates_excluded = filter(lambda tpl: tpl != exclude_template, templates)
+    templates_excluded = [tpl for tpl in templates if tpl != exclude_template]
     if templates_excluded:
         template = random.choice(templates_excluded)
     else:
@@ -1503,7 +1504,7 @@ def check_templates_in_provider(self, provider_id):
     try:
         # TODO: change after openshift wrapanapi refactor
         if isinstance(provider.api, Openshift):
-            templates = map(str, provider.api.list_template())
+            templates = list(map(str, provider.api.list_template()))
         else:
             templates = [tmpl.name for tmpl in provider.api.list_templates()]
     except Exception as err:
@@ -1585,7 +1586,7 @@ def generic_shepherd(self, preconfigured):
                 usable=True, ready=True, template_group=gs.template_group,
                 preconfigured=preconfigured, **filter_keep).all())
         # If it can be deployed, it must exist
-        possible_templates_for_provision = filter(lambda tpl: tpl.exists, possible_templates)
+        possible_templates_for_provision = [tpl for tpl in possible_templates if tpl.exists]
         appliances = []
         for template in possible_templates:
             appliances.extend(
@@ -1601,10 +1602,9 @@ def generic_shepherd(self, preconfigured):
             # reasonable balancing
             with transaction.atomic():
                 # Now look for templates that are on non-busy providers
-                tpl_free = filter(
-                    lambda t: not t.provider.disabled and t.provider.free,
-                    possible_templates_for_provision
-                )
+                tpl_free = [t for t
+                            in possible_templates_for_provision
+                            if not t.provider.disabled and t.provider.free]
                 if tpl_free:
                     chosen_template = sorted(tpl_free, key=lambda t: t.provider.appliance_load)[0]
                     new_appliance_name = gen_appliance_name(chosen_template.id)
@@ -1832,7 +1832,7 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
 @singleton_task()
 def calculate_provider_management_usage(self, appliance_ids):
     results = {}
-    for appliance_id in filter(lambda id: id is not None, appliance_ids):
+    for appliance_id in [id for id in appliance_ids if id is not None]:
         try:
             appliance = Appliance.objects.get(id=appliance_id)
         except ObjectDoesNotExist:
@@ -2105,7 +2105,7 @@ def notify_owners(self, results):
 
     # Send out the e-mails
     for user, messages in per_user.items():
-        appliance_list = '\n'.join('* {}'.format(message) for message in messages)
+        appliance_list = '\n'.join(['* {}'.format(m) for m in messages])
         email_body = """\
 Hello,
 
@@ -2288,7 +2288,7 @@ def read_docker_images_from_url_group(self, group_id):
             proper_pull_url = re.sub(r':latest$', ':{}'.format(latest), pull_url)
         elif cfme_docker and cfme_docker[0].lower().strip() == 'tags:':
             # Multiple tags, take the longest
-            proper_pull_url = sorted(filter(None, cfme_docker[1:]), key=len, reverse=True)[0]
+            proper_pull_url = sorted([_f for _f in cfme_docker[1:] if _f], key=len, reverse=True)[0]
             latest = proper_pull_url.rsplit(':', 1)[-1]
         else:
             self.logger.info('Skipping: unknown format: {!r}'.format(cfme_docker))

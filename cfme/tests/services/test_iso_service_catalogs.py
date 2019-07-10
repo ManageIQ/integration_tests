@@ -55,10 +55,22 @@ def setup_iso_datastore(setup_provider, iso_cust_template, iso_datastore, provis
 
 @pytest.fixture(scope="function")
 def catalog_item(appliance, provider, dialog, catalog, provisioning):
-    iso_template, host, datastore, iso_file, iso_kickstart,\
-        iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
-                                'datastore', 'iso_file', 'iso_kickstart',
-                                'iso_root_password', 'iso_image_type', 'vlan'))
+    (iso_template,
+     host,
+     datastore,
+     iso_file,
+     iso_kickstart,
+     iso_root_password,
+     iso_image_type,
+     vlan) = tuple(map(provisioning.get,
+                     ('pxe_template',
+                      'host',
+                      'datastore',
+                      'iso_file',
+                      'iso_kickstart',
+                      'iso_root_password',
+                      'iso_image_type',
+                      'vlan')))
 
     provisioning_data = {
         'catalog': {'catalog_name': {'name': iso_template, 'provider': provider.name},

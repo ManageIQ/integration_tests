@@ -191,7 +191,7 @@ def test_check_vm_retirement_requester(
     ).userid
 
     # the report filter is such that we will only obtain one row in the report
-    row_data = saved_report.data.rows.next()
+    row_data = next(saved_report.data.rows)
     assert (
         row_data["Name"],
         row_data["Retirement Requester"],

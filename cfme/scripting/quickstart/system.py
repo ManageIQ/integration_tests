@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import re
 import time
@@ -56,10 +54,10 @@ if os.path.exists(OS_RELEASE_FILE):
 print('OS_NAME: {}, OS_VERSION: {}'.format(OS_NAME, OS_VERSION))
 
 RH_BASE = (
-    " python2-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel"
+    " gcc postgresql-devel libxml2-devel libxslt-devel"
     " zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python-devel tesseract freetype-devel"
-    " python2-debuginfo python3-debuginfo git"
+    " libffi-devel python3 python3-pip python3-devel tesseract freetype-devel"
+    " python3-debuginfo git"
 )
 
 RH_BASE_NEW = RH_BASE.replace("zeromq3-devel", "zeromq-devel")
@@ -82,17 +80,19 @@ REDHAT_PACKAGES_SPECS = [
 
 
 DEB_PKGS = (
-    " python-virtualenv python3-virtualenv gcc postgresql libxml2-dev"
+    " python3-venv python3-virtualenv gcc gnutls-dev postgresql libxml2-dev"
     " libxslt1-dev libzmq3-dev libcurl4-openssl-dev"
-    " g++ openssl libffi-dev python-dev libtesseract-dev"
-    " libpng-dev libfreetype6-dev libssl-dev python-dbg git"
+    " g++ openssl libffi-dev python3-dev libtesseract-dev"
+    " libpng-dev libfreetype6-dev libssl-dev python3-dbg git"
 )
 
 OS_PACKAGES_SPECS = [
     # Extend this
     ("Ubuntu", "16.04.3 LTS (Xenial Xerus)", "openssl", DEB_PKGS),
+    ("Ubuntu", "16.04", "openssl", DEB_PKGS),  # as it appears in travis
     ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl", DEB_PKGS),
     ("Ubuntu", "17.10 (Artful Aardvark)", "openssl", DEB_PKGS),
+    ("Ubuntu", "18.04", "gnutls", DEB_PKGS),  # as it appears in travis
     ("Ubuntu", "18.04.1 LTS (Bionic Beaver)", "openssl", DEB_PKGS),
     ("Debian GNU/Linux", "9 (stretch)", "openssl", DEB_PKGS),
 ]

@@ -136,7 +136,9 @@ def serv_button_group(appliance, request):
 @pytest.mark.tier(1)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.parametrize(
-    "display", DISPLAY_NAV.keys(), ids=[item.replace(" ", "_") for item in DISPLAY_NAV.keys()]
+    "display",
+    list(DISPLAY_NAV.keys()),
+    ids=[item.replace(" ", "_") for item in DISPLAY_NAV.keys()]
 )
 @pytest.mark.uncollectif(
     lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,

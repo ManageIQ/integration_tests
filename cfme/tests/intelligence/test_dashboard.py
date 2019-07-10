@@ -64,7 +64,7 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
 
 
 @pytest.mark.rhel_testing
-@pytest.mark.parametrize("number_dashboards", range(1, 4))
+@pytest.mark.parametrize("number_dashboards", list(range(1, 4)))
 @pytest.mark.meta(blockers=[BZ(1666712)])
 def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, appliance):
     """Create some custom dashboards and check their presence. Then check their contents.
@@ -78,7 +78,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, 
     # Very useful construct. List is mutable, so we can prepare the generic delete finalizer.
     # Then we add everything that succeeded with creation. Simple as that :)
     dashboards_to_delete = []
-    request.addfinalizer(lambda: map(lambda item: item.delete(), dashboards_to_delete))
+    request.addfinalizer(lambda: [item.delete() for item in dashboards_to_delete])
     for _ in range(number_dashboards):
         d = appliance.collections.report_dashboards.create(
             fauxfactory.gen_alphanumeric(),
@@ -99,7 +99,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, 
                                 "Widget {} not found in {}!".format(widget.name, dash.name))
                 del dash_dict[dash.name]
         soft_assert(not dash_dict, "Some of the dashboards were not found! ({})".format(
-            ", ".join(dash_dict.keys())))
+            ", ".join(list(dash_dict.keys()))))
     except IndexError:
         pytest.fail("No dashboard selection tabs present on dashboard!")
 

@@ -1,7 +1,29 @@
+# https://docs.travis-ci.com/user/languages/python/#python-37-and-higher
+dist: xenial
+addons:
+  apt:
+    packages:
+      - python3-venv
+      - gcc
+      - gnutls-dev
+      - postgresql
+      - libxml2-dev
+      - libxslt1-dev
+      - libzmq3-dev
+      - libcurl4-openssl-dev
+      - g++
+      - openssl
+      - libffi-dev
+      - python3-dev
+      - libtesseract-dev
+      - libpng-dev
+      - libfreetype6-dev
+      - libssl-dev
+      - python3-dbg
+      - git
 language: python
 python:
-  - '2.7'
-  - '3.6'
+  - '3.7'
 stages:
 - linting
 - test
@@ -9,8 +31,61 @@ stages:
 
 jobs:
   include:
+    - stage: linting
+      python: '3.7'
+      env:
+      install:
+      - pip3 install pre-commit flake8
+      - pip3 install polarion-docstrings
+      - pre-commit install-hooks
+      script:
+      - pre-commit run --all-files
+      after_failure:
+      - git diff
+
+    - stage: test
+      python: '3.7'
+      dist: xenial
+      addons:
+        apt:
+          packages:
+            - python3-venv
+            - gcc
+            - gnutls-dev
+            - postgresql
+            - libxml2-dev
+            - libxslt1-dev
+            - libzmq3-dev
+            - libcurl4-openssl-dev
+            - g++
+            - openssl
+            - libffi-dev
+            - python3-dev
+            - libtesseract-dev
+            - libpng-dev
+            - libfreetype6-dev
+            - libssl-dev
+            - python3-dbg
+            - git
+      env:
+        # work around travis being missconfigured
+        - BOTO_CONFIG=/dev/null
+      install:
+        - pip3 install -U setuptools pip
+        - python3 -m cfme.scripting.quickstart
+        # use templates for conf files necessary for collecting
+        - cp conf/cfme_data.yaml.template conf/cfme_data.yaml
+        - cp conf/env.yaml.template conf/env.yaml
+        - cp conf/credentials.yaml.template conf/credentials.yaml
+      script:
+        - pytest cfme/utils/tests cfme/modeling/tests requirements  -v --dummy-appliance
+        - pytest -p no:cfme cfme/tests/test_modules_importable.py
+        - pytest -v --dummy-appliance --collectonly --include-manual
+      after_success:
+        - coveralls
+
     - stage: deploy
-      python: '3.6'
+      python: '3.7'
       env:
       install: pip install -U setuptools setuptools_scm pbr
       script: skip
@@ -23,33 +98,6 @@ jobs:
         on:
           tags: true
           repo: ManageIQ/integration_tests
-    - stage: linting
-      python: '3.6'
-      env:
-      install:
-      - pip install pre-commit flake8
-      - pip install polarion-docstrings
-      - pre-commit install-hooks
-      script:
-      - pre-commit run --all-files
-      after_failure:
-      - git diff
-env:
-  #   work around travis being missconfigured
-  - BOTO_CONFIG=/dev/null
-install:
-  - pip install -U setuptools pip
-  - python -m cfme.scripting.quickstart
-  # not sure it makes sense to put this into quickstart. so, it is added here
-  - cp conf/cfme_data.yaml.template conf/cfme_data.yaml
-  - cp conf/env.yaml.template conf/env.yaml
-  - cp conf/credentials.yaml.template conf/credentials.yaml
-script:
-- pytest cfme/utils/tests cfme/modeling/tests requirements  -v --dummy-appliance
-- pytest -p no:cfme cfme/tests/test_modules_importable.py
-- pytest -v --dummy-appliance --collectonly --include-manual
-after_success:
-  - coveralls
 cache:
   directories:
     - $HOME/.cache/pip

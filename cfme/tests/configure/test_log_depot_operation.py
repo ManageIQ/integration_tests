@@ -259,7 +259,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         pattern = re.compile(
             r"(^{})(.*?){}{}[.]zip$".format(CollectLogsBase.ALERT_PROMPT,
                                             server_string, date_group))
-        zip_files = filter(pattern.match, contents)
+        zip_files = list(filter(pattern.match, contents))
         assert zip_files, "No logs found!"
         # Check the time of the last file
         datetimes = []

@@ -58,7 +58,7 @@ class Blocker(object):
                 except KeyError:
                     raise ValueError(
                         "{} is a wrong engine specification for blocker! ({} available)".format(
-                            engine, ", ".join(cls.all_blocker_engines().keys())))
+                            engine, ", ".join(list(cls.all_blocker_engines().keys()))))
                 return engine_class(spec, **kwargs)
             match = re.match('^[A-Z][A-Z0-9]+-[0-9]+$', blocker)
             if match is not None:

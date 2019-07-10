@@ -156,7 +156,7 @@ class EventAttr(object):
         if len(attrs) > 1:
             raise ValueError('event attribute can have only one key=value pair')
 
-        self.name, self.value = attrs.items()[0]
+        self.name, self.value = list(attrs.items())[0]
         self.type = attr_type or type(self.value)
         self.cmp_func = cmp_func
 
@@ -200,7 +200,8 @@ class Event(object):
                 logger.warning("arg {} doesn't belong to EventAttr. ignoring it".format(arg))
 
     def __repr__(self):
-        params = ", ".join(["{}={}".format(attr.name, attr.value) for attr in
+        params = ", ".join(["{}={}".format(attr.name, attr.value)
+                            for attr in
                             self.event_attrs.values()])
         return "BaseEvent({})".format(params)
 

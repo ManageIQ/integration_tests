@@ -291,7 +291,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
         payload = {
             "action": "edit",
             "resources": [{
-                "href": filter(lambda c_attr: c_attr.name == ca.name, attribs)[-1].href,
+                "href": [c_attr for c_attr in attribs if c_attr.name == ca.name][-1].href,
                 "value": ca.value
             } for ca in custom_attributes]}
         return self.appliance.rest_api.post(

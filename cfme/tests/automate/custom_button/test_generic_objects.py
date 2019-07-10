@@ -57,7 +57,9 @@ def setup_obj(appliance, button_group):
 
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
-    "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
+    "display",
+    list(DISPLAY_NAV.keys()),
+    ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
 def test_custom_button_display_evm_obj(request, display, setup_obj, button_group):
     """ Test custom button display on a targeted page

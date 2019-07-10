@@ -86,7 +86,7 @@ def resolve_blockers(item, blockers):
     # Check blockers
     use_blockers = []
     # Bugzilla shortcut
-    blockers = map(lambda b: "BZ#{}".format(b) if isinstance(b, int) else b, blockers)
+    blockers = ["BZ#{}".format(b) if isinstance(b, int) else b for b in blockers]
     for blocker in map(Blocker.parse, blockers):
         if blocker.blocks:
             use_blockers.append(blocker)

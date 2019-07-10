@@ -203,7 +203,7 @@ def test_landing_page_admin(
         1656722
     """
     logged_in_page = appliance.server.login_admin()
-    steps = map(lambda x: x.strip(), start_page.split("/"))
+    steps = [x.strip() for x in start_page.split("/")]
 
     # splitting steps splits Import and Export, which we do not wanted, so joining them with /
     if "Import / Export" in start_page:

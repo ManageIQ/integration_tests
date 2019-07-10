@@ -1,6 +1,4 @@
-#!/usr/bin/env python2
-from __future__ import print_function
-
+#!/usr/bin/env python3
 import bottle
 import click
 
@@ -70,7 +68,7 @@ def main(run_id, port):
         with log_path.join("artifactor_crash.log").open("w") as f:
             print(e, file=f)
             print(e, file=sys.stderr)
-            tb = "\n".join(traceback.format_tb(sys.exc_traceback))
+            tb = "\n".join(traceback.format_tb(sys.exc_info()[2]))
             print(tb, file=f)
             print(tb, file=sys.stderr)
 

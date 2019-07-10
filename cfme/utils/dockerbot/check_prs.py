@@ -1,14 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import json
 import logging
 import traceback
 from datetime import datetime
 
-import dockerbot
 import pika
 import requests
 from slumber.exceptions import HttpClientError
 
+from . import dockerbot
 from cfme.utils.appliance import Appliance
 from cfme.utils.conf import docker as docker_conf
 from cfme.utils.log import setup_logger
@@ -32,7 +32,7 @@ logging.getLogger("pika").propagate = False
 def send_message_to_bot(msg):
 
     required_fields = set(['rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'])
-    if not required_fields.issubset(docker_conf.viewkeys()):
+    if not required_fields.issubset(docker_conf.keys()):
         logger.warn("Skipping - docker.yaml doesn't have {}".format(required_fields))
         return
 

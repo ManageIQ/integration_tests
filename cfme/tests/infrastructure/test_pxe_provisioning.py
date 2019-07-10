@@ -41,7 +41,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
 
         provider = args['provider']
 
@@ -55,7 +55,7 @@ def pytest_generate_tests(metafunc):
             continue
 
         pxe_cust_template = provisioning_data['pxe_kickstart']
-        if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
+        if pxe_cust_template not in list(cfme_data.get('customization_templates', {}).keys()):
             continue
 
         new_idlist.append(idlist[i])
@@ -114,14 +114,14 @@ def test_pxe_provision_from_template(appliance, provider, vm_name, setup_provide
         pxe_template, host, datastore,
         pxe_server, pxe_image, pxe_kickstart,
         pxe_root_password, pxe_image_type, pxe_vlan
-    ) = map(
+    ) = list(map(
         provider.data['provisioning'].get,
         (
             'pxe_template', 'host', 'datastore',
             'pxe_server', 'pxe_image', 'pxe_kickstart',
             'pxe_root_password', 'pxe_image_type', 'vlan'
         )
-    )
+    ))
 
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(vm_name, provider)

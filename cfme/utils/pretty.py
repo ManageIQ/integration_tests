@@ -13,7 +13,7 @@ def attr_repr(o, attr):
 
 
 def pretty_repr(attrs, o):
-    pairs = zip(attrs, [attr_repr(o, attr) for attr in attrs])
+    pairs = list(zip(attrs, [attr_repr(o, attr) for attr in attrs]))
     return "<{} {}>".format(_name(o),
                         ", ".join(["{}={}".format(i[0], i[1]) for i in pairs]))
 

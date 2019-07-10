@@ -164,7 +164,7 @@ class ReporterBase(object):
             # Current structure:
             # {groupid: (group_order, [{filedict1}, {filedict2}])}
             # Sorting by group_order
-            processed_groups = sorted(processed_groups.items(), key=lambda kv: kv[1][0])
+            processed_groups = sorted(list(processed_groups.items()), key=lambda kv: kv[1][0])
             # And now make it [(groupid, [{filedict1}, {filedict2}, ...])]
             processed_groups = [(group_name, files) for group_name, (_, files) in processed_groups]
             for group_name, file_dicts in processed_groups:
@@ -187,9 +187,9 @@ class ReporterBase(object):
 
                 test_data["file_groups"].append((group_name, group_file_list))
             # Snd remove groups that are left empty because of eg. traceback or qa contact
-            test_data["file_groups"] = filter(
-                lambda group: len(group[1]) > 0, test_data["file_groups"]
-            )
+            test_data["file_groups"] = [
+                f_group for f_group in test_data["file_groups"] if len(f_group[1]) > 0
+            ]
             if "short_tb" in test_data and test_data["short_tb"]:
                 urls = [url for url in URL.findall(test_data["short_tb"])]
                 if urls:
@@ -302,9 +302,7 @@ class ReporterBase(object):
             # If there is a '_sub' attribute then we know we have other modules to go.
             elif "_sub" in v:
                 percenstring = ""
-                bmax = 0
-                for _, val in v["_stats"].items():
-                    bmax += val
+                bmax = sum(v["_stats"].values())
                 # If there were any NON skipped tests, we now calculate the percentage which
                 # passed.
                 if bmax:

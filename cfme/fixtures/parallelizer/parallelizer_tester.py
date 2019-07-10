@@ -18,7 +18,7 @@ num_copies = 20
 
 
 @pytest.fixture(
-    params=range(10, 10 * num_copies),
+    params=list(range(10, 10 * num_copies)),
     autouse=True,
     scope='module',
 )

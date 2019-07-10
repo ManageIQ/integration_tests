@@ -294,8 +294,7 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
     rows = list(report.data.rows)
     for row in rows:
         project_name, pod_name = row['Project Name'], row['Pod Name']
-        pod = filter(lambda pd: pd.metadata.name == pod_name,
-                     pods_per_project[project_name])
+        pod = [pd for pd in pods_per_project[project_name] if pd.metadata.name == pod_name]
         soft_assert(pod, 'Could not find pod "{}" of project "{}" in the report.'
                     .format(pod_name, project_name))
         pod = pod.pop()
@@ -303,7 +302,7 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
             expected_image = pd.spec.containers[0].image
             pod_images = [r['Image Name'] for r in rows if r['Pod Name'] == pod_name]
             # Use 'in' since the image name in the API may include also registry and tag
-            soft_assert(filter(lambda img_nm: img_nm in expected_image, pod_images),
+            soft_assert([img_nm for img_nm in pod_images if img_nm in expected_image],
                         'Could not find image "{}" in pod "{}". Pod images in report: {}'
                         .format(expected_image, pod_name, pod_images))
 
@@ -346,7 +345,7 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
                       if row['Pod Name'] == pod_name and
                       row['Node Name'] == node]
         # Use 'in' since the image name in the API may include also registry and tag
-        is_image = filter(lambda img_nm: img_nm in expected_image, pod_images)
+        is_image = [img_nm for img_nm in pod_images if img_nm in expected_image]
         soft_assert(is_image,
                     'Expected image for pod "{0}" in node {1} is "{2}". found images: {3}'
                     .format(pod_name, node, expected_image, pod_images))

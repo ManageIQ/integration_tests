@@ -124,7 +124,7 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
     work_items = []
     custom_fields = {}
     try:
-        description = item.function.func_doc
+        description = item.function.__doc__
     except Exception:
         description = ""
     try:
@@ -140,7 +140,7 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
     except Exception:
         pass
 
-    param_list = extract_fixtures_values(item).keys() if not legacy else None
+    param_list = list(extract_fixtures_values(item).keys()) if not legacy else None
 
     manual = item.get_marker('manual')
     if not manual:
@@ -149,7 +149,7 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
             xunit['gh_owner'],
             xunit['gh_repo'],
             item.location[0],
-            item.function.func_code.co_firstlineno
+            item.function.__code__.co_firstlineno
         )
         custom_fields['caseautomation'] = "automated"
         custom_fields['automation_script'] = automation_script
@@ -311,9 +311,7 @@ def gen_duplicates_log(items):
         else:
             names[name] = {path}
 
-    for name, paths in names.items():
-        if len(paths) > 1:
-            duplicates.add(name)
+    [duplicates.add(name) for name, paths in names.items() if len(paths) > 1]
 
     with open('duplicates.log', 'w') as f:
         for test in sorted(duplicates):
