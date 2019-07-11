@@ -142,8 +142,6 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
 @pytest.mark.meta(
     blockers=[BZ(1671580, unblock=lambda provider: not provider.one_of(AzureProvider))]
 )
-@pytest.mark.uncollectif(
-    lambda provider: provider.one_of(EC2Provider) or provider.one_of(GCEProvider))
 def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     """
     Polarion:

@@ -42,7 +42,7 @@ def azone(appliance, provider):
     blockers=[BZ(1671580, unblock=lambda provider: not provider.one_of(AzureProvider))]
 )
 @pytest.mark.uncollectif(lambda provider, graph_type: provider.one_of(EC2Provider)
-    and graph_type in ["azone_memory", "azone_disk"])
+    and graph_type == "azone_disk")
 def test_azone_graph_screen(provider, azone, graph_type, interval, enable_candu):
     """Test Availibility zone graphs for Hourly
 
