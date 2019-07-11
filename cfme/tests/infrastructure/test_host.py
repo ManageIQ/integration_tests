@@ -251,7 +251,6 @@ def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
 
 
 @test_requirements.general_ui
-@pytest.mark.provider([RHEVMProvider], selector=ONE, scope="module", override=True)
 @pytest.mark.parametrize(
     "power_state", ["preparing_for_maintenance", "maintenance", "unknown", "off", "on"]
 )
@@ -309,7 +308,7 @@ def test_infrastructure_hosts_icons_states(
     actual_state = view.entities.summary("Properties").get_text_of("Power State")
     soft_assert(
         actual_state == power_state,
-        "Power state in the summary table[{}] did not match with {}.".format(
+        "Power state in the summary table[{}] did not match with [{}].".format(
             actual_state, power_state
         ),
     )
