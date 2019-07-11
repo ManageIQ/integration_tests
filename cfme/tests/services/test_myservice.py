@@ -120,7 +120,7 @@ def test_download_file(appliance, context, needs_firefox, service_vm, filetype):
 
 
 @pytest.mark.parametrize('context', [ViaUI])
-def test_service_link(appliance, context, service_vm, provider):
+def test_service_link(appliance, context, service_vm):
     """Tests service link from VM details page(BZ1443772)
 
     Polarion:
