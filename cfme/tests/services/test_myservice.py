@@ -6,7 +6,6 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 from cfme.utils import browser
 from cfme.utils.appliance import ViaUI
