@@ -100,6 +100,10 @@ def test_single_datastore_single_vm_migration(
     [["DPortGroup", "ovirtmgmt", dportgroup_template], ["VM Network", "ovirtmgmt", rhel7_minimal]],
     indirect=True,
 )
+@pytest.mark.uncollectif(
+    lambda source_provider, mapping_data_vm_obj_single_network:
+    source_provider.version != 6.5 and "DPortGroup" in mapping_data_vm_obj_single_network
+)
 def test_single_network_single_vm_migration(
     request, appliance, provider, mapping_data_vm_obj_single_network
 ):
