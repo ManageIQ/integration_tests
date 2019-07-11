@@ -10,6 +10,7 @@ from cfme.automate.explorer.method import MethodCopyView
 from cfme.automate.simulation import simulate
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
@@ -80,12 +81,13 @@ def test_domain_lock_disabled(klass):
         initialEstimate: 1/16h
         tags: automate
     """
+    schema_field = fauxfactory.gen_alphanumeric()
     # Disable automate domain
     with update(klass.namespace.domain):
         klass.namespace.domain.enabled = False
 
     # Adding schema for executing automate method
-    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+    klass.schema.add_fields({'name': schema_field, 'type': 'Method', 'data_type': 'String'})
 
     # Adding automate method
     method = klass.methods.create(
@@ -99,7 +101,7 @@ def test_domain_lock_disabled(klass):
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
-        fields={'execute': {'value': method.name}}
+        fields={schema_field: {'value': method.name}}
     )
 
     result = LogValidator(
@@ -320,11 +322,12 @@ def test_object_attribute_type_in_automate_schedule(appliance):
     if len(all_options) < 2:
         # There should be more than one options available because <choose> is default option
         raise OptionNotAvailable("Options not available")
-    for options in all_options:
-        view.form.object_type.select_by_visible_text(options.text)
-        view.flash.assert_no_error()
-        view.form.object_type.select_by_visible_text('<Choose>')
-        view.flash.assert_no_error()
+    for option in all_options:
+        if not (BZ(1686762).blocks and option.text in ['Tenant', 'EVM Group']):
+            view.form.object_type.select_by_visible_text(option.text)
+            view.flash.assert_no_error()
+            view.form.object_type.select_by_visible_text('<Choose>')
+            view.flash.assert_no_error()
 
 
 @pytest.mark.tier(3)

@@ -347,7 +347,8 @@ def automate_flavor_method(appliance, klass, namespace):
                   exit MIQ_STOP\n
                 end\n
     """
-    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+    schema_field = fauxfactory.gen_alphanumeric()
+    klass.schema.add_fields({'name': schema_field, 'type': 'Method', 'data_type': 'String'})
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
@@ -358,7 +359,7 @@ def automate_flavor_method(appliance, klass, namespace):
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
-        fields={'execute': {'value': method.name}}
+        fields={schema_field: {'value': method.name}}
     )
     yield instance
     instance.delete()

@@ -194,8 +194,9 @@ def test_automate_schema_field_without_type(klass):
     Bugzilla:
         1365442
     """
+    schema_field = fauxfactory.gen_alphanumeric()
     with pytest.raises(AssertionError):
-        klass.schema.add_fields({'name': 'execute', 'data_type': 'String'})
+        klass.schema.add_fields({'name': schema_field, 'data_type': 'String'})
     view = klass.create_view(ClassSchemaEditView)
     assert view.schema.save_button.disabled
     assert view.schema.reset_button.disabled

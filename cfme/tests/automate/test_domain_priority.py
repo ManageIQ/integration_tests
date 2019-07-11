@@ -228,6 +228,7 @@ def test_automate_disabled_domains_in_domain_priority(request, klass):
     Bugzilla:
         1331017
     """
+    schema_field = fauxfactory.gen_alphanumeric()
     # Create one more domain
     other_domain = klass.appliance.collections.domains.create(name=fauxfactory.gen_alphanumeric(),
                                                               description=fauxfactory.gen_alpha(),
@@ -242,12 +243,12 @@ def test_automate_disabled_domains_in_domain_priority(request, klass):
     )
     request.addfinalizer(method.delete_if_exists)
 
-    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+    klass.schema.add_fields({'name': schema_field, 'type': 'Method', 'data_type': 'String'})
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
-        fields={'execute': {'value': method.name}}
+        fields={schema_field: {'value': method.name}}
     )
     request.addfinalizer(instance.delete_if_exists)
 

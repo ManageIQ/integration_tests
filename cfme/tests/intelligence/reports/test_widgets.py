@@ -162,7 +162,7 @@ def test_generate_widget_content_by_automate(request, appliance, klass, namespac
             1445932
     """
     widget_name = fauxfactory.gen_alphanumeric()
-
+    schema_field = fauxfactory.gen_alphanumeric()
     # Added method with given code
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -174,12 +174,12 @@ def test_generate_widget_content_by_automate(request, appliance, klass, namespac
     )
 
     # Edited schema of class to execute method using instance
-    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+    klass.schema.add_fields({'name': schema_field, 'type': 'Method', 'data_type': 'String'})
 
     # Added new instance
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
-        fields={'execute': {'value': '{method}'.format(method=method.name)}}
+        fields={schema_field: {'value': method.name}}
     )
 
     # Created chart widget
