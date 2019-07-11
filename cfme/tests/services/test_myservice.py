@@ -51,10 +51,9 @@ def test_retire_service_ui(appliance, context, service_vm):
         initialEstimate: 1/4h
         tags: service
     """
-    service, vm = service_vm
+    service, _ = service_vm
     with appliance.context.use(context):
-        myservice = MyService(appliance, name=service.name, vm_name=vm.name)
-        myservice.retire()
+        service.retire()
 
 
 @pytest.mark.parametrize('context', [ViaUI])
@@ -70,11 +69,10 @@ def test_retire_service_on_date(appliance, context, service_vm):
         initialEstimate: 1/4h
         tags: service
     """
-    service, vm = service_vm
+    service, _ = service_vm
     with appliance.context.use(context):
-        myservice = MyService(appliance, name=service.name, vm_name=vm.name)
         dt = datetime.utcnow()
-        myservice.retire_on_date(dt)
+        service.retire_on_date(dt)
 
 
 @pytest.mark.parametrize('context', [ViaUI])
@@ -91,14 +89,13 @@ def test_crud_set_ownership_and_edit_tags(appliance, context, service_vm):
         tags: service
     """
 
-    service, vm = service_vm
+    service, _ = service_vm
     with appliance.context.use(context):
-        myservice = MyService(appliance, name=service.name, vm_name=vm.name)
-        myservice.set_ownership("Administrator", "EvmGroup-administrator")
-        myservice.add_tag()
-        with update(myservice):
-            myservice.description = "my edited description"
-        myservice.delete()
+        service.set_ownership("Administrator", "EvmGroup-administrator")
+        service.add_tag()
+        with update(service):
+            service.description = "my edited description"
+            service.delete()
 
 
 @pytest.mark.parametrize('context', [ViaUI])
@@ -117,10 +114,9 @@ def test_download_file(appliance, context, needs_firefox, service_vm, filetype):
         initialEstimate: 1/16h
         tags: service
     """
-    service, vm = service_vm
+    service, _ = service_vm
     with appliance.context.use(context):
-        myservice = MyService(appliance, name=service.name, vm_name=vm.name)
-        myservice.download_file(filetype)
+        service.download_file(filetype)
 
 
 @pytest.mark.parametrize('context', [ViaUI])
@@ -136,20 +132,15 @@ def test_service_link(appliance, context, service_vm, provider):
     service, vm = service_vm
     with appliance.context.use(context):
         # TODO: Update to nav to MyService first to click entity link when widget exists
-        myservice = MyService(appliance, name=service.name, vm_name=vm.name)
-        vm = appliance.provider_based_collection(coll_type='vms', provider=provider).instantiate(
-            name=myservice.vm_name,
-            provider=provider
-        )
         view = navigate_to(vm, 'Details')
         view.entities.summary('Relationships').click_at('Service')
-        new_view = myservice.create_view(MyServiceDetailView)
+        new_view = service.create_view(MyServiceDetailView)
         assert new_view.wait_displayed()
 
 
 @pytest.mark.parametrize('context', [ViaUI])
 @pytest.mark.meta(automates=[BZ(1720338)])
-def test_retire_service_with_retired_vm(appliance, context, service_vm, provider):
+def test_retire_service_with_retired_vm(appliance, context, service_vm):
     """Tests retire service with an already retired vm.
 
     Metadata:
