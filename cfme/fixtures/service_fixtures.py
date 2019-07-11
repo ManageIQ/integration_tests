@@ -184,7 +184,7 @@ def service_vm(appliance, provider, catalog_item):
 
     collection = provider.appliance.provider_based_collection(provider)
     vm_name = "{}0001".format(catalog_item.prov_data["catalog"]["vm_name"])
-    vm = collection.instantiate("{}0001".format(vm_name), provider)
+    vm = collection.instantiate("{}".format(vm_name), provider)
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     provision_request = service_catalogs.order()
