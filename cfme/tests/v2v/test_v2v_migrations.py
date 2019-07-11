@@ -197,8 +197,15 @@ def test_dual_datastore_dual_vm_migration(
 
 @pytest.mark.parametrize(
     "mapping_data_vm_obj_dual_nics",
-    [[["VM Network", "ovirtmgmt"], ["DPortGroup", "Storage - VLAN 33"], dual_network_template]],
+    [
+        ["VM Network", "ovirtmgmt", dual_network_template],
+        ["DPortGroup", "Storage - VLAN 33", dual_network_template]
+    ],
     indirect=True,
+)
+@pytest.mark.uncollectif(
+    lambda source_provider, mapping_data_vm_obj_dual_nics:
+    source_provider.version != 6.5 and "DPortGroup" in mapping_data_vm_obj_dual_nics
 )
 def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_dual_nics):
     """

@@ -569,20 +569,13 @@ def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider)
     recursive_update(
         infra_mapping_data,
         {
-            "description": "Dual DS migration of VM from {dss1} to {dst1},& from {dss2} to {dst2}".
-            format(dss1=request.param[0][0],
-                   dst1=request.param[0][1],
-                   dss2=request.param[1][0],
-                   dst2=request.param[1][1]),
+            "description": "Dual DS migration of VM from {network1} to {network2}".format(
+                network1=request.param[0], network2=request.param[1]),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, request.param[0][0], request.param[0][1]
-                ),
-                component_generator(
-                    "vlans", source_provider, provider, request.param[1][0], request.param[1][1]
-                ),
-            ],
-        },
+                    "vlans", source_provider, provider, request.param[0], request.param[1])
+            ]
+        }
     )
     vm_obj = get_vm(request, appliance, source_provider, request.param[2])
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
