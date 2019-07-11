@@ -94,7 +94,7 @@ def test_crud_set_ownership_and_edit_tags(appliance, context, service_vm):
         service.add_tag()
         with update(service):
             service.description = "my edited description"
-            service.delete()
+        service.delete()
 
 
 @pytest.mark.parametrize('context', [ViaUI])
