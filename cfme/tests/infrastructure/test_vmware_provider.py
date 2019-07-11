@@ -16,6 +16,7 @@ from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.vmware,
@@ -31,6 +32,7 @@ pytestmark = [
 
 
 @pytest.mark.tier(3)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
 def test_vmware_provider_filters(appliance, provider, soft_assert):
     """
     N-3 filters for esx provider.
@@ -104,6 +106,7 @@ def test_appliance_scsi_control_vmware(request, appliance):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
 def test_vmware_vds_ui_display(soft_assert, appliance, provider):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
@@ -137,6 +140,7 @@ def test_vmware_vds_ui_display(soft_assert, appliance, provider):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1650441, forced_streams=['5.10', '5.11'])])
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
 def test_vmware_reconfigure_vm_controller_type(appliance, provider):
     """
     Edit any VM which is provisioned for vSphere and select "Reconfigure this VM" option.
@@ -175,6 +179,7 @@ def test_vmware_reconfigure_vm_controller_type(appliance, provider):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
 def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
@@ -239,6 +244,7 @@ def test_vmware_inaccessible_datastore():
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1689369, forced_streams=['5.10', '5.11'])])
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
 def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     """
     Test CD/DVD Drives dropdown lists ISO files, dropdown is not blank
@@ -373,6 +379,7 @@ def test_vmware_provisioned_vm_host_relationship(request, appliance, provider):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
 def test_esxi_reboot_not_orphan_vms(appliance, provider):
     """
     By mimicking ESXi reboot effect on VMs in CFME, make sure they are not getting marked orphaned.
@@ -502,6 +509,7 @@ def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
     assert result.success, "SSH Command result was unsuccessful: {}".format(result)
     logger.info('output of rails command: %s', result.output)
     provider.refresh_provider_relationships()
+    wait_for(provider.is_refreshed, func_kwargs={"refresh_delta": 120}, num_sec=300, delay=30)
     # Using appliance.rest_api as hosts.all() do not return archived hosts, I need those too
     hosts_after = len(appliance.rest_api.collections.hosts.all)
     assert hosts_before == hosts_after
