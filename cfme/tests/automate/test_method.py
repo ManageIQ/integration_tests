@@ -274,7 +274,6 @@ def test_task_id_for_method_automation_log(request, generic_catalog_item):
     result.validate_logs()
 
 
-@pytest.mark.meta(blockers=[BZ(1704439)])
 @pytest.mark.meta(server_roles="+notifier")
 def test_send_email_method(smtp_test, klass):
     """
@@ -291,6 +290,7 @@ def test_send_email_method(smtp_test, klass):
     mail_to = fauxfactory.gen_email()
     mail_cc = fauxfactory.gen_email()
     mail_bcc = fauxfactory.gen_email()
+    schema_field = fauxfactory.gen_alphanumeric()
 
     # Ruby code to send emails
     script = (
@@ -307,7 +307,7 @@ def test_send_email_method(smtp_test, klass):
     script = script.format(mail_cc=mail_cc, mail_bcc=mail_bcc, mail_to=mail_to)
 
     # Adding schema for executing method - send_email which helps to send emails
-    klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+    klass.schema.add_fields({'name': schema_field, 'type': 'Method', 'data_type': 'String'})
 
     # Adding method - send_email for sending mails
     method = klass.methods.create(
@@ -321,7 +321,7 @@ def test_send_email_method(smtp_test, klass):
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
-        fields={'execute': {'value': method.name}}
+        fields={schema_field: {'value': method.name}}
     )
 
     result = LogValidator(
@@ -391,6 +391,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
     Bugzilla:
         1410920
     """
+    schema_field = fauxfactory.gen_alphanumeric()
     # Ruby code
     script = 'go_class = $evm.vmdb(:generic_object_definition).find_by(:name => "{name}")\n'.format(
         name=generic_object_definition.name
@@ -408,7 +409,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
     )
     with appliance.context.use(ViaUI):
         # Adding schema for executing method
-        klass.schema.add_fields({'name': 'execute', 'type': 'Method', 'data_type': 'String'})
+        klass.schema.add_fields({'name': schema_field, 'type': 'Method', 'data_type': 'String'})
 
         # Adding method
         method = klass.methods.create(
@@ -422,7 +423,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
             name=fauxfactory.gen_alphanumeric(),
             display_name=fauxfactory.gen_alphanumeric(),
             description=fauxfactory.gen_alphanumeric(),
-            fields={'execute': {'value': method.name}}
+            fields={schema_field: {'value': method.name}}
         )
 
         result = LogValidator(
