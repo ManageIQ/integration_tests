@@ -7,12 +7,14 @@ from widgetastic_patternfly import BootstrapSelect
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -39,6 +41,62 @@ CREDENTIALS = [
     ("VMware", "vcenter_host", "gather_all_vms_from_vmware.yml"),
     ("Red Hat Virtualization", "host", "connect_to_rhv.yml"),
 ]
+
+
+@pytest.fixture()
+def ansible_linked_vm_action(appliance, ansible_catalog_item, new_vm):
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
+
+    action_values = {
+        "run_ansible_playbook": {
+            "playbook_catalog_item": ansible_catalog_item.name,
+            "inventory": {"specific_hosts": True, "hosts": new_vm.ip_address},
+        }
+    }
+
+    action = appliance.collections.actions.create(
+        fauxfactory.gen_alphanumeric(),
+        action_type="Run Ansible Playbook",
+        action_values=action_values,
+    )
+    yield action
+
+    action.delete_if_exists()
+
+
+@pytest.fixture()
+def new_vm(provider, big_template):
+    vm_collection = provider.appliance.provider_based_collection(provider)
+    vm = vm_collection.instantiate(random_vm_name(context='ansible'),
+                                  provider,
+                                  template_name=big_template.name)
+    vm.create_on_provider(find_in_cfme=True)
+    logger.debug(
+        "Fixture new_vm set up! Name: %r Provider: %r", vm.name, vm.provider.name
+    )
+    yield vm
+    vm.cleanup_on_provider()
+
+
+@pytest.fixture()
+def ansible_policy_linked_vm(appliance, new_vm, ansible_linked_vm_action):
+    policy = appliance.collections.policies.create(
+        VMControlPolicy,
+        fauxfactory.gen_alpha(),
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(new_vm.name),
+    )
+    policy.assign_actions_to_event(
+        "Tag Complete", [ansible_linked_vm_action.description]
+    )
+    policy_profile = appliance.collections.policy_profiles.create(
+        fauxfactory.gen_alpha(), policies=[policy]
+    )
+    new_vm.assign_policy_profiles(policy_profile.description)
+    yield
+
+    policy_profile.delete_if_exists()
+    policy.delete_if_exists()
 
 
 @pytest.fixture
@@ -659,10 +717,8 @@ def test_service_ansible_verbosity(
 ):
     """Check if the different Verbosity levels can be applied to service and
     monitor the std out
-
     Bugzilla:
         1460788
-
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
@@ -707,3 +763,34 @@ def test_service_ansible_verbosity(
     view = navigate_to(ansible_service, "Details")
     assert verbosity[0] == view.provisioning.details.get_text_of("Verbosity")
     assert verbosity[0] == view.retirement.details.get_text_of("Verbosity")
+
+
+@pytest.mark.tier(3)
+@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.usefixtures("setup_provider")
+@pytest.mark.meta(automates=[BZ(1448918)])
+def test_ansible_service_linked_vm(
+    appliance,
+    new_vm,
+    ansible_policy_linked_vm,
+    ansible_service_request,
+    ansible_service,
+    request,
+):
+    """Check Whether service has associated VM attached to it.
+
+    Bugzilla:
+        1448918
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/3h
+        tags: ansible_embed
+    """
+    new_vm.add_tag()
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+
+    view = navigate_to(ansible_service, "Details")
+    assert new_vm.name in view.entities.vms.all_entity_names

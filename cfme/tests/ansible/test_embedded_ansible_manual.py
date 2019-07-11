@@ -799,46 +799,6 @@ def test_service_ansible_overridden_extra_vars():
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_linked_vms_opsui_sui():
-    """
-    Associated with BZ
-
-    Bugzilla:
-        1510797
-
-    Please follow the steps below to recreate the scenario: 1. Enable
-    Embedded Ansible role.
-    2. Wait until it will be enabled.
-    3. Navigate to Automate/Ansible.
-    4. Add ansible repository https://github.com/mkanoor/playbook.
-    5. Navigate to Services->Catalogs.
-    6. Expand "Catalog Items" accordion.
-    7. Create "Ansible Playbook" Catalog Item.
-    8. Pick "add_single_vm_to_service.yml" playbook.
-    9. Navigate to Control->Explorer.
-    10. Expand Actions accordion.
-    11. Click Configuration->Add a new Action.
-    12. In action type choose "Run Ansible Playbook".
-    13. In Playbook Catalog Item choose just created catalog item.
-    14. In inventory choose "Target machine" or provide a specific host.
-    15. Assign this action to some event in a host or vm control policy.
-    16. Assign policy profile which contains that policy to some host or
-    vm.
-    17. Trigger the event which assigned to the policy.
-    18. Wait until the service will be provisioned.
-    19. Navigate tot Services/My Services.
-    20. Open details of the provisioned service, open "Provisioning" tab.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_service_ansible_playbook_standard_output_non_ascii_hostname():
     """
     Look for Standard ouptut
