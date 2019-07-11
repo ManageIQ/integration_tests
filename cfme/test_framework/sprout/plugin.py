@@ -7,9 +7,9 @@ import pytest
 from cached_property import cached_property
 from six.moves.urllib.parse import urlparse
 
-from .client import AuthException
-from .client import SproutClient
-from .client import SproutException
+from cfme.test_framework.sprout.client import AuthException
+from cfme.test_framework.sprout.client import SproutClient
+from cfme.test_framework.sprout.client import SproutException
 from cfme.utils import at_exit
 from cfme.utils import conf
 from cfme.utils.log import logger as log
@@ -24,41 +24,111 @@ this option can be specified more than once, and must be specified at least two 
 
 def pytest_addoption(parser):
     group = parser.getgroup("cfme")
-    group._addoption(
-        '--appliance', dest='appliances', action='append', metavar='appliance_url',
-        help=_appliance_help, default=[])
-    group._addoption('--use-sprout', dest='use_sprout', action='store_true',
-        default=False, help="Use Sprout for provisioning appliances.")
-    group._addoption('--sprout-appliances', dest='sprout_appliances', type=int,
-        default=1, help="How many Sprout appliances to use?.")
-    group._addoption('--sprout-timeout', dest='sprout_timeout', type=int,
-        default=60, help="How many minutes is the lease timeout.")
-    group._addoption('--sprout-provision-timeout', dest='sprout_provision_timeout', type=int,
-        default=60, help="How many minutes to wait for appliances provisioned.")
-    group._addoption(
-        '--sprout-group', dest='sprout_group', default=None, help="Which stream to use.")
-    group._addoption(
-        '--sprout-version', dest='sprout_version', default=None, help="Which version to use.")
-    group._addoption(
-        '--sprout-date', dest='sprout_date', default=None, help="Which date to use.")
-    group._addoption(
-        '--sprout-desc', dest='sprout_desc', default=None, help="Set description of the pool.")
-    group._addoption('--sprout-override-ram', dest='sprout_override_ram', type=int,
-        default=0, help="Override RAM (MB). 0 means no override.")
-    group._addoption('--sprout-override-cpu', dest='sprout_override_cpu', type=int,
-        default=0, help="Override CPU core count. 0 means no override.")
-    group._addoption(
-        '--sprout-provider', dest='sprout_provider', default=None, help="Which provider to use.")
-    group._addoption('--sprout-provider-type', dest='sprout_provider_type', default=None,
-        help="Sprout provider type - openshift, etc")
-    group._addoption('--sprout-template-type', dest='sprout_template_type', default=None,
-        help="Specifies which template type to use openshift_pod, virtual_machine, docker_vm")
-    group._addoption('--sprout-ignore-preconfigured', dest='sprout_template_preconfigured',
-                     default=True, action="store_false",
-                     help="Allows to use not preconfigured templates")
-    group._addoption('--sprout-user-key', default=None,
-                     help='Key for sprout user in credentials yaml, '
-                          'alternatively set SPROUT_USER and SPROUT_PASSWORD env vars')
+    group.addoption(
+        '--appliance',
+        dest='appliances',
+        action='append',
+        metavar='appliance_url',
+        help=_appliance_help,
+        default=[]
+    )
+    group.addoption(
+        '--use-sprout',
+        dest='use_sprout',
+        action='store_true',
+        default=False,
+        help="Use Sprout for provisioning appliances."
+    )
+    group.addoption(
+        '--sprout-appliances',
+        dest='sprout_appliances',
+        type=int,
+        default=1,
+        help="How many Sprout appliances to use?."
+    )
+    group.addoption(
+        '--sprout-timeout',
+        dest='sprout_timeout',
+        type=int,
+        default=60,
+        help="How many minutes is the lease timeout."
+    )
+    group.addoption(
+        '--sprout-provision-timeout',
+        dest='sprout_provision_timeout',
+        type=int,
+        default=60,
+        help="How many minutes to wait for appliances provisioned."
+    )
+    group.addoption(
+        '--sprout-group',
+        dest='sprout_group',
+        default=None,
+        help="Which stream to use."
+    )
+    group.addoption(
+        '--sprout-version',
+        dest='sprout_version',
+        default=None,
+        help="Which version to use."
+    )
+    group.addoption(
+        '--sprout-date',
+        dest='sprout_date',
+        default=None,
+        help="Which date to use."
+    )
+    group.addoption(
+        '--sprout-desc',
+        dest='sprout_desc',
+        default=None,
+        help="Set description of the pool."
+    )
+    group.addoption(
+        '--sprout-override-ram',
+        dest='sprout_override_ram',
+        type=int,
+        default=0,
+        help="Override RAM (MB). 0 means no override."
+    )
+    group.addoption(
+        '--sprout-override-cpu',
+        dest='sprout_override_cpu',
+        type=int,
+        default=0,
+        help="Override CPU core count. 0 means no override."
+    )
+    group.addoption(
+        '--sprout-provider',
+        dest='sprout_provider',
+        default=None,
+        help="Which provider to use."
+    )
+    group.addoption(
+        '--sprout-provider-type',
+        dest='sprout_provider_type',
+        default=None,
+        help="Sprout provider type - openshift, etc"
+    )
+    group.addoption(
+        '--sprout-template-type',
+        dest='sprout_template_type',
+        default=None,
+        help="Specifies which template type to use openshift_pod, virtual_machine, docker_vm"
+    )
+    group.addoption(
+        '--sprout-ignore-preconfigured',
+        dest='sprout_template_preconfigured',
+        default=True,
+        action="store_false",
+        help="Allows to use not preconfigured templates"
+    )
+    group.addoption(
+        '--sprout-user-key',
+        default=None,
+        help='Key for sprout user in credentials yaml, '
+             'alternatively set SPROUT_USER and SPROUT_PASSWORD env vars'
+    )
 
 
 def dump_pool_info(log, pool_data):
