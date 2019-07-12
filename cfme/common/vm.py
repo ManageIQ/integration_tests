@@ -581,7 +581,8 @@ class BaseVMCollection(BaseCollection):
                 if provision_request.is_succeeded(method='ui'):
                     logger.info('Waiting for vm %s to appear on provider %s', vm.name,
                                 provider.key)
-                    wait_for(provider.mgmt.does_vm_exist, [vm.name], num_sec=600)
+                    wait_for(provider.mgmt.does_vm_exist, [vm.name],
+                             handle_exception=True, num_sec=600)
                 elif override:
                     logger.info('Overriding exception to check failure condition.')
                 else:
