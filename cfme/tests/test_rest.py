@@ -1245,12 +1245,12 @@ def test_custom_logos_via_api(appliance, image_type, request):
         image = image_file_path("logo.png")
         expected_name = "/upload/custom_{}.png"
 
-    appliance.server.upload_custom_logos(file_type=image_type, file_data=image)
+    appliance.server.upload_custom_logo(file_type=image_type, file_data=image)
 
     # reset appliance to use default logos
     @request.addfinalizer
     def _finalize():
-        appliance.server.upload_custom_logos(file_type=image_type, enable=False)
+        appliance.server.upload_custom_logo(file_type=image_type, enable=False)
 
     href = "https://{}/api/product_info".format(appliance.hostname)
     api = appliance.rest_api
@@ -1258,6 +1258,6 @@ def test_custom_logos_via_api(appliance, image_type, request):
     # wait until product info is updated
     wait_for(lambda: api.product_info != api.get(href), delay=5, timeout=100)
 
-    # fetch the latest produce_info
+    # fetch the latest product_info
     branding_info = api.get(href)["branding_info"]
     assert branding_info[image_type] == expected_name.format(image_type)
