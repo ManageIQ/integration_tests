@@ -1,6 +1,9 @@
 import fauxfactory
 import pytest
 
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
+
 
 @pytest.fixture(scope='module')
 def domain(appliance):
@@ -63,3 +66,21 @@ def custom_instance(request_cls):
         return instance
 
     return method
+
+
+def import_datastore(appliance, request):
+    """This fixture will help to import datastore file"""
+
+    def domain(file_name, domain_from, domain_into=None):
+        # Download datastore file from FTP server
+        fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+        file_path = fs.download(file_name)
+
+        # Import datastore file to appliance
+        datastore = appliance.collections.automate_import_exports.instantiate(
+            import_type="file", file_path=file_path
+        )
+        request.addfinalizer(datastore.delete_if_exists)
+        return datastore.import_domain_from(domain_from, domain_into=None)
+    return domain
+
