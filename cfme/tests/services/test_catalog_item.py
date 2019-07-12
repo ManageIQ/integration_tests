@@ -447,7 +447,7 @@ def test_service_provisioning_email(request, appliance, catalog_item):
     result = LogValidator(
         "/var/www/miq/vmdb/log/automation.log", failure_patterns=[".*Error during substitution.*"]
     )
-    result.fix_before_start()
+    result.start_monitoring()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     request_description = ("Provisioning Service [{catalog_item_name}] from [{catalog_item_name}]"
@@ -455,4 +455,4 @@ def test_service_provisioning_email(request, appliance, catalog_item):
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
-    result.validate_logs()
+    assert result.validate(wait="60s")

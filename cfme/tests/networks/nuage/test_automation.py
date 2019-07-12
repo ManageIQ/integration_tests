@@ -77,6 +77,6 @@ def test_embedded_ansible_executed_with_data_upon_event(request,
                                                                                    enterprise.id)
         ]
     )
-    evm_tail.fix_before_start()
+    evm_tail.start_monitoring()
     # search logs and wait for validation
-    evm_tail.wait_for_log_validation(timeout=300, delay=10, fail_condition=False)
+    assert evm_tail.validate(wait="300s")

@@ -224,10 +224,10 @@ def test_custom_button_with_dynamic_dialog_vm(
                 "/var/www/miq/vmdb/log/automation.log",
                 matched_patterns=["Attributes - Begin", 'name = "{}"'.format(service.vm_name)],
             )
-            log.fix_before_start()
+            log.start_monitoring()
             submit = "submit" if context is ViaUI else "submit_request"
             getattr(view, submit).click()
-            log.wait_for_log_validation()
+            assert log.validate(wait="120s")
 
 
 @pytest.mark.meta(automates=[1427430, 1450473, 1454910])
@@ -271,11 +271,11 @@ def test_custom_button_automate_service_vm(request, appliance, service_vm, butto
             log = LogValidator(
                 "/var/www/miq/vmdb/log/automation.log", matched_patterns=["Attributes - Begin"]
             )
-            log.fix_before_start()
+            log.start_monitoring()
 
             # Execute custom button on service vm
             custom_button_group = Dropdown(view, button_group.text)
             custom_button_group.item_select(button.text)
 
             # validate request in log
-            log.wait_for_log_validation()
+            assert log.validate(wait="120s")

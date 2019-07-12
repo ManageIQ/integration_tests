@@ -111,13 +111,13 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
             matched_patterns=[".*This is the user: {name}.*".format(
                 name=new_users[0].credential.principal)],
         )
-        result.fix_before_start()
+        result.start_monitoring()
         service_catalogs = ServiceCatalogs(
             appliance, catalog=generic_catalog_item.catalog, name=generic_catalog_item.name
         )
         provision_request = service_catalogs.order()
         provision_request.wait_for_request()
-        result.validate_logs()
+        assert result.validate(wait="60s")
 
     with new_users[1]:
         # Log in with second user and provision instance via lifecycle
@@ -126,7 +126,7 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
             matched_patterns=[".*This is the user: {name}.*".format(
                 name=new_users[1].credential.principal)],
         )
-        result.fix_before_start()
+        result.start_monitoring()
         prov_data = {
             "catalog": {'vm_name': random_vm_name(context='provision')},
             "environment": {'automatic_placement': True},
@@ -141,4 +141,4 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
         provision_request = appliance.collections.requests.instantiate(request_description)
         provision_request.wait_for_request(method='ui')
         request.addfinalizer(provision_request.remove_request)
-        result.validate_logs()
+        assert result.validate(wait="60s")

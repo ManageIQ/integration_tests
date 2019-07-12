@@ -56,8 +56,8 @@ def test_configuration_database_garbage_collection(appliance):
                                 r'.*Queued the action: \[Database GC\] being run for user:.*'
                             ],
                             failure_patterns=[r'.*ERROR.*'])
-    evm_tail.fix_before_start()
+    evm_tail.start_monitoring()
     view = navigate_to(appliance.server.zone.region, 'Database')
     view.submit_db_garbage_collection_button.click()
     view.flash.assert_message('Database Garbage Collection successfully initiated')
-    evm_tail.validate_logs()
+    assert evm_tail.validate(wait="30s")

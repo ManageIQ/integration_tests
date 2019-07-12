@@ -76,7 +76,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     evm_tail_disable = LogValidator('/var/www/miq/vmdb/log/evm.log',
                                     matched_patterns=[r'.*Disabling EMS \[{}\] id \[{}\].*'
                                                       .format(provider.name, str(provider.id))])
-    evm_tail_disable.fix_before_start()
+    evm_tail_disable.start_monitoring()
     if from_collections:
         rep_disable = appliance.collections.containers_providers.pause_providers(provider)
         # collections class returns a list of dicts containing the API response.
@@ -89,7 +89,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
                     .format(provider.name))
     soft_assert(not provider.is_provider_enabled, 'Provider {} is still enabled'
                 .format(provider.name))
-    evm_tail_disable.validate_logs()
+    assert evm_tail_disable.validate()
     # Verify all monitoring workers have been shut down
     assert wait_for(lambda: not check_ems_state_in_diagnostics(appliance, provider))
     # Create a project on the OpenShift provider via wrapanapi
@@ -117,7 +117,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
     evm_tail_enable = LogValidator('/var/www/miq/vmdb/log/evm.log',
                                    matched_patterns=[r'.*Enabling EMS \[{}\] id \[{}\].*'
                                                      .format(provider.name, str(provider.id))])
-    evm_tail_enable.fix_before_start()
+    evm_tail_enable.start_monitoring()
     if from_collections:
         rep_enable = appliance.collections.containers_providers.resume_providers(provider)
         soft_assert(rep_enable[0].get('success'), 'Enabling provider {} failed'
@@ -126,7 +126,7 @@ def test_pause_and_resume_single_provider_api(appliance, provider, from_collecti
         rep_enable = provider.resume()
         soft_assert(rep_enable.get('success'), 'Enabling provider {} failed'.format(provider.name))
     soft_assert(provider.is_provider_enabled, 'Provider {} is still disabled'.format(provider.name))
-    evm_tail_enable.validate_logs()
+    assert evm_tail_enable.validate()
     provider.refresh_provider_relationships()
     soft_assert(
         wait_for(

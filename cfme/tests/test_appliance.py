@@ -405,9 +405,9 @@ def test_codename_in_log(appliance):
     lv = LogValidator(log,
                       matched_patterns=[r'.*Codename: \w+$'],
                       hostname=appliance.hostname)
-    lv.fix_before_start()
+    lv.start_monitoring()
     appliance.ssh_client.run_command('appliance_console_cli --server=restart')
-    lv.wait_for_log_validation()
+    assert lv.validate(wait="60s")
     appliance.wait_for_web_ui()
 
 

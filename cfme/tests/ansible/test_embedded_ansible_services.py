@@ -734,7 +734,7 @@ def test_service_ansible_verbosity(
     # Log Validator
     log = LogValidator("/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern])
     # Start Log check or given pattern
-    log.fix_before_start()
+    log.start_monitoring()
 
     @request.addfinalizer
     def _revert():
@@ -757,7 +757,7 @@ def test_service_ansible_verbosity(
     )
     # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
     # is being logging in evm.log
-    log.validate_logs()
+    assert log.validate(wait="60s")
     logger.info("Pattern found {}".format(log.matched_patterns))
 
     view = navigate_to(ansible_service, "Details")

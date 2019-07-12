@@ -394,14 +394,14 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
             '.*Prevent current event from proceeding.*VM Analysis Request.*{}'.format(vm.name)
         ]
     )
-    policy_result.fix_before_start()
+    policy_result.start_monitoring()
 
     wait_for_ssa_enabled(vm)
 
     try:
         do_scan(vm)
     except TimedOutError:
-        policy_result.validate_logs()
+        assert policy_result.validate(wait="120s")
     else:
         pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
 
@@ -437,7 +437,7 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
             '.*Prevent current event from proceeding.*Host Analysis Request.*{}'.format(host.name)
         ]
     )
-    policy_result.fix_before_start()
+    policy_result.start_monitoring()
 
     view = navigate_to(host, "Details")
 
@@ -456,7 +456,7 @@ def test_action_prevent_host_ssa(request, appliance, host, host_policy):
             message="Check if Drift History field is changed",
         )
     except TimedOutError:
-        policy_result.validate_logs()
+        assert policy_result.validate(wait="120s")
     else:
         pytest.fail("CFME did not prevent analysing the Host {}".format(host.name))
 
@@ -487,7 +487,7 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
             )
         ]
     )
-    policy_result.fix_before_start()
+    policy_result.start_monitoring()
 
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
@@ -499,7 +499,7 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
     # Start the VM
     vm.mgmt.ensure_state(VmState.RUNNING)
     # search logs wait_for log_validation
-    policy_result.wait_for_log_validation()
+    assert policy_result.validate(wait="120s")
 
 
 @pytest.mark.provider(
@@ -527,7 +527,7 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
             )
         ]
     )
-    policy_result.fix_before_start()
+    policy_result.start_monitoring()
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
 
@@ -539,7 +539,7 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
     vm.mgmt.ensure_state(VmState.RUNNING)
 
     # Search the logs and wait for validation
-    policy_result.wait_for_log_validation()
+    assert policy_result.validate("180s")
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")

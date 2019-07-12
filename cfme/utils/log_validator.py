@@ -1,17 +1,26 @@
 import re
 
-import pytest
-from _pytest.outcomes import Failed
-
 from .ssh import SSHTail
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
+class FailPatternMatchError(Exception):
+    """Custom exception for LogValidator"""
+
+    def __init__(self, pattern, message, line):
+        self.pattern = pattern
+        self.message = message
+        self.line = line
+
+    def __str__(self):
+        return repr("Pattern '{p}': {m}".format(p=self.pattern, m=self.message))
+
+
 class LogValidator(object):
     """
     Log content validator class provides methods
-    to fix the log content before test is started,
+    to monitor the log content before test is started,
     and validate the content of log during test execution,
     according to predefined patterns.
     Predefined patterns are:
@@ -25,6 +34,8 @@ class LogValidator(object):
     to be possible to skip particular ERROR log,
     but fail for wider range of other ERRORs.
 
+    Note: If failures pattern matched in log; It will raise `FailPatternMatchError`
+
     Args:
         remote_filename: path to the remote log file
         skip_patterns: array of skip regex patterns
@@ -37,8 +48,8 @@ class LogValidator(object):
                                   skip_patterns=['PARTICULAR_ERROR'],
                                   failure_patterns=['.*ERROR.*'],
                                   matched_patterns=['PARTICULAR_INFO'])
-          evm_tail.fix_before_start()
-          evm_tail.validate_logs()
+          evm_tail.start_monitoring()
+          evm_tail.validate()       # evm_tail.validate(wait="30s")
     """
 
     def __init__(self, remote_filename, **kwargs):
@@ -49,32 +60,46 @@ class LogValidator(object):
         self._remote_file_tail = SSHTail(remote_filename, **kwargs)
         self._matches = {key: 0 for key in self.matched_patterns}
 
-    def fix_before_start(self):
+    def start_monitoring(self):
         """Start monitoring log before action"""
         self._remote_file_tail.set_initial_file_end()
+        logger.info("Log monitoring has been started on remote file")
 
     def _check_skip_logs(self, line):
         for pattern in self.skip_patterns:
             if re.search(pattern, line):
-                logger.info('Skip pattern {} was matched on line {},\
-                            so skipping this line'.format(pattern, line))
+                logger.info(
+                    "Skip pattern %s was matched on line %s so skipping this line", pattern, line
+                )
                 return True
         return False
 
     def _check_fail_logs(self, line):
         for pattern in self.failure_patterns:
             if re.search(pattern, line):
-                pytest.fail('Failure pattern {} was matched on line {}'.format(pattern, line))
+                logger.error("Failure pattern %s was matched on line %s", pattern, line)
+                raise FailPatternMatchError(pattern, "Expected failure pattern found in log.", line)
 
     def _check_match_logs(self, line):
         for pattern in self.matched_patterns:
             if re.search(pattern, line):
-                logger.info('Expected pattern {} was matched on line {}'.format(pattern, line))
+                logger.info("Expected pattern %s was matched on line %s", pattern, line)
                 self._matches[pattern] = self._matches[pattern] + 1
 
     @property
+    def _is_valid(self):
+        for pattern, count in self.matches.items():
+            if count == 0:
+                logger.info("Expected '%s' pattern not found", pattern)
+                return False
+        return True
+
+    @property
     def matches(self):
-        """It will return pattern match count dictionary"""
+        """Collect match count in log
+
+        Returns (dict): Pattern match count dictionary
+        """
 
         for line in self._remote_file_tail:
             if self._check_skip_logs(line):
@@ -85,28 +110,20 @@ class LogValidator(object):
         logger.info("Matches found: {}".format(self._matches))
         return self._matches
 
-    def validate_logs(self):
-        """Validate log pattern"""
-        for pattern, count in self.matches.items():
-            if count == 0:
-                pytest.fail(
-                    'Expected pattern {} did not match; match count {}'.format(pattern, count)
-                )
+    def validate(self, wait=None, message="waiting for log validation", **kwargs):
+        """Validate log pattern
 
-    def wait_for_log_validation(
-            self, delay=5, num_sec=180, message="waiting for log validation", **kwargs
-    ):
-        """ Wait for log validation, takes the kwargs as wait_for. This function will reduce
-            duplicate functions in tests that wait_for log_validation. It is necessary to create
-            this function since _verify_match_logs raise pytest.fail() when it fails to find the
-            match pattern in the logs.
-
-            Note that you must call fix_before_start() before making use of this function.
+        Args:
+            wait: Wait for log validation (timeout)
+            message: Specific message.
+        Returns (bool): True if expected pattern matched in log else False
+        Raise:
+            TimedOutError: If failed to match pattern in respective timeout
+            FailPatternMatchError: If failure pattern matched
         """
-        def validate():
-            try:
-                self.validate_logs()
-                return True
-            except Failed:
-                return False
-        wait_for(validate, delay=delay, num_sec=num_sec, message=message, **kwargs)
+
+        if wait:
+            wait_for(lambda: self._is_valid, delay=5, timeout=wait, message=message, **kwargs)
+            return True
+        else:
+            return self._is_valid
