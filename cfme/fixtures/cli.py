@@ -9,6 +9,8 @@ import requests
 from lxml import etree
 from paramiko_expect import SSHClientInteraction
 from six import iteritems
+from six import StringIO
+from six.moves.urllib.parse import urljoin
 
 import cfme.utils.auth as authutil
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -26,16 +28,6 @@ from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
-
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
-try:
-    from urlparse import urljoin
-except ImportError:
-    from urllib.parse import urljoin
 
 
 TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
