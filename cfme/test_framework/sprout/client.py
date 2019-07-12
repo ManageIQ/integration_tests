@@ -104,6 +104,11 @@ class SproutClient(object):
             provider_type=None, lease_time=60, ram=None, cpu=None, **kwargs):
         # provisioning may take more time than it is expected in some cases
         wait_time = kwargs.pop('wait_time', 900)
+        try:
+            wait_time = int(wait_time)
+        except ValueError:
+            pass
+
         # If we specify version, stream is ignored because we will get that specific version
         if version:
             stream = get_stream(version)
