@@ -33,7 +33,7 @@ class OpenStackProvider(CloudProvider):
     _ctrl_alt_del_xpath = '//*[@id="sendCtrlAltDelButton"]'
 
     api_port = attr.ib(default=None)
-    api_version = attr.ib(default=None)
+    api_version = attr.ib(default="Keystone v3")
     sec_protocol = attr.ib(default=None)
     amqp_sec_protocol = attr.ib(default=None)
     keystone_v3_domain_id = attr.ib(default=None)
