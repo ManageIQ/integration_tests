@@ -12,11 +12,11 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
 from . import ChargebackView
-from cfme.exceptions import CandidateNotFound
 from cfme.exceptions import ChargebackRateNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -128,7 +128,7 @@ class AddComputeChargebackView(RatesView):
 
 class EditComputeChargebackView(AddComputeChargebackView):
 
-    save_button = Button(title='Save Changes')
+    save_button = Button('Save')
     reset_button = Button(title='Reset Changes')
 
     @property
@@ -136,7 +136,8 @@ class EditComputeChargebackView(AddComputeChargebackView):
         return (
             self.in_chargeback and
             self.title.text == 'Compute Chargeback Rate "{}"'
-                               .format(self.context['object'].description)
+                               .format(self.context['object'].description) and
+            self.save_button.is_displayed
         )
 
 
@@ -150,7 +151,8 @@ class EditStorageChargebackView(EditComputeChargebackView):
         return (
             self.in_chargeback and
             self.title.text == 'Storage Chargeback Rate "{}"'
-                               .format(self.context['object'].description)
+                               .format(self.context['object'].description) and
+            self.save_button.is_displayed
         )
 
 
@@ -391,8 +393,7 @@ class StorageRateDetails(CFMENavigateStep):
                 "Rates",
                 "Storage", self.obj.description
             )
-        except Exception as ex:
-            # TODO don't diaper here
+        except CandidateNotFound as ex:
             raise ChargebackRateNotFound('Exception navigating to StorageRate {} "Details": {}'
                                          .format(self.obj.description, ex))
 

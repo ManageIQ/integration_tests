@@ -123,22 +123,21 @@ def test_chargeback_rate(rate_resource, rate_type, rate_action, request, chargeb
         'Chargeback Rate "{}" was added'.format(cb_rate.description))
     assert cb_rate.exists
 
-    if 'delete' in rate_action:
+    if rate_action == 'delete':
         cb_rate.delete()
-        view = cb_rate.create_view(navigator.get_class(cb_rate, 'Details').VIEW, wait=10)
         view.flash.assert_success_message(
             'Chargeback Rate "{}": Delete successful'.format(cb_rate.description))
         assert not cb_rate.exists
 
-    if 'update' in rate_action:
+    if rate_action == 'edit':
         with update(cb_rate):
             cb_rate.description = '{}_edited'.format(cb_rate.description)
-            if 'compute' in rate_action:
+            if rate_resource == 'compute':
                 cb_rate.fields = {
                     'Fixed Compute Cost 1': random_per_time(fixed_rate='500'),
                     'Allocated CPU Count': random_per_time(fixed_rate='100'),
                 }
-            elif 'storage' in rate_action:
+            elif rate_resource == 'storage':
                 cb_rate.fields = {
                     'Fixed Storage Cost 1': random_per_time(fixed_rate='100'),
                     'Fixed Storage Cost 2': random_per_time(fixed_rate='200'),
