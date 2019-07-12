@@ -245,7 +245,7 @@ class AutomateImportExportCollection(BaseCollection):
                 .filter(git_repositories.id == db_id)
                 .first()
             )
-            return AutomateGitRepository(url=url, verify_ssl=verify_ssl > 0)
+            return self.instantiate(import_type="git", url=url, verify_ssl=verify_ssl > 0)
         except ValueError:
             raise ValueError("No such repository in the database")
 

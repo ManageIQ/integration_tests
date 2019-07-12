@@ -155,8 +155,9 @@ class Domain(BaseEntity, Fillable):
         dbo = self.db_object
         if dbo.git_repository_id is None:
             return None
-        from cfme.automate.import_export import AutomateGitRepository
-        return AutomateGitRepository.from_db(dbo.git_repository_id, appliance=self.appliance)
+        return self.appliance.collections.automate_import_export.git_repository_from_db(
+            dbo.git_repository_id
+        )
 
     @cached_property
     def git_checkout_type(self):
@@ -375,11 +376,9 @@ class DomainCollection(BaseCollection):
                     .query(repo_table)\
                     .filter(repo_table.id == git_repository_id)\
                     .first()
-                from cfme.automate.import_export import AutomateGitRepository
-                agr = AutomateGitRepository(
-                    url=repo.url,
-                    verify_ssl=repo.verify_ssl,
-                    appliance=self.appliance)
+                agr = self.appliance.collections.automate_import_export.instantiate(
+                    import_type="git", url=repo.url, verify_ssl=repo.verify_ssl
+                )
                 result.append(
                     self.instantiate(
                         name=name,
