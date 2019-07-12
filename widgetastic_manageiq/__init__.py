@@ -5706,6 +5706,8 @@ class EntryPoint(View, ClickableMixin):
     textbox = TextInput(locator=Parameter("@locator"))
     group_btn = Text(ParametrizedLocator("{@locator}/../span[@class='input-group-btn']"))
     apply = Button("Apply")
+    include_domain = Checkbox(id="include_domain_prefix_chk")
+    cancel = Button("Cancel")
 
     def __init__(self, parent, id=None, name=None, locator=None, tree_id=None, logger=None):  # noqa
         View.__init__(self, parent=parent, logger=logger)
@@ -5729,12 +5731,12 @@ class EntryPoint(View, ClickableMixin):
     def read(self):
         return self.value
 
-    def fill(self, value):
+    def fill(self, value, include_domain=False):
         """ Fill entry point path
         Args:
             value (list): path to for selection.
+            include_domain (bool): check for including domain in tree path
         """
-
         # `domain` not become part of value
         if self.value and "/".join(value) in self.value:
             return False
@@ -5747,8 +5749,10 @@ class EntryPoint(View, ClickableMixin):
             self.tree.wait_displayed("10s")
             self.tree.click_path(*value)
 
-        # Some EntryPoint need to apply tree selection
+        # Applying tree selection with or without domain as a prefix
         if self.tree.is_displayed:
+            if include_domain:
+                self.include_domain.click()
             self.apply.click()
 
         return True
