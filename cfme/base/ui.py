@@ -6,10 +6,6 @@ import time
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from selenium.webdriver.common.keys import Keys
-from widgetastic.utils import Version
-from widgetastic.utils import VersionPick
-from widgetastic.widget import FileInput
-from widgetastic.widget import Image
 from widgetastic.widget import Table
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
@@ -1681,67 +1677,3 @@ class AutomateSimulation(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(*["Automation", "Automate", "Simulation"])
-
-
-class AutomateImportExportBaseView(BaseLoggedInPage):
-    # TODO: This is currently overiding the base flash and should be renamed and efforts made
-    # to update associated tests
-    flash = FlashMessages('div.import-flash-message')
-    title = Text('.//div[@id="main-content"]//h1')
-
-    @property
-    def in_import_export(self):
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ["Automation", "Automate", "Import / Export"] and
-            self.title.text == "Import / Export"
-        )
-
-    @property
-    def is_displayed(self):
-        return self.in_import_export
-
-
-class AutomateImportExportView(AutomateImportExportBaseView):
-    class import_file(View):    # noqa
-        file = FileInput(name='upload_file')
-        upload = Button('Upload')
-
-    class import_git(View):     # noqa
-        ROOT = './/form[@id="retrieve-git-datastore-form"]'
-
-        url = Input(name='git_url')
-        username = Input(name='git_username')
-        password = Input(name='git_password')
-        verify_ssl = Checkbox(name='git_verify_ssl')
-        submit = Button(id='git-url-import')
-
-    export_all = VersionPick({
-        Version.lowest(): Image('.//input[@title="Export all classes and instances"]'),
-        '5.10': Button(title='Export all classes and instances')
-    })
-    reset_all = VersionPick({
-        Version.lowest(): Image(
-            './/img[starts-with(@alt, "Reset all components in the following domains:")]'),
-        '5.10': Button(title='Reset all components in the following domains: RedHat, ManageIQ')
-    })
-    reset_title = Text(
-        ".//div[contains(@class, 'import-or-export')]/h3[contains(text(), 'Reset all')]"
-    )
-
-    @property
-    def is_displayed(self):
-        title = "Reset all components in the following domains: RedHat, ManageIQ"
-
-        return (self.in_import_export and
-                self.export_all.is_displayed and
-                self.reset_title.text == title)
-
-
-@navigator.register(Server)
-class AutomateImportExport(CFMENavigateStep):
-    VIEW = AutomateImportExportView
-    prerequisite = NavigateToSibling('LoggedIn')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select(*["Automation", "Automate", "Import / Export"])
