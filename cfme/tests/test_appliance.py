@@ -467,6 +467,7 @@ def test_ec2_deploy_cfme_image():
     pass
 
 
+@pytest.mark.meta(automates=[1577303])
 def test_fixauth_dryrun_has_feedback(temp_appliance_preconfig):
     """
     Check whether the fixauth says it is running in dry mode
