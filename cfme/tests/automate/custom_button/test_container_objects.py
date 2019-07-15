@@ -85,7 +85,7 @@ def test_custom_button_display_container_obj(request, display, setup_obj, button
     """ Test custom button display on a targeted page
 
     Polarion:
-        assignee: ndhandre
+        assignee: juwatts
         initialEstimate: 1/4h
         caseimportance: critical
         caseposneg: positive
@@ -130,7 +130,7 @@ def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_ob
     """ Test custom button with dialog and InspectMe method
 
     Polarion:
-        assignee: ndhandre
+        assignee: juwatts
         initialEstimate: 1/4h
         caseimportance: high
         caseposneg: positive
@@ -200,7 +200,7 @@ def test_custom_button_expression_container_obj(
     """ Test custom button as per expression enablement/visibility.
 
     Polarion:
-        assignee: ndhandre
+        assignee: juwatts
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
