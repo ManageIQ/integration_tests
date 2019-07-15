@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 import fauxfactory
 import pytest
 import yaml
@@ -83,26 +85,48 @@ def test_custom_report_crud(custom_report_values, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(automates=[BZ(1729882), BZ(1202412), BZ(1446052)])
 def test_reports_schedule_crud(schedule_data, appliance):
     """
-    Bugzilla:
-        1202412
-
     Polarion:
         assignee: pvala
         casecomponent: Reporting
         caseimportance: high
         initialEstimate: 1/16h
+
+    Bugzilla:
+        1202412
+        1446052
+        1729882
     """
+    # create
     schedule = appliance.collections.schedules.create(**schedule_data)
     view = schedule.create_view(ScheduleDetailsView)
     view.flash.assert_success_message('Schedule "{}" was added'.format(schedule.name))
+
+    # update
+    date = datetime.date.today() + datetime.timedelta(5)
+    updated_description = "badger badger badger"
+    updated_timer = {"run": "Monthly", "starting_date": date.strftime("%m/%d/%y")}
+
     with update(schedule):
-        schedule.description = "badger badger badger"
+        schedule.description = updated_description
+        schedule.timer = updated_timer
     view.flash.assert_message('Schedule "{}" was saved'.format(schedule.name))
 
+    assert view.schedule_info.get_text_of("Description") == updated_description
+
+    run_at = view.schedule_info.get_text_of("Run At")
+    assert updated_timer["run"].lower() in run_at
+
+    if not BZ(1729882, forced_streams=["5.10", "5.11"]).blocks:
+        assert str(date.day) in run_at
+
+    # queue
     schedule.queue()
     view.flash.assert_message("The selected Schedule has been queued to run")
+
+    # delete
     schedule.delete()
     view.flash.assert_message("Schedule {} was deleted".format(schedule.name))
 

@@ -107,6 +107,7 @@ def test_schedule_queue(appliance, request, interval, schedule_data):
     request.addfinalizer(schedule.delete_if_exists)
 
     schedule.queue()
+    assert schedule.timer == TIMER[interval]
     view = schedule.create_view(ScheduleDetailsView)
     view.flash.assert_message("The selected Schedule has been queued to run")
 
