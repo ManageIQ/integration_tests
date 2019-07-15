@@ -14,9 +14,10 @@ from cfme.utils.generators import random_vm_name
 pytestmark = [
     test_requirements.quota,
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.long_running,
-    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
+    pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module",
+                         required_fields=[["provisioning", "template"]], selector=ONE_PER_TYPE)
 ]
 
 
