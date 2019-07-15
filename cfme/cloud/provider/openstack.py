@@ -74,7 +74,7 @@ class OpenStackProvider(CloudProvider):
             'tenant_mapping': getattr(self, 'tenant_mapping', None),
             'api_version': self.api_version,
         }
-        if '3' in self.api_version:
+        if '3' in (self.api_version or ''):
             mapping.update({'keystone_v3_domain_id': self.keystone_v3_domain_id})
         return mapping
 
