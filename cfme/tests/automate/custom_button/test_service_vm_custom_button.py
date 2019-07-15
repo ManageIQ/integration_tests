@@ -12,6 +12,7 @@ from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 
 
@@ -136,7 +137,8 @@ def test_custom_button_display_service_vm(request, appliance, service_vm, button
 
 @test_requirements.customer_stories
 @pytest.mark.tier(1)
-@pytest.mark.meta(automates=[1687061])
+# Dynamic dialog problem 1729594
+@pytest.mark.meta(automates=[1687061], blockers=[BZ(1729594), BZ(1729594)])
 def test_custom_button_with_dynamic_dialog_vm(
     appliance, provider, request, service_vm, setup_dynamic_dialog
 ):
@@ -176,6 +178,7 @@ def test_custom_button_with_dynamic_dialog_vm(
     Bugzilla:
         1687061
         1722817
+        1729594
     """
     dialog, ele_name = setup_dynamic_dialog
     # Create button group

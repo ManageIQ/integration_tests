@@ -122,6 +122,15 @@ def test_custom_button_display_container_obj(request, display, setup_obj, button
         assert custom_button_group.has_item(button.text)
 
 
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1729903,
+            forced_streams=["5.11"],
+            unblock=lambda button_group: "CONTAINER_VOLUMES" not in button_group,
+        )
+    ]
+)
 @pytest.mark.uncollectif(
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"
