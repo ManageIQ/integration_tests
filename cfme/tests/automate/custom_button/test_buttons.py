@@ -615,7 +615,7 @@ def test_attribute_override(appliance, request, provider, setup_provider, button
 
     # Initialize Log Checks
     log = LogValidator("/var/www/miq/vmdb/log/automation.log", matched_patterns=patterns)
-    log.fix_before_start()
+    log.start_monitoring()
 
     # Execute button
     view = navigate_to(provider, "Details")
@@ -626,7 +626,7 @@ def test_attribute_override(appliance, request, provider, setup_provider, button
     button.simulate(provider.name, request=req)
 
     # validate log requests for simulation and actual execution
-    log.wait_for_log_validation()
+    log.validate(wait="120s")
 
 
 @pytest.mark.meta(blockers=[BZ(1719282, unblock=lambda button_type: button_type != "User")])
