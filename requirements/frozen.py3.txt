@@ -207,7 +207,7 @@ oslo.utils==3.40.3
 ovirt-engine-sdk-python==4.3.0
 packaging==19.0
 pandocfilters==1.4.2
-paramiko==2.4.2
+paramiko==2.6
 parsedatetime==2.4
 parso==0.4.0
 pbr==5.1.3
@@ -218,6 +218,7 @@ pika==1.0.1
 Pillow==6.0.0
 pluggy==0.6.0
 polarion-docstrings==0.16.1
+pre-commit==1.17.0
 prettytable==0.7.2
 progress==1.5
 prometheus-client==0.6.0
