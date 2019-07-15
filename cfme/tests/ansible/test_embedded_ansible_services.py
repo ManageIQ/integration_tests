@@ -277,7 +277,12 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(2)
 def test_service_ansible_playbook_provision_in_requests(
-    appliance, ansible_catalog_item, ansible_service, ansible_service_request, request
+    appliance,
+    ansible_catalog_item,
+    ansible_service_catalog,
+    ansible_service,
+    ansible_service_request,
+    request,
 ):
     """Tests if ansible playbook service provisioning is shown in service requests.
 
@@ -288,7 +293,7 @@ def test_service_ansible_playbook_provision_in_requests(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service.order()
+    ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
@@ -450,7 +455,7 @@ def test_service_ansible_playbook_order_retire(
 
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_plays_table(
-    ansible_service_request, ansible_service, soft_assert
+    ansible_service_catalog, ansible_service, ansible_service_request, soft_assert
 ):
     """Plays table in provisioned and retired service should contain at least one row.
 
@@ -461,12 +466,12 @@ def test_service_ansible_playbook_plays_table(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service.order()
+    ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
-    soft_assert(view.provisioning.plays.row_count > 1, "Plays table in provisioning tab is empty")
+    soft_assert(view.provisioning.plays.row_count >= 1, "Plays table in provisioning tab is empty")
     ansible_service.retire()
-    soft_assert(view.provisioning.plays.row_count > 1, "Plays table in retirement tab is empty")
+    soft_assert(view.retirement.plays.row_count >= 1, "Plays table in retirement tab is empty")
 
 
 @pytest.mark.tier(3)
@@ -520,7 +525,7 @@ def test_service_ansible_playbook_pass_extra_vars(
     pre = stdout.text
     json_str = pre.split("--------------------------------")
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
-        '\\, "', '",').split('" ] } PLAY')[0])
+        '\\, "', '",').replace("\\", "").split('" ] } PLAY')[0])
     assert result_dict["some_var"] == "some_value"
 
 
