@@ -456,6 +456,10 @@ class Host(
         return {cred_type: cls.Credential.from_config(cred) for
                 cred_type, cred in credentials_config.items()}
 
+    @property
+    def rest_api_entity(self):
+        return self.appliance.rest_api.collections.hosts.get(name=self.name)
+
 
 @attr.s
 class HostsCollection(BaseCollection):

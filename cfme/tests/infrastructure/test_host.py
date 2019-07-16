@@ -248,3 +248,67 @@ def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
     view.entities.paginator.set_items_per_page(1000)
     view.toolbar.view_selector.select(view_type)
     wait_for(view.entities.get_first_entity, timeout=60, message='Wait for the view')
+
+
+@test_requirements.general_ui
+@pytest.mark.parametrize(
+    "power_state", ["preparing_for_maintenance", "maintenance", "unknown", "off", "on"]
+)
+def test_infrastructure_hosts_icons_states(
+    appliance, request, power_state, setup_provider, provider, soft_assert
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/3h
+        setup:
+            1. Add a RHEVM provider.
+            2. SSH into appliance console and run `psql vmdb_production`
+        testSteps:
+            1. Check if the Quadicon(Host's ALL page)
+                and host(Host's Detail page) power_state changes after running the command:
+                `UPDATE hosts SET power_state = ':power_state' WHERE name=':host_name';`
+    """
+    # get host and host details
+    host = provider.hosts.all()[0]
+    host_name = host.name
+    reset_state = host.rest_api_entity.power_state
+    hosts = appliance.db.client["hosts"]
+
+    # change host power_state
+    result = (
+        appliance.db.client.session.query(hosts)
+        .filter(hosts.name == host_name)
+        .update({hosts.power_state: power_state})
+    )
+    assert result == 1
+
+    # reset host power_state
+    @request.addfinalizer
+    def _finalize():
+        appliance.db.client.session.query(hosts).filter(hosts.name == host_name).update(
+            {hosts.power_state: reset_state}
+        )
+
+    # assert power_state from quadicon
+    view = navigate_to(appliance.collections.hosts, "All")
+    host_entity = view.entities.get_entity(name=host_name)
+    actual_state = host_entity.data["quad"]["topRight"]["tooltip"]
+    soft_assert(
+        actual_state == power_state,
+        "Power state in the quadicon[{}] did not match with {}.".format(
+            actual_state, power_state
+        ),
+    )
+
+    # assert power_state from Details page
+    view = navigate_to(host, "Details")
+    actual_state = view.entities.summary("Properties").get_text_of("Power State")
+    soft_assert(
+        actual_state == power_state,
+        "Power state in the summary table[{}] did not match with [{}].".format(
+            actual_state, power_state
+        ),
+    )

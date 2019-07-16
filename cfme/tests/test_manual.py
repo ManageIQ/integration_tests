@@ -147,37 +147,6 @@ def test_sui_stack_service_vm_detail_page_should_show_correct_data():
 
 
 @pytest.mark.manual
-def test_infrastructure_hosts_icons_states():
-    """
-    Requirement: Added a RHEVM provider
-    Then do in console:
-    su - postgres
-    psql
-    vmdb_production
-    UPDATE hosts SET power_state = "preparing_for_maintenance" WHERE
-    name="NAME OF THE TESTED HOST";
-    UPDATE hosts SET power_state = "maintenance" WHERE name="NAME OF THE
-    TESTED HOST";
-    UPDATE hosts SET power_state = "unknown" WHERE name="NAME OF THE
-    TESTED HOST";
-    UPDATE hosts SET power_state = "on" WHERE name="NAME OF THE TESTED
-    HOST";
-    UPDATE hosts SET power_state = "off" WHERE name="NAME OF THE TESTED
-    HOST";
-    Between every update check state icon in Compute -> Infrastructure ->
-    Hosts -> Host quadicon and Compute -> Infrastructure -> Hosts ->
-    Summary of the host
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/3h
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_validate_chargeback_cost_weekly_rate_network_cost():
     """
     Validate network I/O used cost in a daily Chargeback report by
