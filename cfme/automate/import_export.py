@@ -141,7 +141,6 @@ class AutomateGitRepository(BaseEntity):
         git_select_view = self.create_view(GitImportSelectorView, wait="10s")
         git_select_view.flash.assert_no_error()
         git_select_view.fill({"branch_tag": branch_tag, "branch": branch, "tag": tag})
-
         git_select_view.submit.click()
         view.flash.assert_no_error()
 
@@ -213,7 +212,7 @@ class AutomateFileImport(BaseEntity):
 
 
 @attr.s
-class AutomateImportExportCollection(BaseCollection):
+class AutomateImportExportsCollection(BaseCollection):
     def instantiate(
         self,
         import_type="git",
@@ -260,7 +259,7 @@ class AutomateImportExportCollection(BaseCollection):
         view.reset_all.click()
 
 
-@navigator.register(AutomateImportExportCollection, "All")
+@navigator.register(AutomateImportExportsCollection, "All")
 class AutomateImportExport(CFMENavigateStep):
     VIEW = AutomateImportExportView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")

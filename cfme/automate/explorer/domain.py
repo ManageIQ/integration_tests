@@ -155,7 +155,7 @@ class Domain(BaseEntity, Fillable):
         dbo = self.db_object
         if dbo.git_repository_id is None:
             return None
-        return self.appliance.collections.automate_import_export.git_repository_from_db(
+        return self.appliance.collections.automate_import_exports.git_repository_from_db(
             dbo.git_repository_id
         )
 
