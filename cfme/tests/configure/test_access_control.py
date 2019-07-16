@@ -11,7 +11,7 @@ from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.exceptions import RBACOperationBlocked
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -20,15 +20,8 @@ from cfme.utils.log import logger
 from cfme.utils.update import update
 
 pytestmark = [
-    test_requirements.rbac,
-    pytest.mark.provider(classes=[VMwareProvider], selector=ONE),
-    pytest.mark.usefixtures('setup_provider')
+    test_requirements.rbac
 ]
-
-
-@pytest.fixture(scope='module')
-def group_collection(appliance):
-    return appliance.collections.groups
 
 
 def new_credential():
@@ -98,7 +91,7 @@ def catalog_obj(appliance):
 # User test cases
 @pytest.mark.sauce
 @pytest.mark.tier(2)
-def test_user_crud(appliance, group_collection):
+def test_user_crud(appliance):
     """
     Polarion:
         assignee: apagac
@@ -107,6 +100,7 @@ def test_user_crud(appliance, group_collection):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
@@ -118,7 +112,7 @@ def test_user_crud(appliance, group_collection):
 
 
 @pytest.mark.tier(2)
-def test_user_assign_multiple_groups(appliance, request, group_collection):
+def test_user_assign_multiple_groups(appliance, request):
     """Assign a user to multiple groups
 
     Steps:
@@ -135,6 +129,7 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
     group_names = [
         'EvmGroup-user', 'EvmGroup-administrator', 'EvmGroup-user_self_service', 'EvmGroup-desktop']
 
+    group_collection = appliance.collections.groups
     group_list = [group_collection.instantiate(description=name) for name in group_names]
 
     user = new_user(appliance, groups=group_list)
@@ -151,7 +146,7 @@ def test_user_assign_multiple_groups(appliance, request, group_collection):
 
 
 @pytest.mark.tier(2)
-def test_user_change_groups(appliance, group_collection):
+def test_user_change_groups(appliance):
     """Assign a user to multiple groups and confirm that the user can successfully change groups
 
     Polarion:
@@ -164,6 +159,7 @@ def test_user_change_groups(appliance, group_collection):
         'EvmGroup-auditor', 'EvmGroup-desktop', 'EvmGroup-operator',
         'EvmGroup-security', 'EvmGroup-user', 'EvmGroup-vm_user', ]
 
+    group_collection = appliance.collections.groups
     group_list = [group_collection.instantiate(description=name) for name in group_names]
 
     test_user = new_user(appliance, groups=group_list)
@@ -184,7 +180,7 @@ def test_user_change_groups(appliance, group_collection):
 
 
 @pytest.mark.tier(2)
-def test_user_login(appliance, group_collection):
+def test_user_login(appliance):
     """
     Bugzilla:
         1035399
@@ -196,6 +192,7 @@ def test_user_login(appliance, group_collection):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
@@ -207,7 +204,7 @@ def test_user_login(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_user_duplicate_username(appliance, group_collection):
+def test_user_duplicate_username(appliance):
     """ Tests that creating user with existing username is forbidden.
 
     Steps:
@@ -222,6 +219,7 @@ def test_user_duplicate_username(appliance, group_collection):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     credential = new_credential()
@@ -236,7 +234,7 @@ def test_user_duplicate_username(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_user_allow_duplicate_name(appliance, group_collection):
+def test_user_allow_duplicate_name(appliance):
     """ Tests that creating user with existing full name is allowed.
 
     Steps:
@@ -251,6 +249,7 @@ def test_user_allow_duplicate_name(appliance, group_collection):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     name = 'user{}'.format(fauxfactory.gen_alphanumeric())
@@ -264,7 +263,7 @@ def test_user_allow_duplicate_name(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_username_required_error_validation(appliance, group_collection):
+def test_username_required_error_validation(appliance):
     """
     Polarion:
         assignee: apagac
@@ -273,6 +272,7 @@ def test_username_required_error_validation(appliance, group_collection):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     with pytest.raises(Exception, match="Name can't be blank"):
@@ -285,7 +285,7 @@ def test_username_required_error_validation(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_userid_required_error_validation(appliance, group_collection):
+def test_userid_required_error_validation(appliance):
     """
     Polarion:
         assignee: apagac
@@ -294,6 +294,7 @@ def test_userid_required_error_validation(appliance, group_collection):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     with pytest.raises(Exception, match="Userid can't be blank"):
@@ -309,7 +310,7 @@ def test_userid_required_error_validation(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_user_password_required_error_validation(appliance, group_collection):
+def test_user_password_required_error_validation(appliance):
     """
     Polarion:
         assignee: apagac
@@ -318,6 +319,7 @@ def test_user_password_required_error_validation(appliance, group_collection):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     check = "Password can't be blank"
@@ -352,7 +354,7 @@ def test_user_group_error_validation(appliance):
 
 
 @pytest.mark.tier(3)
-def test_user_email_error_validation(appliance, group_collection):
+def test_user_email_error_validation(appliance):
     """
     Polarion:
         assignee: apagac
@@ -360,6 +362,7 @@ def test_user_email_error_validation(appliance, group_collection):
         casecomponent: Configuration
         tags: rbac
     """
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description='EvmGroup-user')
 
     with pytest.raises(Exception, match="Email must be a valid email address"):
@@ -372,7 +375,7 @@ def test_user_email_error_validation(appliance, group_collection):
 
 @pytest.mark.tier(2)
 @test_requirements.tag
-def test_user_edit_tag(appliance, group_collection, tag):
+def test_user_edit_tag(appliance, tag):
     """
     Polarion:
         assignee: anikifor
@@ -380,6 +383,7 @@ def test_user_edit_tag(appliance, group_collection, tag):
         casecomponent: Configuration
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
@@ -394,7 +398,7 @@ def test_user_edit_tag(appliance, group_collection, tag):
 
 @pytest.mark.tier(3)
 @test_requirements.tag
-def test_user_remove_tag(appliance, group_collection):
+def test_user_remove_tag(appliance):
     """
     Polarion:
         assignee: anikifor
@@ -402,6 +406,7 @@ def test_user_remove_tag(appliance, group_collection):
         casecomponent: Tagging
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
@@ -453,7 +458,8 @@ def test_current_user_login_delete(appliance, request):
         tags: rbac
     """
     group_name = "EvmGroup-super_administrator"
-    group = group_collection(appliance).instantiate(description=group_name)
+    group_collection = appliance.collections.groups
+    group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
     request.addfinalizer(user.delete)
@@ -487,7 +493,7 @@ def test_tagvis_user(user_restricted, check_item_visibility):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 # Group test cases
-def test_group_crud(group_collection):
+def test_group_crud(appliance):
     """
     Polarion:
         assignee: apagac
@@ -496,6 +502,7 @@ def test_group_crud(group_collection):
         tags: rbac
     """
     role = 'EvmRole-administrator'
+    group_collection = appliance.collections.groups
     group = group_collection.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()), role=role)
     with update(group):
@@ -506,7 +513,8 @@ def test_group_crud(group_collection):
 @pytest.mark.sauce
 @pytest.mark.tier(2)
 @test_requirements.tag
-def test_group_crud_with_tag(provider, tag_value, group_collection):
+@pytest.mark.provider(classes=[InfraProvider], selector=ONE)
+def test_group_crud_with_tag(appliance, provider, setup_provider, tag_value):
     """Test for verifying group create with tag defined
 
     Steps:
@@ -523,8 +531,9 @@ def test_group_crud_with_tag(provider, tag_value, group_collection):
     """
     tag_for_create, tag_for_update = tag_value
 
-    path = 'VM_Template-Folder' if provider.key == 'vsphere55' else 'Discovered virtual machine'
+    path = 'Discovered virtual machine'
 
+    group_collection = appliance.collections.groups
     group = group_collection.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role='EvmRole-approver',
@@ -542,7 +551,7 @@ def test_group_crud_with_tag(provider, tag_value, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_group_duplicate_name(group_collection):
+def test_group_duplicate_name(appliance):
     """ Verify that two groups can't have the same name
 
     Polarion:
@@ -553,6 +562,7 @@ def test_group_duplicate_name(group_collection):
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
     with pytest.raises(RBACOperationBlocked):
@@ -566,7 +576,7 @@ def test_group_duplicate_name(group_collection):
 
 @pytest.mark.tier(2)
 @test_requirements.tag
-def test_group_edit_tag(group_collection):
+def test_group_edit_tag(appliance):
     """
     Polarion:
         assignee: anikifor
@@ -575,6 +585,7 @@ def test_group_edit_tag(group_collection):
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
     added_tag = group.add_tag()
@@ -588,7 +599,7 @@ def test_group_edit_tag(group_collection):
 
 @pytest.mark.tier(2)
 @test_requirements.tag
-def test_group_remove_tag(group_collection):
+def test_group_remove_tag(appliance):
     """
     Polarion:
         assignee: anikifor
@@ -597,6 +608,7 @@ def test_group_remove_tag(group_collection):
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
     navigate_to(group, 'Edit')
@@ -611,7 +623,7 @@ def test_group_remove_tag(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_group_description_required_error_validation(group_collection):
+def test_group_description_required_error_validation(appliance):
     """
     Polarion:
         assignee: apagac
@@ -621,6 +633,7 @@ def test_group_description_required_error_validation(group_collection):
     """
     error_text = "Description can't be blank"
 
+    group_collection = appliance.collections.groups
     with pytest.raises(Exception, match=error_text):
         group_collection.create(description=None, role='EvmRole-approver')
 
@@ -630,7 +643,7 @@ def test_group_description_required_error_validation(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_default_group(group_collection):
+def test_delete_default_group(appliance):
     """Test for deleting default group EvmGroup-administrator.
 
     Steps:
@@ -643,6 +656,7 @@ def test_delete_default_group(group_collection):
         casecomponent: Configuration
         tags: rbac
     """
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description='EvmGroup-administrator')
 
     with pytest.raises(RBACOperationBlocked):
@@ -650,7 +664,7 @@ def test_delete_default_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_group_with_assigned_user(appliance, group_collection):
+def test_delete_group_with_assigned_user(appliance):
     """Test that CFME prevents deletion of a group that has users assigned
 
     Polarion:
@@ -661,6 +675,7 @@ def test_delete_group_with_assigned_user(appliance, group_collection):
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
     new_user(appliance, [group])
     with pytest.raises(RBACOperationBlocked):
@@ -668,7 +683,7 @@ def test_delete_group_with_assigned_user(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_edit_default_group(group_collection):
+def test_edit_default_group(appliance):
     """Test that CFME prevents a user from editing a default group
 
     Steps:
@@ -681,6 +696,7 @@ def test_edit_default_group(group_collection):
         casecomponent: Configuration
         tags: rbac
     """
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description='EvmGroup-approver')
 
     group_updates = {}
@@ -689,7 +705,7 @@ def test_edit_default_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_edit_sequence_usergroups(request, group_collection):
+def test_edit_sequence_usergroups(appliance, request):
     """Test for editing the sequence of user groups for LDAP lookup.
 
     Steps:
@@ -706,6 +722,7 @@ def test_edit_sequence_usergroups(request, group_collection):
     """
     role_name = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role_name)
     request.addfinalizer(group.delete)
 
@@ -841,7 +858,7 @@ def test_edit_default_roles(appliance):
 
 
 @pytest.mark.tier(3)
-def test_delete_roles_with_assigned_group(appliance, group_collection):
+def test_delete_roles_with_assigned_group(appliance):
     """
     Polarion:
         assignee: apagac
@@ -851,6 +868,7 @@ def test_delete_roles_with_assigned_group(appliance, group_collection):
     """
     role = new_role(appliance)
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_collection = appliance.collections.groups
     group_collection.create(description=group_description, role=role.name)
 
     with pytest.raises(RBACOperationBlocked):
@@ -858,7 +876,7 @@ def test_delete_roles_with_assigned_group(appliance, group_collection):
 
 
 @pytest.mark.tier(3)
-def test_assign_user_to_new_group(appliance, group_collection):
+def test_assign_user_to_new_group(appliance):
     """
     Polarion:
         assignee: apagac
@@ -869,6 +887,7 @@ def test_assign_user_to_new_group(appliance, group_collection):
     role = new_role(appliance)  # call function to get role
 
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role.name)
 
     new_user(appliance, [group])
@@ -926,7 +945,8 @@ def test_permission_edit(appliance, request, product_features):
                 product_features=[(['Everything'], False)] +  # role_features
                                  [(k, True) for k in product_features])
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
-    group = group_collection(appliance).create(description=group_description, role=role.name)
+    group_collection = appliance.collections.groups
+    group = group_collection.create(description=group_description, role=role.name)
     user = new_user(appliance, [group])
     with user:
         # Navigation should succeed with valid permissions
@@ -1032,7 +1052,8 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
     # create a user and role
     role = _mk_role(appliance, product_features=product_features)
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
-    group = group_collection(appliance).create(description=group_description, role=role.name)
+    group_collection = appliance.collections.groups
+    group = group_collection.create(description=group_description, role=role.name)
     user = new_user(appliance, [group])
     fails = {}
     try:
@@ -1089,7 +1110,8 @@ def test_permissions_role_crud(appliance):
 
 
 @pytest.mark.tier(3)
-def test_permissions_vm_provisioning(appliance, provider):
+@pytest.mark.provider(classes=[InfraProvider], selector=ONE)
+def test_permissions_vm_provisioning(appliance, provider, setup_provider):
     """
     Polarion:
         assignee: apagac
@@ -1155,7 +1177,8 @@ def test_user_change_password(appliance, request):
         tags: rbac
     """
     group_name = 'EvmGroup-user'
-    group = group_collection(appliance).instantiate(description=group_name)
+    group_collection = appliance.collections.groups
+    group = group_collection.instantiate(description=group_name)
 
     user = new_user(appliance, [group])
 
@@ -1178,7 +1201,7 @@ def test_user_change_password(appliance, request):
         assert appliance.server.current_full_name() == user.name
 
 
-def test_copied_user_password_inheritance(appliance, group_collection, request):
+def test_copied_user_password_inheritance(appliance, request):
     """Test to verify that dialog for copied user should appear and password field should be
     empty
 
@@ -1189,6 +1212,7 @@ def test_copied_user_password_inheritance(appliance, group_collection, request):
         initialEstimate: 1/15h
     """
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
     user = new_user(appliance, [group])
     request.addfinalizer(user.delete)
@@ -1414,7 +1438,7 @@ def test_unique_name_on_parent_level(request, appliance, collection_name):
 
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
-def test_superadmin_tenant_admin_crud(appliance, group_collection):
+def test_superadmin_tenant_admin_crud(appliance):
     """
     Super admin is able to create new tenant administrator
 
@@ -1430,6 +1454,7 @@ def test_superadmin_tenant_admin_crud(appliance, group_collection):
             2. Update the user details and delete the user.
     """
     group_name = 'EvmGroup-tenant_administrator'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
     user = new_user(appliance, [group])
     assert user.exists
@@ -1746,7 +1771,7 @@ def test_tenant_automation_domains():
 
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
-def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collection, request):
+def test_superadmin_child_tenant_delete_parent_catalog(appliance, request):
     """
     Child superadmin tenant should able to delete catalog belonging to
     superadmin in parent tenant. This is by design tenancy has not been
@@ -1781,6 +1806,7 @@ def test_superadmin_child_tenant_delete_parent_catalog(appliance, group_collecti
         description=fauxfactory.gen_alphanumeric(16),
         parent=root_tenant)
 
+    group_collection = appliance.collections.groups
     group = group_collection.create(description='grp{}'.format(fauxfactory.gen_alphanumeric()),
                                     role="EvmRole-super_administrator",
                                     tenant="{}/{}".format(root_tenant.name, new_tenant.name))
@@ -1975,10 +2001,10 @@ def test_tags_manual_features():
 
 
 @pytest.mark.manual
-@pytest.mark.provider([OpenshiftProvider], override=True)
+@pytest.mark.provider([OpenshiftProvider])
 @test_requirements.rbac
 @pytest.mark.tier(2)
-def test_host_clusters_pod_filter():
+def test_host_clusters_pod_filter(setup_provider):
     """
     Test that user with Hosts & Clusters filter is able to see pods belonging to that filter only
 
