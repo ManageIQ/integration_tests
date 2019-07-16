@@ -31,7 +31,7 @@ def test_server_name(request, appliance):
         appliance.rename(old_server_name)
 
     new_server_name = "RENAME-TEST"
-    assert view.server.basic_information.appliance_name.fill('updated-evm-name')
+    assert view.server.basic_information.appliance_name.fill(new_server_name)
     assert view.server.save.is_enabled
     view.server.save.click()  # no boolean return
     assert appliance.server.name == new_server_name
