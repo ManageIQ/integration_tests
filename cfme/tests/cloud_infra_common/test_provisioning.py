@@ -455,7 +455,7 @@ def test_cloud_provision_from_template_with_attached_disks(
 
     @request.addfinalizer
     def delete_vm_and_wait_for_gone():
-        instance.mgmt.delete()
+        instance.cleanup_on_provider()
         wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
 
     for volume_id in volumes:
@@ -530,7 +530,7 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
 
     @request.addfinalizer
     def delete_vm_and_wait_for_gone():
-        instance.mgmt.delete()  # To make it possible to delete the volume
+        instance.cleanup_on_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
 
     request_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
