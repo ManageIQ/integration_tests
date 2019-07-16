@@ -416,31 +416,32 @@ def test_cloud_provision_from_template_with_attached_disks(
 
     view = navigate_to(method, 'Details')
     former_method_script = view.script.get_value()
+
+    disk_mapping = []
+    for mapping in device_mapping:
+        one_field = dedent("""{{
+            :boot_index => {boot_index},
+            :uuid => "{uuid}",
+            :device_name => "{device_name}",
+            :source_type => "volume",
+            :destination_type => "volume",
+            :volume_size => 1,
+            :delete_on_termination => false
+        }}""")
+        disk_mapping.append(one_field.format(**mapping))
+
+    volume_method = dedent("""
+        clone_options = {{
+        :image_ref => nil,
+        :block_device_mapping_v2 => [
+            {}
+        ]
+        }}
+
+        prov = $evm.root["miq_provision"]
+        prov.set_option(:clone_options, clone_options)
+    """)
     with update(method):
-        disk_mapping = []
-        for mapping in device_mapping:
-            one_field = dedent("""{{
-                :boot_index => {boot_index},
-                :uuid => "{uuid}",
-                :device_name => "{device_name}",
-                :source_type => "volume",
-                :destination_type => "volume",
-                :volume_size => 1,
-                :delete_on_termination => false
-            }}""")
-            disk_mapping.append(one_field.format(**mapping))
-
-        volume_method = dedent("""
-            clone_options = {{
-            :image_ref => nil,
-            :block_device_mapping_v2 => [
-                {}
-            ]
-            }}
-
-            prov = $evm.root["miq_provision"]
-            prov.set_option(:clone_options, clone_options)
-        """)
         method.script = volume_method.format(",\n".join(disk_mapping))
 
     @request.addfinalizer
