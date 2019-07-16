@@ -460,10 +460,19 @@ def test_cloud_provision_from_template_with_attached_disks(
         wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
 
     for volume_id in volumes:
-        assert vm_name in provider.mgmt.volume_attachments(volume_id)
+        attachments = provider.mgmt.volume_attachments(volume_id)
+        soft_assert(
+            vm_name in attachments,
+            'The vm {} not found among the attachemnts of volume {}:'.format(
+                vm_name, volume_id, attachments))
+
     for device in device_mapping:
-        assert (provider.mgmt.volume_attachments(device['uuid'])[vm_name]
-                == '/dev/{}'.format(device['device_name']))
+        provider_devpath = provider.mgmt.volume_attachments(device['uuid'])[vm_name]
+        expected_devpath = '/dev/{}'.format(device['device_name'])
+        soft_assert(
+            provider_devpath == expected_devpath,
+            'Device {} is not attached to expected path: {} but to: {}'.format(
+                device['uuid'], expected_devpath, provider_devpath))
 
 
 # Not collected for EC2 in generate_tests above
