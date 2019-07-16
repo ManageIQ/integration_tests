@@ -402,6 +402,8 @@ def test_cloud_provision_from_template_with_attached_disks(
 
     # Set up automate
     for i, volume in enumerate(volumes, 0):
+        # note the boot_index specifies an ordering in which the disks are tried to
+        # boot from. The value -1 means "never".
         device_mapping.append(
             {'boot_index': 0 if i == 0 else -1,
             'uuid': volume,
