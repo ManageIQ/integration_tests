@@ -30,7 +30,7 @@ class Configuration(object):
         """
         self.yaycl_config = yaycl.Config(
             config_dir=config_dir,
-            crypt_key_file=key_file if key_file and os.path.exists(key_file) else None,
+            crypt_key_file=key_file if (key_file and os.path.exists(key_file)) else None,
         )
         return self.yaycl_config
 

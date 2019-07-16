@@ -7,7 +7,9 @@ from cfme.utils import path
 global_configuration = Configuration()
 
 # Module impersonation to support from cfme.utils.conf import <name>
-sys.modules[__name__] = global_configuration.configure(
+global_configuration.configure(
     config_dir=path.conf_path.strpath,
     key_file=path.project_path.join('.yaml_key').strpath,
 )
+
+sys.modules[__name__] = global_configuration.get_config(__name__)
