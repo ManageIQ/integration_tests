@@ -24,6 +24,7 @@ from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException
 from manageiq_client.api import ManageIQClient as VanillaMiqApi
+from miq_version import version_stream_product_mapping
 from six.moves.urllib.parse import urlparse
 from urllib3.exceptions import ConnectionError
 from werkzeug.local import LocalProxy
@@ -3018,15 +3019,11 @@ def _version_for_version_or_stream(version_or_stream, sprout_client=None):
 
     assert isinstance(version_or_stream, six.string_types), version_or_stream
 
-    from cfme.test_framework.sprout.client import SproutClient
-    sprout_client = SproutClient.from_config() if sprout_client is None else sprout_client
-
     if version_or_stream[0].isdigit():  # presume streams start with non-number
         return Version(version_or_stream)
-    for version_str in sprout_client.available_cfme_versions():
-        version = Version(version_str)
-        if version.stream() == version_or_stream:
-            return version
+    for y_stream, stream_tuple in version_stream_product_mapping.items():
+        if stream_tuple.stream == version_or_stream:
+            return Version(y_stream)
 
     raise LookupError(version_or_stream)
 
