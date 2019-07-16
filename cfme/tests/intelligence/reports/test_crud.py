@@ -85,7 +85,7 @@ def test_custom_report_crud(custom_report_values, appliance):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(automates=[BZ(1729882), BZ(1202412), BZ(1446052)])
+@pytest.mark.meta(automates=[1729882, 1202412, 1446052])
 def test_reports_schedule_crud(schedule_data, appliance):
     """
     Polarion:
@@ -119,7 +119,7 @@ def test_reports_schedule_crud(schedule_data, appliance):
     run_at = view.schedule_info.get_text_of("Run At")
     assert updated_timer["run"].lower() in run_at
 
-    if not BZ(1729882, forced_streams=["5.10", "5.11"]).blocks:
+    if not BZ(1729882, forced_streams=["5.10"]).blocks:
         assert str(date.day) in run_at
 
     # queue
