@@ -402,17 +402,13 @@ def test_cloud_provision_from_template_with_attached_disks(
 
     # Set up automate
     for i, volume in enumerate(volumes, 0):
+        device_mapping.append(
+            {'boot_index': 0 if i == 0 else -1,
+            'uuid': volume,
+            'device_name': device_name.format(chr(ord("a") + i))})
+
         if i == 0:
             provider.mgmt.capi.volumes.set_bootable(volume, True)
-            device_mapping.append(
-                {'boot_index': 0,
-                'uuid': volume,
-                'device_name': device_name.format(chr(ord("a") + i))})
-        else:
-            device_mapping.append(
-                {'boot_index': -1,
-                'uuid': volume,
-                'device_name': device_name.format(chr(ord("a") + i))})
 
     method = modified_request_class.methods.instantiate(name="openstack_PreProvision")
 
