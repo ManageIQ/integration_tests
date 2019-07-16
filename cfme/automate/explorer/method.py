@@ -145,6 +145,7 @@ class MethodDetailsView(AutomateExplorerView):
     location = SummaryFormItem('Main Info', 'Location')
     created_on = SummaryFormItem('Main Info', 'Created On', text_filter=parsetime.from_iso_with_utc)
     inputs = Table(locator='#params_grid', assoc_column='Input Name')
+    script = ScriptBox()
 
     @property
     def is_displayed(self):
@@ -446,7 +447,7 @@ class MethodCollection(BaseCollection):
             location = location.capitalize()
 
         add_page.fill({'location': location})
-        if location == 'inline' or 'Inline':
+        if location.lower() == 'inline':
             add_page.wait_displayed()
             add_page.fill({
                 'inline_name': name,
