@@ -152,8 +152,39 @@ def test_new_report_fields(appliance, based_on, request):
     assert report.exists
 
 
+@pytest.fixture
+def filter_report(appliance):
+    report_data = {
+        "title": "Testing report",
+        "menu_name": "testing report",
+        "base_report_on": "VMs and Instances",
+        "report_fields": [
+            "Active",
+            "EVM Custom Attributes : Name",
+            "EVM Custom Attributes : Region Description",
+            "EVM Custom Attributes : Region Number",
+            "Name",
+        ],
+        "consolidation": {
+            "group_records": [
+                "EVM Custom Attributes : Name",
+                "EVM Custom Attributes : Region Description",
+                "EVM Custom Attributes : Region Number",
+            ]
+        },
+        "filter": {
+            "primary_filter": "fill_field(VM and Instance : Active, IS NOT NULL)",
+            "secondary_filter": "fill_field(EVM Custom Attributes : Name, INCLUDES, A)",
+        },
+    }
+    report = appliance.collections.reports.create(**report_data)
+    yield report
+    report.delete_if_exists()
+
+
 @pytest.mark.tier(1)
-def test_report_edit_secondary_display_filter(appliance, request, soft_assert):
+@pytest.mark.meta(automates=[1565171])
+def test_report_edit_secondary_display_filter(appliance, filter_report, soft_assert):
     """
     Polarion:
         assignee: pvala
@@ -170,61 +201,35 @@ def test_report_edit_secondary_display_filter(appliance, request, soft_assert):
     Bugzilla:
         1565171
     """
-    report_data = {
-        "title": "Testing report",
-        "menu_name": "testing report",
-        "base_report_on": "Instances",
-        "report_fields": [
-            "Active",
-            "EVM Custom Attributes : Name",
-            "EVM Custom Attributes : Region Description",
-            "EVM Custom Attributes : Region Number",
-            "Name",
-        ],
-        "consolidation": {
-            "group_records": [
-                "EVM Custom Attributes : Name",
-                "EVM Custom Attributes : Region Description",
-                "EVM Custom Attributes : Region Number",
-            ]
-        },
-        "filter": {
-            "primary_filter": "fill_field(Instance : Active, IS NOT NULL)",
-            "secondary_filter": "fill_field(EVM Custom Attributes : Name, INCLUDES, A)",
-        },
-    }
-
-    report = appliance.collections.reports.create(**report_data)
-    request.addfinalizer(report.delete_if_exists)
-
-    data = {
-        "filter": {
-            "primary_filter": (
-                "fill_find("
-                "field=Instance.Guest Applications : Name, skey=STARTS WITH, "
-                "value=kernel, check=Check Count, ckey= = , cvalue=1"
-                ");select_first_expression;click_or;fill_find("
-                "field=Instance.Guest Applications : Name, skey=STARTS WITH, "
-                "value=kernel, check=Check Count, ckey= = , cvalue=1)"
-            ),
-            "secondary_filter": (
-                "fill_field(EVM Custom Attributes : Name, INCLUDES, A);"
-                " select_first_expression;click_or;fill_field"
-                "(EVM Custom Attributes : Region Description, INCLUDES, E)"
-            ),
+    filter_report.update(
+        {
+            "filter": {
+                "primary_filter": (
+                    "fill_find("
+                    "field=VM and Instance.Guest Applications : Name, skey=STARTS WITH, "
+                    "value=env, check=Check Count, ckey= = , cvalue=1"
+                    ");select_first_expression;click_or;fill_find("
+                    "field=VM and Instance.Guest Applications : Name, skey=STARTS WITH, "
+                    "value=kernel, check=Check Count, ckey= = , cvalue=1)"
+                ),
+                "secondary_filter": (
+                    "fill_field(EVM Custom Attributes : Name, INCLUDES, A);"
+                    " select_first_expression;click_or;fill_field"
+                    "(EVM Custom Attributes : Region Description, INCLUDES, E)"
+                ),
+            }
         }
-    }
-    report.update(data)
+    )
 
-    view = report.create_view(ReportDetailsView)
+    view = filter_report.create_view(ReportDetailsView, wait="10s")
 
     primary_filter = (
-        '( FIND Instance.Guest Applications : Name STARTS WITH "kernel" CHECK COUNT = 1'
-        ' OR FIND Instance.Guest Applications : Name STARTS WITH "kernel" CHECK COUNT = 1 )'
+        '( FIND VM and Instance.Guest Applications : Name STARTS WITH "env" CHECK COUNT = 1'
+        ' OR FIND VM and Instance.Guest Applications : Name STARTS WITH "kernel" CHECK COUNT = 1 )'
     )
     secondary_filter = (
-        '( Instance.EVM Custom Attributes : Name INCLUDES "A"'
-        ' OR Instance.EVM Custom Attributes : Region Description INCLUDES "E" )'
+        '( VM and Instance.EVM Custom Attributes : Name INCLUDES "A"'
+        ' OR VM and Instance.EVM Custom Attributes : Region Description INCLUDES "E" )'
     )
     soft_assert(
         view.report_info.primary_filter.read() == primary_filter,

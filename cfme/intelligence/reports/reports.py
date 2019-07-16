@@ -165,6 +165,7 @@ class ReportDetailsView(CloudIntelReportsView):
     @View.nested
     class report_info(WaitTab):  # noqa
         TAB_NAME = "Report Info"
+        # Keeping `group_title` empty since the summary form has no title
         report_id = SummaryFormItem("", "ID")
         title = SummaryFormItem("", "Title")
         primary_filter = SummaryFormItem("", "Primary (Record) Filter")
