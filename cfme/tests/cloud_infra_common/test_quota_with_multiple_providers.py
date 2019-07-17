@@ -24,7 +24,7 @@ pytestmark = [
 
 @test_requirements.quota
 @pytest.mark.tier(2)
-def test_show_quota_used_on_tenant_screen(appliance, v2v_providers):
+def test_show_quota_used_on_tenant_screen(appliance, v2v_provider_setup):
     """Test show quota used on tenant quota screen even when no quotas are set.
 
     Polarion:
@@ -42,9 +42,11 @@ def test_show_quota_used_on_tenant_screen(appliance, v2v_providers):
             5. Go to tenant quota table.
             6. Check whether number of VMs are equal to number of VMs in 'in use' column.
     """
-    v2v_providers.vmware_provider.refresh_provider_relationships
-    v2v_providers.rhv_provider.refresh_provider_relationships
-    vm_count = v2v_providers.rhv_provider.num_vm() + v2v_providers.vmware_provider.num_vm()
+    v2v_provider_setup.vmware_provider.refresh_provider_relationships
+    v2v_provider_setup.rhv_provider.refresh_provider_relationships
+    vm_count = (
+        v2v_provider_setup.rhv_provider.num_vm() + v2v_provider_setup.vmware_provider.num_vm()
+    )
     root_tenant = appliance.collections.tenants.get_root_tenant()
     view = navigate_to(root_tenant, "Details")
     for row in view.table:
