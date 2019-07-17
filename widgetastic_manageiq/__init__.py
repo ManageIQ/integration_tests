@@ -1032,10 +1032,12 @@ class SettingsGroupSubmenu(NavDropdown):
     GROUP_SUBMENU = './/ul[contains(@class, "dropdown-menu scrollable-menu")]'
     SELECTED_GROUP_MARKER = " (Current Group)"
 
+    # override NavDropdown locator implementation
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.locator = locator
 
+    # override NavDropdown locator implementation
     def __locator__(self):
         return self.locator
 

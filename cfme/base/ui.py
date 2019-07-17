@@ -152,6 +152,7 @@ class LoginPage(View):
     def logged_in_as_current_user(self):
         return False
 
+    # TODO remove this property, it is erroneous. View properties should be returning data from UI
     @property
     def current_username(self):
         return None
@@ -332,12 +333,14 @@ class LoginScreen(CFMENavigateStep):
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()
-        if not self.view.is_displayed:
+
+        # TODO this is not the place to handle this behavior
+        if not self.view.wait_displayed(timeout=3):
             # Something is wrong
             del self.view  # In order to unbind the browser
             browser.quit()
             browser.ensure_browser_open(self.obj.appliance.server.address())
-            if not self.view.is_displayed:
+            if not self.view.wait_displayed(timeout=3):
                 raise Exception('Could not open the login screen')
 
 
@@ -414,6 +417,8 @@ class About(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.help.select_item('About')
+        # wait for it to open within this step, it can be slow.
+        self.view.modal.wait_displayed(5)
 
 
 @navigator.register(Server)

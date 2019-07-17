@@ -303,7 +303,7 @@ tornado==6.0.2
 traitlets==4.3.2
 tzlocal==1.5.1
 uritemplate==3.0.0
-urllib3==1.24.1
+urllib3==1.24.2
 virtualenv==16.4.3
 vspk==5.3.2
 wait-for==1.0.13
@@ -313,7 +313,7 @@ webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.15.2
 widgetastic.core==0.39
-widgetastic.patternfly==0.1.4
+widgetastic.patternfly==0.1.5
 widgetsnbextension==3.4.2
 wrapanapi==3.3.1
 wrapt==1.11.1

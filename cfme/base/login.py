@@ -15,9 +15,10 @@ class BaseLoggedInPage(View):
     """
     CSRF_TOKEN = '//meta[@name="csrf-token"]'
     flash = FlashMessages('.//div[@id="flash_msg_div"]')
-    help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]|.//li[./a[@id="help-menu"]]')
-    configuration_settings = Text('.//li[./a[@title="Configuration"]]')      # 5.11+
-    settings = SettingsNavDropdown('.//li[./a[@id="dropdownMenu2"]]')
+    # TODO don't use `help` here, its a built-in
+    help = NavDropdown(id="help-menu")
+    configuration_settings = Text('//li[.//a[@title="Configuration"]]')  # 5.11+
+    settings = SettingsNavDropdown(id="dropdownMenu2")
     navigation = VerticalNavigation('#maintab')
 
     @property
@@ -51,6 +52,7 @@ class BaseLoggedInPage(View):
     def logged_in_as_current_user(self):
         return self.logged_in_as_user(self.extra.appliance.user)
 
+    # TODO remove this property, it is erroneous. View properties should be returning data from UI
     @property
     def current_username(self):
         try:

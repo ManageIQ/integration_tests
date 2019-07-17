@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -30,7 +31,7 @@ def test_server_name(request, appliance):
     def _ensure_name_reset():
         appliance.rename(old_server_name)
 
-    new_server_name = "RENAME-TEST"
+    new_server_name = fauxfactory.gen_alpha(length=20)
     assert view.server.basic_information.appliance_name.fill(new_server_name)
     assert view.server.save.is_enabled
     view.server.save.click()  # no boolean return
@@ -45,7 +46,8 @@ def test_server_name(request, appliance):
     )
 
     # CFME updates about box only after any navigation BZ(1408681) - closed wontfix
-    navigate_to(appliance.server, 'Dashboard')
+    view = navigate_to(appliance.server, 'Dashboard')
+    view.browser.refresh()
 
     # opens and closes about modal
     assert new_server_name == about.get_detail(about.SERVER, server=appliance.server), (
