@@ -2101,6 +2101,19 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def region(self):
         return "Region {}".format(self.server.zone.region.number)
 
+    def rename(self, new_name):
+        """Changes appliance name
+
+        Args:
+            new_name: Name to set
+
+        Note:
+            Database must be up and running and evm service must be (re)started afterwards
+            for the name change to take effect.
+        """
+        vmdb_config = {'server': {'name': new_name}}
+        self.update_advanced_settings(vmdb_config)
+
     @cached_property
     def company_name(self):
         return self.advanced_settings["server"]["company"]
@@ -2741,19 +2754,6 @@ class Appliance(IPAppliance):
 
     def does_vm_exist(self):
         return self.provider.mgmt.does_vm_exist(self.vm_name)
-
-    def rename(self, new_name):
-        """Changes appliance name
-
-        Args:
-            new_name: Name to set
-
-        Note:
-            Database must be up and running and evm service must be (re)started afterwards
-            for the name change to take effect.
-        """
-        vmdb_config = {'server': {'name': new_name}}
-        self.update_advanced_settings(vmdb_config)
 
     def destroy(self):
         """Destroys the VM this appliance is running as
