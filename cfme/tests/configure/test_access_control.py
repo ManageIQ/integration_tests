@@ -2035,3 +2035,642 @@ def test_my_tasks_api():
         1639387
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_api_task_status_with_administrator():
+    """
+    Test that user with evmrole Administrator can see task status via API
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        tags: rbac
+        testSteps:
+            1. Create a user with evmrole_administrator
+            2. Generate a task, i.e. by running a report
+            3. Query API with the user:
+                curl -k "https://<username>:<password>@<IP>/api/tasks/<task_id>"
+        expectedResults:
+            1. User created
+            2. Task displayed in My Tasks OPS-UI
+            3. Task status returned
+    Bugzilla:
+        1535962
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_user_view_catalog_items_ssui():
+    """
+    Verify user with a non-administrator role can login to the SSUI and
+    view catalog items that are tagged for them to see
+
+    Note that in order for this to work, all ownership limitations must be
+    removed.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup:
+            1. Create a user account with a non-admin role w/ any necessary tags,
+               "View Catalog Items" permissions and SSUI access
+            2. Create a catalog item that is visible to the user
+        testSteps:
+            1. Login to the SSUI as a non-admin user
+            2. Attempt to view all catalog items the user has access to
+        expectedResults:
+            1. Logged in
+            2. Catalog items visible
+    Bugzilla:
+        1465642
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(1)
+def test_add_child_tenant():
+    """
+    Verify that child tenant can be added.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: low
+        initialEstimate: 1/10h
+        testSteps:
+            1. Go to Configuration -> Access Control
+            2. Select a Tenant
+            3. Use "Configuration" Toolbar to navigate to "Add child Tenant to this Tenant"
+            4. Fill the form in:
+                Name: "test_tenant"
+                Description: "test_tenant"
+            5. Then select "Add"
+        expectedResults:
+            5. Child tenant should be displayed under Parent Tenant
+    Bugzilla:
+        1387088
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(1)
+def test_add_project():
+    """
+    Verify that project can be added to tenant.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: low
+        initialEstimate: 1/10
+        testSteps:
+            1. Go to Configuration -> Access Control
+            2. Select a Tenant
+            3. Use "Configuration" Toolbar to navigate to "Add Project to this Tenant"
+            4. Fill the form in:
+                Name: "test_project"
+                Description: "test_project"
+            5. Then select "Add"
+        expectedResults:
+            5. Project should be displayed under Parent Tenant
+    Bugzilla:
+        1387088
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_ssui_group_switch():
+    """
+    When a user is a member of two or more groups and one of the groups
+    does not have access to the SSUI, verify that the group w/o SSUI does
+    not stay logged in after switching groups.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: critical
+        initialEstimate: 1/6h
+        startsin: 5.9
+        setup:
+            1. Create a user that is a member of two more groups with one group having SSUI access
+                and the other group having SSUI access disabled.
+        testSteps:
+            1. Login to the SSUI
+            2. Switch to the group that doesn"t have SSUI access
+        expectedResults:
+            1. Login successful
+            2. Automatically logged out of the SSUI
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.ssui
+@pytest.mark.tier(2)
+def test_ssui_update_dashboard():
+    """
+    Verify that switching Groups in SSUI changes the dashboard items to
+    match the new groups permissions
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: medium
+        initialEstimate: 1/4h
+        startsin: 5.9
+        setup:
+            1. Create a user with two or more groups with access to the SSUI. The
+                groups should have role permissions that grant access to different
+                features so you can easily see that the dashboard is updated
+                appropriately.
+        testSteps:
+            1. Login to the SSUI
+            2. Switch to another group
+            3. Check that dashboard items are updated appropriately
+        expectedResults:
+            1. Login successful
+            2. Group switch successful
+            3. Dashboard items are updated from to reflect that access of the new group
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
+    """
+    Verify that switching groups the webui changes the dashboard items to
+    match the new groups permissions
+
+    Polarion:
+        assignee: apagac
+        casecomponent: WebUI
+        initialEstimate: 1/4h
+        setup: Create a user with two or more groups. The groups should have role
+               permissions that grant access to different features so you can easily
+               see that the dashboard is updated appropriately.
+        startsin: 5.9
+        tags: rbac
+        title: Verify that changing groups in the webui updates dashboard items
+        testSteps:
+            1. Login to the OPS webui
+            2. Switch to another group
+            3. Check that dashboard items are updated appropriately
+        expectedResults:
+            1. Login successful
+            2. Group switch successful
+            3. Dashboard items are updated from to reflect that access of the new group
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_user_and_group_owned():
+    """
+    Test that vm can not be approved by a user in different group when "User and Group owned"
+    restriction is in place.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Create two users belonging to two different groups
+        testSteps:
+            1. Request a VM as UserA
+            2. As UserB, try to approve the VM request
+        expectedResults:
+            1. VM requested
+            2. UserB should not be able to see the request
+    Bugzilla:
+        1545395
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_user_group_switch():
+    """
+    Switching user's group while user is online
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Open two private/anonymous windows in Firefox/Chrome/etc.
+            2. Identify or create EvmRole-super_administrator level user admin
+            3. Identify or create EvmRole-user level user testusr
+            4. Identify or create EvmRole-user level group testGrp
+        testSteps:
+            1. Sign in to appliance in browser1 as admin
+            2. Sign in to appliance in browser2 as testusr
+            3. Browser1: Change group of user 'testusr' to EvmGroup-security
+            4. Browser2: Navigate to Help > About
+            5. Browser2: Click on user name in top right corner
+            6. Browser1: Change group of user 'testusr' to EvmGroup-user
+            7. Browser2: Navigate to Help > About
+            8. Browser2: Click on user name in top right corner
+            9. Browser1: Change group of user 'testusr' to testGrp
+            10. Browser2: Navigate to Help > About
+            11. Browser2: Click on user name in top right corner
+        expectedResults:
+            1. admin signed in browser 1
+            2. testusr signed in browser 2
+            3. Group changed for user testusr
+            4. Verify testusr role is EvmRole-security and user was not disconnected
+            5. Verify testusr group is EvmGroup-security
+            6. Group changed for user testusr
+            7. Verify testusr role is EvmRole-user and user was not disconnected
+            8. Verify testusr group is EvmGroup-user
+            9. Group changed for user testusr
+            10. Verify testusr role is EvmRole-user and user was not disconnected
+            11. Verify testusr group is testGrp
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.rest
+@pytest.mark.tier(3)
+def test_api_edit_user_no_groups():
+    """
+    Verify that the CFME REST API does not allow you to edit a user and
+    remove it from all assigned groups
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.9
+    testSteps:
+        1. Create a user and assign it to one or more groups
+        2. Using the REST API, edit the user and attempt to assign it to no groups
+    expectedResults:
+        1. User created
+        2. Action failed
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_access_doc():
+    """
+    Verify that admin and user"s with access to Documentation can view the
+    PDF documents
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/8h
+        testSteps:
+            1. As admin, navigate Help->Documentation and view the supporting documents
+            2. Create a user with product feature Help->Documentation enabled
+            3. As the new user, navigate Help->Documentation and view the supporting documents
+        expectedResults:
+            1. Documents can be opened
+            2. User created
+            3. Documents can be opened
+    Bugzilla:
+        1563241
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.rest
+@pytest.mark.tier(2)
+def test_requests_in_ui_and_api():
+    """
+    Test querying requests via UI and API
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Login with user with Services > My Services > Requests > Operate enabled
+            2. View Services > Requests
+            3. Query API on service_requests
+        expectedResults:
+            1. Logged in
+            2. Requests displayed
+            3. Requests returned
+    Bugzilla:
+        1608554
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_authorized_users_can_login():
+    """
+    Verify that authorized users can login successfully with a valid password
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Appliance
+        caseimportance: critical
+        initialEstimate: 1/8h
+        testSteps:
+            1. As admin, create a user with password with uppercase letters
+            2. Login with created user
+        expectedResults:
+            1. User created
+            2. User logged in
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_view_quotas_without_manage_quota_permisson():
+    """
+    Verify that user can see quotas without having the Manage Quota permission.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Remove "Manage Quota" from user's permissions
+            2. Try to view quotas
+        expectedResults:
+            1. Permission removed
+            2. QUotas displayed; "Manage Quotas" button unavailable
+    Bugzilla:
+        1535556
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.rest
+@pytest.mark.tier(2)
+def test_api_provider_refresh_non_admin():
+    """
+    Test provider revresh via api with non-admin user.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. set up a new user with a new group based on vm_user plus api access
+                and refresh access to cloud and infrastructure providers
+            2. issue a refresh using the classic ui with that user
+            3. issue a refresh of the same provider using the api
+        expectedResults:
+            1. New user created
+            2. Refresh performed
+            3. Refresh performed; no 403 error
+    Bugzilla:
+        1602413
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_orchestration_catalog_visible_providers():
+    """
+    When creating a new catalog item of type "Orchestration", the
+    available providers should be restricted to providers that are visible
+    to the user
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Control
+        caseimportance: medium
+        initialEstimate: 1/4h
+        setup:
+            1. On CFME appliance, add a Microsoft Azure provider with no restrictions
+        testSteps:
+            1. As admin: Create an administrator group that restricts
+               access to objects with a certain tag.
+            2. As admin: Create a user that is assigned to the restricted group
+            3. Restricted user: Verfiy that the Azure provider is not visible
+            4. Create a new catalog item with type "Orchestration" and
+               Orchestration Template of type azure
+            5. When the provider option is visible, verify that any
+               providers listed are visible providers
+            6. As admin: Change the tag for the azure provider to match
+               tags that are accessible by the restricted user
+            7. As the restricted user: Verify that the cloud provider is now visible
+            8. Attempt to create a new catalog item of type
+               "Orchestration", Orchestration Template for azure and
+               confirm that the azure provider is an available option
+        expectedResults:
+            1. Group created
+            2. User created
+            3. Azure provider is not visible
+            4. Catalog created
+            5. Providers visible: NOT Azure
+            6. Tag changed
+            7. Azure is now visible
+            8. Catalog item created
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_modify_roles():
+    """
+    When modifying RBAC Roles, all existing enabled/disabled product
+    features should retain their state when modifying other product
+    features.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to access control and create a new role with all
+               product features enabled
+            2. Edit the role, disable 1 or more product features and save the changes
+            3. Create a new role with only one sub product feature enabled and save it
+            4. Modify the previous role and enable an additional product
+               feature. Save the modifications.
+        expectedResults:
+            1. New role created successfully
+            2. Only the user modified feature(s) should be changes
+            3. Only the single product feature should be enabled
+            4. Only the specified product features should be enabled
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@test_requirements.tag
+@pytest.mark.tier(2)
+def test_user_vms_tag():
+    """
+    When a user is assigned a custom tag restricting visible items, verify
+    that the user can only see VMs with the same tag.
+    See: https://access.redhat.com/articles/421423 and
+    https://cloudformsblog.redhat.com/2016/10/13/using-tags-for-access-
+    control
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Provisioning
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup: Add a provider with two VMs available for tagging
+        testSteps:
+            1. Create a custom Category and tag
+            2. Tag a VM with the custom tag and tag another VM with a different tag
+            3. Create a new group with the custom tag
+            4. Create a new user and assign it to the new group
+            5. Login as the new user and attempt to view the VM with the custom tag
+        expectedResults:
+            1. Category & tag created successfully
+            2. VMs tagged successfully
+            3. Group created successfully
+            4. User created successfully
+            5. User can see the VM with the custom tag and not the VM with a different tag
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tag
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_restricted_user_rbac():
+    """
+    Clicking on Users or Groups with restricted role user throws "undefined method `where' for
+    #<Array:0x000000057a2510> [ops/tree_select]"
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: low
+        initialEstimate: 1/6h
+        testSteps:
+            1. Navigate to Configure ==> Configuration ==> Access Control
+            2. Create a new role with "VM & Template Access Restriction" as
+                "Only User or Group Owned" or "Only User Owned".  Make sure all the module access
+                is given in "Product Features (Editing)" i.e., Everything is checked
+            3. Create a new group with the above role
+            4. Create a new user with the above group
+            5. Login with the newly created user and navigate to
+                Configure ==> Configuration ==> Access Control
+            6. Click on Users or Groups
+        expectedResults:
+            6. No error displayed
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_service_non_admin_user():
+    """
+    Verify there's no exception when ordering a service by non admin user.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Go to Access Control, Create a role named "service_role" with below
+                roles should be enabled i.e. Compute and Services.
+            2. Create a user i.e. "service_user" based on this "service_role"
+            3. Login with service_user and order catalog
+        expectedResults:
+            3. No exception displayed
+    Bugzilla:
+        1546944
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_self_service_users_ssui():
+    """
+    Verify that a user in the assigned to the EVMRole-self_service and
+    EVMRole-self_service can login to the SSUI
+
+    Polarion:
+        assignee: apagac
+        casecomponent: SelfServiceUI
+        caseimportance: critical
+        initialEstimate: 1/4h
+        startsin: 5.8
+        testSteps:
+            1. Create a user assigned to the default role of EVMRole-self_service
+            2. Login to the SSUI with the user
+        expectedResults:
+            1. User created successfully
+            2. SSUI access granted
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_tenant_template_visibility():
+    """
+    Create group with role "user owned only"
+    As admin navigate to templates and set ownership for user
+    Log in as user, check template is visible for user(only this template)
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/10h
+    """
+    pass

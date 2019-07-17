@@ -273,17 +273,77 @@ def test_template_set_ownership(appliance, request, provider, setup_provider, vm
         template.mgmt.delete()
 
 
-# @pytest.mark.meta(blockers=[1202947])
-# def test_ownership_transfer(appliance, request, user1, user3, setup_infra_provider):
-#    user_ownership_vm = appliance.collections.infra_vms.instantiate('cu-9-5', setup_infra_provider)
-#    user_ownership_vm.set_ownership(user=user1.name)
-#    with user1:
-#        # Checking before and after the ownership transfer
-#        assert user_ownership_vm.exists, "vm not found"
-#        user_ownership_vm.set_ownership(user=user3)
-#        assert not user_ownership_vm.exists, "vm exists"
-#    with user3:
-#        assert user_ownership_vm.exists, "vm not found"
-#    user_ownership_vm.unset_ownership()
-#    with user3:
-#        assert set_ownership_to_user.exists, "vm exists"
+@pytest.mark.manual
+@test_requirements.ownership
+@pytest.mark.tier(1)
+def test_set_ownership_back_to_default():
+    """
+    Set ownership back to default value.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Set ownership of a VM to some user, for example Administrator and Submit
+            2. Set ownership of that VM back to <No Owner>
+            3. Repeat for group ownership
+            4. Try it on template instead of VM
+        expectedResults:
+            1. Ownership set
+            2. Ownership set
+            3. Ownership set
+            4. Ownership set
+    Bugzilla:
+        1483512
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.ownership
+@pytest.mark.tier(1)
+def test_ownership_dropdown_values():
+    """
+    Test that all values are displayed on ownership user and group dropdowns
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: low
+        initialEstimate: 1/8h
+        setup:
+            1. Create a new user with new group and role
+        testSteps:
+            1. Navigate to testing VM
+            2. Configuration -> Set Ownership
+            3. Inspect user dropdown and group dropdown
+        expectedResults:
+            3. All possible users and groups are displayed in the dropdowns
+    Bugzilla:
+        1330022
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.ownership
+@pytest.mark.tier(1)
+def test_duplicate_groups():
+    """
+    Verify duplicat group names are not listed when selecting multiple vms and setting ownership.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/6h
+        testSteps:
+            1. Navigate to Infrastructure -> Provider -> Vmware
+            2. select multiple vms and go to Configuration -> Set ownership
+            3. Verify no duplicate group names listed.
+        expectedResults:
+            3. No duplicate group names listed
+    """
+    pass
