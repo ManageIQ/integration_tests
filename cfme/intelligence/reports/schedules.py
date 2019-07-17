@@ -236,6 +236,7 @@ class ScheduleCollection(BaseCollection):
             description=description,
             active=active,
             report_filter=report_filter,
+            timer=timer,
             email=email,
             email_options=email_options
         )

@@ -408,6 +408,7 @@ class Report(BaseEntity, Updateable):
                 "subfilter_type": self.subtype,
                 "report_type": self.menu_name,
             },
+            timer=timer,
             email=email,
             email_options=email_options
         )
