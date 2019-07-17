@@ -11,16 +11,34 @@ import tempfile
 from contextlib import contextmanager
 
 from cfme.scripting import quickstart
+from requirements.freeze_all import DEFAULT_EXTRA_TEMPLATE
+from requirements.freeze_all import DEFAULT_FROZEN_OUTPUT
+from requirements.freeze_all import DEFAULT_SCAN_TEMPLATE
 
 os.environ.pop("PYTHONPATH", "")
 
 parser = argparse.ArgumentParser(description=__doc__.strip())
-parser.add_argument("--venv", default=None)
+parser.add_argument("--venv", default=None, dest="venv", help="The virtualenv used to freeze in")
 parser.add_argument("--keep-venv", action="store_true", dest="keep")
-parser.add_argument("--template", default="requirements/template.txt")
-parser.add_argument("--out", default=None, help="the file where packages should be written to")
 parser.add_argument(
-    "--upgrade-only", default=None, help="updates only the given package instead of all of them"
+    "--templates",
+    nargs="+",
+    default=["requirements/template_scanned_imports.txt", "requirements/template_non_imported.txt"],
+    help="one or many template files passed to pip as -r",
+)
+parser.add_argument(
+    "--constraints",
+    default="requirements/constraints.txt",
+    help="The frozen file to start from for specific package upgrade, requires --upgrade-only",
+)
+parser.add_argument(
+    "--out", default=str(DEFAULT_FROZEN_OUTPUT), help="the file where packages should be written to"
+)
+parser.add_argument(
+    "--upgrade-only",
+    default=None,
+    help="updates the given package and its dependencies, requires current frozen file."
+    "Uses --out as current frozen file",
 )
 
 
@@ -37,8 +55,8 @@ def freeze(venv, out):
 
 """,
         file=out,
+        flush=True,
     )
-    out.flush()  # no print(flush) for py2 support
     quickstart.venv_call(venv, "pip", "freeze", stdout=out, call=subprocess.check_call)
 
 
@@ -61,13 +79,28 @@ def maybe_transient_venv_dir(path, keep):
 def main(args):
     with maybe_transient_venv_dir(args.venv, args.keep) as venv:
         quickstart.setup_virtualenv(venv, use_site=False)
-        if args.upgrade_only is None:
-            quickstart.venv_call(venv, "pip", "install", "-r", args.template)
-        elif args.out and args.upgrade_only:
-            quickstart.venv_call(venv, "pip", "install", "-r", args.template, "-c", args.out)
-            quickstart.venv_call(venv, "pip", "install", "-U", "--no-deps", args.upgrade_only)
-        else:
-            raise ValueError("can't use stdout as constraint")
+        # build string of `-r template.txt -r template2.txt -r template3.txt`
+        dash_r_args = []
+        for template in args.templates:
+            # this is a bit odd, but its done because of how its passed to venv_call and compiled
+            dash_r_args.append("-r")
+            dash_r_args.append(template)
+
+        constraint_args = []
+        if args.upgrade_only:
+            # Constrain on the existing frozen file so that only the upgrade package changes
+            constraint_args.append("-c")
+            constraint_args.append(args.out)
+
+        if args.upgrade_only:
+            # install of the template files, constrained
+            quickstart.venv_call(venv, "pip", "install", "-c", args.constraints, *dash_r_args)
+            # now upgrade the given package, including dependencies
+            quickstart.venv_call(venv, "pip", "install", "-U", args.upgrade_only)
+
+        # full install of the template, latest versions where not in constraints
+        quickstart.venv_call(venv, "pip", "install", "-c", args.constraints, *dash_r_args)
+
         if args.out is None:
             freeze(venv, sys.stdout)
         else:

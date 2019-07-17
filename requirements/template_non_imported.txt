@@ -1,0 +1,6 @@
+ansible
+cfme-testcases
+distro
+flake8
+pre-commit
+pytest-polarion-collect

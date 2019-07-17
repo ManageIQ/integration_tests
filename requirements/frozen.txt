@@ -1,2 +1,0 @@
-# backward compat hack needed until prt uses quickstart
--r frozen.py3.txt

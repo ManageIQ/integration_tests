@@ -9,9 +9,8 @@ python-glanceclient
 gevent
 
 
-# https://github.com/Azure/azure-cosmosdb-python/issues/24
---no-binary azure-cosmosdb-python
---no-binary azure-cosmosdb-table
+azure-cosmosdb-python
+azure-cosmosdb-table
 # External dependencies
 boto
 bottle
