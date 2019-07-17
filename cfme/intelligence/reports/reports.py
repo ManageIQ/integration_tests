@@ -175,8 +175,15 @@ class ReportDetailsView(CloudIntelReportsView):
         user = SummaryFormItem("", "User")
         group = SummaryFormItem("", "EVM Group")
         updated_on = SummaryFormItem("", "Updated On")
-        report_schedule_data = Table('//*[@id="report_info"]/table[1]')
-        report_widgets_data = Table('//*[@id="report_info"]/table[2]')
+        # xpath is defined based on the value of the second title head of table
+        report_schedule_data = Table(
+            '//*[@id="report_info"]//th[contains(text(), "Name")]'
+            '/parent::tr/parent::thead/parent::table'
+        )
+        report_widgets_data = Table(
+            '//*[@id="report_info"]//th[contains(text(), "Title")]'
+            '/parent::tr/parent::thead/parent::table'
+        )
         queue_button = Button("Queue")
 
     @View.nested
