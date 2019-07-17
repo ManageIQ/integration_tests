@@ -165,7 +165,7 @@ def test_miq_password_decrypt(klass):
     result = LogValidator(
         "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*Decrypted password is abc.*"],
     )
-    result.fix_before_start()
+    result.start_monitoring()
 
     # Executing method via simulation to check decrypted password
     simulate(
@@ -179,4 +179,4 @@ def test_miq_password_decrypt(klass):
         request="Call_Instance",
         execute_methods=True,
     )
-    result.validate_logs()
+    assert result.validate()
