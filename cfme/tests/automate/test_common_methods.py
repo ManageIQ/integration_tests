@@ -179,4 +179,4 @@ def test_miq_password_decrypt(klass):
         request="Call_Instance",
         execute_methods=True,
     )
-    assert result.validate(wait="120s")
+    assert result.validate()
