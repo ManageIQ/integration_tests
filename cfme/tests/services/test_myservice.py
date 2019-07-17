@@ -75,6 +75,7 @@ def test_retire_service_on_date(appliance, context, service_vm):
 
 
 @pytest.mark.parametrize('context', [ViaUI])
+@pytest.mark.meta(blockers=[BZ(1729940)])
 def test_crud_set_ownership_and_edit_tags(appliance, context, service_vm):
     """Tests my service crud , edit tags and ownership
 
