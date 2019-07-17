@@ -10,39 +10,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 @pytest.mark.provider([OpenStackProvider])
 @test_requirements.snapshot
 @pytest.mark.tier(1)
-def test_osp_snapshot_buttons():
-    """
-    Test new OSP snapshot button and make sure Snapshot link is removed from Instance Details
-    page.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.10
-        setup:
-            1. Have OSP provider added and test instance created
-        testSteps:
-            1. Navigate to test instance
-            2. Make sure the snapshot button is displayed in the top menu
-            3. Try snapshot crud
-            4. Navigate to instance summary screen; Check if the original Snapshot link is present
-        expectedResults:
-            1. Test instance summary page displayed
-            2. Snapshot button displayed
-            3. Snapshot created; Snapshot deleted
-            4. Snapshot link is not displayed
-    Bugzilla:
-        1690954
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.provider([OpenStackProvider])
-@test_requirements.snapshot
-@pytest.mark.tier(1)
 def test_rhos_notification_for_snapshot_failures():
     """
     Test if cfme can report failure when deleting or creating
@@ -163,5 +130,32 @@ def test_snapshot_cloud_tenant():
             5. Snapshot NOT displayed for admin tenant
     Bugzilla:
         1685300
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.provider([OpenStackProvider])
+@test_requirements.snapshot
+@pytest.mark.tier(2)
+def test_snapshot_description_mandatory():
+    """
+    Test that when creating snapshots on Openstack provider the Description field is mandatory.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Cloud
+        caseimportance: high
+        initialEstimate: 1/4h
+        setup:
+            1. Have OSP provider added and test VM created
+        testSteps:
+            1. Try to create a snapshot with no description
+            2. Try to create a snapshot with description
+        expectedResults:
+            1. Snapshot not created; 'Required' displayed
+            2. Snapshot created successfully
+    Bugzilla:
+        1647916
     """
     pass
