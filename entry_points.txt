@@ -1,5 +1,5 @@
 [console_scripts]
-miq = cfme.scripting.miq:cli
+miq = cfme.scripting.miq:miq
 miq-artifactor-server = artifactor.__main__:main
 miq-ipython = cfme.scripting.ipyshell:main
 miq-release = cfme.utils.release:main

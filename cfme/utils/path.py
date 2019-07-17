@@ -49,6 +49,9 @@ orchestration_path = data_path.join('orchestration')
 #: resource files root directory, ``cfme_tests/data/resources``
 resources_path = data_path.join('resources')
 
+#: requirements files directory, `` cfme_tests/requirements``
+requirements_path = project_path.join('requirements')
+
 
 def get_rel_path(absolute_path_str):
     """Get a relative path for object in the project root

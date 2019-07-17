@@ -1,0 +1,11 @@
+-c constraints.txt
+ansible
+bugzilla-docstrings
+cfme-testcases
+distro
+dump2polarion
+flake8
+pdfminer.six
+polarion-docstrings
+pre-commit
+pytest-polarion-collect
