@@ -127,6 +127,7 @@ class VMEvent(object):
                 'RelocateVM_Task',
                 'VM_MIGRATION_DONE',
                 'VM_MIGRATION_FAILED_FROM_TO',  # allow for failure of migration
+                'VM_MIGRATION_FAILED',
             ),
             'tl_category': 'Migration/Vmotion',
             'db_event_type': 'VmMigratedEvent',
