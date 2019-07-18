@@ -1692,7 +1692,7 @@ class ReportDataControllerMixin(object):
         result = self.browser.execute_script(js_cmd)
         self.browser.plugin.ensure_page_safe()
         try:
-            return [int(eid["id"]) for eid in result]
+            return [eid["id"] for eid in result]
         except (TypeError, IndexError):
             return None
 
