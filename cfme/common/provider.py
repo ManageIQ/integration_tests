@@ -237,17 +237,11 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             if cancel:
                 created = False
                 add_view.cancel.click()
-                cancel_text = ('Add of {} Provider was '
-                               'cancelled by the user'.format(self.string_name))
-
-                main_view.flash.assert_message(cancel_text)
                 main_view.flash.assert_no_error()
             else:
                 add_view.add.click()
                 if main_view.is_displayed:
-                    success_text = '{} Providers "{}" was saved'.format(self.string_name,
-                                                                        self.name)
-                    main_view.flash.assert_message(success_text)
+                    main_view.flash.assert_no_error()
                 else:
                     add_view.flash.assert_no_error()
                     raise AssertionError("Provider wasn't added. It seems form isn't accurately"
@@ -605,10 +599,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         view.toolbar.configuration.item_select(item_title.format(self.string_name),
                                                handle_alert=not cancel)
         if not cancel:
-            msg = ('Delete initiated for 1 {} Provider from '
-                   'the {} Database'.format(self.string_name, self.appliance.product_name))
             main_view = self.create_view(navigator.get_class(self, 'All').VIEW, wait='10s')
-            main_view.flash.assert_success_message(msg)
+            main_view.flash.assert_no_error()
 
     def delete_rest(self):
         """Deletes a provider from CFME using REST"""

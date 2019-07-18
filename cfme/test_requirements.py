@@ -144,6 +144,12 @@ control = pytest.mark.requirement(
     assignee_id='mmojzis',
 )
 
+containers = pytest.mark.requirement(
+    "Containers",
+    description='Integration of OpenShift in MIQ/CFME',
+    assignee_id='juwatts',
+)
+
 dashboard = pytest.mark.requirement(
     "Dashboard",
     description='MIQ/CFME Dashboards creation, usability',
