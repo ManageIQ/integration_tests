@@ -2069,7 +2069,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.server_roles = roles
         except TimedOutError:
             wait_for(lambda: self.server_roles == roles, num_sec=600, delay=15)
-        self.wait_for_embedded_ansible()
+        self.wait_for_embedded_ansible(2400)
 
     def disable_embedded_ansible_role(self):
         """disables embbeded ansible role"""

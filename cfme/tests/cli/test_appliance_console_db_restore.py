@@ -242,7 +242,7 @@ def restore_db(appl, location=''):
     interaction = SSHClientInteraction(appl.ssh_client, timeout=10, display=True,
                                        output_callback=logging_callback(appl))
     interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=20)
+    interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
     interaction.expect('Choose the advanced setting: ')
     interaction.send('6')
