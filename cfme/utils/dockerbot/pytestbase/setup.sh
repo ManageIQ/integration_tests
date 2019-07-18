@@ -85,9 +85,9 @@ run_pip_update () {
     if [ -n "$WHEEL_HOST_URL" ]; then
         export PIP_TRUSTED_HOST="$WHEEL_HOST" PIP_FIND_LINKS="$WHEEL_HOST_URL"
     fi
-    gate "pip_install.txt" "pip3 install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+    gate "pip_install.txt" "pip3 install -Ur $CFME_REPO_DIR/requirements/frozen.py3.txt --no-cache-dir"
     # ensures entrypoint updates
-    run_n_log "pip install -e ."
+    run_n_log "pip3 install -e ."
 }
 
 trap on_exit EXIT
@@ -99,9 +99,16 @@ mkdir $CFME_REPO_DIR
 cd $CFME_REPO_DIR
 log "Downloading the master branch of cfme_tests repo..."
 do_or_die "git init >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+
+git remote -v |grep "origin"
+if [[ "$?" -eq "0" ]]
+then
+    do_or_die "git remote remove origin  >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+fi
+
 do_or_die "git remote add origin $CFME_REPO >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 do_or_die "git fetch >> $ARTIFACTOR_DIR/setup.txt 2>&1"
-do_or_die "git checkout -t origin/master >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git checkout origin/master >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 MASTER_AVAILABLE=true
 
 # Copy the credentials files into the conf folder instead of bothing to make symlinks
@@ -147,7 +154,7 @@ git config --global user.name "DockerBot"
 log "#*"
 
 log "Ensuring scripts can be used"
-run_n_log "pip install -e ."
+run_n_log "pip3 install -e ."
 log "#*"
 
 log "GPG Checking #~"

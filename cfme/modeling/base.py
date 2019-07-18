@@ -1,4 +1,4 @@
-from collections import Callable
+from collections.abc import Callable
 
 import attr
 from cached_property import cached_property

@@ -171,7 +171,7 @@ class ReporterBase(object):
                 group_file_list = []
                 for file_dict in file_dicts:
                     if file_dict["file_type"] == "qa_contact":
-                        with open(file_dict["os_filename"], "rb") as qafile:
+                        with open(file_dict["os_filename"], "r") as qafile:
                             qareader = csv.reader(qafile, delimiter=",", quotechar='"')
                             for qacontact in qareader:
                                 test_data["qa_contact"].append(qacontact)
