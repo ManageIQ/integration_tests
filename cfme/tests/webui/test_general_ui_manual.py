@@ -4,6 +4,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider import BaseProvider
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 
 pytestmark = [
     pytest.mark.ignore_stream('upstream'),
@@ -78,5 +80,62 @@ def test_infrastructure_provider_left_panel_titles():
                 the correct page.
             3. Relationships panel must have all items and clicking on each item should display
                 the correct page.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1651194, 1503213])
+@test_requirements.general_ui
+@pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY)
+def test_pdf_summary_provider(provider):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/8h
+        testSteps:
+            1. Add an Provider.
+            2. Open the summary page of the provider
+            3. In the toolbar check if "Print or export summary" button is displayed.
+            4. Download the summary and check if Quadicon is shown correctly, exactly as in the UI.
+        expectedResults:
+            1.
+            2.
+            3. Button must be visible.
+            4. Quadicon must be same as seen in'
+
+    Bugzilla:
+        1651194
+        1503213
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1475553])
+@test_requirements.general_ui
+def test_tls_openssl_verify_mode():
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/8h
+        testSteps:
+            1. Check if key `openssl_verify_mode` is present in the advanced configuration.
+            2. Navigate to Configuration and toggle `Start TLS Automatically`
+                of Outgoing SMTP E-mail Server.
+            3. Again check for the presence of `openssl_verify_mode` and check it's value.
+        expectedResults:
+            1. Key must be absent.
+            2.
+            3. Key must be present and value must be None.
+
+    Bugzilla:
+        1475553
     """
     pass

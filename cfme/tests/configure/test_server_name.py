@@ -10,7 +10,7 @@ pytestmark = [test_requirements.general_ui]
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(automates=[1635178])
+@pytest.mark.meta(automates=[1635178, 1595377])
 @pytest.mark.sauce
 def test_server_name(request, appliance):
     """Tests that changing the server name updates the about page
