@@ -12,6 +12,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -794,3 +795,51 @@ def test_ansible_service_linked_vm(
 
     view = navigate_to(ansible_service, "Details")
     assert new_vm.name in view.entities.vms.all_entity_names
+
+
+@pytest.mark.tier(1)
+def test_ansible_service_order_vault_credentials(
+    appliance,
+    request,
+    ansible_catalog_item,
+    ansible_service_catalog,
+    ansible_service_request,
+    ansible_service,
+):
+    """
+    Add vault password and test in the playbook that encrypted yml can be
+    decrypted.
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/2h
+        tags: ansible_embed
+    """
+    creds = conf.credentials['vault_creds']['password']
+    creds_dict = {"vault_password": creds}
+    vault_creds = appliance.collections.ansible_credentials.create(
+        "Vault_Credentials_{}".format(fauxfactory.gen_alpha()), "Vault", **creds_dict
+    )
+
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
+            "playbook": "dump_secret_variable_from_vault.yml",
+            "vault_credential": vault_creds.name,
+        }
+
+    @request.addfinalizer
+    def _revert():
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning = {
+                "playbook": "dump_all_variables.yml",
+                "vault_credential": "<Choose>",
+            }
+
+        vault_creds.delete_if_exists()
+
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+
+    view = navigate_to(ansible_service, "Details")
+    assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
+    assert view.provisioning.results.get_text_of("Status") == "successful"
