@@ -230,7 +230,7 @@ ipv6 = pytest.mark.requirement(
 
 infra_hosts = pytest.mark.requirement(
     "Infrastructure Hosts Support",
-    description='Support functionality for cfme hosts',
+    description='Support functionality for infrastructure hosts',
     assignee_id='prichard',
 )
 
