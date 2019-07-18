@@ -144,7 +144,7 @@ def test_update_webui(appliance_with_providers, appliance, request, old_version)
     update_appliance(appliance_with_providers)
 
     wait_for(do_appliance_versions_match, func_args=(appliance, appliance_with_providers),
-             num_sec=900, delay=20, handle_exception=True,
+             num_sec=1200, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appliance_with_providers)
