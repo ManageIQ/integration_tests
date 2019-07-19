@@ -305,14 +305,21 @@ class TaggableCommonBase(object):
     """Class represents common functionality for tagging via collection and entities pages"""
 
     def _set_random_tag(self, view):
-        random_cat = random.choice(view.form.tag_category.all_options).text
-        # '*' is added in UI almost to all categoly while tag selection,
+        if self.appliance.version > "5.11":
+            random_cat = random.choice(view.form.tag_category.all_options)
+        else:
+            random_cat = random.choice(view.form.tag_category.all_options).text
+        # '*' is added in UI almost to all category while tag selection,
         #  but doesn't need for Category object creation
         random_cat_cut = random_cat[:-1].strip() if random_cat[-1] == '*' else random_cat
         view.form.tag_category.fill(random_cat)
         # In order to get the right tags list we need to select category first to get loaded tags
-        random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
-                                    if "select" not in tag_option.text.lower()]).text
+        if self.appliance.version > "5.11":
+            random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
+                                        if "select" not in tag_option.lower()])
+        else:
+            random_tag = random.choice([tag_option for tag_option in view.form.tag_name.all_options
+                                        if "select" not in tag_option.text.lower()]).text
         category = self.appliance.collections.categories.instantiate(display_name=random_cat_cut)
         return category.collections.tags.instantiate(display_name=random_tag)
 

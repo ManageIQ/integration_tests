@@ -2747,7 +2747,11 @@ class ReactSelect(Widget, ClickableMixin):
     BASE_LOCATOR = ".//div[@id={}]"
     BY_VISIBLE_TEXT = './/div[contains(@id, "react-select") and contains(normalize-space(.), {})]'
     SELECTED_VALUE = './/div[contains(@class, "singleValue")]'
-    ALL_OPTIONS = './/*[self::span or self::div][normalize-space(text())]'
+    # exclude "sr-only" - it has always the same text "Only a single value can be assigned from
+    # these categories" - the "i" mark in the UI
+    # exclude "react-select__placeholder" - it has "Select tag category" or "Select tag value"
+    ALL_OPTIONS = ('.//*[self::span or self::div][not(contains(@class,"sr-only") or '
+                   'contains(@class, "react-select__placeholder")) and normalize-space(text())]')
     # fmt: on
 
     def __init__(self, parent, id=None, locator=None, can_hide_on_select=False, logger=None):
@@ -2764,7 +2768,7 @@ class ReactSelect(Widget, ClickableMixin):
     @property
     def is_open(self):
         try:
-            return self.browser.is_displayed('//div[@class="css-1paxw40-menu"]')
+            return self.browser.is_displayed('.//div[contains(@class, "css-1paxw40-menu")]')
         except StaleElementReferenceException:
             self.logger.warning(
                 "Got a StaleElementReferenceException in .is_open, but ignoring. Returned False."
@@ -2814,7 +2818,7 @@ class ReactSelect(Widget, ClickableMixin):
                     self.browser.click(self.BY_VISIBLE_TEXT.format(quote(item)), force_scroll=True)
                 except NoSuchElementException:
                     raise SelectItemNotFound(
-                        widget=self, item=item, options=[opt.text for opt in self.all_options]
+                        widget=self, item=item, options=[opt for opt in self.all_options]
                     )
         self.close()
 
@@ -2822,7 +2826,9 @@ class ReactSelect(Widget, ClickableMixin):
     def all_options(self):
         # need to open the dropdown to see all available options
         self.open()
-        options = [self.browser.text(e) for e in self.browser.elements(self.ALL_OPTIONS)]
+        options = [
+            self.browser.text(e).encode("utf-8") for e in self.browser.elements(self.ALL_OPTIONS)
+        ]
         self.close()
         return options
 
