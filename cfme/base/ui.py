@@ -6,6 +6,7 @@ import time
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from selenium.webdriver.common.keys import Keys
+from widgetastic.widget import FileInput
 from widgetastic.widget import Table
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput

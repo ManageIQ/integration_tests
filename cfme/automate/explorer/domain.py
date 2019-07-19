@@ -376,7 +376,7 @@ class DomainCollection(BaseCollection):
                     .query(repo_table)\
                     .filter(repo_table.id == git_repository_id)\
                     .first()
-                agr = self.appliance.collections.automate_import_export.instantiate(
+                agr = self.appliance.collections.automate_import_exports.instantiate(
                     import_type="git", url=repo.url, verify_ssl=repo.verify_ssl
                 )
                 result.append(

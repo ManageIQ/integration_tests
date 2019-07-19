@@ -38,7 +38,7 @@ class AutomateImportExportBaseView(BaseLoggedInPage):
 class AutomateImportExportView(AutomateImportExportBaseView):
     @View.nested
     class import_file(View):  # noqa
-        file = FileInput(id="upload_file")
+        upload_file = FileInput(id="upload_file")
         upload = Button(id="upload-datastore-import")
 
     @View.nested
@@ -145,6 +145,7 @@ class AutomateGitRepository(BaseEntity):
         view.flash.assert_no_error()
 
         # Now find the domain in database
+        # TODO: find way to implement it with rest client
         namespaces = self.appliance.db.client["miq_ae_namespaces"]
         git_repositories = self.appliance.db.client["git_repositories"]
         none = None
@@ -161,7 +162,7 @@ class AutomateGitRepository(BaseEntity):
             .join(git_repositories, namespaces.git_repository_id == git_repositories.id)
         )
 
-        for id, name, description, repo_url, git_type, git_type_value in query:
+        for db_id, name, description, repo_url, git_type, git_type_value in query:
             if self.url != repo_url:
                 continue
             if not (
@@ -174,7 +175,7 @@ class AutomateGitRepository(BaseEntity):
 
             # We have the domain
             return self.appliance.collections.domains.instantiate(
-                db_id=id,
+                db_id=db_id,
                 name=name,
                 description=description,
                 git_checkout_type=git_type,
@@ -200,7 +201,7 @@ class AutomateFileImport(BaseEntity):
             Instance of :py:class:`cfme.automate.explorer.domain.Domain`
         """
         view = navigate_to(self.parent, "All")
-        view.import_file.file.fill(self.file_path)
+        view.import_file.upload_file.fill(self.file_path)
         view.import_file.upload.click()
 
         file_view = self.create_view(FileImportSelectorView, wait="10s")
@@ -225,12 +226,12 @@ class AutomateImportExportsCollection(BaseCollection):
     ):
         if import_type == "file":
             import_cls = AutomateFileImport
-            arg = [file_path]
+            args = [file_path]
         elif import_type == "git":
             import_cls = AutomateGitRepository
-            arg = [url, username, password, verify_ssl]
+            args = [url, username, password, verify_ssl]
 
-        return import_cls.from_collection(self, *arg, **kwargs)
+        return import_cls.from_collection(self, *args, **kwargs)
 
     def git_repository_from_db(self, db_id):
         """Instantiate AutomateGitRepository with db id"""
@@ -244,7 +245,7 @@ class AutomateImportExportsCollection(BaseCollection):
                 .filter(git_repositories.id == db_id)
                 .first()
             )
-            return self.instantiate(import_type="git", url=url, verify_ssl=verify_ssl > 0)
+            return self.instantiate(import_type="git", url=url, verify_ssl=bool(verify_ssl))
         except ValueError:
             raise ValueError("No such repository in the database")
 
