@@ -150,13 +150,19 @@ class InstanceDetailsView(CloudInstanceView):
             # Not displayed when the instance is archived
             relationships = self.entities.summary('Relationships')
             relationship_provider_name = relationships.get_text_of('Cloud Provider')
+            return (
+                self.in_cloud_instance and
+                self.entities.title.text == 'Instance "{}"'.format(expected_name) and
+                relationship_provider_name == expected_provider
+            )
         except (NameError, NoSuchElementException):
             logger.warning('No "Cloud Provider" Relationship, assume instance view not displayed')
-            raise NotImplementedError("This view has no unique markers for is_displayed check")
-        return (
-            self.in_cloud_instance and
-            self.entities.title.text == 'Instance "{}"'.format(expected_name) and
-            relationship_provider_name == expected_provider)
+            # for archived instances the relationship_provider_name is removed from the summary
+            # table
+            return (
+                self.in_cloud_instance and
+                self.entities.title.text == 'Instance "{}"'.format(expected_name)
+            )
 
     toolbar = View.nested(InstanceDetailsToolbar)
     sidebar = View.nested(InstanceAccordion)
