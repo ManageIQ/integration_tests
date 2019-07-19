@@ -1,3 +1,4 @@
+import re
 from collections import namedtuple
 
 import fauxfactory
@@ -216,6 +217,17 @@ def fetch_db_local(appl1, appl2):
     appl2.ssh_client.put_file(dump_filename, "/tmp/evm_db.backup")
 
 
+@pytest.fixture
+def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
+    """Requests two configured appliances from sprout."""
+    appl1, appl2 = temp_appliances_preconfig_funcscope
+
+    # Add infra/cloud providers
+    provider_app_crud(VMwareProvider, appl1).setup()
+    provider_app_crud(EC2Provider, appl1).setup()
+    return appl1, appl2
+
+
 def setup_nfs_samba_backup(appl1):
     # Fetch db from first appliance and push it to nfs/samba server
     connect_kwargs = {
@@ -234,7 +246,7 @@ def logging_callback(appliance):
     # TODO (jhenner) Remove me. This is being defined also in some other PR:
     # Fix minor version update tests. #8521
     def the_logger(m):
-        logger.debug('Appliance %s:\n%s', appliance.hostname, m)
+        logger.info('Appliance %s:\n%s', appliance.hostname, m)
     return the_logger
 
 
@@ -521,7 +533,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers):
+def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_providers):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -531,19 +543,56 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
         caseimportance: critical
         initialEstimate: 1h
     """
-    appl1, appl2 = get_appliances_with_providers
+    appl1, appl2 = two_appliances_one_with_providers
     host = cfme_data['network_share']['hostname']
     loc = cfme_data['network_share']['nfs_path']
-    nfs_dump = 'nfs://{}{}share.backup'.format(host, loc)
+    nfs_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+    nfs_restore_dir_path = 'nfs://{}{}'.format(host, loc)
+    nfs_restore_file_path = '{}/db_backup/{}'.format(nfs_restore_dir_path, nfs_dump_file_name)
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    setup_nfs_samba_backup(appl1)
+
+    # setup_nfs_samba_backup(appl1)
+    interaction = SSHClientInteraction(appl1.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl1))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect(r'Choose the backup output file destination: \|1\| ')
+    interaction.send('2')
+    interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
+    interaction.send(nfs_dump_file_name)
+    # Enter the location to save the remote backup file to
+    interaction.expect(re.escape(
+        'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
+    interaction.send(nfs_restore_dir_path)
+    # Running Database backup to nfs://10.8.198.142/srv/export...
+    interaction.expect('Press any key to continue.', timeout=120)
+
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '2', nfs_dump, TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+
+    interaction = SSHClientInteraction(appl2.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl2))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect(r'Choose the restore database file source: \|1\| ')
+    interaction.send('2')
+    # Enter the location of the remote backup file
+    interaction.expect(re.escape(
+        'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
+    interaction.send(nfs_restore_file_path)
+    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
+    interaction.send('y')
+    interaction.expect('Press any key to continue.', timeout=40)
+
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
@@ -558,7 +607,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_samba(request, get_appliances_with_providers):
+def test_appliance_console_restore_db_samba(request, two_appliances_one_with_providers):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -568,21 +617,69 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
         caseimportance: critical
         initialEstimate: 1h
     """
-    appl1, appl2 = get_appliances_with_providers
+    appl1, appl2 = two_appliances_one_with_providers
     host = cfme_data['network_share']['hostname']
     loc = cfme_data['network_share']['smb_path']
-    smb_dump = 'smb://{}{}share.backup'.format(host, loc)
-    pwd = credentials['depot_credentials']['password']
-    usr = credentials['depot_credentials']['username']
+    smb_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+    smb_restore_dir_path = 'smb://{}{}'.format(host, loc)
+    smb_restore_file_path = '{}/db_backup/{}'.format(smb_restore_dir_path, smb_dump_file_name)
+
+    pwd = credentials['depot_smb_credentials']['password']
+    usr = credentials['depot_smb_credentials']['username']
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    setup_nfs_samba_backup(appl1)
+
+    # setup_nfs_samba_backup(appl1)
+    interaction = SSHClientInteraction(appl1.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl1))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect(r'Choose the backup output file destination: \|1\| ')
+    interaction.send('3')
+    interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
+    interaction.send(smb_dump_file_name)
+    # Enter the location to save the remote backup file to
+    interaction.expect(re.escape(
+        'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
+    interaction.send(smb_restore_dir_path)
+    # Enter the username with access to this file.
+    interaction.expect(re.escape("Example: 'mydomain.com/user': "))
+    interaction.send(usr)
+    interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
+    interaction.send(pwd)
+    # Running Database backup to nfs://10.8.198.142/srv/export...
+    interaction.expect('Press any key to continue.', timeout=120)
+
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '3', smb_dump, usr, pwd, TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+
+    interaction = SSHClientInteraction(appl2.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl2))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect(r'Choose the restore database file source: \|1\| ')
+    interaction.send('3')
+    # Enter the location of the remote backup file
+    interaction.expect(re.escape(
+        'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
+    interaction.send(smb_restore_file_path)
+    # Enter the username with access to this file.
+    interaction.expect(re.escape("Example: 'mydomain.com/user': "))
+    interaction.send(usr)
+    interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
+    interaction.send(pwd)
+    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
+    interaction.send('y')
+    interaction.expect('Press any key to continue.', timeout=40)
+
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
