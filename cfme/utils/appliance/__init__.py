@@ -132,17 +132,17 @@ class ApplianceConsole(object):
         self.commands = commands
         for command in commands:
             if isinstance(command, six.string_types):
-                command_string, timeout = command, timeout
+                cmd, timeout = command, timeout
             else:
-                command_string, timeout = command
+                cmd, timeout = command
             channel.settimeout(timeout)
-            if autoreturn:
-                command_string = (command_string + '\n')
-            channel.send("{}".format(command_string))
+            cmd = "{}\n".format(cmd) if autoreturn else "{}".format(cmd)
+            channel.send(cmd)
             result = ''
             try:
                 while True:
-                    result += channel.recv(1)
+                    val = channel.recv(1)
+                    result += val.decode('utf-8') if isinstance(val, bytes) else val
                     if 'Press any key to continue' in result:
                         break
             except socket.timeout:

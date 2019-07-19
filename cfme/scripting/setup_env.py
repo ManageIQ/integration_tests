@@ -1,13 +1,17 @@
+import random
 import re
 import sys
 from collections import namedtuple
+from itertools import cycle
 
 import click
 from wait_for import wait_for
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import stack
 from cfme.utils.conf import credentials
+from cfme.utils.providers import get_crud
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 
@@ -203,6 +207,94 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
     print("Setup - Replication on global appliance")
     apps[0].set_pglogical_replication(replication_type=':global')
     apps[0].add_pglogical_replication_subscription(apps[1].hostname)
+    print("Done!")
+
+
+@main.command('multi-region', help='Sets up replicated environment')
+@click.option('--cfme-version', required=True)
+@click.option('--provider-type', default='rhevm', help='Specify sprout provider type')
+@click.option('--provider', default=None, help='Specify sprout provider, overrides provider_type')
+@click.option('--lease', default='3d', help='set pool lease time, example: 1d4h30m')
+@click.option('--sprout-poolid', default=None, help='Specify ID of existing pool')
+@click.option('--desc', default='Replicated appliances', help='Set description of the pool')
+@click.option('--remote-nodes', default=2, type=int, help='Add nodes to remote regions')
+@click.option('--add-prov', default=None, type=str, multiple=True,
+              help='Add providers to remote region appliances')
+def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_poolid, desc,
+                          remote_nodes, add_prov):
+    lease_time = tot_time(lease)
+    provider_type = None if provider else provider_type
+    """Multi appliance setup with multi region and replication from remote to global"""
+
+    sprout_client = SproutClient.from_config()
+
+    required_app_count = 1  # global app
+    required_app_count += remote_nodes
+
+    if sprout_poolid:
+        if sprout_client.call_method('pool_exists', sprout_poolid):
+            sprout_pool = sprout_client.call_method('request_check', sprout_poolid)
+            if len(sprout_pool['appliances']) >= required_app_count:
+                print("Processing pool...")
+                apps = []
+                for app in sprout_pool['appliances']:
+                    apps.append(IPAppliance(app['ip_address']))
+                sprout_client.set_pool_description(sprout_poolid, desc)
+            else:
+                sys.exit("Pool does not meet the minimum size requirements!")
+        else:
+            sys.exit("Pool not found!")
+
+    else:
+        print("Provisioning appliances")
+        apps, request_id = provision_appliances(
+            count=required_app_count, cfme_version=cfme_version,
+            provider_type=provider_type, provider=provider, lease_time=lease_time
+        )
+        print("Appliance pool lease time is {}".format(lease))
+        sprout_client.set_pool_description(request_id, desc)
+        print("Appliances Provisioned")
+    print("Configuring Replicated Environment")
+    global_app = apps[0]
+    gip = global_app.hostname
+
+    remote_apps = apps[1:]
+
+    print("Global Appliance Configuration")
+    command_set0 = ('ap', '', '7', '1', '1', '2', 'n', '99', pwd, TimedCommand(pwd, 360), '')
+    global_app.appliance_console.run_commands(command_set0)
+    global_app.evmserverd.wait_for_running()
+    global_app.wait_for_web_ui()
+    print("Done: Global @ {}".format(gip))
+
+    for num, app in enumerate(remote_apps):
+        region_n = str(num + 1 * 10)
+        print("Remote Appliance Configuration")
+        command_set1 = ('ap', '', '7', '2', gip, '', pwd, '', '1', '2', 'n', region_n, pwd,
+                        TimedCommand(pwd, 360), '')
+        app.appliance_console.run_commands(command_set1)
+        app.evmserverd.wait_for_running()
+        app.wait_for_web_ui()
+        print("Done: Remote @ {}, region: {}".format(app.hostname, region_n))
+
+        print("Configuring Replication")
+        print("Setup - Replication on remote appliance")
+        app.set_pglogical_replication(replication_type=':remote')
+
+    print("Setup - Replication on global appliance")
+    global_app.set_pglogical_replication(replication_type=':global')
+    for app in remote_apps:
+        global_app.add_pglogical_replication_subscription(app.hostname)
+
+    random.shuffle(remote_apps)
+    if add_prov:
+        for app, prov_id in zip(cycle(remote_apps), add_prov):
+            stack.push(app)
+            prov = get_crud(prov_id)
+            print("Adding provider {} to appliance {}".format(prov_id, app.hostname))
+            prov.create()
+            stack.pop()
+
     print("Done!")
 
 
