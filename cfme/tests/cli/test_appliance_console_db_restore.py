@@ -205,11 +205,11 @@ def fetch_v2key(appl1, appl2):
     appl2.ssh_client.put_file(rand_yml_filename, "/var/www/miq/vmdb/config/database.yml")
 
 
-def fetch_db_local(appl1, appl2):
+def fetch_db_local(appl1, appl2, file_name):
     # Fetch db from the first appliance
     dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
-    appl1.ssh_client.get_file("/tmp/evm_db.backup", dump_filename)
-    appl2.ssh_client.put_file(dump_filename, "/tmp/evm_db.backup")
+    appl1.ssh_client.get_file(file_name, dump_filename)
+    appl2.ssh_client.put_file(dump_filename, file_name)
 
 
 @pytest.fixture
@@ -267,9 +267,9 @@ def restore_db(appl, location=''):
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_local(request, get_appliances_with_providers):
-    """ Test single appliance backup and restore, configures appliance with providers,
-    backs up database, restores it to fresh appliance and checks for matching providers.
+def test_appliance_console_dump_restore_db_local(request, get_appliances_with_providers):
+    """ Test single appliance dump and restore, configures appliance with providers,
+    dumps a database, restores it to fresh appliance and checks for matching providers.
 
     Polarion:
         assignee: jhenner
@@ -280,12 +280,84 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
     appl1, appl2 = get_appliances_with_providers
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    fetch_db_local(appl1, appl2)
+    fetch_db_local(appl1, appl2, "/tmp/evm_db.backup")
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
     restore_db(appl2)
+    appl2.evmserverd.start()
+    appl2.wait_for_web_ui()
+    # Assert providers on the second appliance
+    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on the second appliance
+    virtual_crud = provider_app_crud(VMwareProvider, appl2)
+    vm = provision_vm(request, virtual_crud)
+    assert vm.mgmt.is_running, "vm not running"
+
+
+@pytest.mark.rhel_testing
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream('upstream')
+def test_appliance_console_backup_restore_db_local(request, two_appliances_one_with_providers):
+    """ Test single appliance backup and restore, configures appliance with providers,
+    backs up database, restores it to fresh appliance and checks for matching providers.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/2h
+    """
+    appl1, appl2 = two_appliances_one_with_providers
+    backup_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+
+    interaction = SSHClientInteraction(appl1.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl1))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect(r'Choose the backup output file destination: \|1\| ')
+    interaction.send('')
+    interaction.expect(re.escape(
+        'Enter the location to save the backup file to: |/tmp/evm_db.backup| '))
+    interaction.send(backup_file_name)
+    interaction.expect('Press any key to continue.', timeout=120)
+
+    # Transfer v2_key and db backup from first appliance to second appliance
+    fetch_v2key(appl1, appl2)
+    fetch_db_local(appl1, appl2, backup_file_name)
+
+    # Restore DB on the second appliance
+    appl2.evmserverd.stop()
+    appl2.db.drop()
+    appl2.db.create()
+
+    interaction = SSHClientInteraction(appl2.ssh_client, timeout=10, display=True,
+                                       output_callback=logging_callback(appl2))
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect(re.escape(
+        'Choose the restore database file source: |1| '))
+    interaction.send('')
+    interaction.expect(re.escape(
+        'Enter the location of the local restore file: |/tmp/evm_db.backup| '))
+    interaction.send(backup_file_name)
+    interaction.expect(re.escape(
+        'Should this file be deleted after completing the restore? (Y/N): '))
+    interaction.send('n')
+    interaction.expect(re.escape(
+        'Are you sure you would like to restore the database? (Y/N): '))
+    interaction.send('y')
+    interaction.expect('Press any key to continue.', timeout=80)
+
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
