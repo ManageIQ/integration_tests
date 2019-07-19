@@ -129,3 +129,102 @@ def test_edit_request_task():
 
     """
     pass
+
+
+@test_requirements.rest
+@pytest.mark.manual()
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1727948])
+def test_create_picture_with_role():
+    """
+    Polarion:
+    assignee: pvala
+    caseimportance: high
+    casecomponent: Rest
+    initialEstimate: 1/4h
+    testSteps:
+        1. Navigate to add role page and select every role individually.
+        2. Create a group and user with the new role.
+        3. Send a POST request to create a picture and check the response.
+        4. Navigate to edit role page, uncheck `Everything` and recheck.
+        5. Send a POST request to create a picture and check the response.
+    expectedResults:
+        1.
+        2.
+        3. Picture must be created without any error.
+            Check for `Use of Action create is forbidden` in response.
+        4.
+        5. Picture must be created.
+
+    Bugzilla:
+        1727948
+    """
+    pass
+
+
+@test_requirements.rest
+@pytest.mark.manual()
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1700378])
+def test_notification_url_parallel_requests():
+    """
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        testSteps:
+            1. Stop evmserverd.
+            2. Run `bin rails/server`
+            3. Monitor production.log
+            4. Run ruby script which will execute multiple api requests parallely.
+                ```
+                2.times do
+                    Thread.new do
+                        `curl -L https://admin:smartvm@localhost/api/vms`
+                    end
+                    Thread.new do
+                        `curl -L https://admin:smartvm@localhost/api/notifications?
+                        expand=resources&attributes=details&sort_by=id&sort_order=desc&limit=100`
+                    end
+                end
+                ```
+            5. Validate logs.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Check if all the requests were processed and completed
+
+    Bugzilla:
+        1700378
+    """
+    pass
+
+
+@test_requirements.rest
+@pytest.mark.manual()
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1684681])
+def test_filtering_vm_with_multiple_ips():
+    """
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Add a provider.
+        testSteps:
+            1. Select a VM with multiple IP addresses and note one ipaddress.
+            2. Send a GET request with the noted ipaddress.
+                GET /api/vms?expand=resources&attributes=ipaddresses&filter[]=ipaddresses=':ipaddr'
+        expectedResults:
+            1.
+            2. Selected VM must be present in the resources sent by response.
+
+    Bugzilla:
+        1684681
+    """
+    pass

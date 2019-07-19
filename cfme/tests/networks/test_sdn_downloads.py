@@ -2,7 +2,6 @@ import random
 
 import pytest
 
-from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
@@ -91,25 +90,3 @@ def test_download_pdf_summary(appliance, collection_type, provider):
         download_summary(random_obj)
     else:
         pytest.skip('{} entities not available'.format(collection_type))
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-@test_requirements.general_ui
-def test_pdf_summary_infra_provider():
-    """
-    Bugzilla:
-        1651194
-
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/8h
-        testSteps:
-            1. Add an Infrastructure Provider (tested with VMware)
-            2. Open the summary page of the provider
-            3. In the toolbar click "Print or export summary"
-            = Quadicon is shown correctly, exactly as in the UI
-    """
-    pass
