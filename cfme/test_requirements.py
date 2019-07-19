@@ -228,6 +228,12 @@ ipv6 = pytest.mark.requirement(
     assignee_id='',
 )
 
+infra_hosts = pytest.mark.requirement(
+    "Infrastructure Hosts Support",
+    description='Support functionality for infrastructure hosts',
+    assignee_id='prichard',
+)
+
 log_depot = pytest.mark.requirement(
     "Log Collection and Depot",
     description='MIQ/CFME Log collection and storage',
