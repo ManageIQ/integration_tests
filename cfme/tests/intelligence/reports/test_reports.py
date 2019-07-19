@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.rest.gen_data import users as _users
 from cfme.utils.rest import assert_response
 
@@ -149,3 +150,92 @@ def test_new_report_fields(appliance, based_on, request):
     report = appliance.collections.reports.create(**data)
     request.addfinalizer(report.delete_if_exists)
     assert report.exists
+
+
+@pytest.fixture
+def filter_report(appliance):
+    report_data = {
+        "title": "Testing report",
+        "menu_name": "testing report",
+        "base_report_on": "VMs and Instances",
+        "report_fields": [
+            "Active",
+            "EVM Custom Attributes : Name",
+            "EVM Custom Attributes : Region Description",
+            "EVM Custom Attributes : Region Number",
+            "Name",
+        ],
+        "consolidation": {
+            "group_records": [
+                "EVM Custom Attributes : Name",
+                "EVM Custom Attributes : Region Description",
+                "EVM Custom Attributes : Region Number",
+            ]
+        },
+        "filter": {
+            "primary_filter": "fill_field(VM and Instance : Active, IS NOT NULL)",
+            "secondary_filter": "fill_field(EVM Custom Attributes : Name, INCLUDES, A)",
+        },
+    }
+    report = appliance.collections.reports.create(**report_data)
+    yield report
+    report.delete_if_exists()
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1565171])
+def test_report_edit_secondary_display_filter(appliance, filter_report, soft_assert):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/6h
+        setup:
+            1. Create/Copy a report with secondary (display) filter.
+        testSteps:
+            1. Edit the secondary filter and test if the report was updated.
+        expectedResults:
+            1. Secondary filter must be editable and it must be updated.
+
+    Bugzilla:
+        1565171
+    """
+    filter_report.update(
+        {
+            "filter": {
+                "primary_filter": (
+                    "fill_find("
+                    "field=VM and Instance.Guest Applications : Name, skey=STARTS WITH, "
+                    "value=env, check=Check Count, ckey= = , cvalue=1"
+                    ");select_first_expression;click_or;fill_find("
+                    "field=VM and Instance.Guest Applications : Name, skey=STARTS WITH, "
+                    "value=kernel, check=Check Count, ckey= = , cvalue=1)"
+                ),
+                "secondary_filter": (
+                    "fill_field(EVM Custom Attributes : Name, INCLUDES, A);"
+                    " select_first_expression;click_or;fill_field"
+                    "(EVM Custom Attributes : Region Description, INCLUDES, E)"
+                ),
+            }
+        }
+    )
+
+    view = filter_report.create_view(ReportDetailsView, wait="10s")
+
+    primary_filter = (
+        '( FIND VM and Instance.Guest Applications : Name STARTS WITH "env" CHECK COUNT = 1'
+        ' OR FIND VM and Instance.Guest Applications : Name STARTS WITH "kernel" CHECK COUNT = 1 )'
+    )
+    secondary_filter = (
+        '( VM and Instance.EVM Custom Attributes : Name INCLUDES "A"'
+        ' OR VM and Instance.EVM Custom Attributes : Region Description INCLUDES "E" )'
+    )
+    soft_assert(
+        view.report_info.primary_filter.read() == primary_filter,
+        "Primary Filter did not match.",
+    )
+    soft_assert(
+        view.report_info.secondary_filter.read() == secondary_filter,
+        "Secondary Filter did not match.",
+    )

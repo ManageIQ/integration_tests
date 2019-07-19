@@ -34,6 +34,7 @@ from cfme.utils.wait import wait_for
 from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ReportToolBarViewSelector
+from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
 from widgetastic_manageiq.expression_editor import ExpressionEditor
@@ -78,8 +79,20 @@ class CustomReportFormCommon(CloudIntelReportsView):
         interval = BootstrapSelect("cb_interval")
         interval_size = BootstrapSelect("cb_interval_size")
         interval_end = BootstrapSelect("cb_end_interval_offset")
-        primary_filter = ExpressionEditor()
-        secondary_filter = ExpressionEditor()
+        primary_record_filter = Button("contains", "Record Filter")
+        secondary_display_filter = Button("contains", "Display Filter")
+
+        @View.nested
+        class primary_filter(ExpressionEditor):     # noqa
+            def child_widget_accessed(self, widget):
+                if self.parent.primary_record_filter.is_displayed:
+                    self.parent.primary_record_filter.click()
+
+        @View.nested
+        class secondary_filter(ExpressionEditor):   # noqa
+            def child_widget_accessed(self, widget):
+                if self.parent.secondary_display_filter.is_displayed:
+                    self.parent.secondary_display_filter.click()
 
     @View.nested
     class summary(WaitTab):  # noqa
@@ -152,6 +165,25 @@ class ReportDetailsView(CloudIntelReportsView):
     @View.nested
     class report_info(WaitTab):  # noqa
         TAB_NAME = "Report Info"
+        # Keeping `group_title` empty since the summary form has no title
+        report_id = SummaryFormItem("", "ID")
+        title = SummaryFormItem("", "Title")
+        primary_filter = SummaryFormItem("", "Primary (Record) Filter")
+        secondary_filter = SummaryFormItem("", "Secondary (Display) Filter")
+        sort_by = SummaryFormItem("", "Sort By")
+        based_on = SummaryFormItem("", "Based On")
+        user = SummaryFormItem("", "User")
+        group = SummaryFormItem("", "EVM Group")
+        updated_on = SummaryFormItem("", "Updated On")
+        # xpath is defined based on the value of the second title head of table
+        report_schedule_data = Table(
+            '//*[@id="report_info"]//th[contains(text(), "Name")]'
+            '/parent::tr/parent::thead/parent::table'
+        )
+        report_widgets_data = Table(
+            '//*[@id="report_info"]//th[contains(text(), "Title")]'
+            '/parent::tr/parent::thead/parent::table'
+        )
         queue_button = Button("Queue")
 
     @View.nested

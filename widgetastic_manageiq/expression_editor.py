@@ -121,11 +121,13 @@ class ExpressionEditor(View, Pretty):
     # fmt: off
     EXPRESSIONS_ROOT = ".//div[@class='panel-body']"
     # fmt: on
-    EXPRESSION_TEXT = "//a[contains(@id,'exp_')]"
+    FIRST_EXPRESSION_TEXT = "//a[contains(@id,'exp_')]"
+    EXPRESSION_TEXT = '//*[@id="exp_editor_div"]//p'
     SELECT_SPECIFIC = ".//a[@title='Click to change to a specific Date/Time format']"
     SELECT_RELATIVE = ".//a[@title='Click to change to a relative Date/Time format']"
 
     # widgets
+    first_expression_text_widget = Text(FIRST_EXPRESSION_TEXT)
     expression_text_widget = Text(EXPRESSION_TEXT)
     commit = Button(title="Commit expression element changes")
     discard = Button(title="Discard expression element changes")
@@ -193,9 +195,11 @@ class ExpressionEditor(View, Pretty):
             return "<new element>"
 
     def select_first_expression(self):
-        """There is always at least one (???), so no checking of bounds."""
+        """There is always at least one (<new element>), so no checking of bounds."""
         els = wait_for(
-            lambda: self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root),
+            lambda: self.browser.elements(
+                self.FIRST_EXPRESSION_TEXT, parent=self._expressions_root
+            ),
             fail_condition=[],
             timeout=5,
         )
@@ -204,10 +208,12 @@ class ExpressionEditor(View, Pretty):
         self.browser.click(els[0][0])
 
     def select_last_expression(self):
-        """There is always at least one (???), so no checking of bounds.
+        """There is always at least one (<new element>), so no checking of bounds.
         Could be the same as first expression but is needed for complex expression tests"""
         els = wait_for(
-            lambda: self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root),
+            lambda: self.browser.elements(
+                self.FIRST_EXPRESSION_TEXT, parent=self._expressions_root
+            ),
             fail_condition=[],
             timeout=5,
         )
@@ -216,8 +222,10 @@ class ExpressionEditor(View, Pretty):
         self.browser.click(els[0][-1])
 
     def select_expression_text(self):
-        self.expression_text_widget.wait_displayed()
-        self.expression_text_widget.click()
+        """This can be used select the first expression when error such as
+        StaleElementReferenceException is encountered."""
+        self.first_expression_text_widget.wait_displayed()
+        self.first_expression_text_widget.click()
 
     def select_expression_by_text(self, text):
         self.browser.click(
