@@ -12,9 +12,11 @@ from widgetastic.widget import FileInput
 from widgetastic.widget import Image
 from widgetastic.widget import Table
 from widgetastic.widget import Text
+from widgetastic.widget import TextInput
 from widgetastic.widget import View
 from widgetastic_patternfly import Accordion
 from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import DatePicker
@@ -50,6 +52,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import SummaryTable
@@ -513,6 +516,43 @@ class ServerView(ConfigurationView):
     @View.nested
     class customlogos(WaitTab):  # noqa
         TAB_NAME = "Custom Logos"
+        save_button = Button("Save")
+        reset_button = Button("Reset")
+
+        @View.nested
+        class logo(View):   # noqa
+            image = FileInput(id="upload_logo")
+            upload_button = InputButton(
+                locator='//div[contains(.,"Dimensions - 350x70.")]/input'
+            )
+            enable = BootstrapSwitch(id="server_uselogo")
+
+        @View.nested
+        class login_logo(View):    # noqa
+            image = FileInput(id="login_logo")
+            upload_button = InputButton(
+                locator='//div[contains(.,"Dimensions - 1280x1000.")]/input'
+            )
+            enable = BootstrapSwitch(id="server_useloginlogo")
+
+        @View.nested
+        class brand(View):    # noqa
+            image = FileInput(id="brand_logo")
+            upload_button = InputButton(
+                locator='//div[normalize-space()="* Requirements: File-type - PNG;"]/input'
+            )
+            enable = BootstrapSwitch(id="server_usebrand")
+
+        @View.nested
+        class favicon(View):    # noqa
+            image = FileInput(id="favicon_logo")
+            upload_button = InputButton(locator='//div[contains(.,"ICO")]/input')
+            enable = BootstrapSwitch(id="server_usefavicon")
+
+        @View.nested
+        class logintext(View):    # noqa
+            login_text = TextInput(id="login_text")
+            enable = BootstrapSwitch(id="server_uselogintext")
 
     @View.nested
     class advanced(WaitTab):  # noqa

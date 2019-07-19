@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
+import os
 import random
 from datetime import datetime
 from datetime import timedelta
@@ -13,6 +14,8 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -1192,3 +1195,69 @@ def test_supported_provider_options(appliance, soft_assert):
                 "regions" in provider,
                 "Regions information not present in the provider OPTIONS.",
             )
+
+
+def image_file_path(file_name):
+    """ Returns file path of the file"""
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.others)
+    file_path = fs.download(file_name, os.path.join("/tmp", file_name))
+    return file_path
+
+
+@test_requirements.rest
+@pytest.mark.meta(automates=[1578076])
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(
+    lambda appliance, image_type: image_type == "favicon" and appliance.version < 5.11
+)
+@pytest.mark.parametrize("image_type", ["logo", "brand", "login_logo", "favicon"])
+def test_custom_logos_via_api(appliance, image_type, request):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/10h
+        setup:
+            1. Navigate to Configuration > Server > Custom Logos
+            2. Change the brand, logo, login_logo and favicon
+        testSteps:
+            1.  Send a GET request: /api/product_info and
+                check the value of image type in branding_info
+        expectedResults:
+            1. Response: {
+                ...
+                "branding_info": {
+                    "brand": "/upload/custom_brand.png",
+                    "logo": "/upload/custom_logo.png",
+                    "login_logo": "/upload/custom_login_logo.png",
+                    "favicon": "/upload/custom_favicon.ico"
+                }
+            }
+
+    Bugzilla:
+        1578076
+    """
+    if image_type == "favicon":
+        image = image_file_path("icon.ico")
+        expected_name = "/upload/custom_{}.ico"
+    else:
+        image = image_file_path("logo.png")
+        expected_name = "/upload/custom_{}.png"
+
+    appliance.server.upload_custom_logo(file_type=image_type, file_data=image)
+
+    # reset appliance to use default logos
+    @request.addfinalizer
+    def _finalize():
+        appliance.server.upload_custom_logo(file_type=image_type, enable=False)
+
+    href = "https://{}/api/product_info".format(appliance.hostname)
+    api = appliance.rest_api
+
+    # wait until product info is updated
+    wait_for(lambda: api.product_info != api.get(href), delay=5, timeout=100)
+
+    # fetch the latest product_info
+    branding_info = api.get(href)["branding_info"]
+    assert branding_info[image_type] == expected_name.format(image_type)

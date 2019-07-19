@@ -105,6 +105,33 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         )
         assert result.ok
 
+    def upload_custom_logo(self, file_type, file_data=None, enable=True):
+        """
+        This function can be used to upload custom logo or text and use them.
+
+        Args:
+            file_type (str) : Can be either of [logo, login_logo, brand, favicon, logintext]
+            file_data (str) : Text data if file_type is logintext else image path to be uploaded
+            enable (bool) : True to use the custom logo/text else False
+        """
+        view = navigate_to(self, "CustomLogos")
+        try:
+            logo_view = getattr(view.customlogos, file_type)
+        except AttributeError:
+            raise AttributeError(
+                "File type not in ('logo', 'login_logo', 'brand', 'favicon', 'logintext)."
+            )
+        if file_data:
+            if file_type == "logintext":
+                logo_view.fill({"login_text": file_data})
+            else:
+                logo_view.fill({"image": file_data})
+                logo_view.upload_button.click()
+            view.flash.assert_no_error()
+        logo_view.enable.fill(enable)
+        view.customlogos.save_button.click()
+        view.flash.assert_no_error()
+
 
 @attr.s
 class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):

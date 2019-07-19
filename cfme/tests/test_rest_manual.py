@@ -29,42 +29,6 @@ def test_create_rhev_provider_with_metric():
 
 @pytest.mark.manual
 @test_requirements.rest
-@pytest.mark.tier(3)
-def test_custom_logos_via_api():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/10h
-        setup:
-            1. Navigate to Configuration > Server > Custom Logos
-            2. Change the brand, logo, login_logo and favicon
-        testSteps:
-            1.  Send a GET request: /api/product_info
-        expectedResults:
-            1. Response: {
-                "name": "ManageIQ",
-                "name_full": "ManageIQ",
-                "copyright": "Copyright (c) 2019 ManageIQ. Sponsored by Red Hat Inc.",
-                "support_website": "http://www.manageiq.org",
-                "support_website_text": "ManageIQ.org",
-                "branding_info": {
-                    "brand": "/upload/custom_brand.png",
-                    "logo": "/upload/custom_logo.png",
-                    "login_logo": "/upload/custom_login_logo.png",
-                    "favicon": "/upload/custom_favicon.ico"
-                }
-            }
-
-    Bugzilla:
-        1578076
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
 def test_automation_request_task():
     """
     Polarion:
