@@ -13,6 +13,63 @@ from cfme.utils.wait import wait_for
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
 
+FILTER_DATA = {
+    "title": "Testing report",
+    "menu_name": "testing report",
+    "base_report_on": "VMs and Instances",
+    "report_fields": [
+        "Active",
+        "EVM Custom Attributes : Name",
+        "EVM Custom Attributes : Region Description",
+        "EVM Custom Attributes : Region Number",
+        "Name",
+    ],
+    "consolidation": {
+        "group_records": [
+            "EVM Custom Attributes : Name",
+            "EVM Custom Attributes : Region Description",
+            "EVM Custom Attributes : Region Number",
+        ]
+    },
+    "filter": {
+        "primary_filter": "fill_field(VM and Instance : Active, IS NOT NULL)",
+        "secondary_filter": "fill_field(EVM Custom Attributes : Name, INCLUDES, A)",
+    },
+}
+
+LONG_CONDITION_DATA = {
+    "title": "Testing report",
+    "menu_name": "testing report",
+    "base_report_on": "VMs and Instances",
+    "report_fields": ["Name"],
+    "filter": {
+        "primary_filter": (
+            "fill_field({based_on} : Power State, = , on);"
+            "select_first_expression;click_or;fill_field("
+            "{based_on} : Datastore Path, INCLUDES, i);"
+            "select_first_expression;click_or;fill_field("
+            "{based_on}.Provider : Hostname, INCLUDES, env);"
+            "select_first_expression;click_or;fill_field("
+            "{based_on}.Provider : IP Address, INCLUDES, 1);"
+            "select_first_expression;click_or;fill_field("
+            "{based_on}.Provider : IP Address, INCLUDES, 2);"
+            "select_first_expression;click_or;fill_field("
+            "{based_on}.Provider : IP Address, INCLUDES, 4);"
+        ).format(based_on="VM and Instance")
+    },
+}
+
+
+@pytest.fixture
+def generate_report(appliance, request):
+    def _report(data):
+        report = appliance.collections.reports.create(**data)
+        request.addfinalizer(report.delete_if_exists)
+        return report
+
+    return _report
+
+
 @pytest.fixture
 def create_custom_tag(appliance):
     # cannot create a category with uppercase in the name
@@ -126,6 +183,7 @@ def test_reports_custom_tags(appliance, request, create_custom_tag):
             ["Name", "My Company Tags : Owner", "My Company Tags : Cost Center"],
         ),
     ],
+    ids=["floating_ips", "cloud_tenants"],
 )
 @pytest.mark.meta(automates=[1546927, 1504155])
 def test_new_report_fields(appliance, based_on, request):
@@ -156,39 +214,11 @@ def test_new_report_fields(appliance, based_on, request):
     assert report.exists
 
 
-@pytest.fixture
-def filter_report(appliance):
-    report_data = {
-        "title": "Testing report",
-        "menu_name": "testing report",
-        "base_report_on": "VMs and Instances",
-        "report_fields": [
-            "Active",
-            "EVM Custom Attributes : Name",
-            "EVM Custom Attributes : Region Description",
-            "EVM Custom Attributes : Region Number",
-            "Name",
-        ],
-        "consolidation": {
-            "group_records": [
-                "EVM Custom Attributes : Name",
-                "EVM Custom Attributes : Region Description",
-                "EVM Custom Attributes : Region Number",
-            ]
-        },
-        "filter": {
-            "primary_filter": "fill_field(VM and Instance : Active, IS NOT NULL)",
-            "secondary_filter": "fill_field(EVM Custom Attributes : Name, INCLUDES, A)",
-        },
-    }
-    report = appliance.collections.reports.create(**report_data)
-    yield report
-    report.delete_if_exists()
-
-
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1565171])
-def test_report_edit_secondary_display_filter(appliance, filter_report, soft_assert):
+def test_report_edit_secondary_display_filter(
+    appliance, request, soft_assert, generate_report
+):
     """
     Polarion:
         assignee: pvala
@@ -205,7 +235,8 @@ def test_report_edit_secondary_display_filter(appliance, filter_report, soft_ass
     Bugzilla:
         1565171
     """
-    filter_report.update(
+    report = generate_report(FILTER_DATA)
+    report.update(
         {
             "filter": {
                 "primary_filter": (
@@ -225,7 +256,7 @@ def test_report_edit_secondary_display_filter(appliance, filter_report, soft_ass
         }
     )
 
-    view = filter_report.create_view(ReportDetailsView, wait="10s")
+    view = report.create_view(ReportDetailsView, wait="10s")
 
     primary_filter = (
         '( FIND VM and Instance.Guest Applications : Name STARTS WITH "env" CHECK COUNT = 1'
@@ -250,7 +281,7 @@ def test_report_edit_secondary_display_filter(appliance, filter_report, soft_ass
 @pytest.mark.meta(server_roles="+notifier", automates=[1677839])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 def test_send_text_custom_report_with_long_condition(
-    appliance, request, setup_provider, smtp_test, soft_assert
+    appliance, setup_provider, smtp_test, soft_assert, request, generate_report
 ):
     """
     Polarion:
@@ -270,31 +301,7 @@ def test_send_text_custom_report_with_long_condition(
     Bugzilla:
         1677839
     """
-    report_data = {
-        "title": "Testing report",
-        "menu_name": "testing report",
-        "base_report_on": "VMs and Instances",
-        "report_fields": ["Name"],
-        "filter": {
-            "primary_filter": (
-                "fill_field({based_on} : Power State, = , on);"
-                "select_first_expression;click_or;fill_field("
-                "{based_on} : Datastore Path, INCLUDES, i);"
-                "select_first_expression;click_or;fill_field("
-                "{based_on}.Provider : Hostname, INCLUDES, env);"
-                "select_first_expression;click_or;fill_field("
-                "{based_on}.Provider : IP Address, INCLUDES, 1);"
-                "select_first_expression;click_or;fill_field("
-                "{based_on}.Provider : IP Address, INCLUDES, 2);"
-                "select_first_expression;click_or;fill_field("
-                "{based_on}.Provider : IP Address, INCLUDES, 4);"
-                # "{based_on}.Provider : Memory - Recommendation, > ,0)"
-            ).format(based_on="VM and Instance")
-        },
-    }
-
-    report = appliance.collections.reports.create(**report_data)
-    request.addfinalizer(report.delete_if_exists)
+    report = generate_report(LONG_CONDITION_DATA)
     data = {
         "timer": {"hour": "12", "minute": "10"},
         "email": {"to_emails": "test@example.com"},
