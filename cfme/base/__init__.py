@@ -132,6 +132,10 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         view.customlogos.save_button.click()
         view.flash.assert_no_error()
 
+    @property
+    def intel_name(self):
+        return "Overview" if self.appliance.version > "5.11" else "Cloud Intel"
+
 
 @attr.s
 class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
