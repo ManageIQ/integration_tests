@@ -211,31 +211,6 @@ def test_custom_reports_with_timelines(report_type):
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_sent_text_custom_report_with_long_condition():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup:
-            1. Create a report containing 1 or 2 columns
-                and add a report filter with a long condition.(Refer BZ for more detail)
-            2. Create a schedule for the report and check send_txt.
-        testSteps:
-            1. Queue the schedule and monitor evm log.
-        expectedResults:
-            1. There should be no error in the log and report must be sent successfully.
-
-    Bugzilla:
-        1677839
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_vm_volume_free_space_less_than_20_percent():
     """
     Polarion:

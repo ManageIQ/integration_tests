@@ -2,9 +2,13 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
@@ -239,3 +243,79 @@ def test_report_edit_secondary_display_filter(appliance, filter_report, soft_ass
         view.report_info.secondary_filter.read() == secondary_filter,
         "Secondary Filter did not match.",
     )
+
+
+@test_requirements.report
+@pytest.mark.tier(1)
+@pytest.mark.meta(server_roles="+notifier", automates=[1677839])
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+def test_send_text_custom_report_with_long_condition(
+    appliance, request, setup_provider, smtp_test, soft_assert
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Create a report containing 1 or 2 columns
+                and add a report filter with a long condition.(Refer BZ for more detail)
+            2. Create a schedule for the report and check send_txt.
+        testSteps:
+            1. Queue the schedule and monitor evm log.
+        expectedResults:
+            1. There should be no error in the log and report must be sent successfully.
+
+    Bugzilla:
+        1677839
+    """
+    report_data = {
+        "title": "Testing report",
+        "menu_name": "testing report",
+        "base_report_on": "VMs and Instances",
+        "report_fields": ["Name"],
+        "filter": {
+            "primary_filter": (
+                "fill_field({based_on} : Power State, = , on);"
+                "select_first_expression;click_or;fill_field("
+                "{based_on} : Datastore Path, INCLUDES, i);"
+                "select_first_expression;click_or;fill_field("
+                "{based_on}.Provider : Hostname, INCLUDES, env);"
+                "select_first_expression;click_or;fill_field("
+                "{based_on}.Provider : IP Address, INCLUDES, 1);"
+                "select_first_expression;click_or;fill_field("
+                "{based_on}.Provider : IP Address, INCLUDES, 2);"
+                "select_first_expression;click_or;fill_field("
+                "{based_on}.Provider : IP Address, INCLUDES, 4);"
+                # "{based_on}.Provider : Memory - Recommendation, > ,0)"
+            ).format(based_on="VM and Instance")
+        },
+    }
+
+    report = appliance.collections.reports.create(**report_data)
+    request.addfinalizer(report.delete_if_exists)
+    data = {
+        "timer": {"hour": "12", "minute": "10"},
+        "email": {"to_emails": "test@example.com"},
+        "email_options": {"send_if_empty": True, "send_txt": True},
+    }
+    schedule = report.create_schedule(**data)
+
+    # prepare LogValidator
+    pattern = ".*negative argument.*"
+    log = LogValidator("/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern])
+
+    log.start_monitoring()
+    schedule.queue()
+
+    # assert that the mail was sent
+    wait_for(
+        lambda: len(smtp_test.get_emails(to_address=data["email"]["to_emails"])) == 1,
+        timeout=200,
+        delay=5,
+        msg="Mail was not sent. Some error occured.",
+    )
+
+    # assert that the pattern was not found in the logs
+    soft_assert(not log.validate(), "Found error message in the logs.")
