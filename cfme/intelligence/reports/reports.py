@@ -213,9 +213,11 @@ class ReportTimelineView(CloudIntelTimelinesView):
         # since Timeline doesn't include `All Reports` in it's tree_path,
         # which is why tree.currently_selected is checked against tree_path[1:]
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Cloud Intel', 'Timelines'] and
-            self.timelines.tree.currently_selected == self.context["object"].tree_path[1:]
+            self.logged_in_as_current_user
+            and self.navigation.currently_selected
+            == [self.context["object"].appliance.server.intel_name, "Timelines"]
+            and self.timelines.tree.currently_selected
+            == self.context["object"].tree_path[1:]
         )
 
 

@@ -20,8 +20,9 @@ class CloudIntelReportsView(BaseLoggedInPage):
     @property
     def in_intel_reports(self):
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ["Cloud Intel", "Reports"]
+            self.logged_in_as_current_user
+            and self.navigation.currently_selected
+            == [self.context["object"].appliance.server.intel_name, "Reports"]
         )
 
     @property
@@ -69,7 +70,7 @@ class CloudIntelReports(CFMENavigateStep):
     prerequisite = NavigateToSibling("LoggedIn")
 
     def step(self, *args, **kwargs):
-        self.view.navigation.select("Cloud Intel", "Reports")
+        self.view.navigation.select(self.view.context["object"].intel_name, "Reports")
 
     def resetter(self, *args, **kwargs):
         self.view.saved_reports.open()

@@ -15,8 +15,10 @@ class ChargebackView(BaseLoggedInPage):
     @property
     def in_chargeback(self):
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Cloud Intel', 'Chargeback'])
+            self.logged_in_as_current_user
+            and self.navigation.currently_selected
+            == [self.context["object"].appliance.server.intel_name, "Chargeback"]
+        )
 
     @property
     def is_displayed(self):
@@ -41,4 +43,6 @@ class IntelChargeback(CFMENavigateStep):
     prerequisite = NavigateToSibling("LoggedIn")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select("Cloud Intel", "Chargeback")
+        self.prerequisite_view.navigation.select(
+            self.view.context["object"].intel_name, "Chargeback"
+        )

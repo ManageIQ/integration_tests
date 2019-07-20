@@ -221,8 +221,10 @@ class DashboardView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Cloud Intel', 'Dashboard'])
+            self.logged_in_as_current_user
+            and self.navigation.currently_selected
+            == [self.context["object"].appliance.server.intel_name, "Dashboard"]
+        )
 
 
 class ParticularDashboardView(DashboardView):
@@ -455,7 +457,7 @@ class DashboardCollection(BaseCollection):
     def refresh(self):
         """Refreshes the dashboard view by forcibly clicking the navigation again."""
         view = navigate_to(self.appliance.server, 'Dashboard')
-        view.navigation.select('Cloud Intel', 'Dashboard')
+        view.navigation.select(self.appliance.server.intel_name, 'Dashboard')
 
     @property
     def zoomed_name(self):
