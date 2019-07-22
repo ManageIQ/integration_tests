@@ -112,30 +112,3 @@ def test_pdf_summary_provider(provider):
         1503213
     """
     pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1475553])
-@test_requirements.general_ui
-def test_tls_openssl_verify_mode():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/8h
-        testSteps:
-            1. Check if key `openssl_verify_mode` is present in the advanced configuration.
-            2. Navigate to Configuration and toggle `Start TLS Automatically`
-                of Outgoing SMTP E-mail Server.
-            3. Again check for the presence of `openssl_verify_mode` and check it's value.
-        expectedResults:
-            1. Key must be absent.
-            2.
-            3. Key must be present and value must be None.
-
-    Bugzilla:
-        1475553
-    """
-    pass

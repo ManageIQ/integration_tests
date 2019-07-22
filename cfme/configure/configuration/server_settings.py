@@ -114,7 +114,7 @@ class ServerInformationView(View):
         host = Input("smtp_host")
         port = Input("smtp_port")
         domain = Input("smtp_domain")
-        start_tls = Input("smtp_enable_starttls_auto")
+        start_tls = BootstrapSwitch(name="smtp_enable_starttls_auto")
         ssl_verify = BootstrapSelect("smtp_openssl_verify_mode")
         auth = BootstrapSelect("smtp_authentication")
         username = Input("smtp_user_name")

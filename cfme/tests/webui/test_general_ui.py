@@ -10,6 +10,7 @@ from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [test_requirements.general_ui]
@@ -286,6 +287,47 @@ def test_add_button_on_provider_all_page(
 
     displayed_view = provider.create_view(add_view)
     assert displayed_view.is_displayed
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1475553])
+def test_tls_openssl_verify_mode(temp_appliance_preconfig, request):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/8h
+        testSteps:
+            1. Check if key `openssl_verify_mode` is present in the advanced configuration.
+            2. Navigate to Configuration and toggle `Start TLS Automatically`
+                of Outgoing SMTP E-mail Server.
+            3. Again check for the presence of `openssl_verify_mode` and check its value.
+        expectedResults:
+            1. Key must be absent.
+            2.
+            3. Key must be present and value must be None.
+
+    Bugzilla:
+        1475553
+    """
+    # take a fresh appliance where smtp has never been touched
+    appliance = temp_appliance_preconfig
+    # 1
+    assert "openssl_verify_mode" not in appliance.advanced_settings["smtp"]
+    # 2
+    appliance.server.settings.update_smtp_server({"start_tls": False})
+    # reset `Start TLS Automatically`
+    request.addfinalizer(
+        lambda: appliance.update_advanced_settings({"smtp": {"start_tls": "<<reset>>"}})
+    )
+    # 3
+    wait_for(
+        lambda: "openssl_verify_mode" in appliance.advanced_settings["smtp"],
+        timeout=50,
+        delay=2,
+    )
+    assert appliance.advanced_settings["smtp"]["openssl_verify_mode"] == "none"
 
 
 @pytest.mark.ignore_stream('5.10')
