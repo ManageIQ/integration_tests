@@ -70,7 +70,7 @@ class CloudIntelReports(CFMENavigateStep):
     prerequisite = NavigateToSibling("LoggedIn")
 
     def step(self, *args, **kwargs):
-        self.view.navigation.select(self.view.context["object"].intel_name, "Reports")
+        self.view.navigation.select(self.obj.intel_name, "Reports")
 
     def resetter(self, *args, **kwargs):
         self.view.saved_reports.open()

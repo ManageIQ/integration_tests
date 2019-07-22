@@ -422,7 +422,7 @@ class RSS(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.view.navigation.select(self.view.context["object"].intel_name, 'RSS')
+        self.view.navigation.select(self.obj.intel_name, 'RSS')
 
 
 @navigator.register(Server)
@@ -431,7 +431,7 @@ class CloudIntelTimelines(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.view.navigation.select(self.view.context["object"].intel_name, 'Timelines')
+        self.view.navigation.select(self.obj.intel_name, 'Timelines')
 
 
 @navigator.register(Server)
@@ -462,7 +462,7 @@ class Dashboard(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(
-            self.view.context["object"].intel_name, "Dashboard"
+            self.obj.intel_name, "Dashboard"
         )
 
 
@@ -473,7 +473,7 @@ class Chargeback(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(
-            self.view.context["object"].intel_name, "Chargeback"
+            self.obj.intel_name, "Chargeback"
         )
 
 

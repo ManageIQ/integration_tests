@@ -44,5 +44,5 @@ class IntelChargeback(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(
-            self.view.context["object"].intel_name, "Chargeback"
+            self.obj.intel_name, "Chargeback"
         )
