@@ -170,30 +170,3 @@ def test_notification_url_parallel_requests():
         1700378
     """
     pass
-
-
-@test_requirements.rest
-@pytest.mark.manual()
-@pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1684681])
-def test_filtering_vm_with_multiple_ips():
-    """
-    Polarion:
-        assignee: pvala
-        caseimportance: high
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        setup:
-            1. Add a provider.
-        testSteps:
-            1. Select a VM with multiple IP addresses and note one ipaddress.
-            2. Send a GET request with the noted ipaddress.
-                GET /api/vms?expand=resources&attributes=ipaddresses&filter[]=ipaddresses=':ipaddr'
-        expectedResults:
-            1.
-            2. Selected VM must be present in the resources sent by response.
-
-    Bugzilla:
-        1684681
-    """
-    pass

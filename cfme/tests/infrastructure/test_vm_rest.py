@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from manageiq_client.filters import Q
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -135,3 +137,48 @@ def test_delete_vm_from_collection(vm):
         casecomponent: Infra
     """
     delete_resources_from_collection([vm], not_found=True, num_sec=300, delay=10)
+
+
+@pytest.fixture
+def vm_ip(appliance, provider):
+    vm = appliance.collections.infra_vms.instantiate(
+        provider.data["cap_and_util"]["capandu_vm"], provider
+    )
+    view = navigate_to(vm, "Details")
+    rest_vm = appliance.rest_api.collections.vms.get(name=vm.name)
+    # get all the ipaddresses from VM Details page
+    ipaddrs = (
+        view.entities.summary("Properties").get_text_of("IP Addresses").split(", ")
+    )
+    return rest_vm, ipaddrs
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1684681])
+def test_filtering_vm_with_multiple_ips(appliance, provider, vm_ip, soft_assert):
+    """
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Add a provider.
+        testSteps:
+            1. Select a VM with multiple IP addresses and note one ipaddress.
+            2. Send a GET request with the noted ipaddress.
+                GET /api/vms?expand=resources&attributes=ipaddresses&filter[]=ipaddresses=':ipaddr'
+        expectedResults:
+            1.
+            2. Selected VM must be present in the resources sent by response.
+
+    Bugzilla:
+        1684681
+    """
+    # 1
+    subject_vm, ips = vm_ip
+    # 2
+    result = appliance.rest_api.collections.vms.filter(Q("ipaddresses", "=", ips[0]))
+    assert_response(appliance)
+    assert subject_vm.name in [resource.name for resource in result.resources]
