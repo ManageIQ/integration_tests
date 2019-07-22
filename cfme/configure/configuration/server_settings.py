@@ -211,15 +211,16 @@ class ServerInformation(Updateable, Pretty):
         * decryption: url description
     """
     CONSOLE_TYPES = ('VNC', 'VMware VMRC Plugin', 'VMware WebMKS')
-    SERVER_ROLES = ('embedded_ansible', 'ems_metrics_coordinator', 'ems_operations',
-                    'ems_metrics_collector', 'reporting', 'ems_metrics_processor', 'scheduler',
-                    'smartproxy', 'database_operations', 'smartstate', 'event', 'user_interface',
-                    'web_services', 'ems_inventory', 'notifier', 'automate',
-                    'rhn_mirror', 'remote_console', 'database_synchronization_role', 'git_owner',
-                    'websocket', 'storage_metrics_processor', 'storage_metrics_collector',
-                    'storage_metrics_coordinator', 'storage_inventory', 'vmdb_storage_bridge',
-                    'cockpit_ws', 'remote_console')
-
+    SERVER_ROLES = (
+        'embedded_ansible', 'ems_metrics_coordinator', 'ems_operations',
+        'ems_metrics_collector', 'reporting', 'ems_metrics_processor', 'scheduler',
+        'smartproxy', 'database_operations', 'smartstate', 'event', 'user_interface',
+        'web_services', 'ems_inventory', 'notifier', 'automate',
+        'rhn_mirror', 'remote_console', 'database_synchronization_role', 'git_owner',
+        'websocket', 'storage_metrics_processor', 'storage_metrics_collector',
+        'storage_metrics_coordinator', 'storage_inventory', 'vmdb_storage_bridge',
+        'cockpit_ws', 'remote_console', 'internet_connectivity'
+    )
     _basic_information = ['hostname', 'company_name', 'appliance_name', 'appliance_zone',
                           'time_zone', 'locale']
     _vmware_console = ['console_type']
