@@ -145,6 +145,7 @@ def test_menuwidget_crud(appliance):
         casecomponent: Reporting
         initialEstimate: 1/12h
     """
+    dashboard = "{} / Dashboard".format(appliance.server.intel_name)
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.MENU,
         fauxfactory.gen_alphanumeric(),
@@ -152,7 +153,7 @@ def test_menuwidget_crud(appliance):
         active=True,
         shortcuts={
             "Services / Catalogs": fauxfactory.gen_alphanumeric(),
-            "Cloud Intel / Dashboard": fauxfactory.gen_alphanumeric(),
+            dashboard: fauxfactory.gen_alphanumeric(),
         },
         visibility="<To All Users>"
     )

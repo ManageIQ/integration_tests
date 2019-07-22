@@ -50,11 +50,6 @@ ALL_LANDING_PAGES = list(SPECIAL_LANDING_PAGES.keys()) + [
     "Automation / Automate / Log",
     "Automation / Automate / Requests",
     "Automation / Automate / Simulation",
-    "Cloud Intel / Chargeback",
-    "Cloud Intel / Dashboard",
-    "Cloud Intel / RSS",
-    "Cloud Intel / Reports",
-    "Cloud Intel / Timelines",
     "Compute / Clouds / Availability Zones",
     "Compute / Clouds / Flavors",
     "Compute / Clouds / Host Aggregates",
@@ -128,6 +123,10 @@ ALL_LANDING_PAGES = list(SPECIAL_LANDING_PAGES.keys()) + [
 ]
 
 PAGES_NOT_IN_510 = [
+    "Overview / Chargeback",
+    "Overview / Dashboard",
+    "Overview / Reports",
+    "Overview / Utilization",
     "Compute / Physical Infrastructure / Chassis",
     "Compute / Physical Infrastructure / Overview",
     "Compute / Physical Infrastructure / Providers",
@@ -140,7 +139,10 @@ PAGES_NOT_IN_510 = [
 ]
 
 PAGES_NOT_IN_511 = [
+    "Cloud Intel / Chargeback",
+    "Cloud Intel / Dashboard",
     "Cloud Intel / RSS",
+    "Cloud Intel / Reports",
     "Cloud Intel / Timelines",
     "Monitor / Alerts / Most Recent Alerts",
     "Optimize / Bottlenecks",

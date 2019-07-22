@@ -13,8 +13,9 @@ class CloudIntelTimelinesView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Cloud Intel', 'Timelines']
+            self.logged_in_as_current_user
+            and self.navigation.currently_selected
+            == [self.context["object"].appliance.server.intel_name, "Timelines"]
         )
 
     @View.nested
