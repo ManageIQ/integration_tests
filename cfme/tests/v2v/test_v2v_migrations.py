@@ -44,9 +44,13 @@ pytestmark = [
         ["nfs", "iscsi", rhel7_minimal],
         ["iscsi", "iscsi", rhel7_minimal],
         ["iscsi", "nfs", rhel7_minimal],
-        ["iscsi", "local", rhel7_minimal],
+        ["local", "nfs", rhel7_minimal],
     ],
     indirect=True,
+)
+@pytest.mark.uncollectif(
+    lambda source_provider, mapping_data_vm_obj_single_datastore:
+    source_provider.version == 6.5 and "local" in mapping_data_vm_obj_single_datastore
 )
 def test_single_datastore_single_vm_migration(
     request, appliance, provider, mapping_data_vm_obj_single_datastore
@@ -95,6 +99,10 @@ def test_single_datastore_single_vm_migration(
     "mapping_data_vm_obj_single_network",
     [["DPortGroup", "ovirtmgmt", dportgroup_template], ["VM Network", "ovirtmgmt", rhel7_minimal]],
     indirect=True,
+)
+@pytest.mark.uncollectif(
+    lambda source_provider, mapping_data_vm_obj_single_network:
+    source_provider.version != 6.5 and "DPortGroup" in mapping_data_vm_obj_single_network
 )
 def test_single_network_single_vm_migration(
     request, appliance, provider, mapping_data_vm_obj_single_network
@@ -189,8 +197,15 @@ def test_dual_datastore_dual_vm_migration(
 
 @pytest.mark.parametrize(
     "mapping_data_vm_obj_dual_nics",
-    [[["VM Network", "ovirtmgmt"], ["DPortGroup", "Storage - VLAN 33"], dual_network_template]],
+    [
+        ["VM Network", "ovirtmgmt", dual_network_template],
+        ["DPortGroup", "Storage - VLAN 33", dual_network_template]
+    ],
     indirect=True,
+)
+@pytest.mark.uncollectif(
+    lambda source_provider, mapping_data_vm_obj_dual_nics:
+    source_provider.version != 6.5 and "DPortGroup" in mapping_data_vm_obj_dual_nics
 )
 def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_dual_nics):
     """

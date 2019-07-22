@@ -216,7 +216,7 @@ class InfrastructureMapping(BaseEntity):
     datastores = attr.ib(validator=attr.validators.instance_of(list))
     networks = attr.ib(validator=attr.validators.instance_of(list))
 
-    def fill_dict(self):
+    def fill_dict(self, target_selection=True):
         """Generate a dictionary for filling the InfraMapping wizard
         This is a dictionary which contains 3 lists, for the 3 components
         Each component list has dictionary elements, that contain source + target mapping lists
@@ -229,8 +229,8 @@ class InfrastructureMapping(BaseEntity):
             }
         Returns: dict, see above
         """
-        target_provider = ("Red Hat Virtualization" if self.plan_type == "rhv"
-                           else "Red Hat OpenStack Platform")
+        target_provider = (("Red Hat Virtualization" if self.plan_type == "rhv"
+                           else "Red Hat OpenStack Platform") if target_selection else None)
         return {
             "general": {"name": self.name, "description": self.description,
                         "plan_type": target_provider},
@@ -251,7 +251,7 @@ class InfrastructureMapping(BaseEntity):
         self.clusters = updates.get('clusters')
         self.datastores = updates.get('datastores')
         self.networks = updates.get('networks')
-        view.fill(self.fill_dict())
+        view.fill(self.fill_dict(target_selection=False))
 
 
 @attr.s
