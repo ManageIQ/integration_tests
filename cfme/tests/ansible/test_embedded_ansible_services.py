@@ -523,6 +523,9 @@ def test_service_ansible_playbook_pass_extra_vars(
     stdout = getattr(view, action).standart_output
     stdout.wait_displayed()
     pre = stdout.text
+    # Standard output has several sections splitted by --------------------------------
+    # Required data is located in 6th section
+    # Then we need to replace or remove some characters to get a parsable json string
     json_str = pre.split("--------------------------------")
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
         '\\, "', '",').replace("\\", "").split('" ] } PLAY')[0])
