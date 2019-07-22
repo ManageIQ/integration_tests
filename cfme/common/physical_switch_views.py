@@ -8,13 +8,13 @@ from widgetastic_patternfly import Accordion
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TimelinesView
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BreadCrumb
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import JSBaseEntity
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import SummaryTable
-from widgetastic_manageiq import TimelinesView
 
 
 class ComputePhysicalInfrastructureSwitchesView(BaseLoggedInPage):
@@ -79,11 +79,7 @@ class PhysicalSwitchDetailsView(ComputePhysicalInfrastructureSwitchesView):
 
 class PhysicalSwitchTimelinesView(TimelinesView, ComputePhysicalInfrastructureSwitchesView):
     """Represents a PhysicalSwitch Timelines page."""
-
-    @property
-    def is_displayed(self):
-        return (self.in_compute_physical_infrastructure_switches and
-                super(TimelinesView, self).is_displayed)
+    pass
 
 
 class PhysicalSwitchProvisionView(BaseLoggedInPage):

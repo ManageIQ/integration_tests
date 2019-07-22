@@ -54,9 +54,9 @@ from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Checkbox
 from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ServerTimelinesView
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import SummaryTable
-from widgetastic_manageiq import TimelinesView
 from widgetastic_manageiq import WaitTab
 
 
@@ -840,7 +840,7 @@ class ServerDiagnosticsView(ConfigurationView):
         TAB_NAME = "Utilization"
 
     @View.nested
-    class timelines(WaitTab, TimelinesView):  # noqa
+    class timelines(WaitTab, ServerTimelinesView):  # noqa
         TAB_NAME = "Timelines"
 
     configuration = Dropdown('Configuration')

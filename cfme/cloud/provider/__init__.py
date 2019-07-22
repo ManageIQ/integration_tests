@@ -14,6 +14,7 @@ from cfme.cloud.tenant import ProviderTenantAllView
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.common import TagPageView
+from cfme.common import TimelinesView
 from cfme.common.provider import BaseProvider
 from cfme.common.provider import CloudInfraProviderMixin
 from cfme.common.provider import provider_types
@@ -32,19 +33,10 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import ItemsToolBarViewSelector
-from widgetastic_manageiq import TimelinesView
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
-    breadcrumb = BreadCrumb()
-
-    @property
-    def is_displayed(self):
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
-            self.is_timelines)
+    pass
 
 
 class CloudProviderInstancesView(BaseLoggedInPage):

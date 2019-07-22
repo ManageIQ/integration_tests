@@ -10,6 +10,7 @@ from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TimelinesView
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 from widgetastic_manageiq import BootstrapTreeview
@@ -19,7 +20,6 @@ from widgetastic_manageiq import JSBaseEntity
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
-from widgetastic_manageiq import TimelinesView
 
 
 class ComputePhysicalInfrastructureServersView(BaseLoggedInPage):
@@ -91,11 +91,7 @@ class PhysicalServerDetailsView(ComputePhysicalInfrastructureServersView):
 
 class PhysicalServerTimelinesView(TimelinesView, ComputePhysicalInfrastructureServersView):
     """Represents a PhysicalServer Timelines page."""
-
-    @property
-    def is_displayed(self):
-        return (self.in_compute_physical_infrastructure_servers and
-                super(TimelinesView, self).is_displayed)
+    pass
 
 
 class PhysicalServerProvisionView(BaseLoggedInPage):

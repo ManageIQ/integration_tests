@@ -11,6 +11,7 @@ from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TimelinesView
 from cfme.common.host_views import HostEntitiesView
 from cfme.utils.blockers import BZ
 from cfme.utils.version import VersionPicker
@@ -27,7 +28,6 @@ from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ParametrizedStatusBox
 from widgetastic_manageiq import ParametrizedSummaryTable
 from widgetastic_manageiq import Search
-from widgetastic_manageiq import TimelinesView
 from widgetastic_manageiq import WaitTab
 
 
@@ -141,17 +141,7 @@ class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
     """
-    breadcrumb = BreadCrumb()
-
-    @property
-    def is_displayed(self):
-        expected_name = self.context['object'].name
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
-            ('{} (Summary)'.format(expected_name) in self.breadcrumb.locations or
-                '{} (Dashboard)'.format(expected_name) in self.breadcrumb.locations) and
-            self.is_timelines)
+    pass
 
 
 class InfraProvidersDiscoverView(BaseLoggedInPage):

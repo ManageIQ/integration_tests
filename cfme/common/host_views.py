@@ -11,6 +11,7 @@ from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TimelinesView
 from cfme.exceptions import displayed_not_implemented
 from cfme.utils.log import logger
 from widgetastic_manageiq import Accordion
@@ -26,7 +27,6 @@ from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ParametrizedSummaryTable
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import Table
-from widgetastic_manageiq import TimelinesView
 from widgetastic_manageiq import WaitTab
 
 
@@ -149,14 +149,7 @@ class HostDriftAnalysis(ComputeInfrastructureHostsView):
 
 class HostTimelinesView(TimelinesView, ComputeInfrastructureHostsView):
     """Represents a Host Timelines page."""
-    breadcrumb = BreadCrumb()
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_compute_infrastructure_hosts and
-            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
-            self.is_timelines)
+    pass
 
 
 class HostDiscoverView(ComputeInfrastructureHostsView):

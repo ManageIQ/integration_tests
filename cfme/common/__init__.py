@@ -28,12 +28,14 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
+from cfme.utils.version import LOWEST
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 from widgetastic_manageiq import ReactSelect
+from widgetastic_manageiq import ServerTimelinesView
 
 
 class ManagePoliciesView(BaseLoggedInPage):
@@ -818,3 +820,23 @@ class CustomButtonEvents(CFMENavigateStep):
             table.click_at("Custom Button Events")
         else:
             raise DestinationNotFound("Custom button event count 0")
+
+
+class TimelinesView(ServerTimelinesView):
+    """
+    represents common Timelines page, parent class for vm, host, cluster, availability zone,
+    and provider's timelines page
+    """
+
+    @property
+    def is_displayed(self):
+        expected_name = VersionPicker({
+            LOWEST: self.context['object'].expected_details_breadcrumb,
+            "5.11": self.context['object'].name
+        }).pick(self.extra.appliance.version)
+
+        return (
+            expected_name in self.breadcrumb.locations and
+            # this last check is less specific due to BZ 1732517
+            "Timeline" in self.title.text
+        )

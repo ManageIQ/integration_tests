@@ -3091,7 +3091,7 @@ class TimelinesChart(View):
         return events
 
 
-class TimelinesView(View):
+class ServerTimelinesView(View):
     """represents Timelines page
     """
 
@@ -3108,12 +3108,7 @@ class TimelinesView(View):
 
     @property
     def is_displayed(self):
-        return self.title.text == "Timelines"
-
-    @property
-    def is_timelines(self):
-        """method to check title text for base Timelines without overriding is_displayed"""
-        return self.title.text == "Timelines"
+        return "Timeline" in self.title.text
 
 
 class AttributeValueForm(View):
