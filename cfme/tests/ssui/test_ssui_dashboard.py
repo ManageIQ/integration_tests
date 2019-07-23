@@ -13,7 +13,6 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.dashboard import Dashboard
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
@@ -21,7 +20,6 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
-    pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.provider(
         [InfraProvider],
@@ -155,6 +153,7 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
 
 @pytest.mark.rhel_testing
+@pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_total_services(appliance, setup_provider, context, order_service):
     """Tests total services count displayed on dashboard.
@@ -219,7 +218,7 @@ def test_retired_service(appliance, context):
         assert dashboard.retired_services() == dashboard.results()
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+@pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_monthly_charges(appliance, has_no_providers_modscope, setup_provider, context,
         order_service, run_service_chargeback_report):

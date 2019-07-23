@@ -15,6 +15,11 @@ BROWSER_VERSION = 'Browser Version'
 BROWSER_OS = 'Browser OS'
 
 
+class MIQAboutModal(AboutModal):
+    """Override some locators that MIQ mangles"""
+    CLOSE_LOC = './/div[@class="modal-header"]/button[@class="close"]'
+
+
 class AboutView(View):
     """
     The view for the about modal
@@ -23,7 +28,7 @@ class AboutView(View):
     def is_displayed(self):
         return self.modal.is_open
 
-    modal = AboutModal(id='aboutModal')
+    modal = MIQAboutModal()  # 5.10 has id, 5.11 does not, wt.pf doesn't need it.
 
 
 def get_detail(field, server):

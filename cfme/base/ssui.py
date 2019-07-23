@@ -2,14 +2,13 @@ import time
 
 from navmazing import NavigateToSibling
 from selenium.webdriver.common.keys import Keys
-from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import ParametrizedView
 from widgetastic.widget import View
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import FlashMessages
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import NavDropdown
 from widgetastic_patternfly import Text
+from widgetastic_patternfly.utils import PFIcon
 
 from . import Server
 from cfme.base.credential import Credential
@@ -25,29 +24,29 @@ from cfme.utils.log import logger
 from widgetastic_manageiq import SSUIVerticalNavigation
 
 
+class SSUISettingsNavDropdown(NavDropdown):
+    """iuser pficon-user to differentiate from help menu"""
+    ROOT = ('//nav'
+            '//li[.//a[contains(@class, "dropdown-toggle") and '
+            './/i[contains(@class, "{}")]] '
+            'and contains(@class, "dropdown")]'.format(PFIcon.icons.USER))
+
+
+class SSUIHelpNavDropdown(NavDropdown):
+    ROOT = '//nav//li[@ng-if="vm.permissions.helpMenu"]'
+
+
 class SSUIBaseLoggedInPage(View):
     """This page should be subclassed by any page that models any other page that is available as
     logged in.
     """
     flash = FlashMessages('.//div[@id="flash_msg_div"]')
-    help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]')
+    # TODO don't use `help` here, its a built-in
+    help = SSUIHelpNavDropdown()
     navigation = SSUIVerticalNavigation('//ul[@class="list-group"]')
     domain_switcher = Button(id="domain-switcher")
     shopping_cart = Text('.//li/a[@title="Shopping cart"]')
-
-    @ParametrizedView.nested
-    class settings(ParametrizedView):  # noqa
-        PARAMETERS = ("user_name",)
-        setting = NavDropdown(ParametrizedLocator('.//li[./a[@title={user_name|quote}]]'))
-
-        def text(self):
-            return self.setting.text
-
-        def is_displayed(self):
-            return self.setting.is_displayed
-
-        def select_item(self, option):
-            return self.setting.select_item(option)
+    settings = SSUISettingsNavDropdown()
 
     @property
     def is_displayed(self):
@@ -62,6 +61,7 @@ class SSUIBaseLoggedInPage(View):
     def logged_in_as_current_user(self):
         return self.logged_in_as_user(self.extra.appliance.user)
 
+    # TODO remove this property, it is erroneous. View properties should be returning data from UI
     @property
     def current_username(self):
         try:
@@ -71,12 +71,12 @@ class SSUIBaseLoggedInPage(View):
 
     @property
     def current_fullname(self):
-        return self.settings(self.extra.appliance.user.credential.principal).text()
+        return self.settings.text
 
     @property
     def logged_in(self):
         return (
-            self.settings(self.extra.appliance.user.credential.principal).is_displayed() and
+            self.settings.is_displayed and
             self.shopping_cart.is_displayed)
 
     @property
@@ -84,7 +84,7 @@ class SSUIBaseLoggedInPage(View):
         return not self.logged_in
 
     def logout(self):
-        self.settings(self.extra.appliance.user.credential.principal).select_item('Logout')
+        self.settings.select_item('Logout')
         self.browser.handle_alert(wait=None)
         self.extra.appliance.user = None
 
