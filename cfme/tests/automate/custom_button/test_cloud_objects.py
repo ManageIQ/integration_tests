@@ -180,6 +180,8 @@ def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, 
         1555331
         1574403
         1640592
+        1710350
+        1732436
     """
 
     group, obj_type = button_group
@@ -210,7 +212,9 @@ def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, 
 
         # Submit order request
         dialog_view.submit.click()
-        view.flash.assert_message("Order Request was Submitted")
+
+        if not (BZ(1732436, forced_streams=["5.10", "5.11"]).blocks and obj_type == "PROVIDER"):
+            view.flash.assert_message("Order Request was Submitted")
 
         # Check for request in automation log
         try:

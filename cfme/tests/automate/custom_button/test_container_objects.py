@@ -156,6 +156,9 @@ def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_ob
             6. Fill dialog and submit
             7. Check for the proper flash message related to button execution
             8. Check request in automation log
+
+    Bugzilla:
+        1732489
     """
 
     group, obj_type = button_group
@@ -183,7 +186,9 @@ def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_ob
 
     # Submit order
     dialog_view.submit.click()
-    view.flash.assert_message("Order Request was Submitted")
+
+    if not (BZ(1732489, forced_streams=["5.10", "5.11"]).blocks and obj_type == "PROVIDER"):
+        view.flash.assert_message("Order Request was Submitted")
 
     # Check for request in automation log
     try:
