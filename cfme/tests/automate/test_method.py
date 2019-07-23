@@ -475,3 +475,24 @@ def test_automate_service_quota_runs_only_once(appliance, generic_catalog_item):
     provision_request = service_catalogs.order()
     provision_request.wait_for_request()
     assert result.matches[pattern] == 1
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1718495])
+def test_embedded_method_selection():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        casecomponent: Automate
+        testSteps:
+            1. Create a new inline method in CloudForms Automate.
+            2. Add an embedded method.
+        expectedResults:
+            1.
+            2. Selected embedded method should be visible
+
+    Bugzilla:
+        1718495
+    """
+    pass

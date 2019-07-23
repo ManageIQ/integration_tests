@@ -1025,3 +1025,115 @@ def test_automate_task_schedule():
         1713072
     """
     pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1693362])
+def test_redhat_domain_sync_after_upgrade():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Dump database of appliance(5.10) to appliance(5.11) or Upgrade 5.10 appliance to 5.11
+            2. grep 'domain version on disk differs from db version' /var/www/miq/vmdb/log/evm.log
+            3. Check last_startup.txt
+        expectedResults:
+            1.
+            2. RedHat domain version on disk differs from db version
+            3. RedHat domain version on disk differs from db version
+
+    Bugzilla:
+        1693362
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1678135])
+def test_variable_pass_successive_playbook():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup:
+            1. Enable embedded ansible role
+        testSteps:
+            1. Add Ansible repo called billy -
+               https://github.com/billfitzgerald0120/ansible_playbooks
+            2. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip ) to downloads
+               directory(Zip file with description - 'Automate domain' is attached with BZ(1678135)
+            3. Goto Automation/Automate Import/Export and import zip file
+            4. Click on "Toggle All/None" and hit the submit button
+            5. Goto Automation/Automate/Explorer and Enable the imported domain
+            6. Make sure all the playbook methods have all the information (see if Repository,
+               Playbook and Machine credentials have values), update if needed
+            7. Import or create hello_world (simple ansible dialog with Machine credentials and
+               hosts fields)
+            8. Create a Generic service using the hello_world dialog and select instance
+               'CatalogItemInitialization_jira24' then order service
+            9. Run " grep dump_vars2 automation.log" from log directory
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9. Variables should be passed through successive playbooks and you should see logs like
+               this(https://bugzilla.redhat.com/show_bug.cgi?id=1678135#c13)
+
+    Bugzilla:
+        1678135
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1678132])
+def test_variable_pass_method_playbook():
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup:
+            1. Enable embedded ansible role
+        testSteps:
+            1. Add Ansible repo called billy -
+               https://github.com/billfitzgerald0120/ansible_playbooks
+            2. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip ) to downloads
+               directory(Zip file with description - 'Automate domain' is attached with BZ(1678135)
+            3. Goto Automation/Automate Import/Export and import zip file
+            4. Click on "Toggle All/None" and hit the submit button
+            5. Goto Automation/Automate/Explorer and Enable the imported domain
+            6. Make sure all the playbook methods have all the information (see if Repository,
+               Playbook and Machine credentials have values), update if needed
+            7. Import or create hello_world (simple ansible dialog with Machine credentials and
+               hosts fields)
+            8. Create a Generic service using the hello_world dialog and select instance
+               'CatalogItemInitialization_jira23' then order service
+            9. Run " grep dump_vars2 automation.log" from log directory
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9. Variables should be passed through successive playbooks and you should see logs like
+               this(https://bugzilla.redhat.com/show_bug.cgi?id=1678132#c5)
+
+    Bugzilla:
+        1678132
+    """
+    pass
