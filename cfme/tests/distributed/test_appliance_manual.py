@@ -97,21 +97,6 @@ def test_distributed_add_provider_to_remote_zone():
     pass
 
 
-@pytest.mark.tier(1)
-def test_distributed_field_zone_description_long():
-    """
-    When creating a new zone, the description can be up to 50 characters
-    long, and displays correctly after saving.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
 def test_distributed_zone_add_provider_to_nondefault_zone():
     """
     Can a new provider be added the first time to a non default zone.
@@ -252,20 +237,6 @@ def test_distributed_zone_failover_web_services():
     pass
 
 
-@pytest.mark.tier(3)
-def test_distributed_zone_create_new():
-    """
-    Create new zone in local region
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        caseimportance: critical
-        initialEstimate: 1/12h
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_distributed_zone_failover_cu_coordinator_singleton():
     """
@@ -310,35 +281,6 @@ def test_distributed_field_zone_name_whitespace():
     pass
 
 
-@pytest.mark.tier(1)
-def test_distributed_zone_create_duplicate():
-    """
-    Create Zone with name that is already in use.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_field_zone_name_long():
-    """
-    When creating a new zone, the name can be up to 50 characters long,
-    and displays correctly after saving.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
 def test_distributed_zone_in_different_networks():
     """
     Polarion:
@@ -373,20 +315,6 @@ def test_distributed_field_zone_description_leading_whitespace():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_change_appliance_zone():
-    """
-    Move an appliance from one zone to another.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
