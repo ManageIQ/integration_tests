@@ -18,6 +18,8 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
 from cfme.utils.log import logger
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
@@ -32,6 +34,7 @@ from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ParametrizedSummaryTable
 from widgetastic_manageiq import RadioGroup
+from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
 
@@ -481,10 +484,19 @@ class SetOwnershipView(BaseLoggedInPage):
     """
     @View.nested
     class form(View):  # noqa
-        user_name = BootstrapSelect('user_name')
-        group_name = BootstrapSelect('group_name')
+        user_name = VersionPicker({
+            "5.11": ReactSelect('user_name'),
+            LOWEST: BootstrapSelect('user_name')
+        })
+        group_name = VersionPicker({
+            "5.11": ReactSelect('group_name'),
+            LOWEST: BootstrapSelect('group_name')
+        })
         entities = View.nested(BaseNonInteractiveEntitiesView)
-        save_button = Button('Save')
+        save_button = VersionPicker({
+            "5.11": Button('Submit'),
+            LOWEST: Button('Save')
+        })
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
 
