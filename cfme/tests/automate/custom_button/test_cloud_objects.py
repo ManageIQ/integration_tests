@@ -149,6 +149,7 @@ def test_custom_button_display_cloud_obj(appliance, request, display, setup_objs
             assert custom_button_group.has_item(button.text)
 
 
+@pytest.mark.meta(automates=[1635797, 1574403, 1640592, 1710350, 1732436])
 @pytest.mark.uncollectif(
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"
@@ -229,6 +230,7 @@ def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, 
             assert False, "Expected 1 requests not found in automation log"
 
 
+@pytest.mark.meta(automates=[1628224])
 @pytest.mark.uncollectif(
     lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
     and appliance.version < "5.10"

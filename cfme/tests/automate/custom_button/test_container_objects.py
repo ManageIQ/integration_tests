@@ -123,6 +123,7 @@ def test_custom_button_display_container_obj(request, display, setup_obj, button
 
 
 @pytest.mark.meta(
+    automates=[1729903, 1732489],
     blockers=[
         BZ(
             1729903,
@@ -158,6 +159,7 @@ def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_ob
             8. Check request in automation log
 
     Bugzilla:
+        1729903
         1732489
     """
 
