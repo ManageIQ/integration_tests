@@ -2,15 +2,18 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
+from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
@@ -90,6 +93,11 @@ def get_report(appliance, request):
         return report
 
     return _report
+
+
+@pytest.fixture
+def vm(appliance, provider, request):
+    return _vm(request, provider, appliance)
 
 
 @pytest.fixture
@@ -405,3 +413,59 @@ def test_report_fullscreen_enabled(request, tenant_report, set_and_get_tenant_qu
 
     view = navigate_to(non_empty_report, "Details", use_resetter=False)
     assert view.configuration.item_enabled("Show full screen Report")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1504010])
+@pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY)
+def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testSteps:
+            1. Add a provider.
+            2. Power off a VM.
+            3. Queue report (Operations > Virtual Machines > Online VMs (Powered On)).
+            4. See if the powered off VM is present in the queued report.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. VM must not be present in the report data.
+
+    Bugzilla:
+        1504010
+    """
+    subject_vm = appliance.rest_api.collections.vms.get(name=vm)
+    response = subject_vm.action.stop()
+    assert_response(appliance)
+    # Wait for task to be finished.
+    wait_for(
+        lambda: response.task.state == "Finished",
+        fail_func=response.task.reload,
+        timeout=50,
+        delay=2,
+    )
+    # Wait for VM power state to change
+    # Note: Simply waiting for vm power_state to change doesn't work
+    subject_vm.reload()
+    wait_for(
+        lambda: subject_vm.power_state == "off",
+        fail_func=subject_vm.reload,
+        timeout=100,
+        delay=2,
+    )
+
+    saved_report = appliance.collections.reports.instantiate(
+        type="Operations",
+        subtype="Virtual Machines",
+        menu_name="Online VMs (Powered On)",
+    ).queue(wait_for_finish=True)
+    request.addfinalizer(saved_report.delete_if_exists)
+
+    view = navigate_to(saved_report, "Details")
+    vm_names = [row.vm_name.text for row in view.table.rows()]
+    assert vm not in vm_names
