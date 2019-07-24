@@ -374,20 +374,6 @@ def test_embed_tower_ha():
 
 
 @pytest.mark.tier(1)
-def test_embed_tower_add_azure_credentials():
-    """
-    Add Azure credentials.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_embed_tower_add_network_credentials():
     """
     Add Network credentials.
