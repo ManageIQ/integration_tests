@@ -7,7 +7,6 @@ import fauxfactory
 import pytest
 import requests
 from lxml import etree
-from paramiko_expect import SSHClientInteraction
 from six import iteritems
 from six import StringIO
 
@@ -26,6 +25,7 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class
+from cfme.utils.ssh_expect import SSHExpect
 from cfme.utils.version import get_stream
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
@@ -308,24 +308,14 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     app1_ip = apps1.hostname
     pwd = app_creds["password"]
 
-    def logging_callback(appliance):
-        def the_logger(m):
-            logger.debug('Appliance %s:\n%s', appliance.hostname, m)
-        return the_logger
-
     # Configure first appliance as dedicated database
-    interaction = SSHClientInteraction(apps0.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(apps0))
+    interaction = SSHExpect(apps0)
     interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=20)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('5' if apps0.version < '5.10' else '7')  # Configure Database
-    interaction.expect('Choose the encryption key: |1|')
-    interaction.send('1')
-    interaction.expect('Choose the database operation: ')
-    interaction.send('1')
-    interaction.expect('Choose the database disk: |1| ')
+    interaction.answer('Press any key to continue.', '', timeout=20)
+    interaction.answer('Choose the advanced setting: ',
+                      '5' if apps0.version < '5.10' else '7')  # Configure Database
+    interaction.answer('Choose the encryption key: |1|', '1')
+    interaction.answer('Choose the database operation: ', '1')
     # On 5.10, rhevm provider:
     #
     #    database disk
@@ -333,155 +323,110 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     #    1) /dev/sr0: 0 MB
     #    2) /dev/vdb: 4768 MB
     #    3) Don't partition the disk
-    interaction.send('1' if apps0.version < '5.10' else '2')
+    interaction.answer('Choose the database disk: |1| ',
+                       '1' if apps0.version < '5.10' else '2')
     # Should this appliance run as a standalone database server?
-    interaction.expect(r'\? \(Y\/N\): |N| ')
-    interaction.send('y')
-    interaction.expect('Enter the database password on localhost: ')
-    interaction.send(pwd)
-    interaction.expect('Enter the database password again: ')
-    interaction.send(pwd)
+    interaction.answer(r'\? \(Y\/N\): |N| ', 'y')
+    interaction.answer('Enter the database password on localhost: ', pwd)
+    interaction.answer('Enter the database password again: ', pwd)
     # Configuration activated successfully.
-    interaction.expect('Press any key to continue.', timeout=6 * 60)
-    interaction.send('')
+    interaction.answer('Press any key to continue.', '', timeout=6 * 60)
 
     wait_for(lambda: apps0.db.is_dedicated_active, num_sec=4 * 60)
 
     # Configure EVM webui appliance with create region in dedicated database
-    interaction = SSHClientInteraction(apps2.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(apps2))
+    interaction = SSHExpect(apps2)
     interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=20)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('5' if apps2.version < '5.10' else '7')  # Configure Database
-    interaction.expect('Choose the encryption key: |1| ')
-    interaction.send('2')
+    interaction.answer('Press any key to continue.', '', timeout=20)
+    interaction.answer('Choose the advanced setting: ',
+                       '5' if apps2.version < '5.10' else '7')  # Configure Database
+    interaction.answer('Choose the encryption key: |1| ', '2')
     interaction.send(app0_ip)
-    interaction.expect('Enter the appliance SSH login: |root| ')
-    interaction.send('')
-    interaction.expect('Enter the appliance SSH password: ')
-    interaction.send(pwd)
-    interaction.expect('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key|')
-    interaction.send('')
-    interaction.expect('Choose the database operation: ')
-    interaction.send('2')
-    interaction.expect('Enter the database region number: ')
-    interaction.send('0')
+    interaction.answer('Enter the appliance SSH login: |root| ', '')
+    interaction.answer('Enter the appliance SSH password: ', pwd)
+    interaction.answer('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key|',
+                       '')
+    interaction.answer('Choose the database operation: ', '2')
+    interaction.answer('Enter the database region number: ', '0')
     # WARNING: Creating a database region will destroy any existing data and
     # cannot be undone.
-    interaction.expect(r'Are you sure you want to continue\? \(Y\/N\):')
-    interaction.send('y')
-    interaction.expect('Enter the database hostname or IP address: ')
-    interaction.send(app0_ip)
-    interaction.expect('Enter the port number: |5432| ')
-    interaction.send('')
-    interaction.expect('Enter the name of the database on .*: |vmdb_production| ')
-    interaction.send('')
-    interaction.expect('Enter the username: |root|')
-    interaction.send('')
-    interaction.expect('Enter the database password on .*: ')
-    interaction.send(pwd)
+    interaction.answer(r'Are you sure you want to continue\? \(Y\/N\):', 'y')
+    interaction.answer('Enter the database hostname or IP address: ', app0_ip)
+    interaction.answer('Enter the port number: |5432| ', '')
+    interaction.answer('Enter the name of the database on .*: |vmdb_production| ', '')
+    interaction.answer('Enter the username: |root|', '')
+    interaction.answer('Enter the database password on .*: ', pwd)
     # Configuration activated successfully.
-    interaction.expect('Press any key to continue.', timeout=360)
-    interaction.send('')
+    interaction.answer('Press any key to continue.', '', timeout=360)
 
     apps2.evmserverd.wait_for_running()
     apps2.wait_for_web_ui()
 
     # Configure primary replication node
-    interaction = SSHClientInteraction(apps0.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(apps0))
+    interaction = SSHExpect(apps0)
     interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=20)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    # Configure Database Replication
-    interaction.send('6' if apps1.version < '5.10' else '8')
-    interaction.expect('Choose the database replication operation: ')
-    interaction.send('1')
-    interaction.expect('Enter the number uniquely identifying '
-                       'this node in the replication cluster: ')
-    interaction.send('1')
-    interaction.expect('Enter the cluster database name: |vmdb_production| ')
-    interaction.send('')
-    interaction.expect('Enter the cluster database username: |root| ')
-    interaction.send('')
-    interaction.expect('Enter the cluster database password: ')
-    interaction.send(pwd)
-    interaction.expect('Enter the cluster database password: ')
-    interaction.send(pwd)
-    interaction.expect('Enter the primary database hostname or IP address: |.*| ')
-    interaction.send(app0_ip)
-    interaction.expect(r'Apply this Replication Server Configuration\? \(Y/N\): ')
-    interaction.send('y')
-    interaction.expect('Press any key to continue.')
-    interaction.send('')
+    interaction.answer('Press any key to continue.', '', timeout=20)
+    # 6/8 for Configure Database Replication
+    interaction.answer('Choose the advanced setting: ',
+                       '6' if apps1.version < '5.10' else '8')
+    interaction.answer('Choose the database replication operation: ', '1')
+    interaction.answer('Enter the number uniquely identifying '
+                       'this node in the replication cluster: ', '1')
+    interaction.answer('Enter the cluster database name: |vmdb_production| ', '')
+    interaction.answer('Enter the cluster database username: |root| ', '')
+    interaction.answer('Enter the cluster database password: ', pwd)
+    interaction.answer('Enter the cluster database password: ', pwd)
+    interaction.answer('Enter the primary database hostname or IP address: |.*| ', app0_ip)
+    interaction.answer(r'Apply this Replication Server Configuration\? \(Y/N\): ', 'y')
+    interaction.answer('Press any key to continue.', '')
 
     if BZ(1732092, forced_streams=get_stream(apps1.version)).blocks:
         assert apps1.ssh_client.run_command('setenforce 0').success
 
     # Configure secondary (standby) replication node
-    interaction = SSHClientInteraction(apps1.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(apps1))
+    interaction = SSHExpect(apps1)
     interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=20)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    # Configure Database Replication
-    interaction.send('6' if apps1.version < '5.10' else '8')
-    interaction.expect('Choose the database replication operation: ')
-    interaction.send('2')  # Configure Server as Standby
-    interaction.expect('Choose the encryption key: |1| ')
-    interaction.send('2')
+    interaction.answer('Press any key to continue.', '', timeout=20)
+    interaction.answer('Choose the advanced setting: ',
+                       '6' if apps1.version < '5.10' else '8')
+    # 6/8 for Configure Database Replication
+    # Configure Server as Standby
+    interaction.answer('Choose the database replication operation: ', '2')
+    interaction.answer('Choose the encryption key: |1| ', '2')
     interaction.send(app0_ip)
-    interaction.expect('Enter the appliance SSH login: |root| ')
-    interaction.send('')
-    interaction.expect('Enter the appliance SSH password: ')
-    interaction.send(pwd)
-    interaction.expect('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key|')
-    interaction.send('')
-    interaction.expect('Choose the standby database disk: |1| ')
-    interaction.send('1' if apps1.version < '5.10' else '2')
+    interaction.answer('Enter the appliance SSH login: |root| ', '')
+    interaction.answer('Enter the appliance SSH password: ', pwd)
+    interaction.answer('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key|',
+                       '')
+    interaction.answer('Choose the standby database disk: |1| ',
+                       '1' if apps1.version < '5.10' else '2')
     # "Enter " ... is on line above.
-    interaction.expect('.*the number uniquely identifying this '
-                       'node in the replication cluster: ')
-    interaction.send('2')
-    interaction.expect('Enter the cluster database name: |vmdb_production| ')
-    interaction.send('')
-    interaction.expect('Enter the cluster database username: |root| ')
-    interaction.send('')
-    interaction.expect('Enter the cluster database password: ')
-    interaction.send(pwd)
-    interaction.expect('Enter the cluster database password: ')
-    interaction.send(pwd)
-    interaction.expect('Enter the primary database hostname or IP address: ')
-    interaction.send(app0_ip)
-    interaction.expect('Enter the Standby Server hostname or IP address: |.*|')
-    interaction.send(app1_ip)
-    interaction.expect(r'Configure Replication Manager \(repmgrd\) for automatic '
-                       r'failover\? \(Y/N\): ')
-    interaction.send('y')
-    interaction.expect(r'Apply this Replication Server Configuration\? \(Y/N\): ')
-    interaction.send('y')
-    interaction.expect('Press any key to continue.', timeout=5 * 60)
+    interaction.answer('.*the number uniquely identifying this '
+                       'node in the replication cluster: ',
+                       '2')
+    interaction.answer('Enter the cluster database name: |vmdb_production| ', '')
+    interaction.answer('Enter the cluster database username: |root| ', '')
+    interaction.answer('Enter the cluster database password: ', pwd)
+    interaction.answer('Enter the cluster database password: ', pwd)
+    interaction.answer('Enter the primary database hostname or IP address: ', app0_ip)
+    interaction.answer('Enter the Standby Server hostname or IP address: |.*|', app1_ip)
+    interaction.answer(r'Configure Replication Manager \(repmgrd\) for automatic '
+                       r'failover\? \(Y/N\): ', 'y')
+    interaction.answer(r'Apply this Replication Server Configuration\? \(Y/N\): ', 'y')
+    interaction.answer('Press any key to continue.', '', timeout=5 * 60)
 
     # Configure automatic failover on EVM appliance
-    interaction = SSHClientInteraction(apps2.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(apps2))
+    interaction = SSHExpect(apps2)
     interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=20)
-    interaction.send('')
+    interaction.answer('Press any key to continue.', '', timeout=20)
     interaction.expect('Choose the advanced setting: ')
 
     with waiting_for_ha_monitor_started(apps2, app1_ip, timeout=300):
         # Configure Application Database Failover Monitor
         interaction.send('8' if apps2.version < '5.10' else '10')
-        interaction.expect('Choose the failover monitor configuration: ')
-        interaction.send('1')
+        interaction.answer('Choose the failover monitor configuration: ', '1')
         # Failover Monitor Service configured successfully
-        interaction.expect('Press any key to continue.')
-        interaction.send('')
+        interaction.answer('Press any key to continue.', '')
 
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, apps2).setup()
