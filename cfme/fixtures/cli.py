@@ -19,12 +19,14 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class
+from cfme.utils.version import get_stream
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
@@ -415,6 +417,9 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     interaction.send('y')
     interaction.expect('Press any key to continue.')
     interaction.send('')
+
+    if BZ(1732092, forced_streams=get_stream(apps1.version)).blocks:
+        assert apps1.ssh_client.run_command('setenforce 0').success
 
     # Configure secondary (standby) replication node
     interaction = SSHClientInteraction(apps1.ssh_client, timeout=10, display=True,
