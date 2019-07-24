@@ -110,6 +110,15 @@ def appliance_preupdate(old_version, appliance):
     sp.destroy_pool(pool_id)
 
 
+def do_yum_update(appliance):
+    appliance.evmserverd.stop()
+    with appliance.ssh_client as ssh:
+        result = ssh.run_command('yum update -y', timeout=3600)
+        assert result.success, "update failed {}".format(result.output)
+    appliance.evmserverd.start()
+    appliance.wait_for_web_ui()
+
+
 @pytest.mark.rhel_testing
 def test_update_yum(appliance_preupdate, appliance):
     """Tests appliance update between versions
@@ -120,12 +129,7 @@ def test_update_yum(appliance_preupdate, appliance):
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    appliance_preupdate.evmserverd.stop()
-    with appliance_preupdate.ssh_client as ssh:
-        result = ssh.run_command('yum update -y', timeout=3600)
-        assert result.success, "update failed {}".format(result.output)
-    appliance_preupdate.evmserverd.start()
-    appliance_preupdate.wait_for_web_ui()
+    do_yum_update(appliance_preupdate)
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version
 
@@ -294,8 +298,9 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_version):
-    """ Tests updating an appliance with providers, also confirms that the
+@pytest.mark.parametrize("update_strategy", [update_appliance, do_yum_update], ids=["webui", "yum"])
+def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, request, old_version):
+    """ Tests updating an appliance with providers using webui, also confirms that the
             provisioning continues to function correctly after the update has completed
 
     Polarion:
@@ -305,7 +310,7 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
         initialEstimate: 1/4h
     """
     evm_log = '/var/www/miq/vmdb/log/evm.log'
-    update_appliance(ha_appliances_with_providers[2])
+    update_strategy(ha_appliances_with_providers[2])
     wait_for(do_appliance_versions_match, func_args=(appliance, ha_appliances_with_providers[2]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
