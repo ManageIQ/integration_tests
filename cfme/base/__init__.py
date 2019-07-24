@@ -159,7 +159,15 @@ class ServerCollection(BaseCollection, sentaku.modeling.ElementMixin):
         return servers
 
     def get_master(self):
-        """Look for the master server through REST entity, use its ID to instantiate Server
+        """Look for the master server through REST entity, use its ID to
+        instantiate Server
+
+        In replicated environment, we can have more than one master. In such
+        case one of them (quite randomly thus quite possibly the incorrect one)
+        used to be selected by the get_master function.
+
+        To get the the correct rest-api object matching the appliance in the
+        context the IPAppliance._rest_api_server has to be used .
 
         Returns:
             :py:class:`cfme.base.Server` entity
