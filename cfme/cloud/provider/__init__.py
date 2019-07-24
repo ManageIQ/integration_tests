@@ -81,10 +81,12 @@ class CloudProviderImagesView(BaseLoggedInPage):
     """
     @property
     def is_displayed(self):
-        location = VersionPicker({Version.lowest(): 'Cloud Providers', '5.11': 'Compute'}).pick()
+        location = VersionPicker({Version.lowest(): 'Cloud Providers',
+                                  '5.11': self.context['object'].name}).pick()
         return (
-            self.breadcrumb.locations[0] == location and
-            self.entities.title.text == '{} (All Images)'.format(self.context['object'].name))
+            self.breadcrumb.locations[-2] == location and
+            self.entities.title.text == self.breadcrumb.locations[-1]
+        )
 
     breadcrumb = BreadCrumb()
     toolbar = View.nested(CloudProviderImagesToolbar)
