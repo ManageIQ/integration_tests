@@ -156,6 +156,46 @@ class CredentialFormView(CredentialsBaseView):
             'constructed as two words followed by a three digit number, such as: '
             'squeamish-ossifrage-123"]')
 
+    @credential_form.register("Azure")
+    class CredentialFormAzureView(View):
+        username = Input(
+            locator='.//input[@title="The username to use to connect to the '
+            'Microsoft Azure account"]'
+        )
+        password = Input(
+            locator='.//input[@title="The password to use to connect to the '
+            'Microsoft Azure account"]'
+        )
+        subscription_id = Input(
+            locator='.//input[@title="The Subscription UUID for the Microsoft Azure account"]'
+        )
+        tenant_id = Input(
+            locator='.//input[@title="The Tenant ID for the Microsoft Azure account"]'
+        )
+        client_secret = Input(
+            locator='.//input[@title="The Client Secret for the Microsoft Azure account"]'
+        )
+        client_id = Input(
+            locator='.//input[@title="The Client ID for the Microsoft Azure account"]'
+        )
+
+    @credential_form.register("Network")
+    class CredentialFormNetworkView(View):
+        username = Input(locator='.//input[@title="Username for this credential"]')
+        password = Input(locator='.//input[@title="Password for this credential"]')
+        authorize = Input(
+            locator='.//input[@title="Whether to use the authorize mechanism"]'
+        )
+        authorize_password = Input(
+            locator='.//input[@title="Password used by the authorize mechanism"]'
+        )
+        ssh_key = TextInput(
+            locator='.//textarea[@title="RSA or DSA private key to be used instead of password"][2]'
+        )
+        private_key_phrase = Input(
+            locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"][2]'
+        )
+
     cancel_button = Button("Cancel")
 
 
@@ -212,6 +252,97 @@ class CredentialEditView(CredentialFormView):
                 continue
 
 
+def machine_credentials(credentials):
+    return {
+        "username": credentials.get("username"),
+        "password": credentials.get("password"),
+        "private_key": credentials.get("private_key"),
+        "private_key_phrase": credentials.get("private_key_phrase"),
+        "privilage_escalation": credentials.get("privilage_escalation"),
+        "privilage_escalation_username": credentials.get("privilage_escalation_username"),
+        "privilage_escalation_password": credentials.get("privilage_escalation_password"),
+    }
+
+
+def scm_credentials(credentials):
+    return {
+        "username": credentials.get("username"),
+        "password": credentials.get("password"),
+        "private_key": credentials.get("private_key"),
+        "private_key_phrase": credentials.get("private_key_phrase")
+    }
+
+
+def vault_credentials(credentials):
+    return {
+        "vault_password": credentials.get("vault_password")
+    }
+
+
+def amazon_credentials(credentials):
+    return {
+        "access_key": credentials.get("access_key"),
+        "secret_key": credentials.get("secret_key"),
+        "sts_token": credentials.get("sts_token"),
+    }
+
+
+def azure_credentials(credentials):
+    return {
+        "username": credentials.get("username"),
+        "password": credentials.get("password"),
+        "subscription_id": credentials.get("subscription_id"),
+        "tenant_id": credentials.get("tenant_id"),
+        "client_secret": credentials.get("client_secret"),
+        "client_id": credentials.get("client_id"),
+    }
+
+
+def network_credentials(credentials):
+    return {
+        "username": credentials.get("username"),
+        "password": credentials.get("password"),
+        "authorize": credentials.get("authorize"),
+        "authorize_password": credentials.get("authorize_password"),
+        "ssh_key": credentials.get("ssh_key"),
+        "private_key_phrase": credentials.get("private_key_phrase"),
+    }
+
+
+def vmware_credentials(credentials):
+    return {
+        "username": credentials.get("username"),
+        "password": credentials.get("password"),
+        "vcenter_host": credentials.get("vcenter_host")
+    }
+
+
+def openstack_credentials(credentials):
+    return {
+        "username": credentials.get("username"),
+        "password": credentials.get("password"),
+        "authentication_url": credentials.get("authentication_url"),
+        "project": credentials.get("project"),
+        "domain": credentials.get("domain")
+    }
+
+
+def gce_credentials(credentials):
+    return {
+        "service_account": credentials.get("service_account"),
+        "priv_key": credentials.get("priv_key"),
+        "project": credentials.get("project")
+    }
+
+
+def rhv_credentials(credentials):
+    return {
+        "username": credentials.get("username"),
+        "password": credentials.get("password"),
+        "host": credentials.get("host")
+    }
+
+
 class Credential(BaseEntity, Taggable):
     """A class representing one Embedded Ansible credential in the UI."""
 
@@ -229,60 +360,17 @@ class Credential(BaseEntity, Taggable):
     __repr__ = object.__repr__
 
     def update(self, updates):
-        machine_credential_fill_dict = {
-            "username": updates.get("username"),
-            "password": updates.get("password"),
-            "private_key": updates.get("private_key"),
-            "private_key_phrase": updates.get("private_key_phrase"),
-            "privilage_escalation": updates.get("privilage_escalation"),
-            "privilage_escalation_username": updates.get("privilage_escalation_username"),
-            "privilage_escalation_password": updates.get("privilage_escalation_password"),
-        }
-        scm_credential_fill_dict = {
-            "username": updates.get("username"),
-            "password": updates.get("password"),
-            "private_key": updates.get("private_key"),
-            "private_key_phrase": updates.get("private_key_phrase")
-        }
-        vault_credential_fill_dict = {
-            "vault_password": updates.get("vault_password")
-        }
-        amazon_credential_fill_dict = {
-            "access_key": updates.get("access_key"),
-            "secret_key": updates.get("secret_key"),
-            "sts_token": updates.get("sts_token"),
-        }
-        vmware_credential_fill_dict = {
-            "username": updates.get("username"),
-            "password": updates.get("password"),
-            "vcenter_host": updates.get("vcenter_host")
-        }
-        openstack_credential_fill_dict = {
-            "username": updates.get("username"),
-            "password": updates.get("password"),
-            "authentication_url": updates.get("authentication_url"),
-            "project": updates.get("project"),
-            "domain": updates.get("domain")
-        }
-        gce_credential_fill_dict = {
-            "service_account": updates.get("service_account"),
-            "priv_key": updates.get("priv_key"),
-            "project": updates.get("project")
-        }
-        rhv_credential_fill_dict = {
-            "username": updates.get("username"),
-            "password": updates.get("password"),
-            "host": updates.get("host")
-        }
         credential_type_map = {
-            "Machine": machine_credential_fill_dict,
-            "Scm": scm_credential_fill_dict,
-            "Vault": vault_credential_fill_dict,
-            "Amazon": amazon_credential_fill_dict,
-            "VMware": vmware_credential_fill_dict,
-            "OpenStack": openstack_credential_fill_dict,
-            "Red Hat Virtualization": rhv_credential_fill_dict,
-            "Google Compute Engine": gce_credential_fill_dict
+            "Machine": machine_credentials(updates),
+            "Scm": scm_credentials(updates),
+            "Vault": vault_credentials(updates),
+            "Amazon": amazon_credentials(updates),
+            "Azure": azure_credentials(updates),
+            "Network": network_credentials(updates),
+            "VMware": vmware_credentials(updates),
+            "OpenStack": openstack_credentials(updates),
+            "Red Hat Virtualization": rhv_credentials(updates),
+            "Google Compute Engine": gce_credentials(updates)
         }
         edit_page = navigate_to(self, "Edit")
         changed = edit_page.fill({"name": updates.get("name")})
@@ -328,60 +416,17 @@ class CredentialsCollection(BaseCollection):
 
     def create(self, name, credential_type, **credentials):
         add_page = navigate_to(self, "Add")
-        machine_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "private_key": credentials.get("private_key"),
-            "private_key_phrase": credentials.get("private_key_phrase"),
-            "privilage_escalation": credentials.get("privilage_escalation"),
-            "privilage_escalation_username": credentials.get("privilage_escalation_username"),
-            "privilage_escalation_password": credentials.get("privilage_escalation_password")
-        }
-        scm_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "private_key": credentials.get("private_key"),
-            "private_key_phrase": credentials.get("private_key_phrase")
-        }
-        vault_credential_fill_dict = {
-            "vault_password": credentials.get("vault_password")
-        }
-        amazon_credential_fill_dict = {
-            "access_key": credentials.get("access_key"),
-            "secret_key": credentials.get("secret_key"),
-            "sts_token": credentials.get("sts_token"),
-        }
-        vmware_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "vcenter_host": credentials.get("vcenter_host")
-        }
-        openstack_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "authentication_url": credentials.get("authentication_url"),
-            "project": credentials.get("project"),
-            "domain": credentials.get("domain")
-        }
-        rhv_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "host": credentials.get("host")
-        }
-        gce_credential_fill_dict = {
-            "service_account": credentials.get("service_account"),
-            "priv_key": credentials.get("priv_key"),
-            "project": credentials.get("project")
-        }
         credential_type_map = {
-            "Machine": machine_credential_fill_dict,
-            "Scm": scm_credential_fill_dict,
-            "Vault": vault_credential_fill_dict,
-            "Amazon": amazon_credential_fill_dict,
-            "VMware": vmware_credential_fill_dict,
-            "OpenStack": openstack_credential_fill_dict,
-            "Red Hat Virtualization": rhv_credential_fill_dict,
-            "Google Compute Engine": gce_credential_fill_dict
+            "Machine": machine_credentials(credentials),
+            "Scm": scm_credentials(credentials),
+            "Vault": vault_credentials(credentials),
+            "Amazon": amazon_credentials(credentials),
+            "Azure": azure_credentials(credentials),
+            "Network": network_credentials(credentials),
+            "VMware": vmware_credentials(credentials),
+            "OpenStack": openstack_credentials(credentials),
+            "Red Hat Virtualization": rhv_credentials(credentials),
+            "Google Compute Engine": gce_credentials(credentials)
         }
 
         add_page.fill({"name": name, "credential_type": credential_type})
