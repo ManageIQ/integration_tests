@@ -84,8 +84,8 @@ class CloudProviderImagesView(BaseLoggedInPage):
         location = VersionPicker({Version.lowest(): 'Cloud Providers',
                                   '5.11': self.context['object'].name}).pick()
         return (
-            self.breadcrumb.locations[-2] == location and
-            self.entities.title.text == self.breadcrumb.locations[-1]
+            self.breadcrumb.locations[-2] == location
+            and self.entities.title.text == self.breadcrumb.active_location
         )
 
     breadcrumb = BreadCrumb()
