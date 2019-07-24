@@ -27,6 +27,7 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input as WInput
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TimelinesView
 from cfme.common.vm import Template
 from cfme.common.vm import TemplateCollection
 from cfme.common.vm import VM
@@ -65,7 +66,6 @@ from widgetastic_manageiq import Search
 from widgetastic_manageiq import SnapshotMemorySwitch
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
-from widgetastic_manageiq import TimelinesView
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 
@@ -329,13 +329,20 @@ class InfraVmDetailsView(InfraVmView):
 
 
 class InfraVmTimelinesView(TimelinesView, InfraVmView):
+
     @property
     def is_displayed(self):
-        expected_name = self.context['object'].name
+        if self.breadcrumb.is_displayed:
+            check_object = self.breadcrumb.locations
+        else:
+            # since in 5.10 there is no breadcrumb
+            check_object = self.title.text
+
         return (
-            self.in_infra_vms and
-            self.title.text == 'Timelines for Virtual Machine "{}"'.format(expected_name))
-    # Timelines for Virtual Machine "landon-test"
+            self.context['object'].name in check_object and
+            # this last check is less specific due to BZ 1732517
+            "Timeline" in self.title.text
+        )
 
 
 class InfraVmReconfigureView(BaseLoggedInPage):

@@ -12,6 +12,7 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
+from cfme.common import TimelinesView
 from cfme.common.candu_views import AzoneCloudUtilizationView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
@@ -29,7 +30,6 @@ from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import Text
-from widgetastic_manageiq import TimelinesView
 
 
 class AvailabilityZoneToolBar(View):
@@ -133,13 +133,7 @@ class AvailabilityZoneDetailsView(AvailabilityZoneView):
 
 
 class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
-    @property
-    def is_displayed(self):
-        return (
-            self.in_availability_zones and
-            self.breadcrumb.active_location == 'Timelines' and
-            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
-            self.is_timelines)
+    pass
 
 
 @attr.s

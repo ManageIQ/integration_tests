@@ -4,12 +4,12 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_patternfly import BreadCrumb
 
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.common import TaggableCollection
 from cfme.common import TagPageView
+from cfme.common import TimelinesView
 from cfme.common.provider_views import ProviderDetailsToolBar
 from cfme.common.vm_console import ConsoleMixin
 from cfme.containers.provider import ContainerObjectAllBaseView
@@ -24,7 +24,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import Button
 from widgetastic_manageiq import Text
-from widgetastic_manageiq import TimelinesView
 
 
 class NodeDetailsToolBar(ProviderDetailsToolBar):
@@ -166,15 +165,7 @@ class Utilization(CFMENavigateStep):
 
 class NodeTimelinesView(TimelinesView, NodeView):
     """Timeline page for Nodes"""
-    breadcrumb = BreadCrumb()
-
-    @property
-    def is_displayed(self):
-        """Is this page currently being displayed"""
-        return (
-            self.in_node and
-            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
-            self.is_timelines)
+    pass
 
 
 @navigator.register(Node, 'Timelines')

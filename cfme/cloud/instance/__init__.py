@@ -10,6 +10,7 @@ from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TimelinesView
 from cfme.common.vm import VM
 from cfme.common.vm import VMCollection
 from cfme.common.vm_views import EditView
@@ -34,7 +35,6 @@ from widgetastic_manageiq import CompareToolBarActionsView
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
-from widgetastic_manageiq import TimelinesView
 
 
 class InstanceDetailsToolbar(View):
@@ -170,12 +170,20 @@ class InstanceDetailsView(CloudInstanceView):
 
 
 class InstanceTimelinesView(TimelinesView, CloudInstanceView):
+
     @property
     def is_displayed(self):
-        expected_name = self.context['object'].name
+        if self.breadcrumb.is_displayed:
+            check_object = self.breadcrumb.locations
+        else:
+            # since in 5.10 there is no breadcrumb
+            check_object = self.title.text
+
         return (
-            self.in_cloud_instance and
-            self.title.text == 'Timelines for Instance "{}"'.format(expected_name))
+            self.context['object'].name in check_object and
+            # this last check is less specific due to BZ 1732517
+            "Timeline" in self.title.text
+        )
 
 
 class InstanceCompareView(CloudInstanceView):

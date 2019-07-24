@@ -13,6 +13,7 @@ from widgetastic_patternfly import Dropdown
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
+from cfme.common import TimelinesView
 from cfme.common.candu_views import ClusterInfraUtilizationView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
@@ -32,7 +33,6 @@ from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Text
-from widgetastic_manageiq import TimelinesView
 
 
 # TODO: since Cluster always requires provider, it will use only one way to get to Cluster Detail's
@@ -145,15 +145,7 @@ class ClusterDetailsView(ClusterView):
 
 class ClusterTimelinesView(TimelinesView, ClusterView):
     """The timelines page of a cluster"""
-    breadcrumb = BreadCrumb()
-
-    @property
-    def is_displayed(self):
-        """Determine if this page is currently being displayed"""
-        return (
-            self.in_cluster and
-            self.context['object'].expected_details_breadcrumb in self.breadcrumb.locations and
-            self.is_timelines)
+    pass
 
 
 @attr.s
