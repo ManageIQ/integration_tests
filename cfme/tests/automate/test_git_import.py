@@ -6,6 +6,8 @@ from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.rest import assert_response
 
 
@@ -45,6 +47,7 @@ def new_user(appliance):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[BZ(1714493)])
 def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
     """
     Polarion:
@@ -61,6 +64,7 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(automates=[BZ(1714493)])
 def test_automate_git_domain_displayed_in_service(appliance):
     """Tests if a domain is displayed in a service.
        Checks if the domain imported from git is displayed and usable in the pop-up tree in the
@@ -73,7 +77,7 @@ def test_automate_git_domain_displayed_in_service(appliance):
         initialEstimate: 1/20h
         tags: automate
     """
-    url = "https://github.com/ramrexx/CloudForms_Essentials.git"
+    url = cfme_data.ansible_links.playbook_repositories.automate_domain
     repo = AutomateGitRepository(url=url, verify_ssl=True, appliance=appliance)
     imported_domain = repo.import_domain_from(branch="origin/master")
     collection = appliance.collections.catalog_items
@@ -90,10 +94,12 @@ def test_automate_git_domain_displayed_in_service(appliance):
     )
     view.provisioning_entry_point.fill(path, include_domain=True)
     assert view.provisioning_entry_point.value == (
-        "/CloudForms_Essentials/Service/Generic/StateMachines/GenericLifecycle/provision")
+        "/{}".format("/".join([imported_domain.name, path[2], path[3], path[4], path[5], path[6]]))
+    )
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(automates=[BZ(1714493)])
 def test_automate_git_import_multiple_domains(request, appliance):
     """
     Importing of multiple domains from a single git repository is not allowed.
@@ -127,6 +133,7 @@ def test_automate_git_import_multiple_domains(request, appliance):
         assert not domain.exists
 
 
+@pytest.mark.meta(automates=[BZ(1714493)])
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
     ("url", "param_type", "param_value", "verify_ssl"),
@@ -198,6 +205,7 @@ def test_domain_import_git(
 @pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1677575])
 def test_import_export_domain_with_ansible_method():
     """This test case tests support of Export/Import of Domain with Ansible Method
 
@@ -226,6 +234,7 @@ def test_import_export_domain_with_ansible_method():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[BZ(1714493)])
 def test_refresh_git_current_user(imported_domain, new_user):
     """
     Polarion:
