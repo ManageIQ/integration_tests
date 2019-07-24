@@ -5739,7 +5739,7 @@ class EntryPoint(View, ClickableMixin):
         """
 
         # `domain` not become part of value
-        if self.value and self.value in "/".join(value):
+        if self.value and "/".join(value) in self.value:
             return False
 
         if value:
