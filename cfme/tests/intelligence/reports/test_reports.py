@@ -8,7 +8,6 @@ from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
-from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
@@ -318,12 +317,6 @@ def test_send_text_custom_report_with_long_condition(
     schedule.queue()
 
     # assert that the mail was sent
-    wait_for(
-        lambda: len(smtp_test.get_emails(to_address=data["email"]["to_emails"])) == 1,
-        timeout=200,
-        delay=5,
-        msg="Mail was not sent. Some error occured.",
-    )
-
+    assert len(smtp_test.wait_for_emails(wait=200, to_address=data["email"]["to_emails"])) == 1
     # assert that the pattern was not found in the logs
     soft_assert(log.validate(), "Found error message in the logs.")
