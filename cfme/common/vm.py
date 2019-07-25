@@ -193,6 +193,16 @@ class BaseVM(
         return find_pingable(self.mgmt)
 
     @property
+    def all_ip_addresses(self):
+        """Fetches all IP Addresses of a VM, pingable or otherwise."""
+        view = navigate_to(self, "Details", use_resetter=False)
+        try:
+            return view.entities.summary('Properties').get_text_of("IP Address")
+        except NameError:
+            # since some providers have plural 'Addresses'.
+            return view.entities.summary('Properties').get_text_of("IP Addresses").split(", ")
+
+    @property
     def mac_address(self):
         """Fetches MAC Address of VM"""
         # TODO: We should update this with wrapanapi method when it becomes available.
