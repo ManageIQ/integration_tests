@@ -13,7 +13,8 @@ from cfme.utils.wait import wait_for
 @pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
     appliance.server.settings.enable_server_roles("embedded_ansible")
-    appliance.wait_for_embedded_ansible()
+    if appliance.version < "5.11":
+        appliance.wait_for_embedded_ansible()
     yield
     appliance.server.settings.disable_server_roles("embedded_ansible")
 
