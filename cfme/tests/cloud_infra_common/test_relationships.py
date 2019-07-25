@@ -406,16 +406,17 @@ def test_datastore_relationships():
     """
     Polarion:
         assignee: ghubale
-        casecomponent: Cloud
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
         tags: relationship
         setup:
             1. Add infrastructure provider(e.g: vsphere65)
             2. Provision VM
+            3. Setup SSA
         testSteps:
             1. Navigate to VM's details page and click on 'Datastores' from 'Relationships' table
-            2. Click on 'Managed VMs' from from 'Relationships' table
+            2. Click on 'Managed VMs' from 'Relationships' table
             3. Select VM(Vm should be in 'on' state) and perform operations(Refresh Relationships
                and Power States, Perform Smartstate Analysis, Extract Running Processes) by
                selecting from 'configuration' dropdown
@@ -438,10 +439,12 @@ def test_cluster_relationships():
     """
     Polarion:
         assignee: ghubale
-        casecomponent: Cloud
+        casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
         tags: relationship
+        setup:
+            1. Setup SSA
         testSteps:
             1. Add infra provider(e.g. vsphere65, scvmm etc)
             2. Go to provider details page
@@ -453,7 +456,10 @@ def test_cluster_relationships():
         expectedResults:
             1.
             2.
-            3. Operations should be performed successfully. It should not give unexpected error.
+            3.
+            4.
+            5.
+            6. Operations should be performed successfully. It should not give unexpected error.
 
     Bugzilla:
         1732370
