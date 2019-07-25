@@ -515,12 +515,16 @@ def test_service_ansible_playbook_pass_extra_vars(
     """
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
-    if action == "retirement":
-        ansible_service.retire()
-    view = navigate_to(ansible_service, "Details")
     # To avoid NoSuchElementException
     if action == "provisioning":
+        view = navigate_to(ansible_service, "Details")
         view.provisioning_tab.click()
+
+    if action == "retirement":
+        ansible_service.retire()
+        view = navigate_to(ansible_service, "RetiredDetails")
+        view.retirement_tab.click()
+
     stdout = getattr(view, action).standart_output
     stdout.wait_displayed()
     pre = stdout.text
