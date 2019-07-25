@@ -68,10 +68,10 @@ class SMTPCollectorClient(object):
         return self._query(requests.get, "messages.html").text.strip()
 
     def wait_for_emails(self, wait=60, **filter):
-        result = wait_for(
-            lambda: self.get_emails(**filter),
+        wait_for(
+            lambda: len(self.get_emails(**filter)) > 0,
             timeout=wait,
             delay=5,
             msg="Mail not found.",
         )
-        return result.out
+        return self.get_emails(**filter)

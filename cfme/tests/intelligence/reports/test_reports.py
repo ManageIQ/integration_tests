@@ -1,3 +1,5 @@
+import os
+
 import fauxfactory
 import pytest
 
@@ -6,63 +8,31 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
 
-FILTER_DATA = {
-    "title": "Testing report",
-    "menu_name": "testing report",
-    "base_report_on": "VMs and Instances",
-    "report_fields": [
-        "Active",
-        "EVM Custom Attributes : Name",
-        "EVM Custom Attributes : Region Description",
-        "EVM Custom Attributes : Region Number",
-        "Name",
-    ],
-    "consolidation": {
-        "group_records": [
-            "EVM Custom Attributes : Name",
-            "EVM Custom Attributes : Region Description",
-            "EVM Custom Attributes : Region Number",
-        ]
-    },
-    "filter": {
-        "primary_filter": "fill_field(VM and Instance : Active, IS NOT NULL)",
-        "secondary_filter": "fill_field(EVM Custom Attributes : Name, INCLUDES, A)",
-    },
-}
-
-LONG_CONDITION_DATA = {
-    "title": "Testing report",
-    "menu_name": "testing report",
-    "base_report_on": "VMs and Instances",
-    "report_fields": ["Name"],
-    "filter": {
-        "primary_filter": (
-            "fill_field({based_on} : Power State, = , on);"
-            "select_first_expression;click_or;fill_field("
-            "{based_on} : Datastore Path, INCLUDES, i);"
-            "select_first_expression;click_or;fill_field("
-            "{based_on}.Provider : Hostname, INCLUDES, env);"
-            "select_first_expression;click_or;fill_field("
-            "{based_on}.Provider : IP Address, INCLUDES, 1);"
-            "select_first_expression;click_or;fill_field("
-            "{based_on}.Provider : IP Address, INCLUDES, 2);"
-            "select_first_expression;click_or;fill_field("
-            "{based_on}.Provider : IP Address, INCLUDES, 4);"
-        ).format(based_on="VM and Instance")
-    },
-}
-
-
 @pytest.fixture
-def generate_report(appliance, request):
-    def _report(data):
-        report = appliance.collections.reports.create(**data)
+def get_report(appliance, request):
+    def _report(file_name, menu_name):
+        collection = appliance.collections.reports
+        file_name = "{}.yaml".format(file_name)
+
+        # download the report from server
+        fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
+        file_path = fs.download(file_name, os.path.join("/tmp", file_name))
+
+        # import the report
+        collection.import_report(file_path)
+
+        # instantiate report and return it
+        report = collection.instantiate(
+            type="My Company (All Groups)", subtype="Custom", menu_name=menu_name
+        )
         request.addfinalizer(report.delete_if_exists)
         return report
 
@@ -216,7 +186,7 @@ def test_new_report_fields(appliance, based_on, request):
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1565171])
 def test_report_edit_secondary_display_filter(
-    appliance, request, soft_assert, generate_report
+    appliance, request, soft_assert, get_report
 ):
     """
     Polarion:
@@ -234,7 +204,7 @@ def test_report_edit_secondary_display_filter(
     Bugzilla:
         1565171
     """
-    report = generate_report(FILTER_DATA)
+    report = get_report("filter_report", "test_filter_report")
     report.update(
         {
             "filter": {
@@ -280,7 +250,7 @@ def test_report_edit_secondary_display_filter(
 @pytest.mark.meta(server_roles="+notifier", automates=[1677839])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 def test_send_text_custom_report_with_long_condition(
-    appliance, setup_provider, smtp_test, soft_assert, request, generate_report
+    appliance, setup_provider, smtp_test, soft_assert, request, get_report
 ):
     """
     Polarion:
@@ -300,7 +270,7 @@ def test_send_text_custom_report_with_long_condition(
     Bugzilla:
         1677839
     """
-    report = generate_report(LONG_CONDITION_DATA)
+    report = get_report("long_condition_report", "test_long_condition_report")
     data = {
         "timer": {"hour": "12", "minute": "10"},
         "email": {"to_emails": "test@example.com"},
@@ -317,6 +287,9 @@ def test_send_text_custom_report_with_long_condition(
     schedule.queue()
 
     # assert that the mail was sent
-    assert len(smtp_test.wait_for_emails(wait=200, to_address=data["email"]["to_emails"])) == 1
+    assert (
+        len(smtp_test.wait_for_emails(wait=200, to_address=data["email"]["to_emails"]))
+        == 1
+    )
     # assert that the pattern was not found in the logs
     soft_assert(log.validate(), "Found error message in the logs.")
