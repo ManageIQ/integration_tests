@@ -310,8 +310,9 @@ def test_send_text_custom_report_with_long_condition(
     schedule = report.create_schedule(**data)
 
     # prepare LogValidator
-    pattern = ".*negative argument.*"
-    log = LogValidator("/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern])
+    log = LogValidator(
+        "/var/www/miq/vmdb/log/evm.log", failure_patterns=[".*negative argument.*"]
+    )
 
     log.start_monitoring()
     schedule.queue()
@@ -325,4 +326,4 @@ def test_send_text_custom_report_with_long_condition(
     )
 
     # assert that the pattern was not found in the logs
-    soft_assert(not log.validate(), "Found error message in the logs.")
+    soft_assert(log.validate(), "Found error message in the logs.")
