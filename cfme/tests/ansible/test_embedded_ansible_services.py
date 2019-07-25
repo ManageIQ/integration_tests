@@ -471,6 +471,7 @@ def test_service_ansible_playbook_plays_table(
     view = navigate_to(ansible_service, "Details")
     soft_assert(view.provisioning.plays.row_count >= 1, "Plays table in provisioning tab is empty")
     ansible_service.retire()
+    view = navigate_to(ansible_service, "RetiredDetails")
     soft_assert(view.retirement.plays.row_count >= 1, "Plays table in retirement tab is empty")
 
 
