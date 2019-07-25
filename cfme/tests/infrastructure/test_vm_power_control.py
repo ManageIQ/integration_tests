@@ -2,14 +2,18 @@
 import random
 import time
 
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -609,3 +613,46 @@ def test_guest_os_shutdown(appliance, provider, testing_vm_tools, ensure_vm_runn
         new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
         soft_assert(new_last_boot_time == last_boot_time,
                     "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1687597])
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+def test_retire_vm_with_vm_user_role(request, appliance, testing_vm):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+
+    Bugzilla:
+        1687597
+    """
+    # Using group - "EvmGroup-vm_user" because this is attached to role - "EvmRole-vm_user"
+    user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
+
+    # Creating a user with 'EvmGroup-vm_user' group to retire VM provisioned by admin
+    new_user = appliance.collections.users.create(
+        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
+        credential=Credential(
+            principal="uid{}".format(fauxfactory.gen_alphanumeric(4)),
+            secret="{password}".format(password=fauxfactory.gen_alphanumeric(4)),
+        ),
+        email=fauxfactory.gen_email(),
+        groups=user_group,
+        cost_center="Workload",
+        value_assign="Database",
+    )
+    user = appliance.rest_api.collections.users.get(name=new_user.name)
+    request.addfinalizer(user.action.delete)
+
+    # Log in with new user to retire the vm
+    with new_user:
+        new = testing_vm.find_quadicon(from_any_provider=True)
+        new.check()
+        view = testing_vm.create_view(VmsTemplatesAllView)
+        assert view.toolbar.lifecycle.item_enabled("Retire selected items")
+        testing_vm.retire()
+        testing_vm.wait_for_vm_state_change(desired_state="retired", timeout=720, from_details=True)
