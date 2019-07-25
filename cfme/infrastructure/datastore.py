@@ -343,7 +343,10 @@ class DatastoreCollection(BaseCollection):
         provider_db = {
             prov.id: get_crud_by_name(prov.name)
             for prov in self.appliance.rest_api.collections.providers.all
-            if not (getattr(prov, "parent_ems_id", False) or ("Manager" in prov.name))
+            if not (
+                getattr(prov, "parent_ems_id", False)
+                or ("Manager" in prov.name or prov.name == "Embedded Ansible")
+            )
         }
         datastores = [
             self.instantiate(name=name, provider=provider_db[prov_id])
