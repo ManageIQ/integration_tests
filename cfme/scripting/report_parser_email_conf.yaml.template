@@ -1,0 +1,15 @@
+---
+email_host: smtp.example.com
+email_port: 25
+from_addr: admin@example.com
+default_to_addr: someone@example.com	# If user is not set, email will be sent to this address by default.
+email_subject: Test Case Failure Report
+email_template: |
+"Hello {},
+
+Please look at the following list of failed test cases, and try to fix any automation issues:
+
+{}
+
+Thanks,
+CFME QE Test Results Nagger Bot"
