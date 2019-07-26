@@ -11,6 +11,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
@@ -36,7 +37,7 @@ def new_instance(provider):
                     'first_name': fauxfactory.gen_alpha(),
                     'last_name': fauxfactory.gen_alpha()},
         'catalog': {'num_vms': '1',
-                    'vm_name': fauxfactory.gen_alpha()},
+                    'vm_name': random_vm_name("osp")},
         'environment': {'cloud_network': prov_data['cloud_network'],
                         'cloud_tenant': prov_data['cloud_tenant']},
         'properties': {'instance_type': partial_match(prov_data['instance_type'])},

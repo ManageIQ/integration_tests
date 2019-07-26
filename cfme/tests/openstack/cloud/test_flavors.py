@@ -10,6 +10,7 @@ from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
@@ -78,7 +79,7 @@ def new_instance(provider, zero_disk_flavor):
                     'first_name': fauxfactory.gen_alpha(),
                     'last_name': fauxfactory.gen_alpha()},
         'catalog': {'num_vms': '1',
-                    'vm_name': fauxfactory.gen_alpha()},
+                    'vm_name': random_vm_name("osp")},
         'environment': {'cloud_network': prov_data['cloud_network'],
                         'cloud_tenant': prov_data['cloud_tenant']},
         'properties': {'instance_type': partial_match(flavor_name)},
@@ -112,7 +113,7 @@ def instance_with_private_flavor(provider, private_flavor):
                     'first_name': fauxfactory.gen_alpha(),
                     'last_name': fauxfactory.gen_alpha()},
         'catalog': {'num_vms': '1',
-                    'vm_name': fauxfactory.gen_alpha()},
+                    'vm_name': random_vm_name("osp")},
         'environment': {'cloud_network': prov_data['cloud_network'],
                         'cloud_tenant': prov_data['cloud_tenant']},
         'properties': {'instance_type': partial_match(flavor_name)},
