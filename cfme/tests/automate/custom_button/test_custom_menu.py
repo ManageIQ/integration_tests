@@ -1,15 +1,40 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [test_requirements.custom_button]
+
+
+ADVANCE_SETTING_CUSTOM_MENU = {
+    "ui": {
+        "custom_menu": [
+            {
+                "type": "item",
+                "icon": "fa fa-cubes",
+                "id": "redhat",
+                "name": "RedHat",
+                "href": "https://www.redhat.com",
+                "rbac": "vm_explorer",
+            },
+            {
+                "type": "item",
+                "icon": "pficon pficon-project",
+                "id": "manageiq",
+                "name": "ManageIQ",
+                "href": "https://manageiq.org",
+                "rbac": "vm_explorer",
+            },
+        ]
+    }
+}
 
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(coverage=[1678151])
-def test_custom_menu_display():
+def test_custom_menu_display(appliance):
     """Add Custom Menu in Left Navigation bar as Admin
 
     Requirements for custom menu
@@ -55,4 +80,11 @@ def test_custom_menu_display():
     Bugzilla:
         1678151
     """
-    pass
+    appliance.update_advanced_settings(ADVANCE_SETTING_CUSTOM_MENU)
+    appliance.reboot()
+    view = navigate_to(appliance.server, "LoggedIn")
+
+    for menu in ["RedHat", "ManageIQ"]:
+        view.navigation.select(menu)
+        assert view.navigation.currently_selected == [menu]
+        assert "id={}".format(menu.lower()) in appliance.browser.selenium.current_url
