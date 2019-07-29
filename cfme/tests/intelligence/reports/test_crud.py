@@ -310,7 +310,7 @@ def test_run_report(appliance):
 
 
 @pytest.mark.tier(3)
-def test_import_report(appliance):
+def test_import_report_rest(appliance):
     """
     Polarion:
         assignee: pvala
