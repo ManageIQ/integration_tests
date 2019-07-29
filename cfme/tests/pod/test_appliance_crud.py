@@ -28,7 +28,8 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(1),
     pytest.mark.long_running,
-    pytest.mark.provider([OpenshiftProvider], scope='function')
+    pytest.mark.provider([OpenshiftProvider], scope='function'),
+    pytest.mark.ignore_stream('5.11')
 ]
 
 
@@ -436,6 +437,7 @@ def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
         casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     appliance = temp_pod_appliance
     collection = appliance.collections.container_projects
@@ -477,6 +479,7 @@ def test_crud_pod_appliance_ext_db(temp_extdb_pod_appliance, provider, setup_pro
         casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     appliance = temp_extdb_pod_appliance
     collection = appliance.collections.container_projects
@@ -496,6 +499,7 @@ def test_crud_pod_appliance_custom_config():
         casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/2h
+        endsin: 5.10
     """
     # custom deployment
     pass
@@ -511,6 +515,7 @@ def test_pod_appliance_config_upgrade():
         casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     pass
 
@@ -525,6 +530,7 @@ def test_pod_appliance_image_upgrade():
         casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     pass
 
@@ -539,6 +545,7 @@ def test_pod_appliance_db_upgrade():
         casecomponent: Containers
         caseimportance: medium
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     pass
 
@@ -555,6 +562,7 @@ def test_pod_appliance_start_stop(temp_pod_appliance, provider, setup_provider):
         casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/6h
+        endsin: 5.10
     """
     appliance = temp_pod_appliance
     assert provider.mgmt.is_vm_running(appliance.project)
@@ -574,6 +582,7 @@ def test_pod_appliance_scale():
         casecomponent: Containers
         caseimportance: high
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     pass
 
@@ -593,6 +602,7 @@ def test_aws_smartstate_pod(temp_ssa_pod_appliance, ssa_vm, provider, aws_provid
           3. setup appliance to use that image for smartstate in aws
           4. add aws provider
           5. find 24/7 vm in aws and perform smartstate analysis
+        endsin: 5.10
     """
     appliance = temp_ssa_pod_appliance
 
@@ -634,6 +644,7 @@ def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_pro
         casecomponent: Containers
         caseimportance: high
         initialEstimate: 1h
+        endsin: 5.10
     """
     template_folder = template_folder
     appliance = temp_pod_appliance
@@ -718,6 +729,7 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
           4. deploy new httpd configmap configuration
           5. restart httpd pod
           6. to login to appliance using external credentials
+        endsin: 5.10
     """
     appliance = temp_pod_appliance
     auth_prov = ipa_auth_provider
