@@ -142,7 +142,13 @@ def test_delete_vm_from_collection(vm):
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1684681])
+@pytest.mark.meta(automates=[1684681])
+@pytest.mark.provider(
+    classes=[InfraProvider],
+    selector=ONE,
+    override=True,
+    required_fields=[["cap_and_util", "capandu_vm"]],
+)
 def test_filtering_vm_with_multiple_ips(appliance, provider):
     """
     Polarion:
