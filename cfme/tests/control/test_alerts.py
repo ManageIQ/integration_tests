@@ -194,6 +194,8 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     with update(alert):
         alert.active = True
         alert.emails = fauxfactory.gen_email()
+        if appliance.version >= "5.11.0.7":
+            alert.severity = "Error"
 
     setup_for_alerts(request, [alert], "VM Power On", vm.name, provider)
 
