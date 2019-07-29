@@ -138,7 +138,7 @@ def test_custom_button_display_service_vm(request, appliance, service_vm, button
 @test_requirements.customer_stories
 @pytest.mark.tier(1)
 # Dynamic dialog problem 1729594
-@pytest.mark.meta(automates=[1687061], blockers=[BZ(1729594), BZ(1729594)])
+@pytest.mark.meta(automates=[1687061], blockers=[BZ(1729594), BZ(1729046)])
 def test_custom_button_with_dynamic_dialog_vm(
     appliance, provider, request, service_vm, setup_dynamic_dialog
 ):
