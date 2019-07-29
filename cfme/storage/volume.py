@@ -142,7 +142,10 @@ class VolumeAddForm(View):
     volume_type = BootstrapSelect(name=VersionPicker({Version.lowest(): 'aws_volume_type',
                                                       '5.10': 'volume_type'}))
     volume_size = TextInput(name='size')
-    az = BootstrapSelect(name='aws_availability_zone_id')  # is for ec2 block storage only
+    # az is for ec2 block storage only
+    az = BootstrapSelect(
+        name=VersionPicker(
+            {Version.lowest(): 'aws_availability_zone_id', '5.11': 'availability_zone_id'}))
     iops = TextInput(name='aws_iops')  # is for ec2 block storage only
     encryption = BootstrapSwitch(name="aws_encryption")  # is for ec2 block storage only
     add = Button('Add')
