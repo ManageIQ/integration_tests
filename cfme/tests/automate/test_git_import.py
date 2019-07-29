@@ -4,7 +4,6 @@ from six.moves.urllib.parse import urlparse
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainDetailsView
-from cfme.automate.import_export import AutomateGitRepository
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -21,10 +20,8 @@ GIT_REPO_URL = "https://github.com/RedHatQE/ManageIQ-automate-git.git"
 
 @pytest.fixture
 def imported_domain(appliance):
-    repo = AutomateGitRepository(
-        url=GIT_REPO_URL,
-        verify_ssl=False,
-        appliance=appliance
+    repo = appliance.collections.automate_import_exports.instantiate(
+        import_type="git", url=GIT_REPO_URL, verify_ssl=False
     )
     domain = repo.import_domain_from(branch="origin/master")
     yield domain
@@ -124,7 +121,9 @@ def test_automate_git_import_multiple_domains(request, appliance):
             3. Import of multiple domains from a single git repo is not allowed
     """
     url = "https://github.com/ganeshhubale/ManageIQ-automate-git"
-    repo = AutomateGitRepository(url=url, verify_ssl=True, appliance=appliance)
+    repo = appliance.collections.automate_import_exports.instantiate(
+        import_type="git", url=url, verify_ssl=True
+    )
     with pytest.raises(ValueError):
         domain = repo.import_domain_from(branch="origin/master")
         request.addfinalizer(domain.delete_if_exists)
@@ -192,7 +191,9 @@ def test_domain_import_git(
     Bugzilla:
         1389823
     """
-    repo = AutomateGitRepository(url=url, verify_ssl=verify_ssl, appliance=appliance)
+    repo = appliance.collections.automate_import_exports.instantiate(
+        import_type="git", url=url, verify_ssl=verify_ssl
+    )
     domain = repo.import_domain_from(**{param_type: param_value})
     request.addfinalizer(domain.delete)
     assert domain.exists

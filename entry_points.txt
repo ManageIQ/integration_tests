@@ -18,6 +18,7 @@ ansible_tower_job_templates = cfme.ansible_tower.explorer:AnsibleTowerJobTemplat
 ansible_tower_jobs = cfme.ansible_tower.jobs:TowerJobsCollection
 ansible_tower_providers = cfme.ansible_tower.explorer:AnsibleTowerProvidersCollection
 ansible_tower_systems = cfme.ansible_tower.explorer:AnsibleTowerSystemsCollection
+automate_import_exports = cfme.automate.import_export:AutomateImportExportsCollection
 balancers = cfme.networks.balancer:BalancerCollection
 block_managers = cfme.storage.manager:BlockManagerCollection
 bottlenecks = cfme.optimize.bottlenecks:BottlenecksCollection
