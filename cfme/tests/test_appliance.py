@@ -373,6 +373,26 @@ def test_appliance_exec_scripts():
     pass
 
 
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1678130])
+def test_appliance_contains_ansible_modules(appliance):
+    """
+    check that there are ansible modules included in the appliance.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Appliance
+        caseimportance: high
+        initialEstimate: 1/6h
+        startsin: 5.9.2
+    Bugzilla:
+        1678130
+    """
+    assert appliance.ssh_client.run_command(
+        'stat /opt/rh/cfme-gemset/bundler/gems/cfme-conten*/content/ansible/roles'
+    ).success
+
+
 @pytest.mark.manual
 @pytest.mark.tier(1)
 def test_appliance_log_error():
