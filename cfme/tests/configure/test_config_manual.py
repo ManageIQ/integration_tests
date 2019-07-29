@@ -113,6 +113,21 @@ def test_replication_subscription_crud():
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
+        testSteps:
+            1. Set up two appliances where first appliance resides in global region (99) and
+            second one resides in remote region (10). Those should use the same security key
+            2. Add a provider to second appliance
+            3. Set replication subscription type to Remote in second appliance
+            4. Set replication subscription type to Global in first appliance
+            5. Try adding subscription to second appliance with wrong password in first appliance
+            6. Update not working subscription to use correct password
+            7. Delete subscription
+        expectedResults:
+            5. Subscription was added. User was prewarned that subscription wasn't established.
+               Provider didn't show up in global appliance.
+            6. Provider and its data showed up in global region appliance
+            7. Subscription was deleted. Provider and its data disappeared from global region
+            appliance.
     """
     pass
 
@@ -128,6 +143,16 @@ def test_add_duplicate_subscription():
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
+        testSteps:
+            1. Set up two appliances where first appliance resides in global region (99) and
+            second one resides in remote region (10). Those should use the same security key
+            2. Add a provider to second appliance
+            3. Set replication subscription type to Remote in second appliance
+            4. Set replication subscription type to Global in first appliance
+            5. Add subscription to second appliance in first appliance
+            6. Try adding second subscription to second appliance in first appliance
+        expectedResults:
+            6. Second subscription hasn't been added. Warning message has appeared
     """
     pass
 
