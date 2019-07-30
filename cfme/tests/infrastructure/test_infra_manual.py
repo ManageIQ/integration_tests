@@ -4,8 +4,8 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [pytest.mark.manual]
 
-@pytest.mark.manual
 @test_requirements.discovery
 @pytest.mark.tier(1)
 def test_infrastructure_providers_rhevm_edit_provider_no_default_port():
@@ -29,7 +29,6 @@ def test_infrastructure_providers_rhevm_edit_provider_no_default_port():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 @test_requirements.discovery
 def test_add_infra_provider_screen():
@@ -59,7 +58,6 @@ def test_add_infra_provider_screen():
 
 
 @test_requirements.general_ui
-@pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1532404])
 def test_provider_summary_topology():
@@ -84,9 +82,8 @@ def test_provider_summary_topology():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.infra_hosts
-def test_setting_default_filter():
+def test_host_setting_default_filter():
     """
     Verify the creation and proper functionality of default filters.
 
@@ -112,7 +109,6 @@ def test_setting_default_filter():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.infra_hosts
 def test_host_comparison_properties():
     """
@@ -125,7 +121,7 @@ def test_host_comparison_properties():
         initialEstimate: 1/4h
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
-            2. Select at least 2 hosts by checking the box in upper left of host icons.
+            2. Select at least 2 hosts by checking the box in upper left of quadicons.
             3. Click "Compare Selected Items" under the "Configuration" dropdown.
             4. Click on "Host Properties(X)" in the Compare Host view.
             5. Click on "Host Properties(X)" again, in the Compare Host view.
@@ -145,7 +141,7 @@ def test_host_comparison_properties():
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. The "Compare Host / Node" view should be displayed.
             - icons are displayed for all and only selected hosts with hostname displayed
-            - one of the host icons has the host denoted as "(base)" in the hostname
+            - one of the quadicons has the host denoted as "(base)" in the hostname
             - host properties row is displayed (default)
             - "% Matched" text or graphs are displayed
             - when 3 or more hosts are displayed, remove icons exist for all non-base hosts.
@@ -168,10 +164,9 @@ def test_host_comparison_properties():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.infra_hosts
 def test_host_comparison_security():
-    '''
+    """
     Verify host comparisons view functionality for security section.
     This is going to be a similar test as test_host_comparison_properties, but for the Security
     Section.
@@ -184,7 +179,7 @@ def test_host_comparison_security():
         initialEstimate: 1/4h
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
-            2. Select at least 2 hosts by checking the box in upper left of host icons.
+            2. Select at least 2 hosts by checking the box in upper left of quadicons.
             3. Click "Compare Selected Items" under the "Configuration" dropdown.
             4. Click to select/check the "Security" checkbox in "Comparison Sections".
             5. Click "Apply"
@@ -201,7 +196,7 @@ def test_host_comparison_security():
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. The "Compare Host / Node" view should be displayed.
             - icons are displayed for all and only selected hosts with hostname displayed
-            - one of the host icons has the host denoted as "(base)" in the hostname
+            - one of the quadicons has the host denoted as "(base)" in the hostname
             - host properties row is displayed (default)
             - "% Matched" text or graphs are displayed
             - when 3 or more hosts are displayed, remove icons exist for all non-base hosts.
@@ -218,14 +213,13 @@ def test_host_comparison_security():
             - Properties for non-base hosts should be in purple/dark blue.
             7. The section should collapse again to only display the parent row.
             8. Same expected results as for step 6 and 7.
-    '''
+    """
     pass
 
 
-@pytest.mark.manual
 @test_requirements.infra_hosts
 def test_host_comparison_configuration():
-    '''
+    """
     Verify host comparisons view functionality for configuration section.
     This is going to be similar as test_host_comparison_security, but for the Configuration
     Section.
@@ -238,7 +232,7 @@ def test_host_comparison_configuration():
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
             2. Select at least 2 hosts (three if possible) by checking the box in upper left of
-            host icons.
+            quadicons.
             3. Click "Compare Selected Items" under the "Configuration" dropdown.
             4. Click to select/check the "Configuration" checkbox in "Comparison Sections".
             5. Click "Apply"
@@ -255,7 +249,7 @@ def test_host_comparison_configuration():
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. The "Compare Host / Node" view should be displayed.
             - icons are displayed for all and only selected hosts with hostname displayed
-            - one of the host icons has the host denoted as "(base)" in the hostname
+            - one of the quadicons has the host denoted as "(base)" in the hostname
             - host properties row is displayed (default)
             - "% Matched" text or graphs are displayed
             - when 3 or more hosts are displayed, remove icons exist for all non-base hosts.
@@ -272,14 +266,13 @@ def test_host_comparison_configuration():
             - Properties for non-base hosts should be in purple/dark blue.
             7. The section should collapse again to only display the parent row.
             8. Same expected results as for step 6 and 7.
-    '''
+    """
     pass
 
 
-@pytest.mark.manual
 @test_requirements.infra_hosts
 def test_host_comparison_my_company_tags():
-    '''
+    """
     Verify host comparisons view functionality for 'My Company Tags' section.
     This is going to be the same test as test_host_comparison_properties, but for the "My Company
      Tags" section.
@@ -292,7 +285,7 @@ def test_host_comparison_my_company_tags():
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
             2. Select at least 2 hosts (three if possible) by checking the box in upper left of
-            host icons.
+            quadicons.
             3. Click "Compare Selected Items" under the "Configuration" dropdown.
             4. Click to select/check the "My Company Tags" checkbox in "Comparison Sections".
             5. Click "Apply"
@@ -304,12 +297,11 @@ def test_host_comparison_my_company_tags():
             8. Repeat steps 6 and 7 for all "My Company Tags" sub-items.
             *Steps 6 and 7 apply recursively to any sub items of parent sections that may exist.
         expectedResults:
-            1. Hosts view is displayed with hosts filtered via the Default filter (denoted by
-            "(Default)" next to the filter name in the dropdown).
+            1. Hosts view is displayed with hosts filtered.
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. The "Compare Host / Node" view should be displayed.
             - icons are displayed for all and only selected hosts with hostname displayed
-            - one of the host icons has the host denoted as "(base)" in the hostname
+            - one of the quadicons has the host denoted as "(base)" in the hostname
             - host properties row is displayed (default)
             - "% Matched" text or graphs are displayed
             - when 3 or more hosts are displayed, remove icons exist for all non-base hosts.
@@ -326,13 +318,13 @@ def test_host_comparison_my_company_tags():
             - Properties for non-base hosts should be in purple/dark blue.
             7. The section should collapse again to only display the parent row.
             8. Same expected results as for step 6 and 7.
-    '''
+    """
     pass
 
-@pytest.mark.manual
+
 @test_requirements.infra_hosts
 def test_host_comparison_remove_hosts():
-    '''
+    """
     Test removing hosts from the "Compare Host / Node" view.
 
     Polarion:
@@ -343,19 +335,18 @@ def test_host_comparison_remove_hosts():
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
             2. Select at least 3 hosts (more if possible) by checking the box in upper left of
-            host icons.
+            quadicons.
             3. Click "Compare Selected Items" under the "Configuration" dropdown.
             4. Click on the remove icon (trash can) on one of the hosts.
             5. If hosts still exist with the remove icon displayed, click on one.
             6. Repeat step 5 until only 2 hosts remain.
 
         expectedResults:
-            1. Hosts view is displayed with hosts filtered via the Default filter (denoted by
-            "(Default)" next to the filter name in the dropdown).
+            1. Hosts view is displayed.
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. The "Compare Host / Node" view should be displayed.
             - icons are displayed for all and only selected hosts with hostname displayed
-            - one of the host icons has the host denoted as "(base)" in the hostname
+            - one of the quadicons has the host denoted as "(base)" in the hostname
             - host properties row is displayed (default)
             - "% Matched" text or graphs are displayed
             - remove icons exist for all non-base hosts.
@@ -365,18 +356,16 @@ def test_host_comparison_remove_hosts():
             non-base hosts.
             5. The clicked host should be removed from display.
             - The same host is still denoted as the base host.
-            - - when, and only when, 3 or more hosts are displayed, remove icons exist for all
+            - when, and only when, 3 or more hosts are displayed, remove icons exist for all
             non-base hosts.
             6. Hosts should be displayed without the remove host icon.
-    '''
-
-
+    """
     pass
 
-@pytest.mark.manual
+
 @test_requirements.infra_hosts
 def test_host_comparison_exists_mode():
-    '''
+    """
     Polarion:
         assignee: prichard
         casecomponent: Infra
@@ -385,28 +374,32 @@ def test_host_comparison_exists_mode():
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
             2. Select at least 3 hosts (more if possible) by checking the box in upper left of
-            host icons.
+            quadicons.
             3. Click "Compare Selected Items" under the "Configuration" dropdown.
-            4. Click the "Exists Mode" icon (in row of buttons to top left).
-        expectedResults:icon
-            1. Hosts view is displayed with hosts filtered via the Default filter (denoted by
-            "(Default)" next to the filter name in the dropdown).
+            4. Select "Network Adapters" from the compare section accordion and click "Apply".
+            5. Click on the "Network Adapters" row, in the Compare Host/Node view, to expand it.
+            6. Click the "Exists Mode" icon (in row of buttons to top left).
+        expectedResults:
+            1. Hosts view is displayed.
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. The "Compare Host / Node" view should be displayed (in expanded view by default).
             - icons are displayed for all and only selected hosts with hostname displayed
-            - one of the host icons has the host denoted as "(base)" in the hostname
+            - one of the quadicons has the host denoted as "(base)" in the hostname
             - host properties row is displayed (default)
             - "% Matched" text or graphs are displayed
             - remove icons exist for all non-base hosts.
-            4. ????????
-    '''
-
+            4. Network Adapter row will be displayed in the Compare Host/Node panel.
+            5. Individual child rows will be displayed with "% Matched" in base host and graphs
+            displayed for the rest of the hosts.
+            6. The "% Matched" and graphs displayed on child rows will be replaced with "+" or
+                  "-" depending if the item exists in the non-base hosts.
+    """
     pass
 
-@pytest.mark.manual
+
 @test_requirements.infra_hosts
 def test_host_comparison_compressed_view():
-    '''
+    """
         Polarion:
             assignee: prichard
             casecomponent: Infra
@@ -415,17 +408,17 @@ def test_host_comparison_compressed_view():
             testSteps:
                 1. Navigate to the Compute > Infrastructure > Hosts view.
                 2. Select at least 3 hosts (more if possible) by checking the box in upper left of
-                host icons.
+                      quadicons.
                 3. Click "Compare Selected Items" under the "Configuration" dropdown.
                 4. Click the "Compressed View" icon (in row of buttons to top left).
-            expectedResults:icon
+            expectedResults:
                 1. Hosts view is displayed with hosts filtered via the Default filter (denoted by
-                "(Default)" next to the filter name in the dropdown).
+                      "(Default)" next to the filter name in the dropdown).
                 2. The selected hosts should be displayed with a blue border and checked checkbox.
                 3. The "Compare Host / Node" view should be displayed (in expanded view by
-                default).
+                      default).
                 - icons are displayed for all and only selected hosts with hostname displayed
-                - one of the host icons has the host denoted as "(base)" in the hostname
+                - one of the quadicons has the host denoted as "(base)" in the hostname
                 - host properties row is displayed (default)
                 - "% Matched" text or graphs are displayed
                 - remove icons exist for all non-base hosts.
@@ -434,14 +427,14 @@ def test_host_comparison_compressed_view():
                 - a smaller, simpler, icon is displayed (represents 3rd quadrant) for the hosts.
                 - on parent rows, "% Matched" is displayed as "%".
                 - on child(leaf) rows, color coded values are replaced with checkmarks for
-                matching, and x's for non-matching values
-        '''
+                     matching, and x's for non-matching values
+    """
     pass
 
-@pytest.mark.manual
+
 @test_requirements.infra_hosts
-def test_host_comparison_download():
-    '''
+def test_host_comparison_report():
+    """
         Polarion:
             assignee: prichard
             casecomponent: Infra
@@ -450,34 +443,75 @@ def test_host_comparison_download():
             testSteps:
                 1. Navigate to the Compute > Infrastructure > Hosts view.
                 2. Select at least 3 hosts (more if possible) by checking the box in upper left of
-                host icons.
+                      quadicons.
                 3. Click "Compare Selected Items" under the "Configuration" dropdown.
-                4. Click the "Exists Mode" icon (in row of buttons to top left).
-            expectedResults:icon
-                1. Hosts view is displayed with hosts filtered via the Default filter (denoted by
-                "(Default)" next to the filter name in the dropdown).
+                4. Click "Download as text" under the Downloads pulldown.
+                5. Click "Download as CSV" under the Downloads pulldown.
+                6. Click "Print or export as PDF".
+            expectedResults:
+                1. Hosts view is displayed.
                 2. The selected hosts should be displayed with a blue border and checked checkbox.
-                3. The "Compare Host / Node" view should be displayed (in expanded view by
-                default).
-                - icons are displayed for all and only selected hosts with hostname displayed
-                - one of the host icons has the host denoted as "(base)" in the hostname
-                - host properties row is displayed (default)
-                - "% Matched" text or graphs are displayed
-                - remove icons exist for all non-base hosts.
-                4. ????????
-
-                include txt, csv, pdf-export + print
-        '''
-
-
-
+                3. The "Compare Host / Node" view should be displayed.
+                4. A compare report should be downloaded (Chrome will show it in left bottom
+                      corner of window.
+                - report is in text format.
+                - report has date appended to name.
+                - data in the report matches the GUI.
+                5. A compare report should be downloaded (Chrome will show it in left bottom
+                      corner of window.
+                - report is in CSV format.
+                - report has date appended to name.
+                - data in the report matches the GUI.
+                6. A print page is displayed containing the compare report.
+    """
     pass
 
-@pytest.mark.manual
+
 @test_requirements.infra_hosts
 def test_host_comparison_multipleviews_interactions():
-    '''
-    Here i will test adding and removing rows and sections in permutations I did not cover explictily already.
-    Also cover the case where clicking on the parent section selects all of the child sections.
-    '''
+    """
+    Here i will test adding and removing rows and sections in permutations I did not cover
+    explictily already. Also cover the case where clicking on the parent section selects all of
+    the child sections.
+
+        Polarion:
+                assignee: prichard
+                casecomponent: Infra
+                caseimportance: low
+                initialEstimate: 1/4h
+                testSteps:
+                    1. Navigate to the Compute > Infrastructure > Hosts view.
+                    2. Select at least 3 hosts (more if possible) by checking the box in upper left
+                          of quadicons.
+                    3. Click "Compare Selected Items" under the "Configuration" dropdown.
+                    4. Click to select "My Company Tags" in the Comparison Sections dropdown,
+                          and click "Apply".
+                    5. Repeat step 4 for Configuration, Security, and Properties sections.
+                          Note: Properties will need to be clicked twice as it defaults to checked
+                          with only one section enbled.
+                    6. Click on "My Company Tags" in Comparison Sections dropdown.
+                    7. Click on a child item, to deselect, and click "Apply".
+                    8. Click on random child items within the section and click "Apply" until no
+                          child items remain selected.
+                    9. Click on random child items within the section and click "Apply" until all
+                          child items remain selected.
+                    10. Repeat steps 6 through 9 for Configuration, Security, and Properties
+                           sections.
+
+                expectedResults:icon
+                    1. Hosts view is displayed.
+                    2. The selected hosts should be displayed with a blue border and checked
+                          checkbox.
+                    3. The "Compare Host / Node" view should be displayed.
+                    4. All of the "My Company Togs" sections are displayed in Compare Host/Node
+                          panel.
+                    5. All of the sections for selected parent are displayed in Compare Host/Node
+                          panel.
+                    6. Expanded section will be displayed with all child items.
+                    7. Child item is removed from display in Compare Hosts/Node panel.
+                    8. Each child item is removed from display in Compare Hosts/Node panel.
+                    9. Each child item is added to display in Compare Hosts/Node panel.
+                    10. Same expected results as for steps 6 through 9.
+
+    """
     pass
