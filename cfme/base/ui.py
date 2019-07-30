@@ -47,9 +47,11 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Checkbox
+from widgetastic_manageiq import DiagnosticsTreeView
 from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import ServerTimelinesView
+from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import WaitTab
@@ -1199,6 +1201,13 @@ class RegionDiagnosticsView(ConfigurationView):
     @View.nested
     class rolesbyservers(WaitTab):  # noqa
         TAB_NAME = "Roles by Servers"
+        title = Text(
+            '//*[@id="zone_tree_div"]/'
+            'h3[contains(normalize-space(.), "Status of Regional Roles for Servers in Region")]'
+        )
+        tree = DiagnosticsTreeView("roles_by_server_treebox")
+        selected_item = SummaryForm("Selected Item")
+        configuration = Dropdown("Configuration")
 
     @View.nested
     class replication(WaitTab):  # noqa
@@ -1207,6 +1216,13 @@ class RegionDiagnosticsView(ConfigurationView):
     @View.nested
     class serversbyroles(WaitTab):  # noqa
         TAB_NAME = "Servers by Roles"
+        title = Text(
+            '//*[@id="zone_tree_div"]/'
+            'h3[contains(normalize-space(.), "Status of Regional Roles for Servers in Region")]'
+        )
+        tree = DiagnosticsTreeView("servers_by_role_treebox")
+        selected_item = SummaryForm("Selected Item")
+        configuration = Dropdown("Configuration")
 
     @View.nested
     class servers(WaitTab):  # noqa
