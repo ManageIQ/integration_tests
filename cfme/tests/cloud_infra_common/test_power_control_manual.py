@@ -400,3 +400,4 @@ def test_orphaned_instance_status():
     Bugzilla:
         1701188
     """
+    pass

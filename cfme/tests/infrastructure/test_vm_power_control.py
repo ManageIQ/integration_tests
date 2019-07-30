@@ -508,6 +508,7 @@ def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_r
 
 
 @pytest.mark.rhv3
+@pytest.mark.meta(automates=[BZ(1724062)])
 def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_stopped):
     """Tests vm power options from off
 
@@ -518,14 +519,19 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
         assignee: ghubale
         casecomponent: Infra
         initialEstimate: 1/4h
+
+    Bugzilla:
+        1724062
     """
+    # TODO(ghubale@redhat.com): Update this test case with power options(shutdown and restart guest)
+    #  for scvmm provider
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope='function')
-@pytest.mark.meta(automates=[1571830])
+@pytest.mark.meta(automates=[1571830, 1650506])
 def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
 
@@ -540,7 +546,9 @@ def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running
 
     Bugzilla:
         1571830
+        1650506
     """
+    # TODO(ghubale@redhat.com): Update this test case for power operation(restart guest) for scvmm
     wait_for_vm_tools(testing_vm_tools)
     view = navigate_to(testing_vm_tools, "Details")
     last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
@@ -560,7 +568,7 @@ def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running
     soft_assert(testing_vm_tools.mgmt.is_running, "vm not running")
 
 
-@pytest.mark.meta(automates=[1723485, 1571895])
+@pytest.mark.meta(automates=[1723485, 1571895, 1650506])
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
 @pytest.mark.meta(blockers=[BZ(1723485, forced_streams=["5.11"],
                                unblock=lambda provider: not (provider.one_of(RHEVMProvider)
@@ -578,7 +586,9 @@ def test_guest_os_shutdown(appliance, provider, testing_vm_tools, ensure_vm_runn
     Bugzilla:
         1723485
         1571895
+        1650506
     """
+    # TODO(ghubale@redhat.com): Update this test case for power operation(shutdown guest) for scvmm
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
     wait_for_vm_tools(testing_vm_tools)

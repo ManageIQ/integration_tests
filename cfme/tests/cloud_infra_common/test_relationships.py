@@ -33,6 +33,7 @@ from cfme.networks.views import NetworkProviderDetailsView
 from cfme.networks.views import ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -332,8 +333,9 @@ def test_host_refresh_relationships(provider, setup_provider):
 
 @pytest.mark.rhv3
 @pytest.mark.provider([InfraProvider])
+@pytest.mark.meta(automates=[BZ(1732349)])
 def test_template_refresh_relationships(appliance, provider, setup_provider):
-    """ Test that host refresh doesn't fail
+    """ Test that template refresh doesn't fail
 
     Polarion:
         assignee: ghubale
@@ -341,7 +343,11 @@ def test_template_refresh_relationships(appliance, provider, setup_provider):
         caseimportance: high
         initialEstimate: 1/8h
         tags: relationship
+
+    Bugzilla:
+        1732349
     """
+    # TODO(ghubale@redhat.com): Update this test case with navigation to details page of template
     templates_view = navigate_to(provider, 'ProviderTemplates')
     template_names = templates_view.entities.entity_names
     template_collection = appliance.provider_based_collection(provider=provider,
@@ -388,5 +394,74 @@ def test_change_network_security_groups_per_page_items():
 
     Bugzilla:
         1524443
+    """
+    pass
+
+
+@test_requirements.relationships
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1729953])
+def test_datastore_relationships():
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/12h
+        tags: relationship
+        setup:
+            1. Add infrastructure provider(e.g: vsphere65)
+            2. Provision VM
+            3. Setup SSA
+        testSteps:
+            1. Navigate to VM's details page and click on 'Datastores' from 'Relationships' table
+            2. Click on 'Managed VMs' from 'Relationships' table
+            3. Select VM(Vm should be in 'on' state) and perform operations(Refresh Relationships
+               and Power States, Perform Smartstate Analysis, Extract Running Processes) by
+               selecting from 'configuration' dropdown
+        expectedResults:
+            1.
+            2.
+            3. Operations should be performed successfully. It should not give unexpected error.
+
+    Bugzilla:
+        1729953
+    """
+    pass
+
+
+@test_requirements.relationships
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1732370])
+def test_cluster_relationships():
+    """
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/12h
+        tags: relationship
+        setup:
+            1. Setup SSA
+        testSteps:
+            1. Add infra provider(e.g. vsphere65, scvmm etc)
+            2. Go to provider details page
+            3. Click on 'Cluster' from 'Relationships' table
+            4. Click on cluster available and go to it's details page
+            5. Click on 'All VMs' from 'Relationships' table
+            6. Select any vm and click on options like 'Refresh Relationships and Power states' or
+              'perform smartstate analysis' and 'Extract running processes' from 'configuration'
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Operations should be performed successfully. It should not give unexpected error.
+
+    Bugzilla:
+        1732370
     """
     pass
