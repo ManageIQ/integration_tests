@@ -4,10 +4,7 @@ from cfme import test_requirements
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
-pytestmark = [
-    pytest.mark.ignore_stream("upstream"),
-    test_requirements.ansible
-]
+pytestmark = [pytest.mark.ignore_stream("upstream"), test_requirements.ansible]
 
 
 @pytest.fixture(scope="function")
@@ -30,15 +27,16 @@ def test_embedded_ansible_enable(embedded_appliance):
         tags: ansible_embed
     """
     assert wait_for(lambda: embedded_appliance.is_embedded_ansible_running, num_sec=30)
-    assert wait_for(lambda: embedded_appliance.supervisord.is_active, num_sec=30)
-    assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
-    assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
-    endpoint = "api" if embedded_appliance.is_pod else "ansibleapi"
+    if embedded_appliance.version < "5.11":
+        assert wait_for(lambda: embedded_appliance.supervisord.is_active, num_sec=30)
+        assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
+        assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
+        endpoint = "api" if embedded_appliance.is_pod else "ansibleapi"
 
-    assert embedded_appliance.ssh_client.run_command(
-        'curl -kL https://localhost/{endp} | grep "AWX REST API"'.format(endp=endpoint),
-        container=embedded_appliance.ansible_pod_name,
-    )
+        assert embedded_appliance.ssh_client.run_command(
+            'curl -kL https://localhost/{endp} | grep "AWX REST API"'.format(endp=endpoint),
+            container=embedded_appliance.ansible_pod_name,
+        )
 
 
 @pytest.mark.tier(3)
@@ -52,11 +50,12 @@ def test_embedded_ansible_disable(embedded_appliance):
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
-    assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
-    embedded_appliance.disable_embedded_ansible_role()
+    if embedded_appliance.version < "5.11":
+        assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
+        assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
+    assert embedded_appliance.disable_embedded_ansible_role()
 
-    if not embedded_appliance.is_pod:
+    if not embedded_appliance.is_pod and embedded_appliance.version < "5.11":
         assert wait_for(
             lambda: not embedded_appliance.supervisord.is_active, num_sec=180
         )
@@ -81,16 +80,26 @@ def test_embedded_ansible_event_catcher_process(embedded_appliance):
         initialEstimate: 1/4h
         tags: ansible_embed
     """
-    result = embedded_appliance.ssh_client.run_rake_command(
-        "evm:status | grep 'EmbeddedAnsible'"
-    ).output
+    if embedded_appliance.version < "5.11":
+        result = embedded_appliance.ssh_client.run_rake_command(
+            "evm:status | grep 'EmbeddedAnsible'"
+        ).output
 
-    for data in result.splitlines():
-        logger.info("Checking service/process %s started or not", data)
-        assert "started" in data
+        for data in result.splitlines():
+            logger.info("Checking service/process %s started or not", data)
+            assert "started" in data
+    else:
+        rpm_check = embedded_appliance.ssh_client.run_command(
+            "rpm -qa | grep 'ansible-runner'"
+        ).output
+
+        for data in rpm_check.splitlines():
+            logger.info("Checking %s is present or not", data)
+            assert "ansible-runner" in data
 
 
 @pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.11")
 def test_embedded_ansible_logs(embedded_appliance):
     """
     Separate log files should be generated for Ansible to aid debugging.

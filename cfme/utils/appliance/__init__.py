@@ -1832,7 +1832,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @property
     def is_embedded_ansible_running(self):
-        return self.is_embedded_ansible_role_enabled and self.supervisord.running
+        supervisord = self.supervisord.running if self.version < '5.11' else True
+        return self.is_embedded_ansible_role_enabled and supervisord
 
     def wait_for_embedded_ansible(self, timeout=1200):
         """Waits for embedded ansible to be ready
@@ -2053,7 +2054,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.update_advanced_settings({'server': server_data})
         timeout = 600 if enabling_ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)
-        if enabling_ansible:
+        if enabling_ansible and self.version < '5.11':
             self.wait_for_embedded_ansible()
 
     def enable_embedded_ansible_role(self):
@@ -2067,7 +2068,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.server_roles = roles
         except TimedOutError:
             wait_for(lambda: self.server_roles == roles, num_sec=600, delay=15)
-        self.wait_for_embedded_ansible()
+        if self.version < '5.11':
+            self.wait_for_embedded_ansible()
 
     def disable_embedded_ansible_role(self):
         """disables embbeded ansible role"""
