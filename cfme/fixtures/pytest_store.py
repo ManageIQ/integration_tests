@@ -133,13 +133,20 @@ class Store(object):
 
     @cached_property
     def my_ip_address(self):
+        """Make a few guesses at what the pytest host's address is
+        Last guess defaulting to localhost
+        """
         try:
             # Check the environment first
-            return os.environ['CFME_MY_IP_ADDRESS']
+            env_or_ssh = os.environ.get(
+                'CFME_MY_IP_ADDRESS',
+                self.current_appliance.ssh_client.client_address
+            )
+            return env_or_ssh or '127.0.0.1'
         except KeyError:
             # Fall back to having an appliance tell us what it thinks our IP
             # address is
-            return self.current_appliance.ssh_client.client_address()
+            return
 
     def write_line(self, line, **kwargs):
         return write_line(line, **kwargs)

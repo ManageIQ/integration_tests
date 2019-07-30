@@ -95,6 +95,12 @@ class SSHResult(object):
         return self.rc != 0
 
 
+class SSHResultDummy(SSHResult):
+    """ Dummy result class to handle partial calls with extra kwargs for SSHClient methods"""
+    def __init__(self, command, rc, output, *args, **kwargs):
+        SSHResult.__init__(self, command, rc, output)
+
+
 _ssh_key_file = project_path.join('.generated_ssh_key')
 _ssh_pubkey_file = project_path.join('.generated_ssh_key.pub')
 
@@ -168,6 +174,18 @@ class SSHClient(paramiko.SSHClient):
     def username(self):
         return self._connect_kwargs.get('username')
 
+    @property
+    def connected(self):
+        return self._transport and self._transport.active
+
+    @property
+    def client_address(self):
+        res = self.run_command('echo $SSH_CLIENT', ensure_host=True, ensure_user=True)
+        # SSH_CLIENT format is 'clientip clientport serverport', we want clientip
+        if not res.output:
+            raise Exception('unable to get client address via SSH')
+        return res.output.split()[0]
+
     def __repr__(self):
         return "<SSHClient hostname={} port={}>".format(
             repr(self._connect_kwargs.get("hostname")),
@@ -211,10 +229,6 @@ class SSHClient(paramiko.SSHClient):
             _client_session.remove(self)
         except (AttributeError, ValueError):
             pass
-
-    @property
-    def connected(self):
-        return self._transport and self._transport.active
 
     def connect(self, hostname=None, **kwargs):
         if self.is_dev:
@@ -649,13 +663,6 @@ class SSHClient(paramiko.SSHClient):
 
         return 0
 
-    def client_address(self):
-        res = self.run_command('echo $SSH_CLIENT', ensure_host=True, ensure_user=True)
-        # SSH_CLIENT format is 'clientip clientport serverport', we want clientip
-        if not res.output:
-            raise Exception('unable to get client address via SSH')
-        return res.output.split()[0]
-
     def appliance_has_netapp(self):
         return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").success
 
@@ -780,6 +787,36 @@ class SSHTail(SSHClient):
     def lines_as_list(self):
         """Return lines as list"""
         return list(self)
+
+
+class SSHDummy(object):
+    """Dummy object that support contextmanager and just returns a logger.info bound method
+    This is for dev appliances that don't support ssh
+    Framework/tests that use appliance.ssh_client will end up just logging what they would have run
+    """
+    def __repr__(self):
+        return "<SSHDummy for dev appliance>"
+
+    def __enter__(self, *args, **kwargs):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        pass
+
+    @staticmethod
+    def is_appliance_downstream(self):
+        return False
+
+    def __getattr__(self, item):
+        run_warn = 'Cannot run ssh against a dev appliance'
+        if item in ['run_command', 'run_rails_command', 'run_rails_console', 'run_rake_command']:
+            logger.warning('%s, SSH function call skipped: %s', run_warn, item)
+            from functools import partial
+            return partial(SSHResultDummy, rc=1, output=None)
+
+        if item in [name for name, p in SSHClient.__dict__.items() if isinstance(p, property)]:
+            logger.warning('%s, SSH property call skipped: %s', run_warn, item)
+            return None
 
 
 def keygen():

@@ -1,0 +1,14 @@
+#!/bin/bash
+nginx &
+HOME=/home/selenium vncserver :99 -fg -Log *:stderr:100 &
+
+# Add host.docker.internal if it does not already exist
+ping -c 1 host.docker.internal > /dev/null
+[[ $? -ne 0 ]] && ip -4 route list match 0/0 |awk '{print $3 " host.docker.internal"}' >> /etc/hosts
+
+cd /integration_tests
+git init
+
+source /cfme_venv/bin/activate
+pip install -e .
+miq-runtest $@

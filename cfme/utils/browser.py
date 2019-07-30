@@ -146,6 +146,7 @@ class BrowserFactory(object):
 
     def processed_browser_args(self):
         self._add_missing_options()
+        log.info('BROWSER KWARGS: {}'.format(self.browser_kwargs))
         return self.browser_kwargs
 
     def create(self, url_key):
@@ -258,7 +259,7 @@ class BrowserManager(object):
                 if browser_conf[
                         'webdriver_options'][
                             'desired_capabilities']['browserName'].lower() == 'chrome':
-                    browser_kwargs['desired_capabilities']['chromeOptions'] = {}
+                    browser_kwargs['desired_capabilities']['chromeOptions'] = {'w3c': False}
                     browser_kwargs[
                         'desired_capabilities']['chromeOptions']['args'] = ['--no-sandbox',
                                                                             '--start-maximized',

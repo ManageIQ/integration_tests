@@ -54,6 +54,7 @@ from cfme.utils.path import conf_path
 from cfme.utils.path import data_path
 from cfme.utils.path import patches_path
 from cfme.utils.path import scripts_path
+from cfme.utils.ssh import SSHDummy
 from cfme.utils.ssh import SSHTail
 from cfme.utils.version import get_stream
 from cfme.utils.version import Version
@@ -337,6 +338,7 @@ class IPAppliance(object):
         'ssh_port': 'ssh_port',
         'project': 'project',
         'version': 'version',
+        'root_dir': 'root_dir',  # manageIQ source dir for dev appliance
     }
     CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
@@ -374,7 +376,7 @@ class IPAppliance(object):
     def __init__(
             self, hostname, ui_protocol='https', ui_port=None, browser_steal=False, project=None,
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None,
-            is_dev=False, version=None,
+            is_dev=False, version=None, root_dir=None,
     ):
         if not isinstance(hostname, six.string_types):
             raise TypeError('Appliance\'s hostname must be a string!')
@@ -1018,6 +1020,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             The credentials default to those found under ``ssh`` key in ``credentials.yaml``.
 
         """
+        if self.is_dev:
+            logger.warning('Using a Dummy SSH object for dev appliance')
+            return SSHDummy()
         logger.debug('Waiting for SSH to %s to become connective.',
                      self.hostname)
         self.wait_for_ssh()
@@ -1793,6 +1798,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         Args:
             timeout: Number of seconds to wait until timeout (default ``600``)
         """
+        if self.is_dev:
+            return
         wait_for(func=lambda: self.is_ssh_running,
                  message='appliance.is_ssh_running',
                  delay=5,
@@ -1863,6 +1870,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @property
     def is_ssh_running(self):
+        if self.is_dev:
+            return True  # shortcut without blocking logic
         if self.openshift_creds and 'hostname' in self.openshift_creds:
             hostname = self.openshift_creds['hostname']
         else:
@@ -1888,18 +1897,23 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             True if appliance is idling for longer or equal to idle_time seconds.
             False if appliance is not idling for longer or equal to idle_time seconds.
         """
+        # TODO Handle is_dev
         idle_time = 3600
-        ssh_output = self.ssh_client.run_command('if [ $((`date "+%s"` - `date -d "$(egrep -v '
+        ssh_output = self.ssh_client.run_command(
+            'if [ $((`date "+%s"` - `date -d "$(egrep -v '
             r'"(Processing by Api::ApiController\#index as JSON|Started GET "/api" for '
-            '127.0.0.1|Completed 200 OK in)" /var/www/miq/vmdb/log/production.log | tail -1 |cut '
-            '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];'
+            '127.0.0.1|Completed 200 OK in)" {} | tail -1 |cut '
+            r'-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];'
             'then echo "False";'
             'else echo "True";'
-            'fi;'.format(idle_time))
+            'fi;'.format('/var/www/miq/vmdb/log/production.log', idle_time)
+        )
         return True if 'True' in ssh_output else False
 
     @cached_property
     def build_datetime(self):
+        if self.is_dev:
+            return datetime.now()
         build_datetime_string = self.build.split('_', 1)[0]
         return datetime.strptime(build_datetime_string, '%Y%m%d%H%M%S')
 

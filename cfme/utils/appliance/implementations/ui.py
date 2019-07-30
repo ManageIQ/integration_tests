@@ -345,11 +345,17 @@ class CFMENavigateStep(NavigateStep):
             if "jQuery" not in str(e):
                 logger.error("Checked for jQuery but got something different.")
                 logger.exception(e)
-            # Restart some workers
-            logger.warning("Restarting UI and VimBroker workers!")
-            with self.appliance.ssh_client as ssh:
-                # Blow off the Vim brokers and UI workers
-                ssh.run_rails_command("\"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill\"")
+            # Restart some workers if not on dev appliance
+            if not self.appliance.is_dev:
+                with self.appliance.ssh_client as ssh:
+                    # Blow off the Vim brokers and UI workers
+                    logger.warning("Restarting UI and VimBroker workers!")
+                    ssh.run_rails_command(
+                        '"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill"'
+                    )
+            else:
+                logger.warning("Skipping worker restart on dev appliance")
+
             logger.info("Waiting for web UI to come back alive.")
             sleep(10)   # Give it some rest
             self.appliance.wait_for_web_ui()
@@ -364,13 +370,14 @@ class CFMENavigateStep(NavigateStep):
         if rails_e is not None:
             logger.warning("Page was blocked by rails error, renavigating.")
             logger.error(rails_e)
-            # RHEL7 top does not know -M and -a
-            logger.debug('Top CPU consumers:')
-            logger.debug(store.current_appliance.ssh_client.run_command(
-                'top -c -b -n1 | head -30').output)
-            logger.debug('Top Memory consumers:')
-            logger.debug(store.current_appliance.ssh_client.run_command(
-                'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
+            if not self.appliance.is_dev:
+                # RHEL7 top does not know -M and -a
+                logger.debug('Top CPU consumers:')
+                logger.debug(store.current_appliance.ssh_client.run_command(
+                    'top -c -b -n1 | head -30').output)
+                logger.debug('Top Memory consumers:')
+                logger.debug(store.current_appliance.ssh_client.run_command(
+                    'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
             logger.debug('Managed known Providers:')
             logger.debug(
                 '%r', [prov.key for prov in store.current_appliance.managed_known_providers])
