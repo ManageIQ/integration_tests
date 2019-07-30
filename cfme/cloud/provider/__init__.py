@@ -31,6 +31,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import ItemsToolBarViewSelector
 
@@ -71,9 +73,12 @@ class CloudProviderImagesView(BaseLoggedInPage):
     """
     @property
     def is_displayed(self):
+        location = VersionPicker({Version.lowest(): 'Cloud Providers',
+                                  '5.11': self.context['object'].name}).pick()
         return (
-            self.breadcrumb.locations[0] == 'Cloud Providers' and
-            self.entities.title.text == '{} (All Images)'.format(self.context['object'].name))
+            self.breadcrumb.locations[-2] == location
+            and self.entities.title.text == self.breadcrumb.active_location
+        )
 
     breadcrumb = BreadCrumb()
     toolbar = View.nested(CloudProviderImagesToolbar)
