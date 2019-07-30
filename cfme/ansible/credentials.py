@@ -87,74 +87,115 @@ class CredentialFormView(CredentialsBaseView):
     @credential_form.register("Machine")
     class CredentialFormMachineView(View):
         username = Input(locator='.//input[@title="Username for this credential"]')
-        password = Input(locator='.//input[@title="Password for this credential"][2]')
+        password = Input(
+            locator='.//input[@title="Password for this credential" and "not @disabled"]'
+        )
         private_key = TextInput(
-            locator='.//textarea[@title="RSA or DSA private key to be used instead of password"][2]'
+            locator='.//textarea[@title="RSA or DSA private key to be used instead of password"'
+            'and "not @disabled"]'
         )
         private_key_phrase = Input(
-            locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"][2]')
+            locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"'
+            'and "not @disabled"]'
+        )
         privilage_escalation = BootstrapSelect("{{name}}")
         privilage_escalation_username = Input(
-            locator='.//input[@title="Privilege escalation username"]')
+            locator='.//input[@title="Privilege escalation username"]'
+        )
         privilage_escalation_password = Input(
-            locator='.//input[@title="Password for privilege escalation method"][2]')
+            locator='.//input[@title="Password for privilege escalation method"'
+            'and "not @disabled"]'
+        )
 
     @credential_form.register("Scm")
     class CredentialFormScmView(View):
         username = Input(locator='.//input[@title="Username for this credential"]')
-        password = Input(locator='.//input[@title="Password for this credential"][2]')
+        password = Input(
+            locator='.//input[@title="Password for this credential" and "not @disabled"]'
+        )
         private_key = TextInput(
-            locator='.//textarea[@title="RSA or DSA private key to be used instead of password"][2]'
+            locator='.//textarea[@title="RSA or DSA private key to be used instead of password"'
+            'and "not @disabled"]'
         )
         private_key_phrase = Input(
-            locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"][2]')
+            locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"'
+            'and "not @disabled"]'
+        )
 
     @credential_form.register("Vault")
     class CredentialFormVaultView(View):
-        vault_password = Input(locator='.//input[@title="Vault password"][2]')
+        vault_password = Input(
+            locator='.//input[@title="Vault password" and "not @disabled"]'
+        )
 
     @credential_form.register("Amazon")
     class CredentialFormAmazonView(View):
-        access_key = Input(locator='.//input[@title="AWS Access Key for this credential"]')
-        secret_key = Input(locator='.//input[@title="AWS Secret Key for this credential"][2]')
+        access_key = Input(
+            locator='.//input[@title="AWS Access Key for this credential"]'
+        )
+        secret_key = Input(
+            locator='.//input[@title="AWS Secret Key for this credential" and "not @disabled"]'
+        )
         sts_token = Input(
-            locator='.//input[@title="Security Token Service(STS) Token for this credential"][2]')
+            locator='.//input[@title="Security Token Service(STS) Token for this credential"'
+            'and "not @disabled"]'
+        )
 
     @credential_form.register("VMware")
     class CredentialFormVMwareView(View):
         username = Input(locator='.//input[@title="Username for this credential"]')
-        password = Input(locator='.//input[@title="Password for this credential"][2]')
+        password = Input(
+            locator='.//input[@title="Password for this credential" and "not @disabled"]'
+        )
         vcenter_host = Input(
-            locator='.//input[@title="The hostname or IP address of the vCenter Host"]')
+            locator='.//input[@title="The hostname or IP address of the vCenter Host"]'
+        )
 
     @credential_form.register("OpenStack")
     class CredentialFormOpenStackView(View):
-        username = Input(locator='.//input[@title="The username to use to connect to OpenStack"]')
-        password = Input(locator='.//input[@title="The password or API'
-                                 ' key to use to connect to OpenStack"][2]')
+        username = Input(
+            locator='.//input[@title="The username to use to connect to OpenStack"]'
+        )
+        password = Input(
+            locator='.//input[@title="The password or API'
+            ' key to use to connect to OpenStack" and "not @disabled"]'
+        )
         authentication_url = Input(
             locator='.//input[@title="The host to authenticate with. '
-            'For example, https://openstack.business.com/v2.0"]')
-        project = Input(locator='.//input[@title="This is the tenant name. This value '
-            'is usually the same as the username"]')
-        domain = Input(locator='.//input[@title="OpenStack domains define administrative '
-            'boundaries. It is only needed for Keystone v3 authentication URLs"]')
+            'For example, https://openstack.business.com/v2.0"]'
+        )
+        project = Input(
+            locator='.//input[@title="This is the tenant name. This value '
+            'is usually the same as the username"]'
+        )
+        domain = Input(
+            locator='.//input[@title="OpenStack domains define administrative '
+            'boundaries. It is only needed for Keystone v3 authentication URLs"]'
+        )
 
     @credential_form.register("Red Hat Virtualization")
     class CredentialFormRHVView(View):
         username = Input(locator='.//input[@title="Username for this credential"]')
-        password = Input(locator='.//input[@title="Password for this credential"][2]')
+        password = Input(
+            locator='.//input[@title="Password for this credential" and "not @disabled"]'
+        )
         host = Input(locator='.//input[@title="The host to authenticate with"]')
 
     @credential_form.register("Google Compute Engine")
     class CredentialFormGCEView(View):
-        service_account = Input(locator='.//input[@title="The email address assigned to '
-            'the Google Compute Engine service account"]')
-        priv_key = TextInput(locator='.//textarea[@title="Contents of the PEM file associated with '
-            'the service account email"]')
-        project = Input(locator='.//input[@title="The GCE assigned identification. It is '
-            'constructed as two words followed by a three digit number, such as: '
-            'squeamish-ossifrage-123"]')
+        service_account = Input(
+            locator='.//input[@title="The email address assigned to '
+            'the Google Compute Engine service account"]'
+        )
+        priv_key = TextInput(
+            locator='.//textarea[@title="Contents of the PEM file associated with '
+            'the service account email"]'
+        )
+        project = Input(
+            locator='.//input[@title="The GCE assigned identification. It is '
+            "constructed as two words followed by a three digit number, such as: "
+            'squeamish-ossifrage-123"]'
+        )
 
     @credential_form.register("Azure")
     class CredentialFormAzureView(View):
@@ -190,10 +231,12 @@ class CredentialFormView(CredentialsBaseView):
             locator='.//input[@title="Password used by the authorize mechanism"]'
         )
         ssh_key = TextInput(
-            locator='.//textarea[@title="RSA or DSA private key to be used instead of password"][2]'
+            locator='.//textarea[@title="RSA or DSA private key to be used instead of password"'
+            'and "not @disabled"]'
         )
         private_key_phrase = Input(
-            locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"][2]'
+            locator='.//input[@title="Passphrase to unlock SSH private key if encrypted"'
+            'and "not @disabled"]'
         )
 
     cancel_button = Button("Cancel")
