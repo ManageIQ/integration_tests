@@ -1,5 +1,3 @@
-import os
-
 import fauxfactory
 import pytest
 
@@ -20,11 +18,10 @@ pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 def get_report(appliance, request):
     def _report(file_name, menu_name):
         collection = appliance.collections.reports
-        file_name = "{}.yaml".format(file_name)
 
         # download the report from server
         fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
-        file_path = fs.download(file_name, os.path.join("/tmp", file_name))
+        file_path = fs.download(file_name)
 
         # import the report
         collection.import_report(file_path)
@@ -204,7 +201,7 @@ def test_report_edit_secondary_display_filter(
     Bugzilla:
         1565171
     """
-    report = get_report("filter_report", "test_filter_report")
+    report = get_report("filter_report.yaml", "test_filter_report")
     report.update(
         {
             "filter": {
@@ -250,7 +247,7 @@ def test_report_edit_secondary_display_filter(
 @pytest.mark.meta(server_roles="+notifier", automates=[1677839])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 def test_send_text_custom_report_with_long_condition(
-    appliance, setup_provider, smtp_test, soft_assert, request, get_report
+    appliance, setup_provider, smtp_test, request, get_report
 ):
     """
     Polarion:
@@ -270,7 +267,7 @@ def test_send_text_custom_report_with_long_condition(
     Bugzilla:
         1677839
     """
-    report = get_report("long_condition_report", "test_long_condition_report")
+    report = get_report("long_condition_report.yaml", "test_long_condition_report")
     data = {
         "timer": {"hour": "12", "minute": "10"},
         "email": {"to_emails": "test@example.com"},
@@ -292,4 +289,4 @@ def test_send_text_custom_report_with_long_condition(
         == 1
     )
     # assert that the pattern was not found in the logs
-    soft_assert(log.validate(), "Found error message in the logs.")
+    assert log.validate(), "Found error message in the logs."
