@@ -8,7 +8,7 @@ import pika
 import requests
 from slumber.exceptions import HttpClientError
 
-from . import dockerbot
+from cfme.utils.dockerbot import dockerbot
 from cfme.utils.appliance import Appliance
 from cfme.utils.conf import docker as docker_conf
 from cfme.utils.log import setup_logger
