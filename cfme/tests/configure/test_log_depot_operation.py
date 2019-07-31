@@ -143,8 +143,8 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
         zip_files = ftp.filesystem.search(re.compile(
             r"^.*{}{}[.]zip$".format(server_string, date_group)), directories=False)
         assert zip_files, "No logs found!"
-        # Collection of Models and Dialogs introduced in 5.10
-        if not BZ(1656318, forced_streams=["5.10"]).blocks:
+        # Collection of Models and Dialogs introduced in 5.10 but it work only in 5.11 (BZ 1656318)
+        if appliance.version >= "5.11" and not BZ(1706989).blocks:
             models_files = ftp.filesystem.search(re.compile(
                 r"^Models_.*{}[.]zip$".format(server_string)), directories=False
             )
@@ -210,6 +210,7 @@ def service_request(appliance, ansible_catalog_item):
 @pytest.mark.uncollectif(lambda appliance, log_depot:
                          not appliance.is_downstream and log_depot.protocol == 'dropbox',
                          reason='Dropbox test only for downstream version of product')
+@pytest.mark.meta(automates=[1656318, 1706989])
 def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
@@ -242,7 +243,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
     # Check it on FTP
     if log_depot.protocol != 'dropbox':
         check_ftp(appliance=appliance, ftp=log_depot.ftp, server_name=appliance.server.name,
-                  server_zone_id=appliance.server.zone.id, check_ansible_logs=True)
+                  server_zone_id=appliance.server.sid, check_ansible_logs=True)
     elif appliance.is_downstream:  # check for logs on dropbox, not applicable for upstream
         try:
             username = conf.credentials['rh_dropbox']['username']

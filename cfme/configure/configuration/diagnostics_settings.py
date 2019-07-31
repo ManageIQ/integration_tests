@@ -310,7 +310,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         else:
             message = "MiqServer {} [{}]".format(
                 self.appliance.server.name,
-                self.appliance.server.zone.id
+                self.appliance.server.sid
             )
         view.flash.assert_message(
             "Log collection for {} {} has been initiated".format(
