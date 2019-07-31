@@ -68,10 +68,11 @@ def custom_instance(request_cls):
     return method
 
 
+@pytest.fixture()
 def import_datastore(appliance, request):
     """This fixture will help to import datastore file"""
 
-    def domain(file_name, domain_from, domain_into=None):
+    def domain(file_name, from_domain, to_domain=None):
         # Download datastore file from FTP server
         fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
         file_path = fs.download(file_name)
@@ -80,7 +81,7 @@ def import_datastore(appliance, request):
         datastore = appliance.collections.automate_import_exports.instantiate(
             import_type="file", file_path=file_path
         )
-        request.addfinalizer(datastore.delete_if_exists)
-        return datastore.import_domain_from(domain_from, domain_into=None)
+        domain = datastore.import_domain_from(from_domain, to_domain)
+        request.addfinalizer(domain.delete_if_exists)
+        return domain
     return domain
-
