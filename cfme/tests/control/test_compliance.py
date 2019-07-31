@@ -105,6 +105,9 @@ def test_check_package_presence(request, appliance, compliance_vm, analysis_prof
     Metadata:
         test_flag: provision, policy
 
+    Bugzilla:
+        1730805
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -142,6 +145,9 @@ def test_check_files(request, appliance, compliance_vm, analysis_profile):
 
     Metadata:
         test_flag: provision, policy
+
+    Bugzilla:
+        1730805
 
     Polarion:
         assignee: jdupuy

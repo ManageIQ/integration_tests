@@ -374,6 +374,7 @@ def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smt
 
     Bugzilla:
         1396544
+        1730805
 
     Metadata:
         test_flag: alerts, provision
