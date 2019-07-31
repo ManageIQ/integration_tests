@@ -4,13 +4,14 @@ import logging
 import traceback
 from datetime import datetime
 
+import fauxfactory
 import pika
 import requests
 from slumber.exceptions import HttpClientError
 
-from . import dockerbot
 from cfme.utils.appliance import Appliance
 from cfme.utils.conf import docker as docker_conf
+from cfme.utils.dockerbot import dockerbot
 from cfme.utils.log import setup_logger
 from cfme.utils.trackerbot import api
 
@@ -111,11 +112,7 @@ def create_run(db_pr, pr):
         stream = group['name']
         logger.info('  Adding task stream {}...'.format(stream))
         task_data = dict(output="",
-            tid="pr{pr}-r{runs}-{stream}-ts{time:%Y-%m-%d-%H:%M:%S}".format(
-                pr=db_pr['number'],
-                runs=len(db_pr.get('runs', [])),
-                stream=stream,
-                time=datetime.now()),
+            tid=fauxfactory.gen_alphanumeric(8),
             result="pending",
             stream=stream,
             datestamp=str(datetime.now()),
