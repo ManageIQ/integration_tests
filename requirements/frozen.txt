@@ -1,2 +1,2 @@
 # backward compat hack needed until prt uses quickstart
--r frozen.py2.txt
+-r frozen.py3.txt

@@ -559,7 +559,7 @@ def create_program(dsl_program, widget_object):
         if len(args) > 0 and len(args[0]) > 0:
             if re.match(KWARG, args[0]):
                 # kwargs
-                kwargs = dict([map(lambda x: x.strip(), x.split("=", 1)) for x in args])
+                kwargs = dict([[x.strip() for x in x.split("=", 1)] for x in args])
                 command_list.append({fname: kwargs})
             else:
                 # Args

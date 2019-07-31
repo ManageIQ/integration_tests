@@ -192,10 +192,7 @@ def safe_string(o):
         o: Anything.
     """
     if not isinstance(o, six.string_types):
-        if hasattr(o, "__unicode__") and six.PY2:
-            o = six.text_type(o)
-        else:
-            o = str(o)
+        o = str(o)
     if isinstance(o, bytes):
         o = o.decode('utf-8', "ignore")
     if not isinstance(o, str):

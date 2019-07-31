@@ -52,7 +52,7 @@ def handle_extra_tabs(view):
     view.browser.selenium.switch_to_window(tabs[0])
 
 
-@pytest.mark.parametrize("filetype", extensions_mapping.keys())
+@pytest.mark.parametrize("filetype", list(extensions_mapping.keys()))
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
 def test_download_lists_base(filetype, collection_type, appliance):
     """ Download the items from base lists.

@@ -121,7 +121,7 @@ class BaseAuthProvider(object):
 
     def as_fill_value(self, user_type=None, auth_mode=None):
         """Basic implementation matches instance attributes to view form attributes"""
-        if user_type not in USER_TYPES.keys():
+        if user_type not in list(USER_TYPES.keys()):
             raise ValueError('invalid user_type "{}", must be key in USER_TYPES'.format(user_type))
         class_attrs = attr.fields_dict(type(self))  # dict of attr objects keyed by name
         # attr filter needs the Attribute object

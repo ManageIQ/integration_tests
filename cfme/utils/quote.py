@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ######################################################################
 #  Written by Kevin L. Sitze on 2006-12-03

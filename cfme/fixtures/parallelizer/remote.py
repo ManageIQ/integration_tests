@@ -27,7 +27,7 @@ class SlaveManager(object):
         ctx = zmq.Context.instance()
         self.sock = ctx.socket(zmq.REQ)
         self.sock.set_hwm(1)
-        self.sock.setsockopt_string(zmq.IDENTITY, u'{}'.format(self.slaveid))
+        self.sock.setsockopt_string(zmq.IDENTITY, '{}'.format(self.slaveid))
         self.sock.connect(zmq_endpoint)
 
         self.messages = {}

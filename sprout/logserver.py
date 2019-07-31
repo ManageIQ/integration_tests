@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Based on: https://docs.python.org/2.4/lib/network-logging.html
 import atexit

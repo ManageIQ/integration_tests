@@ -46,8 +46,9 @@ def get_detail(field, server):
         if field.lower() in ['title', 'trademark']:
             return getattr(view.modal, field.lower())
         else:
+            # this is AboutModal.items function, TODO rename
             return view.modal.items()[field]
-    except KeyError:
+    except (KeyError, AttributeError):
         raise ItemNotFound('No field named {} found in "About" modal.'.format(field))
     finally:
         # close since its a blocking modal and will break further navigation

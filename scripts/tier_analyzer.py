@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """This simple script lists all tests generated for the given provider. Then it lists all the tests
 marked with given tier marker(s). In the end it simply compares those two list, showing you tests
 that are generated for provider but NOT marked with the tier(s)."""

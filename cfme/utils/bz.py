@@ -71,7 +71,7 @@ class Bugzilla(object):
             yield bug
 
     def products(self, *names):
-        return list(map(Product, self.bugzilla._proxy.Product.get({"names": names})["products"]))
+        return [Product(p) for p in self.bugzilla._proxy.Product.get({"names": names})["products"]]
 
     def product(self, product):
         if product not in self.__product_cache:
@@ -262,11 +262,11 @@ def check_fixed_in(fixed_in, version_series):
 
 
 class BugWrapper(object):
-    _copy_matchers = map(re.compile, [
+    _copy_matchers = list(map(re.compile, [
         r'^[+]{3}\s*This bug is a CFME zstream clone. The original bug is:\s*[+]{3}\n[+]{3}\s*'
         r'https://bugzilla.redhat.com/show_bug.cgi\?id=(\d+)\.\s*[+]{3}',
         r"^\+\+\+ This bug was initially created as a clone of Bug #([0-9]+) \+\+\+"
-    ])
+    ]))
 
     def __init__(self, bugzilla, bug):
         self._bug = bug
@@ -342,7 +342,7 @@ class BugWrapper(object):
             bug = self._bugzilla.get_bug(bug_id)
             if bug.copy_of == self._bug.id:
                 result.append(bug_id)
-        return map(int, result)
+        return list(map(int, result))
 
     @property
     def _release_flag_data(self):

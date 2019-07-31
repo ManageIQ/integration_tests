@@ -32,7 +32,7 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
 
     for index, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
         datastores = args['provider'].data.datastores
         for ds in datastores:
             if not ds.get('test_fleece', False):

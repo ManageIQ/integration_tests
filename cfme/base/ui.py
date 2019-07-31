@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import re
 import time
 
@@ -1637,7 +1635,8 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
             'password': user.secret if user else None,
             'verify': user.secret if user else None
         }.items()
-        if v is not None}
+        if v is not None
+    }
 
     add_page.fill(fill_dict)
     if cancel:

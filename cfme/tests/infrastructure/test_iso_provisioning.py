@@ -35,12 +35,12 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
         if args['provider'].type == "scvmm":
             continue
 
         iso_cust_template = args['provider'].data['provisioning']['iso_kickstart']
-        if iso_cust_template not in cfme_data.get('customization_templates', {}).keys():
+        if iso_cust_template not in list(cfme_data.get('customization_templates', {}).keys()):
             continue
 
         new_idlist.append(idlist[i])
@@ -93,10 +93,24 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
         initialEstimate: 1/4h
     """
     # generate_tests makes sure these have values
-    iso_template, host, datastore, iso_file, iso_kickstart,\
-        iso_root_password, iso_image_type, vlan, addr_mode = map(provider.data['provisioning'].get,
-            ('pxe_template', 'host', 'datastore', 'iso_file', 'iso_kickstart',
-             'iso_root_password', 'iso_image_type', 'vlan', 'iso_address_mode'))
+    (iso_template,
+     host,
+     datastore,
+     iso_file,
+     iso_kickstart,
+     iso_root_password,
+     iso_image_type,
+     vlan,
+     addr_mode) = tuple(map(provider.data['provisioning'].get,
+                            ('pxe_template',
+                             'host',
+                             'datastore',
+                             'iso_file',
+                             'iso_kickstart',
+                             'iso_root_password',
+                             'iso_image_type',
+                             'vlan',
+                             'iso_address_mode')))
 
     request.addfinalizer(lambda:
                          appliance.collections.infra_vms.instantiate(vm_name, provider)

@@ -49,7 +49,7 @@ def test_default_view_cloud_reset(appliance):
     assert not view.tabs.default_views.reset.disabled
 
 
-@pytest.mark.parametrize('group_name', gtl_params.keys())
+@pytest.mark.parametrize('group_name', list(gtl_params.keys()))
 @pytest.mark.parametrize('expected_view', ['List View', 'Tile View', 'Grid View'])
 def test_cloud_default_view(appliance, group_name, expected_view):
     """This test case changes the default view of a cloud related page and asserts the change.

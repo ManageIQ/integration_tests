@@ -91,7 +91,7 @@ def test_default_view_infra_reset(appliance):
     assert not view.tabs.default_views.reset.disabled
 
 
-@pytest.mark.parametrize('group_name', GTL_PARAMS.keys(), scope="module")
+@pytest.mark.parametrize('group_name', list(GTL_PARAMS.keys()), scope="module")
 @pytest.mark.parametrize('view', ['List View', 'Tile View', 'Grid View'])
 @pytest.mark.uncollectif(
     lambda view, group_name: view == "Grid View" and group_name == "Service Catalogs"

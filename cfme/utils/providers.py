@@ -291,7 +291,7 @@ def list_provider_keys(provider_type=None):
     Returns: List of provider keys (strings).
     """
     try:
-        all_keys = conf.cfme_data.management_systems.keys()
+        all_keys = list(conf.cfme_data.management_systems.keys())
     except (KeyError, AttributeError):
         all_keys = []
 
@@ -406,4 +406,4 @@ class UnknownProvider(Exception):
         self.provider_key = provider_key
 
     def __str__(self):
-        return ('Unknown provider: "{}"'.format(self.provider_key))
+        return 'Unknown provider: "{}"'.format(self.provider_key)

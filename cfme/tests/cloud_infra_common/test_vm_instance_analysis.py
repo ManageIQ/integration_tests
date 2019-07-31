@@ -111,7 +111,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
     for index, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
         vma_data = args['provider'].data.vm_analysis_new
         if 'vms' in vma_data:
             vms = vma_data.vms
@@ -433,7 +433,7 @@ def detect_system_type(vm):
     if hasattr(vm, 'ssh'):
         system_release = safe_string(vm.ssh.run_command("cat /etc/os-release").output)
 
-        all_systems_dict = RPM_BASED.values() + DEB_BASED.values()
+        all_systems_dict = list(RPM_BASED.values()) + list(DEB_BASED.values())
         for systems_type in all_systems_dict:
             if systems_type['id'].lower() in system_release.lower():
                 return systems_type
@@ -803,7 +803,7 @@ def test_ssa_packages(ssa_vm):
     if ssa_vm.system_type == WINDOWS:
         pytest.skip("Windows has no packages")
 
-    if 'package' not in ssa_vm.system_type.keys():
+    if 'package' not in list(ssa_vm.system_type.keys()):
         pytest.skip("Don't know how to update packages for {}".format(ssa_vm.system_type))
 
     package_name = ssa_vm.system_type['package']

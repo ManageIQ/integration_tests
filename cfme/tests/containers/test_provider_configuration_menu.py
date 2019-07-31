@@ -65,8 +65,9 @@ def test_ocp_operator_out_of_the_box(appliance):
 
     # Search for the required role
     role_name_prefix = "container_operator"
-    is_role_found = bool(filter(lambda row: role_name_prefix in row.name.text.lower(),
-                                view.table.rows()))
+    is_role_found = bool([row for row
+                          in view.table.rows()
+                          if role_name_prefix in row.name.text.lower()])
 
     # validate the role exist out-of-the-box
     assert is_role_found, "No {role} found".format(role=role_name_prefix)

@@ -75,10 +75,10 @@ class AnsibleExtraVariables(View):
         self.tab = tab
 
     def _values_to_remove(self, values):
-        return map(tuple, set(self.all_vars) - set(values))
+        return list(map(tuple, set(self.all_vars) - set(values)))
 
     def _values_to_add(self, values):
-        return map(tuple, set(values) - set(self.all_vars))
+        return list(map(tuple, set(values) - set(self.all_vars)))
 
     def fill(self, values):
         """

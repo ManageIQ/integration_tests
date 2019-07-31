@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Script used to catch and expose e-mails from CFME"""
 import asyncore
@@ -76,16 +76,15 @@ class EmailServer(SMTPServer):
         if isinstance(payload, list):
             # Message can have multiple payloads, so let's join them for simplicity
             payload = "\n".join([x.get_payload().strip() for x in payload])
-        d = dict(message.items())
         with db_lock:
             global connection
             cursor = connection.cursor()
             cursor.execute(
                 "INSERT INTO emails VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)",
                 (
-                    d["From"],
-                    ",".join([address.strip() for address in d["To"].strip().split(",")]),
-                    d["Subject"],
+                    message["From"],
+                    ",".join([address.strip() for address in message["To"].strip().split(",")]),
+                    message["Subject"],
                     payload)
             )
             connection.commit()
@@ -172,7 +171,7 @@ def all_messages():
         c = db.execute(sql, bindings)
 
         rows = c.fetchall()
-        return json.dumps([dict(zip(ROWS, row)) for row in rows])
+        return json.dumps([dict(list(zip(ROWS, row))) for row in rows])
 
 
 @route("/messages.html")
@@ -181,7 +180,8 @@ def all_messages_in_html():
     emails = []
     Email = namedtuple("Email", ["source", "destination", "subject", "received", "body"])
     with db_lock:
-        emails = map(Email._make, connection.cursor().execute("SELECT * FROM emails").fetchall())
+        emails = list(map(Email._make,
+                          connection.cursor().execute("SELECT * FROM emails").fetchall()))
 
     return template_env.get_template("smtp_result.html").render(emails=emails)
 

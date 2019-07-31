@@ -23,7 +23,7 @@ def dig_code(node):
     for line in lc_info:
         contact = re.findall(r'.{8} \(\<(.*?)\> ', line)
         contact_stats[contact[0]] += 1
-    sorted_x = sorted(contact_stats.items(), key=operator.itemgetter(1), reverse=True)
+    sorted_x = sorted(list(contact_stats.items()), key=operator.itemgetter(1), reverse=True)
     results = []
     for item in sorted_x:
         percen = float(item[1]) / float(offset) * 100

@@ -14,7 +14,7 @@ def all_possible_roles():
     return roles
 
 
-@pytest.fixture(scope="module", params=server_roles_conf['sets'].keys())
+@pytest.fixture(scope="module", params=list(server_roles_conf['sets'].keys()))
 def roles(request, all_possible_roles):
     result = {}
     try:

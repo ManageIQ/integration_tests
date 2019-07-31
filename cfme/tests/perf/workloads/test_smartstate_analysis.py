@@ -91,7 +91,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
 
     while ((time.time() - starttime) < total_time):
         start_ssa_time = time.time()
-        for vm in scenario['vms_to_scan'].values()[0]:
+        for vm in list(scenario['vms_to_scan'].values())[0]:
             vm_api = appliance.rest_api.collections.vms.get(name=vm)
             vm_api.action.scan()
             total_scanned_vms += 1

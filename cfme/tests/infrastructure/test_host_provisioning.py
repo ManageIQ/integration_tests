@@ -39,7 +39,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
         try:
             prov_data = args['provider'].data['host_provisioning']
         except KeyError:
@@ -56,7 +56,7 @@ def pytest_generate_tests(metafunc):
             continue
 
         pxe_cust_template = prov_data.get('pxe_kickstart', '')
-        if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
+        if pxe_cust_template not in list(cfme_data.get('customization_templates', {}).keys()):
             continue
 
         new_idlist.append(idlist[i])
@@ -111,11 +111,32 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
     test_host = appliance.collections.hosts.create_from_config('esx')
 
     # Populate provisioning_data before submitting host provisioning form
-    pxe_server, pxe_image, pxe_image_type, pxe_kickstart, datacenter, cluster, datastores,\
-        prov_host_name, root_password, ip_addr, subnet_mask, gateway, dns = map(
-            host_provisioning.get,
-            ('pxe_server', 'pxe_image', 'pxe_image_type', 'pxe_kickstart', 'datacenter', 'cluster',
-             'datastores', 'hostname', 'root_password', 'ip_addr', 'subnet_mask', 'gateway', 'dns'))
+    (pxe_server,
+     pxe_image,
+     pxe_image_type,
+     pxe_kickstart,
+     datacenter,
+     cluster,
+     datastores,
+     prov_host_name,
+     root_password,
+     ip_addr,
+     subnet_mask,
+     gateway,
+     dns) = tuple(map(host_provisioning.get,
+            ('pxe_server',
+             'pxe_image',
+             'pxe_image_type',
+             'pxe_kickstart',
+             'datacenter',
+             'cluster',
+             'datastores',
+             'hostname',
+             'root_password',
+             'ip_addr',
+             'subnet_mask',
+             'gateway',
+             'dns')))
 
     def cleanup_host():
         try:

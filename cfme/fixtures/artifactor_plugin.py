@@ -47,7 +47,9 @@ UNDER_TEST = False  # set to true for artifactor using tests
 
 # Create a list of all our passwords for use with the sanitize request later in this module
 # Filter out all Nones as it will mess the output up.
-words = [word for word in {v.get('password') for v in credentials.values()} if word is not None]
+words = [word for word
+         in {v.get('password') for v in credentials.values()}
+         if word is not None]
 
 
 def get_test_idents(item):
@@ -61,7 +63,9 @@ def get_test_idents(item):
 
 
 def get_name(obj):
-    return getattr(obj, '_param_name', None) or getattr(obj, 'name', None) or str(obj)
+    return (getattr(obj, '_param_name', None) or
+            getattr(obj, 'name', None) or
+            str(obj))
 
 
 class DummyClient(object):
@@ -74,11 +78,10 @@ class DummyClient(object):
     def task_status(self):
         return
 
-    def __nonzero__(self):
+    def __bool__(self):
         # DummyClient is always False,
         # so it's easy to see if we have an artiactor client
         return False
-    __bool__ = __nonzero__
 
 
 def get_client(art_config, pytest_config):

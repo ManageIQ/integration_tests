@@ -104,7 +104,7 @@ class JSONApi(object):
         if request.method != 'POST':
             return json_success({
                 "available_methods": sorted(
-                    map(lambda m: m.description, self._methods.values()),
+                    [m.description for m in self._methods.values()],
                     key=lambda m: m["name"]),
             })
         try:
@@ -332,12 +332,12 @@ def available_cfme_versions(preconfigured=True):
 
 @jsonapi.method
 def available_groups():
-    return map(lambda group: group.id, Group.objects.all())
+    return [group.id for group in Group.objects.all()]
 
 
 @jsonapi.method
 def available_providers():
-    return map(lambda group: group.id, Provider.objects.all())
+    return [group.id for group in Provider.objects.all()]
 
 
 @jsonapi.authenticated_method
@@ -488,7 +488,7 @@ def find_pools_by_description(user, description, partial=False):
     def _filter(pool):
         return (pool.owner is None and user.is_staff) or (pool.owner == user)
 
-    return map(lambda pool: pool.id, filter(_filter, pools))
+    return [pool.id for pool in list(filter(_filter, pools))]
 
 
 @jsonapi.authenticated_method

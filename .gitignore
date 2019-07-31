@@ -25,6 +25,7 @@ log/*
 # docs inventories
 docs/*.inv
 .cfme_venv/
+.sprout_venv/
 # Docstrings
 doc_data.yaml
 

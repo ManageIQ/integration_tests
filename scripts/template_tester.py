@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Template tester script, used to test and mark template as usable.
 
 get:

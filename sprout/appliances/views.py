@@ -146,7 +146,7 @@ def templates(request, group_id=None, prov_id=None):
     zstream_rowspans = {}
     version_rowspans = {}
     date_version_rowspans = {}
-    items = group.zstreams_versions.items()
+    items = list(group.zstreams_versions.items())
     items.sort(key=lambda pair: Version(pair[0]), reverse=True)
     for zstream, versions in items:
         for version in versions:
@@ -321,7 +321,7 @@ def providers_for_date_group_and_version(request):
             else:
                 filters["date"] = parser.parse(date)
             providers = Template.objects.filter(**filters).values("provider").distinct()
-            providers = sorted([p.values()[0] for p in providers])
+            providers = sorted([list(p.values())[0] for p in providers])
             providers = list(Provider.objects.filter(id__in=providers))
             if provider_type is None:
                 providers = list(providers)

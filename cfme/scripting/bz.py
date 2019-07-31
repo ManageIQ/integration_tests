@@ -149,7 +149,9 @@ def list(directory, bz_status):
     status = STATUS[bz_status]
 
     if status["val"]:
-        bz_list = [bug_id for bug_id in info.keys() if info[bug_id]["is_open"] == status["val"]]
+        bz_list = [bug_id for bug_id
+                   in list(info.keys())
+                   if info[bug_id]["is_open"] == status["val"]]
     else:
         bz_list = [bug_id for bug_id in info.keys()]
 

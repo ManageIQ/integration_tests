@@ -219,7 +219,7 @@ class ParallelSession(object):
 
         # If a slave was terminated for any reason, kill that slave
         # the terminated flag implies the appliance has died :(
-        for slave in list(self.slaves.values()):
+        for slave in self.slaves.values():
             if slave.forbid_restart:
                 if slave.process is None:
                     self.config.hook.pytest_miq_node_shutdown(

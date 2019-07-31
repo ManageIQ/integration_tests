@@ -269,8 +269,8 @@ class CollectionFilteringError(CFMEException):
         self.filter_key = filter_key
 
     def __str__(self):
-        return 'Action on Collection ({}) requires a filter: ({})'\
-               .format(self.collection, self.filter_key)
+        return 'Action on Collection ({}) requires a filter: ({})'.format(self.collection,
+                                                                          self.filter_key)
 
 
 class NeedleNotFoundInLog(CFMEException):

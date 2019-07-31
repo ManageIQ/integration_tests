@@ -128,7 +128,7 @@ def test_create_multiple_schedules_in_one_timezone(appliance, request):
         initialEstimate: 1/4h
     """
     schedule_list = []
-    request.addfinalizer(lambda: map(lambda item: item.delete(), schedule_list))
+    request.addfinalizer(lambda: [item.delete() for item in schedule_list])
 
     for i in range(6):
         schedule = appliance.collections.system_schedules.create(

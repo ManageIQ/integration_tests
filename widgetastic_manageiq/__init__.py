@@ -592,7 +592,9 @@ class Table(VanillaTable):
         # We get two group matches and one of them will always be None, therefore empty filter
         # for filtering the None out
         try:
-            return filter(None, re.search(r"(sorting_|fa-sort-)(asc|desc)", klass).groups())[1]
+            return [_f for _f in re.search(r"(sorting_|fa-sort-)(asc|desc)", klass).groups() if _f][
+                1
+            ]
         except IndexError:
             raise ValueError(
                 "Could not figure out which column is used for sorting now."
@@ -1147,7 +1149,7 @@ class SettingsGroupSubmenu(NavDropdown):
                 )
             )
         element = self.browser.element(
-            u"./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self
+            "./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self
         )
         return "disabled" not in self.browser.classes(element)
 
@@ -1162,8 +1164,8 @@ class SettingsGroupSubmenu(NavDropdown):
             raise WidgetOperationFailed("Cannot click disabled item {}".format(item))
 
         self.expand()
-        self.logger.info(u"selecting item {}".format(item))
-        self.browser.click(u"./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self)
+        self.logger.info("selecting item {}".format(item))
+        self.browser.click("./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self)
 
     def read(self):
         """ Returns the text of the group element """
@@ -2727,7 +2729,7 @@ class UpDownSelect(View):
         current_items = self.items[: len(items)]
         if current_items == items:
             return False
-        items = map(str, items)
+        items = list(map(str, items))
         for item in reversed(items):  # reversed because every new item at top pushes others down
             self.move_top(item)
         return True
@@ -3011,8 +3013,8 @@ class TimelinesChart(View):
 
     class TimelinesEvent(object):
         def __repr__(self):
-            attrs = [attr for attr in self.__dict__.keys() if not attr.startswith("_")]
-            params = ", ".join(["{}={}".format(attr, getattr(self, attr)) for attr in attrs])
+            attrs = [att for att in self.__dict__.keys() if not att.startswith("_")]
+            params = ", ".join(["{}={}".format(att, getattr(self, att)) for att in attrs])
             return "TimelinesEvent({})".format(params)
 
     def __init__(self, parent, locator=None, logger=None):
@@ -3491,7 +3493,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
             entities = []
             for keys in conditions:
                 cur_entities = self.get_entities_by_keys(**keys)
-                map(func, cur_entities)
+                list(map(func, cur_entities))
                 entities.extend(cur_entities)
             return entities
 
@@ -3705,7 +3707,7 @@ class MenuShortcutsPicker(View):
             values = [values]
         if isinstance(values, dict):
             dict_values = values
-            values = values.values()
+            values = list(values.values())
         if set(values) == set(self.all_shortcuts):
             return False
         else:
@@ -4423,7 +4425,7 @@ class LineChart(Widget, ClickableMixin):
         Returns:
             :py:class:`list` all available legends
         """
-        return self._legends.keys()
+        return list(self._legends.keys())
 
     def hide_all_legends(self):
         """To hide all legends on chart"""
@@ -5380,7 +5382,7 @@ class MigrationProgressBar(Widget):
             float(div.get_attribute("style").split(": ")[1].split("%")[0])
             for div in self.browser.elements(self.PROGRESS_BARS, parent=el)
         ]
-        return dict(zip(desc, val))
+        return dict(list(zip(desc, val)))
 
 
 class MigrationDashboardStatusCard(AggregateStatusCard):

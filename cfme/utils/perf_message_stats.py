@@ -354,8 +354,13 @@ def generate_hourly_charts_and_csvs(hourly_buckets, charts_dir):
 def generate_raw_data_csv(rawdata_dict, csv_file_name):
     csv_rawdata_path = log_path.join('csv_output', csv_file_name)
     output_file = csv_rawdata_path.open('w', ensure=True)
-    csvwriter = csv.DictWriter(output_file, fieldnames=rawdata_dict[rawdata_dict.keys()[0]].headers,
-        delimiter=',', quotechar='\'', quoting=csv.QUOTE_MINIMAL)
+    csvwriter = csv.DictWriter(
+        output_file,
+        fieldnames=rawdata_dict[list(rawdata_dict.keys())[0]].headers,
+        delimiter=',',
+        quotechar='\'',
+        quoting=csv.QUOTE_MINIMAL
+    )
     csvwriter.writeheader()
     sorted_rd_keys = sorted(rawdata_dict.keys())
     for key in sorted_rd_keys:
@@ -900,7 +905,7 @@ def perf_process_evm(evm_file, top_file):
     logger.info('----------- Writing html files for report -----------')
     # Write an index.html file for fast switching between graphs:
     html_index = log_path.join('index.html').open('w', ensure=True)
-    cmd = hr_bkt.keys()[0]
+    cmd = list(hr_bkt.keys())[0]
     html_index.write(
         '<html>\n'
         '<title>Performance Worker/Message Metrics</title>\n'

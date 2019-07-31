@@ -4,8 +4,8 @@ import os
 
 import attr
 import requests
+from miq_version import LATEST_DOWN_STREAM
 
-from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import credentials
 from cfme.utils.conf import env
@@ -101,9 +101,8 @@ class SproutClient(object):
 
     def provision_appliances(
             self, count=1, preconfigured=False, version=None, stream=None, provider=None,
-            provider_type=None, lease_time=60, ram=None, cpu=None, **kwargs):
+            provider_type=None, lease_time=60, ram=None, cpu=None, wait_time=900, **kwargs):
         # provisioning may take more time than it is expected in some cases
-        wait_time = kwargs.pop('wait_time', 900)
         # If we specify version, stream is ignored because we will get that specific version
         if version:
             stream = get_stream(version)
@@ -112,8 +111,7 @@ class SproutClient(object):
             pass
         # If we dont specify either, we will get the same version as current appliance
         else:
-            stream = get_stream(current_appliance.version)
-            version = current_appliance.version.vstring
+            stream = LATEST_DOWN_STREAM
         request_id = self.call_method(
             'request_appliances',
             preconfigured=preconfigured,

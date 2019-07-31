@@ -1,6 +1,4 @@
-#!/usr/bin/env python2
-from __future__ import print_function
-
+#!/usr/bin/env python3
 import datetime
 import re
 import sys
@@ -25,30 +23,30 @@ def clean_commit(commit_msg):
 
 
 VALID_LABELS = [
-    u"LegacyBranch",
-    u"blackify",
-    u"blockers-only",
-    u"collections-conversion",
-    u"doc",
-    u"enhancement",
-    u"fix-framework",
-    u"fix-locator-or-text",
-    u"fix-test",
-    u"implement-ssui",
-    u"infra-related",
-    u"issue-bug",
-    u"issue-rfe",
-    u"manual",
-    u"new-test-or-feature",
-    u"Nuage",
-    u"other",
-    u"py3-compat",
-    u"rc-regression-fix",
-    u"Redfish",
-    u"RHV",
-    u"sprout",
-    u"tech-debt",
-    u"widgetastic-conversion",
+    "LegacyBranch",
+    "blackify",
+    "blockers-only",
+    "collections-conversion",
+    "doc",
+    "enhancement",
+    "fix-framework",
+    "fix-locator-or-text",
+    "fix-test",
+    "implement-ssui",
+    "infra-related",
+    "issue-bug",
+    "issue-rfe",
+    "manual",
+    "new-test-or-feature",
+    "Nuage",
+    "other",
+    "py3-compat",
+    "rc-regression-fix",
+    "Redfish",
+    "RHV",
+    "sprout",
+    "tech-debt",
+    "widgetastic-conversion",
 ]
 
 
@@ -146,7 +144,7 @@ def main(tag, old_tag, report_type, line_limit):
     print("")
     print("Includes: {} -> {}".format(old_tag, tag))
 
-    max_len_labels = max(map(len, VALID_LABELS))
+    max_len_labels = max(list(map(len, VALID_LABELS)))
 
     prs = get_prs()
 

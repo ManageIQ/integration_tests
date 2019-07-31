@@ -147,7 +147,7 @@ class SmemMemoryMonitor(Thread):
 
     def create_process_result(self, process_results, starttime, process_pid, process_name,
             memory_by_pid):
-        if process_pid in memory_by_pid.keys():
+        if process_pid in list(memory_by_pid.keys()):
             if process_name not in process_results:
                 process_results[process_name] = OrderedDict()
                 process_results[process_name][process_pid] = OrderedDict()
@@ -477,8 +477,8 @@ def generate_summary_csv(file_name, appliance_results, process_results, provider
     with open(str(file_name), 'w') as csv_file:
         csv_file.write('Version: {}, Provider(s): {}\n'.format(version_string, provider_names))
         csv_file.write('Measurement,Start of test,End of test\n')
-        start = appliance_results.keys()[0]
-        end = appliance_results.keys()[-1]
+        start = list(appliance_results.keys())[0]
+        end = list(appliance_results.keys())[-1]
         csv_file.write('Appliance Total Memory,{},{}\n'.format(
             round(appliance_results[start]['total'], 2), round(appliance_results[end]['total'], 2)))
         csv_file.write('Appliance Free Memory,{},{}\n'.format(
@@ -538,12 +538,12 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write(' : <b><a href=\'workload.html\'>Workload Info</a></b>')
         html_file.write(' : <b><a href=\'graphs/\'>Graphs directory</a></b>\n')
         html_file.write(' : <b><a href=\'rawdata/\'>CSVs directory</a></b><br>\n')
-        start = appliance_results.keys()[0]
-        end = appliance_results.keys()[-1]
+        start = list(appliance_results.keys())[0]
+        end = list(appliance_results.keys())[-1]
         timediff = end - start
         total_proc_count = 0
         for proc_name in process_results:
-            total_proc_count += len(process_results[proc_name].keys())
+            total_proc_count += len(list(process_results[proc_name].keys()))
         growth = appliance_results[end]['used'] - appliance_results[start]['used']
         max_used_memory = 0
         for ts in appliance_results:
@@ -778,8 +778,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         for ordered_name in process_order:
             if ordered_name in process_results:
                 for pid in process_results[ordered_name]:
-                    start = process_results[ordered_name][pid].keys()[0]
-                    end = process_results[ordered_name][pid].keys()[-1]
+                    start = list(process_results[ordered_name][pid].keys())[0]
+                    end = list(process_results[ordered_name][pid].keys())[-1]
                     timediff = end - start
                     html_file.write('<tr>\n')
                     if len(process_results[ordered_name]) > 1:
@@ -997,17 +997,23 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
 
     starttime = time.time()
 
-    dates = appliance_results.keys()
-    total_memory_list = list(appliance_results[ts]['total'] for ts in appliance_results.keys())
-    free_memory_list = list(appliance_results[ts]['free'] for ts in appliance_results.keys())
-    used_memory_list = list(appliance_results[ts]['used'] for ts in appliance_results.keys())
-    buffers_memory_list = list(
-        appliance_results[ts]['buffers'] for ts in appliance_results.keys())
-    cache_memory_list = list(appliance_results[ts]['cached'] for ts in appliance_results.keys())
-    slab_memory_list = list(appliance_results[ts]['slab'] for ts in appliance_results.keys())
-    swap_total_list = list(appliance_results[ts]['swap_total'] for ts in
-        appliance_results.keys())
-    swap_free_list = list(appliance_results[ts]['swap_free'] for ts in appliance_results.keys())
+    dates = list(appliance_results.keys())
+    total_memory_list = list(appliance_results[ts]['total']
+                             for ts in appliance_results.keys())
+    free_memory_list = list(appliance_results[ts]['free']
+                            for ts in appliance_results.keys())
+    used_memory_list = list(appliance_results[ts]['used']
+                            for ts in appliance_results.keys())
+    buffers_memory_list = list(appliance_results[ts]['buffers']
+                               for ts in appliance_results.keys())
+    cache_memory_list = list(appliance_results[ts]['cached']
+                             for ts in appliance_results.keys())
+    slab_memory_list = list(appliance_results[ts]['slab']
+                            for ts in appliance_results.keys())
+    swap_total_list = list(appliance_results[ts]['swap_total']
+                           for ts in appliance_results.keys())
+    swap_free_list = list(appliance_results[ts]['swap_free']
+                          for ts in appliance_results.keys())
 
     # Stack Plot Memory Usage
     file_name = graphs_path.join('{}-appliance_memory.png'.format(ver))
@@ -1123,7 +1129,7 @@ def graph_all_miq_workers(graph_file_path, process_results, provider_names):
     for process_name in process_results:
         if 'Worker' in process_name or 'Handler' in process_name or 'Catcher' in process_name:
             for process_pid in process_results[process_name]:
-                dates = process_results[process_name][process_pid].keys()
+                dates = list(process_results[process_name][process_pid].keys())
 
                 rss_samples = list(process_results[process_name][process_pid][ts]['rss']
                         for ts in process_results[process_name][process_pid].keys())
@@ -1158,7 +1164,7 @@ def graph_individual_process_measurements(graph_file_path, process_results, prov
 
             file_name = graph_file_path.join('{}-{}.png'.format(process_name, process_pid))
 
-            dates = process_results[process_name][process_pid].keys()
+            dates = list(process_results[process_name][process_pid].keys())
             rss_samples = list(process_results[process_name][process_pid][ts]['rss']
                     for ts in process_results[process_name][process_pid].keys())
             pss_samples = list(process_results[process_name][process_pid][ts]['pss']
@@ -1243,7 +1249,7 @@ def graph_same_miq_workers(graph_file_path, process_results, provider_names):
             plt.ylabel('Memory (MiB)')
 
             for process_pid in process_results[process_name]:
-                dates = process_results[process_name][process_pid].keys()
+                dates = list(process_results[process_name][process_pid].keys())
 
                 rss_samples = list(process_results[process_name][process_pid][ts]['rss']
                         for ts in process_results[process_name][process_pid].keys())
@@ -1306,8 +1312,8 @@ def summary_csv_measurement_dump(csv_file, process_results, measurement):
     for ordered_name in process_order:
         if ordered_name in process_results:
             for process_pid in sorted(process_results[ordered_name]):
-                start = process_results[ordered_name][process_pid].keys()[0]
-                end = process_results[ordered_name][process_pid].keys()[-1]
+                start = list(process_results[ordered_name][process_pid].keys())[0]
+                end = list(process_results[ordered_name][process_pid].keys())[-1]
                 csv_file.write('{},{},{},{}\n'.format(ordered_name, process_pid,
                     round(process_results[ordered_name][process_pid][start][measurement], 2),
                     round(process_results[ordered_name][process_pid][end][measurement], 2)))

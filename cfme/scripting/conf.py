@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Script to encrypt config files.
 
@@ -92,8 +92,8 @@ def decrypt(conf_name, delete, skip):
     try:
         yaycl_crypt.decrypt_yaml(conf, conf_name, delete=delete)
     except yaycl_crypt.YayclCryptError as ex:
-        if skip and 'overwrite' in ex.message:
-            print('{} conf decrypt skipped, decrypted file already exists'.format(conf_name))
+        if skip and 'overwrite' in str(ex):
+            print('SKIPPED {} conf decrypt, decrypted file already exists'.format(conf_name))
             return
         else:
             raise

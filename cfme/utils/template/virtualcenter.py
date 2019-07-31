@@ -41,7 +41,7 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
                                                  self.template_upload_data.cluster)
         ]
 
-        if 'proxy' in self.template_upload_data.keys():
+        if 'proxy' in list(self.template_upload_data.keys()):
             cmd_args.append("--proxy={}".format(self.template_upload_data.proxy))
 
         command = ' '.join(cmd_args)

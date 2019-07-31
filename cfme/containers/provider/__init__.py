@@ -764,7 +764,7 @@ def navigate_and_get_rows(provider, obj, count, silent_failure=False):
 
     view = navigate_to(obj, 'All')
     view.toolbar.view_selector.list_button.click()
-    if filter(lambda msg: 'No Records Found.' in msg.text, view.flash.messages) and silent_failure:
+    if [msg for msg in view.flash.messages if 'No Records Found.' in msg.text] and silent_failure:
         return []
     view.paginator.set_items_per_page(1000)
     rows = list(view.table.rows())

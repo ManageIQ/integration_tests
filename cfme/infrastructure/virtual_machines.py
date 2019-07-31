@@ -999,7 +999,7 @@ class InfraVm(VM):
                 disk_message = 'Remove Disks'
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
-        message = ", ".join(filter(None, [ram_message, cpu_message, disk_message]))
+        message = ", ".join([_f for _f in [ram_message, cpu_message, disk_message] if _f])
 
         if cancel:
             vm_recfg.cancel_button.click()
@@ -1220,7 +1220,7 @@ class Genealogy(object):
         attributes = kwargs.get('attributes', 'all').lower()
         mode = kwargs.get('mode', 'exists').lower()
         assert len(objects) >= 2, 'You must specify at least two objects'
-        objects = map(lambda o: o.name if isinstance(o, (InfraVm, InfraTemplate)) else o, objects)
+        objects = [o.name if isinstance(o, (InfraVm, InfraTemplate)) else o for o in objects]
         view = self.navigate()
         for obj in objects:
             if not isinstance(obj, list):
@@ -1231,7 +1231,7 @@ class Genealogy(object):
         # COMPARE PAGE
         compare_view = self.obj.create_view('Compare')
         if sections is not None:
-            map(lambda path: compare_view.tree.check_node(*path), sections)
+            list(map(lambda path: compare_view.tree.check_node(*path), sections))
             compare_view.apply.click()
             compare_view.flash.assert_no_errors()
         # Set requested attributes sets

@@ -148,10 +148,10 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     view = navigate_to(vm, "Details")
     data = view.entities.summary("Properties").get_text_of("Container").strip()
     # No longer possible to use version pick because of cherrypicking?
-    regexes = map(re.compile, [
+    regexes = list(map(re.compile, [
         r"^[^(]*(\d+) CPUs?.*, ([^)]+)[^)]*$",
         r"^[^(]*\((\d+) CPUs?, ([^)]+)\)[^)]*$",
-        r"^.*?(\d+) CPUs? .*?(\d+ MB)$"])
+        r"^.*?(\d+) CPUs? .*?(\d+ MB)$"]))
     for regex in regexes:
         match = regex.match(data)
         if match is not None:

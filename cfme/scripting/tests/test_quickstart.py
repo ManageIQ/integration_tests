@@ -6,18 +6,15 @@ import pytest
 
 from cfme.utils import path
 
-PYTHON_DEB = 'apt-get -y update && apt-get -y install python python3'
-PYTHON_RPM = '{cmd} -yq update && {cmd} -yq install python python3'
+PYTHON_DEB = 'apt-get -y update && apt-get -y install python3'
+PYTHON_RPM = '{cmd} -yq update && {cmd} -yq install python3'
 IMAGE_SPEC = [
-    ('fedora:24', PYTHON_RPM.format(cmd="dnf")),
-    ('fedora:25', PYTHON_RPM.format(cmd="dnf")),
-    ('fedora:26', PYTHON_RPM.format(cmd="dnf")),
-    ('fedora:27', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:28', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:29', PYTHON_RPM.format(cmd="dnf")),
     ('fedora:30', PYTHON_RPM.format(cmd="dnf")),
     ('centos:7', PYTHON_RPM.format(cmd="yum")),
     ('debian:stable', PYTHON_DEB),
+    ('ubuntu:16.04', PYTHON_DEB),  # travis python3.7 image
     ('ubuntu:artful', PYTHON_DEB),
     ('ubuntu:bionic', PYTHON_DEB),
 ]
@@ -46,10 +43,8 @@ def yamls_volume():
 
 
 @pytest.mark.parametrize('image, prepare', IMAGE_SPEC, ids=[x[0] for x in IMAGE_SPEC])
-@pytest.mark.parametrize('python', [
-    'python2',
-    pytest.param('python3', marks=pytest.mark.xfail(reason="dump2polarion bug"))
-])
+@pytest.mark.parametrize('python',
+                         [pytest.param('python3')])
 @pytest.mark.long_running
 def test_quickstart_run(image, python, prepare, root_volume, yamls_volume, check_docker):
     cmd = ("docker run --rm "
@@ -66,7 +61,7 @@ def test_quickstart_run(image, python, prepare, root_volume, yamls_volume, check
     try:
         subprocess.check_call(cmd, shell=True)
     except subprocess.CalledProcessError as e:
-        pytest.fail(e)
+        pytest.fail(str(e))
 
 
 @pytest.mark.parametrize("old, new, expected_changes", [

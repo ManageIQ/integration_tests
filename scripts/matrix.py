@@ -150,7 +150,7 @@ for suite in sorted(cache_suites.keys()):
     # add the suite the _real_ list of suites, which will be ordered
     suites.append(this_suite)
     # iterate through the tests (sorted by the short_name)
-    for test in sorted(this_suite.cache_tests.keys(),
+    for test in sorted(list(this_suite.cache_tests.keys()),
                        key=lambda e: this_suite.cache_tests[e].short_name):
         # append to cache_params a list of all params for this test from the results
         this_suite.cache_params.append(

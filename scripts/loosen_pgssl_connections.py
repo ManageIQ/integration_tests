@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """SSH into a running appliance and loosen postgres connections"""
 import argparse
 import sys

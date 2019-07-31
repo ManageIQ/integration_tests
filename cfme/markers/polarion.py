@@ -13,7 +13,7 @@ def pytest_configure(config):
 def extract_polarion_ids(item):
     """Extracts Polarion TC IDs from the test item. Returns None if no marker present."""
     polarion = item.get_marker('polarion')
-    return map(str, getattr(polarion, 'args', []))
+    return list(map(str, getattr(polarion, 'args', [])))
 
 
 @pytest.mark.tryfirst

@@ -50,7 +50,7 @@ def generated_request(appliance, provider, provisioning, template_name, vm_name)
     last_name = fauxfactory.gen_alphanumeric()
     notes = fauxfactory.gen_alphanumeric()
     e_mail = "{}@{}.test".format(first_name, last_name)
-    host, datastore = map(provisioning.get, ('host', 'datastore'))
+    host, datastore = list(map(provisioning.get, ('host', 'datastore')))
     vm = appliance.collections.infra_vms.instantiate(name=vm_name,
                                                      provider=provider,
                                                      template_name=template_name)

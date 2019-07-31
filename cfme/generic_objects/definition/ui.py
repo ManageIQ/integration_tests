@@ -126,7 +126,7 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Automation', 'Automate', 'Generic Objects')
 
     def resetter(self, *args, **kwargs):
-        self.view.accordion.fill({'classes': {'tree': [u'All Generic Object Classes']}})
+        self.view.accordion.fill({'classes': {'tree': ['All Generic Object Classes']}})
 
 
 @navigator.register(GenericObjectDefinitionCollection)

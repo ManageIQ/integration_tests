@@ -278,7 +278,8 @@ class InstanceCollection(BaseCollection):
                 'description': description,
                 'fields': fields,
             }.items()
-            if v is not None}
+            if v is not None
+        }
         add_page.fill(fill_dict)
         if cancel:
             add_page.cancel_button.click()

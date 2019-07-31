@@ -85,7 +85,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         # TODO: Modify accordingly once there is FlashMessages.assert_massage_contains()
-        assert filter(lambda m: 'Analysis successfully initiated' in m.text, view.flash.messages)
+        assert [m for m in view.flash.messages if 'Analysis successfully initiated' in m.text]
         if wait_for_finish:
             try:
                 task = self.appliance.collections.tasks.instantiate(

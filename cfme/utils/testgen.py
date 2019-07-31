@@ -132,7 +132,7 @@ def _param_check(metafunc, argnames, argvalues):
         classname = getattr(metafunc.cls, '__name__', None)
         funcname = metafunc.function.__name__
 
-        test_name = '.'.join(filter(None, (modname, classname, funcname)))
+        test_name = '.'.join([_f for _f in (modname, classname, funcname) if _f])
         uncollect_msg = 'Parametrization for {} yielded no values,'\
             ' marked for uncollection'.format(test_name)
         logger.warning(uncollect_msg)

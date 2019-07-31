@@ -59,7 +59,7 @@ class SSHResult(object):
     output = attr.ib(repr=False)
 
     def __str__(self):
-        return self.output
+        return str(self.output)
 
     def __contains__(self, what):
         # Handling 'something' in x
@@ -67,7 +67,7 @@ class SSHResult(object):
             raise ValueError('You can only check strings using the in operator')
         return what in self.output
 
-    def __nonzero__(self):
+    def __bool__(self):
         # Handling bool(x) or if x:
         return self.rc == 0
 
@@ -712,7 +712,7 @@ class SSHClient(paramiko.SSHClient):
         servers = []
         for server in srv_body:
             fields = [f.strip() for f in server.strip().split("|")]
-            srv = dict(zip(srv_headers, fields))
+            srv = dict(list(zip(srv_headers, fields)))
             _process_dict(srv)
             servers.append(srv)
 
@@ -726,7 +726,7 @@ class SSHClient(paramiko.SSHClient):
             wrk_body = wrks[2:]
             for worker in wrk_body:
                 fields = [f.strip() for f in worker.strip().split("|")]
-                wrk = dict(zip(wrk_headers, fields))
+                wrk = dict(list(zip(wrk_headers, fields)))
                 _process_dict(wrk)
                 # ansible worker doesn't work in pod in 5.8
                 if (wrk['Worker Type'] == 'EmbeddedAnsibleWorker' and

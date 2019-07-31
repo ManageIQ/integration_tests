@@ -1,19 +1,15 @@
-import warnings
-
 import attr
 import pytest
 import six.moves.urllib.parse
 
 from cfme.fixtures import terminalreporter
 from cfme.utils import conf
-from cfme.utils.appliance import ApplianceSummoningWarning
 from cfme.utils.appliance import DummyAppliance
 from cfme.utils.appliance import load_appliances_from_config
 from cfme.utils.appliance import stack
 from cfme.utils.path import log_path
 
 PLUGIN_KEY = "appliance-holder"
-warnings.simplefilter('error', ApplianceSummoningWarning)
 
 
 def pytest_addoption(parser):

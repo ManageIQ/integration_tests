@@ -142,7 +142,7 @@ def generate_policy_event(request, appliance, provider, vm_crud, register_event)
     vm_crud.create_on_provider(find_in_cfme=True)
 
 
-@pytest.mark.parametrize("path, updates", zip(PATHS, UPDATES), ids=IDS)
+@pytest.mark.parametrize("path, updates", list(zip(PATHS, UPDATES)), ids=IDS)
 def test_reports_with_timelines(appliance, setup_for_reports):
     """
     Test that a timeline widget is displayed for a reports.

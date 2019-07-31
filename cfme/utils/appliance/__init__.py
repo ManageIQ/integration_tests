@@ -3092,8 +3092,8 @@ def load_appliances_from_config(config):
     Args:
         config: A dictionary with the configuration
     """
-    if 'appliances' not in config:
-        raise ValueError("Invalid config: missing an 'appliances' section")
+    if config.get('appliances', None) is None:
+        raise ValueError("Invalid config: missing an 'appliances' section, or its empty")
     appliances = config['appliances']
 
     global_kwargs = {
@@ -3104,7 +3104,7 @@ def load_appliances_from_config(config):
     return load_appliances(appliances, global_kwargs)
 
 
-class ApplianceSummoningWarning(Warning):
+class ApplianceSummoningWarning(PendingDeprecationWarning):
     """to ease filtering/erroring on magical appliance creation based on script vs code"""
 
 

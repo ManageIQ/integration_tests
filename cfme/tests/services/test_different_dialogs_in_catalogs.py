@@ -62,8 +62,8 @@ def catalog(appliance):
 
 @pytest.fixture(scope="function")
 def catalog_item(appliance, provider, provisioning, tagcontrol_dialog, catalog):
-    template, host, datastore, iso_file, vlan = map(provisioning.get,
-        ('template', 'host', 'datastore', 'iso_file', 'vlan'))
+    template, host, datastore, iso_file, vlan = list(map(provisioning.get,
+        ('template', 'host', 'datastore', 'iso_file', 'vlan')))
 
     provisioning_data = {
         'catalog': {'catalog_name': {'name': template, 'provider': provider.name},

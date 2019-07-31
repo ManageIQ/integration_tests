@@ -26,7 +26,7 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
 
     for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
 
         for test_host in args['provider'].data['hosts']:
             if not test_host.get('test_fleece', False):

@@ -45,7 +45,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+        args = dict(list(zip(argnames, argvalue_tuple)))
 
         if args['provider'].type == "scvmm":
             continue
@@ -55,7 +55,7 @@ def pytest_generate_tests(metafunc):
             continue
 
         pxe_cust_template = args['provider'].data['provisioning']['pxe_kickstart']
-        if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
+        if pxe_cust_template not in list(cfme_data.get('customization_templates', {}).keys()):
             continue
 
         new_idlist.append(idlist[i])
@@ -90,12 +90,12 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning,
                  setup_pxe_servers_vm_prov):
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
-        pxe_image_type, pxe_vlan = map(
+        pxe_image_type, pxe_vlan = list(map(
             provisioning.get, (
                 'pxe_template', 'host', 'datastore', 'pxe_server', 'pxe_image', 'pxe_kickstart',
                 'pxe_root_password', 'pxe_image_type', 'vlan'
             )
-        )
+        ))
 
     provisioning_data = {
         'catalog': {'catalog_name': {'name': pxe_template, 'provider': provider.name},

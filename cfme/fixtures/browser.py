@@ -41,7 +41,6 @@ def pytest_exception_interact(node, call, report):
     from cfme.fixtures.pytest_store import store
     from six.moves.http_client import BadStatusLine
     from socket import error
-
     val = safe_string(call.excinfo.value)
     if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))

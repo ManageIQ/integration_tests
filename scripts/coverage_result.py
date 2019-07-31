@@ -1,14 +1,12 @@
-#!/usr/bin/env python2
-from __future__ import print_function
+#!/usr/bin/env python3
+import re
+import subprocess
+import sys
 
 from coverage import CoverageData
-try:
-    from cfme.utils.path import project_path, log_path
-except ImportError:
-    from cfme.utils.path import project_path, log_path
-import sys
-import subprocess
-import re
+
+from cfme.utils.path import log_path
+from cfme.utils.path import project_path
 
 
 def compute_coverage(branch):
