@@ -4,6 +4,7 @@ import logging
 import traceback
 from datetime import datetime
 
+import fauxfactory
 import pika
 import requests
 from slumber.exceptions import HttpClientError
@@ -111,11 +112,7 @@ def create_run(db_pr, pr):
         stream = group['name']
         logger.info('  Adding task stream {}...'.format(stream))
         task_data = dict(output="",
-            tid="pr{pr}-r{runs}-{stream}-ts{time:%Y-%m-%d-%H:%M:%S}".format(
-                pr=db_pr['number'],
-                runs=len(db_pr.get('runs', [])),
-                stream=stream,
-                time=datetime.now()),
+            tid=fauxfactory.gen_alphanumeric(8),
             result="pending",
             stream=stream,
             datestamp=str(datetime.now()),
