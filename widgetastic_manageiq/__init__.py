@@ -699,9 +699,9 @@ class SummaryTable(VanillaTable):
         """
         fields = self.get_field(field_name)
         if isinstance(fields, (list, tuple)):
-            return [field.text for field in fields]
+            return [self.browser.text(field) for field in fields]
         else:
-            return fields[1].text
+            return self.browser.text(fields[1])
 
     def get_img_of(self, field_name):
         """Returns the information about the image in the field with this name.
