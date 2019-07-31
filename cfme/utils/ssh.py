@@ -2,6 +2,7 @@
 import re
 import socket
 import sys
+from functools import total_ordering
 from os import path as os_path
 from subprocess import check_call
 
@@ -31,7 +32,8 @@ from cfme.utils.wait import wait_for
 RUNCMD_TIMEOUT = 1200.0
 
 
-@attr.s(frozen=True)
+@attr.s(frozen=True, cmp=False)
+@total_ordering
 class SSHResult(object):
     """Allows rich comparison for more convenient testing.
 
@@ -75,14 +77,19 @@ class SSHResult(object):
         # handling int(x)
         return self.rc
 
-    def __cmp__(self, other):
-        # Handling comparison to strings or numbers
-        # py3.6 compatible cmp syntax
-        # TODO: remove for full py3.6 compatibility
+    def __eq__(self, other):
         if isinstance(other, int):
-            return (self.rc > other) - (self.rc < other)
+            return self.rc == other
         elif isinstance(other, six.string_types):
-            return (self.output > other) - (self.output < other)
+            return self.output == other
+        else:
+            raise ValueError('You can only compare SSHResult with str or int')
+
+    def __lt__(self, other):
+        if isinstance(other, int):
+            return self.rc < other
+        elif isinstance(other, six.string_types):
+            return self.output < other
         else:
             raise ValueError('You can only compare SSHResult with str or int')
 
