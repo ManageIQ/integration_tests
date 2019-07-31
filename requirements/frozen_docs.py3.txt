@@ -131,7 +131,7 @@ docutils==0.14
 dogpile.cache==0.7.1
 dump2polarion==0.39.1
 entrypoints==0.3
-fauxfactory==3.0.2
+fauxfactory==3.0.6
 flake8==3.7.7
 flufl.enum==4.1.1
 funcsigs==1.0.2
