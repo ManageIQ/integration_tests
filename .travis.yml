@@ -28,7 +28,6 @@ stages:
 - linting
 - test
 - deploy
-dist: trusty
 
 jobs:
   include:
