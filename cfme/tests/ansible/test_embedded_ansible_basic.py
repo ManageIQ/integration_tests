@@ -102,6 +102,24 @@ CREDENTIALS = [
             "project": fauxfactory.gen_alpha(),
         },
     ),
+    (
+        "Network",
+        {
+            "username": fauxfactory.gen_alpha(),
+            "password": fauxfactory.gen_alpha(),
+        },
+    ),
+    (
+        "Azure",
+        {
+            "username": fauxfactory.gen_alpha(),
+            "password": fauxfactory.gen_alpha(),
+            "subscription_id": fauxfactory.gen_alpha(),
+            "tenant_id": fauxfactory.gen_alpha(),
+            "client_secret": fauxfactory.gen_alpha(),
+            "client_id": fauxfactory.gen_alpha(),
+        },
+    ),
 ]
 
 
@@ -219,10 +237,8 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
             credential.service_account = updated_value
         elif credential.credential_type == "Amazon":
             credential.access_key = updated_value
-            # credential.username = updated_value
         else:
             credential.username = updated_value
-            # credential.access_key = updated_value
     view = navigate_to(credential, "Details")
 
     def wait_for_changes(field_name):
