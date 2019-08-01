@@ -149,6 +149,7 @@ def test_infra_compare_view(appliance, expected_view):
     default_views.set_default_view(group_name, old_default)
 
 
+@pytest.mark.ignore_stream("5.11")
 def test_vm_visibility_off(appliance):
     """
     Polarion:
@@ -157,11 +158,13 @@ def test_vm_visibility_off(appliance):
         caseimportance: medium
         initialEstimate: 1/10h
         tags: settings
+        endsin: 5.10
     """
     appliance.user.my_settings.default_views.set_default_view_switch_off()
     assert not check_vm_visibility(appliance)
 
 
+@pytest.mark.ignore_stream("5.11")
 def test_vm_visibility_on(appliance):
     """
     Polarion:
@@ -170,6 +173,7 @@ def test_vm_visibility_on(appliance):
         caseimportance: medium
         initialEstimate: 1/5h
         tags: settings
+        endsin: 5.10
     """
     appliance.user.my_settings.default_views.set_default_view_switch_on()
     assert check_vm_visibility(appliance, check=True)
