@@ -59,7 +59,8 @@ class LinksView(View):
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
 
     @View.nested
-    class vm_hosts(View):  # noqa
+    class vm_instances(View):  # noqa
+        # TODO: title must be changed once BZ 1723813 is resolved.
         TEXT = 'Virtual Machines Hosts Guide'
         link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
         img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))

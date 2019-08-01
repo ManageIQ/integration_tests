@@ -29,7 +29,7 @@ doc_titles = {
     'providers': 'managing providers',
     'rest': 'red hat cloudforms rest api',
     'scripting': 'scripting actions in cloudforms',
-    'vm_hosts': 'provisioning virtual machines and instances'}
+    'vm_instances': 'provisioning virtual machines and instances'}
 
 
 def pdf_get_text(file_obj, page_nums):
