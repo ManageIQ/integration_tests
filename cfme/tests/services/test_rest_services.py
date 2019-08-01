@@ -1378,6 +1378,12 @@ class TestPendingRequestsRESTAPI(object):
         miq_domain = dc.instantiate(name='ManageIQ')
         instance = self._get_instance(miq_domain)
         instance.copy_to(domain)
+        # blah
+        # blah
+        # blah
+        # blah
+        # blah
+        # blah
         return domain
 
     @pytest.fixture(scope='class')
@@ -1422,7 +1428,10 @@ class TestPendingRequestsRESTAPI(object):
                 service_request.approval_state.lower() == 'pending_approval')
 
         wait_for(_order_pending, num_sec=30, delay=2)
-
+        # blah
+        # blah
+        # blah
+        # blah
         return service_request
 
     def test_query_service_request_attributes(self, pending_request, soft_assert):
