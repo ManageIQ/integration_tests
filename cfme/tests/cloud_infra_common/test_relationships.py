@@ -210,6 +210,12 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
     assert relationship_view.is_displayed
 
 
+@pytest.fixture
+def adding_a_new_fixture():
+    # can the bot detect this new fixture?
+    pass
+
+
 @pytest.fixture(scope='function')
 def prov_child_visibility(appliance, provider, request, tag, user_restricted):
     def _prov_child_visibility(relationship, visibility):
