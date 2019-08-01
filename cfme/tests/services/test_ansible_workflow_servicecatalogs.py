@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-:
 import pytest
 
 from cfme import test_requirements
@@ -44,13 +44,14 @@ def config_manager(config_manager_obj):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, request, config_manager, dialog, catalog, job_type):
+def catalog_item(appliance, request, config_manager, dialog, catalog):
+    job_type = 'workflow'
     config_manager_obj = config_manager
     provider_name = config_manager_obj.yaml_data.get('name')
     template = config_manager_obj.yaml_data['provisioning_data'][job_type]
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
-        name={}_dialog.label.format(job_type),
+        name=dialog.label,
         description="my catalog",
         display_in=True,
         catalog=catalog,
@@ -61,8 +62,8 @@ def catalog_item(appliance, request, config_manager, dialog, catalog, job_type):
     return catalog_item
 
 
-def test_tower_workflow_item(appliance, config_manager, catalog_item, request, job_type):
-    """Tests ordering of catalog items for Ansible Template and Workflow jobs
+def test_tower_workflow_item(appliance, config_manager, catalog_item, request):
+    """Tests ordering of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
 
@@ -72,7 +73,6 @@ def test_tower_workflow_item(appliance, config_manager, catalog_item, request, j
         casecomponent: Services
         caseimportance: high
     """
-    job_type = 'workflow'
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
@@ -86,8 +86,8 @@ def test_tower_workflow_item(appliance, config_manager, catalog_item, request, j
 
 
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8610')])
-def test_retire_ansible_service(appliance, catalog_item, request, job_type):
-    """Tests retiring of catalog items for Ansible Template and Workflow jobs
+def test_retire_ansible_service(appliance, catalog_item, request):
+    """Tests retiring of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
 
@@ -97,7 +97,6 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type):
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    job_type = 'workflow'
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
