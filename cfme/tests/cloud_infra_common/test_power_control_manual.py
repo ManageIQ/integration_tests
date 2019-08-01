@@ -2,6 +2,9 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 
@@ -227,9 +230,11 @@ def test_power_controls_on_vm_in_stack_cloud():
 @pytest.mark.manual
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@pytest.mark.provider([CloudProvider, InfraProvider], required_fields=['templates'],
+                      selector=ONE_PER_TYPE, override=True)
 @test_requirements.multi_region
 @test_requirements.power
-def test_power_operations_from_global_region(context):
+def test_power_operations_from_global_region(provider, context):
     """
     This test case is to check power operations from Global region
     Setup is 2 or more appliances(DB should be configured manually). One
