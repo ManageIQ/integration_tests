@@ -78,7 +78,9 @@ def test_automate_git_domain_displayed_in_service(appliance):
         tags: automate
     """
     url = cfme_data.ansible_links.playbook_repositories.automate_domain
-    repo = AutomateGitRepository(url=url, verify_ssl=True, appliance=appliance)
+    repo = appliance.collections.automate_import_exports.instantiate(
+        import_type="git", url=url, verify_ssl=True
+    )
     imported_domain = repo.import_domain_from(branch="origin/master")
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.GENERIC, "test")
@@ -93,9 +95,7 @@ def test_automate_git_domain_displayed_in_service(appliance):
         "provision"
     )
     view.provisioning_entry_point.fill(path, include_domain=True)
-    assert view.provisioning_entry_point.value == (
-        "/{}".format("/".join([imported_domain.name, path[2], path[3], path[4], path[5], path[6]]))
-    )
+    assert view.provisioning_entry_point.value.split('/') == ['', imported_domain.name, *path[2:]]
 
 
 @pytest.mark.tier(3)
