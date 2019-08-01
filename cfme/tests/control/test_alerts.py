@@ -127,6 +127,7 @@ def setup_for_alerts(appliance):
             provider.assign_policy_profiles(policy_profile.description)
             request.addfinalizer(
                 lambda: provider.unassign_policy_profiles(policy_profile.description))
+            # change function in a wrapper :D
     return _setup_for_alerts
 
 
