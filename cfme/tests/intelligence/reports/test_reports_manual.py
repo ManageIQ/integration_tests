@@ -348,7 +348,7 @@ def test_reports_timezone():
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.parametrize('report', ['new-report', 'existing-report'])
-def test_reports_in_global_region(context,report):
+def test_reports_in_global_region(context, report):
     """
     This test case tests report creation and rendering from global region
     based on data from remote regions.
