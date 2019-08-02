@@ -10,6 +10,7 @@ from cfme.utils.blockers import BZ
 pytestmark = [test_requirements.automate, pytest.mark.tier(2)]
 
 
+@pytest.mark.meta(automates=[1719322])
 def test_object_attributes(appliance):
     """
     Polarion:
@@ -35,7 +36,7 @@ def test_object_attributes(appliance):
             # Selecting object attribute type
             view.target_type.select_by_visible_text(object_type.text)
             # Checking whether dependent objects(object attribute selection) are loaded or not
-            assert view.target_object.all_options > 0
+            assert len(view.target_object.all_options) > 0
 
 
 @pytest.fixture(scope='function')
@@ -49,6 +50,7 @@ def copy_class(domain):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1335669])
 def test_assert_failed_substitution(copy_class):
     """
     Polarion:

@@ -7,7 +7,6 @@ from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 
@@ -30,11 +29,8 @@ def new_users(appliance):
 
     yield users
     for user in users:
-        if not BZ(1720273).blocks:
-            user.delete_if_exists()
-        else:
-            user = appliance.rest_api.collections.users.get(name=user.name)
-            user.action.delete()
+        user = appliance.rest_api.collections.users.get(name=user.name)
+        user.action.delete()
 
 
 @pytest.fixture(scope='function')
@@ -76,7 +72,7 @@ def service_validate_request(domain):
 
 @pytest.mark.tier(3)
 @pytest.mark.provider([VMwareProvider], scope="module")
-@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1671563, 1720273, 1728706])
 def test_user_requester_for_lifecycle_provision(request, appliance, provider, setup_provider,
                                                 new_users, generic_catalog_item,
                                                 infra_validate_request, service_validate_request,
@@ -92,6 +88,7 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
     Bugzilla:
          1671563
          1720273
+         1728706
     """
     script = """
     user = $evm.root['user']
