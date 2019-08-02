@@ -47,9 +47,10 @@ def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog)
     job_type = 'workflow'
     config_manager_obj = tower_manager
     provider_name = config_manager_obj.yaml_data.get('name')
-    if config_manager_obj.yaml_data['provisioning_data'][job_type]:
-        template = config_manager_obj.yaml_data['provisioning_data'][job_type]
-    else:
+    try:
+        if config_manager_obj.yaml_data['provisioning_data'][job_type]:
+            template = config_manager_obj.yaml_data['provisioning_data'][job_type]
+    except KeyError:
         pytest.skip("No such Ansible template: {} found in cfme_data.yaml".format(job_type))
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
