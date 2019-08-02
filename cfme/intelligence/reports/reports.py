@@ -589,7 +589,7 @@ class SavedReport(Updateable, BaseEntity):
             return SavedReportData([], [])
         view.paginator.set_items_per_page(1000)
         try:
-            headers = tuple([hdr.encode("utf-8") for hdr in view.table.headers])
+            headers = tuple([hdr for hdr in view.table.headers])
             body = []
             for _ in range(view.paginator.pages_amount):
                 for row in view.table.rows():
@@ -599,7 +599,7 @@ class SavedReport(Updateable, BaseEntity):
                         # TODO: Support this functionality in widgetastic. Issue:
                         # https://github.com/RedHatQE/widgetastic.core/issues/26
                         continue
-                    row_data = tuple([row[header].text.encode("utf-8") for header in headers])
+                    row_data = tuple([row[header].text for header in headers])
                     body.append(row_data)
         except NoSuchElementException:
             # No data found
@@ -650,8 +650,8 @@ class SavedReportsCollection(BaseCollection):
                         continue
                     results.append(
                         self.instantiate(
-                            row.run_at.text.encode("utf-8"),
-                            row.queued_at.text.encode("utf-8"),
+                            row.run_at.text,
+                            row.queued_at.text,
                             self.parent.is_candu
                         )
                     )
