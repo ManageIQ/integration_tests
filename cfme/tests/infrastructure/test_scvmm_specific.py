@@ -126,7 +126,9 @@ def scvmm_appliance(provider, cfme_vhd):
     # create the template
     provider.mgmt.run_script(template_script)
     # provision the appliance from the newly created template
-    scvmm_appliance = provision_appliance(provider.key, version=version, template=template_name)
+    scvmm_appliance = provision_appliance(
+        provider.key, version=version, template=template_name, vm_name_prefix='test-cfme'
+    )
 
     yield scvmm_appliance
 
