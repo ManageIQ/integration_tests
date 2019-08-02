@@ -35,7 +35,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def tower_manager(config_manager_obj):
-    """ Fixture that sets up Ansible Tower"""
+    """ Fixture that sets up Ansible Tower provider"""
     if config_manager_obj.type == "Ansible Tower":
         config_manager_obj.create(validate=True)
     yield config_manager_obj
@@ -48,8 +48,7 @@ def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog)
     config_manager_obj = tower_manager
     provider_name = config_manager_obj.yaml_data.get('name')
     try:
-        if config_manager_obj.yaml_data['provisioning_data'][job_type]:
-            template = config_manager_obj.yaml_data['provisioning_data'][job_type]
+        template = config_manager_obj.yaml_data['provisioning_data'][job_type]
     except KeyError:
         pytest.skip("No such Ansible template: {} found in cfme_data.yaml".format(job_type))
     catalog_item = appliance.collections.catalog_items.create(
