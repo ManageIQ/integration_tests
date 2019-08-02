@@ -6,7 +6,6 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
-from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 
 
@@ -48,7 +47,10 @@ def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog)
     job_type = 'workflow'
     config_manager_obj = tower_manager
     provider_name = config_manager_obj.yaml_data.get('name')
-    template = config_manager_obj.yaml_data['provisioning_data'][job_type]
+    if config_manager_obj.yaml_data['provisioning_data'][job_type]:
+        template = config_manager_obj.yaml_data['provisioning_data'][job_type]
+    else:
+        pytest.skip("No such Ansible template: {} found in cfme_data.yaml".format(job_type))
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
         name=dialog.label,
@@ -89,7 +91,6 @@ def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem,
     )
 
 
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8610')])
 def test_retire_ansible_workflow(appliance, ansible_workflow_catalog_item, request):
     """Tests retiring of catalog items for Ansible Workflow templates
     Metadata:
