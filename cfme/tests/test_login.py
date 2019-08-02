@@ -239,3 +239,31 @@ def test_credentials_change_password_with_special_characters():
         tags: rbac
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(3)
+@test_requirements.multi_region
+@pytest.mark.parametrize('context', [ViaUI])
+def test_multiregion_displayed_on_login(context):
+    """
+    This test case is to check that Global/Remote region is displayed on login page
+
+    Polarion:
+        assignee: izapolsk
+        initialEstimate: 1/10h
+        caseimportance: low
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: WebUI
+        testSteps:
+            1. Take two or more appliances
+            2. Configure DB manually
+            3. Make one appliance as Global region and others are Remote
+        expectedResults:
+            1.
+            2.
+            3. Global is displayed on login page of appliance in Global region and Remote for others
+    """
+    pass

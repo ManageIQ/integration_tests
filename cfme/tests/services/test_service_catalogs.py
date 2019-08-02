@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
@@ -551,31 +552,22 @@ def test_generic_object_details_displayed_from_a_service_do_not_include_associat
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @test_requirements.multi_region
 @test_requirements.service
-def test_service_provisioning_from_global_region(context):
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@pytest.mark.parametrize('catalog_location', ['global', 'remote'])
+@pytest.mark.parametrize('item_type', ['AMAZON', 'ANSIBLE', 'TOWER', 'AZURE', 'GENERIC',
+                                       'OPENSTACK', 'ORCHESTRATION', 'RHV', 'SCVMM', 'VMWARE'])
+@pytest.mark.provider([InfraProvider], selector=ONE,
+                      required_fields=[['provisioning', 'template'],
+                                       ['provisioning', 'host'],
+                                       ['provisioning', 'datastore']], override=True)
+def test_service_provision_retire_from_global_region(item_type, catalog_location, context):
     """
     Polarion:
         assignee: izapolsk
         caseimportance: medium
         casecomponent: Services
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaREST, ViaUI])
-@test_requirements.multi_region
-@test_requirements.service
-def test_service_retirement_from_global_region(context):
-    """
-    Polarion:
-        assignee: izapolsk
-        caseimportance: medium
-        casecomponent: Services
-        initialEstimate: 1/4h
+        initialEstimate: 1/3h
     """
     pass
