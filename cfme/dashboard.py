@@ -271,7 +271,7 @@ class DashboardWidget(BaseEntity):
         cleaned = [
             x.strip()
             for x
-            in self.widget_view.footer.text.encode("utf-8").strip().split("|")
+            in self.widget_view.footer.text.strip().split("|")
         ]
         result = {}
         for item in cleaned:

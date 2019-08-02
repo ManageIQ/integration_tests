@@ -21,7 +21,7 @@ def compare(db_item, report_item):
     """If one of the item is unfilled, check that the other item is as well.
     If not, check that they contain the same information."""
     if db_item is not None or report_item != '':
-        return db_item.encode('utf8') == report_item
+        return db_item == report_item
     else:
         return db_item is None and report_item == ''
 
@@ -178,11 +178,11 @@ def test_operations_vm_on(soft_assert, appliance, request):
         # Following check is based on BZ 1504010
         assert vm_names.count(vm.vm_name) == 1, (
             'There is a duplicate entry in DB for VM {}'.format(vm.vm_name))
-        store_path = vm.vm_location.encode('utf8')
+        store_path = vm.vm_location
         if vm.storages_name:
-            store_path = '{}/{}'.format(vm.storages_name.encode('utf8'), store_path)
+            store_path = '{}/{}'.format(vm.storages_name, store_path)
         for item in report.data.rows:
-            if vm.vm_name.encode('utf8') == item['VM Name']:
+            if vm.vm_name == item['VM Name']:
                 assert compare(vm.hosts_name, item['Host'])
                 assert compare(vm.storages_name, item['Datastore'])
                 assert compare(store_path, item['Datastore Path'])
@@ -236,8 +236,8 @@ def test_datastores_summary(soft_assert, appliance, request):
             host_storages.storage_id == store.id).count()
 
         store_dict = {
-            'Datastore Name': store.name.encode('utf8'),
-            'Type': store.store_type.encode('utf8'),
+            'Datastore Name': store.name,
+            'Type': store.store_type,
             'Free Space': round_num(store.free_space),
             'Total Space': round_num(store.total_space),
             'Number of Hosts': int(number_of_hosts),
