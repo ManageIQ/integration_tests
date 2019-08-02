@@ -7,6 +7,7 @@ from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.rest import assert_response
 
 
@@ -45,8 +46,8 @@ def new_user(appliance):
     user.delete_if_exists()
 
 
-@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[BZ(1714493)])
 def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
     """
     Polarion:
@@ -62,9 +63,9 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
         '[ ! -d "/var/www/vmdb/data/git_repos{}" ]'.format(repo_path)).success
 
 
-@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(2)
-def test_automate_git_domain_displayed_in_service(appliance, imported_domain):
+@pytest.mark.meta(automates=[BZ(1714493)])
+def test_automate_git_domain_displayed_in_service(appliance):
     """Tests if a domain is displayed in a service.
        Checks if the domain imported from git is displayed and usable in the pop-up tree in the
        dialog for creating services.
@@ -76,27 +77,29 @@ def test_automate_git_domain_displayed_in_service(appliance, imported_domain):
         initialEstimate: 1/20h
         tags: automate
     """
+    url = cfme_data.ansible_links.playbook_repositories.automate_domain
+    repo = appliance.collections.automate_import_exports.instantiate(
+        import_type="git", url=url, verify_ssl=True
+    )
+    imported_domain = repo.import_domain_from(branch="origin/master")
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.GENERIC, "test")
     view = navigate_to(cat_item, "Add")
-    view.provisioning_entry_point.click()
-    view.modal.tree.click_path(
+    path = (
         "Datastore",
         "{0} ({1}) ({0}) (Locked)".format(imported_domain.name, "origin/master"),
         "Service",
-        "Provisioning",
+        "Generic",
         "StateMachines",
-        "ServiceProvision_Template",
-        "CatalogItemInitialization"
+        "GenericLifecycle",
+        "provision"
     )
-    view.modal.include_domain.fill(True)
-    view.modal.apply.click()
-    assert view.provisioning_entry_point.value == ("/{}/Service/Provisioning/StateMachines/"
-        "ServiceProvision_Template/CatalogItemInitialization".format(imported_domain.name))
+    view.provisioning_entry_point.fill(path, include_domain=True)
+    assert view.provisioning_entry_point.value.split('/') == ['', imported_domain.name, *path[2:]]
 
 
-@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(3)
+@pytest.mark.meta(automates=[BZ(1714493)])
 def test_automate_git_import_multiple_domains(request, appliance):
     """
     Importing of multiple domains from a single git repository is not allowed.
@@ -130,7 +133,7 @@ def test_automate_git_import_multiple_domains(request, appliance):
         assert not domain.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1714493)])
+@pytest.mark.meta(automates=[BZ(1714493)])
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
     ("url", "param_type", "param_value", "verify_ssl"),
@@ -199,10 +202,10 @@ def test_domain_import_git(
     assert domain.exists
 
 
-@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1677575])
 def test_import_export_domain_with_ansible_method():
     """This test case tests support of Export/Import of Domain with Ansible Method
 
@@ -230,8 +233,8 @@ def test_import_export_domain_with_ansible_method():
     pass
 
 
-@pytest.mark.meta(blockers=[BZ(1714493)])
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[BZ(1714493)])
 def test_refresh_git_current_user(imported_domain, new_user):
     """
     Polarion:
