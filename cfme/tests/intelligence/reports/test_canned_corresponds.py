@@ -56,8 +56,8 @@ def test_providers_summary(appliance, soft_assert):
         details_view = navigate_to(provider_object, 'Details')
         props = details_view.entities.summary("Properties")
 
-        hostname = ("Host Name", "Hostname")
-        soft_assert(props.get_text_of(hostname[0]) == provider[hostname[1]],
+        hostname = "Hostname" if appliance.version > "5.11" else "Host Name"
+        soft_assert(props.get_text_of(hostname) == provider["Hostname"],
                     "Hostname does not match at {}".format(provider["Name"]))
 
         cpu_cores = props.get_text_of("Aggregate Host CPU Cores")
@@ -254,8 +254,7 @@ def test_datastores_summary(soft_assert, appliance, request):
         row['Number of VMs'] = int(row['Number of VMs'])
 
         report_rows_list.append(row)
-
-    assert sorted(storages_in_db_list) == sorted(report_rows_list)
+    assert sorted(storages_in_db_list, key=str) == sorted(report_rows_list, key=str)
 
 
 def round_num(column):
