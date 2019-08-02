@@ -1,6 +1,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.base.ui import ServerDiagnosticsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
@@ -58,7 +59,9 @@ def test_configuration_dropdown_roles_by_server(appliance, request):
     view.rolesbyservers.configuration.item_select("Suspend Role", handle_alert=True)
 
     request.addfinalizer(
-        lambda: view.rolesbyservers.configuration.item_select("Start Role", handle_alert=True)
+        lambda: view.rolesbyservers.configuration.item_select(
+            "Start Role", handle_alert=True
+        )
     )
 
     view.flash.assert_message("Suspend successfully initiated")
@@ -68,3 +71,40 @@ def test_configuration_dropdown_roles_by_server(appliance, request):
     if BZ(1734393, forced_streams=["5.10"]).blocks:
         view.rolesbyservers.tree.select_item("SmartState Analysis")
     assert "available" in view.rolesbyservers.tree.currently_selected_role
+
+
+@test_requirements.general_ui
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1498090])
+def test_diagnostics_server(appliance):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/15h
+        testSteps:
+            1. Navigate to Configuration and go to Diagnostics accordion.
+            2. Click on Region, click on `Servers` tab
+                and select a server from the table and check the landing page.
+            3. Click on Zone, click on `Servers` tab
+                and select a server from the table and check the landing page.
+        expectedResults:
+            1.
+            2. Landing page must be `Diagnostics Server` summary page.
+            3. Landing page must be `Diagnostics Server` summary page.
+
+    Bugzilla:
+        1498090
+    """
+    required_view = appliance.server.create_view(ServerDiagnosticsView)
+
+    view = navigate_to(appliance.server.zone.region, "Servers")
+    view.servers.table.row(name=appliance.server.name).click()
+    assert required_view.is_displayed
+    assert required_view.summary.is_active()
+
+    view = navigate_to(appliance.server.zone, "Servers")
+    view.servers.table.row(name=appliance.server.name).click()
+    assert required_view.is_displayed
+    assert required_view.summary.is_active()

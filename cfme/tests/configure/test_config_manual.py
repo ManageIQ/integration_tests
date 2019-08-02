@@ -76,36 +76,6 @@ def test_configure_icons_roles_by_server():
 
 
 @pytest.mark.manual
-@test_requirements.general_ui
-@pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1498090])
-def test_diagnostics_server():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/15h
-        testSteps:
-            1. Navigate to Configuration and go to Diagnostics accordion.
-            2. Click on Region.
-            3. Click on `Servers` tab and select a server from the table and check the landing page.
-            4. Click Zone.
-            5. Click on `Servers` tab and select a server from the table and check the landing page.
-        expectedResults:
-            1.
-            2.
-            3. Landing page must be `Diagnostics Server` summary page.
-            4.
-            5. Landing page must be `Diagnostics Server` summary page.
-
-    Bugzilla:
-        1498090
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_replication_subscription_crud():
     """
