@@ -64,7 +64,7 @@ if not conf.runtime['env'].get('ts'):
 
 
 def pytest_addhooks(pluginmanager):
-    from . import hooks
+    from cfme.fixtures.parallelizer import hooks
     pluginmanager.add_hookspecs(hooks)
 
 

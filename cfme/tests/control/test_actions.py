@@ -15,8 +15,6 @@ import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-from . import do_scan
-from . import wait_for_ssa_enabled
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -25,6 +23,8 @@ from cfme.control.explorer import policies
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.tests.control import do_scan
+from cfme.tests.control import wait_for_ssa_enabled
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name

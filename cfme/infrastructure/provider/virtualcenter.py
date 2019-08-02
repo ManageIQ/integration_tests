@@ -2,11 +2,11 @@ import attr
 from widgetastic.exceptions import NoSuchElementException
 from wrapanapi.systems import VMWareSystem
 
-from . import InfraProvider
 from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.exceptions import ItemNotFound
+from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_items import VMwareCatalogItem
 from widgetastic_manageiq import LineChart
 

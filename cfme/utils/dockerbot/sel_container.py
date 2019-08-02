@@ -7,8 +7,8 @@ import click
 from wait_for import TimedOutError
 from wait_for import wait_for
 
-from .dockerbot import SeleniumDocker
 from cfme.utils.conf import docker as docker_conf
+from cfme.utils.dockerbot.dockerbot import SeleniumDocker
 from cfme.utils.net import random_port
 
 

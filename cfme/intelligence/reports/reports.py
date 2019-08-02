@@ -17,8 +17,8 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import CloudIntelReportsView
-from . import ReportsMultiBoxSelect
+from cfme.intelligence.reports import CloudIntelReportsView
+from cfme.intelligence.reports import ReportsMultiBoxSelect
 from cfme.intelligence.reports.schedules import SchedulesFormCommon
 from cfme.intelligence.timelines import CloudIntelTimelinesView
 from cfme.modeling.base import BaseCollection

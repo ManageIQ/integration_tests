@@ -8,11 +8,11 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 
-from . import GenericObjectInstance
-from . import GenericObjectInstanceCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView
+from cfme.generic_objects.instance import GenericObjectInstance
+from cfme.generic_objects.instance import GenericObjectInstanceCollection
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to

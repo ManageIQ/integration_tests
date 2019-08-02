@@ -13,7 +13,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
-from .playbooks import PlaybooksCollection
+from cfme.ansible.playbooks import PlaybooksCollection
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView

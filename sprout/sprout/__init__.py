@@ -5,7 +5,7 @@ try:
     import six.moves.cPickle as pickle
 except ImportError:
     import pickle
-from .celery import app as celery_app
+from sprout.sprout.celery import app as celery_app
 assert celery_app
 
 from django.core.cache import cache

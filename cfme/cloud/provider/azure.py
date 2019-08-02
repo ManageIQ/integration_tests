@@ -1,8 +1,8 @@
 import attr
 from wrapanapi.systems import AzureSystem
 
-from . import CloudProvider
 from cfme.cloud.instance.azure import AzureInstance
+from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView

@@ -3,8 +3,8 @@ import attr
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
 
-from . import CloudIntelReportsView
-from .reports import SavedReportDetailsView as BaseSavedReportDetailsView
+from cfme.intelligence.reports import CloudIntelReportsView
+from cfme.intelligence.reports.reports import SavedReportDetailsView as BaseSavedReportDetailsView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

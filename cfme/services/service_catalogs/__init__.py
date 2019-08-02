@@ -99,6 +99,6 @@ class BaseOrderForm(View):
         return was_change
 
 
-from . import ui, ssui  # NOQA last for import cycles
+from cfme.services.service_catalogs import ui, ssui  # NOQA last for import cycles
 importscan.scan(ui)
 importscan.scan(ssui)

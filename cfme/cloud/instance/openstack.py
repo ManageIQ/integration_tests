@@ -8,9 +8,9 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 
-from . import CloudInstanceView
-from . import Instance
-from . import InstanceCollection
+from cfme.cloud.instance import CloudInstanceView
+from cfme.cloud.instance import Instance
+from cfme.cloud.instance import InstanceCollection
 from cfme.common.vm_views import RightSizeView
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import displayed_not_implemented

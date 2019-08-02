@@ -13,8 +13,8 @@ from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import BaseCatalogItem
 from cfme.services.catalogs import ServicesCatalogView
+from cfme.services.catalogs.catalog_items import BaseCatalogItem
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
 from widgetastic_manageiq import FileInput

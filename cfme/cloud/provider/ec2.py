@@ -5,8 +5,8 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 from wrapanapi.systems import EC2System
 
-from . import CloudProvider
 from cfme.cloud.instance.ec2 import EC2Instance
+from cfme.cloud.provider import CloudProvider
 from cfme.common.candu_views import AzoneCloudUtilizationView
 from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint

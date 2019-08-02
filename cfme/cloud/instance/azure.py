@@ -2,8 +2,8 @@
 import attr
 from riggerlib import recursive_update
 
-from . import Instance
-from . import InstanceCollection
+from cfme.cloud.instance import Instance
+from cfme.cloud.instance import InstanceCollection
 
 
 @attr.s

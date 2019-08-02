@@ -12,7 +12,7 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import FlashMessages
 
-from . import CloudIntelReportsView
+from cfme.intelligence.reports import CloudIntelReportsView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

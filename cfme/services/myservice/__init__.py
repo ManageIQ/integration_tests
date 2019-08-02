@@ -35,6 +35,6 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
         self.parent = self.appliance.context
 
 
-from . import ui, ssui  # NOQA last for import cycles
+from cfme.services.myservice import ui, ssui  # NOQA last for import cycles
 importscan.scan(ui)
 importscan.scan(ssui)

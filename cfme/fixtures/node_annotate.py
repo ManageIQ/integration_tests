@@ -6,7 +6,7 @@ import py
 import pytest
 import yaml
 
-from .pytest_store import store
+from cfme.fixtures.pytest_store import store
 from cfme.utils.conf import cfme_data
 from cfme.utils.path import project_path
 

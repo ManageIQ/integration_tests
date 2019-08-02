@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import attr
 
-from . import Instance
-from . import InstanceCollection
+from cfme.cloud.instance import Instance
+from cfme.cloud.instance import InstanceCollection
 
 
 @attr.s

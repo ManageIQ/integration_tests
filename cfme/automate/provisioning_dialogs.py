@@ -8,7 +8,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Dropdown
 
-from . import AutomateCustomizationView
+from cfme.automate import AutomateCustomizationView
 from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity

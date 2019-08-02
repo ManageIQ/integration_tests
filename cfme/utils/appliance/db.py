@@ -176,7 +176,7 @@ class ApplianceDB(AppliancePlugin):
         Changed from Rake task due to a bug in 5.9
 
         """
-        from . import ApplianceException
+        from cfme.utils.appliance import ApplianceException
         self.logger.info('Backing up database')
         result = self.appliance.ssh_client.run_command(
             'pg_dump --format custom --file {} vmdb_production'.format(
@@ -190,7 +190,7 @@ class ApplianceDB(AppliancePlugin):
         """Restore VMDB database
 
         """
-        from . import ApplianceException
+        from cfme.utils.appliance import ApplianceException
         self.logger.info('Restoring database')
         result = self.appliance.ssh_client.run_rake_command(
             'evm:db:restore:local --trace -- --local-file "{}"'.format(database_path))
@@ -608,7 +608,7 @@ class ApplianceDB(AppliancePlugin):
             msg = ('Appliance {} failed to enable external DB running on {}'
                   .format(self.appliance.hostname, db_address))
             self.logger.error(msg)
-            from . import ApplianceException
+            from cfme.utils.appliance import ApplianceException
             raise ApplianceException(msg)
 
         return result.rc, result.output

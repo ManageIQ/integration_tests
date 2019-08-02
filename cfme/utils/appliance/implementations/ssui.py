@@ -10,10 +10,10 @@ from selenium.common.exceptions import NoSuchElementException
 from widgetastic.browser import Browser
 from widgetastic.browser import DefaultPlugin
 
-from . import Implementation
-from .common import HandleModalsMixin
 from cfme import exceptions
 from cfme.fixtures.pytest_store import store
+from cfme.utils.appliance.implementations import Implementation
+from cfme.utils.appliance.implementations.common import HandleModalsMixin
 from cfme.utils.browser import manager
 from cfme.utils.log import create_sublogger
 from cfme.utils.log import logger

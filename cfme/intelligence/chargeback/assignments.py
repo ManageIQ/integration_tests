@@ -6,7 +6,7 @@ from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 
-from . import ChargebackView
+from cfme.intelligence.chargeback import ChargebackView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to

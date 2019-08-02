@@ -6,7 +6,6 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Input
 from wrapanapi.systems import RedfishSystem
 
-from . import PhysicalProvider
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.exceptions import HostStatsNotContains
@@ -18,6 +17,7 @@ from cfme.physical.physical_rack import PhysicalRack
 from cfme.physical.physical_rack import PhysicalRackCollection
 from cfme.physical.physical_server import PhysicalServer
 from cfme.physical.physical_server import PhysicalServerCollection
+from cfme.physical.provider import PhysicalProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.varmeth import variable

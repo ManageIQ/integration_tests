@@ -16,11 +16,11 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
 
-from . import AutomateExplorerView
-from . import check_tree_path
-from .common import Copiable
-from .common import CopyViewBase
-from .klass import ClassDetailsView
+from cfme.automate.explorer import AutomateExplorerView
+from cfme.automate.explorer import check_tree_path
+from cfme.automate.explorer.common import Copiable
+from cfme.automate.explorer.common import CopyViewBase
+from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity

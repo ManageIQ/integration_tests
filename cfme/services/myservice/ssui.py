@@ -8,9 +8,9 @@ from widgetastic.widget import Text
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import MyService
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.dashboard import Kebab
+from cfme.services.myservice import MyService
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import navigate_to
 from cfme.utils.appliance.implementations.ssui import navigator

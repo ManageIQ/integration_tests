@@ -7,10 +7,10 @@ from widgetastic.widget import Text
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import AutomateExplorerView
-from . import check_tree_path
-from .domain import Domain
-from .domain import DomainDetailsView
+from cfme.automate.explorer import AutomateExplorerView
+from cfme.automate.explorer import check_tree_path
+from cfme.automate.explorer.domain import Domain
+from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -81,7 +81,7 @@ class NamespaceEditView(NamespaceForm):
 class Namespace(BaseEntity):
 
     def __init__(self, collection, name, description=None):
-        from .klass import ClassCollection
+        from cfme.automate.explorer.klass import ClassCollection
         self._collections = {
             'namespaces': NamespaceCollection,
             'classes': ClassCollection

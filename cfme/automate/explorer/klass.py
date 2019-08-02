@@ -15,11 +15,11 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import AutomateExplorerView
-from . import check_tree_path
-from .common import Copiable
-from .common import CopyViewBase
-from .namespace import NamespaceDetailsView
+from cfme.automate.explorer import AutomateExplorerView
+from cfme.automate.explorer import check_tree_path
+from cfme.automate.explorer.common import Copiable
+from cfme.automate.explorer.common import CopyViewBase
+from cfme.automate.explorer.namespace import NamespaceDetailsView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -114,8 +114,8 @@ class ClassEditView(ClassForm):
 
 class Class(BaseEntity, Copiable):
     def __init__(self, collection, name, display_name=None, description=None):
-        from .instance import InstanceCollection
-        from .method import MethodCollection
+        from cfme.automate.explorer.instance import InstanceCollection
+        from cfme.automate.explorer.method import MethodCollection
         self._collections = {
             'instances': InstanceCollection,
             'methods': MethodCollection

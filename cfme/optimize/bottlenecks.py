@@ -7,9 +7,9 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 
-from . import BottlenecksView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.optimize import BottlenecksView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

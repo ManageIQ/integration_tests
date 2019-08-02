@@ -2,12 +2,12 @@
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Menus"""
 import attr
 
-from . import BaseDashboardReportWidget
-from . import BaseDashboardWidgetFormCommon
-from . import BaseEditDashboardWidgetStep
-from . import BaseEditDashboardWidgetView
-from . import BaseNewDashboardWidgetStep
-from . import BaseNewDashboardWidgetView
+from cfme.intelligence.reports.widgets import BaseDashboardReportWidget
+from cfme.intelligence.reports.widgets import BaseDashboardWidgetFormCommon
+from cfme.intelligence.reports.widgets import BaseEditDashboardWidgetStep
+from cfme.intelligence.reports.widgets import BaseEditDashboardWidgetView
+from cfme.intelligence.reports.widgets import BaseNewDashboardWidgetStep
+from cfme.intelligence.reports.widgets import BaseNewDashboardWidgetView
 from cfme.utils.appliance.implementations.ui import navigator
 from widgetastic_manageiq import MenuShortcutsPicker
 

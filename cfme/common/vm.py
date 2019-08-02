@@ -9,9 +9,9 @@ import attr
 from cached_property import cached_property
 from riggerlib import recursive_update
 
-from . import PolicyProfileAssignable
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
+from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis

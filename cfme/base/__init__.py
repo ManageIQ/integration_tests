@@ -366,7 +366,7 @@ class RegionCollection(BaseCollection, sentaku.modeling.ElementMixin):
         return regions
 
 
-from . import ui, ssui, rest  # NOQA last for import cycles
+from cfme.base import ui, ssui, rest  # NOQA last for import cycles
 importscan.scan(ui)
 importscan.scan(ssui)
 importscan.scan(rest)

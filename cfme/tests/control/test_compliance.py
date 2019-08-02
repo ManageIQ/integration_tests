@@ -4,12 +4,12 @@ import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-from . import do_scan
 from cfme import test_requirements
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy
 from cfme.control.explorer.policies import VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.tests.control import do_scan
 from cfme.utils import conf
 from cfme.utils.update import update
 

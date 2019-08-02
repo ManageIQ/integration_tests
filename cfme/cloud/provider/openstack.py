@@ -1,8 +1,8 @@
 import attr
 from wrapanapi.systems import OpenstackSystem
 
-from . import CloudProvider
 from cfme.cloud.instance.openstack import OpenStackInstance
+from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import EventsEndpoint
 from cfme.common.provider import SSHEndpoint
 from cfme.exceptions import ItemNotFound

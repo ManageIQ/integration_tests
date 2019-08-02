@@ -6,8 +6,6 @@ import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-from . import do_scan
-from . import wait_for_ssa_enabled
 from cfme import test_requirements
 from cfme.control.explorer import alert_profiles
 from cfme.control.explorer import policies
@@ -18,6 +16,8 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
+from cfme.tests.control import do_scan
+from cfme.tests.control import wait_for_ssa_enabled
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter

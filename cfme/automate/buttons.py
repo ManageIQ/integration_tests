@@ -16,7 +16,7 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import AutomateCustomizationView
+from cfme.automate import AutomateCustomizationView
 from cfme.base.ui import AutomateSimulationView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity

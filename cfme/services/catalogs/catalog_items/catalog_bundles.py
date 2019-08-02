@@ -6,12 +6,12 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 
-from . import AllCatalogItemView
-from . import BasicInfoForm
-from . import DetailsCatalogItemView
-from . import NonCloudInfraCatalogItem
-from . import ServicesCatalogView
 from cfme.modeling.base import BaseCollection
+from cfme.services.catalogs.catalog_items import AllCatalogItemView
+from cfme.services.catalogs.catalog_items import BasicInfoForm
+from cfme.services.catalogs.catalog_items import DetailsCatalogItemView
+from cfme.services.catalogs.catalog_items import NonCloudInfraCatalogItem
+from cfme.services.catalogs.catalog_items import ServicesCatalogView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

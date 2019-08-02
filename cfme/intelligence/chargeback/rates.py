@@ -16,8 +16,8 @@ from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
-from . import ChargebackView
 from cfme.exceptions import ChargebackRateNotFound
+from cfme.intelligence.chargeback import ChargebackView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
