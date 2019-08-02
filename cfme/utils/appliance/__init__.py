@@ -10,6 +10,7 @@ from copy import copy
 from datetime import datetime
 from time import sleep
 from time import time
+from urllib.parse import urlparse
 
 import attr
 import dateutil.parser
@@ -18,13 +19,11 @@ import lxml.etree
 import pytz
 import requests
 import sentaku
-import six
 import yaml
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException
 from manageiq_client.api import ManageIQClient as VanillaMiqApi
-from six.moves.urllib.parse import urlparse
 from urllib3.exceptions import ConnectionError
 from werkzeug.local import LocalProxy
 from werkzeug.local import LocalStack
@@ -119,7 +118,7 @@ class ApplianceConsole(object):
         result = ''
         try:
             while True:
-                result += channel.recv(1)
+                result += str(channel.recv(1))
                 if ("{}".format(timezone[0])) in result:
                     break
         except socket.timeout:
@@ -131,7 +130,7 @@ class ApplianceConsole(object):
             channel = self.appliance.ssh_client.invoke_shell()
         self.commands = commands
         for command in commands:
-            if isinstance(command, six.string_types):
+            if isinstance(command, str):
                 cmd, timeout = command, timeout
             else:
                 cmd, timeout = command
@@ -141,8 +140,7 @@ class ApplianceConsole(object):
             result = ''
             try:
                 while True:
-                    val = channel.recv(1)
-                    result += val.decode('utf-8') if isinstance(val, bytes) else val
+                    result += str(channel.recv(1))
                     if 'Press any key to continue' in result:
                         break
             except socket.timeout:
@@ -376,7 +374,7 @@ class IPAppliance(object):
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None,
             is_dev=False, version=None,
     ):
-        if not isinstance(hostname, six.string_types):
+        if not isinstance(hostname, str):
             raise TypeError('Appliance\'s hostname must be a string!')
         self.hostname = hostname
         if ui_protocol not in self.PROTOCOL_PORT_MAPPING:
@@ -811,7 +809,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         Returns:
             A :py:class:`IPAppliance` instance.
         """
-        if not isinstance(url, six.string_types):
+        if not isinstance(url, str):
             raise TypeError('url for .from_url must be a string')
         parsed = urlparse(url)
         new_kwargs = {}
@@ -3016,7 +3014,7 @@ def _version_for_version_or_stream(version_or_stream, sprout_client=None):
     if isinstance(version_or_stream, Version):
         return version_or_stream
 
-    assert isinstance(version_or_stream, six.string_types), version_or_stream
+    assert isinstance(version_or_stream, str), version_or_stream
 
     from cfme.test_framework.sprout.client import SproutClient
     sprout_client = SproutClient.from_config() if sprout_client is None else sprout_client
