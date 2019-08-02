@@ -569,7 +569,7 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
     """
     vm_id = appliance.rest_api.collections.vms.get(name=full_vm.name).id
     # get initial disks for later comparison
-    initial_disks = full_vm.configuration.disks
+    initial_disks = [disk.filename for disk in full_vm.configuration.disks]
 
     # add a disk to VM
     add_data = [
@@ -597,10 +597,11 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
     if not (BZ(1691635).blocks and full_vm.provider.one_of(RHEVMProvider)):
 
         # there will always be 2 disks after the disk has been added
-        disk_added = list(set(full_vm.configuration.disks) - set(initial_disks))[0]
+        disks_present = [disk.filename for disk in full_vm.configuration.disks]
+        disk_added = list(set(disks_present) - set(initial_disks))[0]
 
         # remove the newly added disk from VM
-        delete_data = [{"disk_name": disk_added.filename, "delete_backing": False}]
+        delete_data = [{"disk_name": disk_added, "delete_backing": False}]
         vm_reconfig_via_rest(appliance, "disk_remove", vm_id, delete_data)
 
         # assert the disk was removed
