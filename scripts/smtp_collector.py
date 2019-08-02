@@ -70,7 +70,7 @@ def write(what, end="\n"):
 
 class EmailServer(SMTPServer):
     """Simple e-mail server. What does it do is that every mail is put in the database."""
-    def process_message(self, peer, mailfrom, rcpttos, data):
+    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
         message = email.message_from_string(data)
         payload = message.get_payload()
         if isinstance(payload, list):
@@ -199,7 +199,7 @@ def clear_database():
 
 
 def run_email_server(port=1025):
-    EmailServer(("0.0.0.0", port), None)
+    EmailServer(("0.0.0.0", port), None, decode_data=True)
     try:
         asyncore.loop()
     except KeyboardInterrupt:
