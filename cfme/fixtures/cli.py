@@ -304,7 +304,6 @@ def configure_appliances_ha(appliances, pwd):
     """
     apps0, apps1, apps2 = appliances
     app0_ip = apps0.hostname
-    app1_ip = apps1.hostname
 
     # Configure first appliance as dedicated database
     interaction = SSHExpect(apps0)
@@ -392,7 +391,7 @@ def configure_primary_replication_node(appl, pwd):
     interaction.answer('Enter the cluster database username: |root| ', '')
     interaction.answer('Enter the cluster database password: ', pwd)
     interaction.answer('Enter the cluster database password: ', pwd)
-    interaction.answer('Enter the primary database hostname or IP address: |.*| ', app0_ip)
+    interaction.answer('Enter the primary database hostname or IP address: |.*| ', appl.hostname)
     interaction.answer(r'Apply this Replication Server Configuration\? \(Y/N\): ', 'y')
     interaction.answer('Press any key to continue.', '')
 
@@ -459,8 +458,6 @@ def configure_standby_replication_node(appl, pwd, primary_ip):
     interaction.answer('Enter the cluster database password: ', pwd)
     interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
     interaction.answer('Enter the Standby Server hostname or IP address: |.*|', appl.hostname)
-    if repmgr_reconfigure:
-        interaction.answer(r'Continue with configuration\? \(Y/N\): ', 'y')
     interaction.answer(r'Configure Replication Manager \(repmgrd\) for automatic '
                        r'failover\? \(Y/N\): ', 'y')
     interaction.answer(r'Apply this Replication Server Configuration\? \(Y/N\): ', 'y')
@@ -533,6 +530,7 @@ def configure_automatic_failover(appl, primary_ip):
 @pytest.fixture
 def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     configure_appliances_ha(ha_multiple_preupdate_appliances, app_creds["password"])
+    return ha_multiple_preupdate_appliances
 
 
 @pytest.fixture
