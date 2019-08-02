@@ -12,8 +12,9 @@ def main():
 
     for _ in range(3):
         server = random.choice(servers)
-        proc = subprocess.Popen(
-            ['gpg', '--recv-keys', '--keyserver', server] + key_list)
+        gpg_cmd = ['gpg', '--recv-keys', '--keyserver', server] + key_list
+        print("running command: {}".format(" ".join(gpg_cmd)))
+        proc = subprocess.Popen(gpg_cmd)
         proc.wait()
         if proc.returncode == 0:
             sys.exit(proc.returncode)
