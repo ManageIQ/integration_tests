@@ -12,6 +12,7 @@ from pdfminer.pdfpage import PDFPage
 from cfme import test_requirements
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
 
@@ -28,7 +29,7 @@ doc_titles = {
     'providers': 'managing providers',
     'rest': 'red hat cloudforms rest api',
     'scripting': 'scripting actions in cloudforms',
-    'vm_hosts': 'provisioning virtual machines and hosts'}
+    'vm_instances': 'provisioning virtual machines and instances'}
 
 
 def pdf_get_text(file_obj, page_nums):
@@ -108,7 +109,8 @@ def test_contents(appliance, soft_assert):
         else:
             expected.append('cloudforms')
             assert cur_ver.product_version() is not None
-            expected.append(cur_ver.product_version())
+            if not BZ(1723813).blocks:
+                expected.append(cur_ver.product_version())
 
         for exp_str in expected:
             soft_assert(exp_str in pdf_titlepage_text_low, "{} not in {}"
