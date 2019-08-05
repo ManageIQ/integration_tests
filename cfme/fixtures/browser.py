@@ -1,9 +1,8 @@
 import base64
+from urllib.error import URLError
 
 import pytest
-import six
 from py.error import ENOENT
-from six.moves.urllib_error import URLError
 
 import cfme.utils.browser
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
@@ -39,7 +38,7 @@ def pytest_runtest_setup(item):
 
 def pytest_exception_interact(node, call, report):
     from cfme.fixtures.pytest_store import store
-    from six.moves.http_client import BadStatusLine
+    from http.client import BadStatusLine
     from socket import error
     val = safe_string(call.excinfo.value)
     if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
@@ -77,7 +76,7 @@ def pytest_exception_interact(node, call, report):
 
     # base64 encoded to go into a data uri, same for screenshots
     tb = report.longreprtext
-    if not isinstance(tb, six.binary_type):
+    if not isinstance(tb, bytes):
         tb = tb.encode('utf-8')
     full_tb = base64.b64encode(tb)
     # errors are when exceptions are thrown outside of the test call phase

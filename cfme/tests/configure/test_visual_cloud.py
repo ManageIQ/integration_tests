@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-import six
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
@@ -77,7 +76,7 @@ def test_cloud_grid_page_per_item(appliance, request, page, value, set_grid):
         initialEstimate: 1/10h
         tags: settings
     """
-    if isinstance(page, six.string_types):
+    if isinstance(page, str):
         page = getattr(appliance.collections, page)
     if appliance.user.my_settings.visual.grid_view_limit != value:
         appliance.user.my_settings.visual.grid_view_limit = int(value)
@@ -111,7 +110,7 @@ def test_cloud_tile_page_per_item(appliance, request, page, value, set_tile):
         initialEstimate: 1/10h
         tags: settings
     """
-    if isinstance(page, six.string_types):
+    if isinstance(page, str):
         page = getattr(appliance.collections, page)
     if appliance.user.my_settings.visual.tile_view_limit != value:
         appliance.user.my_settings.visual.tile_view_limit = int(value)
@@ -145,7 +144,7 @@ def test_cloud_list_page_per_item(appliance, request, page, value, set_list):
         initialEstimate: 1/10h
         tags: settings
     """
-    if isinstance(page, six.string_types):
+    if isinstance(page, str):
         page = getattr(appliance.collections, page)
     if appliance.user.my_settings.visual.list_view_limit != value:
         appliance.user.my_settings.visual.list_view_limit = int(value)

@@ -1,14 +1,11 @@
-import base64
 import os
 import re
 from textwrap import dedent
 from types import FunctionType
 
 import pytest
-import six
 import sphinx
 import yaml
-from six import iteritems
 from sphinx.ext.napoleon import _skip_member
 from sphinx.ext.napoleon import Config
 from sphinx.ext.napoleon import docstring
@@ -38,8 +35,7 @@ def pytest_collection_modifyitems(items):
         node_name = '{}.{}'.format(item_class, item_name)
         output[node_name] = {}
         docstring = getattr(item.function, '__doc__') or ''
-        output[node_name]['docstring'] = base64.b64encode(
-            docstring if six.PY2 else docstring.encode('utf-8'))
+        output[node_name]['docstring'] = docstring.encode('utf-8')
         output[node_name]['name'] = item_name
 
         # This is necessary to convert AttrDict in metadata, or even metadict(previously)
@@ -136,7 +132,7 @@ def setup(app):
     app.connect('autodoc-process-docstring', _process_docstring)
     app.connect('autodoc-skip-member', _skip_member)
 
-    for name, (default, rebuild) in iteritems(Config._config_values):
+    for name, (default, rebuild) in getattr(Config, '_config_values', {}).items():
         app.add_config_value(name, default, rebuild)
     return {'version': sphinx.__version__, 'parallel_read_safe': True}
 

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
+from urllib.request import urlopen
 
 import fauxfactory
 import pytest
-from six.moves.urllib.request import urlopen
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider

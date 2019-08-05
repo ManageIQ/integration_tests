@@ -8,6 +8,7 @@ from collections import namedtuple
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
+from urllib.error import URLError
 
 import requests
 from cached_property import cached_property
@@ -18,7 +19,6 @@ from selenium.webdriver.common import keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
-from six.moves.urllib_error import URLError
 from werkzeug.local import LocalProxy
 
 from cfme.fixtures.pytest_store import store

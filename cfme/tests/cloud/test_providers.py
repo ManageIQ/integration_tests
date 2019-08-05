@@ -3,10 +3,10 @@
 # pylint: disable=W0621
 import os
 import uuid
+from urllib.parse import urljoin
 
 import fauxfactory
 import pytest
-from six.moves.urllib.parse import urljoin
 from wait_for import wait_for
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from wrapanapi import VmState

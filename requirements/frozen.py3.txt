@@ -285,7 +285,6 @@ sentaku==0.6.4
 setuptools-scm==3.3.3
 shyaml==0.6.1
 simplejson==3.16.0
-six==1.12.0
 slumber==0.7.1
 smmap2==2.0.5
 snowballstemmer==1.2.1

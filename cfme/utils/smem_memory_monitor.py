@@ -7,7 +7,6 @@ from collections import OrderedDict
 from datetime import datetime
 from threading import Thread
 
-import six
 import yaml
 from yaycl import AttrDict
 
@@ -982,7 +981,7 @@ def get_scenario_html(scenario_data):
 
 def create_dict(attr_dict):
     main_dict = dict(attr_dict)
-    for key, value in six.iteritems(main_dict):
+    for key, value in main_dict.items():
         if type(value) == AttrDict:
             main_dict[key] = create_dict(value)
     return main_dict

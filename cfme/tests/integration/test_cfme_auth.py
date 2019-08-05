@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 from fauxfactory import gen_alphanumeric
-from six import iteritems
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -84,7 +83,7 @@ def pytest_generate_tests(metafunc):
     for mode in test_param_maps.keys():
         for auth_type in test_param_maps.get(mode, {}):
             eligible_providers = {key: prov_dict
-                                  for key, prov_dict in iteritems(auth_data.auth_providers)
+                                  for key, prov_dict in auth_data.auth_providers.items()
                                   if prov_dict.type == auth_type}
             for user_type in test_param_maps[mode][auth_type]['user_types']:
                 for key, prov_dict in eligible_providers.items():

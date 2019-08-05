@@ -4,8 +4,6 @@ import math
 import re
 from collections import namedtuple
 
-import six
-
 
 # TODO: Split the 1000 and 1024 factor out. Now it is not an issue as it is used FOR COMPARISON ONLY
 FACTOR = 1024
@@ -77,7 +75,7 @@ class Unit(object):
         return type(self)(int_or_float, PREFIXES[0], self.unit_type)
 
     def _cast_other_to_same(self, other):
-        if isinstance(other, six.string_types):
+        if isinstance(other, str):
             other = self.parse(other)
         elif isinstance(other, (int, float)):
             other = self._as_same_unit(other)

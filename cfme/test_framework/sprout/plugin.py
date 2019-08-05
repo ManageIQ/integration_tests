@@ -1,11 +1,11 @@
 import random
 import re
 from threading import Timer
+from urllib.parse import urlparse
 
 import attr
 import pytest
 from cached_property import cached_property
-from six.moves.urllib.parse import urlparse
 
 from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient

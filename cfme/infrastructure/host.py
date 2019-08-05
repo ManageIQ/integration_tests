@@ -3,7 +3,6 @@
 import json
 
 import attr
-import six
 from manageiq_client.api import APIException
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
@@ -258,7 +257,7 @@ class Host(
         # TODO: Move to Sentaku
         try:
             host = self.appliance.rest_api.collections.hosts.get(name=self.name)
-            if isinstance(credentials['default'], six.string_types):
+            if isinstance(credentials['default'], str):
                 creds = self.Credential.from_config(credentials["default"])
             elif isinstance(credentials['default'], self.Credential):
                 creds = credentials['default']

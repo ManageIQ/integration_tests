@@ -13,8 +13,6 @@ from collections import Mapping
 from collections import OrderedDict
 from copy import copy
 
-import six
-
 from cfme.common.provider import all_types
 from cfme.exceptions import UnknownProviderType
 from cfme.utils import conf
@@ -97,7 +95,7 @@ class ProviderFilter(object):
                 field_ident, field_value = field_or_fields
             else:
                 field_ident, field_value = field_or_fields, None
-            if isinstance(field_ident, six.string_types):
+            if isinstance(field_ident, str):
                 if field_ident not in provider.data:
                     return False
                 else:
@@ -135,12 +133,12 @@ class ProviderFilter(object):
             test_flags = [flag.strip() for flag in self.required_flags]
 
             defined_flags = conf.cfme_data.get('test_flags', '')
-            if isinstance(defined_flags, six.string_types):
+            if isinstance(defined_flags, str):
                 defined_flags = defined_flags.split(',')
             defined_flags = [flag.strip() for flag in defined_flags]
 
             excluded_flags = provider.data.get('excluded_test_flags', '')
-            if isinstance(excluded_flags, six.string_types):
+            if isinstance(excluded_flags, str):
                 excluded_flags = excluded_flags.split(',')
             excluded_flags = [flag.strip() for flag in excluded_flags]
 
@@ -250,7 +248,7 @@ def list_providers(filters=None, use_global_filters=True):
 
     Returns: List of provider crud objects.
     """
-    if isinstance(filters, six.string_types):
+    if isinstance(filters, str):
         raise TypeError(
             'You are probably using the old-style invocation of provider setup functions! '
             'You need to change it appropriately.')
@@ -388,7 +386,7 @@ def get_mgmt(provider_key, providers=None, credentials=None):
         provider_kwargs['username'] = provider_kwargs['principal']
         provider_kwargs['password'] = provider_kwargs['secret']
 
-    if isinstance(provider_key, six.string_types):
+    if isinstance(provider_key, str):
         provider_kwargs['provider_key'] = provider_key
     provider_kwargs['logger'] = logger
 

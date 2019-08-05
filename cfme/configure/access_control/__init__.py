@@ -1,5 +1,4 @@
 import attr
-import six
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.utils import Version
@@ -793,7 +792,7 @@ class Group(BaseEntity, Taggable):
         updated_result = False
         if item is not None:
             if update:
-                if isinstance(item, six.string_types):
+                if isinstance(item, str):
                     updated_result = tab_view.fill({
                         'tag_mode': 'Tags Based On Expression',
                         'tag_settings': {'tag_expression': item}})

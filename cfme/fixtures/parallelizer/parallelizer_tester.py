@@ -10,7 +10,6 @@ import random
 from time import sleep
 
 import pytest
-from six.moves import range
 # uncommment this to slow things down, if desired
 # pytestmark= pytest.mark.usefixtures("wait")
 

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from urllib.parse import urlparse
 
 import fauxfactory
 import pytest
 from dateutil.relativedelta import relativedelta
-from six.moves.urllib.parse import urlparse
 
 from cfme.utils import conf
 from cfme.utils import testgen

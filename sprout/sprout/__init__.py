@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from contextlib import contextmanager
-try:
-    import six.moves.cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
+
 from sprout.sprout.celery import app as celery_app
 assert celery_app
 

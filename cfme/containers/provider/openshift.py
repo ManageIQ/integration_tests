@@ -1,8 +1,8 @@
 from os import path
+from urllib.error import URLError
 
 import attr
 from cached_property import cached_property
-from six.moves.urllib.error import URLError
 from wrapanapi.systems.container import Openshift
 
 from cfme.common import Taggable

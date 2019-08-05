@@ -22,7 +22,6 @@ import shutil
 import time
 from copy import deepcopy
 
-import six
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from py.path import local
@@ -247,7 +246,7 @@ class ReporterBase(object):
         and the duration.
         """
 
-        if isinstance(path, six.string_types):
+        if isinstance(path, str):
             segs = process_pytest_path(path)
         else:
             segs = path

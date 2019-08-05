@@ -6,7 +6,6 @@ from traceback import format_exc
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from six import string_types
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
 from widgetastic.widget import View
@@ -592,7 +591,7 @@ class ContainerObjectAllBaseView(ProvidersView):
 
     @property
     def summary_text(self):
-        if isinstance(self.SUMMARY_TEXT, (string_types, type(None))):
+        if isinstance(self.SUMMARY_TEXT, (str, type(None))):
             return self.SUMMARY_TEXT
         else:
             return self.SUMMARY_TEXT.pick(self.context['object'].appliance.version)
@@ -642,7 +641,7 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
 
     @property
     def summary_text(self):
-        if isinstance(self.SUMMARY_TEXT, (string_types, type(None))):
+        if isinstance(self.SUMMARY_TEXT, (str, type(None))):
             return self.SUMMARY_TEXT
         else:
             return self.SUMMARY_TEXT.pick(self.context['object'].appliance.version)

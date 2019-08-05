@@ -3,7 +3,6 @@ from distutils.version import LooseVersion
 
 import attr
 import pytest
-import six
 from cached_property import cached_property
 
 from cfme.markers.env import EnvironmentMarker
@@ -203,7 +202,7 @@ def all_required(miq_version, filters=None):
     # Build up a list of data providers by iterating the types list from above
     dprovs = []
     for cat, prov_type_or_dict in types:
-        if isinstance(prov_type_or_dict, six.string_types):
+        if isinstance(prov_type_or_dict, str):
             # If the provider is versionless, ie, EC2, GCE, set the version number to 0
             dprovs.append(DataProvider(cat, prov_type_or_dict, 0))
         else:

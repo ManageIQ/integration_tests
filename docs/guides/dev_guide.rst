@@ -306,7 +306,6 @@ General Notes
 * If you feel icky about something you've written but don't know how to make
   it better, ask someone. It's better to have it fixed before submitting it as
   a pull request ;)
-* Use :py:mod:`six` library to write Python 3 compatible code.
 
 Other useful code style guidelines:
 

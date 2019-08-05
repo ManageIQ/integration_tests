@@ -5,6 +5,8 @@ import re
 import subprocess
 import time
 from collections import namedtuple
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 import click
 import diaper
@@ -12,8 +14,6 @@ import jenkins
 import py
 import requests
 from requests.auth import HTTPBasicAuth
-from six.moves.urllib.parse import urlsplit
-from six.moves.urllib.parse import urlunsplit
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import IPAppliance

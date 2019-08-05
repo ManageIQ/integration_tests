@@ -1,6 +1,7 @@
+from urllib.parse import urlparse
+
 import attr
 import pytest
-import six.moves.urllib.parse
 
 from cfme.fixtures import terminalreporter
 from cfme.utils import conf
@@ -21,7 +22,7 @@ def pytest_addoption(parser):
 def appliances_from_cli(cli_appliances, appliance_version):
     appliance_config = dict(appliances=[])
     for appliance_data in cli_appliances:
-        parsed_url = six.moves.urllib.parse.urlparse(appliance_data['hostname'])
+        parsed_url = urlparse(appliance_data['hostname'])
         if not parsed_url.hostname:
             raise ValueError(
                 "Invalid appliance url: {}".format(appliance_data)

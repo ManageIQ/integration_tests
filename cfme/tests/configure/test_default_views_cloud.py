@@ -2,7 +2,6 @@
 import random
 
 import pytest
-from six import string_types
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
@@ -66,7 +65,7 @@ def test_cloud_default_view(appliance, group_name, expected_view):
     old_default = default_views.get_default_view(group_name, fieldset='Clouds')
     default_views.set_default_view(group_name, expected_view, fieldset='Clouds')
     # gtl_params.values(), source of page, are mix of class and collection name
-    nav_cls = getattr(appliance.collections, page) if isinstance(page, string_types) else page
+    nav_cls = getattr(appliance.collections, page) if isinstance(page, str) else page
     selected_view = navigate_to(nav_cls, 'All', use_resetter=False).toolbar.view_selector.selected
     assert expected_view == selected_view, '{} view setting failed'.format(expected_view)
     default_views.set_default_view(group_name, old_default, fieldset='Clouds')
