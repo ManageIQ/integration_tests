@@ -91,7 +91,7 @@ def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem,
     )
 
 
-def test_retire_ansible_workflow(appliance, ansible_workflow_catalog_item, request):
+def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, request):
     """Tests retiring of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
@@ -102,7 +102,7 @@ def test_retire_ansible_workflow(appliance, ansible_workflow_catalog_item, reque
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    service_catalogs = ServiceCatalogs(appliance, ansible_workflow_catitem.name.catalog,
+    service_catalogs = ServiceCatalogs(appliance, ansible_workflow_catitem.catalog,
         ansible_workflow_catitem.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', ansible_workflow_catitem.name)
