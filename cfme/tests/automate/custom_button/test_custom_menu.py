@@ -30,11 +30,19 @@ ADVANCE_SETTING_CUSTOM_MENU = {
 }
 
 
-@pytest.mark.manual
+def update_adv_setting_and_wait(appliance, data):
+    """
+    This local method will help to update advance settings, restart evmserverd and wait for ui
+    """
+    appliance.update_advanced_settings(data)
+    appliance.evmserverd.restart()
+    appliance.wait_for_web_ui()
+
+
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1678151])
-def test_custom_menu_display(appliance):
+@pytest.mark.meta(automates=[1678151])
+def test_custom_menu_display(appliance, request):
     """Add Custom Menu in Left Navigation bar as Admin
 
     Requirements for custom menu
@@ -69,7 +77,7 @@ def test_custom_menu_display(appliance):
                 :href: https://manageiq.org
                 :rbac: vm_explorer
             ```
-            3. reboot appliance
+            3. restart evmserverd / reboot appliance
             4. Check Navigation bar
         expectedResults:
             1.
@@ -80,11 +88,12 @@ def test_custom_menu_display(appliance):
     Bugzilla:
         1678151
     """
-    appliance.update_advanced_settings(ADVANCE_SETTING_CUSTOM_MENU)
-    appliance.reboot()
+    update_adv_setting_and_wait(appliance, ADVANCE_SETTING_CUSTOM_MENU)
+    request.addfinalizer(lambda: update_adv_setting_and_wait(appliance, {"ui": "<<reset>>"}))
+
     view = navigate_to(appliance.server, "LoggedIn")
 
     for menu in ["RedHat", "ManageIQ"]:
         view.navigation.select(menu)
         assert view.navigation.currently_selected == [menu]
-        assert "id={}".format(menu.lower()) in appliance.browser.selenium.current_url
+        assert "id={}".format(menu.lower()) in view.browser.selenium.current_url
