@@ -315,6 +315,7 @@ def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_
 
 
 @pytest.mark.manual
+@pytest.mark.ignore_stream("5.10")
 def test_custom_button_open_url_evm_obj(setup_obj, button_group):
     """ Test Open url functionality of custom button.
 
