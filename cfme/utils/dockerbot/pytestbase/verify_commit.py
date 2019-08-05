@@ -20,6 +20,7 @@ def main():
             print("Good sig and match for {}".format(gpg))
             sys.exit(0)
     print("ERROR: Bad signature. Please sign your commits!")
+    print("git output: {}".format(output))
     sys.exit(127)
 
 
