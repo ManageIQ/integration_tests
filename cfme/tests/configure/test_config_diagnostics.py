@@ -65,6 +65,6 @@ def test_configuration_dropdown_roles_by_server(appliance, request):
 
     assert log.validate(wait="20s")
 
-    if BZ(1734393, forced_streams=["5.11", "5.10"]).blocks:
+    if BZ(1734393, forced_streams=["5.10"]).blocks:
         view.rolesbyservers.tree.select_item("SmartState Analysis")
     assert "available" in view.rolesbyservers.tree.currently_selected_role
