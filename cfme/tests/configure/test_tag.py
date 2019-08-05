@@ -14,7 +14,6 @@ from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -121,7 +120,7 @@ def test_map_tagging_crud(appliance, category, soft_assert):
 
     map_tag_entity.delete()
     view = appliance.browser.create_view(navigator.get_class(map_tags_collection, 'All').VIEW)
-    if not BZ(1707328, forced_streams=["5.11"]).blocks:
+    if appliance.version >= "5.11":  # BZ 1707328 is fixed only for 5.11
         view.flash.assert_success_message('Container Label Tag Mapping "{}": Delete successful'
                                           .format(map_tag_entity.label))
 
