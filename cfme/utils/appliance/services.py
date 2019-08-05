@@ -87,11 +87,7 @@ class SystemdService(AppliancePlugin):
 
     @property
     def is_active(self):
-        result = self._run_service_command("status")
-        if 'inactive' in result.output:
-            return False
-        else:
-            return True
+        return self._run_service_command('is-active').rc == 0
 
     @property
     def running(self):

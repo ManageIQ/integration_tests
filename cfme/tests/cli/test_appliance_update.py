@@ -12,10 +12,15 @@ from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
+from cfme.utils.version import get_stream
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for_decorator
+
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 pytestmark = [
@@ -26,27 +31,38 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     """The following lines generate appliance versions based from the current build.
-    Appliance version is split and minor_build is picked out for generating each version
+    Appliance version is split and z-version is picked out for generating each version
     and appending it to the empty versions list"""
-    versions = []
     version = find_appliance(metafunc).version
+    versions = []
 
-    split_ver = str(version).split(".")
-    try:
-        minor_build = split_ver[2]
-        assert int(minor_build) != 0
-    except IndexError:
-        logger.exception('Caught IndexError generating for test_appliance_update, skipping')
-    except AssertionError:
-        logger.debug('Caught AssertionError: No previous z-stream version to update from')
-        versions.append(
-            pytest.param(
-                "bad:{!r}".format(version),
-                marks=pytest.mark.uncollect('Could not parse minor_build from: {}'.format(version))
-            )
-        )
-    except Exception:  # diaper just in case
-        logger.exception('Exception hit parsing version for test_appliance_update')
+    old_version_pytest_arg = metafunc.config.getoption('old_version')
+    if old_version_pytest_arg == 'same':
+        versions.append(version)
+    elif old_version_pytest_arg is None:
+        split_ver = str(version).split(".")
+        try:
+            z_version = int(split_ver[2])
+        except (IndexError, ValueError) as e:
+            logger.exception("Couldn't parse version: %s, skipping", e)
+            versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.uncollect(
+                reason='Could not parse z_version from: {}'.format(version)
+            )))
+        else:
+            z_version = z_version - 1
+            if z_version < 0:
+                reason_str = ('No previous z-stream version to update from: {}'
+                    .format(version))
+                logger.debug(reason_str)
+                versions.append(pytest.param(
+                    "bad:{!r}".format(version),
+                    marks=pytest.mark.uncollect(reason=reason_str)
+                ))
+            else:
+                versions.append("{split_ver[0]}.{split_ver[1]}.{z_version}".format(
+                    split_ver=split_ver, z_version=z_version))
+    else:
+        versions.append(old_version_pytest_arg)
     metafunc.parametrize('old_version', versions, indirect=True)
 
 
@@ -94,6 +110,15 @@ def appliance_preupdate(old_version, appliance):
     sp.destroy_pool(pool_id)
 
 
+def do_yum_update(appliance):
+    appliance.evmserverd.stop()
+    with appliance.ssh_client as ssh:
+        result = ssh.run_command('yum update -y', timeout=3600)
+        assert result.success, "update failed {}".format(result.output)
+    appliance.evmserverd.start()
+    appliance.wait_for_web_ui()
+
+
 @pytest.mark.rhel_testing
 def test_update_yum(appliance_preupdate, appliance):
     """Tests appliance update between versions
@@ -104,12 +129,7 @@ def test_update_yum(appliance_preupdate, appliance):
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    appliance_preupdate.evmserverd.stop()
-    with appliance_preupdate.ssh_client as ssh:
-        result = ssh.run_command('yum update -y', timeout=3600)
-        assert result.success, "update failed {}".format(result.output)
-    appliance_preupdate.evmserverd.start()
-    appliance_preupdate.wait_for_web_ui()
+    do_yum_update(appliance_preupdate)
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version
 
@@ -128,7 +148,7 @@ def test_update_webui(appliance_with_providers, appliance, request, old_version)
     update_appliance(appliance_with_providers)
 
     wait_for(do_appliance_versions_match, func_args=(appliance, appliance_with_providers),
-             num_sec=900, delay=20, handle_exception=True,
+             num_sec=1200, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appliance_with_providers)
@@ -176,36 +196,43 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
         initialEstimate: 1/4h
     """
     update_appliance(enabled_embedded_appliance)
-    wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
-             num_sec=900, delay=20, handle_exception=True,
-             message='Waiting for appliance to update')
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=90)
-    assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running, num_sec=60)
-    assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running, num_sec=60)
-    repositories = enabled_embedded_appliance.collections.ansible_repositories
-    name = "example_{}".format(fauxfactory.gen_alpha())
-    description = "edited_{}".format(fauxfactory.gen_alpha())
-    try:
-        repository = repositories.create(
-            name=name,
-            url=cfme_data.ansible_links.playbook_repositories.console_db,
-            description=description)
-    except KeyError:
-        pytest.skip("Skipping since no such key found in yaml")
-    view = navigate_to(repository, "Details")
-    refresh = view.toolbar.refresh.click
-    wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status").lower() == "successful",
-        timeout=60,
-        fail_func=refresh
-    )
+    with enabled_embedded_appliance:
+        wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
+                num_sec=900, delay=20, handle_exception=True,
+                message='Waiting for appliance to update')
+    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running,
+                    num_sec=180)
+    assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running,
+                    num_sec=60)
+    assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running,
+                    num_sec=60)
+    enabled_embedded_appliance.wait_for_web_ui()
+
+    with enabled_embedded_appliance:
+        repositories = enabled_embedded_appliance.collections.ansible_repositories
+        name = "example_{}".format(fauxfactory.gen_alpha())
+        description = "edited_{}".format(fauxfactory.gen_alpha())
+        try:
+            repository = repositories.create(
+                name=name,
+                url=cfme_data.ansible_links.playbook_repositories.console_db,
+                description=description)
+        except KeyError:
+            pytest.skip("Skipping since no such key found in yaml")
+        view = navigate_to(repository, "Details")
+        refresh = view.toolbar.refresh.click
+
+        @wait_for_decorator(timeout=60, fail_func=refresh)
+        def success():
+            properties = view.entities.summary("Properties")
+            return properties.get_text_of("Status").lower() == "successful"
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_update_distributed_webui(ext_appliances_with_providers, appliance, request, old_version,
-                                  soft_assert):
+def test_update_distributed_webui(ext_appliances_with_providers, appliance,
+        request, old_version, soft_assert):
     """ Tests updating an appliance with providers, also confirms that the
-            provisioning continues to function correctly after the update has completed
+    provisioning continues to function correctly after the update has completed
 
     Polarion:
         assignee: jhenner
@@ -214,12 +241,13 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance, requ
         initialEstimate: 1/4h
     """
     update_appliance(ext_appliances_with_providers[0])
-    wait_for(do_appliance_versions_match, func_args=(appliance, ext_appliances_with_providers[0]),
-             num_sec=900, delay=20, handle_exception=True,
-             message='Waiting for appliance to update')
-    wait_for(do_appliance_versions_match, func_args=(appliance, ext_appliances_with_providers[1]),
-             num_sec=900, delay=20, handle_exception=True,
-             message='Waiting for appliance to update')
+    for updated_appliance in ext_appliances_with_providers:
+        wait_for(do_appliance_versions_match, func_args=(appliance, updated_appliance),
+                num_sec=900, delay=20, handle_exception=True,
+                message='Waiting for appliance to update')
+        updated_appliance.evmserverd.wait_for_running()
+        updated_appliance.wait_for_web_ui()
+
     # Verify that existing provider can detect new VMs on both apps
     virtual_crud_appl1 = provider_app_crud(VMwareProvider, ext_appliances_with_providers[0])
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, ext_appliances_with_providers[1])
@@ -252,6 +280,10 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
              func_args=(appliance, replicated_appliances_with_providers[1]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
+    replicated_appliances_with_providers[0].evmserverd.wait_for_running()
+    replicated_appliances_with_providers[1].evmserverd.wait_for_running()
+    replicated_appliances_with_providers[0].wait_for_web_ui()
+    replicated_appliances_with_providers[1].wait_for_web_ui()
 
     # Assert providers exist after upgrade and replicated to second appliances
     assert providers_before_upgrade == set(
@@ -266,8 +298,9 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_version):
-    """ Tests updating an appliance with providers, also confirms that the
+@pytest.mark.parametrize("update_strategy", [update_appliance, do_yum_update], ids=["webui", "yum"])
+def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, request, old_version):
+    """ Tests updating an appliance with providers using webui, also confirms that the
             provisioning continues to function correctly after the update has completed
 
     Polarion:
@@ -276,22 +309,29 @@ def test_update_ha_webui(ha_appliances_with_providers, appliance, request, old_v
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    update_appliance(ha_appliances_with_providers[2])
+    evm_log = '/var/www/miq/vmdb/log/evm.log'
+    update_strategy(ha_appliances_with_providers[2])
     wait_for(do_appliance_versions_match, func_args=(appliance, ha_appliances_with_providers[2]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
-    # Cause failover to occur
-    result = ha_appliances_with_providers[0].ssh_client.run_command(
-        'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-    assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
 
-    def is_failover_started():
-        return ha_appliances_with_providers[2].ssh_client.run_command(
-            "grep 'Starting to execute failover' /var/www/miq/vmdb/log/ha_admin.log").success
+    if BZ(1704835, forced_streams=get_stream(ha_appliances_with_providers[2].version)).blocks:
+        with LogValidator(evm_log,
+                          matched_patterns=[r'Starting database failover monitor'],
+                          hostname=ha_appliances_with_providers[2].hostname).waiting(wait=30):
+            ha_appliances_with_providers[2].evm_failover_monitor.restart()
 
-    wait_for(is_failover_started, timeout=450, handle_exception=True,
-             message='Waiting for HA failover')
-    ha_appliances_with_providers[2].wait_for_evm_service()
+    assert ha_appliances_with_providers[2].evm_failover_monitor.running
+
+    with LogValidator(evm_log,
+                      matched_patterns=['Starting to execute failover'],
+                      hostname=ha_appliances_with_providers[2].hostname).waiting(wait=450):
+        # Cause failover to occur
+        result = ha_appliances_with_providers[0].ssh_client.run_command(
+            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
+        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+
+    ha_appliances_with_providers[2].evmserverd.wait_for_running()
     ha_appliances_with_providers[2].wait_for_web_ui()
     # Verify that existing provider can detect new VMs
     virtual_crud = provider_app_crud(VMwareProvider, ha_appliances_with_providers[2])

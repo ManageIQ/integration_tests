@@ -311,6 +311,7 @@ class IPAppliance(object):
     collectd = SystemdService.declare(unit_name='collectd')
     evminit = SystemdService.declare(unit_name='evminit')
     evmserverd = SystemdService.declare(unit_name='evmserverd')
+    evm_failover_monitor = SystemdService.declare(unit_name='evm-failover-monitor')
     httpd = SystemdService.declare(unit_name='httpd')
     merkyl = SystemdService.declare(unit_name='merkyl')
     nginx = SystemdService.declare(unit_name='nginx')
@@ -446,7 +447,14 @@ class IPAppliance(object):
 
     @property
     def server(self):
-        return self.collections.servers.get_master()
+        sid = self._rest_api_server().id
+        return self.collections.servers.instantiate(sid=sid)
+
+    def _rest_api_server(self):
+        shref = self.appliance.rest_api.server_info['server_href']
+        results = self.appliance.rest_api.collections.servers.all
+        server, = (r for r in results if r.href == shref)
+        return server
 
     @property
     def user(self):
@@ -1042,6 +1050,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 'container': self.container,
                 'is_pod': self.is_pod,
                 'port': self.ssh_port,
+                'strict_host_key_checking': False,
             }
         connect_kwargs.update({'is_dev': self.is_dev})
 
@@ -1549,7 +1558,13 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
     def _check_appliance_ui_wait_fn(self):
         # Get the URL, don't verify ssl cert
         try:
-            response = requests.get(self.url, timeout=15, verify=False)
+            # If we don't request text/html, there is a short window during the
+            # appliance HA DB failover when the evmserverd is not in OK state
+            # but returns HTTP 200 while with requesting the text/html, we get
+            # HTTP 500. Browsers are requesting the text/html, so we should.
+            # probably as well.
+            response = requests.get(self.url, timeout=15, verify=False,
+                                    headers={'Accept': 'text/html'})
             if response.status_code == 200:
                 self.log.info("Appliance online")
                 return True
