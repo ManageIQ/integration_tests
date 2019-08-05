@@ -13,6 +13,8 @@ ROLE = 'User Role'
 BROWSER = 'Browser'
 BROWSER_VERSION = 'Browser Version'
 BROWSER_OS = 'Browser OS'
+ZONE = "Zone"
+REGION = "Region"
 
 
 class MIQAboutModal(AboutModal):
