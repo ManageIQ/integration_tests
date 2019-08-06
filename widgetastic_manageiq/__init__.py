@@ -61,6 +61,7 @@ from widgetastic_patternfly import Tab
 from widgetastic_patternfly import VerticalNavigation
 
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ManyEntitiesFound
 
 
 class DynamicTableAddError(Exception):
@@ -5760,3 +5761,31 @@ class EntryPoint(View, ClickableMixin):
     @property
     def is_displayed(self):
         return self.textbox.is_displayed
+
+
+class DiagnosticsTreeView(BootstrapTreeview):
+    @property
+    def items(self):
+        # read_contents method returns [:server_info, [:role1, :role2,..]]
+        # and since we only need roles, we use indexing
+        return self.read_contents()[-1]
+
+    def select_item(self, name, parent=None):
+        if not parent:
+            parent = self.root_item
+        item_lst = self.child_items_with_text(parent, name)
+        if len(item_lst) == 1:
+            item_lst[0].click()
+            return True
+        elif len(item_lst) > 1:
+            raise ManyEntitiesFound(
+                "More than 1 items partially matching name '{}' found.".format(name)
+            )
+        else:
+            raise ItemNotFound("No items partially matching name '{}' found.".format(name))
+
+    @property
+    def currently_selected_role(self):
+        # currently_selected returns [:server_info, :role_info] and since we only need
+        # currently selected role, we use indexing
+        return self.currently_selected[-1]
