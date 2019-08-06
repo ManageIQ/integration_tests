@@ -239,7 +239,7 @@ def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
         flash = 'Credential validation was not successful: Invalid Google JSON key'
         default_credentials.service_account = '{"test": "bad"}'
     elif provider.one_of(OpenStackProvider):
-        for endp_name in provider.endpoints.keys():
+        for endp_name in list(provider.endpoints.keys()):
             if endp_name != 'default':
                 del provider.endpoints[endp_name]
 
