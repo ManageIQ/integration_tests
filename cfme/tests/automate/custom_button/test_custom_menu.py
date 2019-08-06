@@ -7,6 +7,7 @@ pytestmark = [test_requirements.custom_button]
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(coverage=[1678151])
 def test_custom_menu_display():
     """Add Custom Menu in Left Navigation bar as Admin
