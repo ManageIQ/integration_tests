@@ -2,7 +2,6 @@
 import random
 import time
 
-import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -14,6 +13,7 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -615,39 +615,38 @@ def test_guest_os_shutdown(appliance, provider, testing_vm_tools, ensure_vm_runn
                     "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
 
+@pytest.fixture(scope="function")
+def new_user(request, appliance):
+    user, user_data = _users(request, appliance, group="EvmGroup-vm_user")
+    yield appliance.collections.users.instantiate(
+        name=user[0].name,
+        credential=Credential(principal=user_data[0]["userid"], secret=user_data[0]["password"]),
+    )
+
+    if user[0].exists:
+        user[0].action.delete()
+
+
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1687597])
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
-def test_retire_vm_with_vm_user_role(request, appliance, testing_vm):
+def test_retire_vm_with_vm_user_role(new_user, appliance, testing_vm):
     """
+    Bugzilla:
+        1687597
+
     Polarion:
         assignee: ghubale
         initialEstimate: 1/8h
         caseposneg: positive
         startsin: 5.10
         casecomponent: Automate
-
-    Bugzilla:
-        1687597
+        setup:
+            1. Provision vm
+        testSteps:
+            1. Create custom user with 'EvmRole_vm-user' role
+            2. Retire VM by log-in to custom user
     """
-    # Using group - "EvmGroup-vm_user" because this is attached to role - "EvmRole-vm_user"
-    user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
-
-    # Creating a user with 'EvmGroup-vm_user' group to retire VM provisioned by admin
-    new_user = appliance.collections.users.create(
-        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-        credential=Credential(
-            principal="uid{}".format(fauxfactory.gen_alphanumeric(4)),
-            secret="{password}".format(password=fauxfactory.gen_alphanumeric(4)),
-        ),
-        email=fauxfactory.gen_email(),
-        groups=user_group,
-        cost_center="Workload",
-        value_assign="Database",
-    )
-    user = appliance.rest_api.collections.users.get(name=new_user.name)
-    request.addfinalizer(user.action.delete)
-
     # Log in with new user to retire the vm
     with new_user:
         new = testing_vm.find_quadicon(from_any_provider=True)
