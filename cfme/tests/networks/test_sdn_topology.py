@@ -38,7 +38,7 @@ def test_topology_search(request, elements_collection):
     elements = elements_collection.all()
     logger.info(str(elements))
     element_to_search = random.choice(elements)
-    search_term = element_to_search.name[:len(element_to_search.name) / 2]
+    search_term = element_to_search.name[:len(element_to_search.name) // 2]
     elements_collection.search(search_term)
     request.addfinalizer(elements_collection.clear_search)
     for element in elements:
