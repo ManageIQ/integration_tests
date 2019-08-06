@@ -2,6 +2,7 @@
 import requests
 
 from cfme.utils.timeutil import parsetime
+from cfme.utils.wait import wait_for
 
 
 class SMTPCollectorClient(object):
@@ -65,3 +66,12 @@ class SMTPCollectorClient(object):
 
     def get_html_report(self):
         return self._query(requests.get, "messages.html").text.strip()
+
+    def wait_for_emails(self, wait=60, **filter):
+        wait_for(
+            lambda: len(self.get_emails(**filter)) > 0,
+            timeout=wait,
+            delay=5,
+            msg="Mail not found.",
+        )
+        return self.get_emails(**filter)

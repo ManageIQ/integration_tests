@@ -2,11 +2,38 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
+
+
+@pytest.fixture
+def get_report(appliance, request):
+    def _report(file_name, menu_name):
+        collection = appliance.collections.reports
+
+        # download the report from server
+        fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
+        file_path = fs.download(file_name)
+
+        # import the report
+        collection.import_report(file_path)
+
+        # instantiate report and return it
+        report = collection.instantiate(
+            type="My Company (All Groups)", subtype="Custom", menu_name=menu_name
+        )
+        request.addfinalizer(report.delete_if_exists)
+        return report
+
+    return _report
 
 
 @pytest.fixture
@@ -122,6 +149,7 @@ def test_reports_custom_tags(appliance, request, create_custom_tag):
             ["Name", "My Company Tags : Owner", "My Company Tags : Cost Center"],
         ),
     ],
+    ids=["floating_ips", "cloud_tenants"],
 )
 @pytest.mark.meta(automates=[1546927, 1504155])
 def test_new_report_fields(appliance, based_on, request):
@@ -152,39 +180,11 @@ def test_new_report_fields(appliance, based_on, request):
     assert report.exists
 
 
-@pytest.fixture
-def filter_report(appliance):
-    report_data = {
-        "title": "Testing report",
-        "menu_name": "testing report",
-        "base_report_on": "VMs and Instances",
-        "report_fields": [
-            "Active",
-            "EVM Custom Attributes : Name",
-            "EVM Custom Attributes : Region Description",
-            "EVM Custom Attributes : Region Number",
-            "Name",
-        ],
-        "consolidation": {
-            "group_records": [
-                "EVM Custom Attributes : Name",
-                "EVM Custom Attributes : Region Description",
-                "EVM Custom Attributes : Region Number",
-            ]
-        },
-        "filter": {
-            "primary_filter": "fill_field(VM and Instance : Active, IS NOT NULL)",
-            "secondary_filter": "fill_field(EVM Custom Attributes : Name, INCLUDES, A)",
-        },
-    }
-    report = appliance.collections.reports.create(**report_data)
-    yield report
-    report.delete_if_exists()
-
-
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1565171])
-def test_report_edit_secondary_display_filter(appliance, filter_report, soft_assert):
+def test_report_edit_secondary_display_filter(
+    appliance, request, soft_assert, get_report
+):
     """
     Polarion:
         assignee: pvala
@@ -201,7 +201,8 @@ def test_report_edit_secondary_display_filter(appliance, filter_report, soft_ass
     Bugzilla:
         1565171
     """
-    filter_report.update(
+    report = get_report("filter_report.yaml", "test_filter_report")
+    report.update(
         {
             "filter": {
                 "primary_filter": (
@@ -221,7 +222,7 @@ def test_report_edit_secondary_display_filter(appliance, filter_report, soft_ass
         }
     )
 
-    view = filter_report.create_view(ReportDetailsView, wait="10s")
+    view = report.create_view(ReportDetailsView, wait="10s")
 
     primary_filter = (
         '( FIND VM and Instance.Guest Applications : Name STARTS WITH "env" CHECK COUNT = 1'
@@ -239,3 +240,53 @@ def test_report_edit_secondary_display_filter(appliance, filter_report, soft_ass
         view.report_info.secondary_filter.read() == secondary_filter,
         "Secondary Filter did not match.",
     )
+
+
+@test_requirements.report
+@pytest.mark.tier(1)
+@pytest.mark.meta(server_roles="+notifier", automates=[1677839])
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+def test_send_text_custom_report_with_long_condition(
+    appliance, setup_provider, smtp_test, request, get_report
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Create a report containing 1 or 2 columns
+                and add a report filter with a long condition.(Refer BZ for more detail)
+            2. Create a schedule for the report and check send_txt.
+        testSteps:
+            1. Queue the schedule and monitor evm log.
+        expectedResults:
+            1. There should be no error in the log and report must be sent successfully.
+
+    Bugzilla:
+        1677839
+    """
+    report = get_report("long_condition_report.yaml", "test_long_condition_report")
+    data = {
+        "timer": {"hour": "12", "minute": "10"},
+        "email": {"to_emails": "test@example.com"},
+        "email_options": {"send_if_empty": True, "send_txt": True},
+    }
+    schedule = report.create_schedule(**data)
+
+    # prepare LogValidator
+    log = LogValidator(
+        "/var/www/miq/vmdb/log/evm.log", failure_patterns=[".*negative argument.*"]
+    )
+
+    log.start_monitoring()
+    schedule.queue()
+
+    # assert that the mail was sent
+    assert (
+        len(smtp_test.wait_for_emails(wait=200, to_address=data["email"]["to_emails"]))
+        == 1
+    )
+    # assert that the pattern was not found in the logs
+    assert log.validate(), "Found error message in the logs."
