@@ -712,7 +712,7 @@ class TestProvidersRESTAPI(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_cloud_networks_query(self, cloud_provider, appliance, from_detail):
+    def test_cloud_networks_query(self, cloud_provider, appliance, from_detail, setup_provider):
         """Tests querying cloud providers and cloud_networks collection for network info.
 
         Metadata:
@@ -730,8 +730,8 @@ class TestProvidersRESTAPI(object):
         else:
             networks = appliance.rest_api.collections.cloud_networks
         assert_response(appliance)
-        assert networks
-        assert len(networks) == networks.subcount
+        assert networks.name == 'cloud_networks'
+        assert len(networks.all) == networks.subcount
 
         enabled_networks = 0
         networks.reload(expand=True)
@@ -742,7 +742,7 @@ class TestProvidersRESTAPI(object):
         assert enabled_networks >= 1
 
     @pytest.mark.tier(3)
-    def test_security_groups_query(self, cloud_provider, appliance):
+    def test_security_groups_query(self, cloud_provider, appliance, setup_provider):
         """Tests querying cloud networks subcollection for security groups info.
 
         Metadata:
