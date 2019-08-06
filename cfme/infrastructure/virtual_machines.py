@@ -412,6 +412,7 @@ class InfraVmSnapshotView(InfraVmView):
     description = Text('//label[normalize-space(.)="Description"]/../div/p|'
                        '//td[@class="key" and normalize-space(.)="Description"]/..'
                        '/td[not(contains(@class, "key"))]')
+    size = Text('.//label[normalize-space(.)="Size"]/../div/p')
     tree = ManageIQTree('snapshot_treebox')
 
     @property
@@ -683,6 +684,28 @@ class InfraVm(VM):
                         last_snapshot.text == title)
             else:
                 return has_child(view.tree, '{} (Active)'.format(title), root_item)
+
+        @property
+        def size(self):
+            """
+            Check the shapshot size in the UI. So far available only in RHV and CFME > "5.11"
+
+            :returns the size of the snapshot
+            """
+            from cfme.infrastructure.provider.rhevm import RHEVMProvider
+            if not self.parent_vm.provider.one_of(RHEVMProvider):
+                raise Exception("Provider is not RHV, this feature is not available")
+            if self.parent_vm.appliance.version < "5.11":
+                raise Exception("This feature is available only starting in CFME 5.11")
+            title = getattr(self, self.parent_vm.provider.SNAPSHOT_TITLE)
+            view = navigate_to(self.parent_vm, 'SnapshotsAll')
+            root_item = view.tree.expand_path(self.parent_vm.name)
+            snapshot_path = find_path(view.tree, title, root_item)
+            if not snapshot_path:
+                raise Exception('Could not find snapshot with name "{}"'.format(title))
+            else:
+                view.tree.click_path(*snapshot_path)
+            return view.size.text
 
         def create(self, force_check_memory=False):
             """Create a snapshot"""
