@@ -166,9 +166,16 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 @pytest.mark.rhv3
 # Special parametrization in testgen above
 @pytest.mark.meta(blockers=[1209847, 1380782])
-@pytest.mark.parametrize("disk_format", ["Thin", "Thick", "Preallocated"])
-@pytest.mark.uncollectif(lambda provider, disk_format:
-                         (provider.one_of(RHEVMProvider) and disk_format == "Thick") or
+@pytest.mark.meta(automates=[1633867])
+@pytest.mark.parametrize("disk_format", ["Thin", "Thick", "Preallocated",
+    "Thick - Lazy Zero", "Thick - Eager Zero"])
+@pytest.mark.uncollectif(lambda provider, disk_format, appliance:
+                         (provider.one_of(RHEVMProvider) and disk_format in ["Thick",
+                            "Thick - Lazy Zero", "Thick - Eager Zero"]) or
+                         (provider.one_of(VMwareProvider) and disk_format == "Thick" and
+                        appliance.version > '5.11') or
+                         (provider.one_of(VMwareProvider) and disk_format in ["Thick - Lazy Zero",
+                          "Thick - Eager Zero"] and appliance.version < '5.11') or
                          (not provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
                          # Temporarily, our storage domain cannot handle Preallocated disks
                          (provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
@@ -195,9 +202,6 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
         caseimportance: high
         initialEstimate: 1/6h
     """
-
-    if provider.key == "vsphere55" and disk_format == "Thick":
-        pytest.skip("Vsphere55 provider with disk_format == Thick isn't supported")
 
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['hardware']["disk_format"] = disk_format
