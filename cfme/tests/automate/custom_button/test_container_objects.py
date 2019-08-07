@@ -182,7 +182,7 @@ def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_ob
     # Submit order
     dialog_view.submit.click()
 
-    if not (BZ(1732489, forced_streams=["5.10", "5.11"]).blocks and obj_type == "PROVIDER"):
+    if not (False and obj_type == "PROVIDER"):
         view.flash.assert_message("Order Request was Submitted")
 
     # Check for request in automation log
