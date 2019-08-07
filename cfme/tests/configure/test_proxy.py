@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os.path
+
 import pytest
 
 from cfme import test_requirements
@@ -6,7 +8,6 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
-from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
@@ -30,12 +31,16 @@ def proxy_machine():
     After test run vm deletes from provider
     """
     try:
+        root_password = "heslo"
+        authorized_ssh_keys = open(os.path.expanduser('~/.ssh/id_rsa.pub')).read()
         data = cfme_data.proxy_template
         proxy_port = data.port
         vm = deploy_template(
             data.provider,
             random_vm_name('proxy'),
-            template_name=data.template_name
+            template_name=data.template_name,
+            root_password=root_password,
+            authorized_ssh_keys=authorized_ssh_keys
         )
     except AttributeError:
         msg = 'Missing data in cfme_data.yaml, cannot deploy proxy'
@@ -55,16 +60,17 @@ def proxy_machine():
         logger.exception(msg)
         pytest.skip(msg)
 
-    yield found_ip, proxy_port
+    yield found_ip, proxy_port, root_password
     vm.delete()
 
 
 @pytest.fixture(scope='module')
 def proxy_ssh(proxy_machine):
-    proxy_ip, __ = proxy_machine
+    proxy_ip, __, root_password = proxy_machine
     with SSHClient(
             hostname=proxy_ip,
-            **credentials['proxy_vm']) as ssh_client:
+            username='root',
+            password=root_password) as ssh_client:
         yield ssh_client
 
 
@@ -82,7 +88,7 @@ def validate_proxy_logs(provider, proxy_ssh, appliance_ip):
 
 @pytest.fixture(scope="function")
 def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, proxy_port = proxy_machine
+    proxy_ip, proxy_port, __ = proxy_machine
     prov_type = provider.type
     # 192.0.2.1 is from TEST-NET-1 which doesn't exist on the internet (RFC5737).
     appliance.set_proxy('192.0.2.1', proxy_port, prov_type='default')
@@ -95,7 +101,7 @@ def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_machine):
 
 @pytest.fixture(scope="function")
 def prepare_proxy_default(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, proxy_port = proxy_machine
+    proxy_ip, proxy_port, __ = proxy_machine
     prov_type = provider.type
     appliance.set_proxy(proxy_ip, proxy_port, prov_type='default')
     appliance.reset_proxy(prov_type)
