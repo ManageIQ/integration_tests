@@ -1414,8 +1414,14 @@ class Notification(Widget, ClickableMixin):
     class notification_drawer(ParametrizedView):  # noqa
         PARAMETERS = ("message",)
         notification_bell = Text('.//li/a[contains(@title, "notifications")]/*')
-        events = Text(
-            ".//h4[contains(@class, 'panel-title')]/a[contains(normalize-space(.), 'Events')]"
+        events = VersionPick(
+            {
+                Version.lowest(): Text(".//h4[contains(@class, 'panel-title')]"),
+                "5.9": Text(
+                    ".//h4[contains(@class, 'panel-title')]"
+                    "/a[contains(normalize-space(.), 'Success')]"
+                ),
+            }
         )
         find_event = Text(
             ParametrizedLocator(

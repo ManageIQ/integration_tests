@@ -15,7 +15,6 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import Modal
 
 from cfme.automate.explorer import AutomateExplorerView
 from cfme.automate.explorer import check_tree_path
@@ -33,7 +32,6 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import Input
-from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import ScriptBox
 from widgetastic_manageiq import SummaryFormItem
 
@@ -232,25 +230,6 @@ class PlaybookInputParameters(View):
         return self.all_vars
 
 
-class EmbeddedView(Modal):
-    """This view is for embedding automate method"""
-    title = Text(
-        './/div[contains(@class, "modal-header ng-scope")]/h4[contains(@class, "modal-title")]'
-    )
-    include_domain = Text(
-        './/div[contains(@class, "bootstrap-switch-container")]/span[contains(@class, '
-        '"bootstrap-switch-label")]'
-    )
-    close = Text('.//button[contains(@ng-click, "closeModal")]')
-    tree = ManageIQTree("treeview-entrypoint_selection")
-
-    @property
-    def is_displayed(self):
-        return (self.title.text == "Select Item"
-                and self.tree.has_path("Datastore", "ManageIQ (Locked)")
-                )
-
-
 class MethodAddView(AutomateExplorerView):
     title = Text('#explorer_title_text')
 
@@ -280,7 +259,6 @@ class MethodAddView(AutomateExplorerView):
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
-    embedded_view = View.nested(EmbeddedView)
 
     add_button = Button('Add')
     cancel_button = Button('Cancel')
@@ -325,7 +303,6 @@ class MethodEditView(AutomateExplorerView):
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
-    embedded_view = View.nested(EmbeddedView)
 
     save_button = Button('Save')
     reset_button = Button('Reset')
