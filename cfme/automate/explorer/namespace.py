@@ -31,7 +31,7 @@ class NamespaceDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text == 'Automate Namespace "{}"'.format(self.context['object'].name) and
             self.datastore.is_opened and (
-                BZ(1704439).blocks or
+                False or
                 check_tree_path(
                     self.datastore.tree.currently_selected,
                     self.context['object'].tree_path)
@@ -155,13 +155,13 @@ class Namespace(BaseEntity):
                 'Automate Namespace "{}": Delete successful'.format(self.description or self.name))
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
     def update(self, updates):
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
         view = navigate_to(self, 'Edit')
@@ -213,7 +213,7 @@ class NamespaceCollection(BaseCollection):
                 'Automate Namespace "{}" was added'.format(description or name))
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
             return self.instantiate(name=name, description=description)
@@ -256,7 +256,7 @@ class NamespaceCollection(BaseCollection):
                     namespace.description or namespace.name))
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
 
