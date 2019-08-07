@@ -317,7 +317,7 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     """
     event = 'create'
     vm_event = VMEvent(new_vm, event)
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm, )
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -341,7 +341,7 @@ def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
     """
 
     event = 'policy'
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -364,7 +364,7 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
         casecomponent: Events
     """
     event = 'stop'
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -387,7 +387,7 @@ def test_infra_timeline_start_event(new_vm, soft_assert):
         casecomponent: Events
     """
     event = 'start'
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -410,7 +410,7 @@ def test_infra_timeline_suspend_event(new_vm, soft_assert):
         casecomponent: Events
     """
     event = 'suspend'
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -454,7 +454,7 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
     """
     event = 'clone'
     vm_event = VMEvent(new_vm, event)
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -477,7 +477,7 @@ def test_infra_timeline_migrate_event(new_vm, soft_assert):
     """
     event = 'migrate'
     vm_event = VMEvent(new_vm, event)
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -502,7 +502,7 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     """
     event = 'rename'
     vm_event = VMEvent(new_vm, event)
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -528,7 +528,7 @@ def test_infra_timeline_delete_event(new_vm, soft_assert):
     """
     event = 'delete'
     vm_event = VMEvent(new_vm, event)
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_vm,)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
