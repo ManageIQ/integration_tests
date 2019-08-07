@@ -1,10 +1,14 @@
+version: 2
+
+sphinx:
+  configuration: docs/conf.py
 
 build:
   image: latest
 
 formats: []
-requirements_file: requirements/frozen_docs.py3.txt
 
 python:
   version: 3.7
-  setup_py_install: true
+  install:
+    - requirements: requirements/frozen_docs.py3.txt

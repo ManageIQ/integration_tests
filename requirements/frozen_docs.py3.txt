@@ -136,7 +136,6 @@ flake8==3.7.7
 flufl.enum==4.1.1
 funcsigs==1.0.2
 future==0.17.1
-gevent==1.4.0
 gitdb2==2.0.5
 GitPython==2.1.11
 google-api-python-client==1.7.8
@@ -203,7 +202,6 @@ oslo.config==6.8.1
 oslo.i18n==3.23.1
 oslo.serialization==2.28.2
 oslo.utils==3.40.3
-ovirt-engine-sdk-python==4.3.0
 packaging==19.0
 pandocfilters==1.4.2
 paramiko==2.6
@@ -230,7 +228,6 @@ pyasn1-modules==0.2.4
 pycodestyle==2.5.0
 pycparser==2.19
 pycryptodome==3.8.1
-pycurl==7.43.0.3
 pyflakes==2.1.1
 pygal==2.4.0
 PyGithub==1.43.7
@@ -252,7 +249,6 @@ python-heatclient==1.17.0
 python-ironicclient==2.7.0
 python-jenkins==1.4.0
 python-keystoneclient==3.19.0
-python-novaclient==7.1.2
 python-string-utils==0.6.0
 python-swiftclient==3.7.0
 pytz==2019.1
@@ -288,7 +284,7 @@ slumber==0.7.1
 smmap2==2.0.5
 snowballstemmer==1.2.1
 sortedcontainers==2.1.0
-Sphinx==1.3.5
+Sphinx==2.1.2
 sphinx-rtd-theme==0.4.3
 SQLAlchemy==1.3.3
 stevedore==1.30.1
@@ -313,7 +309,6 @@ Werkzeug==0.15.2
 widgetastic.core==0.39
 widgetastic.patternfly==1.0.0
 widgetsnbextension==3.4.2
-wrapanapi==3.3.1
 wrapt==1.11.1
 xmltodict==0.12.0
 yaycl==0.3.0
