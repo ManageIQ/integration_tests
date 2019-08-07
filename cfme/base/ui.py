@@ -1670,7 +1670,7 @@ def delete(self, cancel=False):
 def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=None,
            max_scans=None, user=None, cancel=False):
 
-    if BZ(1509452).blocks:
+    if False:
         raise BugException(1509452, 'creating zones')
 
     add_page = navigate_to(self, 'Add')
