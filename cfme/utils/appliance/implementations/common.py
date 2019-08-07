@@ -72,7 +72,7 @@ class HandleModalsMixin(object):
         try:
             if wait:
                 popup = wait_for(self.get_alert, num_sec=wait, fail_condition=None).out
-                if isinstance(popup, Modal) and BZ(1713399).blocks:
+                if isinstance(popup, Modal) and False:
                     # infinispinner if accept button is clicked too quick in  modal
                     sleep(1)
             else:
