@@ -272,7 +272,7 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
         initialEstimate: 1/4h
         casecomponent: Events
     """
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_instance, )
     else:
         targets = (new_instance, new_instance.provider, azone)
@@ -295,7 +295,7 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     """
     event = 'policy'
     # accordions on azone and provider's page are not displayed in 5.10
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_instance, )
     else:
         targets = (new_instance, new_instance.provider)
@@ -316,7 +316,7 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
         casecomponent: Events
     """
     # accordions on azone and provider's page are not displayed in 5.10
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_instance, )
     else:
         targets = (new_instance, new_instance.provider, azone)
@@ -338,7 +338,7 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
         casecomponent: Events
     """
     # accordions on azone and provider's page are not displayed in 5.10
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_instance, )
     else:
         targets = (new_instance, new_instance.provider, azone)
@@ -380,7 +380,7 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     """
     event = 'rename'
     # accordions on azone and provider's page are not displayed in 5.10
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_instance, )
     else:
         targets = (new_instance, new_instance.provider, azone)
@@ -406,7 +406,7 @@ def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
     """
     event = 'delete'
     # accordions on azone and provider's page are not displayed in 5.10
-    if BZ(1670550).blocks:
+    if False:
         targets = (new_instance, )
     else:
         targets = (new_instance, new_instance.provider, azone)
