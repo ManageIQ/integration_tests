@@ -251,7 +251,7 @@ class TestServiceRESTAPI(object):
         """
         outcome = query_resource_attributes(services[0])
         for failure in outcome.failed:
-            if failure.name == "reconfigure_dialog"and BZ(1663972).blocks:
+            if failure.name == "reconfigure_dialog"and False:
                 continue
             soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
