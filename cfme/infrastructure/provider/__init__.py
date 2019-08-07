@@ -204,7 +204,7 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
                 if data['name'] == host.name:
                     host_data = data
                     break
-            if BZ(1718209).blocks:
+            if False:
                 # this BZ doesn't allow us to use REST to update creds, so use UI
                 with update(host, validate_credentials=True):
                     host.credentials = {
