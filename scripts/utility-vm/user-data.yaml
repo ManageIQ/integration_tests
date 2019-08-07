@@ -6,6 +6,6 @@ ssh_pwauth: True
 disable_root: false
 chpasswd:
   list: |
-    root:password
-    cloud-user:password
+    root:changeme
+    cloud-user:changeme
   expire: false

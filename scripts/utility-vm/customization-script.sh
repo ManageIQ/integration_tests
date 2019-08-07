@@ -2,6 +2,13 @@
 
 set -x -e
 
+SHARE_PASSWORD="$1"
+
+if [ -z "${SHARE_PASSWORD}" ]; then
+    echo "Please supply a SHARE_PASSWORD as first argument to $0" >&2
+    exit 1
+fi
+
 function rhel7y {
     RHEL_7_Y_IDENTIFIER="Red Hat Enterprise Linux Server release 7\.. .* (Maipo)"
     grep -q "$RHEL_7_Y_IDENTIFIER" /etc/redhat-release
@@ -29,7 +36,7 @@ rhel8y && ( systemctl enable nfs-server; systemctl start nfs-server )
 
 # SMB setup
 adduser backuper
-echo -e 'changeme\nchangeme' | smbpasswd -sa backuper
+echo -e "${SHARE_PASSWORD}\n${SHARE_PASSWORD}" | smbpasswd -sa backuper
 mkdir -p /srv/samba
 chmod a=rwx /srv/samba
 
@@ -49,7 +56,11 @@ systemctl start smb
 # FTP setup
 systemctl enable vsftpd
 systemctl start vsftpd
-echo changeme | passwd --stdin backuper
+echo "${SHARE_PASSWORD}" | passwd --stdin backuper
+
+# Prepare squid
+yum -y install squid
+systemctl enable squid
 
 # Turn selinux off
 echo SELINUXTYPE=targeted > /etc/selinux/config

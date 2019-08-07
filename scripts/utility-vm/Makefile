@@ -11,7 +11,8 @@ snapshot.qcow2: ${SOURCE_IMAGE} customization-script.sh rhel7.repo rhel8.repo
 		           -a ${TMP_DISK} \
 				   --upload rhel7.repo:/tmp/rhel7.repo \
 				   --upload rhel8.repo:/tmp/rhel8.repo \
-				   --run customization-script.sh \
+				   --upload customization-script.sh:/tmp/customization-script.sh \
+				   --run-command "/bin/bash /tmp/customization-script.sh '${SHARE_PASSWORD}'" \
 				   --selinux-relabel
 	mv ${TMP_DISK} $@
 
