@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import fauxfactory
 import pytest
 
@@ -68,20 +70,37 @@ def custom_instance(request_cls):
     return method
 
 
+# DatastoreImport help to pass import data to fixture import_datastore
+DatastoreImport = namedtuple("DatastoreImport", ["file_name", "from_domain", "to_domain"])
+
+
 @pytest.fixture()
-def import_datastore(appliance, request):
-    """This fixture will help to import datastore file"""
+def import_datastore(appliance, import_data):
+    """This fixture will help to import datastore file.
 
-    def domain(file_name, from_domain, to_domain=None):
-        # Download datastore file from FTP server
-        fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
-        file_path = fs.download(file_name)
+    To invoke this fixture, we need to pass parametrize import data with the help
+    of `DatastoreImport`namedtuple.
 
-        # Import datastore file to appliance
-        datastore = appliance.collections.automate_import_exports.instantiate(
-            import_type="file", file_path=file_path
+    Usage:
+        .. code-block:: python
+
+        @pytest.mark.parametrize(
+        "import_data", [DatastoreImport("datastore.zip", "from_daomin_name", "to_domain_name")]
         )
-        domain = datastore.import_domain_from(from_domain, to_domain)
-        request.addfinalizer(domain.delete_if_exists)
-        return domain
-    return domain
+        def test_foo(import_datastore, import_data):
+            pass
+    """
+
+    # Download datastore file from FTP server
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+    file_path = fs.download(import_data.file_name)
+
+    # Import datastore file to appliance
+    datastore = appliance.collections.automate_import_exports.instantiate(
+        import_type="file", file_path=file_path
+    )
+    domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
+
+    yield domain
+
+    domain.delete_if_exists()

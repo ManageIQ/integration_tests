@@ -1,11 +1,17 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.fixtures.automate import DatastoreImport
 
 pytestmark = [test_requirements.automate, pytest.mark.tier(3)]
 
 
-def test_domain_import_file(import_datastore):
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1715396.zip", "BZ_1715396", None)],
+    ids=["sample_domain"],
+)
+def test_domain_import_file(import_datastore, import_data):
     """This test case Verifies that a domain can be imported from file.
 
     Polarion:
@@ -24,5 +30,4 @@ def test_domain_import_file(import_datastore):
             2.
             3. Import should work. Check imported or not.
     """
-    domain = import_datastore(file_name="bz_1715396.zip", from_domain="BZ_1715396")
-    assert domain.exists
+    assert import_datastore.exists
