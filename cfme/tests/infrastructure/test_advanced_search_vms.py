@@ -400,7 +400,7 @@ def test_create_filter_with_multiple_conditions(appliance, provider, request, ru
 
     @request.addfinalizer
     def cleanup():
-        if not BZ(1725838, forced_streams=["5.10", "5.11"]).blocks:
+        if not False:
             # the screen after applied search is unclickable
             vm_view.entities.search.load_filter(filter_name)
             vm_view.entities.search.delete_filter()
