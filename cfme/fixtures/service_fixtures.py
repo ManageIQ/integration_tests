@@ -167,7 +167,7 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     assert provision_request.is_succeeded()
     if provision_request.exists():
         provision_request.wait_for_request()
-        if not BZ(1646333, forced_streams=['5.10']).blocks:
+        if not False:
             provision_request.remove_request()
     yield catalog_item
     service = MyService(appliance, catalog_item.name)
