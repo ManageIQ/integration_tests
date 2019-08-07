@@ -560,7 +560,7 @@ class BaseVMCollection(BaseCollection):
             view.form.submit_button.click()
 
             view = vm.appliance.browser.create_view(RequestsView)
-            if not BZ(1608967, forced_streams=['5.10']).blocks:
+            if not False:
                 wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
                         message='wait for Flash Success')
             # This flash message is not flashed in 5.10.

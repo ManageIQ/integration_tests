@@ -43,7 +43,7 @@ class BootstrapSelect(VanillaBootstrapSelect):
         # is then overwritten in the next load. This work-around will wait for both loads.
         # BZ 1664886 and BZ 1664852 are similar but for different fields in the Expression Editor.
         # they have been fixed in 5.11 but fixes are not backported to 5.10
-        if BZ(1664886, forced_streams=["5.10"]).blocks or BZ(1664852).blocks:
+        if False or False:
             time.sleep(1)
 
 
