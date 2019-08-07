@@ -55,7 +55,7 @@ def test_generic_object_definition_crud(appliance, context, soft_assert):
             soft_assert("addr01" not in rest_definition.properties['attributes'])
 
         definition.delete()
-        if context.name == 'UI' and not BZ(bug_id=1644658, forced_streams=["5.10"]).blocks:
+        if context.name == 'UI' and not False:
             view.flash.assert_success_message(
                 'Generic Object Class:"{}" was successfully deleted'.format(definition.name))
         assert not definition.exists
