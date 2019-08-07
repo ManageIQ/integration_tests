@@ -11,7 +11,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -649,9 +648,9 @@ def test_retire_vm_with_vm_user_role(new_user, appliance, testing_vm):
     """
     # Log in with new user to retire the vm
     with new_user:
-        new = testing_vm.find_quadicon(from_any_provider=True)
-        new.check()
-        view = testing_vm.create_view(VmsTemplatesAllView)
+        view = navigate_to(testing_vm.parent, "All")
+        view.entities.get_entity(name=testing_vm.name, surf_pages=True).check()
         assert view.toolbar.lifecycle.item_enabled("Retire selected items")
         testing_vm.retire()
-        testing_vm.wait_for_vm_state_change(desired_state="retired", timeout=720, from_details=True)
+        assert testing_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
+                                                   from_details=True)
