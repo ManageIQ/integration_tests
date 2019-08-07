@@ -26,7 +26,7 @@ def test_object_attributes(appliance):
     # Collecting all the options available for object attribute type
     for object_type in view.target_type.all_options[1:]:
         view.reset_button.click()
-        if BZ(1719322, forced_streams=['5.10', '5.11']).blocks and object_type.text in [
+        if False and object_type.text in [
             "Group",
             "EVM Group",
             "Tenant",
