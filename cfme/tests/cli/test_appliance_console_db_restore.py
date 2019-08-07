@@ -18,7 +18,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.ssh import SSHClient
 from cfme.utils.ssh_expect import SSHExpect
 
 pytestmark = [
@@ -28,6 +27,16 @@ pytestmark = [
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 evm_log = '/var/www/miq/vmdb/log/evm.log'
+
+
+@pytest.fixture
+def network_share(utility_vm):
+    utility_vm_hostname, root_password = utility_vm
+    info = {
+        'hostname': utility_vm_hostname,
+    }
+    info.update(cfme_data.utility_vm.network_share)
+    return info
 
 
 def provision_vm(request, provider):
@@ -212,20 +221,6 @@ def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(EC2Provider, appl1).setup()
     return appl1, appl2
-
-
-def setup_nfs_samba_backup(appl1):
-    # Fetch db from first appliance and push it to nfs/samba server
-    connect_kwargs = {
-        'hostname': cfme_data['network_share']['hostname'],
-        'username': credentials['ssh']['username'],
-        'password': credentials['depot_credentials']['password']
-    }
-    loc = cfme_data['network_share']['nfs_path']
-    nfs_smb = SSHClient(**connect_kwargs)
-    dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
-    appl1.ssh_client.get_file("/tmp/evm_db.backup", dump_filename)
-    nfs_smb.put_file(dump_filename, "{}share.backup".format(loc))
 
 
 def restore_db(appl, location=''):
@@ -585,7 +580,8 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_providers):
+def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_providers,
+                                          network_share):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -596,15 +592,15 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
         initialEstimate: 1h
     """
     appl1, appl2 = two_appliances_one_with_providers
-    host = cfme_data['network_share']['hostname']
-    loc = cfme_data['network_share']['nfs_path']
+    host = network_share['hostname']
+    loc = network_share['nfs']['path']
     nfs_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
     nfs_restore_dir_path = 'nfs://{}{}'.format(host, loc)
     nfs_restore_file_path = '{}/db_backup/{}'.format(nfs_restore_dir_path, nfs_dump_file_name)
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
 
-    # setup_nfs_samba_backup(appl1)
+    # Do the backup
     interaction = SSHExpect(appl1)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
@@ -657,7 +653,8 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_samba(request, two_appliances_one_with_providers):
+def test_appliance_console_restore_db_samba(request, two_appliances_one_with_providers,
+                                            network_share):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -668,18 +665,19 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
         initialEstimate: 1h
     """
     appl1, appl2 = two_appliances_one_with_providers
-    host = cfme_data['network_share']['hostname']
-    loc = cfme_data['network_share']['smb_path']
+    host = network_share['hostname']
+    loc = network_share['smb']['path']
     smb_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
     smb_restore_dir_path = 'smb://{}{}'.format(host, loc)
     smb_restore_file_path = '{}/db_backup/{}'.format(smb_restore_dir_path, smb_dump_file_name)
 
-    pwd = credentials['depot_smb_credentials']['password']
-    usr = credentials['depot_smb_credentials']['username']
+    creds_key = network_share['smb']['credentials']
+    pwd = credentials[creds_key]['password']
+    usr = credentials[creds_key]['username']
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
 
-    # setup_nfs_samba_backup(appl1)
+    # Do the backup
     interaction = SSHExpect(appl1)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)

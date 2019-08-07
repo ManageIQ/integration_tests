@@ -88,6 +88,7 @@ pytest_plugins = [
     "cfme.fixtures.templates",
     "cfme.fixtures.terminalreporter",
     "cfme.fixtures.ui_coverage",
+    "cfme.fixtures.utility_vm",
     "cfme.fixtures.update_tests",
     "cfme.fixtures.v2v_fixtures",
     "cfme.fixtures.version_info",
