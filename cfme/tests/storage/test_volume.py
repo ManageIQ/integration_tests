@@ -70,12 +70,21 @@ def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=Fa
     volume_collection = appliance.collections.volumes
     name = fauxfactory.gen_alpha()
     if provider.one_of(OpenStackProvider):
-        volume = volume_collection.create(name=name,
-                                          tenant=provider.data['provisioning']['cloud_tenant'],
-                                          volume_size=STORAGE_SIZE,
-                                          provider=provider,
-                                          cancel=cancel,
-                                          from_manager=is_from_manager)
+        if appliance.version < "5.11":
+            volume = volume_collection.create(name=name,
+                                              tenant=provider.data['provisioning']['cloud_tenant'],
+                                              volume_size=STORAGE_SIZE,
+                                              provider=provider,
+                                              cancel=cancel,
+                                              from_manager=is_from_manager)
+        else:
+            volume = volume_collection.create(name=name,
+                                              tenant=provider.data['provisioning']['cloud_tenant'],
+                                              volume_size=STORAGE_SIZE,
+                                              provider=provider,
+                                              az=provider.data['provisioning']['availability_zone'],
+                                              cancel=cancel,
+                                              from_manager=is_from_manager)
     elif provider.one_of(EC2Provider):
         az = az if az else "{}a".format(provider.region)
         volume = volume_collection.create(name=name,
