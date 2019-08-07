@@ -310,7 +310,7 @@ class MethodEditView(AutomateExplorerView):
             self.in_explorer and
             self.datastore.is_opened and
             'Editing Automate Method "{}"'.format(self.context['object'].name) in self.title.text
-            and (BZ(1704439).blocks or check_tree_path(
+            and (False or check_tree_path(
                 self.datastore.tree.currently_selected,
                 self.context['object'].tree_path, partial=True))
         )
@@ -395,7 +395,7 @@ class Method(BaseEntity, Copiable):
     def update(self, updates):
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
         view = navigate_to(self, 'Edit')
@@ -421,7 +421,7 @@ class Method(BaseEntity, Copiable):
                 'Automate Method "{}": Delete successful'.format(self.name))
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
 
@@ -490,7 +490,7 @@ class MethodCollection(BaseCollection):
             add_page.flash.assert_no_error()
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 view = self.create_view(ClassDetailsView)
                 view.flash.assert_message('Automate Method "{}" was added'.format(name))
                 self.browser.refresh()
@@ -549,7 +549,7 @@ class MethodCollection(BaseCollection):
                 'Automate Method "{}": Delete successful'.format(method.name))
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
 
