@@ -596,7 +596,7 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
 
     # Disk GUID is displayed instead of disk name in the disks table for a rhev VM, and passing
     # disk GUID to the delete method results in failure, so skip this part until the BZ is fixed.
-    if not (BZ(1691635).blocks and full_vm.provider.one_of(RHEVMProvider)):
+    if not (False and full_vm.provider.one_of(RHEVMProvider)):
 
         # there will always be 2 disks after the disk has been added
         disks_present = [disk.filename for disk in full_vm.configuration.disks]
