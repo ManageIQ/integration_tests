@@ -3,8 +3,7 @@
 """
 import argparse
 import sys
-
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.appliance import IPAppliance

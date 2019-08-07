@@ -4,12 +4,12 @@ import os.path
 import re
 import subprocess
 import sys
+from urllib.parse import urlsplit
 
 import docker
 import fauxfactory
 import requests
 import yaml
-from six.moves.urllib.parse import urlsplit
 
 from cfme.utils.conf import docker as docker_conf
 from cfme.utils.net import my_ip_address

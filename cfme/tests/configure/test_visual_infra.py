@@ -2,7 +2,6 @@
 from random import choice
 
 import pytest
-import six
 
 from cfme import test_requirements
 from cfme.infrastructure import virtual_machines as vms  # NOQA
@@ -121,7 +120,7 @@ def test_infra_grid_page_per_item(appliance, request, page, value, set_grid):
         initialEstimate: 1/12h
         tags: settings
     """
-    if isinstance(page, six.string_types):
+    if isinstance(page, str):
         page = getattr(appliance.collections, page)
     if appliance.user.my_settings.visual.grid_view_limit != value:
         appliance.user.my_settings.visual.grid_view_limit = int(value)
@@ -155,7 +154,7 @@ def test_infra_tile_page_per_item(appliance, request, page, value, set_tile):
         initialEstimate: 1/10h
         tags: settings
     """
-    if isinstance(page, six.string_types):
+    if isinstance(page, str):
         page = getattr(appliance.collections, page)
     if appliance.user.my_settings.visual.tile_view_limit != value:
         appliance.user.my_settings.visual.tile_view_limit = int(value)
@@ -189,7 +188,7 @@ def test_infra_list_page_per_item(appliance, request, page, value, set_list):
         initialEstimate: 1/10h
         tags: settings
     """
-    if isinstance(page, six.string_types):
+    if isinstance(page, str):
         page = getattr(appliance.collections, page)
     if appliance.user.my_settings.visual.list_view_limit != value:
         appliance.user.my_settings.visual.list_view_limit = int(value)

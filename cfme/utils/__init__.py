@@ -6,7 +6,6 @@ import subprocess
 from functools import partial
 
 import diaper
-import six
 from cached_property import cached_property
 from werkzeug.local import LocalProxy
 # import diaper for backward compatibility
@@ -25,7 +24,7 @@ class FakeObject(object):
 
 
 def fakeobject_or_object(obj, attr, default=None):
-    if isinstance(obj, six.string_types):
+    if isinstance(obj, str):
         return FakeObject(**{attr: obj})
     elif not obj:
         return FakeObject(**{attr: default})
@@ -191,13 +190,13 @@ def safe_string(o):
     Args:
         o: Anything.
     """
-    if not isinstance(o, six.string_types):
+    if not isinstance(o, str):
         o = str(o)
     if isinstance(o, bytes):
         o = o.decode('utf-8', "ignore")
     if not isinstance(o, str):
         o = o.encode("ascii", "xmlcharrefreplace")
-    elif not six.PY2:
+    else:
         o = o.encode("ascii", "xmlcharrefreplace").decode('ascii')
     return o
 

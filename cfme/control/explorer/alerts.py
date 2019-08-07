@@ -3,7 +3,6 @@
 from copy import copy
 
 import attr
-import six
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
@@ -106,7 +105,7 @@ class AlertFormCommon(ControlExplorerView):
         expression = ExpressionEditor("//button[normalize-space(.)='Define Expression']")
 
         def fill(self, values):
-            if isinstance(values, six.string_types):
+            if isinstance(values, str):
                 new_values = dict(type=values)
             elif isinstance(values, (list, tuple)):
                 new_values = dict(type=values[0], **values[1])

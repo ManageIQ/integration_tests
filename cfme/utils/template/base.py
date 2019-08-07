@@ -3,14 +3,14 @@ import re
 from contextlib import closing
 from os import path
 from threading import Lock
+from urllib import request
+from urllib.error import URLError
+from urllib.request import urlopen
 from zipfile import ZipFile
 
 from cached_property import cached_property
 from fauxfactory import gen_alphanumeric
 from glanceclient import Client
-from six.moves.urllib import request
-from six.moves.urllib.error import URLError
-from six.moves.urllib.request import urlopen
 
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider

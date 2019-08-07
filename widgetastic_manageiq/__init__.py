@@ -11,7 +11,6 @@ from datetime import timedelta
 from math import ceil
 from tempfile import NamedTemporaryFile
 
-import six
 from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
@@ -912,7 +911,7 @@ class SNMPHostsField(View):
 
     def fill(self, values):
         fields = self.host_fields
-        if isinstance(values, six.string_types):
+        if isinstance(values, str):
             values = [values]
         if len(values) > len(fields):
             raise ValueError("You cannot specify more hosts than the form allows!")
@@ -2889,7 +2888,7 @@ class AlertEmail(View):
         self.id = id
 
     def fill(self, values):
-        if isinstance(values, six.string_types):
+        if isinstance(values, str):
             values = [values]
         if self.all_emails == set(values):
             return False
@@ -3615,7 +3614,7 @@ class DashboardWidgetsPicker(View):
         return list(set(values) - set(self.all_dashboard_widgets))
 
     def fill(self, values):
-        if isinstance(values, six.string_types):
+        if isinstance(values, str):
             values = [values]
         if set(values) == set(self.all_dashboard_widgets):
             return False
@@ -3704,7 +3703,7 @@ class MenuShortcutsPicker(View):
 
     def fill(self, values):
         dict_values = None
-        if isinstance(values, six.string_types):
+        if isinstance(values, str):
             values = [values]
         if isinstance(values, dict):
             dict_values = values
@@ -4403,7 +4402,7 @@ class LineChart(Widget, ClickableMixin):
         return [leg.id for leg in self.browser.elements(self.LEGENDS)]
 
     def legend_is_displayed(self, leg):
-        if isinstance(leg, six.string_types):
+        if isinstance(leg, str):
             leg = self._legends.get(leg)
         return "c3-legend-item-hidden" not in self.browser.classes(leg)
 
@@ -5659,7 +5658,7 @@ class RolesSelector(Widget):
 
     def role_selected(self, role):
         """Check role is selected or not"""
-        if isinstance(role, six.string_types):
+        if isinstance(role, str):
             role = self._cell_input_map.get(role)
         return self.browser.is_selected(role)
 

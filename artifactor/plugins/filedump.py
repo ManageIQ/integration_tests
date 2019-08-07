@@ -14,8 +14,6 @@ import base64
 import os
 import re
 
-import six
-
 from artifactor import ArtifactorBasePlugin
 from cfme.utils import normalize_text
 from cfme.utils import safe_string
@@ -121,7 +119,7 @@ class Filedump(ArtifactorBasePlugin):
                 with open(filename) as f:
                     data = f.read()
                 for word in words:
-                    if not isinstance(word, six.string_types):
+                    if not isinstance(word, str):
                         word = str(word)
                     data = data.replace(word, "*" * len(word))
                 with open(filename, "w") as f:

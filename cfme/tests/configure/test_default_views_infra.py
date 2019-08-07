@@ -2,7 +2,6 @@
 import random
 
 import pytest
-from six import string_types
 
 from cfme import test_requirements
 from cfme.exceptions import ItemNotFound
@@ -58,7 +57,7 @@ def _get_page(page, appliance):
     if page in [TemplatesImages, VmsInstances]:
         # one-off instantiation of class
         return page(appliance)
-    if isinstance(page, string_types):
+    if isinstance(page, str):
         # Appliance collection instantiation of class
         return getattr(appliance.collections, page)
     # Nav class provided

@@ -3,7 +3,6 @@ import re
 from collections import Sequence
 from contextlib import contextmanager
 
-import six
 from bugzilla import Bugzilla as _Bugzilla
 from bugzilla.transport import BugzillaError
 from cached_property import cached_property
@@ -289,7 +288,7 @@ class BugWrapper(object):
         """
         value = getattr(self._bug, attr)
         if attr in self.loose:
-            if isinstance(value, Sequence) and not isinstance(value, six.string_types):
+            if isinstance(value, Sequence) and not isinstance(value, str):
                 value = value[0]
             value = value.strip()
             if not value:
@@ -301,7 +300,7 @@ class BugWrapper(object):
             if not value:
                 return None
             return Version(value)
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             if len(value.strip()) == 0:
                 return None
             else:

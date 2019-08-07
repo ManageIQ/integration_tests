@@ -2,12 +2,7 @@
 import base64
 import re
 import yaml
-import six
-
-try:
-    import six.moves.cPickle as pickle
-except ImportError:
-    import pickle   # NOQA
+import pickle   # NOQA
 
 import wrapanapi
 from wrapanapi import VmState, Openshift
@@ -1338,12 +1333,12 @@ class AppliancePool(MetadataMixin):
                                            template_type=template_type, **user_filter)
             if dates:
                 date = dates[0]
-        if isinstance(group, six.string_types):
+        if isinstance(group, str):
             group = Group.objects.get(id=group)
-        if isinstance(provider_type, six.string_types):
+        if isinstance(provider_type, str):
             if provider_type not in Provider.get_available_provider_types(owner):
                 raise Exception('There are no providers for type {!r}'.format(provider_type))
-        if isinstance(provider, six.string_types):
+        if isinstance(provider, str):
             provider = Provider.objects.get(id=provider, working=True, disabled=False)
             if provider_type is not None and provider.provider_type != provider_type:
                 raise Exception(

@@ -42,7 +42,6 @@ from collections import defaultdict
 from collections import Mapping
 
 import pytest
-import six
 from _pytest.compat import getimfunc
 from _pytest.fixtures import call_fixture_func
 from _pytest.outcomes import TEST_OUTCOME
@@ -310,7 +309,7 @@ def template(template_location, provider):
         except (IndexError, KeyError):
             logger.info("Cannot apply %r to %r in the template specification, ignoring.", field, o)
         else:
-            if not isinstance(o, six.string_types):
+            if not isinstance(o, str):
                 raise ValueError("{!r} is not a string! (for template)".format(o))
             if not TEMPLATES:
                 # There is nothing in TEMPLATES, that means no trackerbot URL and no data pulled.

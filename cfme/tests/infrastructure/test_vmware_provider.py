@@ -3,10 +3,10 @@
 import os
 import re
 import tarfile
+from urllib import request as url_request
 
 import fauxfactory
 import pytest
-from six.moves.urllib import request as url_request
 
 from cfme import test_requirements
 from cfme.infrastructure.host import Host

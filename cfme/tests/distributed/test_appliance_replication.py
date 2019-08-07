@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from time import sleep
+from urllib.parse import urlparse
 
 import pytest
-from six.moves.urllib.parse import urlparse
 
 from cfme import test_requirements
 from cfme.base.ui import ServerView

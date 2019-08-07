@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
 
-import six
 from navmazing import NavigateToSibling
 from navmazing import NavigationDestinationNotFound
 from widgetastic.exceptions import NoSuchElementException
@@ -511,7 +510,7 @@ class Taggable(TaggableCommonBase):
         tags_text = tag_table.get_text_of(tenant)
         if tags_text != 'No {} have been assigned'.format(tenant):
             # check for users/groups page in case one tag string is returned
-            for tag in [tags_text] if isinstance(tags_text, six.string_types) else list(tags_text):
+            for tag in [tags_text] if isinstance(tags_text, str) else list(tags_text):
                 tag_category, tag_name = tag.split(':')
                 # instantiate category first, then use its tags collection to instantiate tag
                 tags_objs.append(
@@ -542,7 +541,7 @@ class TaggableCollection(TaggableCommonBase):
             try:
                 # setup a entities widget filter with the given key, using the item if its string
                 # or the item's attribute (given key) otherwise
-                entity_kwargs[entity_filter_key] = (item if isinstance(item, six.string_types)
+                entity_kwargs[entity_filter_key] = (item if isinstance(item, str)
                                                     else getattr(item, entity_filter_key))
             except AttributeError:
                 logger.exception('TaggableCollection item does not have attribute to search by: %s',
@@ -585,7 +584,7 @@ class TaggableCollection(TaggableCommonBase):
             try:
                 # setup a entities widget filter with the given key, using the item if its string
                 # or the item's attribute (given key) otherwise
-                entity_kwargs[entity_filter_key] = (item if isinstance(item, six.string_types)
+                entity_kwargs[entity_filter_key] = (item if isinstance(item, str)
                                                     else getattr(item, entity_filter_key))
             except AttributeError:
                 logger.exception('TaggableCollection item does not have attribute to search by: %s',

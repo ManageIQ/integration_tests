@@ -3,7 +3,6 @@ from collections import namedtuple
 
 import fauxfactory
 import pytest
-import six
 
 from cfme import test_requirements
 from cfme.infrastructure.config_management import ConfigManager
@@ -122,7 +121,7 @@ pytestmark = [
 
 
 def _navigation(param, appliance):
-    if isinstance(param.collection, six.string_types):
+    if isinstance(param.collection, str):
         view = navigate_to(getattr(appliance.collections, param.collection), param.destination)
     else:
         view = navigate_to(param.collection, param.destination)

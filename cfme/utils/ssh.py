@@ -11,7 +11,6 @@ import fauxfactory
 import gevent
 import iso8601
 import paramiko
-import six
 from cached_property import cached_property
 from scp import SCPClient
 
@@ -65,7 +64,7 @@ class SSHResult(object):
 
     def __contains__(self, what):
         # Handling 'something' in x
-        if not isinstance(what, six.string_types):
+        if not isinstance(what, str):
             raise ValueError('You can only check strings using the in operator')
         return what in self.output
 
@@ -80,7 +79,7 @@ class SSHResult(object):
     def __eq__(self, other):
         if isinstance(other, int):
             return self.rc == other
-        elif isinstance(other, six.string_types):
+        elif isinstance(other, str):
             return self.output == other
         else:
             raise ValueError('You can only compare SSHResult with str or int')
@@ -88,7 +87,7 @@ class SSHResult(object):
     def __lt__(self, other):
         if isinstance(other, int):
             return self.rc < other
-        elif isinstance(other, six.string_types):
+        elif isinstance(other, str):
             return self.output < other
         else:
             raise ValueError('You can only compare SSHResult with str or int')

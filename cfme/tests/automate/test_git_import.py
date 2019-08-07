@@ -1,6 +1,7 @@
+from urllib.parse import urlparse
+
 import fauxfactory
 import pytest
-from six.moves.urllib.parse import urlparse
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainDetailsView

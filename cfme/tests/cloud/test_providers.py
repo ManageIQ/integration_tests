@@ -3,10 +3,10 @@
 # pylint: disable=W0621
 import os
 import uuid
+from urllib.parse import urljoin
 
 import fauxfactory
 import pytest
-from six.moves.urllib.parse import urljoin
 from wait_for import wait_for
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from wrapanapi import VmState
@@ -239,7 +239,7 @@ def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
         flash = 'Credential validation was not successful: Invalid Google JSON key'
         default_credentials.service_account = '{"test": "bad"}'
     elif provider.one_of(OpenStackProvider):
-        for endp_name in provider.endpoints.keys():
+        for endp_name in list(provider.endpoints.keys()):
             if endp_name != 'default':
                 del provider.endpoints[endp_name]
 
@@ -712,7 +712,7 @@ class TestProvidersRESTAPI(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_cloud_networks_query(self, cloud_provider, appliance, from_detail):
+    def test_cloud_networks_query(self, cloud_provider, appliance, from_detail, setup_provider):
         """Tests querying cloud providers and cloud_networks collection for network info.
 
         Metadata:
@@ -730,8 +730,8 @@ class TestProvidersRESTAPI(object):
         else:
             networks = appliance.rest_api.collections.cloud_networks
         assert_response(appliance)
-        assert networks
-        assert len(networks) == networks.subcount
+        assert networks.name == 'cloud_networks'
+        assert len(networks.all) == networks.subcount
 
         enabled_networks = 0
         networks.reload(expand=True)
@@ -742,7 +742,7 @@ class TestProvidersRESTAPI(object):
         assert enabled_networks >= 1
 
     @pytest.mark.tier(3)
-    def test_security_groups_query(self, cloud_provider, appliance):
+    def test_security_groups_query(self, cloud_provider, appliance, setup_provider):
         """Tests querying cloud networks subcollection for security groups info.
 
         Metadata:

@@ -2,13 +2,12 @@ import zlib
 from collections import namedtuple
 from configparser import ConfigParser
 from contextlib import contextmanager
+from io import StringIO
 
 import fauxfactory
 import pytest
 import requests
 from lxml import etree
-from six import iteritems
-from six import StringIO
 
 import cfme.utils.auth as authutil
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -136,7 +135,7 @@ def ipa_crud():
     try:
         ipa_keys = [
             key
-            for key, yaml in iteritems(auth_data.auth_providers)
+            for key, yaml in auth_data.auth_providers.items()
             if yaml.type == authutil.FreeIPAAuthProvider.auth_type
         ]
         ipa_provider = authutil.get_auth_crud(ipa_keys[0])

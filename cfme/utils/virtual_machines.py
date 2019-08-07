@@ -3,7 +3,6 @@
 from ssl import SSLError
 
 import pytest
-import six
 from novaclient.exceptions import OverLimit as OSOverLimit
 from wrapanapi import AzureSystem
 from wrapanapi.exceptions import VMInstanceNotCloned
@@ -32,7 +31,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     if isinstance(allow_skip, dict):
         skip_exceptions = list(allow_skip.keys())
         callable_mapping = allow_skip
-    elif isinstance(allow_skip, six.string_types) and allow_skip.lower() == "default":
+    elif isinstance(allow_skip, str) and allow_skip.lower() == "default":
         skip_exceptions = DEFAULT_SKIP
         callable_mapping = {}
     else:

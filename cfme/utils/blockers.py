@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
+from urllib.parse import urlparse
+from xmlrpc.client import Fault as RPCFault
 
-import six.moves.xmlrpc_client
 from github import Github
-from six.moves.urllib.parse import urlparse
 
 from cfme.fixtures.pytest_store import store
 from cfme.utils import classproperty
@@ -49,7 +49,7 @@ class Blocker(object):
         """Create a blocker object from some representation"""
         if isinstance(blocker, cls):
             return blocker
-        elif isinstance(blocker, six.string_types):
+        elif isinstance(blocker, str):
             if "#" in blocker:
                 # Generic blocker
                 engine, spec = blocker.split("#", 1)
@@ -102,7 +102,7 @@ class GH(Blocker):
             if self.DEFAULT_REPOSITORY is None:
                 raise ValueError("You must specify github/default_repo in env.yaml!")
             self.issue = description
-        elif isinstance(description, six.string_types):
+        elif isinstance(description, str):
             try:
                 owner, repo, issue_num = re.match(r"^([^/]+)/([^/:]+):([0-9]+)$",
                                                   str(description).strip()).groups()
@@ -236,7 +236,7 @@ class BZ(Blocker):
                 if bug.fixed_in is not None:
                     return version.current_version() < bug.fixed_in
             return result
-        except six.moves.xmlrpc_client.Fault as e:
+        except RPCFault as e:
             code = e.faultCode
             s = e.faultString.strip().split("\n")[0]
             logger.error("Bugzilla thrown a fault: %s/%s", code, s)

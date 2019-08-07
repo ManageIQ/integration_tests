@@ -37,7 +37,6 @@ example of artifactor configuration:
 """
 import attr
 import pytest
-import six
 
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 
@@ -123,7 +122,7 @@ class MerkylInspector(object):
                                         path/to/log/name.log)
         """
         contents = self.get_log(log_name)
-        if isinstance(needle, six.string_types):
+        if isinstance(needle, str):
             return needle in contents
         else:
             return bool(needle.search(contents))

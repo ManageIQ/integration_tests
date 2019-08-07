@@ -3,8 +3,6 @@ import os.path
 import re
 import sys
 
-import six
-
 if len(sys.argv) == 1:
     print("""
 Invoke either by supplying a path or a file and optionally a string to find in a test name
@@ -27,7 +25,7 @@ def parser(filename, exp=None):
 
     p = re.findall(r'\s*def\s*[a-zA-Z0-9_]*?(test_.*?{}.*?)\('.format(exp), data)
     for test in p:
-        if isinstance(test, six.string_types):
+        if isinstance(test, str):
             print("{} :: {}".format(filename, test))
         else:
             print("{} :: {}".format(filename, test[0]))

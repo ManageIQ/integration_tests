@@ -2,7 +2,6 @@ from copy import deepcopy
 
 import attr
 from cached_property import cached_property
-from six import iteritems
 
 from cfme.configure.configuration.server_settings import AmazonAuthenticationView
 from cfme.configure.configuration.server_settings import ExternalAuthenticationView
@@ -115,7 +114,7 @@ class BaseAuthProvider(object):
         config_copy = deepcopy(prov_config)  # copy to avoid modifying passed attrdict
         config_copy.update(credentials[config_copy.get('credentials')])
         class_params = {k: v
-                        for k, v in iteritems(config_copy)
+                        for k, v in config_copy.items()
                         if k in attr.fields_dict(cls)}
         return cls(key=prov_key, **class_params)
 

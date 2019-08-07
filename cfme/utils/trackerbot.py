@@ -2,11 +2,11 @@ import argparse
 import json
 import time
 from collections import defaultdict
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 import requests
 import slumber
-from six.moves.urllib_parse import parse_qs
-from six.moves.urllib_parse import urlparse
 
 from cfme.utils.conf import env
 from cfme.utils.log import logger
