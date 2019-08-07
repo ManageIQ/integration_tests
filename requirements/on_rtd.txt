@@ -1,3 +1,3 @@
 # enable the usage of the wheels we add for pbr-broken packages
 --find-links ./docs/
--r frozen_docs.py2.txt
+-r frozen_docs.py3.txt
