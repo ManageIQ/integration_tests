@@ -501,8 +501,7 @@ def test_host_comparison_multipleviews_interactions():
                        child items remain selected.
                     10. Repeat steps 6 through 9 for Configuration, Security, and Properties
                         sections.
-
-                expectedResults:icon
+                expectedResults:
                     1. Hosts view is displayed.
                     2. The selected hosts should be displayed with a blue border and checked
                        checkbox.
@@ -516,6 +515,5 @@ def test_host_comparison_multipleviews_interactions():
                     8. Each child item is removed from display in Compare Hosts/Node panel.
                     9. Each child item is added to display in Compare Hosts/Node panel.
                     10. Same expected results as for steps 6 through 9.
-
     """
     pass
