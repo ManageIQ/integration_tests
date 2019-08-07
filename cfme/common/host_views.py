@@ -14,6 +14,8 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import TimelinesView
 from cfme.exceptions import displayed_not_implemented
 from cfme.utils.log import logger
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import Button
@@ -193,7 +195,10 @@ class HostsView(ComputeInfrastructureHostsView):
 
     @View.nested
     class filters(Accordion):  # noqa
-        ACCORDION_NAME = "Filters"
+        ACCORDION_NAME = VersionPicker({
+            Version.lowest(): 'Filters',
+            '5.11': 'Global Filters'
+        })
 
         navigation = BootstrapNav('.//div/ul')
         tree = ManageIQTree()
