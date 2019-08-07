@@ -243,7 +243,7 @@ class Domain(BaseEntity, Fillable):
                 'Automate Domain "{}": Delete successful'.format(self.description or self.name))
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
     def lock(self):
@@ -255,7 +255,7 @@ class Domain(BaseEntity, Fillable):
         details_page.flash.assert_message('The selected Automate Domain were marked as Locked')
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
         clear_property_cache(self, 'locked')
@@ -270,7 +270,7 @@ class Domain(BaseEntity, Fillable):
         details_page.flash.assert_message('The selected Automate Domain were marked as Unlocked')
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
         clear_property_cache(self, 'locked')
@@ -279,7 +279,7 @@ class Domain(BaseEntity, Fillable):
     def update(self, updates):
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
         view = navigate_to(self, 'Edit')
@@ -354,7 +354,7 @@ class DomainCollection(BaseCollection):
                 enabled = False
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
             return self.instantiate(
@@ -422,7 +422,7 @@ class DomainCollection(BaseCollection):
                 'Automate Domain "{}": Delete successful'.format(domain.description or domain.name))
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
     def set_order(self, items):
