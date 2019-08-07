@@ -25,7 +25,6 @@ rhel7y && mv /tmp/rhel7.repo /etc/yum.repos.d/rhel.repo
 rhel8y && mv /tmp/rhel8.repo /etc/yum.repos.d/rhel.repo
 
 yum install -y nfs-utils samba vsftpd
-#setenforce 0
 
 # NFS setup
 mkdir -p /srv/export
@@ -63,6 +62,6 @@ yum -y install squid
 systemctl enable squid
 
 # Turn selinux off
-echo SELINUXTYPE=targeted > /etc/selinux/config
+sed  -i 's/SELINUX=.*/SELINUX=permissive/' /etc/selinux/config
 
 touch /.unconfigured
