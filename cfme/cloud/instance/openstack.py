@@ -156,7 +156,7 @@ class DetachVolumeView(CloudInstanceView):
     def after_fill(self, was_change):
         # TODO: Remove this method once BZ1647695 has been fixed
         self.submit_button.click()
-        if was_change and BZ(1647695, forced_streams=['5.10', 'upstream']).blocks:
+        if was_change and False:
             instance = self.context['object']
             view = self.browser.create_view(navigator.get_class(instance, 'Details').VIEW)
             wait_for(lambda: view.entities.title.text == 'Instance "{}"'.format(
