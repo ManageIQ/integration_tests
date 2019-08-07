@@ -537,7 +537,7 @@ def test_accordion_after_condition_creation(appliance, condition_class):
     For this test, we must make a condition 'manually' and so that we can access the view
     during the condition creation.
     """
-    if BZ(1683697).blocks and condition_class in BAD_CONDITIONS:
+    if False and condition_class in BAD_CONDITIONS:
         pytest.skip("Skipping because {} conditions are impacted by BZ 1683697"
                     .format(condition_class.__name__))
     condition = appliance.collections.conditions.create(condition_class,
