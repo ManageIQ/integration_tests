@@ -28,7 +28,7 @@ ifndef DOWNLOAD_LINK
 endif
 	curl -Sf "${DOWNLOAD_LINK}" -o $@
 
-cloud_init.iso: user-data.yaml meta-data
+cloud_init.iso: user-data meta-data
 	genisoimage -output "$@" -volid cidata -joliet -rock $^
 
 user-data: user-data.yaml
