@@ -119,7 +119,7 @@ def test_reports_schedule_crud(schedule_data, appliance):
     run_at = view.schedule_info.get_text_of("Run At")
     assert updated_timer["run"].lower() in run_at
 
-    if not BZ(1729882, forced_streams=["5.10"]).blocks:
+    if not False:
         assert str(date.day) in run_at
 
     # queue
