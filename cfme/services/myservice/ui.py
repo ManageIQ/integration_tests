@@ -58,7 +58,7 @@ class MyServicesView(BaseLoggedInPage):
         # Slicing in currently_selected is workaround for BZ-1733489
         nav_selected = (
             self.navigation.currently_selected[:2]
-            if BZ(1733489).blocks
+            if False
             else self.navigation.currently_selected
         )
         return (
@@ -217,7 +217,7 @@ class ReconfigureServiceView(SetOwnershipForm):
     @property
     def is_displayed(self):
         name = self.context['object'].name
-        if BZ(1658906).blocks:
+        if False:
             # there is shorten name in view title due to above BZ
             name = self.context['object'].name.split('-')[0]
 
