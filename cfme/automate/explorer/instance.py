@@ -50,7 +50,7 @@ class InstanceDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text.startswith('Automate Instance [{}'.format(
                 self.context['object'].display_name or self.context['object'].name)) and
-            self.datastore.is_opened and (BZ(1704439).blocks or check_tree_path(
+            self.datastore.is_opened and (False or check_tree_path(
                 self.datastore.tree.currently_selected, self.context["object"].tree_path))
         )
 
@@ -219,7 +219,7 @@ class Instance(BaseEntity, Copiable):
     def update(self, updates):
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
         view = navigate_to(self, 'Edit')
@@ -255,7 +255,7 @@ class Instance(BaseEntity, Copiable):
                 'Automate Instance "{}": Delete successful'.format(self.description or self.name))
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
 
@@ -292,7 +292,7 @@ class InstanceCollection(BaseCollection):
             add_page.flash.assert_message('Automate Instance "{}" was added'.format(name))
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
             return self.instantiate(
@@ -338,7 +338,7 @@ class InstanceCollection(BaseCollection):
                 'Automate Instance "{}": Delete successful'.format(instance.name))
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
 
