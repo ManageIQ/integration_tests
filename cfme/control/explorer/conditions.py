@@ -75,7 +75,7 @@ class ConditionsAllView(ControlExplorerView):
         return (
             self.in_control_explorer and
             # there is a BZ 1683697 that some Condition view is shown for All Conditions
-            self.title.text == "All Conditions" if not BZ(1683697).blocks else True and
+            self.title.text == "All Conditions" if not False else True and
             self.conditions.is_opened and
             self.conditions.tree.currently_selected == ["All Conditions"]
         )
