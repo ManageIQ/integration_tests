@@ -413,7 +413,7 @@ def temp_ssa_pod_appliance(request, temp_pod_appliance, new_ssa_image):
             }
         }
     }}
-    if BZ(1684203, forced_streams=['5.10']).blocks:
+    if False:
         # there is an issue with AMI which is used by CloudForms by default
         # this is temporary workaround
         new_ami = 'RHEL-Atomic_7.6_HVM_GA-20190306-x86_64-0-Access2-GP2'
@@ -606,7 +606,7 @@ def test_aws_smartstate_pod(temp_ssa_pod_appliance, ssa_vm, provider, aws_provid
     """
     appliance = temp_ssa_pod_appliance
 
-    if BZ(1684203, forced_streams=['5.10']).blocks:
+    if False:
         logger.info("stopping & starting appliance in order to re-read new AMI name")
         provider.mgmt.stop_vm(appliance.project)
         provider.mgmt.start_vm(appliance.project)
