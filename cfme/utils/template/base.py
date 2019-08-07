@@ -129,7 +129,7 @@ class ProviderTemplateUpload(object):
     # TODO rework to pull default image for stream URL
         try:
             with closing(urlopen(self.image_url)) as image_dir:
-                string_from_url = image_dir.read()
+                string_from_url = image_dir.read().decode('utf-8')
         except URLError as e:
             logger.error("Cannot get image URL from %s: %s", self.image_url, e.reason.strerror)
             raise TemplateUploadException("Cannot get image URL.")
