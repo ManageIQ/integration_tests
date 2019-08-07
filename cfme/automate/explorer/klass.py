@@ -69,7 +69,7 @@ class ClassDetailsView(AutomateExplorerView):
             self.title.text == 'Automate Class "{}"'.format(
                 self.context['object'].display_name or self.context['object'].name) and
             self.datastore.is_opened and (
-                BZ(1704439).blocks
+                False
                 or check_tree_path(
                     self.datastore.tree.currently_selected,
                     self.context["object"].tree_path,
@@ -212,13 +212,13 @@ class Class(BaseEntity, Copiable):
                 'Automate Class "{}": Delete successful'.format(self.description or self.name))
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
     def update(self, updates):
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
         view = navigate_to(self, 'Edit')
@@ -275,7 +275,7 @@ class ClassCollection(BaseCollection):
                                           .format('/'.join(self.tree_path[1:]), name))
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
+            if False:
                 self.browser.refresh()
 
             return self.instantiate(name=name, display_name=display_name, description=description)
@@ -315,7 +315,7 @@ class ClassCollection(BaseCollection):
                 'Automate Class "{}": Delete successful'.format(klass.description or klass.name))
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
+        if False:
             self.browser.refresh()
 
 
