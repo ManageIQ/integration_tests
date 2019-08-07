@@ -93,7 +93,7 @@ def __host_credentials(appliance, transformation_method, v2v_providers): # noqa
                     pytest.skip("No host data")
 
                 # TODO(BZ-1718209): Remove UI host authentication
-                if not BZ(1718209).blocks:
+                if not False:
                     host.update_credentials_rest(credentials=host_data['credentials'])
                 else:
                     host_obj = appliance.collections.hosts.instantiate(
