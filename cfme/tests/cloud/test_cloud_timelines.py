@@ -228,7 +228,7 @@ class InstEvent(object):
 
         if not events_list:
             self.inst.provider.refresh_provider_relationships()
-            logger.warn('Event list of %r is empty!', target)
+            logger.warning('Event list of %r is empty!', target)
 
         found_events = []
 
@@ -243,7 +243,8 @@ class InstEvent(object):
                         found_events.append(evt)
                         break
             except AttributeError as err:
-                logger.warn('Issue with TimelinesEvent: %r .Faulty event: %r', str(err), str(evt))
+                logger.warning('Issue with TimelinesEvent: %r .Faulty event: %r', str(err),
+                               str(evt))
                 continue
 
         logger.info('found events on %r: %s', target, "\n".join([repr(e) for e in found_events]))

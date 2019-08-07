@@ -204,7 +204,7 @@ def test_provisioning(appliance, request, scenario):
             elif time_remaining > 0:
                 time.sleep(wait_diff)
             else:
-                logger.warn('Time to initiate provisioning ({}) exceeded time between '
+                logger.warning('Time to initiate provisioning ({}) exceeded time between '
                     '({})'.format(iteration_time, time_between_provision))
 
     quantifiers['Elapsed_Time'] = round(time.time() - starttime, 2)

@@ -797,7 +797,7 @@ class VM(BaseVM):
             if find_in_cfme:
                 self.wait_to_appear(timeout=timeout, load_details=False)
         except Exception:
-            logger.warn("Couldn't find VM or Instance '%s' in CFME", self.name)
+            logger.warning("Couldn't find VM or Instance '%s' in CFME", self.name)
             if delete_on_failure:
                 logger.info("Removing VM or Instance from mgmt system")
                 self.cleanup_on_provider()

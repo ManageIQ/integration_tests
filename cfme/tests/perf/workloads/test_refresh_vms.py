@@ -108,7 +108,7 @@ def test_refresh_vms(appliance, request, scenario):
             elif time_remaining > 0:
                 time.sleep(wait_diff)
         else:
-            logger.warn('Time to Queue VM Refreshes ({}) exceeded time between '
+            logger.warning('Time to Queue VM Refreshes ({}) exceeded time between '
                 '({})'.format(refresh_time, time_between_refresh))
 
     quantifiers['Elapsed_Time'] = round(time.time() - starttime, 2)

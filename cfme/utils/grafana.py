@@ -25,5 +25,5 @@ def get_scenario_dashboard_urls(scenario, from_ts, to_ts, output_to_log=True):
             logger.info('Grafana URLs: {}'.format(grafana_urls))
         return grafana_urls
     else:
-        logger.warn('Grafana integration is not enabled')
+        logger.warning('Grafana integration is not enabled')
         return ''

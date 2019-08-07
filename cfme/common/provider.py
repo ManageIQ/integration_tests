@@ -1109,7 +1109,7 @@ class CloudInfraProviderMixin(object):
             if value:
                 self.default_endpoint.hostname = value
         else:
-            logger.warn("can't set hostname because default endpoint is absent")
+            logger.warning("can't set hostname because default endpoint is absent")
 
     @property
     def ip_address(self):
@@ -1121,7 +1121,7 @@ class CloudInfraProviderMixin(object):
             if value:
                 self.default_endpoint.ipaddress = value
         else:
-            logger.warn("can't set ipaddress because default endpoint is absent")
+            logger.warning("can't set ipaddress because default endpoint is absent")
 
     @variable(alias="db")
     def num_template(self):

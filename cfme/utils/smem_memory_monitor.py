@@ -166,7 +166,7 @@ class SmemMemoryMonitor(Thread):
             process_results[process_name][process_pid][starttime]['swap'] = swap_mem
             del memory_by_pid[process_pid]
         else:
-            logger.warn('Process {} PID, not found: {}'.format(process_name, process_pid))
+            logger.warning('Process {} PID, not found: {}'.format(process_name, process_pid))
 
     def get_appliance_memory(self, appliance_results, plottime):
         # 5.5/5.6 - RHEL 7 / Centos 7
@@ -387,10 +387,10 @@ def create_report(scenario_data, appliance_results, process_results, use_slab, g
 
     scenario_path = workload_path.join(scenario_data['scenario']['name'])
     if os.path.exists(str(scenario_path)):
-        logger.warn('Duplicate Workload-Scenario Name: {}'.format(scenario_path))
+        logger.warning('Duplicate Workload-Scenario Name: {}'.format(scenario_path))
         scenario_path = workload_path.join('{}-{}'.format(time.strftime('%Y%m%d%H%M%S'),
             scenario_data['scenario']['name']))
-        logger.warn('Using: {}'.format(scenario_path))
+        logger.warning('Using: {}'.format(scenario_path))
     os.mkdir(str(scenario_path))
 
     mem_graphs_path = scenario_path.join('graphs')

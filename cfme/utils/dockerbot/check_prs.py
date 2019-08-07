@@ -34,7 +34,7 @@ def send_message_to_bot(msg):
 
     required_fields = set(['rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'])
     if not required_fields.issubset(docker_conf.keys()):
-        logger.warn("Skipping - docker.yaml doesn't have {}".format(required_fields))
+        logger.warning("Skipping - docker.yaml doesn't have {}".format(required_fields))
         return
 
     logger.info("Github PR bot: about to send '{}'".format(msg))
@@ -53,7 +53,7 @@ def send_message_to_bot(msg):
                               body=json.dumps(message, ensure_ascii=True))
     except Exception:
         output = traceback.format_exc()
-        logger.warn("Exception while sending a message to the bot: {}".format(output))
+        logger.warning("Exception while sending a message to the bot: {}".format(output))
     finally:
         if connection:
             connection.close()
