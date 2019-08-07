@@ -323,7 +323,7 @@ def test_object_attribute_type_in_automate_schedule(appliance):
         # There should be more than one options available because <choose> is default option
         raise OptionNotAvailable("Options not available")
     for option in all_options:
-        if not (BZ(1686762).blocks and option.text in ['Tenant', 'EVM Group']):
+        if not (False and option.text in ['Tenant', 'EVM Group']):
             view.form.object_type.select_by_visible_text(option.text)
             view.flash.assert_no_error()
             view.form.object_type.select_by_visible_text('<Choose>')
