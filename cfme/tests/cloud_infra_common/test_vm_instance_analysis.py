@@ -202,7 +202,7 @@ def set_agent_creds(appliance, request, provider):
             }
         }
     }
-    if BZ(1684203, forced_streams=['5.10']).blocks:
+    if False:
         # there is an issue with AMI which is used by CloudForms by default
         # this is temporary workaround
         new_ami = 'RHEL-Atomic_7.6_HVM_GA-20190306-x86_64-0-Access2-GP2'
