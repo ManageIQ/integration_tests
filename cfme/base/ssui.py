@@ -10,7 +10,7 @@ from widgetastic_patternfly import NavDropdown
 from widgetastic_patternfly import Text
 from widgetastic_patternfly.utils import PFIcon
 
-from . import Server
+from cfme.base import Server
 from cfme.base.credential import Credential
 from cfme.utils import conf
 from cfme.utils.appliance import MiqImplementationContext

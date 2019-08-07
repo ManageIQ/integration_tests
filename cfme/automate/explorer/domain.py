@@ -12,7 +12,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
-from . import AutomateExplorerView
+from cfme.automate.explorer import AutomateExplorerView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -112,7 +112,7 @@ class Domain(BaseEntity, Fillable):
     def __init__(
             self, collection, name, description=None, enabled=None, locked=None,
             git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None):
-        from .namespace import NamespaceCollection
+        from cfme.automate.explorer.namespace import NamespaceCollection
         self._collections = {'namespaces': NamespaceCollection}
         super(Domain, self).__init__(collection)
         self.name = name

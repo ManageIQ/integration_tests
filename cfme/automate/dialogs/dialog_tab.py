@@ -2,9 +2,8 @@ import attr
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
 
-from . import AddTabView
-from . import TabForm
-from .dialog_box import BoxCollection
+from cfme.automate.dialogs import AddTabView
+from cfme.automate.dialogs import TabForm
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.modeling.base import parent_of_type
@@ -40,6 +39,7 @@ class Tab(BaseEntity):
     tab_label = attr.ib()
     tab_desc = attr.ib(default=None)
 
+    from cfme.automate.dialogs.dialog_box import BoxCollection
     _collections = {'boxes': BoxCollection}
 
     @property
@@ -53,7 +53,7 @@ class Tab(BaseEntity):
     @property
     def dialog(self):
         """ Returns parent object - Dialog"""
-        from .service_dialogs import Dialog
+        from cfme.automate.dialogs.service_dialogs import Dialog
         return parent_of_type(self, Dialog)
 
 

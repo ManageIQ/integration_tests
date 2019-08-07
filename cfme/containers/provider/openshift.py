@@ -5,12 +5,12 @@ from cached_property import cached_property
 from six.moves.urllib.error import URLError
 from wrapanapi.systems.container import Openshift
 
-from . import ContainersProvider
-from . import ContainersProviderDefaultEndpoint
-from . import ContainersProviderEndpointsForm
 from cfme.common import Taggable
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.vm_console import ConsoleMixin
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProviderDefaultEndpoint
+from cfme.containers.provider import ContainersProviderEndpointsForm
 from cfme.control.explorer.alert_profiles import NodeAlertProfile
 from cfme.control.explorer.alert_profiles import ProviderAlertProfile
 from cfme.utils import ssh

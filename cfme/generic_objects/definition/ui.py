@@ -2,13 +2,13 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic_patternfly import CandidateNotFound
 
-from . import GenericObjectDefinition
-from . import GenericObjectDefinitionCollection
-from .definition_views import GenericObjectDefinitionAddView
-from .definition_views import GenericObjectDefinitionAllView
-from .definition_views import GenericObjectDefinitionDetailsView
-from .definition_views import GenericObjectDefinitionEditView
 from cfme.exceptions import ItemNotFound
+from cfme.generic_objects.definition import GenericObjectDefinition
+from cfme.generic_objects.definition import GenericObjectDefinitionCollection
+from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionAddView
+from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionAllView
+from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
+from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionEditView
 from cfme.generic_objects.instance.ui import GenericObjectInstanceAllView
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

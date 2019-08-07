@@ -12,7 +12,7 @@ import io
 import click
 import yaycl_crypt
 
-from . import link_config
+from cfme.scripting import link_config
 from cfme.utils import conf
 
 

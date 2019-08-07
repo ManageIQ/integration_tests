@@ -1,7 +1,7 @@
 import attr
 
-from . import InfraProvider
 from cfme.containers.provider.openshift import VirtualizationEndpoint
+from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.providers import get_crud
 
 

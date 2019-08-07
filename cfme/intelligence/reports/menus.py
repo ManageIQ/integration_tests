@@ -7,8 +7,8 @@ from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button
 
-from . import CloudIntelReportsView
-from . import ReportsMultiBoxSelect
+from cfme.intelligence.reports import CloudIntelReportsView
+from cfme.intelligence.reports import ReportsMultiBoxSelect
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

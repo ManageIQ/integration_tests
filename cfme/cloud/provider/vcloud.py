@@ -3,7 +3,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Input
 from wrapanapi.systems import VmwareCloudSystem
 
-from . import CloudProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import Credential
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm

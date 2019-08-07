@@ -1,8 +1,8 @@
 import sys
 
-from . import IN_VIRTUAL_ENV
-from . import main
-from . import mk_parser
+from cfme.scripting.quickstart import IN_VIRTUAL_ENV
+from cfme.scripting.quickstart import main
+from cfme.scripting.quickstart import mk_parser
 IS_SCRIPT = sys.argv[0] == __file__
 
 if IS_SCRIPT:

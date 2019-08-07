@@ -6,8 +6,8 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
-from . import CloudInstanceView
-from . import InstanceAccordion
+from cfme.cloud.instance import CloudInstanceView
+from cfme.cloud.instance import InstanceAccordion
 from cfme.common.vm import Template
 from cfme.common.vm import TemplateCollection
 from cfme.common.vm_views import BasicProvisionFormView

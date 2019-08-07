@@ -19,10 +19,10 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import FlashMessages
 from widgetastic_patternfly import Input
 
-from . import Region
-from . import Server
-from . import Zone
-from . import ZoneCollection
+from cfme.base import Region
+from cfme.base import Server
+from cfme.base import Zone
+from cfme.base import ZoneCollection
 from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.about import AboutView

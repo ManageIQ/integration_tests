@@ -15,7 +15,7 @@ IMPORTS = [
 def main(no_quickstart):
     """Use quickstart to ensure we have correct env, then execute imports in ipython and done."""
     if not no_quickstart:
-        from . import quickstart
+        from cfme.scripting import quickstart
 
         quickstart.main(quickstart.args_for_current_venv())
     print('Welcome to IPython designed for running CFME QE code.')

@@ -5,9 +5,9 @@ import os
 import subprocess
 import sys
 
-from .proc import PRISTINE_ENV
-from .proc import run_cmd_or_exit
-from .system import install_system_packages
+from cfme.scripting.quickstart.proc import PRISTINE_ENV
+from cfme.scripting.quickstart.proc import run_cmd_or_exit
+from cfme.scripting.quickstart.system import install_system_packages
 
 CREATED = object()
 

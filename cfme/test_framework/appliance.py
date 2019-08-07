@@ -55,7 +55,7 @@ def pytest_configure(config):
         appliances = appliances_from_cli(config.option.appliances, config.option.appliance_version)
         reporter.write_line('Retrieved these appliances from the --appliance parameters', red=True)
     elif config.getoption('--use-sprout'):
-        from .sprout.plugin import mangle_in_sprout_appliances
+        from cfme.test_framework.sprout.plugin import mangle_in_sprout_appliances
 
         mangle_in_sprout_appliances(config)
         # TODO : handle direct sprout pass on?

@@ -7,12 +7,12 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 from wrapanapi.systems import NuageSystem
 
-from . import NetworkProvider
 from cfme.cloud.tenant import TenantCollection
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.common.provider import EventsEndpoint
 from cfme.common.provider_views import BeforeFillMixin
+from cfme.networks.provider import NetworkProvider
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.varmeth import variable

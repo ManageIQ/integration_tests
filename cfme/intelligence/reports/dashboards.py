@@ -8,7 +8,7 @@ from widgetastic.widget import Text
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import CloudIntelReportsView
+from cfme.intelligence.reports import CloudIntelReportsView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance import Navigatable

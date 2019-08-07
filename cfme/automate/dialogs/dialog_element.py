@@ -8,8 +8,8 @@ from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from . import AddBoxView
-from . import AutomateCustomizationView
+from cfme.automate.dialogs import AddBoxView
+from cfme.automate.dialogs import AutomateCustomizationView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.modeling.base import parent_of_type
@@ -135,7 +135,7 @@ class Element(BaseEntity):
     @property
     def dialog(self):
         """ Returns parent object - Dialog"""
-        from .service_dialogs import Dialog
+        from cfme.automate.dialogs.service_dialogs import Dialog
         return parent_of_type(self, Dialog)
 
     def element_loc(self, element_type):

@@ -2,9 +2,8 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 
-from . import AddBoxView
-from . import BoxForm
-from .dialog_element import ElementCollection
+from cfme.automate.dialogs import AddBoxView
+from cfme.automate.dialogs import BoxForm
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.modeling.base import parent_of_type
@@ -29,6 +28,7 @@ class Box(BaseEntity):
     box_label = attr.ib()
     box_desc = attr.ib(default=None)
 
+    from cfme.automate.dialogs.dialog_element import ElementCollection
     _collections = {'elements': ElementCollection}
 
     @cached_property
@@ -41,7 +41,7 @@ class Box(BaseEntity):
 
     @property
     def tab(self):
-        from .dialog_tab import Tab
+        from cfme.automate.dialogs.dialog_tab import Tab
         return parent_of_type(self, Tab)
 
 

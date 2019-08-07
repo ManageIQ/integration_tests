@@ -1,8 +1,8 @@
 import re
 from contextlib import contextmanager
 
-from .ssh import SSHTail
 from cfme.utils.log import logger
+from cfme.utils.ssh import SSHTail
 from cfme.utils.wait import wait_for
 
 

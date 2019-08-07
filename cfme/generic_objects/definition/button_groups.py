@@ -1,13 +1,13 @@
 import attr
 from navmazing import NavigateToAttribute
 
-from .definition_views import GenericObjectActionsDetailsView
-from .definition_views import GenericObjectAddButtonView
-from .definition_views import GenericObjectButtonGroupAddView
-from .definition_views import GenericObjectButtonGroupDetailsView
-from .definition_views import GenericObjectDefinitionAllView
-from .definition_views import GenericObjectDefinitionDetailsView
 from cfme.exceptions import OptionNotAvailable
+from cfme.generic_objects.definition.definition_views import GenericObjectActionsDetailsView
+from cfme.generic_objects.definition.definition_views import GenericObjectAddButtonView
+from cfme.generic_objects.definition.definition_views import GenericObjectButtonGroupAddView
+from cfme.generic_objects.definition.definition_views import GenericObjectButtonGroupDetailsView
+from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionAllView
+from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

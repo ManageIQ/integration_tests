@@ -2,7 +2,7 @@ import os
 import re
 import time
 
-from . import run_cmd_or_exit
+from cfme.scripting.quickstart import run_cmd_or_exit
 
 IS_ROOT = os.getuid() == 0
 REDHAT_RELEASE_FILE = '/etc/redhat-release'

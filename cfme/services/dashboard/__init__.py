@@ -24,5 +24,5 @@ class Dashboard(Navigatable, sentaku.modeling.ElementMixin):
         self.parent = self.appliance.context
 
 
-from . import ssui  # NOQA last for import cycles
+from cfme.services.dashboard import ssui  # NOQA last for import cycles
 importscan.scan(ssui)

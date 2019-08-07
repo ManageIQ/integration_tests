@@ -2379,9 +2379,9 @@ class AdvancedFilterUserInput(View):
 class AdvancedSearchView(View):
     """ Advanced Search View """
 
-    from . import expression_editor as exp_editor
+    from widgetastic_manageiq.expression_editor import ExpressionEditor
 
-    search_exp_editor = exp_editor.ExpressionEditor()
+    search_exp_editor = ExpressionEditor()
 
     load_filter_button = Button("Load")
     apply_filter_button = Button("Apply")

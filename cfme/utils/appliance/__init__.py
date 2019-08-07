@@ -30,18 +30,18 @@ from werkzeug.local import LocalStack
 from wrapanapi import VmState
 from wrapanapi.exceptions import VMInstanceNotFound
 
-from .db import ApplianceDB
-from .implementations.rest import ViaREST
-from .implementations.ssui import ViaSSUI
-from .implementations.ui import ViaUI
-from .services import SystemdException
-from .services import SystemdService
 from cfme.fixtures import ui_coverage
 from cfme.fixtures.pytest_store import store
 from cfme.utils import clear_property_cache
 from cfme.utils import conf
 from cfme.utils import ports
 from cfme.utils import ssh
+from cfme.utils.appliance.db import ApplianceDB
+from cfme.utils.appliance.implementations.rest import ViaREST
+from cfme.utils.appliance.implementations.ssui import ViaSSUI
+from cfme.utils.appliance.implementations.ui import ViaUI
+from cfme.utils.appliance.services import SystemdException
+from cfme.utils.appliance.services import SystemdService
 from cfme.utils.conf import hidden
 from cfme.utils.log import create_sublogger
 from cfme.utils.log import logger

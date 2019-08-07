@@ -5,10 +5,10 @@ from navmazing import NavigateToSibling
 from widgetastic.utils import Fillable
 from widgetastic.widget import Text
 
-from . import AddDialogView
-from . import AutomateCustomizationView
-from . import EditDialogView
-from .dialog_tab import TabCollection
+from cfme.automate.dialogs import AddDialogView
+from cfme.automate.dialogs import AutomateCustomizationView
+from cfme.automate.dialogs import EditDialogView
+from cfme.automate.dialogs.dialog_tab import TabCollection
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

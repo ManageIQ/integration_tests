@@ -2,9 +2,9 @@ import attr
 from widgetastic_patternfly import Input
 from wrapanapi.systems import LenovoSystem
 
-from . import PhysicalProvider
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
+from cfme.physical.provider import PhysicalProvider
 
 
 class LenovoEndpoint(DefaultEndpoint):

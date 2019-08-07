@@ -1,7 +1,7 @@
 import os
 import sys
 
-from . import quickstart
+from cfme.scripting import quickstart
 QUICKSTART_DONE = 'MIQ_RUNTEST_QUICKSTART_DONE'
 
 
