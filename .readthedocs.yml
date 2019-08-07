@@ -3,8 +3,8 @@ build:
   image: latest
 
 formats: []
-requirements_file: requirements/frozen_docs.py2.txt
+requirements_file: requirements/frozen_docs.py3.txt
 
 python:
-  version: 2
+  version: 3.7
   setup_py_install: true
