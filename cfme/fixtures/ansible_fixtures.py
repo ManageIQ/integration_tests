@@ -130,7 +130,7 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
     service_request = appliance.collections.requests.instantiate(description=request_descr)
     if service_request.exists():
         service_request.wait_for_request()
-        if not BZ(1646333, forced_streams=['5.10']).blocks:
+        if not False:
             service_request.remove_request()
     yield cat_item_name
     service = MyService(appliance, cat_item_name)
