@@ -110,7 +110,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
             elif time_remaining > 0:
                 time.sleep(wait_diff)
         else:
-            logger.warn('Time to Queue SmartState Analyses ({}) exceeded time between '
+            logger.warning('Time to Queue SmartState Analyses ({}) exceeded time between '
                 '({})'.format(ssa_time, time_between_analyses))
 
     quantifiers['Elapsed_Time'] = round(time.time() - starttime, 2)

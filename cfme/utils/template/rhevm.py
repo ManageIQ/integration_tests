@@ -73,7 +73,7 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
         """
         temp_vm = self.mgmt.get_vm(self.temp_vm_name)
         if temp_vm.get_disks_count() > 1:
-            logger.warn('%s Warning: found more than one disk in existing VM (%s).',
+            logger.warning('%s Warning: found more than one disk in existing VM (%s).',
                         self.provider_key, self.temp_vm_name)
             return
         rhevm_specs = cfme_data.template_upload.template_upload_rhevm

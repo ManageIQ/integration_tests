@@ -92,7 +92,7 @@ def test_refresh_providers(appliance, request, scenario):
             elif time_remaining > 0:
                 time.sleep(wait_diff)
         else:
-            logger.warn('Time to Queue Refreshes ({}) exceeded time between '
+            logger.warning('Time to Queue Refreshes ({}) exceeded time between '
                         '({})'.format(refresh_time, time_between_refresh))
 
     quantifiers['Elapsed_Time'] = round(time.time() - starttime, 2)

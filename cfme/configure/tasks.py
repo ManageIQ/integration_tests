@@ -241,7 +241,7 @@ class TasksCollection(BaseCollection):
             try:
                 rows.append(list(tab_view.table.rows(task_name=task, state=expected_status)).pop())
             except IndexError:
-                logger.warn('IndexError exception suppressed when searching for task row,'
+                logger.warning('IndexError exception suppressed when searching for task row,'
                             ' no match found.')
                 return False
         for row in rows:

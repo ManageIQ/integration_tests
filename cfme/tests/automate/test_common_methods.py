@@ -38,7 +38,7 @@ def testing_vm(request, setup_provider, provider, provisioning):
         try:
             vm_obj.cleanup_on_provider()
         except Exception:
-            logger.warn('Failed deleting VM from provider: %s', vm_name)
+            logger.warning('Failed deleting VM from provider: %s', vm_name)
     request.addfinalizer(_finalize)
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm_obj

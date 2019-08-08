@@ -618,7 +618,8 @@ def test_aws_smartstate_pod(temp_ssa_pod_appliance, ssa_vm, provider, aws_provid
                 navigate_to(aws_provider, 'Details')
                 break
             except Exception as e:
-                logger.warn("attempt to go to aws_provider failed with '{e}'".format(e=e.message))
+                logger.warning("attempt to go to aws_provider "
+                               "failed with '{e}'".format(e=e.message))
 
     # run SSA against cu24x7 vm
     ssa_vm.smartstate_scan(wait_for_task_result=True)
