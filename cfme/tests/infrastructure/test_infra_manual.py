@@ -404,34 +404,34 @@ def test_host_comparison_exists_mode():
 @test_requirements.infra_hosts
 def test_host_comparison_compressed_view():
     """
-        Polarion:
-            assignee: prichard
-            casecomponent: Infra
-            caseimportance: low
-            initialEstimate: 1/4h
-            testSteps:
-                1. Navigate to the Compute > Infrastructure > Hosts view.
-                2. Select at least 3 hosts (more if possible) by checking the box in upper left of
-                   quadicons.
-                3. Click "Compare Selected Items" under the "Configuration" dropdown.
-                4. Click the "Compressed View" icon (in row of buttons to top left).
-            expectedResults:
-                1. Hosts view is displayed with hosts filtered via the Default filter (denoted by
-                   "(Default)" next to the filter name in the dropdown).
-                2. The selected hosts should be displayed with a blue border and checked checkbox.
-                3. The "Compare Host / Node" view should be displayed (in expanded view by
-                   default).
-                   - icons are displayed for all and only selected hosts with hostname displayed
-                   - one of the quadicons has the host denoted as "(base)" in the hostname
-                   - host properties row is displayed (default)
-                   - "% Matched" text or graphs are displayed
-                   - remove icons exist for all non-base hosts.
-                4. All hosts are still displayed but now in compressed mode:
-                   - column headings(hosts) are displayed vertically
-                   - a smaller, simpler, icon is displayed (represents 3rd quadrant) for the hosts.
-                   - on parent rows, "% Matched" is displayed as "%".
-                   - on child(leaf) rows, color coded values are replaced with checkmarks for
-                     matching, and x's for non-matching values
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Select at least 3 hosts (more if possible) by checking the box in upper left of
+               quadicons.
+            3. Click "Compare Selected Items" under the "Configuration" dropdown.
+            4. Click the "Compressed View" icon (in row of buttons to top left).
+        expectedResults:
+            1. Hosts view is displayed with hosts filtered via the Default filter (denoted by
+               "(Default)" next to the filter name in the dropdown).
+            2. The selected hosts should be displayed with a blue border and checked checkbox.
+            3. The "Compare Host / Node" view should be displayed (in expanded view by
+               default).
+               - icons are displayed for all and only selected hosts with hostname displayed
+               - one of the quadicons has the host denoted as "(base)" in the hostname
+               - host properties row is displayed (default)
+               - "% Matched" text or graphs are displayed
+               - remove icons exist for all non-base hosts.
+            4. All hosts are still displayed but now in compressed mode:
+               - column headings(hosts) are displayed vertically
+               - a smaller, simpler, icon is displayed (represents 3rd quadrant) for the hosts.
+               - on parent rows, "% Matched" is displayed as "%".
+               - on child(leaf) rows, color coded values are replaced with checkmarks for
+                 matching, and x's for non-matching values
     """
     pass
 
@@ -439,34 +439,34 @@ def test_host_comparison_compressed_view():
 @test_requirements.infra_hosts
 def test_host_comparison_report():
     """
-        Polarion:
-            assignee: prichard
-            casecomponent: Infra
-            caseimportance: low
-            initialEstimate: 1/4h
-            testSteps:
-                1. Navigate to the Compute > Infrastructure > Hosts view.
-                2. Select at least 3 hosts (more if possible) by checking the box in upper left of
-                   quadicons.
-                3. Click "Compare Selected Items" under the "Configuration" dropdown.
-                4. Click "Download as text" under the Downloads pulldown.
-                5. Click "Download as CSV" under the Downloads pulldown.
-                6. Click "Print or export as PDF".
-            expectedResults:
-                1. Hosts view is displayed.
-                2. The selected hosts should be displayed with a blue border and checked checkbox.
-                3. The "Compare Host / Node" view should be displayed.
-                4. A compare report should be downloaded (Chrome will show it in left bottom
-                   corner of window.
-                   - report is in text format.
-                   - report has date appended to name.
-                   - data in the report matches the GUI.
-                5. A compare report should be downloaded (Chrome will show it in left bottom
-                   corner of window.
-                   - report is in CSV format.
-                   - report has date appended to name.
-                   - data in the report matches the GUI.
-                6. A print page is displayed containing the compare report.
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Select at least 3 hosts (more if possible) by checking the box in upper left of
+               quadicons.
+            3. Click "Compare Selected Items" under the "Configuration" dropdown.
+            4. Click "Download as text" under the Downloads pulldown.
+            5. Click "Download as CSV" under the Downloads pulldown.
+            6. Click "Print or export as PDF".
+        expectedResults:
+            1. Hosts view is displayed.
+            2. The selected hosts should be displayed with a blue border and checked checkbox.
+            3. The "Compare Host / Node" view should be displayed.
+            4. A compare report should be downloaded (Chrome will show it in left bottom
+               corner of window.
+               - report is in text format.
+               - report has date appended to name.
+               - data in the report matches the GUI.
+            5. A compare report should be downloaded (Chrome will show it in left bottom
+               corner of window.
+               - report is in CSV format.
+               - report has date appended to name.
+               - data in the report matches the GUI.
+            6. A print page is displayed containing the compare report.
     """
     pass
 
