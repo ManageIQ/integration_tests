@@ -2830,9 +2830,7 @@ class ReactSelect(Widget, ClickableMixin):
     def all_options(self):
         # need to open the dropdown to see all available options
         self.open()
-        options = [
-            self.browser.text(e).encode("utf-8") for e in self.browser.elements(self.ALL_OPTIONS)
-        ]
+        options = [self.browser.text(e) for e in self.browser.elements(self.ALL_OPTIONS)]
         self.close()
         return options
 
