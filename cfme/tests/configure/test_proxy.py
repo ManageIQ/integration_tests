@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-import os.path
-
 import pytest
 
 from cfme import test_requirements
@@ -8,12 +5,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
-from cfme.utils.generators import random_vm_name
-from cfme.utils.log import logger
-from cfme.utils.net import find_pingable
 from cfme.utils.ssh import SSHClient
-from cfme.utils.virtual_machines import deploy_template
-from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -24,49 +16,15 @@ pytestmark = [
 
 
 @pytest.fixture(scope='module')
-def proxy_machine():
-    """ Deploy vm for proxy test
-
-    This fixture uses for deploy vm on provider from yaml and then receive it's ip
-    After test run vm deletes from provider
-    """
-    try:
-        root_password = "heslo"
-        authorized_ssh_keys = open(os.path.expanduser('~/.ssh/id_rsa.pub')).read()
-        data = cfme_data.proxy_template
-        proxy_port = data.port
-        vm = deploy_template(
-            data.provider,
-            random_vm_name('proxy'),
-            template_name=data.template_name,
-            root_password=root_password,
-            authorized_ssh_keys=authorized_ssh_keys
-        )
-    except AttributeError:
-        msg = 'Missing data in cfme_data.yaml, cannot deploy proxy'
-        logger.exception(msg)
-        pytest.skip(msg)
-
-    try:
-        found_ip, _ = wait_for(
-            find_pingable,
-            func_args=[vm],
-            fail_condition=None,
-            delay=5,
-            num_sec=300
-        )
-    except TimedOutError:
-        msg = 'Timed out waiting for reachable proxy VM IP'
-        logger.exception(msg)
-        pytest.skip(msg)
-
-    yield found_ip, proxy_port, root_password
-    vm.delete()
+def proxy_machine(utility_vm):
+    utility_vm_ip, utility_vm_root_password = utility_vm
+    yield (utility_vm_ip, utility_vm_root_password,
+           cfme_data.utility_vm.proxy.port)
 
 
 @pytest.fixture(scope='module')
 def proxy_ssh(proxy_machine):
-    proxy_ip, __, root_password = proxy_machine
+    proxy_ip, root_password, __ = proxy_machine
     with SSHClient(
             hostname=proxy_ip,
             username='root',
@@ -88,7 +46,7 @@ def validate_proxy_logs(provider, proxy_ssh, appliance_ip):
 
 @pytest.fixture(scope="function")
 def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, proxy_port, __ = proxy_machine
+    proxy_ip, __, proxy_port = proxy_machine
     prov_type = provider.type
     # 192.0.2.1 is from TEST-NET-1 which doesn't exist on the internet (RFC5737).
     appliance.set_proxy('192.0.2.1', proxy_port, prov_type='default')
@@ -101,7 +59,7 @@ def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_machine):
 
 @pytest.fixture(scope="function")
 def prepare_proxy_default(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, proxy_port, __ = proxy_machine
+    proxy_ip, __, proxy_port = proxy_machine
     prov_type = provider.type
     appliance.set_proxy(proxy_ip, proxy_port, prov_type='default')
     appliance.reset_proxy(prov_type)
