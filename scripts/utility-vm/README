@@ -1,0 +1,24 @@
+usage
+=====
+
+SHARE_PASSWORD=changeme \
+RHEL_REPO_BASE=http://download...redhat.com/rel-eng  \
+DOWNLOAD_LINK=http://download...redhat.com/brewroot/packages/rhel-guest-image \
+/8.1/68/images/rhel-guest-image-8.1-68.x86_64.qcow2 \
+make
+
+After the make finishes, you should have utility_vm.qcow2 file in the current
+directory which you can upload to the provider.
+
+To check the created image you may build an iso which will enable you to log-in
+using password "changeme" as user "root" or "cloud-user"
+
+$ make cloud_init.iso
+
+$ qemu-kvm -nographic -m 1G \
+         -drive file=utility_vm.qcow2 \
+         -cdrom cloud_init.iso \
+         -net nic,model=virtio \
+         -net user,hostfwd=tcp::2222-:22
+
+Note that this act will modify the image.
