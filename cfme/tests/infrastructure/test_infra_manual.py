@@ -478,42 +478,42 @@ def test_host_comparison_multipleviews_interactions():
     explictily already. Also cover the case where clicking on the parent section selects all of
     the child sections.
 
-        Polarion:
-                assignee: prichard
-                casecomponent: Infra
-                caseimportance: low
-                initialEstimate: 1/4h
-                testSteps:
-                    1. Navigate to the Compute > Infrastructure > Hosts view.
-                    2. Select at least 3 hosts (more if possible) by checking the box in upper left
-                       of quadicons.
-                    3. Click "Compare Selected Items" under the "Configuration" dropdown.
-                    4. Click to select "My Company Tags" in the Comparison Sections dropdown,
-                       and click "Apply".
-                    5. Repeat step 4 for Configuration, Security, and Properties sections.
-                       Note: Properties will need to be clicked twice as it defaults to checked
-                       with only one section enbled.
-                    6. Click on "My Company Tags" in Comparison Sections dropdown.
-                    7. Click on a child item, to deselect, and click "Apply".
-                    8. Click on random child items within the section and click "Apply" until no
-                       child items remain selected.
-                    9. Click on random child items within the section and click "Apply" until all
-                       child items remain selected.
-                    10. Repeat steps 6 through 9 for Configuration, Security, and Properties
-                        sections.
-                expectedResults:
-                    1. Hosts view is displayed.
-                    2. The selected hosts should be displayed with a blue border and checked
-                       checkbox.
-                    3. The "Compare Host / Node" view should be displayed.
-                    4. All of the "My Company Togs" sections are displayed in Compare Host/Node
-                       panel.
-                    5. All of the sections for selected parent are displayed in Compare Host/Node
-                       panel.
-                    6. Expanded section will be displayed with all child items.
-                    7. Child item is removed from display in Compare Hosts/Node panel.
-                    8. Each child item is removed from display in Compare Hosts/Node panel.
-                    9. Each child item is added to display in Compare Hosts/Node panel.
-                    10. Same expected results as for steps 6 through 9.
+    Polarion:
+            assignee: prichard
+            casecomponent: Infra
+            caseimportance: low
+            initialEstimate: 1/4h
+            testSteps:
+                1. Navigate to the Compute > Infrastructure > Hosts view.
+                2. Select at least 3 hosts (more if possible) by checking the box in upper left
+                   of quadicons.
+                3. Click "Compare Selected Items" under the "Configuration" dropdown.
+                4. Click to select "My Company Tags" in the Comparison Sections dropdown,
+                   and click "Apply".
+                5. Repeat step 4 for Configuration, Security, and Properties sections.
+                   Note: Properties will need to be clicked twice as it defaults to checked
+                   with only one section enbled.
+                6. Click on "My Company Tags" in Comparison Sections dropdown.
+                7. Click on a child item, to deselect, and click "Apply".
+                8. Click on random child items within the section and click "Apply" until no
+                   child items remain selected.
+                9. Click on random child items within the section and click "Apply" until all
+                   child items remain selected.
+                10. Repeat steps 6 through 9 for Configuration, Security, and Properties
+                    sections.
+            expectedResults:
+                1. Hosts view is displayed.
+                2. The selected hosts should be displayed with a blue border and checked
+                   checkbox.
+                3. The "Compare Host / Node" view should be displayed.
+                4. All of the "My Company Togs" sections are displayed in Compare Host/Node
+                   panel.
+                5. All of the sections for selected parent are displayed in Compare Host/Node
+                   panel.
+                6. Expanded section will be displayed with all child items.
+                7. Child item is removed from display in Compare Hosts/Node panel.
+                8. Each child item is removed from display in Compare Hosts/Node panel.
+                9. Each child item is added to display in Compare Hosts/Node panel.
+                10. Same expected results as for steps 6 through 9.
     """
     pass
