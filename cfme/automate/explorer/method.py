@@ -96,7 +96,7 @@ class Inputs(View, ClickableMixin):
         keys = set(value.keys())
         value = copy(value)
 
-        present = list(self.inputs.read().keys())
+        present = set(self.inputs.read().keys())
         to_delete = present - keys
         changed = False
 
