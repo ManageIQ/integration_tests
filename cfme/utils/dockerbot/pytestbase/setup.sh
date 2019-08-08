@@ -81,7 +81,7 @@ gate() {
 
 # Runs pip update - optionally can make use of wheelhouse
 run_pip_update () {
-	export PYCURL_SSL_LIBRARY=nss
+        export PYCURL_SSL_LIBRARY=openssl
     if [ -n "$WHEEL_HOST_URL" ]; then
         export PIP_TRUSTED_HOST="$WHEEL_HOST" PIP_FIND_LINKS="$WHEEL_HOST_URL"
     fi
