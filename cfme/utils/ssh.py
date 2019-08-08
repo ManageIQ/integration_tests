@@ -232,7 +232,7 @@ class SSHClient(paramiko.SSHClient):
 
         if not self.connected:
             self._connect_kwargs.update(kwargs)
-            wait_for(self._check_port, timeout='2m', delay=5)
+            wait_for(self._check_port, handle_exception=True, timeout='2m', delay=5)
             try:
                 conn = super(SSHClient, self).connect(**self._connect_kwargs)
             except paramiko.ssh_exception.BadHostKeyException:
