@@ -10,6 +10,10 @@ from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
 
+STATE1 = fauxfactory.gen_alpha()
+STATE2 = fauxfactory.gen_alpha()
+STATE3 = fauxfactory.gen_alpha()
+
 
 @pytest.mark.sauce
 @pytest.mark.tier(2)
@@ -356,10 +360,52 @@ def test_quota_source_value(request, entity, search, copy_quota_instance, generi
     assert result.validate(wait="60s")
 
 
+@pytest.fixture(scope='module')
+def setup(domain, klass, namespace):
+    """This fixture creates common domain, namespace, two classes, instance and method. This setup
+    is common for both parameterized tests"""
+
+    klass.schema.add_fields(*[{'name': state, 'type': 'State'}
+                              for state in [STATE1, STATE2, STATE3]])
+
+    # Adding method to execute via parent instance(state machine instance)
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script="""
+               \n$evm.log(:info, "Hello from method of parent instance")
+                \nexit MIQ_STOP
+                """
+    )
+
+    # Adding parent instance to call automate method and child instances in other class
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={STATE3: {"value": f"METHOD::{method.name}"}}
+    )
+
+    # Creating other class for two child instances
+    klass2 = namespace.classes.create(
+        name=fauxfactory.gen_alpha(),
+        display_name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+    klass2.schema.add_fields(*[{'name': state, 'type': 'State'}
+                               for state in [STATE1, STATE2, STATE3]])
+
+    yield klass2, instance
+    method.delete_if_exists()
+    instance.delete_if_exists()
+    klass2.delete_if_exists()
+
+
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1441353])
 @pytest.mark.parametrize("process", ["miq_stop", "miq_abort"])
-def test_miq_stop_abort_with_state_machines(request, process, domain, klass, namespace):
+def test_miq_stop_abort_with_state_machines(request, setup, process, domain, klass, namespace):
     """
     Bugzilla:
         1441353
@@ -374,43 +420,7 @@ def test_miq_stop_abort_with_state_machines(request, process, domain, klass, nam
         casecomponent: Automate
         tags: automate
     """
-    state1 = fauxfactory.gen_alpha()
-    state2 = fauxfactory.gen_alpha()
-    state3 = fauxfactory.gen_alpha()
-    for state in [state1, state2, state3]:
-        klass.schema.add_fields({'name': state, 'type': 'State'})
-
-    # Adding method to execute via parent instance(state machine instance)
-    method = klass.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
-        location='inline',
-        script="""
-               \n$evm.log(:info, "Hello from method of parent instance")
-                \nexit MIQ_STOP
-                """
-    )
-    request.addfinalizer(method.delete_if_exists)
-
-    # Adding parent instance to call automate method and child instances in other class
-    instance = klass.instances.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
-        fields={state3: {"value": f"METHOD::{method.name}"}}
-    )
-    request.addfinalizer(instance.delete_if_exists)
-
-    # Creating other class for two child instances
-    klass2 = namespace.classes.create(
-        name=fauxfactory.gen_alpha(),
-        display_name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha()
-    )
-    request.addfinalizer(klass2.delete_if_exists)
-
-    for state in [state1, state2]:
-        klass2.schema.add_fields({'name': state, 'type': 'State'})
+    klass2, instance = setup
 
     # Creating three child methods to execute via child instances
     child_method = list(map(lambda num: klass2.methods.create(
@@ -423,25 +433,32 @@ def test_miq_stop_abort_with_state_machines(request, process, domain, klass, nam
                 """
     ), ["first", "second", "third"]))
 
-    fields = [{state1: {'value': f"METHOD::{child_method[0].name}"},
-              state2: {'value': f"METHOD::{child_method[1].name}"}},
-             {state1: {'value': f"METHOD::{child_method[2].name}"}}]
+    fields = [{STATE1: {'value': f"METHOD::{child_method[0].name}"},
+              STATE2: {'value': f"METHOD::{child_method[1].name}"}},
+              {STATE1: {'value': f"METHOD::{child_method[2].name}"}}]
 
     # Creating two child instances
-    child_inst = list(map(lambda field: klass2.instances.create(
+    child_inst = list(map(lambda field: setup[0].instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         fields=field
     ), fields))
 
+    @request.addfinalizer
+    def finalize():
+        for method in child_method:
+            method.delete_if_exists()
+        for inst in child_inst:
+            inst.delete_if_exists()
+
     # Updating parent instance fields to execute child instances
     with update(instance):
         instance.fields = {
-            state1: {
+            STATE1: {
                 "value": f"/{domain.name}/{namespace.name}/{klass2.name}/{child_inst[0].name}"
             },
-            state2: {
+            STATE2: {
                 "value": f"/{domain.name}/{namespace.name}/{klass2.name}/{child_inst[1].name}"
             },
         }
