@@ -26,7 +26,6 @@ from cfme.services.requests import RequestsView
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
 from cfme.utils.pretty import Pretty

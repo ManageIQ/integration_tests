@@ -19,7 +19,6 @@ from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance import stack
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.version import get_stream

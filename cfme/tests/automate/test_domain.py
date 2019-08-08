@@ -10,7 +10,6 @@ from cfme.automate.explorer.method import MethodCopyView
 from cfme.automate.simulation import simulate
 from cfme.exceptions import OptionNotAvailable
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 

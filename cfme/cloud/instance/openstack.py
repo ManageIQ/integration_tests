@@ -17,7 +17,6 @@ from cfme.exceptions import displayed_not_implemented
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import CheckboxSelect
 from widgetastic_manageiq import Input

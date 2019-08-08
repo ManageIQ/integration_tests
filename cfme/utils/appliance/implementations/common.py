@@ -4,7 +4,6 @@ from time import sleep
 from widgetastic.exceptions import NoAlertPresentException
 from widgetastic_patternfly import Modal
 
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 

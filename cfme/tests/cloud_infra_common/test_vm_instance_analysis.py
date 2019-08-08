@@ -24,7 +24,6 @@ from cfme.utils import safe_string
 from cfme.utils import ssh
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable

@@ -43,7 +43,6 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Checkbox

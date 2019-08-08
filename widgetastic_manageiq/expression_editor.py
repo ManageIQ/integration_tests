@@ -14,7 +14,6 @@ from widgetastic_patternfly import BootstrapSelect as VanillaBootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
-from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
