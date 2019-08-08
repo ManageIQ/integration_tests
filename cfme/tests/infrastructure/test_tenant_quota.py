@@ -233,6 +233,7 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set
 # sequence is important here
 # indirect is the list where we define which fixtures are to be passed values indirectly.
 @pytest.mark.rhv2
+@pytest.mark.meta(automates=[1467644])
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data'],
     [
@@ -243,8 +244,12 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set
     indirect=['set_roottenant_quota'],
     ids=['max_cores', 'max_sockets', 'max_memory']
 )
-def test_tenant_quota_vm_reconfigure(appliance, set_roottenant_quota, small_vm, custom_prov_data):
+def test_tenant_quota_vm_reconfigure(request, appliance, set_roottenant_quota, small_vm,
+                                     custom_prov_data):
     """Tests quota with vm reconfigure
+
+    Bugzilla:
+        1467644
 
     Polarion:
         assignee: ghubale
@@ -253,11 +258,27 @@ def test_tenant_quota_vm_reconfigure(appliance, set_roottenant_quota, small_vm, 
         initialEstimate: 1/6h
         tags: quota
     """
-    original_config = small_vm.configuration.copy()
     new_config = small_vm.configuration.copy()
     setattr(new_config.hw, custom_prov_data['change'], custom_prov_data['value'])
     small_vm.reconfigure(new_config)
-    assert small_vm.configuration != original_config
+
+    # Description of reconfigure request changes with new configuration
+    if custom_prov_data['change'] == 'mem_size':
+        request_description = (
+            f'VM Reconfigure for: {small_vm.name} - Memory: {new_config.hw.mem_size} MB'
+        )
+    else:
+        request_description = (
+            f'VM Reconfigure for: {small_vm.name} - Processor Sockets: {new_config.hw.sockets}, '
+            f'Processor Cores Per Socket: {new_config.hw.cores_per_socket}, Total Processors: '
+            f'{new_config.hw.cores_per_socket * new_config.hw.sockets}'
+        )
+
+    # nav to requests page to check quota validation
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 @pytest.mark.parametrize(
