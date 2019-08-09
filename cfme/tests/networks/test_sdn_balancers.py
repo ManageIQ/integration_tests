@@ -11,7 +11,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([AzureProvider, EC2Provider, GCEProvider], scope='module')
+    pytest.mark.provider([AzureProvider, EC2Provider, GCEProvider], scope='module'),
+    pytest.mark.ignore_stream("5.11", "upstream")  # BZ 1672949 (RFE)
 ]
 
 
@@ -43,6 +44,7 @@ def test_sdn_prov_balancers_number(network_prov_with_load_balancers):
         assignee: mmojzis
         casecomponent: Cloud
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     for prov, sum_all in network_prov_with_load_balancers:
         view = navigate_to(prov, 'Details')
@@ -60,6 +62,7 @@ def test_sdn_balancers_detail(provider, network_prov_with_load_balancers):
         assignee: mmojzis
         casecomponent: Cloud
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     for prov, _ in network_prov_with_load_balancers:
         for balancer in prov.balancers.all():
@@ -89,6 +92,7 @@ def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_wi
         assignee: anikifor
         casecomponent: Tagging
         initialEstimate: 1/4h
+        endsin: 5.10
     """
     network_prov = random.choice(network_prov_with_load_balancers)[0]
     balancers_for_provider = network_prov.balancers.all()
