@@ -181,7 +181,7 @@ def test_new_report_fields(appliance, based_on, request):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(automates=[1565171])
+@pytest.mark.meta(automates=[1565171, 1519809])
 def test_report_edit_secondary_display_filter(
     appliance, request, soft_assert, get_report
 ):
@@ -200,6 +200,7 @@ def test_report_edit_secondary_display_filter(
 
     Bugzilla:
         1565171
+        1519809
     """
     report = get_report("filter_report.yaml", "test_filter_report")
     report.update(

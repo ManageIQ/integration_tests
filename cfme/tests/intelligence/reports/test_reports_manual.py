@@ -38,37 +38,6 @@ def test_reports_generate_custom_conditional_filter_report():
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_after_setting_certain_types_of_filters_filter_tab_should_be_accessible_and_editable():
-    """
-    Bugzilla:
-        1519809
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/4h
-        title: After setting certain types of filters filter tab should be
-                accessible and editable
-        setup:
-            1. Navigate to Cloud Intel > Reports > All Reports.
-            2. Click on `Configuration` and select `Add a new Report`.
-            3. Add a report using a filter based on "EVM Custom Attributes:
-            Name" and "EVM Custom Attributes: Value".
-            4. Edit the report.
-        testSteps:
-            1. Try editing the filter.
-        expectedResults:
-            1. Editing the filter should not result in screen freeze.
-            Report must be accessible without causing puma consumption of all cpu on at least one
-            thread.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_date_should_be_change_in_editing_reports_scheduled():
     """
     Bugzilla:
@@ -90,35 +59,6 @@ def test_date_should_be_change_in_editing_reports_scheduled():
         expectedResults:
             1. "Timer" must change accordingly.
             2. "Starting Date" must change accordingly.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
-def test_report_secondary_display_filter_should_be_editable():
-    """
-    Bugzilla:
-        1565171
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/6h
-        title: Report secondary (display) filter should be editable
-        setup:
-            1. Create report based on container images.
-            2. Select some fields for the report.
-            3. Go to the filter tab and add a primary filter.
-            4. Add secondary filter.
-            5. Save the report.
-            6. Edit the report.
-        testSteps:
-            1.Try to edit the secondary filter.
-        expectedResults:
-            1. Secondary filter must be editable.
     """
     pass
 

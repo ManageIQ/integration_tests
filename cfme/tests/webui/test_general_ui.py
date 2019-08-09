@@ -322,6 +322,7 @@ def test_tls_openssl_verify_mode(temp_appliance_preconfig, request):
     # start_tls will be set to False since it's default value is True,
     # although value of start_tls doesn't really affect the value of openssl_verify_mode
     appliance.server.settings.update_smtp_server({"start_tls": not old_tls})
+    assert view.smtp_server.start_tls.read() == (not old_tls)
 
     # 3
     wait_for(
@@ -334,6 +335,7 @@ def test_tls_openssl_verify_mode(temp_appliance_preconfig, request):
     # reset `Start TLS Automatically` and assert that
     # the value of openssl_verify_mode is still none.
     appliance.server.settings.update_smtp_server({"start_tls": old_tls})
+    assert view.smtp_server.start_tls.read() == old_tls
     assert appliance.advanced_settings["smtp"]["openssl_verify_mode"] == "none"
 
 
