@@ -36,8 +36,8 @@ pytestmark = [
 def get_clusters(appliance, provider, source_provider):
     clusters = {}
     try:
-        source_cluster = provider.data.get("clusters")[0]
-        target_cluster = source_provider.data.get("clusters")[0]
+        source_cluster = source_provider.data.get("clusters")[0]
+        target_cluster = provider.data.get("clusters")[0]
     except IndexError:
         pytest.skip("Cluster not found in given provider data")
     cluster_db = {
@@ -65,9 +65,9 @@ def get_datastores(appliance, provider, source_provider):
     datastores = {}
     try:
         source_ds = [
-            i.name for i in provider.data.datastores if i.type == "nfs"][0]
-        target_ds = [
             i.name for i in source_provider.data.datastores if i.type == "nfs"][0]
+        target_ds = [
+            i.name for i in provider.data.datastores if i.type == "nfs"][0]
     except IndexError:
         pytest.skip("Datastore not found in given provider data")
     datastore_db = {
@@ -94,8 +94,8 @@ def get_datastores(appliance, provider, source_provider):
 def get_networks(appliance, provider, source_provider):
     networks = {}
     try:
-        source_network = provider.data.get("vlans", [None])[0]
-        target_network = source_provider.data.get("vlans", [None])[0]
+        source_network = source_provider.data.get("vlans", [None])[0]
+        target_network = provider.data.get("vlans", [None])[0]
     except IndexError:
         pytest.skip("Network not found in given provider data")
     network_db = {
