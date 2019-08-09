@@ -373,6 +373,52 @@ def test_appliance_exec_scripts():
     pass
 
 
+@pytest.mark.manual
+@pytest.mark.tier(1)
+def test_puma_server():
+    """
+    Puma, by default is a threaded web server, which means each
+    http(s) request will be handled in a new thread. Since Rails' database
+    connection pool reserves connections to threads, it's possible to
+    exhaust the connection pool with enough web requests spinning up new
+    puma threads. Thin, by contrast, still processes each request in a
+    single thread by default. While this is usually slower, you don't have
+    the issues of multiple threads in flight at the same time. We should
+    make puma the default web server but have an easy option to switch to
+    thin in case there are thread issues with puma.
+
+    Note: Testers/users, the proc title for UI/Webservice and web
+    socket workers will look different in ps, top, etc. if you use thin
+    instead of puma. Puma configures it's own proc title and we
+    configure the parts that we can. Thin does not, so it will look
+    like all the other workers.
+
+    For example:
+    thin:
+    43177 ttys002 0:08.20 MIQ: MiqUiWorker id: 158, uri:
+    http://0.0.0.0:3000
+
+    puma:
+    43871 ttys004 0:00.68 puma 3.3.0 (tcp://0.0.0.0:3000) [MIQ: Web Server
+    Worker]
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Appliance
+        initialEstimate: 1/2h
+        caseimportance: medium
+        testSteps:
+            1. Change the web server, to thin in the advanced configuration:
+            :server:
+            :rails_server: thin
+            2. Connect to the WebUI
+
+        expectedResults:
+            1. HTTP 200 - OK
+    """
+    pass
+
+
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1678130])
 def test_appliance_contains_ansible_modules(appliance):
