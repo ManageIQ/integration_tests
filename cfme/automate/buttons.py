@@ -556,6 +556,11 @@ class ButtonCollection(BaseCollection):
             roles=roles,
         )
 
+    def delete_all(self):
+        """This method will help to clean all buttons (rest)"""
+        for btn in self.appliance.rest_api.collections.custom_buttons.all:
+            btn.action.delete()
+
 
 @navigator.register(ButtonCollection, "All")
 class ButtonAll(CFMENavigateStep):
@@ -842,6 +847,11 @@ class ButtonGroupCollection(BaseCollection):
             icon_color=icon_color,
             assign_buttons=assign_buttons,
         )
+
+    def delete_all(self):
+        """This method will help to clean all custom button groups (rest)"""
+        for btn_grp in self.appliance.rest_api.collections.custom_button_sets.all:
+            btn_grp.action.delete()
 
 
 @navigator.register(ButtonGroupCollection, "All")
