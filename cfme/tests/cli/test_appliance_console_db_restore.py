@@ -90,9 +90,9 @@ def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_
 
     """
     appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
-    appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
+    appl1.ssh_client.run_command("pg_basebackup -X fetch -U root -Ft -z -D /tmp/backup")
     appl1.db.backup()
-    appl2.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
+    appl2.ssh_client.run_command("pg_basebackup -X fetch -U root -Ft -z -D /tmp/backup")
     appl2.db.backup()
     return temp_appliances_unconfig_funcscope_rhevm
 
