@@ -25,6 +25,7 @@ from cfme.base import Zone
 from cfme.base import ZoneCollection
 from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
+from cfme.cloud_insights.services import CloudInsightsServicesView
 from cfme.configure.about import AboutView
 from cfme.configure.configuration.server_settings import ServerAuthenticationView
 from cfme.configure.configuration.server_settings import ServerInformationView
@@ -1741,3 +1742,13 @@ class AutomateSimulation(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(*["Automation", "Automate", "Simulation"])
+
+
+# Red Hat Cloud - Insights
+@navigator.register(Server, "Insights")
+class CloudInsightsServices(CFMENavigateStep):
+    VIEW = CloudInsightsServicesView
+    prerequisite = NavigateToSibling("LoggedIn")
+
+    def step(self, *args, **kwargs):
+        self.view.navigation.select("Red Hat Cloud", "Services")
