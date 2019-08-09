@@ -20,6 +20,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import ReactSelect
+from widgetastic_manageiq import WaitTab
 
 
 AUTH_MODES = {
@@ -726,3 +728,59 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                 view.flash.assert_no_error()
         else:
             logger.info('No authentication settings changed, not saving form.')
+
+
+class ServerWorkersTab510(WaitTab):
+    TAB_NAME = "Workers"
+    generic_worker_count = BootstrapSelect("generic_worker_count")
+    generic_worker_threshold = BootstrapSelect("generic_worker_threshold")
+    cu_data_collector_worker_count = BootstrapSelect("ems_metrics_collector_worker_count")
+    cu_data_collector_worker_threshold = BootstrapSelect(
+        "ems_metrics_collector_worker_threshold")
+    event_monitor_worker_threshold = BootstrapSelect("event_catcher_threshold")
+    connection_broker_worker_threshold = BootstrapSelect("vim_broker_worker_threshold")
+    ui_worker_count = BootstrapSelect("ui_worker_count")
+    reporting_worker_count = BootstrapSelect("reporting_worker_count")
+    reporting_worker_threshold = BootstrapSelect("reporting_worker_threshold")
+    web_service_worker_count = BootstrapSelect("web_service_worker_count")
+    web_service_worker_threshold = BootstrapSelect("web_service_worker_threshold")
+    priority_worker_count = BootstrapSelect("priority_worker_count")
+    priority_worker_threshold = BootstrapSelect("priority_worker_threshold")
+    cu_data_processor_worker_count = BootstrapSelect("ems_metrics_processor_worker_count")
+    cu_data_processor_worker_threshold = BootstrapSelect(
+        "ems_metrics_processor_worker_threshold")
+    refresh_worker_threshold = BootstrapSelect("ems_refresh_worker_threshold")
+    vm_analysis_collectors_worker_count = BootstrapSelect("proxy_worker_count")
+    vm_analysis_collectors_worker_threshold = BootstrapSelect("proxy_worker_threshold")
+    websocket_worker_count = BootstrapSelect("websocket_worker_count")
+
+    save = Button('Save')
+    reset = Button('Reset')
+
+
+class ServerWorkersTab511(WaitTab):
+    TAB_NAME = "Workers"
+    generic_worker_count = ReactSelect("generic_worker.count")
+    generic_worker_threshold = ReactSelect("generic_worker.memory_threshold")
+    priority_worker_count = ReactSelect("priority_worker.count")
+    priority_worker_threshold = ReactSelect("priority_worker.memory_threshold")
+    cu_data_collector_worker_count = ReactSelect("ems_metrics_collector_worker.defaults.count")
+    cu_data_collector_worker_threshold = ReactSelect(
+        "ems_metrics_collector_worker.defaults.memory_threshold")
+    cu_data_processor_worker_count = ReactSelect("ems_metrics_processor_worker.count")
+    cu_data_processor_worker_threshold = ReactSelect(
+        "ems_metrics_processor_worker.memory_threshold")
+    event_monitor_worker_threshold = ReactSelect("event_catcher.memory_threshold")
+    refresh_worker_threshold = ReactSelect("ems_refresh_worker.defaults.memory_threshold")
+    connection_broker_worker_threshold = ReactSelect("vim_broker_worker.memory_threshold")
+    vm_analysis_collectors_worker_count = ReactSelect("smart_proxy_worker.count")
+    vm_analysis_collectors_worker_threshold = ReactSelect("smart_proxy_worker.memory_threshold")
+    ui_worker_count = ReactSelect("ui_worker.count")
+    remote_console_worker_count = ReactSelect("remote_console_worker.count")
+    reporting_worker_count = ReactSelect("reporting_worker.count")
+    reporting_worker_threshold = ReactSelect("reporting_worker.memory_threshold")
+    web_service_worker_count = ReactSelect("web_service_worker.count")
+    web_service_worker_threshold = ReactSelect("web_service_worker.memory_threshold")
+
+    save = Button('Save')
+    reset = Button('Reset')

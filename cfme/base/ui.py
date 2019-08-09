@@ -28,6 +28,8 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.configure.about import AboutView
 from cfme.configure.configuration.server_settings import ServerAuthenticationView
 from cfme.configure.configuration.server_settings import ServerInformationView
+from cfme.configure.configuration.server_settings import ServerWorkersTab510
+from cfme.configure.configuration.server_settings import ServerWorkersTab511
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
@@ -45,6 +47,8 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Checkbox
 from widgetastic_manageiq import InputButton
@@ -486,34 +490,10 @@ class ServerView(ConfigurationView):
         TAB_NAME = "Authentication"
         including_view = View.include(ServerAuthenticationView, use_parent=True)
 
-    @View.nested
-    class workers(WaitTab):  # noqa
-        TAB_NAME = "Workers"
-        # TODO move workers tab view into server_settings as ServerWorkersView
-        generic_worker_count = BootstrapSelect("generic_worker_count")
-        generic_worker_threshold = BootstrapSelect("generic_worker_threshold")
-        cu_data_collector_worker_count = BootstrapSelect("ems_metrics_collector_worker_count")
-        cu_data_collector_worker_threshold = BootstrapSelect(
-            "ems_metrics_collector_worker_threshold")
-        event_monitor_worker_threshold = BootstrapSelect("event_catcher_threshold")
-        connection_broker_worker_threshold = BootstrapSelect("vim_broker_worker_threshold")
-        ui_worker_count = BootstrapSelect("ui_worker_count")
-        reporting_worker_count = BootstrapSelect("reporting_worker_count")
-        reporting_worker_threshold = BootstrapSelect("reporting_worker_threshold")
-        web_service_worker_count = BootstrapSelect("web_service_worker_count")
-        web_service_worker_threshold = BootstrapSelect("web_service_worker_threshold")
-        priority_worker_count = BootstrapSelect("priority_worker_count")
-        priority_worker_threshold = BootstrapSelect("priority_worker_threshold")
-        cu_data_processor_worker_count = BootstrapSelect("ems_metrics_processor_worker_count")
-        cu_data_processor_worker_threshold = BootstrapSelect(
-            "ems_metrics_processor_worker_threshold")
-        refresh_worker_threshold = BootstrapSelect("ems_refresh_worker_threshold")
-        vm_analysis_collectors_worker_count = BootstrapSelect("proxy_worker_count")
-        vm_analysis_collectors_worker_threshold = BootstrapSelect("proxy_worker_threshold")
-        websocket_worker_count = BootstrapSelect("websocket_worker_count")
-
-        save = Button('Save')
-        reset = Button('Reset')
+    workers = VersionPicker({
+        '5.11': View.nested(ServerWorkersTab511),
+        Version.lowest(): View.nested(ServerWorkersTab510)
+    })
 
     @View.nested
     class customlogos(WaitTab):  # noqa
