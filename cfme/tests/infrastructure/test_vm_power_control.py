@@ -5,11 +5,14 @@ import time
 import pytest
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.base.login import BaseLoggedInPage
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -609,3 +612,45 @@ def test_guest_os_shutdown(appliance, provider, testing_vm_tools, ensure_vm_runn
         new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
         soft_assert(new_last_boot_time == last_boot_time,
                     "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+
+
+@pytest.fixture(scope="function")
+def new_user(request, appliance):
+    user, user_data = _users(request, appliance, group="EvmGroup-vm_user")
+    yield appliance.collections.users.instantiate(
+        name=user[0].name,
+        credential=Credential(principal=user_data[0]["userid"], secret=user_data[0]["password"]),
+    )
+
+    if user[0].exists:
+        user[0].action.delete()
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1687597])
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+def test_retire_vm_with_vm_user_role(new_user, appliance, testing_vm):
+    """
+    Bugzilla:
+        1687597
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+        setup:
+            1. Provision vm
+        testSteps:
+            1. Create custom user with 'EvmRole_vm-user' role
+            2. Retire VM by log-in to custom user
+    """
+    # Log in with new user to retire the vm
+    with new_user:
+        view = navigate_to(testing_vm.parent, "All")
+        view.entities.get_entity(name=testing_vm.name, surf_pages=True).check()
+        assert view.toolbar.lifecycle.item_enabled("Retire selected items")
+        testing_vm.retire()
+        assert testing_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
+                                                   from_details=True)

@@ -770,30 +770,6 @@ def test_service_retirement_from_automate_method():
 
 
 @pytest.mark.tier(1)
-def test_retire_vm_with_vm_user_role():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        startsin: 5.10
-        casecomponent: Automate
-        testSteps:
-            1. Copy vm-user role
-            2. Assign it to user
-            3. User retire VM
-        expectedResults:
-            1.
-            2.
-            3. VM should be retired
-
-    Bugzilla:
-        1687597
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_dialog_element_values_passed_to_button():
     """
     Polarion:
