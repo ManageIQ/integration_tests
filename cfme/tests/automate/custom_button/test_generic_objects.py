@@ -1,4 +1,5 @@
 import re
+from textwrap import dedent
 
 import fauxfactory
 import pytest
@@ -314,10 +315,51 @@ def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_
             assert button.text in custom_button_group.items
 
 
-@pytest.mark.manual
+@pytest.fixture(scope="module")
+def cls(appliance):
+    domain = appliance.collections.domains.create(
+        name=fauxfactory.gen_alphanumeric(start="domain"), enabled=True
+    )
+    original_class = (
+        domain.parent.instantiate(name="ManageIQ")
+        .namespaces.instantiate(name="System")
+        .classes.instantiate(name="Request")
+    )
+    original_class.copy_to(domain=domain)
+    yield domain.namespaces.instantiate(name="System").classes.instantiate(name="Request")
+    if domain.exists:
+        domain.delete()
+
+
+@pytest.fixture()
+def method(cls, button_group):
+    _, obj_type = button_group
+    obj_type = f"miq_{obj_type.lower()}" if obj_type == "GROUP" else obj_type.lower()
+
+    meth = cls.methods.create(
+        name=f"{obj_type}_{fauxfactory.gen_alphanumeric(8,start='meth', separator='_')}",
+        script=dedent(
+            f"""
+            # add external url to open
+            vm = $evm.root["{obj_type}"]
+            $evm.log(:info, "Opening url")
+            vm.remote_console_url = "https://example.com"
+            """
+        ),
+    )
+
+    instance = cls.instances.create(
+        name=f"{obj_type}_{fauxfactory.gen_alphanumeric(8,start='inst', separator='_')}",
+        fields={"meth1": {"value": meth.name}},
+    )
+    yield instance
+    meth.delete_if_exists()
+    instance.delete_if_exists()
+
+
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(coverage=[1550002])
-def test_custom_button_open_url_evm_obj(setup_obj, button_group):
+def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 
     Polarion:
@@ -345,4 +387,40 @@ def test_custom_button_open_url_evm_obj(setup_obj, button_group):
     Bugzilla:
         1550002
     """
-    pass
+    group, obj_type = button_group
+
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        open_url=True,
+        system="Request",
+        request=method.name,
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    import ipdb; ipdb.set_trace()
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+
+    # TODO: Move windows handling functionality to browser
+    initial_count = len(view.browser.selenium.window_handles)
+    main_window = view.browser.selenium.current_window_handle
+    custom_button_group.item_select(button.text)
+
+    wait_for(
+        lambda: len(view.browser.selenium.window_handles) > initial_count,
+        timeout=120,
+        message="Check for window open",
+    )
+    open_url_window = set(view.browser.selenium.window_handles) - {main_window}
+
+    view.browser.selenium.switch_to_window(open_url_window.pop())
+
+    @request.addfinalizer
+    def _reset_window():
+        if view.browser.selenium.current_window_handle != main_window:
+            view.browser.selenium.close()
+            view.browser.selenium.switch_to_window(main_window)
+
+    assert "example.com" in view.browser.url
