@@ -76,7 +76,8 @@ def test_configuration_dropdown_roles_by_server(appliance, request):
 @test_requirements.general_ui
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1498090])
-def test_diagnostics_server(appliance):
+@pytest.mark.parametrize("obj", ["Zone", "Region"])
+def test_diagnostics_server(appliance, obj):
     """
     Polarion:
         assignee: pvala
@@ -97,14 +98,13 @@ def test_diagnostics_server(appliance):
     Bugzilla:
         1498090
     """
+    context_obj = (
+        appliance.server.zone.region if obj == "Region" else appliance.server.zone
+    )
+
     required_view = appliance.server.create_view(ServerDiagnosticsView)
 
-    view = navigate_to(appliance.server.zone.region, "Servers")
-    view.servers.table.row(name=appliance.server.name).click()
-    assert required_view.is_displayed
-    assert required_view.summary.is_active()
-
-    view = navigate_to(appliance.server.zone, "Servers")
+    view = navigate_to(context_obj, "Servers")
     view.servers.table.row(name=appliance.server.name).click()
     assert required_view.is_displayed
     assert required_view.summary.is_active()
