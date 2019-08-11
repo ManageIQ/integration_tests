@@ -1,5 +1,10 @@
 import fauxfactory
+# -*- coding: utf-8 -*-
+import re
+
 import pytest
+from polarion_collect import get_nodeid_full_path
+from polarion_docstrings import parser as docparser
 from wrapanapi import VmState
 
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -10,13 +15,62 @@ from cfme.utils.net import net_check
 from cfme.utils.wait import wait_for
 
 
-def _create_vm(request, template, provider, vm_name):
-    collection = provider.appliance.provider_based_collection(provider)
-    vm_obj = collection.instantiate(vm_name, provider, template_name=template.name)
-    vm_obj.create_on_provider(allow_skip="default")
-    vm_obj.mgmt.ensure_state(VmState.RUNNING)
-    # In order to have seamless SSH connection
+DOCSTRING_CACHE = {}
+TEST_PARAMS = re.compile(r"\[.*\]")
 
+
+def get_parsed_docstring(request, nodeid, docstrings_cache):
+    """Gets parsed docstring from cache."""
+    if nodeid not in docstrings_cache:
+        docstrings = docparser.get_docstrings_in_file(str(request.node.fspath.strpath))
+        merged_docstrings = docparser.merge_docstrings(docstrings)
+        docstrings_cache.update(merged_docstrings)
+    return docstrings_cache[nodeid]
+
+
+def _create_vm(request, template, provider, vm_name):
+    if isinstance(request.node, pytest.Function):
+        nodeid = TEST_PARAMS.sub("", get_nodeid_full_path(request.node))
+        assignee = get_parsed_docstring(request, nodeid, DOCSTRING_CACHE).get('assignee', '')
+    else:
+        # Fetch list of tests in the module object
+        test_list = [
+            item
+            for item in dir(request.module)
+            if ('test_' in item[:5]) and not ('test_requirements' == item)
+        ]
+        # Find out assignee for each test in test_list
+        assignee_list = list()
+        for test in test_list:
+            nodeid = f"{request.node.fspath.strpath}::{test}"
+            try:
+                assignee_list.append(get_parsed_docstring(request, nodeid, DOCSTRING_CACHE)
+                    .get('assignee', ''))
+            except KeyError:
+                continue
+        # If all tests have same assignee, set length will be 1, else set assignee='module'
+        assignee = assignee_list[0] if len(set(assignee_list)) == 1 else 'module'
+
+    vm_name = f"{vm_name}-{assignee}"
+
+    collection = provider.appliance.provider_based_collection(provider)
+    try:
+        vm_obj = collection.instantiate(
+            vm_name, provider,
+            template_name=provider.data['templates'][template].name
+        )
+    except (KeyError, AttributeError):
+        pytest.skip('No appropriate template was passed to the fixture.')
+    vm_obj.create_on_provider(allow_skip="default")
+
+    @request.addfinalizer
+    def _cleanup():
+        vm_obj.cleanup_on_provider()
+        provider.refresh_provider_relationships()
+
+    vm_obj.mgmt.ensure_state(VmState.RUNNING)
+
+    # In order to have seamless SSH connection
     vm_ip, _ = wait_for(
         lambda: vm_obj.ip_address,
         num_sec=300,
@@ -34,11 +88,6 @@ def _create_vm(request, template, provider, vm_name):
     if not vm_obj.exists:
         provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
-
-    @request.addfinalizer
-    def _cleanup():
-        vm_obj.cleanup_on_provider()
-        provider.refresh_provider_relationships()
 
     return vm_obj
 
@@ -60,13 +109,21 @@ def _get_vm_name(request):
 
 
 @pytest.fixture(scope="module")
-def full_template_vm_modscope(setup_provider_modscope, request, full_template_modscope, provider):
+def create_vm_modscope(setup_provider_modscope, request, provider):
+    if request.param:
+        template_type = request.param
+    else:
+        pytest.error('Any appropriate Template was not passed to the fixture.')
     vm_name = _get_vm_name(request)
-    return _create_vm(request, full_template_modscope, provider, vm_name)
+    return _create_vm(request, template_type, provider, vm_name)
 
 
 @pytest.fixture(scope="function")
-def full_template_vm(setup_provider, request, full_template, provider):
+def create_vm(setup_provider, request, provider):
+    if request.param:
+        template_type = request.param
+    else:
+        pytest.error('Any appropriate Template was not passed to the fixture.')
     vm_name = _get_vm_name(request)
     return _create_vm(request, full_template, provider, vm_name)
 
