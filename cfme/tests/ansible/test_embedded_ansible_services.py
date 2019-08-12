@@ -854,3 +854,59 @@ def test_ansible_service_order_vault_credentials(
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
     assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[BZ(1734904)])
+def test_ansible_service_ansible_galaxy_role(
+    appliance, request, ansible_catalog_item, ansible_service, ansible_service_catalog
+):
+    """Check Role is fetched from Ansible Galaxy by using roles/requirements.yml file
+    from playbook.
+
+    Bugzilla:
+        1734904
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/3h
+        tags: ansible_embed
+    """
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
+            "playbook": "ansible_galaxy_role_users.yaml"
+        }
+
+    @request.addfinalizer
+    def _revert():
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning = {"playbook": "dump_all_variables.yml"}
+
+        service = MyService(appliance, ansible_catalog_item.name)
+        if service_request.exists():
+            service_request.wait_for_request()
+            # 'request_descr' and 'service_request' being used in finalizer to remove
+            # first service request
+            request_descr = (
+                "Provisioning Service "
+                f"[{ansible_catalog_item.name}] from [{ansible_catalog_item.name}]"
+            )
+            service_request_id = appliance.rest_api.collections.service_requests.get(
+                description=request_descr
+            ).id
+            appliance.rest_api.collections.service_requests.action.delete(
+                id=service_request_id
+            )
+        if service.exists:
+            service.delete()
+
+    service_request = ansible_service_catalog.order()
+    service_request.wait_for_request(num_sec=300, delay=20)
+
+    view = navigate_to(ansible_service, "Details")
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
