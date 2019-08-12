@@ -56,6 +56,22 @@ def setup_obj(appliance, button_group):
     return obj
 
 
+@pytest.fixture(scope="module")
+def method(custom_instance, button_group):
+    _, obj_type = button_group
+    obj_type = f"miq_{obj_type.lower()}" if obj_type == "GROUP" else obj_type.lower()
+
+    ruby_code = dedent(
+        f"""
+        # add external url to open
+        vm = $evm.root['{obj_type}']
+        $evm.log(:info, "Opening url")
+        vm.external_url = "https://example.com"
+        """
+    )
+    yield custom_instance(ruby_code)
+
+
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
     "display",
@@ -315,50 +331,8 @@ def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_
             assert button.text in custom_button_group.items
 
 
-@pytest.fixture(scope="module")
-def cls(appliance):
-    domain = appliance.collections.domains.create(
-        name=fauxfactory.gen_alphanumeric(start="domain"), enabled=True
-    )
-    original_class = (
-        domain.parent.instantiate(name="ManageIQ")
-        .namespaces.instantiate(name="System")
-        .classes.instantiate(name="Request")
-    )
-    original_class.copy_to(domain=domain)
-    yield domain.namespaces.instantiate(name="System").classes.instantiate(name="Request")
-    if domain.exists:
-        domain.delete()
-
-
-@pytest.fixture()
-def method(cls, button_group):
-    _, obj_type = button_group
-    obj_type = f"miq_{obj_type.lower()}" if obj_type == "GROUP" else obj_type.lower()
-
-    meth = cls.methods.create(
-        name=f"{obj_type}_{fauxfactory.gen_alphanumeric(8,start='meth', separator='_')}",
-        script=dedent(
-            f"""
-            # add external url to open
-            vm = $evm.root["{obj_type}"]
-            $evm.log(:info, "Opening url")
-            vm.remote_console_url = "https://example.com"
-            """
-        ),
-    )
-
-    instance = cls.instances.create(
-        name=f"{obj_type}_{fauxfactory.gen_alphanumeric(8,start='inst', separator='_')}",
-        fields={"meth1": {"value": meth.name}},
-    )
-    yield instance
-    meth.delete_if_exists()
-    instance.delete_if_exists()
-
-
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1550002])
+@pytest.mark.meta(automates=[1550002])
 def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 
@@ -390,7 +364,7 @@ def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method
     group, obj_type = button_group
 
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn", separator="_"),
         hover=fauxfactory.gen_alphanumeric(),
         open_url=True,
         system="Request",
@@ -398,7 +372,6 @@ def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method
     )
     request.addfinalizer(button.delete_if_exists)
 
-    import ipdb; ipdb.set_trace()
     view = navigate_to(setup_obj, "Details")
     custom_button_group = Dropdown(view, group.hover)
     assert custom_button_group.has_item(button.text)
