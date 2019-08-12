@@ -496,3 +496,70 @@ def test_embedded_method_selection():
         1718495
     """
     pass
+
+
+@pytest.mark.tier(1)
+def test_automate_state_method(klass):
+    """
+    You can pass methods as states compared to the old method of passing
+    instances which had to be located in different classes. You use the
+    METHOD:: prefix
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/4h
+        tags: automate
+        startsin: 5.6
+        testSteps:
+            1. Create an automate class that has one state.
+            2. Create a method in the class, make the method output
+               something recognizable in the logs
+            3. Create an instance inside the class, and as a Value for the
+               state use: METHOD::method_name where method_name is the name
+               of the method you created
+            4. Run a simulation, use Request / Call_Instance to call your
+               state machine instance
+        expectedResults:
+            1. Class created
+            2. Method created
+            3. Instance created
+            4. The method got called, detectable by grepping logs
+    """
+    state = fauxfactory.gen_alpha()
+
+    klass.schema.add_fields({'name': state, 'type': 'State'})
+
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script="""\n$evm.log(:info, "Hello from state method")"""
+    )
+
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={state: {"value": f"METHOD::{method.name}"}}
+    )
+
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[".*Hello from state method.*"],
+    )
+    result.start_monitoring()
+
+    simulate(
+        appliance=klass.appliance,
+        attributes_values={
+            "namespace": klass.namespace.name,
+            "class": klass.name,
+            "instance": instance.name,
+        },
+        message="create",
+        request="Call_Instance",
+        execute_methods=True,
+    )
+    assert result.validate()
