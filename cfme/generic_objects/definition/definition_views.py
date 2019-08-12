@@ -10,7 +10,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BootstrapSwitch

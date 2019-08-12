@@ -16,6 +16,12 @@ from cfme.utils import testgen
 class EnvironmentMarker(object):
     """Base Environment Marker"""
     PARAM_BY_DEFAULT = False
+    NAME = None
+    CHOICES = None
+
+    @classmethod
+    def marker_description(cls):
+        return f'{cls.NAME}: mark a test for environment: {cls.CHOICES}'
 
     def process_env_mark(self, metafunc):
         if hasattr(metafunc.function, self.NAME):
@@ -54,6 +60,13 @@ class PodifiedEnvironmentMarker(EnvironmentMarker):
     """Podified Appliance Environment Marker"""
     NAME = 'podified'
     CHOICES = ['pod', 'vm']
+
+
+def pytest_configure(config):
+    config.addinivalue_line('markers', 'provider: Mark a test function/class/module for a provider')
+    config.addinivalue_line('markers', 'uses_testgen: Marker placed on tests that use testgen')
+    for envmark in [BrowserEnvironmentMarker, TCPEnvironmentMarker, PodifiedEnvironmentMarker]:
+        config.addinivalue_line('markers', envmark.marker_description())
 
 
 def pytest_generate_tests(metafunc):

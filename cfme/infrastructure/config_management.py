@@ -12,13 +12,13 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView
 from cfme.exceptions import displayed_not_implemented
 from cfme.utils import conf
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -251,7 +251,7 @@ class ConfigManagementEditView(ConfigManagementView):
     is_displayed = displayed_not_implemented
 
 
-class ConfigManager(Updateable, Pretty, Navigatable):
+class ConfigManager(Updateable, Pretty, NavigatableMixin):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
 
@@ -271,8 +271,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     type = None
     refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
 
-    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance, name=None, url=None, ssl=None, credentials=None, key=None):
+        self.appliance = appliance
         self.name = name
         self.url = url
         self.ssl = ssl
@@ -510,7 +510,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
                 name = row.description.text
             if 'unassigned' in name.lower():
                 continue
-            config_profiles.append(ConfigProfile(name=name, manager=self))
+            config_profiles.append(ConfigProfile(appliance=self.appliance, name=name, manager=self))
         return config_profiles
 
     @property
@@ -524,11 +524,12 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         return conf.cfme_data.configuration_managers[self.key]
 
     @classmethod
-    def load_from_yaml(cls, key):
+    def load_from_yaml(cls, key, appliance):
         """Returns 'ConfigManager' object loaded from yamls, based on its key"""
         data = conf.cfme_data.configuration_managers[key]
         creds = conf.credentials[data['credentials']]
         return cls(
+            appliance=appliance,
             name=data['name'],
             url=data['url'],
             ssl=data['ssl'],
@@ -544,27 +545,32 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             return '{} Configuration Manager'.format(self.name)
 
 
-def get_config_manager_from_config(cfg_mgr_key):
+def get_config_manager_from_config(cfg_mgr_key, appliance=None, mgr_type=None):
     cfg_mgr = conf.cfme_data.get('configuration_managers', {})[cfg_mgr_key]
+    if mgr_type and cfg_mgr['type'] != mgr_type:
+        logger.info(f'Config managers loading type mismatch: {cfg_mgr} '
+                    f'key does not match desired type: [{mgr_type}]')
+        return None
     if cfg_mgr['type'] == 'satellite':
-        return Satellite.load_from_yaml(cfg_mgr_key)
+        return Satellite.load_from_yaml(cfg_mgr_key, appliance)
     elif cfg_mgr['type'] == 'ansible':
-        return AnsibleTower.load_from_yaml(cfg_mgr_key)
+        return AnsibleTower.load_from_yaml(cfg_mgr_key, appliance)
     else:
         raise Exception("Unknown configuration manager key")
 
 
-class ConfigProfile(Pretty, Navigatable):
+class ConfigProfile(Pretty, NavigatableMixin):
     """Configuration profile object (foreman-side hostgroup)
 
     Args:
+        appliance: appliance object
         name: Name of the profile
         manager: ConfigManager object which this profile is bound to
     """
     pretty_attrs = ['name', 'manager']
 
-    def __init__(self, name, manager, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance, name, manager):
+        self.appliance = appliance
         self.name = name
         self.manager = manager
 
@@ -579,17 +585,17 @@ class ConfigProfile(Pretty, Navigatable):
             view.entities.configured_systems.click()
 
         if view.entities.configured_systems.elements.is_displayed:
-            return [ConfigSystem(row.hostname.text, self)
+            return [ConfigSystem(appliance=self.appliance, name=row.hostname.text, profile=self)
                     for row in view.entities.configured_systems.elements]
         return list()
 
 
-class ConfigSystem(Pretty, Navigatable, Taggable):
+class ConfigSystem(Pretty, NavigatableMixin, Taggable):
     """The tags pages of the config system"""
     pretty_attrs = ['name', 'manager_key']
 
-    def __init__(self, name, profile, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance, name, profile):
+        self.appliance = appliance
         self.name = name
         self.profile = profile
 
@@ -642,13 +648,13 @@ class Satellite(ConfigManager):
         LATEST: 'Foreman'
     })
 
-    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
-        super(Satellite, self).__init__(name=name, url=url, ssl=ssl, credentials=credentials,
+    def __init__(self, appliance, name=None, url=None, ssl=None, credentials=None, key=None):
+        super(Satellite, self).__init__(appliance=appliance,
+                                        name=name,
+                                        url=url,
+                                        ssl=ssl,
+                                        credentials=credentials,
                                         key=key)
-        self.name = name
-        self.url = url
-        self.ssl = ssl
-        self.credentials = credentials
         self.key = key or name
 
 
@@ -686,13 +692,13 @@ class AnsibleTower(ConfigManager):
 
     type = 'Ansible Tower'
 
-    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
-        super(AnsibleTower, self).__init__(name=name, url=url, ssl=ssl, credentials=credentials,
+    def __init__(self, appliance, name=None, url=None, ssl=None, credentials=None, key=None):
+        super(AnsibleTower, self).__init__(appliance=appliance,
+                                           name=name,
+                                           url=url,
+                                           ssl=ssl,
+                                           credentials=credentials,
                                            key=key)
-        self.name = name
-        self.url = url
-        self.ssl = ssl
-        self.credentials = credentials
         self.key = key or name
 
     @property

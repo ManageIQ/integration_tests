@@ -5,7 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.services.catalogs.catalog_items import AddCatalogItemView
 from cfme.services.catalogs.catalog_items import AllCatalogItemView
 from cfme.services.catalogs.catalog_items import DetailsCatalogItemView

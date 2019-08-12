@@ -22,6 +22,8 @@ ONE_PER_VERSION = 'one_per_version'
 ONE_PER_CATEGORY = 'one_per_category'
 ONE_PER_TYPE = 'one_per_type'
 
+PROVIDER_MARKER_FIXTURE_NAME = 'provider'
+
 
 class DPFilter(ProviderFilter):
     def __call__(self, provider):
@@ -248,7 +250,7 @@ def providers(metafunc, filters=None, selector=ONE_PER_VERSION, fixture_name='pr
         flags_filter = ProviderFilter(required_flags=test_flags)
         filters = filters + [flags_filter]
 
-    # available_providers are the ones "available" from the yamls after all of the global and
+    # available_providers are the ones "available" from the yamls after all of the aal and
     # local filters have been applied. It will be a list of crud objects.
     available_providers = list_providers(filters)
 
@@ -392,8 +394,13 @@ def providers(metafunc, filters=None, selector=ONE_PER_VERSION, fixture_name='pr
 
 
 def providers_by_class(
-        metafunc, classes, required_fields=None, selector=ONE_PER_VERSION, fixture_name='provider',
-        required_flags=None):
+    metafunc,
+    classes,
+    required_fields=None,
+    selector=ONE_PER_VERSION,
+    fixture_name=PROVIDER_MARKER_FIXTURE_NAME,
+    required_flags=None
+):
     """ Gets providers by their class
 
     Args:
@@ -417,48 +424,78 @@ def providers_by_class(
 
 
 class ProviderEnvironmentMarker(EnvironmentMarker):
-    NAME = 'provider'
+    NAME = PROVIDER_MARKER_FIXTURE_NAME
+
+    @classmethod
+    def get_closest_kwarg_markers(cls, test_item, kwarg_name='fixture_name'):
+        """use iter_markers, and apply a marker kwarg filter, returning the first marker matching
+        Like pytest.nodes implementation, its relying on the first item returned by iter_marker
+        to be the 'lowest' level mark
+
+        Args:
+            test_item: a test definition, or node, that has iter_markers
+            kwarg_name: the kwarg to organize markers by for closeness
+
+        Returns:
+            dictionary of marks keyed by fixture name
+        """
+        provider_marks = list(test_item.iter_markers(name=cls.NAME))
+        if not provider_marks:
+            # no matching marks, nothing to parametrize
+            return
+        marks_by_kwarg = defaultdict(list)
+        for mark in provider_marks:
+            marks_by_kwarg[mark.kwargs.get(kwarg_name, cls.NAME)].append(mark)
+
+        # pop the first item in the list for the closest marker
+        closest_marks = {fix: marks.pop(0) if marks else None
+                         for fix, marks in marks_by_kwarg.items()}
+        return closest_marks
 
     def process_env_mark(self, metafunc):
-        if hasattr(metafunc.function, self.NAME):
-            mark_dict = defaultdict(list)
-            for mark in getattr(metafunc.function, self.NAME):
-                # Find all provider-ish markers
-                fixture_name = mark.kwargs.get('fixture_name', 'provider')
-                mark_dict[fixture_name].append(mark)
+        """ Process the provider env marks
+        Notes:
+            provider markers can be applied at multiple layers (module, class, function)
+            provider markers automatically override at lower layers (function overrides all)
+            provider markers can supply their own fixture_name, to support multiple providers
+        Args:
+            metafunc: pytest metafunc object
 
-            for name, marks in mark_dict.items():
-                mark = None
-                for mark in marks:
-                    if mark.kwargs.get('override', False):
-                        break
-                else:
-                    if len(mark_dict[name]) >= 2:
-                        raise Exception(
-                            "You have an override provider without "
-                            "specifying the override flag [{}]".format(metafunc.function.__name__)
-                        )
+        Returns:
+            Parametrizes metafunc object directly, returns nothing
+        """
 
-                args = mark.args
-                kwargs = mark.kwargs.copy()
-                if 'override' in kwargs:
-                    kwargs.pop('override')
-                scope = kwargs.pop('scope', 'function')
-                indirect = kwargs.pop('indirect', False)
-                filter_unused = kwargs.pop('filter_unused', True)
-                selector = kwargs.pop('selector', ONE_PER_VERSION)
-                gen_func = kwargs.pop('gen_func', providers_by_class)
+        # organize by fixture_name kwarg to the marker
+        # iter_markers returns most local mark first, maybe don't need override
+        marks_by_fixture = self.get_closest_kwarg_markers(metafunc.definition)
+        if marks_by_fixture is None:
+            return
 
-                # If parametrize doesn't get you what you need, steal this and modify as needed
-                kwargs.update({'selector': selector})
-                argnames, argvalues, idlist = gen_func(metafunc, *args, **kwargs)
-                # Filter out argnames that aren't requested on the metafunc test item,
-                # so not all tests need all fixtures to run, and tests not using gen_func's
-                # fixtures aren't parametrized.
-                if filter_unused:
-                    argnames, argvalues = fixture_filter(metafunc, argnames, argvalues)
-                    # See if we have to parametrize at all after filtering
-                parametrize(
-                    metafunc, argnames, argvalues, indirect=indirect,
-                    ids=idlist, scope=scope, selector=selector
-                )
+        # process each mark, defaulting fixture_name
+        for fixture_name, mark in marks_by_fixture.items():
+
+            # mark is either the lowest marker (automatic override), or has custom fixture_name
+            logger.debug(f'Parametrizing provider env mark {mark}')
+            args = mark.args
+            kwargs = mark.kwargs.copy()
+            if kwargs.pop('override', False):
+                logger.warning('provider marker included override kwarg, this is unnecessary')
+            scope = kwargs.pop('scope', 'function')
+            indirect = kwargs.pop('indirect', False)
+            filter_unused = kwargs.pop('filter_unused', True)
+            selector = kwargs.pop('selector', ONE_PER_VERSION)
+            gen_func = kwargs.pop('gen_func', providers_by_class)
+
+            # If parametrize doesn't get you what you need, steal this and modify as needed
+            kwargs.update({'selector': selector})
+            argnames, argvalues, idlist = gen_func(metafunc, *args, **kwargs)
+            # Filter out argnames that aren't requested on the metafunc test item,
+            # so not all tests need all fixtures to run, and tests not using gen_func's
+            # fixtures aren't parametrized.
+            if filter_unused:
+                argnames, argvalues = fixture_filter(metafunc, argnames, argvalues)
+                # See if we have to parametrize at all after filtering
+            parametrize(
+                metafunc, argnames, argvalues, indirect=indirect,
+                ids=idlist, scope=scope, selector=selector
+            )

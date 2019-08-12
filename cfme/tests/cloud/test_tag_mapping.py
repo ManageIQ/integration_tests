@@ -71,7 +71,7 @@ def tag_components():
             'tag_value_{}'.format(fauxfactory.gen_alphanumeric()))
 
 
-@pytest.mark.provider([AzureProvider], selector=ONE_PER_TYPE, scope='function', override=True)
+@pytest.mark.provider([AzureProvider], selector=ONE_PER_TYPE, scope='function')
 def test_tag_mapping_azure_instances(tagged_vm, map_tags):
     """"
     Polarion:

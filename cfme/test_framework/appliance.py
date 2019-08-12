@@ -4,6 +4,7 @@ import attr
 import pytest
 
 from cfme.fixtures import terminalreporter
+from cfme.fixtures.pytest_store import store
 from cfme.utils import conf
 from cfme.utils.appliance import DummyAppliance
 from cfme.utils.appliance import load_appliances_from_config
@@ -94,6 +95,6 @@ class ApplianceHolderPlugin(object):
     def pytest_sessionstart(self):
         if isinstance(self.held_appliance, DummyAppliance) or self.held_appliance.is_dev:
             return
-        if pytest.store.parallelizer_role != 'slave':
+        if store.parallelizer_role != 'slave':
             with log_path.join('appliance_version').open('w') as appliance_version:
                 appliance_version.write(self.held_appliance.version.vstring)

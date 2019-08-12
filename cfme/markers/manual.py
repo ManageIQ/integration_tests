@@ -16,7 +16,7 @@ def pytest_addoption(parser):
                      help="Collect also manual tests (only for --collect-only)")
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items):
     if config.getvalue('include_manual'):
         return
@@ -24,7 +24,7 @@ def pytest_collection_modifyitems(config, items):
 
     keep, discard = [], []
     for item in items:
-        if bool(item.get_marker("manual")) == is_manual:
+        if bool(item.get_closest_marker("manual")) == is_manual:
             keep.append(item)
         else:
             discard.append(item)

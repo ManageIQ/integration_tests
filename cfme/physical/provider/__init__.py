@@ -4,8 +4,8 @@ from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Fillable
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import Server
+from cfme.common import BaseLoggedInPage
 from cfme.common.provider import BaseProvider
 from cfme.common.provider import provider_types
 from cfme.common.provider_views import PhysicalProviderAddView

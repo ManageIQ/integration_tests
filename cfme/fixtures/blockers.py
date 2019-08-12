@@ -65,7 +65,7 @@ def pytest_addoption(parser):
                     help='Specify to list the blockers (takes some time though).')
 
 
-@pytest.mark.trylast
+@pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(session, config, items):
     if not config.getvalue("list_blockers"):
         return

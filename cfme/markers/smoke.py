@@ -30,14 +30,14 @@ def pytest_addoption(parser):
            help="halt the test run if smoke tests fail")
 
 
-@pytest.mark.trylast
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     smoke_tests = SmokeTests(reporter(config))
     config.pluginmanager.register(smoke_tests, 'smoke_tests')
     config.addinivalue_line('markers', __doc__.splitlines()[0])
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_collection_modifyitems(session, config, items):
     # XXX: This also handles moving long_running tests to the front of the test module
     # There are a few different ways to handle this batter, but rather than building in logic
@@ -107,5 +107,6 @@ class SmokeTests(object):
     def pytest_runtest_teardown(self, item, nextitem):
         # This condition should only be met on the last smoke test, since they were
         # all moved to the top of the test run.
-        if item.get_marker('smoke') and not (nextitem and nextitem.get_marker('smoke')):
+        if item.get_closest_marker('smoke') and not (nextitem and
+                                                     nextitem.get_closest_marker('smoke')):
             self.complete = True

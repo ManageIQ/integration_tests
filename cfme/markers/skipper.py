@@ -4,15 +4,13 @@ This doesn't provide any special markers, but it does add behavor to marks defin
 :py:attr:`skip_marks`.
 
 """
-import pytest
-
-
 #: List of (mark, commandline flag) tuples. When the given mark is used on a test, it will
 #: be skipped unless the commandline flag is used. If the mark is already found in py.test's
 #: parsed mark expression, no changes will be made for that mark.
 skip_marks = [
     ('long_running', '--long-running'),
-    ('perf', '--perf')
+    ('perf', '--perf'),
+    ('long_running', '--long-running-env')
 ]
 
 _mark_doc = ('{mark}: Skip tests with the {mark} mark by default, unless {cmdline} commandline '
@@ -28,6 +26,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    # warning: dragons below
     if config.getoption('--help'):
         return
 
@@ -62,10 +61,3 @@ def pytest_configure(config):
             config.option.markexpr = '({}) and ({})'.format(skip_mark_expr, config.option.markexpr)
         else:
             config.option.markexpr = skip_mark_expr
-
-
-def pytest_collection_modifyitems(items):
-    # mark all perf tests here so we don't have to maintain the mark in those modules
-    for item in items:
-        if item.nodeid.startswith('cfme/tests/perf'):
-            item.add_marker(pytest.mark.perf)

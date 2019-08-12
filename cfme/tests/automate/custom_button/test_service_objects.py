@@ -786,7 +786,7 @@ def unassigned_btn_setup(request, appliance, provider, gen_rest_service):
     yield obj, gp, destinations
 
 
-@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE)
+@pytest.mark.provider([VMwareProvider], scope="module", selector=ONE)
 def test_custom_button_unassigned_behavior_objs(
     appliance, setup_provider, unassigned_btn_setup, request
 ):

@@ -359,7 +359,7 @@ class TestTagsViaREST(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.provider(
-        [CloudProvider, InfraProvider], selector=ONE_PER_CATEGORY, override=True
+        [CloudProvider, InfraProvider], selector=ONE_PER_CATEGORY
     )
     @pytest.mark.parametrize("collection_name", INFRA_COLLECTION + CLOUD_COLLECTION)
     @pytest.mark.uncollectif(

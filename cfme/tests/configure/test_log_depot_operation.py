@@ -201,7 +201,6 @@ def service_request(appliance, ansible_catalog_item):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.nondestructive
 @pytest.mark.meta(automates=[1652116, 1656318, 1706989])
 def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept

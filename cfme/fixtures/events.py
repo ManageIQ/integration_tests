@@ -66,7 +66,7 @@ def pytest_runtest_call(item):
     try:
         yield
     finally:
-        if "register_event" in item.funcargnames:
+        if "register_event" in item.fixturenames:
             event_listener = item.funcargs["register_event"]
             soft_assert = item.funcargs["soft_assert"]
 

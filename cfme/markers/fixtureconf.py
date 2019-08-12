@@ -13,7 +13,7 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
-    fixtureconf_mark = item.keywords.get('fixtureconf')
+    fixtureconf_mark = item.get_closest_marker('fixtureconf')
     args = getattr(fixtureconf_mark, 'args', tuple())
     kwargs = getattr(fixtureconf_mark, 'kwargs', dict())
     fixtureconf = dict()

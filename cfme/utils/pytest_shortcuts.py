@@ -22,22 +22,24 @@ def extract_fixtures_values(item):
 
 
 def trim_items(iterable, keep_index):
-    return [e[1] for e in enumerate(iterable) if e[0] in keep_index]
+    return [e[1]
+            for e in enumerate(iterable)
+            if e[0] in keep_index]
 
 
 def fixture_filter(metafunc, argnames, argvalues):
     """Filter fixtures based on fixturenames in
     the function represented by ``metafunc``"""
 
-    # Identify indeces of matches between argnames and fixturenames
+    # Identify indices of matches between argnames and fixturenames
     keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
 
     # Keep items at indices in keep_index
-    def f(l):
-        if isinstance(l, (list, tuple)) and not isinstance(l, ParameterSet):
-            return trim_items(l, keep_index)
+    def f(values):
+        if isinstance(values, (list, tuple)) and not isinstance(values, ParameterSet):
+            return trim_items(values, keep_index)
         else:
-            parameterset = ParameterSet.extract_from(l)
+            parameterset = ParameterSet.extract_from(values)
             return parameterset._replace(values=trim_items(parameterset.values, keep_index))
 
     # Generate the new values

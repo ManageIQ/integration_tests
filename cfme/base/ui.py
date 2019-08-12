@@ -24,7 +24,7 @@ from cfme.base import Server
 from cfme.base import Zone
 from cfme.base import ZoneCollection
 from cfme.base.credential import Credential
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.configure.about import AboutView
 from cfme.configure.configuration.server_settings import ServerAuthenticationView
 from cfme.configure.configuration.server_settings import ServerInformationView
@@ -459,9 +459,7 @@ class Dashboard(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select(
-            self.obj.intel_name, "Dashboard"
-        )
+        self.prerequisite_view.navigation.select(self.obj.intel_name, "Dashboard")
 
 
 @navigator.register(Server)
@@ -470,9 +468,7 @@ class Chargeback(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select(
-            self.obj.intel_name, "Chargeback"
-        )
+        self.prerequisite_view.navigation.select(self.obj.intel_name, "Chargeback")
 
 
 class ServerView(ConfigurationView):

@@ -36,7 +36,7 @@ def get_path_and_file_name(node):
     return node.parent.name, vid_name
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_setup(item):
     global recorder
     if vid_options and vid_options['enabled']:
@@ -62,13 +62,13 @@ def stop_recording():
             recorder = None
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_teardown(item, nextitem):
     yield
     stop_recording()
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_unconfigure(config):
     yield
     stop_recording()

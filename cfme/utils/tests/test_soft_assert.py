@@ -37,7 +37,11 @@ def test_soft_assert_call_hook(testdir, monkeypatch):
     result = testdir.runpytest_subprocess('--dummy-appliance')
     # replace the testfile name in the expected output names,
     # then check filename and lineno are correct in the failure output
-    result.stdout.fnmatch_lines([s.format(testfile=pyfile) for s in test_output_match_lines])
+    result.stdout.fnmatch_lines(
+        [s.format(testfile=pyfile)
+        for s in test_output_match_lines]
+    )
+    testdir.finalize()
 
 
 def test_soft_assert_cm(soft_assert):
@@ -79,7 +83,7 @@ def test_soft_assert_helpers(soft_assert):
                 assert False, 'message'
 
             with soft_assert.catch_assert():
-                assert None
+                assert False is None
 
     # get the caught asserts; there are two of them
     caught_asserts = soft_assert.caught_asserts()

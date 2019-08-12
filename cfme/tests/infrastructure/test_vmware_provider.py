@@ -31,7 +31,7 @@ pytestmark = [
 
 
 @pytest.mark.tier(3)
-@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_vmware_provider_filters(appliance, provider, soft_assert):
     """
     N-3 filters for esx provider.
@@ -63,7 +63,7 @@ def test_vmware_provider_filters(appliance, provider, soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.long_running
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_appliance_scsi_control_vmware(request, appliance):
     """
     Appliance cfme-vsphere-paravirtual-*.ova has SCSI controller as Para
@@ -105,7 +105,7 @@ def test_appliance_scsi_control_vmware(request, appliance):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_vmware_vds_ui_display(soft_assert, appliance, provider):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
@@ -141,7 +141,7 @@ def test_vmware_vds_ui_display(soft_assert, appliance, provider):
 @pytest.mark.meta(blockers=[BZ(1650441, forced_streams=['5.10', '5.11'])])
 @pytest.mark.provider([VMwareProvider],
     required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
-    selector=ONE, override=True)
+    selector=ONE)
 def test_vmware_reconfigure_vm_controller_type(appliance, provider):
     """
     Edit any VM which is provisioned for vSphere and select "Reconfigure this VM" option.
@@ -179,7 +179,7 @@ def test_vmware_reconfigure_vm_controller_type(appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
@@ -244,9 +244,9 @@ def test_vmware_inaccessible_datastore():
 
 @pytest.mark.tier(1)
 @pytest.mark.provider([VMwareProvider], selector=ONE,
-    required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
-    override=True)
+    required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
 @pytest.mark.meta(automates=[1689369])
+@pytest.mark.meta(blockers=[BZ(1689369, forced_streams=['5.10', '5.11'])])
 def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     """
     Test CD/DVD Drives dropdown lists ISO files, dropdown is not blank
@@ -382,7 +382,7 @@ def test_vmware_provisioned_vm_host_relationship(request, appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_esxi_reboot_not_orphan_vms(appliance, provider):
     """
     By mimicking ESXi reboot effect on VMs in CFME, make sure they are not getting marked orphaned.
@@ -430,7 +430,7 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 @pytest.mark.meta(automates=[1688900])
 def test_switches_class_present_ems(appliance, provider):
     """
@@ -475,7 +475,7 @@ def test_switches_class_present_ems(appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 @pytest.mark.meta(automates=[1719399])
 def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
     """

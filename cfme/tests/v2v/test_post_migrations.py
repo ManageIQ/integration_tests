@@ -5,8 +5,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.common import BaseLoggedInPage
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider

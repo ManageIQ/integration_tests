@@ -3,7 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.provider import rhel7_minimal
+from cfme.fixtures.templates import rhel7_minimal
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider

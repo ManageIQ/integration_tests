@@ -19,9 +19,9 @@ def test_ipappliance_from_url():
     assert ip_a.hostname == address
 
 
-@pytest.mark.skipif(pytest.config.getoption('--dummy-appliance'),
+@pytest.mark.skipif(lambda request: request.config.getoption('--dummy-appliance', default=False),
                     reason="infra_provider cant support dummy instance")
-def test_ipappliance_managed_providers(appliance, infra_provider):
+def test_ipappliance_managed_providers(appliance, infra_provider, request):
     assert infra_provider in appliance.managed_known_providers
 
 

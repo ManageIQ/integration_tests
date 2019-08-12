@@ -12,11 +12,11 @@ def pytest_configure(config):
 
 def extract_polarion_ids(item):
     """Extracts Polarion TC IDs from the test item. Returns None if no marker present."""
-    polarion = item.get_marker('polarion')
+    polarion = item.get_closest_marker('polarion')
     return list(map(str, getattr(polarion, 'args', [])))
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items):
     xml = getattr(config, '_xml', None)
     if xml is None:
@@ -34,7 +34,7 @@ class ReportPolarionToJunitPlugin(object):
     xml = attr.ib()
     node_map = attr.ib()
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_logreport(self, report):
         """Adds the supplied test case id to the xunit file as a property"""
         if report.when != 'setup':

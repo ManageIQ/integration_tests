@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.mark.trylast
+@pytest.hookimpl(trylast=True)
 def pytest_runtest_teardown(item, nextitem):
     if item.config.getoption('sauce'):
         from cfme.utils.browser import ensure_browser_open, quit, browser

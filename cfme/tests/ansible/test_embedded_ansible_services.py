@@ -778,7 +778,7 @@ def test_service_ansible_verbosity(
 
 
 @pytest.mark.tier(3)
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.meta(automates=[BZ(1448918)])
 def test_ansible_service_linked_vm(

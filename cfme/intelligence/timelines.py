@@ -1,7 +1,7 @@
 from widgetastic.widget import View
 from widgetastic_patternfly import Accordion
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import TimelinesChart
 

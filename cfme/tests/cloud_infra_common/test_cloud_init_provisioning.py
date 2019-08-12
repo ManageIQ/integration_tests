@@ -120,8 +120,8 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
 
 @pytest.mark.rhv3
-@pytest.mark.provider([RHEVMProvider], override=True)
 @test_requirements.provision
+@pytest.mark.provider([RHEVMProvider])
 def test_provision_cloud_init_payload(appliance, request, setup_provider, provider, provisioning,
                                       vm_name):
     """

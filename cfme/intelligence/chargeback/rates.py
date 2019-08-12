@@ -309,7 +309,7 @@ class StorageRateCollection(BaseCollection):
 @navigator.register(ComputeRateCollection, 'All')
 class ComputeRateAll(CFMENavigateStep):
     VIEW = RatesView
-    prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
+    prerequisite = NavigateToAttribute('appliance.server', 'Chargeback')
 
     def step(self, *args, **kwargs):
         self.view.rates.tree.click_path(
@@ -364,7 +364,7 @@ class ComputeRateEdit(CFMENavigateStep):
 @navigator.register(StorageRateCollection, 'All')
 class StorageRateAll(CFMENavigateStep):
     VIEW = RatesView
-    prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
+    prerequisite = NavigateToAttribute('appliance.server', 'Chargeback')
 
     def step(self, *args, **kwargs):
         self.view.rates.tree.click_path(

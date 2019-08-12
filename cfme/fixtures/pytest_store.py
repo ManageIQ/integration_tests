@@ -148,9 +148,9 @@ class Store(object):
 store = Store()
 
 
-def pytest_namespace():
-    # Expose the pytest store as pytest.store
-    return {'store': store}
+# def pytest_configure(config):
+#     # Expose the pytest store as pytest.store
+#     pytest.store = store
 
 
 def pytest_plugin_registered(manager):

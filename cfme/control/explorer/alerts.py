@@ -14,7 +14,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import SelectorDropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.control.explorer import ControlExplorerView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity

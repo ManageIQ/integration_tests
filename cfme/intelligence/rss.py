@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from widgetastic_manageiq import Table
 
 

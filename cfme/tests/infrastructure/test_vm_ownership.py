@@ -126,7 +126,7 @@ def small_vm(provider, small_template):
 
 
 @test_requirements.power
-@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider], scope="function", selector=ONE_PER_TYPE)
 def test_rename_vm(small_vm):
     """Test for rename the VM.
 
