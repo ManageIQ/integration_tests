@@ -31,7 +31,6 @@ from cfme.configure.configuration.server_settings import ServerInformationView
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
-from cfme.exceptions import BugException
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.intelligence.chargeback import ChargebackView
@@ -43,7 +42,6 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Checkbox
@@ -1385,16 +1383,20 @@ class ZoneSettingsView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        server_zone = self.context['object'].appliance.server.zone
+        region = server_zone.region
+        is_current = (server_zone.id == self.context['object'].id)
+        current_string = " (current)" if is_current else ""
         expected_list = [
-            self.context['object'].region.settings_string,
+            region.settings_string,
             "Zones",
-            "Zone: {} (current)".format(self.context['object'].description)
+            "Zone: {}{}".format(self.context['object'].description, current_string)
         ]
         return (
             self.accordions.settings.is_opened and
             self.accordions.settings.tree.currently_selected == expected_list and
-            self.title.text == 'Settings Zone "{}" (current)'.format(
-                self.context['object'].description)
+            self.title.text == 'Settings Zone "{}"{}'.format(
+                self.context['object'].description, current_string)
         )
 
 
@@ -1494,10 +1496,10 @@ class ZoneEditView(ZoneForm):
 @navigator.register(Zone, 'Edit')
 class ZoneEdit(CFMENavigateStep):
     VIEW = ZoneEditView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('Zone')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.configuration.item_select("Edit this Zone")
+        self.prerequisite_view.zone.configuration.item_select("Edit this Zone")
 
 
 # Zone Diagnostics #
@@ -1628,7 +1630,7 @@ class ZoneCANDUGapCollection(CFMENavigateStep):
 @Zone.exists.external_getter_implemented_for(ViaUI)
 def exists(self):
     try:
-        navigate_to(self, 'Details')
+        navigate_to(self, 'Zone')
         return True
     except ItemNotFound:
         return False
@@ -1660,8 +1662,8 @@ def delete(self, cancel=False):
     Args:
         cancel: Whether to click on the cancel button in the pop-up.
     """
-    view = navigate_to(self, 'Details')
-    view.configuration.item_select('Delete this Zone', handle_alert=not cancel)
+    view = navigate_to(self, 'Zone')
+    view.zone.configuration.item_select('Delete this Zone', handle_alert=not cancel)
     if not cancel:
         view.flash.assert_message('Zone "{}": Delete successful'.format(self.name))
 
@@ -1669,10 +1671,6 @@ def delete(self, cancel=False):
 @MiqImplementationContext.external_for(ZoneCollection.create, ViaUI)
 def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=None,
            max_scans=None, user=None, cancel=False):
-
-    if BZ(1509452).blocks:
-        raise BugException(1509452, 'creating zones')
-
     add_page = navigate_to(self, 'Add')
     if not ntp_servers:
         ntp_servers = []
