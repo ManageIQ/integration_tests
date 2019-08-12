@@ -10,6 +10,7 @@ from widgetastic.widget import TextInput
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import DatePicker
 from widgetastic_patternfly import FlashMessages
 
 from cfme.intelligence.reports import CloudIntelReportsView
@@ -21,7 +22,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import AlertEmail
-from widgetastic_manageiq import Calendar
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import Table
@@ -69,7 +69,7 @@ class SchedulesFormCommon(CloudIntelReportsView):
         timer_month = BootstrapSelect("timer_months")
         timer_week = BootstrapSelect("timer_weeks")
         time_zone = BootstrapSelect("time_zone")
-        starting_date = Calendar("miq_date_1")
+        starting_date = DatePicker("miq_date_1")
         hour = BootstrapSelect("start_hour")
         minute = BootstrapSelect("start_min")
 
