@@ -105,9 +105,9 @@ def test_reports_schedule_crud(schedule_data, appliance):
     view.flash.assert_success_message('Schedule "{}" was added'.format(schedule.name))
 
     # update
-    date = datetime.date.today() + datetime.timedelta(5)
+    date = datetime.datetime.today() + datetime.timedelta(5)
     updated_description = "badger badger badger"
-    updated_timer = {"run": "Monthly", "starting_date": date.strftime("%m/%d/%y")}
+    updated_timer = {"run": "Monthly", "starting_date": date}
 
     with update(schedule):
         schedule.description = updated_description
@@ -118,9 +118,7 @@ def test_reports_schedule_crud(schedule_data, appliance):
 
     run_at = view.schedule_info.get_text_of("Run At")
     assert updated_timer["run"].lower() in run_at
-
-    if not BZ(1729882, forced_streams=["5.10"]).blocks:
-        assert str(date.day) in run_at
+    assert str(date.day) in run_at
 
     # queue
     schedule.queue()
