@@ -97,6 +97,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(automates=[1608475])
 def test_snapshot_crud(small_test_vm, provider):
     """Tests snapshot crud
 
@@ -111,6 +112,9 @@ def test_snapshot_crud(small_test_vm, provider):
     # has_name is false if testing RHEVMProvider
     snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
+    # check for the size as "read" check
+    if provider.appliance.version >= "5.11" and provider.one_of(RHEVMProvider):
+        assert snapshot.size
     snapshot.delete()
 
 
