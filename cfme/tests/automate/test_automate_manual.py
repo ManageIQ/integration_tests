@@ -646,25 +646,6 @@ def test_method_for_log_and_notify():
 
 
 @pytest.mark.tier(1)
-def test_miq_stop_abort_with_state_machines():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Automate
-        tags: automate
-
-    Bugzilla:
-        1441353
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_vm_naming_number_padding():
     """
     Polarion:
