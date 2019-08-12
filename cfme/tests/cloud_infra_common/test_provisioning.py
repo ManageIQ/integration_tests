@@ -662,12 +662,14 @@ def test_provision_with_tag(appliance, vm_name, tag, provider, request):
     assert tag in instance.get_tags(), 'Provisioned instance does not have expected tag'
 
 
-@pytest.mark.manual
+@pytest.fixture(scope='module')
+def global_appliance
+
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @test_requirements.multi_region
 @test_requirements.provision
-def test_provision_from_template_from_global_region(context):
+def test_provision_from_template_from_global_region(context, global_appliance):
     """
     Polarion:
         assignee: izapolsk
@@ -675,4 +677,6 @@ def test_provision_from_template_from_global_region(context):
         casecomponent: Provisioning
         initialEstimate: 1/3h
     """
+    global_appliance = app_cluster.global_appliance
+
     pass
