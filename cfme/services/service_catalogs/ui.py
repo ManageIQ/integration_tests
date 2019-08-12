@@ -6,7 +6,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
 from cfme.base import Server
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.services.requests import RequestsView
 from cfme.services.service_catalogs import BaseOrderForm
 from cfme.services.service_catalogs import ServiceCatalogs

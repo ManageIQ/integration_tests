@@ -39,7 +39,6 @@ to set it up will be made.
 import random
 import sys
 from collections import defaultdict
-from collections import Mapping
 
 import pytest
 from _pytest.compat import getimfunc
@@ -50,7 +49,7 @@ from cfme.common.provider import all_types
 from cfme.common.provider import BaseProvider
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_store import store
-from cfme.fixtures.templateloader import TEMPLATES
+from cfme.markers.env_markers.provider import ProviderEnvironmentMarker
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers
@@ -288,7 +287,7 @@ def setup_provider_modscope(request, provider):
 
 @pytest.fixture(scope='class')
 def setup_provider_clsscope(request, provider):
-    """Module-scoped fixture to set up a provider"""
+    """Class-scoped fixture to set up a provider"""
     return setup_or_skip(request, provider)
 
 
@@ -297,218 +296,6 @@ def setup_provider_funcscope(request, provider):
     """Function-scoped fixture to set up a provider"""
     return setup_or_skip(request, provider)
 # -----------------------------------------------
-
-
-@pytest.fixture(scope="function")
-def template(template_location, provider):
-    if template_location is not None:
-        o = provider.data
-        try:
-            for field in template_location:
-                o = o[field]
-        except (IndexError, KeyError):
-            logger.info("Cannot apply %r to %r in the template specification, ignoring.", field, o)
-        else:
-            if not isinstance(o, str):
-                raise ValueError("{!r} is not a string! (for template)".format(o))
-            if not TEMPLATES:
-                # There is nothing in TEMPLATES, that means no trackerbot URL and no data pulled.
-                # This should normally not constitute an issue so continue.
-                return o
-            templates = TEMPLATES.get(provider.key)
-            if templates is not None:
-                if o in templates:
-                    return o
-    logger.info("Wanted template %s on %s but it is not there!", o, provider.key)
-    pytest.skip('Template not available')
-
-
-def _get_template(provider, template_type_name):
-    """Get the template name for the given template type
-    YAML is expected to have structure with a templates section in the provider:
-    provider:
-        templates:
-            small_template:
-                name:
-                creds:
-            big_template:
-                name:
-                creds:
-    Args:
-        provider (obj): Provider object to lookup template on
-        template_type_name (str): Template type to lookup (small_template, big_template, etc)
-    Returns:
-         (dict) template dictionary from the yaml, with name and creds key:value pairs
-    """
-    try:
-        template_type = provider.data.templates.get(template_type_name)
-    except (AttributeError, KeyError):
-        logger.error("Wanted template %s on %s but it is not there!", template, provider.key)
-        pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
-    if not isinstance(template_type, Mapping):
-        pytest.skip('Template mapping is incorrect, {} on provider {}'
-                    .format(template_type_name, provider.key))
-    return template_type
-
-
-@pytest.fixture(scope="function")
-def small_template(provider):
-    return _get_template(provider, 'small_template')
-
-
-@pytest.fixture(scope="module")
-def small_template_modscope(provider):
-    return _get_template(provider, 'small_template')
-
-
-@pytest.fixture(scope="function")
-def full_template(provider):
-    return _get_template(provider, 'full_template')
-
-
-@pytest.fixture(scope="module")
-def full_template_modscope(provider):
-    return _get_template(provider, 'full_template')
-
-
-@pytest.fixture(scope="function")
-def big_template(provider):
-    return _get_template(provider, 'big_template')
-
-
-@pytest.fixture(scope="module")
-def big_template_modscope(provider):
-    return _get_template(provider, 'big_template')
-
-
-@pytest.fixture(scope="function")
-def provisioning(provider):
-    try:
-        return provider.data['provisioning']
-    except KeyError:
-        logger.warning('Tests using the provisioning fixture '
-                       'should include required_fields in their ProviderFilter marker')
-        pytest.skip('Missing "provisioning" field in provider data')
-
-
-@pytest.fixture(scope="function")
-def console_template(provider):
-    return _get_template(provider, 'console_template')
-
-
-@pytest.fixture(scope="module")
-def console_template_modscope(provider):
-    return _get_template(provider, 'console_template')
-
-
-@pytest.fixture(scope="function")
-def ubuntu16_template(provider):
-    return _get_template(provider, 'ubuntu16_template')
-
-
-@pytest.fixture(scope="module")
-def ubuntu16_template_modscope(provider):
-    return _get_template(provider, 'ubuntu16_template')
-
-
-@pytest.fixture(scope="function")
-def rhel69_template(provider):
-    return _get_template(provider, 'rhel69_template')
-
-
-@pytest.fixture(scope="module")
-def rhel69_template_modscope(provider):
-    return _get_template(provider, 'rhel69_template')
-
-
-@pytest.fixture(scope="function")
-def rhel74_template(provider):
-    return _get_template(provider, 'rhel74_template')
-
-
-@pytest.fixture(scope="module")
-def rhel74_template_modscope(provider):
-    return _get_template(provider, 'rhel74_template')
-
-
-@pytest.fixture(scope="function")
-def win7_template(provider):
-    return _get_template(provider, 'win7_template')
-
-
-@pytest.fixture(scope="module")
-def win7_template_modscope(provider):
-    return _get_template(provider, 'win7_template')
-
-
-@pytest.fixture(scope="function")
-def win10_template(provider):
-    return _get_template(provider, 'win10_template')
-
-
-@pytest.fixture(scope="module")
-def win10_template_modscope(provider):
-    return _get_template(provider, 'win10_template')
-
-
-@pytest.fixture(scope="function")
-def win2012_template(provider):
-    return _get_template(provider, 'win2012_template')
-
-
-@pytest.fixture(scope="module")
-def win2012_template_modscope(provider):
-    return _get_template(provider, 'win2012_template')
-
-
-@pytest.fixture(scope="function")
-def win2016_template(provider):
-    return _get_template(provider, 'win2016_template')
-
-
-@pytest.fixture(scope="module")
-def win2016_template_modscope(provider):
-    return _get_template(provider, 'win2016_template')
-
-
-@pytest.fixture(scope="function")
-def dual_network_template(provider):
-    return _get_template(provider, 'dual_network_template')
-
-
-@pytest.fixture(scope="module")
-def dual_network_template_modscope(provider):
-    return _get_template(provider, 'dual_network_template')
-
-
-@pytest.fixture(scope="function")
-def dual_disk_template(provider):
-    return _get_template(provider, 'dual_disk_template')
-
-
-@pytest.fixture(scope="module")
-def dual_disk_template_modscope(provider):
-    return _get_template(provider, 'dual_disk_template')
-
-
-@pytest.fixture(scope="function")
-def dportgroup_template(provider):
-    return _get_template(provider, 'dportgroup_template')
-
-
-@pytest.fixture(scope="module")
-def dportgroup_template_modscope(provider):
-    return _get_template(provider, 'dportgroup_template')
-
-
-@pytest.fixture(scope="function")
-def rhel7_minimal(provider):
-    return _get_template(provider, 'rhel7_minimal')
-
-
-@pytest.fixture(scope="module")
-def rhel7_minimal_modscope(provider):
-    return _get_template(provider, 'rhel7_minimal')
 
 
 def _walk_to_obj_parent(obj):
@@ -524,7 +311,7 @@ def _walk_to_obj_parent(obj):
     return obj
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     # since we use DataProvider at collection time and BaseProvider in fixtures and tests,
     # we need to instantiate BaseProvider and replace DataProvider obj with it right before first
@@ -534,36 +321,36 @@ def pytest_fixture_setup(fixturedef, request):
 
     # As the object may not be the root object and may have a parent, we need to walk to that
     # the object to see if we can find the attribute on it or any of its parents
-    if hasattr(_walk_to_obj_parent(request).function, 'provider'):
-        marks = _walk_to_obj_parent(request).function.provider._marks
+    parent = _walk_to_obj_parent(request)
+    # node has all the markers from full scope
+    # default it to empty dict so loop below shorts and yields at the end
+    item_marks = ProviderEnvironmentMarker.get_closest_kwarg_markers(parent.node) or {}
 
-        for mark in marks:
-            if mark.kwargs.get('fixture_name', 'provider') == fixturedef.argname:
-                kwargs = {}
-                for argname in fixturedef.argnames:
-                    fixdef = request._get_active_fixturedef(argname)
-                    result, arg_cache_key, exc = fixdef.cached_result
-                    request._check_scope(argname, request.scope, fixdef.scope)
-                    kwargs[argname] = result
+    for fixture_name, mark in item_marks.items():
+        if fixture_name == fixturedef.argname:
+            kwargs = {}
+            for argname in fixturedef.argnames:
+                fixdef = request._get_active_fixturedef(argname)
+                result, arg_cache_key, exc = fixdef.cached_result
+                request._check_scope(argname, request.scope, fixdef.scope)
+                kwargs[argname] = result
 
-                fixturefunc = fixturedef.func
-                if request.instance is not None:
-                    fixturefunc = getimfunc(fixturedef.func)
-                    if fixturefunc != fixturedef.func:
-                        fixturefunc = fixturefunc.__get__(request.instance)
-                my_cache_key = request.param_index
-                try:
-                    provider_data = call_fixture_func(fixturefunc, request, kwargs)
-                except TEST_OUTCOME:
-                    fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
-                    raise
-                from cfme.utils.providers import get_crud
-                provider = get_crud(provider_data.key)
-                fixturedef.cached_result = (provider, my_cache_key, None)
-                request.param = provider
-                yield provider
-                break
-        else:
-            yield
+            fixturefunc = fixturedef.func
+            if request.instance is not None:
+                fixturefunc = getimfunc(fixturedef.func)
+                if fixturefunc != fixturedef.func:
+                    fixturefunc = fixturefunc.__get__(request.instance)
+            my_cache_key = request.param_index
+            try:
+                provider_data = call_fixture_func(fixturefunc, request, kwargs)
+            except TEST_OUTCOME:
+                fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
+                raise
+            from cfme.utils.providers import get_crud
+            provider = get_crud(provider_data.key)
+            fixturedef.cached_result = (provider, my_cache_key, None)
+            request.param = provider
+            yield provider
+            break
     else:
         yield

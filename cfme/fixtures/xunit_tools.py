@@ -128,13 +128,13 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
     except Exception:
         description = ""
     try:
-        requirement = item.get_marker('requirement').args[0]
+        requirement = item.get_closest_marker('requirement').args[0]
         requirement_id = cfme_data['requirements'][requirement]
         work_items.append({'id': requirement_id, 'role': 'verifies'})
     except Exception:
         pass
     try:
-        tier = item.get_marker('tier').args[0]
+        tier = item.get_closest_marker('tier').args[0]
         tier_id = caselevels[str(tier)]
         custom_fields['caselevel'] = tier_id
     except Exception:
@@ -142,7 +142,7 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
 
     param_list = list(extract_fixtures_values(item).keys()) if not legacy else None
 
-    manual = item.get_marker('manual')
+    manual = item.get_closest_marker('manual')
     if not manual:
         # The master here should probably link the latest "commit" eventually
         automation_script = 'http://github.com/{0}/{1}/blob/master/{2}#L{3}'.format(
@@ -318,7 +318,7 @@ def gen_duplicates_log(items):
             f.write('{}\n'.format(test))
 
 
-@pytest.mark.trylast
+@pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(config, items):
     """Generates the XML files using collected items."""
     if not (config.getoption('generate_xmls') or config.getoption('generate_legacy_xmls')):

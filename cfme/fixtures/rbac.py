@@ -153,7 +153,7 @@ def really_logout():
             ensure_browser_open()
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     """Inspects and consumes certain exceptions
 
@@ -169,7 +169,7 @@ def pytest_pyfunc_call(pyfuncitem):
 
     # Login as the "new" user to run the test under
     if 'rbac_role' in pyfuncitem.fixturenames:
-        user = pyfuncitem._request.getfuncargvalue('rbac_role')
+        user = pyfuncitem._request.getfixturevalue('rbac_role')
         really_logout()
         logger.info("setting user to {}".format(user))
         user_obj = current_appliance.collections.users.instantiate(
@@ -221,7 +221,7 @@ def pytest_pyfunc_call(pyfuncitem):
                     raise Exception("RBAC: Test should have passed!")
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_generate_tests(metafunc):
     yield
     if 'rbac_role' in metafunc.fixturenames:

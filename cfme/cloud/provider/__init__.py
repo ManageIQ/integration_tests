@@ -8,9 +8,9 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.instance.image import Image
 from cfme.cloud.tenant import ProviderTenantAllView
+from cfme.common import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.common import TagPageView

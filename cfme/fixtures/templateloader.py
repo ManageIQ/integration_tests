@@ -11,7 +11,7 @@ from cfme.utils.providers import list_provider_keys
 TEMPLATES = {}
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.addoption(

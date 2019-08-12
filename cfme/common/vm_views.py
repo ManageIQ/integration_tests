@@ -14,7 +14,7 @@ from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
 from cfme.utils.log import logger

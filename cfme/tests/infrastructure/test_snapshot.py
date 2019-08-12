@@ -130,7 +130,7 @@ def test_snapshot_crud(small_test_vm, provider):
 
 @pytest.mark.rhv3
 @test_requirements.rhev
-@pytest.mark.provider([RHEVMProvider], override=True)
+@pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1443411)])
 def test_delete_active_vm_snapshot(small_test_vm):
     """
@@ -153,7 +153,7 @@ def test_delete_active_vm_snapshot(small_test_vm):
 
 @pytest.mark.rhv3
 @test_requirements.rhev
-@pytest.mark.provider([RHEVMProvider], override=True)
+@pytest.mark.provider([RHEVMProvider])
 def test_create_without_description(small_test_vm):
     """
     Test that we get an error message when we try to create a snapshot with
@@ -179,7 +179,7 @@ def test_create_without_description(small_test_vm):
         view.flash.assert_message('Description is required')
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_delete_all_snapshots(small_test_vm, provider):
     """Tests snapshot removal
 
@@ -292,7 +292,7 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_event, request):
     """Tests revert active snapshot
 
@@ -338,7 +338,7 @@ def test_revert_to_active_vm(small_test_vm, provider):
 
 
 @pytest.mark.rhv3
-@pytest.mark.provider([RHEVMProvider], override=True)
+@pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1375544)])
 def test_revert_on_running_vm(small_test_vm):
     """
@@ -373,7 +373,7 @@ def setup_snapshot_env(test_vm, memory):
 
 
 @pytest.mark.parametrize("parent_vm", ["on_with_memory", "on_without_memory", "off"])
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
     """
     test vm state after revert snapshot with parent vm:
@@ -401,7 +401,7 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
     assert bool(small_test_vm.mgmt.is_running) == memory
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_operations_suspended_vm(small_test_vm, soft_assert):
     """Tests snapshot operations on suspended vm
 
@@ -444,7 +444,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     snapshot2.delete()
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_operations_powered_off_vm(small_test_vm):
     """
     Polarion:
@@ -496,7 +496,7 @@ def test_snapshot_history_btn(small_test_vm, provider):
     assert snapshot_view.is_displayed
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
     """This test checks whether the vm.create_snapshot works in AE.
 
@@ -723,7 +723,7 @@ def test_snapshot_tree_view_functionality():
 
 
 @pytest.mark.manual
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @test_requirements.snapshot
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1395116])
@@ -762,7 +762,7 @@ def test_snapshot_link_after_deleting_snapshot():
 
 
 @pytest.mark.manual
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @test_requirements.snapshot
 @test_requirements.ssui
 @pytest.mark.tier(2)
@@ -795,7 +795,7 @@ def test_sui_snapshot_timeline_time_of_creation():
 
 
 @pytest.mark.manual
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @test_requirements.snapshot
 @test_requirements.ssui
 @pytest.mark.tier(2)
@@ -830,7 +830,7 @@ def test_sui_test_snapshot_count():
 
 
 @pytest.mark.manual
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @test_requirements.snapshot
 @test_requirements.ssui
 @pytest.mark.tier(2)
@@ -868,7 +868,7 @@ def test_snapshot_timeline_crud():
 
 
 @pytest.mark.manual
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @test_requirements.snapshot
 @pytest.mark.meta(coverage=[1419872])
 def test_creating_second_snapshot_on_suspended_vm():

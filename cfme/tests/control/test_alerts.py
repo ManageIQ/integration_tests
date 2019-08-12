@@ -27,12 +27,14 @@ from cfme.utils.wait import wait_for
 pf1 = ProviderFilter(classes=[InfraProvider])
 pf2 = ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)
 
+
 CANDU_PROVIDER_TYPES = [VMwareProvider]
 
 # note: RHV provider is not supported for alerts via the Cloudforms support matrix
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+smartproxy", "+notifier"]),
+    pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module"),
     pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.tier(3),
     test_requirements.alert
@@ -211,7 +213,6 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     wait_for_alert(smtp_test, alert, delay=16 * 60)
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_rtp(request, appliance, full_template_vm, smtp_test, provider,
         setup_candu, wait_candu, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
@@ -249,7 +250,6 @@ def test_alert_rtp(request, appliance, full_template_vm, smtp_test, provider,
         "text": full_template_vm.name, "from_address": email})
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_timeline_cpu(request, appliance, full_template_vm,
         set_performance_capture_threshold, provider, ssh, setup_candu, wait_candu,
         setup_for_alerts):
@@ -300,7 +300,6 @@ def test_alert_timeline_cpu(request, appliance, full_template_vm,
         pytest.fail("The event has not been found on the timeline. Event list: {}".format(events))
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_template_vm,
         wait_candu, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
@@ -354,9 +353,8 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
     wait_for(_snmp_arrived, timeout="30m", delay=60, message="SNMP trap arrived.")
 
 
-@pytest.mark.provider(CANDU_PROVIDER_TYPES, scope="module")
 def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smtp_test,
-        full_template_vm, setup_for_alerts):
+        full_template_vm, setup_for_alerts, provider):
     """Tests alert based on "Hardware Reconfigured" evaluation.
 
     According https://bugzilla.redhat.com/show_bug.cgi?id=1396544 Hardware Reconfigured alerts

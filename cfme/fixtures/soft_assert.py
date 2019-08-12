@@ -49,14 +49,14 @@ def base64_from_text(text):
     return base64.b64encode(text)
 
 
-@pytest.mark.hookwrapper(tryfirst=True)
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_protocol(item, nextitem):
     if 'soft_assert' in item.fixturenames:
         _thread_locals.caught_asserts = []
     yield
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
     """pytest hook to handle :py:func:`soft_assert` fixture usage"""
     yield

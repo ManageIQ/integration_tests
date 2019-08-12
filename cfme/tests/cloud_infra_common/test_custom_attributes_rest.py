@@ -201,8 +201,8 @@ class TestCustomAttributesRESTAPI(object):
         collection = resource.custom_attributes
         delete_resources_from_collection(attributes, collection=collection, not_found=True)
 
-    @pytest.mark.unollectif(lambda provider, collection_name:
-                            _uncollect(provider, collection_name))
+    @pytest.mark.uncollectif(lambda provider, collection_name:
+                             _uncollect(provider, collection_name))
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_single_from_collection(self, request, collection_name, get_resource):
         """Test deleting single custom attribute from collection using REST API.

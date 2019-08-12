@@ -8,6 +8,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.smartstate]
@@ -27,45 +28,54 @@ CONTENT_ROWS_TO_CHECK = (
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [RHEVMProvider, VMwareProvider], required_fields=['datastores'])
+        metafunc,
+        [RHEVMProvider, VMwareProvider],
+        required_fields=['datastores']
+    )
     argnames.append('datastore_type')
+    argnames.append('datastore_name')
     new_idlist = []
     new_argvalues = []
 
     for index, argvalue_tuple in enumerate(argvalues):
         args = dict(list(zip(argnames, argvalue_tuple)))
-        datastores = args['provider'].data.datastores
-        for ds in datastores:
-            if not ds.get('test_fleece', False):
-                continue
-            assert ds['type'] in DATASTORE_TYPES, (
-                'datastore type must be set to [{}] for smartstate analysis tests'.format(
-                    '|'.join(DATASTORE_TYPES)))
-            new_argvalues.append([args["provider"], ds['type']])
-            test_id = '{}-{}'.format(idlist[index], ds['type'])
-            new_idlist.append(test_id)
+        provider_arg = args["provider"]
+        datastores = provider_arg.data.get("datastores", {})
+        # don't collect any datastores without test_fleece set
+        # only collect datastores with type matching accepted list
+        testable_datastores = [
+            (ds.get("type"), ds.get("name"))
+            for ds in datastores
+            if ds.get('test_fleece', False) and ds.get("type") in DATASTORE_TYPES
+        ]
+        for ds_type, ds_name in testable_datastores:
+            new_argvalues.append([provider_arg, ds_type, ds_name])
+            new_idlist.append(f"{idlist[index]}-{ds_type}")
+        else:
+            logger.warning(f"No testable datastores found for SSA on {provider_arg}")
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.fixture(scope='module')
-def datastore(appliance, provider, datastore_type):
-    datastores = provider.data.get('datastores')
-    for ds in datastores:
-        if ds.type == datastore_type:
-            return appliance.collections.datastores.instantiate(
-                name=ds.name, provider=provider, type=ds.type)
+def datastore(appliance, provider, datastore_type, datastore_name):
+    return appliance.collections.datastores.instantiate(name=datastore_name,
+                                                        provider=provider,
+                                                        type=datastore_type)
 
 
 @pytest.fixture(scope='module')
 def datastores_hosts_setup(provider, datastore):
     hosts = datastore.hosts.all()
-    assert hosts, "No hosts attached to this datastore found"
     for host in hosts:
-        host_data = [data for data in provider.data['hosts'] if data['name'] == host.name]
+        host_data = [data
+                     for data in provider.data.get("hosts", {})
+                     if data.get("name") == host.name]
         if not host_data:
-            pytest.skip("No host data")
+            pytest.skip(f"No host data for provider {provider} and datastore {datastore}")
         host.update_credentials_rest(credentials=host_data[0]['credentials'])
+    else:
+        pytest.skip(f"No hosts attached to the datastore selected for testing: {datastore}")
     yield
     for host in hosts:
         host.remove_credentials_rest()

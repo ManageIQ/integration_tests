@@ -9,7 +9,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import Text
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity

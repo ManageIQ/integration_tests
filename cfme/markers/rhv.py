@@ -20,7 +20,7 @@ To test this module::
 
     pytest -p pytester markers/rhv.py
 """
-import pytest
+from cfme.fixtures.pytest_store import store
 
 
 RHV_CFME_TIERS = (1, 2, 3)
@@ -62,7 +62,7 @@ def pytest_runtest_logreport(report):
     """Add RHV tier (e.g. "rhv1" to XML report as a property."""
     if report.when != 'setup':
         return
-    xml = getattr(pytest.config, '_xml', None)
+    xml = getattr(store.config, '_xml', None)
     if xml is None:
         return
     reporter = xml.node_reporter(report)

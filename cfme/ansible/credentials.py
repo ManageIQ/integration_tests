@@ -16,7 +16,7 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
 from cfme.base import Server
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound

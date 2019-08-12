@@ -10,7 +10,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
 from cfme.base import Server
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView
 from cfme.modeling.base import BaseCollection

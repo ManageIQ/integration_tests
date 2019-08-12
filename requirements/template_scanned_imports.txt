@@ -41,6 +41,7 @@ pytest
 python-bugzilla
 python-keycloak
 pytz
+pyzmq
 requests
 riggerlib
 scp

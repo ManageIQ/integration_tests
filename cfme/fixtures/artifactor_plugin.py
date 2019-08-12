@@ -119,7 +119,7 @@ def pytest_addoption(parser):
                      help="A run id to assist in logging")
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
     if config.getoption('--help'):
         return
@@ -171,7 +171,7 @@ def fire_art_test_hook(node, hook, **hook_args):
         **hook_args)
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item):
     global session_ver
     global session_build
@@ -199,11 +199,11 @@ def pytest_runtest_protocol(item):
             fw_version=session_fw_version
         )
 
-    tier = item.get_marker('tier')
+    tier = item.get_closest_marker('tier')
     if tier:
         tier = tier.args[0]
 
-    requirement = item.get_marker('requirement')
+    requirement = item.get_closest_marker('requirement')
     if requirement:
         requirement = requirement.args[0]
 
@@ -217,7 +217,7 @@ def pytest_runtest_protocol(item):
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
-    meta = item.get_marker('meta')
+    meta = item.get_closest_marker('meta')
     if meta and 'blockers' in meta.kwargs:
         blocker_spec = meta.kwargs['blockers']
         blockers = []
@@ -272,7 +272,7 @@ def pytest_runtest_teardown(item, nextitem):
 def pytest_runtest_logreport(report):
     if store.slave_manager:
         return  # each node does its own reporting
-    config = pytest.config  # tech debt
+    config = store.config  # tech debt
     name, location = get_test_idents(report)
     xfail = hasattr(report, 'wasxfail')
 
@@ -293,7 +293,7 @@ def pytest_runtest_logreport(report):
     fire_art_hook(config, 'build_report')
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_unconfigure(config):
     yield
     shutdown(config)

@@ -180,4 +180,4 @@ gce = cfme.cloud.instance.gce:GCEInstance
 openstack = cfme.cloud.instance.openstack:OpenStackInstance
 
 [pytest11]
-cfme = cfme.test_framework.pytest_plugin
+cfme = conftest

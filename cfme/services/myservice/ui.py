@@ -11,7 +11,7 @@ from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import TagPageView
 from cfme.common.vm_views import VMDetailsEntities
 from cfme.exceptions import displayed_not_implemented

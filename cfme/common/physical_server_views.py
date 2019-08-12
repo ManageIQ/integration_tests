@@ -9,7 +9,7 @@ from widgetastic_patternfly import BootstrapNav
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import TimelinesView
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView

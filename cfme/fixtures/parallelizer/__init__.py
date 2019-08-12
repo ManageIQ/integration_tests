@@ -69,7 +69,7 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.add_hookspecs(hooks)
 
 
-@pytest.mark.trylast
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     """Configures the parallel session, then fires pytest_parallel_configured."""
     if config.getoption('--help'):
@@ -85,8 +85,7 @@ def pytest_configure(config):
         config.pluginmanager.register(session, "parallel_session")
         store.parallelizer_role = 'master'
         reporter.write_line(
-            'As a parallelizer master kicking off parallel session for these {} appliances'.format(
-                len(appliances)),
+            f'Parallelizer master starting session for {len(appliances)} appliances',
             green=True)
         config.hook.pytest_parallel_configured(parallel_session=session)
     else:
@@ -106,12 +105,11 @@ signal.signal(signal.SIGQUIT, handle_end_session)
 @attr.s(hash=False)
 class SlaveDetail(object):
 
-    slaveid_generator = ('slave{:02d}'.format(i).encode('ascii') for i in count())
+    slaveid_generator = (f'slave{i:02d}'.encode('ascii') for i in count())
 
     appliance = attr.ib()
     worker_config = attr.ib()
-    id = attr.ib(default=attr.Factory(
-        lambda: next(SlaveDetail.slaveid_generator)))
+    id = attr.ib(default=attr.Factory(lambda: next(SlaveDetail.slaveid_generator)))
     forbid_restart = attr.ib(default=False, init=False)
     tests = attr.ib(default=attr.Factory(set), repr=False)
     process = attr.ib(default=None, repr=False)
@@ -133,6 +131,7 @@ class SlaveDetail(object):
 
         ], stdout=devnull)
         at_exit(self.process.kill)
+        at_exit(devnull.close)
 
     def poll(self):
         if self.process is not None:
@@ -170,10 +169,9 @@ class ParallelSession(object):
 
         # set up the ipc socket
 
-        zmq_endpoint = 'ipc://{}'.format(
-            config.cache.makedir('parallelize').join(str(os.getpid())))
-        ctx = zmq.Context.instance()
-        self.sock = ctx.socket(zmq.ROUTER)
+        zmq_endpoint = f'ipc://{config.cache.makedir("parallelize").join(str(os.getpid()))}'
+        self.zmq_ctx = zmq.Context.instance()
+        self.sock = self.zmq_ctx.socket(zmq.ROUTER)
         self.sock.bind(zmq_endpoint)
 
         # clean out old slave config if it exists
@@ -192,8 +190,9 @@ class ParallelSession(object):
             self.slaves[slave_data.id] = slave_data
 
         for slave in sorted(self.slaves):
-            self.print_message("using appliance {}".format(self.slaves[slave].appliance.url),
-                slave, green=True)
+            self.print_message(f"using appliance {self.slaves[slave].appliance.url}",
+                               slave,
+                               green=True)
 
     def _slave_audit(self):
         # XXX: There is currently no mechanism to add or remove slave_urls, short of
@@ -206,15 +205,14 @@ class ParallelSession(object):
             if returncode:
                 slave.process = None
                 if returncode == -9:
-                    msg = '{} killed due to error, respawning'.format(slave.id)
+                    msg = f'{slave.id} killed due to error, respawning'
                 else:
-                    msg = '{} terminated unexpectedly with status {}, respawning'.format(
-                        slave.id, returncode)
+                    msg = f'{slave.id} terminated unexpectedly with status {returncode}, respawning'
                 if slave.tests:
                     failed_tests, slave.tests = slave.tests, set()
                     num_failed_tests = len(failed_tests)
                     self.sent_tests -= num_failed_tests
-                    msg += ' and redistributing {} tests'.format(num_failed_tests)
+                    msg += f' and redistributing {num_failed_tests} tests'
                     self.failed_slave_test_groups.append(failed_tests)
                 self.print_message(msg, purple=True)
 
@@ -228,8 +226,7 @@ class ParallelSession(object):
                     del self.slaves[slave.id]
                 else:
                     # no hook call here, a future audit will handle the fallout
-                    self.print_message(
-                        "{}'s appliance has died, deactivating slave".format(slave.id))
+                    self.print_message(f"{slave.id}'s appliance has died, deactivating slave")
                     self.interrupt(slave)
             else:
                 if slave.process is None:
@@ -249,14 +246,13 @@ class ParallelSession(object):
 
     def recv(self):
         # poll the zmq socket, populate the recv queue deque with responses
-
         events = zmq.zmq_poll([(self.sock, zmq.POLLIN)], 50)
         if not events:
             return None, None, None
         slaveid, _, event_json = self.sock.recv_multipart(flags=zmq.NOBLOCK)
         event_data = json.loads(event_json)
         event_name = event_data.pop('_event_name')
-        if slaveid not in self.slaves:
+        if slaveid not in self.slaves:  # its byte-string coming from recv
             self.log.error("message from terminated worker %s %s %s",
                            slaveid, event_name, event_data)
             return None, None, None
@@ -280,12 +276,11 @@ class ParallelSession(object):
             else:
                 markup = {'cyan': True}
         stamp = datetime.now().strftime("%Y%m%d %H:%M:%S")
-        self.terminal.write_ensure_prefix(
-            '({})[{}] '.format(prefix, stamp), message, **markup)
+        self.terminal.write_ensure_prefix(f'({prefix})[{stamp}] ', message, **markup)
 
     def ack(self, slave, event_name):
         """Acknowledge a slave's message"""
-        self.send(slave, 'ack {}'.format(event_name))
+        self.send(slave, f'ack {event_name}')
 
     def monitor_shutdown(self, slave):
         # non-daemon so slaves get every opportunity to shut down cleanly
@@ -315,9 +310,10 @@ class ParallelSession(object):
                 yield
                 if polls % poll_report_modulo == 0:
                     remaining_time = int(poll_num_sec - (time() - start_time))
-                    self.print_message('{} shutting down, will continue polling for {} seconds'
-                                       .format(slaveid.decode('ascii'), remaining_time),
-                                       blue=True)
+                    self.print_message(
+                        f'{slaveid} shutting down, will polling for {remaining_time} more seconds',
+                        blue=True
+                    )
                 sleep(poll_sleep_time)
 
         # start the poll
@@ -327,13 +323,12 @@ class ParallelSession(object):
                 continue
             else:
                 if ec == 0:
-                    self.print_message('{} exited'.format(slaveid), green=True)
+                    self.print_message(f'{slaveid} exited', green=True)
                 else:
-                    self.print_message('{} died'.format(slaveid), red=True)
+                    self.print_message(f'{slaveid} died', red=True)
                 break
         else:
-            self.print_message('{} failed to shut down gracefully; killed'.format(slaveid),
-                red=True)
+            self.print_message(f'{slaveid} failed to shut down gracefully; killed', red=True)
             process.kill()
 
     def interrupt(self, slave, **kwargs):
@@ -370,6 +365,7 @@ class ParallelSession(object):
             )
         return tests
 
+    @pytest.hookimpl
     def pytest_sessionstart(self, session):
         """pytest sessionstart hook
 
@@ -387,6 +383,7 @@ class ParallelSession(object):
         self.config.pluginmanager.register(self.trdist, "terminaldistreporter")
         self.session = session
 
+    @pytest.hookimpl
     def pytest_runtestloop(self):
         """pytest runtest loop
 
@@ -408,8 +405,10 @@ class ParallelSession(object):
             slave.start()
 
         try:
-            self.print_message("Waiting for {} slave collections".format(len(self.slaves)),
-                red=True)
+            self.print_message(
+                f"Waiting for collection on {len(self.slaves)} pytest instances",
+                red=True
+            )
 
             # Turn off the terminal reporter to suppress the builtin logstart printing
             terminalreporter.disable()
@@ -436,7 +435,7 @@ class ParallelSession(object):
                 elif event_name == 'collectionfinish':
                     slave_collection = event_data['node_ids']
                     # compare slave collection to the master, all test ids must be the same
-                    self.log.debug('diffing {} collection'.format(slave.id))
+                    self.log.debug(f'diffing {slave.id} collection')
                     diff_err = report_collection_diff(
                         slave.id, self.collection, slave_collection)
                     if diff_err:
@@ -444,7 +443,7 @@ class ParallelSession(object):
                             'collection differs, respawning', slave.id,
                             purple=True)
                         self.print_message(diff_err, purple=True)
-                        self.log.error('{}'.format(diff_err))
+                        self.log.error(diff_err)
                         self.kill(slave)
                         slave.start()
                     else:
@@ -483,8 +482,7 @@ class ParallelSession(object):
                         red=True, bold=True)
                     raise KeyboardInterrupt('Interrupted due to slave failures')
         except Exception as ex:
-            self.log.error('Exception in runtest loop:')
-            self.log.exception(ex)
+            self.log.exception('Exception in runtest loop:')
             self.print_message(str(ex))
             raise
         finally:
@@ -492,6 +490,10 @@ class ParallelSession(object):
 
         # Suppress other runtestloop calls
         return True
+
+    @pytest.hookimpl(trylast=True)
+    def pytest_sessionfinish(self):
+        self.zmq_ctx.destroy()
 
     def _test_item_generator(self):
         for tests in self._modscope_item_generator():
@@ -509,8 +511,7 @@ class ParallelSession(object):
         for fspath, gen_moditems in groupby(self.collection, key=get_fspart):
             for tests in self._modscope_id_splitter(gen_moditems):
                 sent_tests += len(tests)
-                self.log.info('{} tests remaining to send'.format(
-                    collection_len - sent_tests))
+                self.log.info(f'{(collection_len - sent_tests)} tests remaining to send')
                 yield list(tests)
 
     def _modscope_id_splitter(self, module_items):
@@ -528,7 +529,7 @@ class ParallelSession(object):
 
         for id, tests in parametrized_ids.items():
             if tests:
-                self.log.info('sent tests with param {} {!r}'.format(id, tests))
+                self.log.info(f'sent tests with param {id} {tests!r}')
                 yield tests
 
     def get(self, slave):
@@ -587,7 +588,7 @@ class ParallelSession(object):
                 try:
                     app.delete_all_providers()
                 except Exception as e:
-                    self.print_message('exception during provider removal: {}'.format(e),
+                    self.print_message(f'exception during provider removal: {e}',
                                        slave,
                                        red=True)
             slave.provider_allocation = [prov]
@@ -634,12 +635,14 @@ class TerminalDistReporter(object):
         self.tr = terminal
         self.outcomes = {}
 
+    @pytest.hookimpl
     def runtest_logstart(self, slaveid, nodeid, location):
         test = self.tr._locationline(nodeid, *location)
-        prefix = '({}) {}'.format(slaveid, test)
+        prefix = f'({slaveid}) {test}'
         self.tr.write_ensure_prefix(prefix, 'running', blue=True)
         self.config.hook.pytest_runtest_logstart(nodeid=nodeid, location=location)
 
+    @pytest.hookimpl
     def runtest_logreport(self, slaveid, report):
         # Run all the normal logreport hooks
         self.config.hook.pytest_runtest_logreport(report=report)
@@ -651,7 +654,7 @@ class TerminalDistReporter(object):
         self.tr.stats.setdefault(outcome, []).append(report)
         test = self.tr._locationline(report.nodeid, *report.location)
 
-        prefix = '({}) {}'.format(slaveid, test)
+        prefix = f'({slaveid}) {test}'
         try:
             # for some reason, pytest_report_teststatus returns a word, markup tuple
             # when the word would be 'XPASS', so unpack it here if that's the case

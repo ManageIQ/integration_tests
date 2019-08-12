@@ -7,7 +7,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
 from cfme.base import Server
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ

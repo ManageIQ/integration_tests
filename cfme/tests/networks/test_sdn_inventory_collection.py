@@ -40,7 +40,7 @@ def test_sdn_api_inventory_networks(provider, appliance):
         'cfme list: {cfme}'.format(networks=prov_networks, cfme=cfme_networks)
 
 
-@pytest.mark.provider([AzureProvider, EC2Provider], override=True, scope='function')
+@pytest.mark.provider([AzureProvider, EC2Provider], scope='function')
 def test_sdn_api_inventory_routers(provider, appliance):
     """Pulls the list of routers from the Provider API and from the appliance. Compare the 2
     results. If Similar, then test is successful
@@ -89,7 +89,7 @@ def test_sdn_api_inventory_subnets(provider, appliance):
     'different from cfme list: {cfme}'.format(sub=prov_subnets, cfme=cfme_subnets)
 
 
-@pytest.mark.provider([EC2Provider, AzureProvider], override=True, scope='function')
+@pytest.mark.provider([EC2Provider, AzureProvider], scope='function')
 def test_sdn_api_inventory_security_groups(provider, appliance):
     """Pulls the list of security groups from the Provider API and from the appliance. Compare
     the 2 results. If Similar, then test is successful
@@ -110,7 +110,7 @@ def test_sdn_api_inventory_security_groups(provider, appliance):
 
 
 @pytest.mark.ignore_stream('5.11')  # Load Balancers are deprecated in 5.11
-@pytest.mark.provider([EC2Provider, AzureProvider], override=True, scope='function')
+@pytest.mark.provider([EC2Provider, AzureProvider], scope='function')
 def test_sdn_api_inventory_loadbalancers(provider, appliance):
     """Pulls the list of loadbalancers from the Provider API and from the appliance. Compare the 2
     results. If Similar, then test is successful
@@ -144,8 +144,8 @@ def secgroup_with_rule(provider):
     provider.mgmt.remove_netsec_group(secgroup_name, res_group)
 
 
-@pytest.mark.provider([AzureProvider], override=True, scope='function')
 @pytest.mark.meta(automates=[1520196])
+@pytest.mark.provider([AzureProvider], scope='function')
 def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
     """ Pulls the list of firewall ports from Provider API and from appliance. Compare the 2
     results. If same, then test is successful.

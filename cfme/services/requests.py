@@ -12,7 +12,7 @@ from widgetastic_patternfly import BootstrapTreeview
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Input
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common.vm_views import BasicProvisionFormView
 from cfme.common.vm_views import ProvisionView
 from cfme.exceptions import displayed_not_implemented

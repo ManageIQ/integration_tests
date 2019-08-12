@@ -60,6 +60,17 @@ from cfme.utils.log import logger
 MARKDECORATOR_TYPE = type(pytest.mark.skip)
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        'markers',
+        'uncollectif: Uncollect a test based on a lambda operating on the test fixture values'
+    )
+    config.addinivalue_line(
+        'markers',
+        'uncollect: Uncollect a test with a direct call'
+    )
+
+
 # work around https://github.com/pytest-dev/pytest/issues/2400
 def get_uncollect_function(marker_or_markdecorator):
     if isinstance(marker_or_markdecorator, MARKDECORATOR_TYPE):
@@ -77,10 +88,7 @@ def uncollectif(item):
     from cfme.utils.appliance import find_appliance
 
     from cfme.utils.pytest_shortcuts import extract_fixtures_values
-    markers = item.get_marker('uncollectif')
-    if not markers:
-        return False, None
-    for mark in markers:
+    for _, mark in item.iter_markers_with_node('uncollectif') or []:
         log_msg = 'Trying uncollecting {}: {}'.format(
             item.name,
             mark.kwargs.get('reason', 'No reason given'))
@@ -106,7 +114,7 @@ def uncollectif(item):
                 return True, None
             args = [values[arg] for arg in arg_names]
         except KeyError:
-            missing_argnames = list(set(arg_names) - set(item._request.funcargnames))
+            missing_argnames = list(set(arg_names) - set(item._request.fixturenames))
             func_name = item.name
             if missing_argnames:
                 raise Exception("You asked for a fixture which wasn't in the function {} "
@@ -120,8 +128,8 @@ def uncollectif(item):
             return retval, mark.kwargs.get('reason', "No reason given")
         else:
             return False, None
-
     else:
+        # no uncollect markers
         return False, None
 
 
@@ -135,7 +143,7 @@ def pytest_collection_modifyitems(session, config, items):
     with log_path.join('uncollected.log').open('w') as f:
         for item in items:
             # First filter out all items who have the uncollect mark
-            uncollect_marker = item.get_marker('uncollect')
+            uncollect_marker = item.get_closest_marker('uncollect')
             if uncollect_marker:
                 uncollect_reason = uncollect_marker.kwargs.get('reason', "No reason given")
                 f.write("{} - {}\n".format(item.name, uncollect_reason))

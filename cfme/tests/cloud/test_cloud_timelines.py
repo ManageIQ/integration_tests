@@ -368,7 +368,7 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.provider([EC2Provider], override=True, scope='function')
+@pytest.mark.provider([EC2Provider], scope='function')
 def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     """
     Metadata:

@@ -256,7 +256,7 @@ def providers(metafunc, filters=None):
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
             argnames.append('provider')
-        if metafunc.config.getoption('sauce'):
+        if metafunc.config.getoption('sauce', default=False):
             break
 
     return argnames, argvalues, idlist
@@ -327,11 +327,11 @@ def config_managers(metafunc, managers_type=None):
     data = cfme_data.get('configuration_managers', {})
 
     for cfg_mgr_key in data:
-        config_mgr = get_config_manager_from_config(cfg_mgr_key)
-        if managers_type and config_mgr.type != managers_type:
-            logger.info('Checking config managers type for [{}], skipping mismatched: [{}]'
-                        .format(managers_type, config_mgr))
-            continue  # skip it
+        config_mgr = get_config_manager_from_config(cfg_mgr_key,
+                                                    appliance=None,
+                                                    mgr_type=managers_type)
+        if config_mgr is None:
+            continue  # type mismatch
         argvalues.append([config_mgr])
         idlist.append(cfg_mgr_key)
     return argnames, argvalues, idlist

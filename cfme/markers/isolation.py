@@ -10,17 +10,17 @@ def pytest_configure(config):
     config.addinivalue_line('markers', 'browser_isolation: Mark a test case for browser isolation')
 
 
-@pytest.mark.hookwrapper(tryfirst=True)
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_setup(item):
-    if item.get_marker('browser_isolation'):
+    if item.get_closest_marker('browser_isolation'):
         logger.info('Browser isolation for marker in setup')
         browser_implementation_quits(item)
     yield
 
 
-@pytest.mark.hookwrapper(trylast=True)
+@pytest.hookimpl(hookwrapper=True, trylast=True)
 def pytest_runtest_teardown(item, nextitem):
     yield
-    if item.get_marker("browser_isolation"):
+    if item.get_closest_marker("browser_isolation"):
         logger.info('Browser isolation for marker in teardown')
         browser_implementation_quits(item)

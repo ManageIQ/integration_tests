@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionAllView
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
 from cfme.utils.appliance import ViaUI

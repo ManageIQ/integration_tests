@@ -224,7 +224,7 @@ def test_power_controls_on_vm_in_stack_cloud():
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.provider([CloudProvider, InfraProvider], required_fields=['templates'],
-                      selector=ONE_PER_TYPE, override=True)
+                      selector=ONE_PER_TYPE)
 @test_requirements.multi_region
 @test_requirements.power
 def test_power_operations_from_global_region(provider, context):

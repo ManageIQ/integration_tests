@@ -4,12 +4,12 @@ import pytest
 from wrapanapi import VmState
 
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.common import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -19,14 +19,12 @@ from cfme.utils.wait import RefreshTimer
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
-FILTER_FIELDS = dict(required_fields=['test_power_control'])
-
-
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.long_running,
     test_requirements.power,
-    pytest.mark.provider([CloudProvider], scope='function', **FILTER_FIELDS),
+    pytest.mark.provider([CloudProvider], scope='function',
+                         required_fields=['test_power_control']),
     pytest.mark.usefixtures('setup_provider'),
 ]
 
@@ -359,8 +357,7 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
     wait_for_instance_state(soft_assert, testing_instance2, state="started")
 
 
-@pytest.mark.provider([OpenStackProvider],
-                      scope='function', override=True, **FILTER_FIELDS)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_hard_reboot(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests instance hard reboot
 
@@ -383,8 +380,7 @@ def test_hard_reboot(appliance, provider, testing_instance, ensure_vm_running, s
     wait_for_instance_state(soft_assert, testing_instance, state="started")
 
 
-@pytest.mark.provider([AzureProvider],
-                      scope='function', override=True, **FILTER_FIELDS)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
 def test_hard_reboot_unsupported(appliance, testing_instance):
     """
     Tests that hard reboot throws an 'unsupported' error message on an Azure instance
@@ -407,8 +403,7 @@ def test_hard_reboot_unsupported(appliance, testing_instance):
     appliance.browser.create_view(BaseLoggedInPage).flash.assert_message(message)
 
 
-@pytest.mark.provider([AzureProvider, OpenStackProvider],
-                      scope='function', override=True, **FILTER_FIELDS)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
 def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_assert):
     """ Tests instance suspend
 
@@ -430,8 +425,7 @@ def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_
     wait_for_instance_state(soft_assert, testing_instance, state="suspended")
 
 
-@pytest.mark.provider([OpenStackProvider],
-                      scope='function', override=True, **FILTER_FIELDS)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_assert):
     """ Tests instance unpause
 
@@ -451,8 +445,7 @@ def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_a
     wait_for_instance_state(soft_assert, testing_instance, state="started")
 
 
-@pytest.mark.provider([AzureProvider, OpenStackProvider],
-                      scope='function', override=True, **FILTER_FIELDS)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
 def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft_assert):
     """ Tests instance resume
 
@@ -623,8 +616,7 @@ class TestInstanceRESTAPI(object):
         # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
-    @pytest.mark.provider([OpenStackProvider],
-                          scope='function', override=True, **FILTER_FIELDS)
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_hard_reboot(self, provider, testing_instance,
             soft_assert, ensure_vm_running, appliance, from_detail):
@@ -654,8 +646,7 @@ class TestInstanceRESTAPI(object):
         # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
-    @pytest.mark.provider([AzureProvider, OpenStackProvider],
-                          scope='function', override=True, **FILTER_FIELDS)
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_suspend_resume(self, provider, testing_instance,
             soft_assert, ensure_vm_running, appliance, from_detail):
@@ -701,8 +692,7 @@ class TestInstanceRESTAPI(object):
         # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
-    @pytest.mark.provider([OpenStackProvider],
-                          scope='function', override=True, **FILTER_FIELDS)
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_pause_unpause(self, provider, testing_instance,
             soft_assert, ensure_vm_running, appliance, from_detail):

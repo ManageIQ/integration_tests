@@ -19,7 +19,7 @@ def pytest_addoption(parser):
                     help="Override appliance's SSH port.")
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
     if config.getoption('--help'):
         return

@@ -5,8 +5,8 @@ from widgetastic.widget import Select
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import Server
+from cfme.common import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator

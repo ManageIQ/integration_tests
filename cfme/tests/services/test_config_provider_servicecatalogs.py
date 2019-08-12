@@ -39,8 +39,9 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def config_manager(config_manager_obj):
+def config_manager(config_manager_obj, appliance):
     """ Fixture that provides a random config manager and sets it up"""
+    config_manager_obj.appliance = appliance
     if config_manager_obj.type == "Ansible Tower":
         config_manager_obj.create(validate=True)
     else:

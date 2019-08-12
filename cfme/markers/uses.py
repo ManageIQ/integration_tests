@@ -21,7 +21,7 @@ import pytest
 
 # List of fixture marks to create and use for test marking
 # these are exposed as globals and individually documented
-USES_FIXTURENAMES = set()
+FIXTURENAME_MARKERS = dict()
 
 ##
 # Create the fixtures that will trigger test marking
@@ -30,8 +30,8 @@ USES_FIXTURENAMES = set()
 
 def _markfixture(func):
     if func.__doc__ is None:
-        func.__doc__ = "Fixture which marks a test with the ``{}`` mark".format(func.__name__)
-    USES_FIXTURENAMES.add(func.__name__)
+        func.__doc__ = f"{func.__name__}: Fixture which applies '{func.__name__}' mark to test"
+    FIXTURENAME_MARKERS.update({func.__name__: func.__doc__})
     return pytest.fixture(scope="session")(func)
 
 
@@ -57,24 +57,30 @@ def is_appliance():
 
 @_markfixture
 def uses_db(is_appliance):
-    """fixture that marks tests with a ``uses_db`` and a ``is_appliance`` mark"""
+    pass
 
 
 @_markfixture
 def uses_ssh(is_appliance):
-    """fixture that marks tests with a ``uses_ssh`` and a ``is_appliance`` mark"""
+    pass
 
 
 @_markfixture
 def uses_cloud_providers(uses_providers):
-    """Fixture which marks a test with the ``uses_cloud_providers`` and ``uses_providers`` marks"""
     pass
 
 
 @_markfixture
 def uses_infra_providers(uses_providers):
-    """Fixture which marks a test with the ``uses_infra_providers`` and ``uses_providers`` marks"""
     pass
+
+
+def pytest_configure(config):
+    for marker_doc in FIXTURENAME_MARKERS.values():
+        config.addinivalue_line(
+            'markers',
+            marker_doc.splitlines()[0]
+        )
 
 
 ###
@@ -88,7 +94,8 @@ def pytest_itemcollected(item):
     """
     try:
         # Intersect 'uses_' fixture set with the fixtures being used by a test
-        mark_fixtures = USES_FIXTURENAMES.intersection(item.fixturenames)
+        uses_fixturenames = set(list(FIXTURENAME_MARKERS.keys()))
+        mark_fixtures = uses_fixturenames.intersection(item.fixturenames)
     except AttributeError:
         # Test doesn't have fixturenames, make no changes
         return

@@ -5,7 +5,7 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import Button
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to

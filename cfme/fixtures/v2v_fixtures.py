@@ -8,7 +8,6 @@ from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.provider import rhel7_minimal
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -418,10 +417,12 @@ def get_vm(request, appliance, source_provider, template, datastore='nfs'):
     collection = source_provider.appliance.provider_based_collection(source_provider)
     vm_name = random_vm_name("v2v-auto")
     vm_obj = collection.instantiate(
-        vm_name, source_provider, template_name=template(source_provider)["name"]
+        vm_name, source_provider, template_name=template["name"]
     )
     power_on_vm = True
-    if template.__name__ == "win10_template":
+    if 'win10' in template.name:
+        # TODO Get the VM to the correct power state within the fixture/test, not here
+        # the fixture or test
         # Need to leave this off, otherwise migration fails
         # because when migration process tries to power off the VM if it is powered off
         # and for win10, it hibernates and that state of filesystem is unsupported
@@ -483,7 +484,7 @@ def infra_mapping_default_data(source_provider, provider):
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
+def mapping_data_vm_obj_mini(request, appliance, source_provider, provider, rhel7_minimal):
     """Fixture to return minimal mapping data and vm object for migration plan"""
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     vm_obj = get_vm(request, appliance, source_provider, template=rhel7_minimal)

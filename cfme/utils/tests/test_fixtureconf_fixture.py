@@ -1,8 +1,7 @@
 import pytest
 
 pytestmark = [
-    pytest.mark.nondestructive,
-    pytest.mark.skip_selenium
+    pytest.mark.non_destructive,
 ]
 
 

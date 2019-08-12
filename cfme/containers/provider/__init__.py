@@ -18,7 +18,7 @@ from widgetastic_patternfly import Input
 from widgetastic_patternfly import SelectorDropdown
 
 from cfme.base.credential import TokenCredential
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.common import TaggableCollection
 from cfme.common import TagPageView

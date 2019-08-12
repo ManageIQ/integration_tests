@@ -9,7 +9,7 @@ from widgetastic_patternfly import Accordion
 from widgetastic_patternfly import Dropdown
 from wrapanapi.entities import PhysicalContainer
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.exceptions import HostStatsNotContains

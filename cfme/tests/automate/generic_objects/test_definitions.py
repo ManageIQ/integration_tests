@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to

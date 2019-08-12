@@ -96,7 +96,7 @@ def smtp_test(request, appliance):
     return client
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
     try:
         yield

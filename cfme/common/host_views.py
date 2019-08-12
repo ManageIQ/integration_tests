@@ -10,7 +10,7 @@ from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import TimelinesView
 from cfme.exceptions import displayed_not_implemented
 from cfme.utils.log import logger

@@ -35,7 +35,7 @@ def pytest_configure(config):
 def pytest_itemcollected(item):
     holder = item.config.pluginmanager.getplugin('appliance-holder')
     streams_id = get_streams_id(holder.held_appliance)
-    marker = item.get_marker("ignore_stream")
+    marker = item.get_closest_marker("ignore_stream")
     if marker is None:
         return
     if hasattr(item, "callspec"):

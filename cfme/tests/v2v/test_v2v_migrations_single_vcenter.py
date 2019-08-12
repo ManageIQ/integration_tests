@@ -5,10 +5,10 @@ from widgetastic.exceptions import WebDriverException
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.provider import rhel69_template
-from cfme.fixtures.provider import rhel7_minimal
-from cfme.fixtures.provider import ubuntu16_template
-from cfme.fixtures.provider import win7_template
+from cfme.fixtures.templates import rhel69_template
+from cfme.fixtures.templates import rhel7_minimal
+from cfme.fixtures.templates import ubuntu16_template
+from cfme.fixtures.templates import win7_template
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data

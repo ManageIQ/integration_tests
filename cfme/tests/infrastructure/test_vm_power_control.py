@@ -6,7 +6,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -533,7 +533,7 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)
 
 
-@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True, scope='function')
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope='function')
 @pytest.mark.meta(automates=[1571830, 1650506])
 def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running, soft_assert):
     """Tests vm guest os reset
@@ -572,7 +572,7 @@ def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running
 
 
 @pytest.mark.meta(automates=[1723485, 1571895, 1650506])
-@pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
+@pytest.mark.provider([VMwareProvider, RHEVMProvider])
 @pytest.mark.meta(blockers=[BZ(1723485, forced_streams=["5.11"],
                                unblock=lambda provider: not (provider.one_of(RHEVMProvider)
                                                              and not provider.version < 4.3))])
@@ -628,7 +628,7 @@ def new_user(request, appliance):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1687597])
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
 def test_retire_vm_with_vm_user_role(new_user, appliance, testing_vm):
     """
     Bugzilla:

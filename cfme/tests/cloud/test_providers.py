@@ -500,7 +500,7 @@ def test_api_port_max_character_validation_cloud(appliance):
 
 @pytest.mark.tier(2)
 @test_requirements.azure
-@pytest.mark.provider([AzureProvider], scope="function", override=True)
+@pytest.mark.provider([AzureProvider], scope="function")
 def test_azure_subscription_required(request, provider):
     """
     Tests that provider can't be added w/o subscription
@@ -661,7 +661,7 @@ def test_openstack_provider_has_dashboard(appliance, openstack_provider):
 
 @test_requirements.ec2
 @pytest.mark.tier(3)
-@pytest.mark.provider([EC2Provider], scope="function", override=True)
+@pytest.mark.provider([EC2Provider], scope="function")
 def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,
                                                  provider):
     """
@@ -700,7 +700,7 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
 
 @pytest.mark.tier(3)
 @test_requirements.azure
-@pytest.mark.provider([AzureProvider], override=True)
+@pytest.mark.provider([AzureProvider])
 def test_azure_instance_password_requirements(appliance, request,
         has_no_cloud_providers, setup_provider):
     """
@@ -859,7 +859,7 @@ class TestProvidersRESTAPI(object):
 
 
 @test_requirements.tag
-@pytest.mark.provider([CloudProvider], override=True, selector=ONE)
+@pytest.mark.provider([CloudProvider], selector=ONE)
 def test_tagvis_provision_fields(setup_provider, request, appliance, user_restricted, tag,
                                  soft_assert):
     """Test for network environment fields for restricted user
@@ -890,7 +890,7 @@ def test_tagvis_provision_fields(setup_provider, request, appliance, user_restri
 
 @test_requirements.general_ui
 @pytest.mark.tier(3)
-@pytest.mark.provider([OpenStackProvider], override=True)
+@pytest.mark.provider([OpenStackProvider])
 def test_domain_id_validation(request, provider):
     """ Test validating Keystone V3 needs domain_id
 
@@ -922,7 +922,7 @@ def test_domain_id_validation(request, provider):
 
 @test_requirements.azure
 @pytest.mark.meta(automates=[1315945])
-@pytest.mark.provider([AzureProvider], override=True, selector=ONE)
+@pytest.mark.provider([AzureProvider], selector=ONE)
 def test_vpc_env_selection(setup_provider, request, provider, appliance, provisioning):
     """
     Test selection of components in environment page of cloud instances

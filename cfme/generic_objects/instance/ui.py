@@ -8,7 +8,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TagPageView
 from cfme.generic_objects.instance import GenericObjectInstance
