@@ -298,10 +298,10 @@ def test_collect_unconfigured(appliance):
 
     view = navigate_to(server_log_depot, 'DiagnosticsCollectLogs')
     # check button is enable after adding log depot
-    assert view.toolbar.collect.item_enabled('Collect all logs') is True
+    assert view.toolbar.collect.is_displayed
     server_log_depot.clear()
     # check button is disable after removing log depot
-    assert view.toolbar.collect.item_enabled('Collect all logs') is False
+    assert not view.toolbar.collect.is_displayed
 
 
 @pytest.mark.parametrize('from_slave', [True, False], ids=['from_slave', 'from_master'])
