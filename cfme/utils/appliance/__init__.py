@@ -124,23 +124,23 @@ class IPAppliance(object):
     """
     _nav_steps = {}
 
+    appliance_console = console.ApplianceConsole.declare()
+    appliance_console_cli = console.ApplianceConsoleCli.declare()
     auditd = SystemdService.declare(unit_name='auditd')
     chronyd = SystemdService.declare(unit_name='chronyd')
     collectd = SystemdService.declare(unit_name='collectd')
+    db = ApplianceDB.declare()
     evminit = SystemdService.declare(unit_name='evminit')
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     evm_failover_monitor = SystemdService.declare(unit_name='evm-failover-monitor')
+    firewalld = SystemdService.declare(unit_name='firewalld')
     httpd = SystemdService.declare(unit_name='httpd')
     nginx = SystemdService.declare(unit_name='nginx')
     rabbitmq_server = SystemdService.declare(unit_name='rabbitmq-server')
-    rh_postgresql95_repmgr = SystemdService.declare(unit_name='rh-postgresql95-repmgr')
+    repmgr = SystemdService.declare()
     sssd = SystemdService.declare(unit_name='sssd')
     sshd = SystemdService.declare(unit_name='sshd')
     supervisord = SystemdService.declare(unit_name='supervisord')
-    firewalld = SystemdService.declare(unit_name='firewalld')
-    db = ApplianceDB.declare()
-    appliance_console = console.ApplianceConsole.declare()
-    appliance_console_cli = console.ApplianceConsoleCli.declare()
 
     CONFIG_MAPPING = {
         'hostname': 'hostname',
@@ -172,6 +172,13 @@ class IPAppliance(object):
     @cached_property
     def db_service(self):
         return SystemdService(self, unit_name=self.db.service_name)
+
+    @cached_property
+    def repmgr(self):
+        return VersionPicker({
+            '5.10': SystemdService(self, unit_name='rh-postgresql95-repmgr'),
+            '5.11': SystemdService(self, unit_name='repmgr10')}
+        ).pick(self.version)
 
     @property
     def as_json(self):
