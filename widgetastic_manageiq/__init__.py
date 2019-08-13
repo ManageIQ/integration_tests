@@ -1022,6 +1022,43 @@ class ScriptBox(Widget):
         )
 
 
+class ReactCodeMirror(Widget):
+    """Looks the same as ScriptBox but it is changed in 5.11
+    https://github.com/JedWatson/react-codemirror"""
+
+    ROOT = "//div[contains(@class,'miq-codemirror')]//textarea"
+    PARENT_DIV = "./.."  # we need to change visibility of this one
+    CLICK_DIV = "./../.."  # the widget has very nested divs,we need to click on that one ¯\_(ツ)_/¯
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    @property
+    def element(self):
+        return self.browser.element(self)
+
+    @property
+    def is_editable(self):
+        return self.element.get_attribute("contentEditable") == "true"
+
+    def make_editable(self):
+        if not self.is_editable:
+            self.browser.set_attribute("contentEditable", "true", self)
+
+    def fill(self, value):
+        # TODO(anikifor): remove the 2 workarounds below as soon as BZ 1740753 is verified
+        self.make_editable()
+        self.browser.set_attribute("style", "overflow: visible", self.PARENT_DIV)
+        self.browser.element(self.CLICK_DIV).click()
+        self.element.send_keys(value)
+        return True
+
+    def read(self):
+        # TODO: implement, the text is stored separately on each line in the page
+        # locator for read is somewhere there "//pre[@class=' CodeMirror-line ']/span"
+        raise NotImplementedError("Read method is not implemented yet")
+
+
 class SettingsGroupSubmenu(NavDropdown):
     """
     Widget for the Group 'Dropdown' menu that allows a user assigned to multiple groups
