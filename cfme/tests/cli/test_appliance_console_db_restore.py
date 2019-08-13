@@ -545,8 +545,8 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     providers_before_restore = set(appl3.managed_provider_names)
     # Restore DB on the second appliance
     appl3.evmserverd.stop()
-    appl1.rh_postgresql95_repmgr.stop()
-    appl2.rh_postgresql95_repmgr.stop()
+    appl1.repmgr.stop()
+    appl2.repmgr.stop()
     appl1.db.drop()
     appl1.db.create()
     fetch_v2key(appl3, appl1)
