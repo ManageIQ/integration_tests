@@ -23,8 +23,7 @@ def report(appliance):
         menu_name="Guest OS Information - any OS",
     ).queue(wait_for_finish=True)
     yield report
-    if report.exists:
-        report.delete()
+    report.delete_if_exists()
 
 
 @pytest.mark.rhv3

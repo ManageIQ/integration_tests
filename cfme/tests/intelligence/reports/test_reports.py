@@ -275,6 +275,7 @@ def test_send_text_custom_report_with_long_condition(
         "email_options": {"send_if_empty": True, "send_txt": True},
     }
     schedule = report.create_schedule(**data)
+    request.addfinalizer(schedule.delete_if_exists)
 
     # prepare LogValidator
     log = LogValidator(
