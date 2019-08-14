@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.testgen import config_managers
 from cfme.utils.testgen import generate
 from cfme.utils.update import update
@@ -29,6 +30,7 @@ def test_config_manager_detail_config_btn(request, config_manager):
     """
     Polarion:
         assignee: nachandr
+        caseimportance: medium
         initialEstimate: 1/2h
         casecomponent: Ansible
     """
@@ -52,6 +54,7 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
     """
     Polarion:
         assignee: nachandr
+        caseimportance: medium
         initialEstimate: 1/15h
         casecomponent: Ansible
     """
@@ -87,6 +90,7 @@ def test_config_manager_edit(request, config_manager):
     """
     Polarion:
         assignee: nachandr
+        caseimportance: medium
         initialEstimate: 1/15h
         casecomponent: Ansible
     """
@@ -104,6 +108,7 @@ def test_config_manager_remove(config_manager):
     """
     Polarion:
         assignee: nachandr
+        caseimportance: medium
         initialEstimate: 1/15h
         casecomponent: Ansible
     """
@@ -151,3 +156,21 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
 # def test_config_system_reprovision(config_system):
 #    # TODO specify machine per stream in yamls or use mutex (by tagging/renaming)
 #    pass
+
+
+@pytest.mark.tier(3)
+def test_ansible_tower_service_dialog_creation_from_template(request, config_manager):
+    """
+    Polarion:
+        assignee: nachandr
+        initialEstimate: 1/4h
+        casecomponent: Ansible
+        caseimportance: high
+
+    """
+    try:
+        job_template = config_manager.appliance.collections.ansible_tower_job_templates.all()[0]
+    except IndexError:
+        pytest.skip("No job template was found")
+    view = navigate_to(job_template, 'ServiceDialog')
+    view.flash.assert_success_message('Service Dialog {} was successfully created'.format(text))

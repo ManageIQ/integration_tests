@@ -210,3 +210,12 @@ class TowerExplorerJobTemplateDetails(CFMENavigateStep):
         except ItemNotFound:
             raise ItemNotFound('Could not locate template "{}"'.format(self.obj.name))
         row.click()
+
+
+@navigator.register(AnsibleTowerJobTemplate, 'ServiceDialog')
+class ServiceDialogCreation(CFMENavigateStep):
+    VIEW = TowerExplorerJobServiceDialogView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Create Service Dialog from this Template')
