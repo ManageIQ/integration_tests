@@ -4,19 +4,24 @@ Bugzilla Guide
 Contributor guidelines
 ----------------------
 We have developed several tools/workflows to make the process
-for dealing with Bugzilla bugs (BZ's) easier for contributors.
+for dealing with Bugzilla bugs (BZs) easier for contributors.
 Here, we discuss:
 
-* Metadata markers for test cases: ``blockers``, ``coverage``, and ``automates``
-* the ``miq bz`` command
-* ``Bugzilla:`` docblocks
+* :ref:`metadata_markers` for test cases: ``blockers``, ``coverage``, and ``automates``
+* the :ref:`miq_bz_command` command
+* :ref:`bugzilla_docblock`
+
+.. _metadata_markers:
 
 Metadata Markers
 ^^^^^^^^^^^^^^^^
 * **blockers**: this marker is used when a test case is `blocked` by a bugzilla bug.
   To use this marker simply add a ``@pytest.mark.metadata(blockers=[BZ(<bug_id>])`` decorator
-  to you test case. At run time, the property ``BZ(<bug_id>).blocks`` will be checked,
-  if ``True``, the test case will be skipped. For example,
+  to your test case. At run time, the property ``BZ(<bug_id>).blocks`` will be checked.
+  This property, defined in ``cfme.utils.blockers.py::BZ`` will return ``True`` if the BZ is
+  open, not in an ``ON_QA``, ``VERIFIED``, or ``CLOSED`` state, and if the BZ appliance
+  version matches (or is lower than) the current appliance version you're testing against.
+  If  ``BZ().blocks == True``, the test case will be skipped. For example,
 
   .. code-block:: python
 
@@ -29,8 +34,13 @@ Metadata Markers
 
 
   There are several key word arguments
-  that can be passed to this: ``uncollectif``, ``forced_streams``, etc. Look into the
-  codebase for examples of their usage.
+  that can be passed to this ``BZ`` class: ``unblock``, ``forced_streams``, ``ignore_bugs``
+  etc. ``unblock`` takes a boolean function so that the BZ will not block if some condition is met.
+  ``forced_streams`` is to be used when a BZ written against one appliance version is also
+  present in another appliance version (and a clone has not yet been made). It will force
+  the BZ to block in the other appliance version. **Note**: if a workaround is possible,
+  it is better to put ``BZ(<bug_id>).blocks`` in the test case or broken bit of framework,
+  so that the test case can still run. Any BZs passed to ``ignore_bugs`` will not block.
 * **coverage**: this marker is used to denote `manual` test cases that are providing
   coverage for a specific BZ. Test cases that are marked with this will be
   parsed by the ``miq bz`` command and can set ``qe_test_coverage`` flags on Bugzilla. If
@@ -66,9 +76,11 @@ use both ``automates OR coverage`` and ``blockers``. Also note that ``blockers``
 passed in as an instance the ``BZ`` class from ``cfme.utils.blockers``, but for ``automates``
 or ``coverage`` you can pass just the ``id`` or an instance of the ``BZ`` class.
 
+.. _miq_bz_command:
+
 miq bz command
 ^^^^^^^^^^^^^^
-The ``miq bz`` command is a cli utility for generating reports on BZ's that have coverage.
+The ``miq bz`` command is a CLI utility for generating reports on BZs that have coverage.
 It looks for test cases that are marked with ``automates`` or ``coverage``, and gathers
 data about the BZ. Most importantly it looks at whether or not ``qe_test_coverage`` is set to
 ``+``, ``?``, or ``-``. When you mark a test case with ``automates`` or ``coverage``, you are
@@ -165,12 +177,15 @@ A dry run of this command (i.e. without ``--set``) produces the following output
         id: 1243357, qe_test_coverage: ?
         id: 1711352, qe_test_coverage: -
 
+.. _bugzilla_docblock:
+
 Bugzilla docblock
 ^^^^^^^^^^^^^^^^^
-The ``Bugzilla`` docblock is for listing any BZ's that are tangentially related to a test case.
-Blocker, automates, and coverage BZ's should be listed here. Any BZ related to a test case
-should also be put here. For example
-
+The ``Bugzilla`` docblock is for listing any BZs that are tangentially related to a test case.
+Blockers, automates, and coverage BZs should be listed here. Any BZ related to a test case
+should also be put here. The BZs listed in this docblock will be shown in the test case
+description on Polarion. Therefore, it's useful to list all the BZs related to the test
+case here. For example
 
 .. code-block:: python
 
@@ -187,6 +202,7 @@ should also be put here. For example
       """
       assert True
 
-So here in the ``Bugzilla`` docblock, in addition to the two BZ's listed in the test case's
-metadata, there is an additional ``BZ 1234562`` which is in some way related to the test
-case.
+So here in the ``Bugzilla`` docblock, in addition to the two BZs listed in the test case's
+metadata, there is an additional ``BZ 1234562`` which is tangentially related to the test
+case. These additional BZs could be in another focus area, but your test case happens to
+hit them. They can be useful to someone trying to debug a failing test case.
