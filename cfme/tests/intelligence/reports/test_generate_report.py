@@ -54,8 +54,6 @@ def test_reports_generate_report(request, path, appliance):
         subtype=path[1],
         menu_name=path[2]
     ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete_if_exists)
 
-    @request.addfinalizer
-    def _finalize():
-        if report.exists:
-            report.delete()
+    assert report.exists
