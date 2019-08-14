@@ -536,7 +536,7 @@ def test_host_refresh_multiple():
                quadicons.
             3. Click "Refresh Relationships and Power States" under the Configuration
                dropdowm, and then click "OK" when prompted.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. "Refresh initiated for X Hosts from the CFME Database" is displayed in green
@@ -564,7 +564,7 @@ def test_host_discover_multiple_valid_ips():
             4. In the Subnet Range section, enter a valid ip range for existing, undiscovered hosts
                and click "Start" button.
             5. Repeat steps 1 through 4 but select "IPMI"in step 3.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. The "Hosts/Nodes Discovery" view is displayed.
             3.
@@ -590,7 +590,7 @@ def test_host_removal():
             2. Click checkbox to select host(s).
             3. Click "Remove items from inventory" in the Configuration accordion.
             4. Click OK.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2.
             3.
@@ -616,7 +616,7 @@ def test_host_refresh():
             2. Select a host by checking the box in upper left of quadicons.
             3. Click "Refresh Relationships and Power States" under the Configuration dropdowm,
                and then click "OK" when prompted.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. The selected hosts should be displayed with a blue border and checked checkbox.
             3. "Refresh initiated for 1 Host from the CFME Database" is displayed in green
@@ -663,7 +663,7 @@ def test_host_view_network_info():
             1. Navigate to the Compute > Infrastructure > Hosts view.
             2. Click on a Host.
             3. From the host accordion, click Properties > Network.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. The summary view is displayed for the host.
             3. The Network view is displayed.
@@ -686,7 +686,7 @@ def test_host_view_storage_adapter():
             1. Navigate to the Compute > Infrastructure > Hosts view.
             2. Click on a Host.
             3. From the host accordion, click Properties > Storage Adapters.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. The summary view is displayed for the host.
             3. The Storage adapters view is displayed with asscoaited VMs, targets and LUNs.
@@ -707,7 +707,7 @@ def test_host_viewing():
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
             2. Click on a host quadicon.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. The summary view is displayed for the host.
             3. The hosts summary view is displayed containing taskbar, summary panel,
@@ -739,7 +739,7 @@ def test_host_tagging():
             5. Click save.
             6. Click on the same quadicon as in step 2.
             7. Repeat steps 1 thru 6, but select multiple hosts.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2.
             3. Tag Assignement view is displayed.
@@ -777,7 +777,7 @@ def test_host_drift_analysis():
             10. Click Exists Mode button, and Expanded View button.
             11. Click "Attributes with same values" button in the toolbar.
             12. Click "Attributes with different values" button in the toolbar.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. Summary view is displayed.
             3. Drift History view is displayed.
@@ -823,7 +823,7 @@ def test_host_drift_reports():
             6. Click "Download As Text" under Download dropdown.
             7. Click "Download As CSV" under Download dropdown.
             8. Click "Print or export as PDF" under Download dropdown.
-        expectedResults:icon
+        expectedResults:
             1. Hosts view is displayed.
             2. Summary view is displayed.
             3. Drift History view is displayed.
