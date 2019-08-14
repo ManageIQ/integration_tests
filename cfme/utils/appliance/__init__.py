@@ -2054,7 +2054,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.update_advanced_settings({'server': server_data})
         timeout = 600 if enabling_ansible else 300
         wait_for(lambda: self.server_roles == roles, num_sec=timeout, delay=15)
-        if enabling_ansible and self.version < '5.11':
+        if enabling_ansible:
             self.wait_for_embedded_ansible()
 
     def enable_embedded_ansible_role(self):
@@ -2068,8 +2068,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self.server_roles = roles
         except TimedOutError:
             wait_for(lambda: self.server_roles == roles, num_sec=600, delay=15)
-        if self.version < '5.11':
-            self.wait_for_embedded_ansible()
+        self.wait_for_embedded_ansible()
 
     def disable_embedded_ansible_role(self):
         """disables embbeded ansible role"""

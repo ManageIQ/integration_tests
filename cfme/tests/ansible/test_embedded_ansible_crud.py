@@ -4,7 +4,10 @@ from cfme import test_requirements
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
-pytestmark = [pytest.mark.ignore_stream("upstream"), test_requirements.ansible]
+pytestmark = [
+    pytest.mark.ignore_stream("upstream"),
+    test_requirements.ansible
+]
 
 
 @pytest.fixture(scope="function")
@@ -52,8 +55,13 @@ def test_embedded_ansible_disable(embedded_appliance):
     """
     if embedded_appliance.version < "5.11":
         assert wait_for(lambda: embedded_appliance.rabbitmq_server.running, num_sec=30)
-        assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=30)
-    assert embedded_appliance.disable_embedded_ansible_role()
+        assert wait_for(lambda: embedded_appliance.nginx.running, num_sec=50)
+
+    embedded_appliance.disable_embedded_ansible_role()
+    assert wait_for(
+        lambda: not embedded_appliance.server_roles.get("embedded_ansible"),
+        timeout=120,
+    )
 
     if not embedded_appliance.is_pod and embedded_appliance.version < "5.11":
         assert wait_for(
@@ -86,7 +94,7 @@ def test_embedded_ansible_event_catcher_process(embedded_appliance):
         ).output
 
         for data in result.splitlines():
-            logger.info("Checking service/process %s started or not", data)
+            logger.info(f"Checking service/process {data} started or not")
             assert "started" in data
     else:
         rpm_check = embedded_appliance.ssh_client.run_command(
@@ -94,7 +102,7 @@ def test_embedded_ansible_event_catcher_process(embedded_appliance):
         ).output
 
         for data in rpm_check.splitlines():
-            logger.info("Checking %s is present or not", data)
+            logger.info(f"Checking {data} is present or not")
             assert "ansible-runner" in data
 
 
