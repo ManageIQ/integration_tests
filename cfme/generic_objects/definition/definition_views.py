@@ -65,7 +65,10 @@ class GenericObjectDefinitionAllView(GenericObjectDefinitionView):
 
 
 class ParametersForm(View):
-    ROOT = ParametrizedLocator('//generic-object-table-component[@key-type="{@param_type}"]')
+    ROOT = ParametrizedLocator(
+        "//generic-object-table-component[@key-type='{@param_type}'] "
+        " | //generic-object-table[@key-type='{@param_type}']"
+    )
     ALL_PARAMETERS = './/input[contains(@class, "ng-not-empty")]'
     add = Button(ParametrizedString('Add {@param_type}'))
     name = Input(locator='.//input[contains(@class, "ng-empty")]')
@@ -142,8 +145,11 @@ class GenericObjectDefinitionAddView(GenericObjectDefinitionAddEditView):
     @property
     def is_displayed(self):
         return (
-            self.in_generic_object_definition and
-            self.title.text == 'Add a new Generic Object Class'
+            self.in_generic_object_definition
+            and self.title.text
+            == "Add a new Generic Object {}".format(
+                "Class" if self.appliance.version < "5.11" else "Definition"
+            )
         )
 
 
