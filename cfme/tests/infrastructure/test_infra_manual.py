@@ -693,6 +693,7 @@ def test_host_view_storage_adapter():
     """
     pass
 
+
 @test_requirements.infra_hosts
 def test_host_viewing():
     """
