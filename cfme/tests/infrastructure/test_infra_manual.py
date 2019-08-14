@@ -517,3 +517,320 @@ def test_host_comparison_multipleviews_interactions():
             10. Same expected results as for steps 6 through 9.
     """
     pass
+
+
+@test_requirements.infra_hosts
+def test_host_refresh_multiple():
+    """
+    Testing refreshing multiple hosts.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Select at least 2 hosts (more if possible) by checking the box in upper left of
+               quadicons.
+            3. Click "Refresh Relationships and Power States" under the Configuration
+               dropdowm, and then click "OK" when prompted.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. The selected hosts should be displayed with a blue border and checked checkbox.
+            3. "Refresh initiated for X Hosts from the CFME Database" is displayed in green
+               banner where "X" is the number of selected hosts. Properties for each host are
+               refreshed.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_discover_multiple_valid_ips():
+    """
+    Testing discovering multiple hosts (not using providers).
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click "Discover Items" under the Configuration accordion.
+            3. Click the checkbox to select "ESX".
+            4. In the Subnet Range section, enter a valid ip range for existing, undiscovered hosts
+               and click "Start" button.
+            5. Repeat steps 1 through 4 but select "IPMI"in step 3.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. The "Hosts/Nodes Discovery" view is displayed.
+            3.
+            4. When available, the new hosts display. They are named by hostname and IP address.
+            5. Same expected results as for steps 1 through 4.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_removal():
+    """
+    Testing removing a host.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click checkbox to select host(s).
+            3. Click "Remove items from inventory" in the Configuration accordion.
+            4. Click OK.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2.
+            3.
+            4. The host(s) is/are removed. The virtual machines remain in the VMDB, but are no
+               longer associated with their respective hosts.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_refresh():
+    """
+    Testing refreshing single host.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Select a host by checking the box in upper left of quadicons.
+            3. Click "Refresh Relationships and Power States" under the Configuration dropdowm,
+               and then click "OK" when prompted.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. The selected hosts should be displayed with a blue border and checked checkbox.
+            3. "Refresh initiated for 1 Host from the CFME Database" is displayed in green
+               banner. Properties for each host are refreshed.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_view_device_info():
+    """
+    Testing the viewing of host device information.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click on a Host.
+            3. From the host accordion, click Properties > Devices.
+        expectedResults:
+            1. Hosts view is displayed.
+            2. The summary view is displayed for the host.
+            3. The Device view is displayed.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_view_network_info():
+    """
+    Testing the viewing of host network information.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click on a Host.
+            3. From the host accordion, click Properties > Network.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. The summary view is displayed for the host.
+            3. The Network view is displayed.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_view_storage_adapter():
+    """
+    Testing the viewing of storage adapters..
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click on a Host.
+            3. From the host accordion, click Properties > Storage Adapters.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. The summary view is displayed for the host.
+            3. The Storage adapters view is displayed with asscoaited VMs, targets and LUNs.
+    """
+    pass
+
+@test_requirements.infra_hosts
+def test_host_viewing():
+    """
+    Testing the viewing of host info..
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click on a host quadicon.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. The summary view is displayed for the host.
+            3. The hosts summary view is displayed containing taskbar, summary panel,
+               accordion, and print/export button.
+               - Items in the accordion sections are displayed in view panel when clicked.
+               - Print/export view is displayed when print/export button is clicked.
+               - Row items that are blue on mouseover can be clicked and display additional
+                 details when done so.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_tagging():
+    """
+    Testing tagging hosts.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click checkbox in quadicon to select a host.
+            3. Click Edit Tags in the Policy dropdown.
+            4. Select a customer tag from the first dropdown and then a value for the tag.
+            5. Click save.
+            6. Click on the same quadicon as in step 2.
+            7. Repeat steps 1 thru 6, but select multiple hosts.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2.
+            3. Tag Assignement view is displayed.
+            4.
+            5. "Tag edits successfully saved." message is displayed.
+            6. Tags added in step 4 are displayed in Smart Management section of hosts summary.
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_drift_analysis():
+    """
+    Testing drift detection for hosts.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        setup:
+            1. At least 2 Smart State Analysis(SSA) tasks must have ben executed on the host
+               used below.
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click checkbox in quadicon to select a host.
+            3. Click on Drift History in the Relationships accordion
+            4. Select at least 2 items in the Drift History view.
+            5. Click the drift analysis button (top left corner below breadcrumbs).
+            6. Click to expand the Host Properties row.
+            7. Click on compressed view icon.
+            8. Click on Network Adapters under Properties in Drift Sections and click "Apply".
+            9. Click to expand Network Adapters row in the Drift Analyssis view.
+            10. Click Exists Mode button, and Expanded View button.
+            11. Click "Attributes with same values" button in the toolbar.
+            12. Click "Attributes with different values" button in the toolbar.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. Summary view is displayed.
+            3. Drift History view is displayed.
+            4.
+            5. Drift Analysis view is displayed.
+            6. All Host Properties rows are displayed, populated with appropriate data. Parent
+               rows have a check in cells with all matching data between hosts and a delta icon
+               where the data differs.
+            7. Specific item data is replaced with associated check or delta icons.
+            8. Network Adapters row is added to Drift Analysis.
+            9. All Network Adapters rows are displayed, populated with appropriate data. Parent
+               rows have a check in cells with all matching data between hosts and a delta icon
+               where the data differs.
+            10. Cell data for non-base hosts displayed with pluses or minus icon base on
+                existance of item.
+            11. Only attributes matching across hosts are displayed.
+            12. Only attributes not matching across hosts are displayed.
+
+    """
+    pass
+
+
+@test_requirements.infra_hosts
+def test_host_drift_reports():
+    """
+    Testing drift analysis reports for hosts.
+
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/4h
+        setup:
+            1. At least 2 Smart State Analysis(SSA) tasks must have ben executed on the host
+               used below.
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Hosts view.
+            2. Click checkbox in quadicon to select a host.
+            3. Click on Drift History in the Relationships accordion
+            4. Select at least 2 items in the Drift History view.
+            5. Click the drift analysis button (top left corner below breadcrumbs).
+            6. Click "Download As Text" under Download dropdown.
+            7. Click "Download As CSV" under Download dropdown.
+            8. Click "Print or export as PDF" under Download dropdown.
+        expectedResults:icon
+            1. Hosts view is displayed.
+            2. Summary view is displayed.
+            3. Drift History view is displayed.
+            4.
+            5. Drift Analysis view is displayed.
+            6. Drift report is downloaded in text format.
+            7. Drift report is downloaded in CSV format.
+            6. "Print" window/tab is displayed for drift report.
+    """
+    pass
