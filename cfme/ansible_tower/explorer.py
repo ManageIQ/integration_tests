@@ -126,6 +126,13 @@ class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
         )
 
 
+class TowerExplorerJobServiceDialogView(TowerExplorerView):
+    @property
+    def is_displayed(self):
+        expected_title = 'Adding a new Service Dialog from "{}"'.format(self.context['object'].name)
+        return self.title.text == expected_title
+
+
 @attr.s
 class AnsibleTowerProvider(BaseEntity):
     pass
@@ -213,9 +220,10 @@ class TowerExplorerJobTemplateDetails(CFMENavigateStep):
 
 
 @navigator.register(AnsibleTowerJobTemplate, 'ServiceDialog')
-class ServiceDialogCreation(CFMENavigateStep):
+class TowerExplorerJobServiceDialog(CFMENavigateStep):
     VIEW = TowerExplorerJobServiceDialogView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.configuration.item_select('Create Service Dialog from this Template')
+        self.prerequisite_view.toolbar.configuration.item_select(
+            'Create Service Dialog from this Template')
