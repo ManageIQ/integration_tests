@@ -480,10 +480,15 @@ def reconfigure_standby_replication_node(appl, pwd, primary_ip, repmgr_reconfigu
     interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ', '')
     interaction.answer(resc('Configure Replication Manager (repmgrd) for automatic '
                        r'failover? (Y/N): '), 'y')
+    # interaction.answer('An active standby node (10.8.198.223) with the node number 2
+    # already exists\n')
+    # 'Would you like to continue configuration by overwriting '
+    # 'the existing node?
+    interaction.answer(resc('(Y/N): |N| '), 'y')
     # Warning: File /etc/repmgr.conf exists. Replication is already configured
     interaction.answer(resc('Continue with configuration? (Y/N): '), 'y')
     interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
-    interaction.answer('Press any key to continue.', '', timeout=5 * 60)
+    interaction.answer('Press any key to continue.', '', timeout=20)
 
 
 def configure_automatic_failover(appl, primary_ip):

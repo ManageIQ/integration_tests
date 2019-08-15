@@ -1,3 +1,5 @@
+from re import escape as resc
+
 import attr
 import fauxfactory
 from cached_property import cached_property
@@ -8,8 +10,10 @@ from cfme.utils import datafile
 from cfme.utils import db
 from cfme.utils.appliance.plugin import AppliancePlugin
 from cfme.utils.appliance.plugin import AppliancePluginException
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
+from cfme.utils.ssh_expect import SSHExpect
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
@@ -171,19 +175,23 @@ class ApplianceDB(AppliancePlugin):
             return self._ssh_client
 
     def backup(self, database_path="/tmp/evm_db.backup"):
-        """Backup VMDB database
-        Changed from Rake task due to a bug in 5.9
-
-        """
-        from cfme.utils.appliance import ApplianceException
-        self.logger.info('Backing up database')
-        result = self.appliance.ssh_client.run_command(
-            'pg_dump --format custom --file {} vmdb_production'.format(
-                database_path))
-        if result.failed:
-            msg = 'Failed to backup database'
-            self.logger.error(msg)
-            raise ApplianceException(msg)
+        """Backup VMDB database using appliance console"""
+        if BZ(1741481).blocks:
+            self.appliance.ssh_client.run_command("""
+                grep 'local replication all peer map=usermap' \
+                        /var/lib/pgsql/data/pg_hba.conf ||
+                echo 'local replication all peer map=usermap' \
+                        >> /var/lib/pgsql/data/pg_hba.conf""")
+            self.appliance.db_service.reload()
+        self.logger.info('Backing up database using appliance console')
+        interaction = SSHExpect(self.appliance)
+        interaction.send('ap')
+        interaction.answer(resc('Press any key to continue.'), '', timeout=40)
+        interaction.answer(resc('Choose the advanced setting: '), '4')
+        interaction.answer(resc('Choose the backup output file destination: |1| '), '1')
+        interaction.answer(resc('Enter the location to save the backup file to: '
+                                '|/tmp/evm_db.backup| '), database_path)
+        interaction.answer(resc('Press any key to continue.'), '', timeout=120)
 
     def restore(self, database_path="/tmp/evm_db.backup"):
         """Restore VMDB database
