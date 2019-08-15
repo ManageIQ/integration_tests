@@ -7,6 +7,7 @@ from cfme.base.ui import LoginPage
 from cfme.utils import conf
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.version import UPSTREAM
 
@@ -241,11 +242,12 @@ def test_credentials_change_password_with_special_characters():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
+@pytest.mark.ignore_stream("5.10")
 @test_requirements.multi_region
+@pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaUI])
-def test_multiregion_displayed_on_login(context):
+def test_multiregion_displayed_on_login(context, setup_multi_region_cluster, multi_region_cluster):
     """
     This test case is to check that Global/Remote region is displayed on login page
 
@@ -266,4 +268,12 @@ def test_multiregion_displayed_on_login(context):
             2.
             3. Global is displayed on login page of appliance in Global region and Remote for others
     """
-    pass
+    with multi_region_cluster.global_appliance as gapp:
+        login_view = navigate_to(gapp.server, 'LoginScreen')
+        assert login_view.is_displayed
+        assert 'Global' in login_view.details.region.text
+
+    with multi_region_cluster.remote_appliances[0] as rapp:
+        login_view = navigate_to(rapp.server, 'LoginScreen')
+        assert login_view.is_displayed
+        assert 'Remote' in login_view.details.region.text
