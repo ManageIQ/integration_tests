@@ -247,15 +247,11 @@ class SavedReportDetailsView(CloudIntelReportsView):
 
     @property
     def is_displayed(self):
-        expected_title = 'Saved Report "{} - {}"'.format(
-            self.context["object"].report.title or self.context['object'].report.menu_name,
-            self.context["object"].queued_datetime_in_title
-        )
         return (
-            self.in_intel_reports and
-            self.reports.is_opened and
-            self.reports.tree.currently_selected == self.context["object"].tree_path and
-            self.title.text == expected_title
+            self.in_intel_reports
+            and self.reports.is_opened
+            and self.reports.tree.currently_selected == self.context["object"].tree_path
+            and self.context["object"].queued_datetime_in_title in self.title.text
         )
 
 
