@@ -63,7 +63,7 @@ def get_custom_report(appliance, custom_report_values):
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-def test_custom_report_crud(custom_report_values, appliance):
+def test_custom_report_crud(custom_report_values, appliance, request):
     """
     Bugzilla:
         1531600
@@ -75,6 +75,8 @@ def test_custom_report_crud(custom_report_values, appliance):
         initialEstimate: 1/16h
     """
     custom_report = appliance.collections.reports.create(**custom_report_values)
+    request.addfinalizer(custom_report.delete_if_exists)
+
     with update(custom_report):
         custom_report.title += fauxfactory.gen_alphanumeric()
     custom_report.queue(wait_for_finish=True)
@@ -86,7 +88,7 @@ def test_custom_report_crud(custom_report_values, appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1729882, 1202412, 1446052])
-def test_reports_schedule_crud(schedule_data, appliance):
+def test_reports_schedule_crud(schedule_data, appliance, request):
     """
     Polarion:
         assignee: pvala
@@ -101,6 +103,8 @@ def test_reports_schedule_crud(schedule_data, appliance):
     """
     # create
     schedule = appliance.collections.schedules.create(**schedule_data)
+    request.addfinalizer(schedule.delete_if_exists)
+
     view = schedule.create_view(ScheduleDetailsView)
     view.flash.assert_success_message('Schedule "{}" was added'.format(schedule.name))
 
@@ -132,7 +136,7 @@ def test_reports_schedule_crud(schedule_data, appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1667064)])
-def test_menuwidget_crud(appliance):
+def test_menuwidget_crud(appliance, request):
     """
     Bugzilla:
         1653796
@@ -155,6 +159,8 @@ def test_menuwidget_crud(appliance):
         },
         visibility="<To All Users>"
     )
+    request.addfinalizer(w.delete_if_exists)
+
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     with update(w):
@@ -165,7 +171,7 @@ def test_menuwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1667064)])
-def test_reportwidget_crud(appliance):
+def test_reportwidget_crud(appliance, request):
     """
     Bugzilla:
         1656413
@@ -187,6 +193,8 @@ def test_reportwidget_crud(appliance):
         timer={"run": "Hourly", "hours": "Hour"},
         visibility="<To All Users>"
     )
+    request.addfinalizer(w.delete_if_exists)
+
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     with update(w):
@@ -197,7 +205,7 @@ def test_reportwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
-def test_chartwidget_crud(appliance):
+def test_chartwidget_crud(appliance, request):
     """
     Polarion:
         assignee: jhenner
@@ -213,6 +221,8 @@ def test_chartwidget_crud(appliance):
         timer={"run": "Hourly", "hours": "Hour"},
         visibility="<To All Users>"
     )
+    request.addfinalizer(w.delete_if_exists)
+
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     with update(w):
@@ -223,7 +233,7 @@ def test_chartwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
-def test_rssfeedwidget_crud(appliance):
+def test_rssfeedwidget_crud(appliance, request):
     """
     Polarion:
         assignee: jhenner
@@ -240,6 +250,8 @@ def test_rssfeedwidget_crud(appliance):
         rows="8",
         visibility="<To All Users>"
     )
+    request.addfinalizer(w.delete_if_exists)
+
     view = w.create_view(AllDashboardWidgetsView)
     view.flash.assert_message('Widget "{}" was saved'.format(w.title))
     # Basic update
@@ -260,7 +272,7 @@ def test_rssfeedwidget_crud(appliance):
 @pytest.mark.sauce
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1667064)])
-def test_dashboard_crud(appliance):
+def test_dashboard_crud(appliance, request):
     """
     Polarion:
         assignee: jhenner
@@ -274,6 +286,8 @@ def test_dashboard_crud(appliance):
         locked=False,
         widgets=["Top CPU Consumers (weekly)", "Vendor and Guest OS Chart"]
     )
+    request.addfinalizer(d.delete_if_exists)
+
     with update(d):
         d.locked = True
     with update(d):
@@ -308,7 +322,7 @@ def test_run_report(appliance):
 
 
 @pytest.mark.tier(3)
-def test_import_report_rest(appliance):
+def test_import_report_rest(appliance, request):
     """
     Polarion:
         assignee: pvala
@@ -331,6 +345,14 @@ def test_import_report_rest(appliance):
     }
     response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
     assert_response(appliance)
+
+    @request.addfinalizer
+    def _finalize():
+        report = appliance.collections.reports.instantiate(
+            type="My Company (All Groups)", subtype="Custom", menu_name=menu_name
+        )
+        report.delete_if_exists()
+
     assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
     report = appliance.rest_api.collections.reports.get(name=menu_name)
     assert report.name == menu_name
@@ -356,6 +378,8 @@ def test_reports_delete_saved_report(appliance, request):
         subtype="Virtual Machines",
         menu_name="Hardware Information for VMs",
     ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete_if_exists)
+
     view = navigate_to(appliance.collections.saved_reports, 'All')
     # iterates through every row and checks if the 'Name' column matches the given value
     for row in view.table.rows():
@@ -416,5 +440,7 @@ def test_crud_custom_report_schedule(appliance, request, get_custom_report, sche
         "report_type": get_custom_report.menu_name,
     }
     custom_report_schedule = appliance.collections.schedules.create(**schedule_data)
+    request.addfinalizer(custom_report_schedule.delete_if_exists)
+
     assert custom_report_schedule.exists
     custom_report_schedule.delete(cancel=False)

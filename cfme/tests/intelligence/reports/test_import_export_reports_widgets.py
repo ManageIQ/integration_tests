@@ -88,6 +88,7 @@ def test_export_widget(appliance, widget):
         startsin: 5.3
     """
     collection = appliance.collections.dashboard_report_widgets
+    # created widget will be deleted from the `widget` fixture
     collection.create(
         widget_class=getattr(collection, widget.TITLE.upper()),
         title=widget.title,
