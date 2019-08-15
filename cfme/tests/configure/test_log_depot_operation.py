@@ -358,11 +358,11 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
 
     if from_slave and zone_collect:
         check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
-        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.sid)
     elif from_slave:
         check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
     else:
-        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.sid)
 
 
 @pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
