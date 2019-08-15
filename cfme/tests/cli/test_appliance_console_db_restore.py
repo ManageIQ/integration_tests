@@ -1,5 +1,6 @@
 import re
 from collections import namedtuple
+from re import escape as resc
 
 import fauxfactory
 import pytest
@@ -66,14 +67,10 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
 @pytest.fixture
 def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     """Returns two database-owning appliances, configures first appliance with provider,
-    enables embedded ansible, takes a pg_backup and copys it to second appliance
-    prior to running tests.
-
+    enables embedded ansible, takes a backup.
     """
     appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
-    appl1.ssh_client.run_command("pg_basebackup -X fetch -U root -Ft -z -D /tmp/backup")
     appl1.db.backup()
-    appl2.ssh_client.run_command("pg_basebackup -X fetch -U root -Ft -z -D /tmp/backup")
     appl2.db.backup()
     return temp_appliances_unconfig_funcscope_rhevm
 
@@ -81,14 +78,14 @@ def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_
 @pytest.fixture
 def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     """Returns database-owning appliance, enables embedded ansible,
-    takes a pg_backup prior to running tests.
+    takes a backup prior to running tests.
 
     """
     appl1 = temp_appliance_preconfig_funcscope
     # enable embedded ansible and create pg_basebackup
     appl1.enable_embedded_ansible_role()
     appl1.wait_for_embedded_ansible()
-    appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
+    appl1.db.backup()
     return temp_appliance_preconfig_funcscope
 
 
@@ -216,19 +213,15 @@ def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
 def restore_db(appl, location=''):
     interaction = SSHExpect(appl)
     interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('6')
-    interaction.expect('Choose the restore database file source: |1| ')
-    interaction.send('1')
-    interaction.expect('Enter the location of the local restore file: |/tmp/evm_db.backup| ')
-    interaction.send(location)
-    interaction.expect(r'Should this file be deleted after completing the restore\? \(Y\/N\): ')
-    interaction.send('N')
-    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
-    interaction.send('Y')
-    interaction.expect('Press any key to continue.', timeout=60)
+    interaction.answer('Press any key to continue.', '', timeout=40)
+    interaction.answer('Choose the advanced setting: ', '6')
+    interaction.answer(resc('Choose the restore database file source: |1| '), '1')
+    interaction.answer(resc('Enter the location of the local restore file: '
+                            '|/tmp/evm_db.backup| '), location)
+    interaction.answer(resc('Should this file be deleted after completing the restore? '
+                            '(Y/N): '), 'N')
+    interaction.answer(resc('Are you sure you would like to restore the database? (Y/N): '), 'Y')
+    interaction.answer('Press any key to continue.', '', timeout=60)
 
 
 @pytest.mark.rhel_testing
@@ -281,18 +274,7 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
     appl1, appl2 = two_appliances_one_with_providers
     backup_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
 
-    interaction = SSHExpect(appl1)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('4')
-    interaction.expect(r'Choose the backup output file destination: \|1\| ')
-    interaction.send('')
-    interaction.expect(re.escape(
-        'Enter the location to save the backup file to: |/tmp/evm_db.backup| '))
-    interaction.send(backup_file_name)
-    interaction.expect('Press any key to continue.', timeout=120)
+    appl1.db.backup(backup_file_name)
 
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
@@ -349,7 +331,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     # Restore DB on the second appliance
     appl1.evmserverd.stop()
     appl1.db_service.restart()
-    restore_db(appl1, '/tmp/backup/base.tar.gz')
+    restore_db(appl1, '/tmp/evm_db.backup')
     manager.quit()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -397,8 +379,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     appl2.evmserverd.stop()
     appl1.db_service.restart()
     appl2.db_service.restart()
-    restore_db(appl1, '/tmp/backup/base.tar.gz')
-    restore_db(appl2, '/tmp/backup/base.tar.gz')
+    restore_db(appl1, '/tmp/evm_db.backup')
+    restore_db(appl2, '/tmp/evm_db.backup')
     appl1.evmserverd.start()
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -487,8 +469,12 @@ def test_appliance_console_restore_db_replicated(
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.wait_for_web_ui()
-    # reconfigure replication between appliances, lost during restore
-    appl1.set_pglogical_replication(replication_type=':remote')
+    # reconfigure replication between appliances which switches to "disabled"
+    # during restore
+    appl2.set_pglogical_replication(replication_type=':none')
+    assert not appl2.managed_provider_names
+
+    # Start the replication again
     appl2.set_pglogical_replication(replication_type=':global')
     appl2.add_pglogical_replication_subscription(appl1.hostname)
     # Assert providers exist after restore and replicated to second appliances

@@ -73,6 +73,13 @@ class SystemdService(AppliancePlugin):
             log_callback=log_callback
         )
 
+    def reload(self, log_callback=None):
+        return self._run_service_command(
+            'reload',
+            expected_exit_code=0,
+            log_callback=log_callback
+        )
+
     def enable(self, log_callback=None):
         return self._run_service_command(
             'enable',
