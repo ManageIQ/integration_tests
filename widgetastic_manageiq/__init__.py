@@ -5198,13 +5198,19 @@ class MigrationPlanRequestDetailsList(Widget):
         # TODO: Add support for reading addtional_info_popup for completed migration if required.
         if self.open_additional_info_popup(vm_name) and not self.is_successful(vm_name):
             el = self.browser.element(self.ITEM_ADDITIONAL_INFO_POPUP_LOCATOR)
+            # While reading the pop up for multiple VM's there has to be a gap of 1s.
+            # There is no locator that we can wait for here so time.sleep
+            import time
+            time.sleep(1)
             return {
                 "Status": self.browser.text("./h3", parent=el),
-                "Started": self.browser.text("./div[2]/div/div[1]", parent=el),
-                "Description": self.browser.text("./div[2]/div/div[2]", parent=el),
-                "Conversion Host": (self.browser.text("./div[2]/div/div[3]", parent=el)).split(
+                "Started": (self.browser.text("./div[2]/div/div[1]", parent=el)).split(": ")[1],
+                "Conversion Host": (self.browser.text("./div[2]/div/div[2]", parent=el)).split(
                     ": "
                 )[1],
+                "Status Detail": (self.browser.text("./div[2]/div/div[3]", parent=el)).split(": ")[
+                    1
+                ],
             }
 
     def cancel_migration(self, vm_name, confirmed=True):

@@ -13,9 +13,11 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.update import Updateable
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import ConversionHostProgress
@@ -25,28 +27,89 @@ from widgetastic_manageiq import V2VBootstrapSwitch
 from widgetastic_manageiq import WaitTab
 
 
-class MigrationSettingsView(BaseLoggedInPage):
+class MigrationThrottling(Updateable, NavigatableMixin):
+    """Migration Throttling for conversion host"""
+
+    def __init__(self, appliance, migration_settings):
+        self.appliance = appliance
+        self.migration_settings = migration_settings
+
+    def set_max_migration_per_conv_host(self, migration_per_conv_host):
+        """ Set migration throttling per conversion host
+        Args:
+            migration_per_conv_host: Integer
+        """
+        view = navigate_to(self.migration_settings, 'MigrationSettings')
+        view.tabs.migration_throttling.fill({'migration_per_conv_host': migration_per_conv_host})
+        view.tabs.migration_throttling.apply_btn.click()
+
+    def get_max_migration_per_conv_host(self):
+        """ Get migration throttling per conversion host
+        Args:
+            migration_per_conv_host: Integer
+        """
+        view = navigate_to(self.migration_settings, 'MigrationSettings')
+        return view.tabs.migration_throttling.migration_per_conv_host.read()
+
+
+class MigrationSettings(Updateable, NavigatableMixin):
+    """Migration Settings page that has throttling tab """
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    @property
+    def migration_throttling(self):
+        """The 'Migration Throttling' tab """
+        return MigrationThrottling(self.appliance, self)
+
+
+class MigrationThrottlingForm(View):
+    migration_per_conv_host = Input(id='max_concurrent_tasks_per_host')
+    migration_per_provider = Input(id='max_concurrent_tasks_per_ems')
+    apply_btn = Button("Apply")
+
+
+class ConversionHostForm(View):
     configure_conversion_host = Text(locator='(//a|//button)[text()="Configure Conversion Host"]')
     conversion_host_progress = ConversionHostProgress()
 
-    @View.nested
-    class MigrationThrottlingTab(WaitTab):  # noqa
-        fill_strategy = WaitFillViewStrategy("15s")
-        TAB_NAME = 'Migration Throttling'
+
+class MigrationSettingsView(BaseLoggedInPage):
 
     @View.nested
-    class ConversionHostsTab(WaitTab):  # noqa
-        fill_strategy = WaitFillViewStrategy("20s")
-        TAB_NAME = 'Conversion Hosts'
-        title = Text('.//div[contains(@class, "pull-left")]//h3')
+    class tabs(View):  # noqa
+        """The tabs on the page"""
 
-        @property
-        def is_displayed(self):
-            return self.title.text == "Configured Conversion Host"
+        @View.nested
+        class migration_throttling(WaitTab):  # noqa
+            fill_strategy = WaitFillViewStrategy("15s")
+            TAB_NAME = 'Migration Throttling'
+            title = Text('.//div[contains(@class, "pull-left")]//h3')
+            including_entities = View.include(MigrationThrottlingForm, use_parent=True)
+
+            @property
+            def is_displayed(self):
+                return self.title.text == "Concurrent Migrations"
+
+        @View.nested
+        class conversion_hosts(WaitTab):  # noqa
+            fill_strategy = WaitFillViewStrategy("20s")
+            TAB_NAME = 'Conversion Hosts'
+            title = Text('.//div[contains(@class, "pull-left")]//h3')
+            including_entities = View.include(ConversionHostForm, use_parent=True)
+
+            @property
+            def is_displayed(self):
+                return self.title.text == "Configured Conversion Host"
 
     @property
     def is_displayed(self):
-        nav_menu = ["Compute", "Migration", "Migration Settings"]
+        nav_menu = (
+            ["Compute", "Migration", "Migration Settings"]
+            if self.context["object"].appliance.version < "5.11"
+            else ["Migration", "Migration Settings"]
+        )
         return self.logged_in_as_current_user and self.navigation.currently_selected == nav_menu
 
 
@@ -216,15 +279,30 @@ class ConversionHostCollection(BaseCollection):
         return conversion_host
 
 
-@navigator.register(ConversionHostCollection, "All")
-class ConversionHosts(CFMENavigateStep):
+@navigator.register(MigrationSettings, "MigrationSettings")
+class MigrationSettingsPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
     VIEW = MigrationSettingsView
 
     def step(self):
-        self.prerequisite_view.navigation.select("Compute", "Migration", "Migration Settings")
-        self.view.ConversionHostsTab.click()
-        self.view.configure_conversion_host.wait_displayed()
+        if self.obj.appliance.version < "5.11":
+            self.prerequisite_view.navigation.select("Compute", "Migration", "Migration Settings")
+        else:
+            self.prerequisite_view.navigation.select("Migration", "Migration Settings")
+
+
+@navigator.register(ConversionHostCollection, "All")
+class ConversionHosts(CFMENavigateStep):
+    VIEW = MigrationSettingsView
+    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
+
+    def step(self):
+        if self.obj.appliance.version < "5.11":
+            self.prerequisite_view.navigation.select("Compute", "Migration", "Migration Settings")
+        else:
+            self.prerequisite_view.navigation.select("Migration", "Migration Settings")
+        self.view.tabs.conversion_hosts.click()
+        self.view.tabs.configure_conversion_host.wait_displayed()
 
 
 @navigator.register(ConversionHostCollection, "Configure")
