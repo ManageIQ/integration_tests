@@ -1225,6 +1225,7 @@ class RegionDiagnosticsView(ConfigurationView):
     @View.nested
     class servers(WaitTab):  # noqa
         TAB_NAME = "Servers"
+        table = Table('//*[@id="miq-gtl-view"]//table')
 
     @View.nested
     class database(WaitTab):  # noqa
@@ -1513,6 +1514,7 @@ class ZoneDiagnosticsView(ConfigurationView):
     @View.nested
     class servers(WaitTab):  # noqa
         TAB_NAME = "Servers"
+        table = Table('//*[@id="miq-gtl-view"]//table')
 
     @View.nested
     class collectlogs(WaitTab):  # noqa
