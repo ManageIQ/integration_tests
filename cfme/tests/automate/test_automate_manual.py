@@ -305,39 +305,6 @@ def test_automate_git_import_deleted_tag():
     pass
 
 
-@pytest.mark.tier(1)
-def test_automate_state_method():
-    """
-    You can pass methods as states compared to the old method of passing
-    instances which had to be located in different classes. You use the
-    METHOD:: prefix
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        tags: automate
-        startsin: 5.6
-        setup: A fresh appliance.
-        testSteps:
-            1. Create an automate class that has one state.
-            2. Create a method in the class, make the method output
-               something recognizable in the logs
-            3. Create an instance inside the class, and as a Value for the
-               state use: METHOD::method_name where method_name is the name
-               of the method you created
-            4. Run a simulation, use Request / Call_Instance to call your
-               state machine instance
-        expectedResults:
-            1. Class created
-            2. Method created
-            3. Instance created
-            4. The method got called, detectable by grepping logs
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_button_can_trigger_events():
     """
