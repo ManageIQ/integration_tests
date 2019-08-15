@@ -13,9 +13,7 @@ from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
 
-pytestmark = [
-    test_requirements.rest
-]
+pytestmark = [test_requirements.rest]
 
 
 class TestTenantsViaREST(object):
@@ -61,7 +59,9 @@ class TestTenantsViaREST(object):
             assert record.name == tenant.name
 
     @pytest.mark.tier(2)
-    @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
+    @pytest.mark.parametrize(
+        "multiple", [False, True], ids=["one_request", "multiple_requests"]
+    )
     def test_edit_tenants(self, appliance, tenants, multiple):
         """Tests editing tenants.
 
@@ -79,7 +79,12 @@ class TestTenantsViaREST(object):
         new = []
         for _ in range(tenants_len):
             new.append(
-                {'name': 'test_tenants_{}'.format(fauxfactory.gen_alphanumeric().lower())})
+                {
+                    "name": "test_tenants_{}".format(
+                        fauxfactory.gen_alphanumeric().lower()
+                    )
+                }
+            )
         if multiple:
             for index in range(tenants_len):
                 new[index].update(tenants[index]._ref_repr())
@@ -93,7 +98,7 @@ class TestTenantsViaREST(object):
         assert tenants_len == len(edited)
         for index, tenant in enumerate(tenants):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['name']) or False,
+                lambda: collection.find_by(name=new[index]["name"]) or False,
                 num_sec=180,
                 delay=10,
             )
@@ -176,7 +181,9 @@ class TestRolesViaREST(object):
             assert record.name == role.name
 
     @pytest.mark.tier(2)
-    @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
+    @pytest.mark.parametrize(
+        "multiple", [False, True], ids=["one_request", "multiple_requests"]
+    )
     def test_edit_roles(self, appliance, roles, multiple):
         """Tests editing roles.
 
@@ -193,8 +200,7 @@ class TestRolesViaREST(object):
         roles_len = len(roles)
         new = []
         for _ in range(roles_len):
-            new.append(
-                {'name': 'test_role_{}'.format(fauxfactory.gen_alphanumeric())})
+            new.append({"name": "test_role_{}".format(fauxfactory.gen_alphanumeric())})
         if multiple:
             for index in range(roles_len):
                 new[index].update(roles[index]._ref_repr())
@@ -208,7 +214,7 @@ class TestRolesViaREST(object):
         assert roles_len == len(edited)
         for index, role in enumerate(roles):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['name']) or False,
+                lambda: collection.find_by(name=new[index]["name"]) or False,
                 num_sec=180,
                 delay=10,
             )
@@ -265,7 +271,8 @@ class TestRolesViaREST(object):
         assert_response(appliance)
         assert role.name == role_data["name"]
         wait_for(
-            lambda: appliance.rest_api.collections.roles.find_by(name=role.name) or False,
+            lambda: appliance.rest_api.collections.roles.find_by(name=role.name)
+            or False,
             num_sec=180,
             delay=10,
         )
@@ -355,7 +362,9 @@ class TestGroupsViaREST(object):
             assert record.description == group.description
 
     @pytest.mark.tier(2)
-    @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
+    @pytest.mark.parametrize(
+        "multiple", [False, True], ids=["one_request", "multiple_requests"]
+    )
     def test_edit_groups(self, appliance, groups, multiple):
         """Tests editing groups.
 
@@ -373,7 +382,12 @@ class TestGroupsViaREST(object):
         new = []
         for _ in range(groups_len):
             new.append(
-                {'description': 'group_description_{}'.format(fauxfactory.gen_alphanumeric())})
+                {
+                    "description": "group_description_{}".format(
+                        fauxfactory.gen_alphanumeric()
+                    )
+                }
+            )
         if multiple:
             for index in range(groups_len):
                 new[index].update(groups[index]._ref_repr())
@@ -387,13 +401,16 @@ class TestGroupsViaREST(object):
         assert groups_len == len(edited)
         for index, group in enumerate(groups):
             record, _ = wait_for(
-                lambda: collection.find_by(description=new[index]['description']) or False,
+                lambda: collection.find_by(description=new[index]["description"])
+                or False,
                 num_sec=180,
                 delay=10,
             )
             group.reload()
             assert record[0].id == edited[index].id == group.id
-            assert record[0].description == edited[index].description == group.description
+            assert (
+                record[0].description == edited[index].description == group.description
+            )
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
@@ -436,12 +453,12 @@ class TestUsersViaREST(object):
         assert len(response) == num
         return response, prov_data
 
-    @pytest.fixture(scope='function')
+    @pytest.fixture(scope="function")
     def user_auth(self, request, appliance):
         users, prov_data = self.users_data(request, appliance, num=1)
-        return users[0].userid, prov_data[0]['password']
+        return users[0].userid, prov_data[0]["password"]
 
-    @pytest.fixture(scope='function')
+    @pytest.fixture(scope="function")
     def users(self, request, appliance):
         users, __ = self.users_data(request, appliance)
         return users
@@ -479,7 +496,7 @@ class TestUsersViaREST(object):
             record = appliance.rest_api.collections.users.get(id=user.id)
             assert_response(appliance)
             assert record.name == user.name
-            user_auth = (user.userid, prov_data[index]['password'])
+            user_auth = (user.userid, prov_data[index]["password"])
             assert appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(3)
@@ -504,11 +521,11 @@ class TestUsersViaREST(object):
             "name": "REST User {}".format(uniq),
             "password": fauxfactory.gen_alphanumeric(),
             "email": "user@example.com",
-            "group": "EvmGroup-user_self_service"
+            "group": "EvmGroup-user_self_service",
         }
         user, _ = _users(request, appliance, **data)
         assert_response(appliance)
-        user_auth = (user[0].userid, data['password'])
+        user_auth = (user[0].userid, data["password"])
         assert appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(2)
@@ -532,7 +549,9 @@ class TestUsersViaREST(object):
         assert appliance.new_rest_api_instance(auth=new_user_auth)
 
     @pytest.mark.tier(3)
-    @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
+    @pytest.mark.parametrize(
+        "multiple", [False, True], ids=["one_request", "multiple_requests"]
+    )
     def test_edit_user_name(self, appliance, users, multiple):
         """Tests editing user name.
 
@@ -549,8 +568,7 @@ class TestUsersViaREST(object):
         users_len = len(users)
         new = []
         for _ in range(users_len):
-            new.append(
-                {'name': 'user_name_{}'.format(fauxfactory.gen_alphanumeric())})
+            new.append({"name": "user_name_{}".format(fauxfactory.gen_alphanumeric())})
         if multiple:
             for index in range(users_len):
                 new[index].update(users[index]._ref_repr())
@@ -564,7 +582,7 @@ class TestUsersViaREST(object):
         assert users_len == len(edited)
         for index, user in enumerate(users):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['name']) or False,
+                lambda: collection.find_by(name=new[index]["name"]) or False,
                 num_sec=180,
                 delay=10,
             )
@@ -573,7 +591,7 @@ class TestUsersViaREST(object):
             assert record[0].name == edited[index].name == user.name
 
     @pytest.mark.tier(3)
-    @pytest.mark.parametrize('group_by', ['id', 'href', 'description'])
+    @pytest.mark.parametrize("group_by", ["id", "href", "description"])
     def test_edit_user_groups(self, appliance, users, group_by):
         """Tests editing user group.
 
@@ -586,23 +604,25 @@ class TestUsersViaREST(object):
             caseimportance: low
             initialEstimate: 1/4h
         """
-        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
-        groups = [appliance.rest_api.collections.groups.get(description=desc)
-                  for desc in group_descriptions]
-        group_handles = [{'href': groups[0].href}]
+        group_descriptions = ["EvmGroup-user_limited_self_service", "EvmGroup-approver"]
+        groups = [
+            appliance.rest_api.collections.groups.get(description=desc)
+            for desc in group_descriptions
+        ]
+        group_handles = [{"href": groups[0].href}]
         for group in groups[1:]:
-            if group_by == 'id':
-                group_handle = {'id': group.id}
-            elif group_by == 'href':
-                group_handle = {'href': group.href}
-            elif group_by == 'description':
-                group_handle = {'description': group.description}
+            if group_by == "id":
+                group_handle = {"id": group.id}
+            elif group_by == "href":
+                group_handle = {"href": group.href}
+            elif group_by == "description":
+                group_handle = {"description": group.description}
             group_handles.append(group_handle)
 
         users_len = len(users)
         new = []
         for _ in range(users_len):
-            new.append({'miq_groups': group_handles})
+            new.append({"miq_groups": group_handles})
         edited = []
         for index in range(users_len):
             edited.append(users[index].action.edit(**new[index]))
@@ -610,18 +630,14 @@ class TestUsersViaREST(object):
         assert users_len == len(edited)
 
         def _updated(user):
-            user.reload(attributes='miq_groups')
+            user.reload(attributes="miq_groups")
             descs = []
             for group in user.miq_groups:
-                descs.append(group['description'])
+                descs.append(group["description"])
             return all(desc in descs for desc in group_descriptions)
 
         for index, user in enumerate(users):
-            wait_for(
-                lambda: _updated(user),
-                num_sec=20,
-                delay=2,
-            )
+            wait_for(lambda: _updated(user), num_sec=20, delay=2)
             user.reload()
             assert edited[index].id == user.id
 
@@ -640,17 +656,19 @@ class TestUsersViaREST(object):
             caseimportance: low
             initialEstimate: 1/4h
         """
-        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
-        groups = [appliance.rest_api.collections.groups.get(description=desc)
-                  for desc in group_descriptions]
-        group_handles = [{'href': group.href} for group in groups]
+        group_descriptions = ["EvmGroup-user_limited_self_service", "EvmGroup-approver"]
+        groups = [
+            appliance.rest_api.collections.groups.get(description=desc)
+            for desc in group_descriptions
+        ]
+        group_handles = [{"href": group.href} for group in groups]
         users, __ = self.users_data(request, appliance, num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles)
         assert_response(appliance)
         user.reload()
         assert user.current_group.id == groups[0].id
-        with pytest.raises(Exception, match='BadRequestError: Invalid attribute'):
+        with pytest.raises(Exception, match="BadRequestError: Invalid attribute"):
             user.action.edit(current_group=group_handles[1])
         assert_response(appliance, http_status=400)
 
@@ -669,17 +687,21 @@ class TestUsersViaREST(object):
             caseimportance: low
             initialEstimate: 1/4h
         """
-        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
-        groups = [appliance.rest_api.collections.groups.get(description=desc)
-                  for desc in group_descriptions]
-        group_handles = [{'href': group.href} for group in groups]
+        group_descriptions = ["EvmGroup-user_limited_self_service", "EvmGroup-approver"]
+        groups = [
+            appliance.rest_api.collections.groups.get(description=desc)
+            for desc in group_descriptions
+        ]
+        group_handles = [{"href": group.href} for group in groups]
         users, __ = self.users_data(request, appliance, num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles)
         assert_response(appliance)
         user.reload()
         assert user.current_group.id == groups[0].id
-        with pytest.raises(Exception, match='Can only edit authenticated user\'s current group'):
+        with pytest.raises(
+            Exception, match="Can only edit authenticated user's current group"
+        ):
             user.action.set_current_group(current_group=group_handles[1])
         assert_response(appliance, http_status=400)
 
@@ -696,19 +718,23 @@ class TestUsersViaREST(object):
             caseimportance: medium
             initialEstimate: 1/4h
         """
-        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
-        groups = [appliance.rest_api.collections.groups.get(description=desc)
-                  for desc in group_descriptions]
-        group_handles = [{'href': group.href} for group in groups]
+        group_descriptions = ["EvmGroup-user_limited_self_service", "EvmGroup-approver"]
+        groups = [
+            appliance.rest_api.collections.groups.get(description=desc)
+            for desc in group_descriptions
+        ]
+        group_handles = [{"href": group.href} for group in groups]
         users, data = self.users_data(request, appliance, num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles)
         assert_response(appliance)
         user.reload()
         assert user.current_group.id == groups[0].id
-        user_auth = (user.userid, data[0]['password'])
+        user_auth = (user.userid, data[0]["password"])
         user_api = appliance.new_rest_api_instance(auth=user_auth)
-        user_api.post(user.href, action='set_current_group', current_group=group_handles[1])
+        user_api.post(
+            user.href, action="set_current_group", current_group=group_handles[1]
+        )
         assert_response(user_api)
 
     @pytest.mark.tier(3)
@@ -724,20 +750,24 @@ class TestUsersViaREST(object):
             caseimportance: medium
             initialEstimate: 1/4h
         """
-        group_descriptions = ['EvmGroup-user_limited_self_service', 'EvmGroup-approver']
-        groups = [appliance.rest_api.collections.groups.get(description=desc)
-                  for desc in group_descriptions]
-        group_handles = [{'href': group.href} for group in groups]
+        group_descriptions = ["EvmGroup-user_limited_self_service", "EvmGroup-approver"]
+        groups = [
+            appliance.rest_api.collections.groups.get(description=desc)
+            for desc in group_descriptions
+        ]
+        group_handles = [{"href": group.href} for group in groups]
         users, data = self.users_data(request, appliance, num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles[:1])
         assert_response(appliance)
         user.reload()
         assert user.current_group.id == groups[0].id
-        user_auth = (user.userid, data[0]['password'])
+        user_auth = (user.userid, data[0]["password"])
         user_api = appliance.new_rest_api_instance(auth=user_auth)
-        with pytest.raises(Exception, match='User must belong to group'):
-            user_api.post(user.href, action='set_current_group', current_group=group_handles[1])
+        with pytest.raises(Exception, match="User must belong to group"):
+            user_api.post(
+                user.href, action="set_current_group", current_group=group_handles[1]
+            )
 
     @pytest.mark.tier(3)
     def test_change_password_as_user(self, appliance, user_auth):
@@ -757,13 +787,13 @@ class TestUsersViaREST(object):
 
         user = appliance.rest_api.collections.users.get(userid=user_auth[0])
         user_api = appliance.new_rest_api_instance(auth=user_auth)
-        user_api.post(user.href, action='edit', resource={'password': new_password})
+        user_api.post(user.href, action="edit", resource={"password": new_password})
         assert_response(user_api)
 
         # login using new password
         assert appliance.new_rest_api_instance(auth=new_user_auth)
         # try to login using old password
-        with pytest.raises(Exception, match='Authentication failed'):
+        with pytest.raises(Exception, match="Authentication failed"):
             appliance.new_rest_api_instance(auth=user_auth)
 
     @pytest.mark.tier(3)
@@ -779,11 +809,11 @@ class TestUsersViaREST(object):
             caseimportance: medium
             initialEstimate: 1/4h
         """
-        new_email = 'new@example.com'
+        new_email = "new@example.com"
 
         user = appliance.rest_api.collections.users.get(userid=user_auth[0])
         user_api = appliance.new_rest_api_instance(auth=user_auth)
-        user_api.post(user.href, action='edit', resource={'email': new_email})
+        user_api.post(user.href, action="edit", resource={"email": new_email})
         assert_response(user_api)
 
         user.reload()
@@ -819,3 +849,98 @@ class TestUsersViaREST(object):
             initialEstimate: 1/4h
         """
         delete_resources_from_collection(users)
+
+
+COMMON_FEATURES = [
+    "Services",
+    "Compute",
+    "Configuration",
+    "Networks",
+    "Storage",
+    "Control",
+    "Automation",
+    "Monitor",
+    "Help",
+    "API",
+    "Service UI",
+]
+
+FEATURES_511 = COMMON_FEATURES + [
+    "Overview",
+    "Migration",
+    "User Settings",
+    "All VM and Instance Access Rules",
+    "Main Configuration",
+    "Red Hat Cloud",
+]
+
+FEATURES_510 = COMMON_FEATURES + [
+    "Cloud Intel",
+    "Red Hat Insights",
+    "Optimize",
+    "Access Rules for all Virtual Machines",
+]
+
+
+@pytest.fixture(params=[True, False], ids=["individual", "everything"])
+def create_role(appliance, request):
+    if request.param:
+        features = FEATURES_511 if appliance.version > "5.11" else FEATURES_510
+        product_features = [[["Everything", feature], True] for feature in features]
+    else:
+        product_features = [[["Everything"], True]]
+
+    role = appliance.collections.roles.create(
+        name=fauxfactory.gen_alpha(15, start="API-role-"),
+        product_features=[[["Everything"], False]] + product_features,
+    )
+
+    yield appliance.rest_api.collections.roles.get(name=role.name)
+
+    role.delete_if_exists()
+
+
+@pytest.fixture
+def role_api(appliance, request, create_role):
+    group = _groups(request, appliance, create_role)
+    user, user_data = _users(request, appliance, group=group.description)
+
+    yield appliance.new_rest_api_instance(
+        entry_point=appliance.rest_api._entry_point,
+        auth=(user[0].userid, user_data[0]["password"]),
+    )
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1727948, 1731157], blockers=[1731157])
+def test_create_picture_with_role(appliance, request, role_api):
+    """
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Create role by
+                i. selecting every role individually.
+                ii. checking every role by clicking on `Everything`.
+            2. Create a group and user with the new role.
+        testSteps:
+            1. Send a POST request to create a picture and check the response.
+        expectedResults:
+            1. Picture must be created without any error.
+                Check for `Use of Action create is forbidden` in response.
+
+    Bugzilla:
+        1727948
+        1731157
+    """
+    picture = role_api.collections.pictures.action.create(
+        {
+            "extension": "png",
+            "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
+            "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        }
+    )[0]
+    assert_response(role_api)
+    assert picture.exists

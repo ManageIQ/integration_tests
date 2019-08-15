@@ -133,37 +133,6 @@ def test_edit_request_task():
 
 @test_requirements.rest
 @pytest.mark.manual()
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1727948])
-def test_create_picture_with_role():
-    """
-    Polarion:
-    assignee: pvala
-    caseimportance: high
-    casecomponent: Rest
-    initialEstimate: 1/4h
-    testSteps:
-        1. Navigate to add role page and select every role individually.
-        2. Create a group and user with the new role.
-        3. Send a POST request to create a picture and check the response.
-        4. Navigate to edit role page, uncheck `Everything` and recheck.
-        5. Send a POST request to create a picture and check the response.
-    expectedResults:
-        1.
-        2.
-        3. Picture must be created without any error.
-            Check for `Use of Action create is forbidden` in response.
-        4.
-        5. Picture must be created.
-
-    Bugzilla:
-        1727948
-    """
-    pass
-
-
-@test_requirements.rest
-@pytest.mark.manual()
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1700378])
 def test_notification_url_parallel_requests():
