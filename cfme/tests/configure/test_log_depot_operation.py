@@ -406,4 +406,4 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
     else:
         collect_logs.collect_current()
 
-    check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+    check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.sid)
