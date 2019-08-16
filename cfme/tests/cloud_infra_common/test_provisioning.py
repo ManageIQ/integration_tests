@@ -16,8 +16,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
-from cfme.utils.appliance import ViaREST
-from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -72,7 +70,7 @@ def instance_args(request, provider, provisioning, vm_name):
     yield vm_name, inst_args
 
 
-@pytest.fixture()
+@pytest.fixture
 def provisioned_instance(provider, instance_args, appliance):
     """ Checks provisioning status for instance """
     vm_name, inst_args = instance_args
@@ -662,17 +660,20 @@ def test_provision_with_tag(appliance, vm_name, tag, provider, request):
     assert tag in instance.get_tags(), 'Provisioned instance does not have expected tag'
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @test_requirements.multi_region
 @test_requirements.provision
-def test_provision_from_template_from_global_region(context):
+@pytest.mark.long_running
+def test_provision_from_template_from_global_region(setup_multi_region_cluster,
+                                                    multi_region_cluster,
+                                                    activate_global_appliance,
+                                                    setup_remote_provider,
+                                                    provisioned_instance):
     """
     Polarion:
         assignee: izapolsk
         caseimportance: medium
         casecomponent: Provisioning
-        initialEstimate: 1/3h
+        initialEstimate: 1/10h
     """
-    pass
+    assert provisioned_instance.exists_on_provider, "Instance wasn't provisioned successfully"
