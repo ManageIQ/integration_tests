@@ -195,7 +195,7 @@ class ApplianceDB(AppliancePlugin):
         interaction.answer(resc('Choose the backup output file destination: |1| '), '1')
         interaction.answer(resc('Enter the location to save the backup file to: '
                                 '|/tmp/evm_db.backup| '), database_path)
-        interaction.answer(resc('Press any key to continue.'), '', timeout=120)
+        interaction.answer(resc('Press any key to continue.'), '', timeout=240)
 
     def restore(self, database_path="/tmp/evm_db.backup"):
         """Restore VMDB database
