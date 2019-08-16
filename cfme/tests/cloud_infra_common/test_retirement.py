@@ -298,9 +298,43 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     assert retire_vm.is_retired is False
 
 
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('context', [ViaUI])
+@test_requirements.multi_region
+@test_requirements.retirement
+def test_vm_retirement_from_global_region(context,
+                                          setup_multi_region_cluster,
+                                          multi_region_cluster,
+                                          activate_global_appliance,
+                                          setup_remote_provider,
+                                          retire_vm):
+    """
+    retire a vm via CA
+
+    Polarion:
+        assignee: izapolsk
+        casecomponent: Provisioning
+        initialEstimate: 1/3h
+        testSteps:
+            1. Have a VM created in the provider in the Remote region
+               subscribed to Global.
+            2. Retire the VM using the Global appliance.
+        expectedResults:
+            1.
+            2. VM transitions to Retired state in the Global and Remote region.
+
+    """
+    retire_times = dict()
+    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
+    retire_vm.retire()
+    verify_retirement_state(retire_vm)
+    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
+    verify_retirement_date(retire_vm, expected_date=retire_times)
+
+
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@pytest.mark.parametrize('context', [ViaREST])
 @test_requirements.multi_region
 @test_requirements.retirement
 def test_vm_retirement_from_global_region(context):
