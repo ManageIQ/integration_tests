@@ -1,5 +1,3 @@
-from textwrap import dedent
-
 import attr
 import fauxfactory
 from cached_property import cached_property
@@ -228,47 +226,6 @@ class ApplianceDB(AppliancePlugin):
             message='appliance db ready', delay=20, num_sec=1200)
 
         self.logger.info('DB setup complete')
-
-    def loosen_pgssl(self, with_ssl=False):
-        """Loosens postgres connections"""
-
-        self.logger.info('Loosening postgres permissions')
-
-        # Init SSH client
-        client = self.appliance.ssh_client
-
-        # set root password
-        cmd = "psql -d vmdb_production -c \"alter user {} with password '{}'\"".format(
-            conf.credentials['database']['username'], conf.credentials['database']['password']
-        )
-        client.run_command(cmd)
-
-        pg_prefix = self.pg_prefix
-        # back up pg_hba.conf
-        client.run_command(
-            'mv {pg_prefix}/var/lib/pgsql/data/pg_hba.conf '
-            '{pg_prefix}/var/lib/pgsql/data/pg_hba.conf.sav'.format(pg_prefix=pg_prefix))
-
-        if with_ssl:
-            ssl = 'hostssl all all all cert map=sslmap'
-        else:
-            ssl = ''
-
-        # rewrite pg_hba.conf
-        write_pg_hba = dedent("""\
-        cat > {pg_prefix}/var/lib/pgsql/data/pg_hba.conf <<EOF
-        local all postgres,root trust
-        host all all 0.0.0.0/0 md5
-        hostssl all all all md5
-        {ssl}
-        EOF
-        """.format(ssl=ssl, pg_prefix=pg_prefix))
-        client.run_command(write_pg_hba)
-        client.run_command("chown postgres:postgres "
-            "{pg_prefix}/var/lib/pgsql/data/pg_hba.conf".format(pg_prefix=pg_prefix))
-
-        # restart postgres
-        return self.appliance.db_service.restart()
 
     def _run_cmd_show_output(self, cmd):
         """

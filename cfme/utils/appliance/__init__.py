@@ -627,7 +627,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
             region: Number to assign to region (default ``0``)
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
-            loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
             on_openstack: If appliance is running on Openstack provider (default ``False``)
@@ -639,7 +638,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
 
         log_callback("Configuring appliance {}".format(self.hostname))
-        loosen_pgssl = kwargs.pop('loosen_pgssl', True)
         fix_ntp_clock = kwargs.pop('fix_ntp_clock', True)
         region = kwargs.pop('region', 0)
         key_address = kwargs.pop('key_address', None)
@@ -690,9 +688,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             # Some conditionally ran items require the evm service be
             # restarted:
             restart_evm = False
-            if loosen_pgssl:
-                self.db.loosen_pgssl()
-                restart_evm = True
             if self.version < '5.11':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
@@ -2714,7 +2709,6 @@ class Appliance(IPAppliance):
             name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
             region: Number to assign to region (default ``0``)
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
-            loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
             on_openstack: If appliance is running on Openstack provider (default ``False``)

@@ -214,7 +214,7 @@ def test_create_appliance_on_scvmm_using_the_vhd_image(scvmm_appliance):
     # use appliance to get the stream so this test only runs once per test run
     # this will always use the downstream stable build, not the version of the appliance
     # configure the appliance
-    scvmm_appliance.configure(loosen_psql=False, fix_ntp_clock=False)
+    scvmm_appliance.configure(fix_ntp_clock=False)
 
 
 @pytest.mark.tier(1)
