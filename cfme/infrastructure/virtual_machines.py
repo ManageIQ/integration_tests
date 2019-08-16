@@ -1074,8 +1074,13 @@ class InfraVm(VM):
             wait_for(self.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         provisioning = self.provider.data['provisioning']
         template_name = provisioning['template']
-        template = self.appliance.rest_api.collections.templates.get(name=template_name,
-                                                                     ems_id=self.provider.id)
+        try:
+            template = self.appliance.rest_api.collections.templates.get(name=template_name,
+                                                                         ems_id=self.provider.id)
+        except ValueError:
+            template = self.appliance.rest_api.collections.templates.get(
+                name=template_name, storage_id=self.provider.id)
+
         host_id = self.appliance.rest_api.collections.hosts.get(name=provisioning['host']).id
         ds_id = self.appliance.rest_api.collections.data_stores.get(
             name=provisioning['datastore']).id
