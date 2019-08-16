@@ -674,7 +674,7 @@ def test_host_view_network_info():
 @test_requirements.infra_hosts
 def test_host_view_storage_adapter():
     """
-    Testing the viewing of storage adapters..
+    Testing the viewing of storage adapters.
 
 
     Polarion:
@@ -697,7 +697,7 @@ def test_host_view_storage_adapter():
 @test_requirements.infra_hosts
 def test_host_viewing():
     """
-    Testing the viewing of host info..
+    Testing the viewing of host info.
 
 
     Polarion:
@@ -710,8 +710,7 @@ def test_host_viewing():
             2. Click on a host quadicon.
         expectedResults:
             1. Hosts view is displayed.
-            2. The summary view is displayed for the host.
-            3. The hosts summary view is displayed containing taskbar, summary panel,
+            2. The hosts summary view is displayed containing taskbar, summary panel,
                accordion, and print/export button.
                - Items in the accordion sections are displayed in view panel when clicked.
                - Print/export view is displayed when print/export button is clicked.
@@ -747,6 +746,7 @@ def test_host_tagging():
             4.
             5. "Tag edits successfully saved." message is displayed.
             6. Tags added in step 4 are displayed in Smart Management section of hosts summary.
+            7. Expected results are the same as steps 1 thru 6 for multiple hosts.
     """
     pass
 
@@ -763,7 +763,7 @@ def test_host_drift_analysis():
         caseimportance: low
         initialEstimate: 1/4h
         setup:
-            1. At least 2 Smart State Analysis(SSA) tasks must have ben executed on the host
+            1. At least 2 Smart State Analysis(SSA) tasks must have been executed on the host
                used below.
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
@@ -813,7 +813,7 @@ def test_host_drift_reports():
         caseimportance: low
         initialEstimate: 1/4h
         setup:
-            1. At least 2 Smart State Analysis(SSA) tasks must have ben executed on the host
+            1. At least 2 Smart State Analysis(SSA) tasks must have been executed on the host
                used below.
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
@@ -832,6 +832,6 @@ def test_host_drift_reports():
             5. Drift Analysis view is displayed.
             6. Drift report is downloaded in text format.
             7. Drift report is downloaded in CSV format.
-            6. "Print" window/tab is displayed for drift report.
+            8. "Print" window/tab is displayed for drift report.
     """
     pass
