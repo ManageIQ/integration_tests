@@ -30,6 +30,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import Input
 from widgetastic_manageiq import ScriptBox
 from widgetastic_manageiq import SummaryFormItem
@@ -253,6 +254,12 @@ class MethodAddView(AutomateExplorerView):
     verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
     playbook_input_parameters = PlaybookInputParameters()
 
+    # Add embedded method
+    # TODO(ghubale@redhat.com): Make use of this table once this BZ(1718495) got fixed
+    embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
+    embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
+                                 tree_id="treeview-entrypoint_selection")
+
     add_button = Button('Add')
     cancel_button = Button('Cancel')
 
@@ -291,6 +298,12 @@ class MethodEditView(AutomateExplorerView):
     verbosity = PlaybookBootstrapSelect('provisioning_verbosity')
     playbook_input_parameters = PlaybookInputParameters()
 
+    # Edit embedded method
+    # TODO(ghubale@redhat.com): Make use of this table once this BZ(1718495) got fixed
+    embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
+    embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
+                                 tree_id="treeview-entrypoint_selection")
+
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
@@ -321,7 +334,8 @@ class Method(BaseEntity, Copiable):
     def __init__(self, collection, name=None, display_name=None, location='inline', script=None,
                  data=None, repository=None, playbook=None, machine_credential=None, hosts=None,
                  max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
-                 playbook_input_parameters=None, cancel=False, validate=True, inputs=None):
+                 playbook_input_parameters=None, cancel=False, validate=True, inputs=None,
+                 embedded_method=None):
         super(Method, self).__init__(collection)
 
         self.name = name
@@ -340,6 +354,7 @@ class Method(BaseEntity, Copiable):
         self.verbosity = verbosity
         self.playbook_input_parameters = playbook_input_parameters
         self.inputs = inputs
+        self.embedded_method = embedded_method
 
     __repr__ = object.__repr__
 
@@ -438,7 +453,8 @@ class MethodCollection(BaseCollection):
             self, name=None, display_name=None, location='inline', script=None, data=None,
             cancel=False, validate=True, repository=None, playbook=None, machine_credential=None,
             hosts=None, max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
-            playbook_input_parameters=None, inputs=None):
+            playbook_input_parameters=None, inputs=None, embedded_method=None):
+
         add_page = navigate_to(self, 'Add')
 
         if self.browser.product_version < '5.11':
@@ -455,6 +471,7 @@ class MethodCollection(BaseCollection):
                 'script': script,
                 'data': data,
                 'inputs': inputs,
+                'embedded_method': embedded_method
             })
         if location == 'playbook':
             add_page.fill({

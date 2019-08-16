@@ -10,6 +10,7 @@ from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import FailPatternMatchError
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -563,3 +564,89 @@ def test_automate_state_method(klass):
         execute_methods=True,
     )
     assert result.validate()
+
+
+@pytest.mark.parametrize(
+    ("notify_level", "log_level"),
+    [(":info", "info"), (":warning", "warning"), (":error", "error"), (":success", "success")],
+    ids=["info", "warning", "error", "success"],
+)
+def test_method_for_log_and_notify(request, klass, notify_level, log_level):
+    """
+    PR:
+        https://github.com/ManageIQ/manageiq-content/pull/423
+        https://github.com/ManageIQ/manageiq-content/pull/362
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        startsin: 5.9
+        casecomponent: Automate
+        testSteps:
+            1. Create a new Automate Method
+            2. In the Automate Method screen embed ManageIQ/System/CommonMethods/Utils/log_object
+               you can pick this method from the UI tree picker
+            3. In your method add a line akin to
+               ManageIQ::Automate::System::CommonMethods::Utils::LogObject.log_and_notify
+               (:info, "Hello Testing Log & Notify", $evm.root['vm'], $evm)
+            4. Check the logs and In your UI session you should see a notification
+    """
+    schema_name = fauxfactory.gen_alpha()
+    # Adding schema for executing method
+    klass.schema.add_fields({'name': schema_name, 'type': 'Method', 'data_type': 'String'})
+    request.addfinalizer(lambda: klass.schema.delete_field(schema_name))
+
+    # Adding automate method with embedded method
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        embedded_method=("Datastore", "ManageIQ (Locked)", "System", "CommonMethods", "Utils",
+                         "log_object"),
+        script='''
+               \nManageIQ::Automate::System::CommonMethods::Utils::LogObject.log_ar_objects()
+               \nManageIQ::Automate::System::CommonMethods::Utils::LogObject.current()
+               \nManageIQ::Automate::System::CommonMethods::Utils::LogObject.log_and_notify({},
+                              "Hello Testing Log & Notify", $evm.root['vm'], $evm)
+               '''.format(notify_level)
+    )
+    request.addfinalizer(method.delete_if_exists)
+
+    # Adding instance to call automate method
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={schema_name: {'value': method.name}}
+    )
+    request.addfinalizer(instance.delete_if_exists)
+
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[
+            ".*Validating Notification type: automate_user_{}.*".format(log_level),
+            ".*Calling Create Notification type: automate_user_{}.*".format(log_level),
+            ".*Hello Testing Log & Notify.*"
+        ],
+        failure_patterns=[".*ERROR.*"]
+    )
+    result.start_monitoring()
+
+    # Executing automate method using simulation
+    simulate(
+        appliance=klass.appliance,
+        message="create",
+        request="Call_Instance",
+        execute_methods=True,
+        attributes_values={
+            "namespace": klass.namespace.name,
+            "class": klass.name,
+            "instance": instance.name,
+        }
+    )
+    if log_level == "error":
+        with pytest.raises(FailPatternMatchError,
+                           match="Pattern '.*ERROR.*': Expected failure pattern found in log."):
+            result.validate(wait="60s")
+    else:
+        result.validate(wait="60s")
