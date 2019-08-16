@@ -12,6 +12,9 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
+    pytest.mark.parametrize('workflow_type', ['multiple_job_workflow', 'inventory_sync_workflow'],
+        ids=['multiple_job_workflow', 'inventory_sync_workflow'],
+        scope='module'),
     pytest.mark.ignore_stream('upstream')
 ]
 
@@ -65,7 +68,8 @@ def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog)
 
 
 @pytest.mark.meta(automates=[BZ(1719051)])
-def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem, request):
+def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem, request,
+        workflow_type):
     """Tests ordering of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
@@ -91,7 +95,7 @@ def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem,
     )
 
 
-def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, request):
+def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, request, workflow_type):
     """Tests retiring of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
