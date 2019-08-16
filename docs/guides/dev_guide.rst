@@ -407,6 +407,10 @@ conftest.py. If they're generic/useful enough consider putting them into
 one of the `fixtures/` directory for use in `cfme_tests` or the `plugin/`
 directory for use in both projects.
 
+Bugzilla Guide
+--------------
+See the :doc:`./bugzilla`
+
 This Document
 -------------
 

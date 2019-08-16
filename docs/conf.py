@@ -47,6 +47,7 @@ else:
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.viewcode",
     "cfme.fixtures.nelson",
     "cfme.utils.apidoc",
