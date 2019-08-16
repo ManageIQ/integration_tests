@@ -11,8 +11,6 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import providers
-from cfme.utils.appliance import ViaREST
-from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.generators import random_vm_name
@@ -299,11 +297,10 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaUI])
+@pytest.mark.long_running
 @test_requirements.multi_region
 @test_requirements.retirement
-def test_vm_retirement_from_global_region(context,
-                                          setup_multi_region_cluster,
+def test_vm_retirement_from_global_region(setup_multi_region_cluster,
                                           multi_region_cluster,
                                           activate_global_appliance,
                                           setup_remote_provider,
@@ -334,10 +331,10 @@ def test_vm_retirement_from_global_region(context,
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaREST])
+@pytest.mark.long_running
 @test_requirements.multi_region
 @test_requirements.retirement
-def test_vm_retirement_from_global_region(context):
+def test_vm_retirement_from_global_region_via_rest():
     """
     retire a vm via CA
 
