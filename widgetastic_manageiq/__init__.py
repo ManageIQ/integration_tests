@@ -4,6 +4,7 @@ import json
 import math
 import os
 import re
+import time
 from collections import namedtuple
 from datetime import date
 from datetime import datetime
@@ -5200,7 +5201,6 @@ class MigrationPlanRequestDetailsList(Widget):
             el = self.browser.element(self.ITEM_ADDITIONAL_INFO_POPUP_LOCATOR)
             # While reading the pop up for multiple VM's there has to be a gap of 1s.
             # There is no locator that we can wait for here so time.sleep
-            import time
             time.sleep(1)
             return {
                 "Status": self.browser.text("./h3", parent=el),
