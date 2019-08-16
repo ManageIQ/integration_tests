@@ -59,14 +59,21 @@ def setup_obj(appliance, button_group):
 @pytest.fixture(scope="module")
 def method(custom_instance, button_group):
     _, obj_type = button_group
-    obj_type = f"miq_{obj_type.lower()}" if obj_type == "GROUP" else obj_type.lower()
+
+    # Note: More information available about method creation
+    # https://github.com/ManageIQ/manageiq-ui-classic/pull/6040#issue-307723899
+    target_obj_map = {
+        "USER": "$evm.root['user']",
+        "GROUP": "$evm.root['miq_group']",
+        "TENANT": "$evm.vmdb($evm.root['vmdb_object_type']).find_by(:id=>$evm.root['tenant_id'])"
+    }
 
     ruby_code = dedent(
         f"""
-        # add external url to open
-        vm = $evm.root['{obj_type}']
+        # open external url with target object
+        target_obj = {target_obj_map[obj_type]}
         $evm.log(:info, "Opening url")
-        vm.external_url = "https://example.com"
+        target_obj.external_url = "https://example.com"
         """
     )
     yield custom_instance(ruby_code)
@@ -333,6 +340,10 @@ def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_
 
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(automates=[1550002])
+@pytest.mark.uncollectif(
+    lambda button_group: "TENANT" in button_group,
+    reason="external_url not supported by tenant object BZ-1550002"
+)
 def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 
@@ -364,8 +375,8 @@ def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method
     group, obj_type = button_group
 
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(start="btn", separator="_"),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         open_url=True,
         system="Request",
         request=method.name,
@@ -376,24 +387,21 @@ def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method
     custom_button_group = Dropdown(view, group.hover)
     assert custom_button_group.has_item(button.text)
 
-    # TODO: Move windows handling functionality to browser
-    initial_count = len(view.browser.selenium.window_handles)
-    main_window = view.browser.selenium.current_window_handle
+    initial_count = len(view.browser.window_handles)
+    main_window = view.browser.current_window_handle
     custom_button_group.item_select(button.text)
 
     wait_for(
-        lambda: len(view.browser.selenium.window_handles) > initial_count,
-        timeout=120,
+        lambda: len(view.browser.window_handles) > initial_count,
+        timeout=30,
         message="Check for window open",
     )
-    open_url_window = set(view.browser.selenium.window_handles) - {main_window}
-
-    view.browser.selenium.switch_to_window(open_url_window.pop())
+    open_url_window = (set(view.browser.window_handles) - {main_window}).pop()
+    view.browser.switch_to_window(open_url_window)
 
     @request.addfinalizer
     def _reset_window():
-        if view.browser.selenium.current_window_handle != main_window:
-            view.browser.selenium.close()
-            view.browser.selenium.switch_to_window(main_window)
+        view.browser.close_window(open_url_window)
+        view.browser.switch_to_window(main_window)
 
     assert "example.com" in view.browser.url
