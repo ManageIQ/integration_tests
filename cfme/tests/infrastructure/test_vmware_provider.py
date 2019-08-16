@@ -272,7 +272,8 @@ def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
             5.Dropdown of ISO files is not empty for CD/DVD Drive
     """
     datastore_collection = appliance.collections.datastores
-    ds = [ds.name for ds in provider.data['datastores'] if ds.type == 'iso']
+    ds = [ds.name for ds in provider.data['datastores'] if ds.type == 'iso' and
+        ds.get('tag') == 'ssa']
     try:
         iso_ds = datastore_collection.instantiate(name=ds[0], provider=provider)
     except IndexError:
