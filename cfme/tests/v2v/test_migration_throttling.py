@@ -82,8 +82,6 @@ def test_migration_throttling(
     for vm in vms:
         try:
             popup_text = request_details_list.read_additional_info_popup(vm)
-            # open__additional_info_popup function also closes opened popup in our case
-            request_details_list.open_additional_info_popup(vm)
             if popup_text['Conversion Host'] in hosts_dict:
                 conversion_host_popup.append(popup_text['Conversion Host'])
         except NoSuchElementException:

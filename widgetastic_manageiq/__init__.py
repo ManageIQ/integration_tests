@@ -5201,7 +5201,7 @@ class MigrationPlanRequestDetailsList(Widget):
             el = self.browser.element(self.ITEM_ADDITIONAL_INFO_POPUP_LOCATOR)
             # While reading the pop up for multiple VM's there has to be a gap of 1s.
             # There is no locator that we can wait for here so time.sleep
-            time.sleep(1)
+            time.sleep(3)
             return {
                 "Status": self.browser.text("./h3", parent=el),
                 "Started": (self.browser.text("./div[2]/div/div[1]", parent=el)).split(": ")[1],
