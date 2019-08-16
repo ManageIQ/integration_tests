@@ -146,11 +146,10 @@ started as quickly as possible:
 
 * ``cfme_tests`` also expects that the appliance it is running against is configured. Without it it
   won't work at all! By configured, we mean the database is set up and seeded (therefore UI
-  running), database permissions loosened so ``cfme_tests`` can access it and a couple of other
-  fixes. Check out :py:meth:`utils.appliance.IPAppliance.configure`, and subsequent method calls.
-  The most common error is that a person tries to execute ``cfme_tests`` code against an appliance
-  that does not have the DB permissions loosened. The second place is SSH unavailable, meaning that
-  the appliance is NAT-ed
+  running) and a couple of other fixes. Check out :py:meth:`utils.appliance.IPAppliance.configure`,
+  and subsequent method calls.  The most common error is that a person tries to execute ``cfme_tests``
+  code against an appliance that does not have the DB permissions loosened. The second place is SSH
+  unavailable, meaning that the appliance is NAT-ed
 
   * Framework contains code that can be used to configure the appliance exactly as ``cfme_tests``
     desires. There are two ways of using it:
