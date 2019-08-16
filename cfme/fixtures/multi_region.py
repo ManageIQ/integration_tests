@@ -4,6 +4,11 @@ import pytest
 
 @attr.s
 class ApplianceCluster(object):
+    """
+    Holder for Multi-Region appliances setup.
+    Appliance from global region is stored in global_appliance.
+    Whereas remote region appliances are stored in remote_appliances property.
+    """
     global_appliance = attr.ib(default=None)
     remote_appliances = attr.ib(default=[])
 
@@ -36,7 +41,7 @@ def setup_remote_appliances(multi_region_cluster, setup_global_appliance, app_cr
     remote_apps = multi_region_cluster.remote_appliances
     gip = multi_region_cluster.global_appliance.hostname
     for num, app in enumerate(remote_apps):
-        region_n = str(num + 1 * 10)
+        region_n = str((num + 1) * 10)
         app_params = dict(region=region_n, dbhostname='localhost',
                           username=app_creds_modscope['username'],
                           password=app_creds_modscope['password'],
