@@ -11,6 +11,8 @@ import io
 
 import click
 import yaycl_crypt
+from dynaconf import settings
+from dynaconf.loaders import vault_loader
 
 from cfme.scripting import link_config
 from cfme.utils import conf
@@ -99,6 +101,25 @@ def decrypt(conf_name, delete, skip):
             raise
 
     print('{} conf decrypted'.format(conf_name))
+
+
+@main.command("write", help="Write a username and password into vault")
+@click.argument("env")
+@click.argument("username")
+@click.argument("password")
+def write(env, username, password):
+    with settings.using_env(env):
+        data = {"username": username, "password": password}
+        vault_loader.write(settings, data)
+        print(f"Username '{username}' and password written to '{env}' successfully")
+
+
+@main.command("read", help="Write a username and password into vault")
+@click.argument("env")
+def read(env):
+    with settings.using_env(env):
+        d = settings.as_dict()
+        print(d)
 
 
 if __name__ == "__main__":

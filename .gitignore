@@ -95,3 +95,6 @@ geckodriver.log
 
 #vscode workspace config
 .vscode/
+
+# Ignore dynaconf .env files
+.env
