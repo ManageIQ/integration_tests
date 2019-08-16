@@ -78,3 +78,18 @@ def activate_global_appliance(multi_region_cluster):
     global_appliance = multi_region_cluster.global_appliance
     with global_appliance:
         yield
+
+
+@pytest.fixture(scope='function')
+@pytest.mark.long_running
+def setup_and_activate_multi_region_cluster(setup_multi_region_cluster,
+                                            setup_remote_provider,
+                                            multi_region_cluster,
+                                            activate_global_appliance):
+    return multi_region_cluster
+
+
+@pytest.fixture(scope='function', params=['regular', 'multi-region'])
+def env(request):
+    if request.param == 'multi-region':
+        return request.getfixturevalue('setup_and_activate_multi_region_cluster')

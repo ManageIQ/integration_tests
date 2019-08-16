@@ -665,9 +665,8 @@ def test_provision_with_tag(appliance, vm_name, tag, provider, request):
 @test_requirements.provision
 @pytest.mark.long_running
 def test_provision_from_template_from_global_region(setup_multi_region_cluster,
-                                                    multi_region_cluster,
-                                                    activate_global_appliance,
                                                     setup_remote_provider,
+                                                    activate_global_appliance,
                                                     provisioned_instance):
     """
     Polarion:
