@@ -188,6 +188,8 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     wait_for(is_provider_replicated, func_args=[app, app2], timeout=30)
 
 
+# There inplace upgrade to 5.11 is not supported.
+@pytest.mark.ignore_stream("5.11")
 @pytest.mark.tier(2)
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
     """Tests appliance upgrade between streams
