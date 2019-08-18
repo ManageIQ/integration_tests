@@ -4,6 +4,7 @@ import pytest
 from wrapanapi import VmState
 
 from cfme import test_requirements
+#from cfme.markers.override import override
 from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
@@ -196,7 +197,7 @@ def wait_for_instance_state(soft_assert, instance, state):
     )
 
 
-def test_quadicon_terminate_cancel(env, provider, testing_instance, ensure_vm_running, soft_assert):
+def test_quadicon_terminate_cancel(provider, env, testing_instance, ensure_vm_running, soft_assert):
     """ Tests terminate cancel
 
     Polarion:
