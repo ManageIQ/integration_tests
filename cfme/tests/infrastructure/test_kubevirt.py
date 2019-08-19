@@ -50,7 +50,7 @@ def test_k6t_provider_crud(provider):
     with update(provider):
         provider.name = fauxfactory.gen_alphanumeric() + '_updated'
 
-    provider.delete(cancel=False)
+    provider.delete()
     provider.wait_for_delete()
 
 

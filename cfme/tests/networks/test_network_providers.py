@@ -84,5 +84,5 @@ def test_network_provider_crud(provider, has_no_networks_providers):
     with update(provider):
         provider.name = old_name  # old name
 
-    provider.delete(cancel=False)
+    provider.delete()
     provider.wait_for_delete()

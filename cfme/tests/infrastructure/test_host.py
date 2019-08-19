@@ -208,7 +208,7 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
         casecomponent: Tagging
     """
     host_on_provider = provider.hosts.all()[0]
-    provider.delete(cancel=False)
+    provider.delete()
     provider.wait_for_delete()
     all_hosts = appliance.collections.hosts.all()
     # need to find the host without the link to the provider,

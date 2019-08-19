@@ -292,7 +292,7 @@ def test_infra_provider_crud(provider):
     with update(provider):
         provider.name = old_name  # old name
 
-    provider.delete(cancel=False)
+    provider.delete()
     provider.wait_for_delete()
 
 
@@ -330,7 +330,7 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
     prov.create()
     prov.validate_stats(ui=True)
 
-    prov.delete(cancel=False)
+    prov.delete()
     prov.wait_for_delete()
 
 

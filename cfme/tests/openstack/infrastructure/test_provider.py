@@ -50,7 +50,7 @@ def test_delete_provider(provider):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    provider.delete(cancel=False)
+    provider.delete()
     provider.wait_for_delete()
     view = navigate_to(provider, 'All')
     assert provider.name not in [item.name for item in view.entities.get_all(surf_pages=True)]

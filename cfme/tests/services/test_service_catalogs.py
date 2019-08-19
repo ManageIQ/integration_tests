@@ -181,7 +181,7 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
     request_description = catalog_item.name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
-    provider.delete(cancel=False)
+    provider.delete()
     provider.wait_for_delete()
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.status.text == 'Error'
