@@ -195,6 +195,7 @@ class BaseVM(
     @property
     def all_ip_addresses(self):
         """Fetches all IP Addresses of a VM, pingable or otherwise."""
+        # TODO: Implement sentaku for this property with ViaMGMT impl
         view = navigate_to(self, "Details", use_resetter=False)
         try:
             return view.entities.summary('Properties').get_text_of("IP Address")
