@@ -189,7 +189,8 @@ def original_class(domain):
         name="System"
     ).classes.instantiate(name="Request").copy_to(domain.name)
     klass = domain.namespaces.instantiate(name="System").classes.instantiate(name="Request")
-    return klass
+    yield klass
+    klass.delete_if_exists()
 
 
 @pytest.mark.tier(1)
@@ -216,6 +217,12 @@ def test_service_retirement_from_automate_method(request, generic_catalog_item, 
                > request = $evm.execute(:create_retire_request, service)
                > $evm.log(:info, "Create request for create_retire_request #{request}")
             5. Execute this method using simulation
+        expectedResults:
+            1. Service provision request should be provisioned successfully
+            2.
+            3.
+            4.
+            5. Service should be retired successfully
     """
     # Ordering catalog item and deleting request once service has been reached to 'Finished' state
     service_request = generic_catalog_item.appliance.rest_api.collections.service_templates.get(
@@ -233,20 +240,23 @@ def test_service_retirement_from_automate_method(request, generic_catalog_item, 
         "$evm.log(:info, 'Create request for create_retire_request #{request}')"
     )
 
-    # Adding method - send_email for sending mails
+    # Adding automate method
     method = original_class.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         location='inline',
-        script=script)
+        script=script
+    )
+    request.addfinalizer(method.delete_if_exists)
 
-    # Adding instance to call automate method - send_email
+    # Adding instance to call automate method
     instance = original_class.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
         fields={'meth5': {'value': method.name}}
     )
+    request.addfinalizer(instance.delete_if_exists)
 
     with LogValidator(
             "/var/www/miq/vmdb/log/automation.log",
