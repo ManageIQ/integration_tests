@@ -55,9 +55,8 @@ def main():
     }
 
     def is_ssh_running(address):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = s.connect_ex((address, 22))
-        return result == 0
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex((address, 22)) == 0
 
     def generate_key(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
