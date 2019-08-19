@@ -93,3 +93,63 @@ def test_dialog_text_area_element_regex_validation():
             3. Regex validation should work
     """
     pass
+
+
+@pytest.mark.meta(coverage=[1720245])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_dialog_regex_validation_button():
+    """
+    Bugzilla:
+        1720245
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.11
+        testSteps:
+            1. Add dialog with Regular Expression - "^[0-9]*$"
+            2. Create catalog and catalog item
+            3. Navigate to Order page of the service
+            4. Type "a" and it will show a message that does not satisfy the regex.
+            5. Clear the field
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Submit button should have become active when the validate field cleared
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1721814])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_regex_dialog_validation_error():
+    """
+    Bugzilla:
+        1721814
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.11
+        testSteps:
+            1. Create a dialog. Set regex_validation in text box ->  ^[0-9]*$
+            2. Save the dialog
+            3. Edit the dialog and disable the validation button of text box
+            4. Use the dialog in a catalog
+            5. Navigate to catalog order page
+            6. Input anything except the format " ^[0-9]*$ "
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. It shouldn't gives the validation error
+    """
+    pass

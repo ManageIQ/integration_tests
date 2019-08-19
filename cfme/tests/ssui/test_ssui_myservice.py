@@ -247,6 +247,7 @@ def test_suspend_vm_service_details(context):
 
 @pytest.mark.meta(coverage=[1677744])
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
 def test_no_error_while_fetching_the_service():
     """
@@ -265,5 +266,65 @@ def test_no_error_while_fetching_the_service():
         expectedResults:
             1.
             2. In SUI click on provisioned service
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1628520])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_retire_owned_service():
+    """
+
+    Bugzilla:
+        1628520
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.11
+        casecomponent: SelfServiceUI
+        initialEstimate: 1/6h
+        testSteps:
+            1. Create a catalog item as User
+            2. Provision service in regular UI with user
+            3. Login to Service UI as User
+            4. Try to retire the service
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Service should retire
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1695804])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_service_dialog_check_on_ssui():
+    """
+    Bugzilla:
+        1695804
+    Polarion:
+        assignee: nansari
+        startsin: 5.11
+        casecomponent: SelfServiceUI
+        initialEstimate: 1/6h
+        testSteps:
+            1. Import datastore and import dialog
+            2. Add catalog item with above dialog
+            3. Navigate to order page of service
+            4. Order the service
+            5. Login into SSUI Portal
+            6. Go MyService and click on provisioned service
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Automation code shouldn't load when opening a service
     """
     pass

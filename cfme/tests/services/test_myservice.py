@@ -186,6 +186,7 @@ def test_retire_on_date_for_multiple_service():
 
 @pytest.mark.meta(coverage=[1678123])
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
 def test_service_state():
     """
@@ -206,5 +207,59 @@ def test_service_state():
             2.
             3.
             4. Service State should be Provisioned or Failed
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1727443])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_service_load():
+    """
+    Bugzilla:
+        1727443
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog and catalog item
+            2. Order the catalog item
+            3. Make 1k copy of above service
+            4. Go to My services
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Tree should load faster when having 1000+ services
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1722194])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_retire_multiple_services():
+    """
+    Bugzilla:
+        1722194
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog and create two catalog item
+            2. Order the catalog items
+            3. Go to My services
+            4. Retire the both services
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Services should retire and vms as well
     """
     pass
