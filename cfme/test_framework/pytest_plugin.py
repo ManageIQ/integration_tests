@@ -70,7 +70,6 @@ pytest_plugins = (
     'cfme.fixtures.maximized',
     'cfme.fixtures.merkyl',
     'cfme.fixtures.nelson',
-    'cfme.fixtures.node_annotate',
     'cfme.fixtures.page_screenshots',
     'cfme.fixtures.perf',
     'cfme.fixtures.provider',

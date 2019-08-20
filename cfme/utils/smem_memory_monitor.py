@@ -246,7 +246,7 @@ class SmemMemoryMonitor(Thread):
 
     def get_pids_memory(self):
         result = self.ssh_client.run_command(
-            'smem -c \'pid rss pss uss vss swap name command\' | sed 1d')
+            "/usr/bin/python2.7 /usr/bin/smem -c 'pid rss pss uss vss swap name command' | sed 1d")
         pids_memory = result.output.strip().split('\n')
         memory_by_pid = {}
         for line in pids_memory:
