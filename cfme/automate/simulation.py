@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 
 def simulate(
@@ -46,6 +47,11 @@ def simulate(
         'avp': attributes_values,
     })
     view.submit_button.click()
+    wait_for(
+        lambda: view.flash.is_displayed,
+        delay=10,
+        timeout=120
+    )
     view.flash.assert_no_error()
     view.flash.assert_message('Automation Simulation has been run')
     # TODO: After fixing the tree

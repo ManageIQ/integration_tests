@@ -11,6 +11,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import ViaUI
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import FailPatternMatchError
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -49,7 +50,7 @@ def test_method_crud(klass):
         script='$evm.log(:info, ":P")',
     )
     view = method.create_view(ClassDetailsView)
-    view.flash.assert_message('Automate Method "{}" was added'.format(method.name))
+    view.flash.assert_message(f'Automate Method "{method.name}" was added')
     assert method.exists
     origname = method.name
     with update(method):

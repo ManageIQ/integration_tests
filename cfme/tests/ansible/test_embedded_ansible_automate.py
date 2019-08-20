@@ -9,7 +9,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
@@ -115,13 +114,13 @@ def alert_profile(appliance, alert, full_template_vm_modscope):
     _alert_profile.delete_if_exists()
 
 
-@pytest.mark.meta(automates=[BZ(1729999)])
-@pytest.mark.meta(blockers=[BZ(1729999, forced_streams=['5.10'])])
+@pytest.mark.meta(automates=[1729999])
 def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repository, klass):
     """CRUD test for ansible playbook method.
 
     Bugzilla:
         1729999
+        1740769
 
     Polarion:
         assignee: ghubale
