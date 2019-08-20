@@ -2,6 +2,7 @@
 """This module contains tests that test the universally applicable canned methods in Automate."""
 from datetime import date
 from datetime import timedelta
+from textwrap import dedent
 
 import fauxfactory
 import pytest
@@ -182,21 +183,10 @@ def test_miq_password_decrypt(klass):
     assert result.validate()
 
 
-@pytest.fixture(scope='module')
-def original_class(domain):
-    # Take the 'Request' class and copy it for own purpose.
-    domain.parent.instantiate(name="ManageIQ").namespaces.instantiate(
-        name="System"
-    ).classes.instantiate(name="Request").copy_to(domain.name)
-    klass = domain.namespaces.instantiate(name="System").classes.instantiate(name="Request")
-    yield klass
-    klass.delete_if_exists()
-
-
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1700524])
 @pytest.mark.ignore_stream("5.10")
-def test_service_retirement_from_automate_method(request, generic_catalog_item, original_class):
+def test_service_retirement_from_automate_method(request, generic_catalog_item, custom_instance):
     """
     Bugzilla:
         1700524
@@ -233,38 +223,22 @@ def test_service_retirement_from_automate_method(request, generic_catalog_item, 
              timeout=180, delay=10)
 
     # Ruby code to execute create_retire_request
-    script = (
-        "service = $evm.root['service']\n"
-        "$evm.log(:info, 'create_retire_request for service #{service}')\n"
-        "request = $evm.execute(:create_retire_request, service)\n"
-        "$evm.log(:info, 'Create request for create_retire_request #{request}')"
+    script = dedent(
+        """
+        service = $evm.root['service']
+        $evm.log(:info, 'create_retire_request for service #{service}')
+        request = $evm.execute(:create_retire_request, service)
+        $evm.log(:info, 'Create request for create_retire_request #{request}')
+        """
     )
-
-    # Adding automate method
-    method = original_class.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
-        location='inline',
-        script=script
-    )
-    request.addfinalizer(method.delete_if_exists)
-
-    # Adding instance to call automate method
-    instance = original_class.instances.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
-        fields={'meth5': {'value': method.name}}
-    )
-    request.addfinalizer(instance.delete_if_exists)
-
+    instance = custom_instance(ruby_code=script)
     with LogValidator(
             "/var/www/miq/vmdb/log/automation.log",
             matched_patterns=['.*Create request for create_retire_request.*']).waiting(timeout=120):
 
         # Executing automate method
         simulate(
-            appliance=original_class.appliance,
+            appliance=generic_catalog_item.appliance,
             target_type="Service",
             target_object=f"{generic_catalog_item.name}",
             message="create",
