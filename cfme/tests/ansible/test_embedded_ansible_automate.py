@@ -5,15 +5,17 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
+from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
-
 
 pytestmark = [
     pytest.mark.long_running,
@@ -306,3 +308,112 @@ def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, re
             timeout=60)
     except TimedOutError:
         pytest.fail("Ansible playbook method hasn't been executed.")
+
+
+@pytest.fixture(scope='module')
+def setup_ansible_repository(appliance, wait_for_ansible):
+    repositories = appliance.collections.ansible_repositories
+    repository = repositories.create(
+        name="billy",
+        url="https://github.com/billfitzgerald0120/ansible_playbooks",
+        description=fauxfactory.gen_alpha()
+    )
+    view = navigate_to(repository, "Details")
+    wait_for(
+        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+        timeout=60,
+        fail_func=view.toolbar.refresh.click
+    )
+    yield
+    repository.delete_if_exists()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1678132])
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize(
+    ("import_data", "item"),
+    ([DatastoreImport("automate_domain_bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
+                      None, "using CFME creds"), "CatalogItemInitialization_jira23"],
+     [DatastoreImport("automate_domain_bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
+                      None, "using CFME creds"), "CatalogItemInitialization_jira24"]),
+    ids=["method_to_playbook", "playbook_to_playbook"]
+)
+def test_variable_pass(request, appliance, setup_ansible_repository, import_datastore, import_data,
+                       item, dialog, catalog):
+    """
+    Bugzilla:
+        1678132
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        startsin: 5.11
+        setup:
+            1. Enable embedded ansible role
+        testSteps:
+            1. Add Ansible repo called billy -
+               https://github.com/ManageIQ/integration_tests_playbooks
+            2. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip ) to downloads
+               directory(Zip file with description - 'Automate domain' is attached with BZ(1678135)
+            3. Go to Automation/Automate Import/Export and import zip file
+            4. Click on "Toggle All/None" and hit the submit button
+            5. Go to Automation/Automate/Explorer and Enable the imported domain
+            6. Make sure all the playbook methods have all the information (see if Repository,
+               Playbook and Machine credentials have values), update if needed
+            7. Import or create hello_world (simple ansible dialog with Machine credentials and
+               hosts fields)
+            8. Create a Generic service using the hello_world dialog and select instance
+               'CatalogItemInitialization_jira23'(Note: This is the state machine which executes
+               playbooks and inline method successively) then order service
+            9. Run "grep dump_vars2 automation.log" from log directory
+        expectedResults:
+            1. Ansible repository added
+            2.
+            3.
+            4. Domain imported
+            5. Domain enabled
+            6. Playbook method updated(if needed as mentioned in step)
+            7. Ansible dialog created
+            8. Generic service catalog item created
+            9. Variables should be passed through successive playbooks and you should see logs like
+               this(https://bugzilla.redhat.com/show_bug.cgi?id=1678132#c5)
+    """
+    # Making provisioning entry points to select while creating generic catalog items
+    entry_point = (
+        "Datastore",
+        f"{import_datastore.name}",
+        "Service",
+        "Provisioning",
+        "StateMachines",
+        "ServiceProvision_Template",
+        f"{item}",
+    )
+
+    # Creating generic catalog items
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+        provisioning_entry_point=entry_point,
+    )
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[
+            ".*if Fred is married to Wilma and Barney is married to Betty and Peebles and BamBam "
+            "are the kids, then the tests work !!!.*"
+        ],
+    ).waiting(timeout=120):
+        # Ordering service catalog bundle
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        service_catalogs.order()
+        request_description = "Provisioning Service [{0}] from [{0}]".format(catalog_item.name)
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        provision_request.wait_for_request(method="ui")
+        request.addfinalizer(provision_request.remove_request)

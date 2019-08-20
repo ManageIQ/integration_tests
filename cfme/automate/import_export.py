@@ -189,11 +189,12 @@ class AutomateGitRepository(BaseEntity):
 class AutomateFileImport(BaseEntity):
     file_path = attr.ib()
 
-    def import_domain_from(self, domain_from, domain_into=None, toggle_all=True):
+    def import_domain_from(self, domain_from, domain_into=None, description=None, toggle_all=True):
         """Import the domain from file using the Import/Export UI.
 
         Args:
             domain_from: Select domain you wish to import from
+            description: Provide description of the domain
             domain_into: Select existing domain to import into:
             toggle_all: Select all namespaces
 
@@ -209,7 +210,8 @@ class AutomateFileImport(BaseEntity):
             {"import_into": domain_into, "import_from": domain_from, "toggle_all": toggle_all}
         )
         file_view.commit.click()
-        return self.appliance.collections.domains.instantiate(name=domain_from)
+        return self.appliance.collections.domains.instantiate(name=domain_from,
+                                                              description=description)
 
 
 @attr.s

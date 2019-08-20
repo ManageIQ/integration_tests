@@ -74,7 +74,8 @@ def custom_instance(request_cls):
 
 
 # DatastoreImport help to pass import data to fixture import_datastore
-DatastoreImport = namedtuple("DatastoreImport", ["file_name", "from_domain", "to_domain"])
+DatastoreImport = namedtuple("DatastoreImport", ["file_name", "from_domain", "to_domain",
+                                                 "description"])
 
 
 @pytest.fixture()
@@ -88,7 +89,7 @@ def import_datastore(appliance, import_data):
         .. code-block:: python
 
         @pytest.mark.parametrize(
-        "import_data", [DatastoreImport("datastore.zip", "from_daomin_name", "to_domain_name")]
+        "import_data", [DatastoreImport("datastore.zip", "from_domain_name", "to_domain_name")]
         )
         def test_foo(import_datastore, import_data):
             pass
@@ -102,7 +103,8 @@ def import_datastore(appliance, import_data):
     datastore = appliance.collections.automate_import_exports.instantiate(
         import_type="file", file_path=file_path
     )
-    domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
+    domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain,
+                                          import_data.description)
     assert domain.exists
     with update(domain):
         domain.enabled = True
