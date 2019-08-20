@@ -134,6 +134,7 @@ def test_custom_button_display_service_vm(request, appliance, service_vm, button
             assert custom_button_group.has_item(button.text)
 
 
+@pytest.mark.customer_scenario
 @test_requirements.customer_stories
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1687061])

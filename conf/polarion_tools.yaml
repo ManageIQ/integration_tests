@@ -7,7 +7,7 @@ default_fields:
     caseimportance: high
     caselevel: component
     caseposneg: positive
-    customerscenario: ""
+    customerscenario: false
     description: ""
     endsin: ""
     expectedResults: ""
@@ -63,6 +63,7 @@ docstrings:
     marker_fields:
         caselevel: "@pytest.mark.tier"
         caseautomation: "@pytest.mark.manual"
+        customerscenario: "@pytest.mark.customer_scenario"
         # default for manual mark is 'notautomated'
         # @pytest.mark.manual('manualonly') to set 'manualonly'
         linkedWorkItems: "@pytest.mark.requirements"

@@ -19,6 +19,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.v2v,
+    pytest.mark.customer_scenario,
     pytest.mark.provider(
         classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
@@ -32,7 +33,7 @@ pytestmark = [
         required_flags=["v2v"],
         scope="module",
     ),
-    pytest.mark.usefixtures("v2v_provider_setup")
+    pytest.mark.usefixtures("v2v_provider_setup"),
 ]
 
 
@@ -137,7 +138,6 @@ def test_non_csv(appliance, infra_map):
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     error_text = "Invalid file extension. Only .csv files are accepted."
@@ -152,7 +152,6 @@ def test_blank_csv(appliance, infra_map):
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     error_msg = "Error: Possibly a blank .CSV file"
@@ -167,7 +166,6 @@ def test_column_headers(appliance, infra_map):
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     content = fauxfactory.gen_alpha(10)
@@ -183,7 +181,6 @@ def test_inconsistent_columns(appliance, infra_map):
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     content = "Name\n{}, {}".format(fauxfactory.gen_alpha(10), fauxfactory.gen_alpha(10))
@@ -199,7 +196,6 @@ def test_csv_empty_vm(appliance, infra_map):
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     content = "Name\n\n"
@@ -216,7 +212,6 @@ def test_csv_invalid_vm(appliance, infra_map):
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     content = "Name\n{}".format(fauxfactory.gen_alpha(10))
@@ -233,7 +228,6 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     content = "Name\n{}".format(valid_vm)
@@ -250,7 +244,6 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     content = "Name\n{}\n{}".format(valid_vm, valid_vm)
@@ -267,7 +260,6 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/8h
     """
     content = "Name\n{}".format(archived_vm)
@@ -285,7 +277,6 @@ def test_csv_security_group_flavor(appliance, infra_map, valid_vm, provider):
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
-        customerscenario: true
         initialEstimate: 1/4h
     """
     try:
