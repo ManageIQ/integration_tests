@@ -283,7 +283,7 @@ def test_automate_quota_units(setup_provider, provider, request, appliance, set_
     Polarion:
         assignee: ghubale
         casecomponent: Automate
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/4h
         tags: automate
     """
@@ -320,3 +320,52 @@ def test_automate_quota_units(setup_provider, provider, request, appliance, set_
         assert provision_request.is_succeeded(
             method="ui"
         ), f"Provisioning failed: {provision_request.row.last_message.text}"
+
+
+@pytest.fixture(scope="module")
+def vm_folder(provider):
+    """Create Vm folder on VMWare provider"""
+    folder = provider.mgmt.create_folder(f"{fauxfactory.gen_alpha()}")
+    yield folder
+    vm_folder.Destroy()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.provider([VMwareProvider], scope="module", override=True)
+@pytest.mark.meta(automates=[1716858])
+def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
+    """
+     Bugzilla:
+         1716858
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: low
+        initialEstimate: 1/4h
+        tags: automate
+    """
+    script = dedent(
+        f"""
+        vm = $evm.vmdb('vm').find_by_name('{testing_vm.name}')
+        folder = $evm.vmdb('EmsFolder').find_by(:name => '{vm_folder.name}')
+        vm.move_into_folder(folder) unless folder.nil?
+        """
+    )
+    instance = custom_instance(script)
+    simulate(
+        appliance=appliance,
+        attributes_values={
+            "namespace": instance.klass.namespace.name,
+            "class": instance.klass.name,
+            "instance": instance.name,
+        },
+        message="create",
+        request="Call_Instance",
+        execute_methods=True,
+    )
+
+    # Navigating to Vms details page and checking folder of the Vm in accordion of CFME UI
+    view = navigate_to(testing_vm, "Details")
+    assert vm_folder.name in view.sidebar.vmstemplates.tree.currently_selected
