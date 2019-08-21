@@ -113,6 +113,7 @@ pytest_plugins = (
     'cfme.fixtures.nuage',
     'cfme.fixtures.automate',
     'cfme.fixtures.multi_region',
+    'cfme.fixtures.generic_object',
 
     'cfme.metaplugins',
 )
