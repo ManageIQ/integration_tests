@@ -583,12 +583,6 @@ class ServerDetails(CFMENavigateStep):
     VIEW = ServerInformationView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return (
-            self.view.is_displayed and
-            self.view.server.is_active
-        )
-
     def step(self, *args, **kwargs):
         self.prerequisite_view.server.select()
 
@@ -623,8 +617,8 @@ class CustomLogos(CFMENavigateStep):
 
     def am_i_here(self):
         return (
-            self.view.is_displayed and self.view.custom_logos.is_displayed and
-            self.view.custom_logos.is_active())
+            self.view.is_displayed and self.view.customlogos.is_displayed and
+            self.view.customlogos.is_active())
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.customlogos.select()
