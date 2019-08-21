@@ -291,3 +291,13 @@ class GenericObjectButtonGroupDetailsView(GenericObjectDefinitionView):
             self.in_generic_object_definition and
             'Custom Button Set' in self.title.text
         )
+
+
+class GenericObjectButtonDetailsView(GenericObjectButtonGroupDetailsView):
+    @property
+    def is_displayed(self):
+        return (
+            self.basic_information.is_displayed and
+            self.in_generic_object_definition and
+            self.title.text == f"Custom Button {self.context['object'].name}"
+        )

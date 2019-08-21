@@ -1,10 +1,13 @@
 import attr
 from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 
 from cfme.exceptions import OptionNotAvailable
 from cfme.generic_objects.definition.definition_views import GenericObjectActionsDetailsView
 from cfme.generic_objects.definition.definition_views import GenericObjectAddButtonView
+from cfme.generic_objects.definition.definition_views import GenericObjectEditButtonView
 from cfme.generic_objects.definition.definition_views import GenericObjectButtonGroupAddView
+from cfme.generic_objects.definition.definition_views import GenericObjectButtonDetailsView
 from cfme.generic_objects.definition.definition_views import GenericObjectButtonGroupDetailsView
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionAllView
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
@@ -13,10 +16,11 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.update import Updateable
 
 
 @attr.s
-class GenericObjectButton(BaseEntity):
+class GenericObjectButton(BaseEntity, Updateable):
 
     name = attr.ib()
     description = attr.ib()
@@ -42,6 +46,22 @@ class GenericObjectButton(BaseEntity):
         view.configuration.item_select('Remove this Button from Inventory', handle_alert=not cancel)
         view = self.create_view(GenericObjectDefinitionAllView)
         assert view.is_displayed
+        view.flash.assert_no_error()
+
+    def update(self, updates):
+        """Update this button in UI.
+
+        Args:
+            updates: Provided by update() context manager.
+        """
+        view = navigate_to(self, "Edit")
+        changed = view.fill(updates)
+
+        if changed:
+            view.save.click()
+        else:
+            view.cancel.click()
+
         view.flash.assert_no_error()
 
 
@@ -149,12 +169,24 @@ class ButtonAll(CFMENavigateStep):
 
 @navigator.register(GenericObjectButton, 'Details')
 class ButtonDetails(CFMENavigateStep):
-    VIEW = GenericObjectAddButtonView
+    VIEW = GenericObjectButtonDetailsView
 
-    prerequisite = NavigateToAttribute('parent', 'Details')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.configuration.item_select('Add a new Button')
+        path = self.prerequisite_view.accordion.classes.tree.read()
+        path.append(self.obj.name)
+        self.prerequisite_view.accordion.classes.tree.fill(path)
+
+
+@navigator.register(GenericObjectButton, "Edit")
+class ButtonEdit(CFMENavigateStep):
+    VIEW = GenericObjectEditButtonView
+
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select("Edit this Button")
 
 
 @attr.s
