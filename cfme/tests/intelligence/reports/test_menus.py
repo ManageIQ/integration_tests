@@ -177,13 +177,17 @@ def test_rbac_move_custom_report(
 @pytest.mark.parametrize("group", GROUPS)
 def test_reports_menu_with_duplicate_reports(appliance, request, group, report_menus):
     """
+    Bugzilla:
+        1731017
+        1676638
+
     Polarion:
         assignee: pvala
         casecomponent: Reporting
         initialEstimate: 1/10h
-        startsin: 5.9
+        startsin: 5.11
         setup:
-            1.Create a custom report or copy an existing report.
+            1. Create a custom report or copy an existing report.
             2. Move the custom report to 'Tenants > Tenant Quotas' menu in user's current group
         testSteps:
             1. See if the report is available under 'Tenants > Tenant Quotas'.
@@ -197,14 +201,12 @@ def test_reports_menu_with_duplicate_reports(appliance, request, group, report_m
             3. Report must not be visible.
             4.
             5. Report must not be visible.
-    Bugzilla:
-        1731017
-        1676638
     """
     # Copy a report the first time and move it
     custom_report_1 = appliance.collections.reports.instantiate(
         type="Tenants", subtype="Tenant Quotas", menu_name="Tenant Quotas"
     ).copy()
+
     folder, subfolder = "Tenants", "Tenant Quotas"
     report_menus.move_reports(group, folder, subfolder, custom_report_1.menu_name)
 
@@ -222,5 +224,5 @@ def test_reports_menu_with_duplicate_reports(appliance, request, group, report_m
     custom_report_2 = appliance.collections.reports.instantiate(
         type="Tenants", subtype="Tenant Quotas", menu_name="Tenant Quotas"
     ).copy()
-    request.addfinalizer(custom_report_2.delete)
+    request.addfinalizer(custom_report_2.delete_if_exists)
     assert not expected_report.exists
