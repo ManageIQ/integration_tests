@@ -8,7 +8,13 @@ from cfme.utils.update import update
 
 
 pytest_generate_tests = generate(gen_func=config_managers)
-pytestmark = [pytest.mark.meta(blockers=[1491704])]
+pytestmark = [
+    pytest.mark.meta(blockers=[1491704]),
+    pytest.mark.parametrize(
+        config_manager_obj.type, [pytest.param('Ansible Tower', marks=test_requirements.tower),
+        pytest.param('Red Hat Satellite', marks=test_requirements.satellite)]
+    )
+]
 
 
 @pytest.fixture
