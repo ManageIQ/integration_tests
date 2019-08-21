@@ -52,11 +52,11 @@ def generic_object(gen_definition, gen_rest_service, appliance):
 
 
 @pytest.fixture(scope="module")
-def add_generic_object_to_service(appliance, gen_service, generic_object):
+def add_generic_object_to_service(appliance, gen_rest_service, generic_object):
     """Add generic object as resource of service"""
 
     with appliance.context.use(ViaREST):
-        gen_service.action.add_resource(
+        gen_rest_service.action.add_resource(
             resource=appliance.rest_api.collections.generic_objects.find_by(
                 name=generic_object.name
             )[0]._ref_repr()

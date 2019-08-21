@@ -10,13 +10,10 @@ from cfme.services.myservice import MyService
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.rest import assert_response
 from cfme.utils.update import update
 
 
-pytestmark = [
-    test_requirements.generic_objects,
-]
+pytestmark = [test_requirements.generic_objects]
 
 
 GEN_OBJ_DIRECTORY = "/var/www/miq/vmdb/tmp/generic_object_definitions"
@@ -36,58 +33,6 @@ def gen_obj_def_import_export(appliance):
 
 
 @pytest.fixture(scope="module")
-def definition(appliance):
-    with appliance.context.use(ViaREST):
-        definition = appliance.collections.generic_object_definitions.create(
-            name='rest_generic_class{}'.format(fauxfactory.gen_alphanumeric()),
-            description='Generic Object Definition',
-            attributes={'addr01': 'string'},
-            associations={'services': 'Service'},
-            methods=['add_vm', 'remove_vm']
-        )
-        yield definition
-        definition.delete_if_exists()
-
-
-@pytest.fixture(scope="module")
-def service(appliance):
-    service_name = 'rest_service_{}'.format(fauxfactory.gen_alphanumeric())
-    rest_service = appliance.rest_api.collections.services.action.create(
-        name=service_name,
-        display=True
-    )
-    rest_service = rest_service[0]
-    yield rest_service
-    rest_service.action.delete()
-
-
-@pytest.fixture(scope="module")
-def generic_object(definition, service, appliance):
-    myservice = MyService(appliance, name=service.name)
-    with appliance.context.use(ViaREST):
-        instance = appliance.collections.generic_objects.create(
-            name='rest_generic_instance{}'.format(fauxfactory.gen_alphanumeric()),
-            definition=definition,
-            attributes={'addr01': 'Test Address'},
-            associations={'services': [myservice]}
-        )
-        instance.my_service = myservice
-        yield instance
-        instance.delete_if_exists()
-
-
-@pytest.fixture(scope="module")
-def add_generic_object_to_service(appliance, service, generic_object):
-    with appliance.context.use(ViaREST):
-        service.action.add_resource(
-            resource=appliance.rest_api.collections.generic_objects.find_by(
-                name=generic_object.name)[0]._ref_repr()
-        )
-        assert_response(appliance)
-    return generic_object
-
-
-@pytest.fixture(scope="module")
 def categories(request, appliance):
     return rest_gen_data.categories(request, appliance, 3)
 
@@ -98,13 +43,13 @@ def tags(request, appliance, categories):
 
 
 @pytest.fixture(scope="module")
-def generic_object_button_group(appliance, definition):
+def generic_object_button_group(appliance, gen_definition):
     def _generic_object_button_group(create_action=True):
         if create_action:
             with appliance.context.use(ViaUI):
                 group_name = "button_group_{}".format(fauxfactory.gen_alphanumeric())
                 group_desc = "Group_button_description_{}".format(fauxfactory.gen_alphanumeric())
-                groups_buttons = definition.collections.generic_object_groups_buttons
+                groups_buttons = gen_definition.collections.generic_object_groups_buttons
                 generic_object_button_group = groups_buttons.create(
                     name=group_name, description=group_desc, image="fa-user"
                 )
@@ -116,11 +61,11 @@ def generic_object_button_group(appliance, definition):
 
 
 @pytest.fixture(scope="module")
-def generic_object_button(appliance, generic_object_button_group, definition):
+def generic_object_button(appliance, generic_object_button_group, gen_definition):
     def _generic_object_button(button_group):
         with appliance.context.use(ViaUI):
             button_parent = (
-                generic_object_button_group(button_group) if button_group else definition
+                generic_object_button_group(button_group) if button_group else gen_definition
             )
             button_name = 'button_{}'.format(fauxfactory.gen_alphanumeric())
             button_desc = 'Button_description_{}'.format(fauxfactory.gen_alphanumeric())
