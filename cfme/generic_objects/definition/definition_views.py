@@ -148,7 +148,7 @@ class GenericObjectDefinitionAddView(GenericObjectDefinitionAddEditView):
             self.in_generic_object_definition
             and self.title.text
             == "Add a new Generic Object {}".format(
-                "Class" if self.appliance.version < "5.11" else "Definition"
+                "Definition" if self.browser.appliance.version >= "5.11" else "Class"
             )
         )
 
@@ -161,8 +161,13 @@ class GenericObjectDefinitionEditView(GenericObjectDefinitionAddEditView):
     @property
     def is_displayed(self):
         return (
-            self.in_generic_object_definition and
-            self.title.text == 'Edit Generic Object Class'
+            self.in_generic_object_definition
+            and self.title.text
+            == "Edit{tup[0]} Generic Object {tup[1]}".format(
+                tup=(" a", "Definition '{}'".format(self.context["object"].name))
+                if self.browser.appliance.version >= "5.11"
+                else ("", "Class")
+            )
         )
 
 
