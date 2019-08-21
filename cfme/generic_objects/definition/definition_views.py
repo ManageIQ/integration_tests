@@ -231,7 +231,7 @@ class GenericObjectEditButtonView(GenericObjectAddEditButtonView):
     @property
     def is_displayed(self):
         return (
-            self.title.text == "Edit Custom Button '{}'".format(self.context['object'].name) and
+            self.title.text == f"Edit Custom Button '{self.context['object'].name}'" and
             self.in_generic_object_definition and
             self.button_type.is_displayed
         )
@@ -275,6 +275,18 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
         # after icon is filled
         if was_change:
             self.browser.element('//body').click()
+
+
+class GenericObjectButtonGroupEditView(GenericObjectButtonGroupAddView):
+    save = Button('Save')
+    reset = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == f"Edit Custom Button Group '{self.context['object'].name}'" and
+            self.in_generic_object_definition
+        )
 
 
 class GenericObjectButtonGroupDetailsView(GenericObjectDefinitionView):
