@@ -1,6 +1,7 @@
 """ This module should contain all things associated with time or date that can be shared.
 
 """
+import pytz
 import time
 from datetime import datetime as _datetime
 
@@ -21,7 +22,9 @@ class parsetime(_datetime):  # NOQA
     iso_date_only_format = "%Y-%m-%d"
     request_format = "%Y-%m-%d-%H-%M-%S"
     long_date_format = "%B %d, %Y %H:%M"
-    saved_report_title_format = "%a, %d %b %Y %H:%M:%S +0000"
+    saved_report_title_format = "%a, %d %b %Y %H:%M:%S"
+    american_with_dynamic_timezone_format = "%m/%d/%y %H:%M:%S"
+    iso_with_dynamic_timezone_format = "%Y-%m-%d %H:%M:%S"
 
     @classmethod
     def _parse(cls, fmt, time_string):
@@ -33,6 +36,10 @@ class parsetime(_datetime):  # NOQA
                 )
             )
         )
+
+    @classmethod
+    def from_american_with_dynamic_timezone(cls, time_string, timezone):
+        return cls._parse(f"{cls.american_with_dynamic_timezone_format} {timezone}", time_string)
 
     @classmethod
     def from_american_with_utc(cls, time_string):
@@ -66,6 +73,15 @@ class parsetime(_datetime):  # NOQA
         Returns: :py:class`utils.timeutil.datetime()` object
         """
         return cls._parse(cls.iso_with_utc_format, time_string)
+
+    def to_iso_with_dynamic_timezone(self, timezone):
+        """ Convert the this object to string representation in american with UTC.
+
+        CFME's format here is 'mm-dd-yy hh:mm:ss UTC'
+
+        Returns: :py:class`str` object
+        """
+        return self.strftime(f"{self.iso_with_dynamic_timezone_format} {timezone}")
 
     def to_iso_with_utc(self):
         """ Convert the this object to string representation in american with UTC.
@@ -203,7 +219,7 @@ class parsetime(_datetime):  # NOQA
         return self.strftime(self.long_date_format)
 
     @classmethod
-    def from_saved_report_title_format(cls, time_string):
+    def from_saved_report_title_format(cls, time_string, area="UTC"):
         """ Convert the string representation of the time into parsetime()
 
                 Format here is '%a, %d %b %Y %H:%M:%S +0000'.
@@ -211,17 +227,23 @@ class parsetime(_datetime):  # NOQA
                 Args:
                     time_string: String with time to parse
                 Returns: :py:class`utils.timeutil.datetime()` object
-                """
-        return cls._parse(cls.saved_report_title_format, time_string)
+        """
+        return cls._parse(f"{cls.saved_report_title_format} {get_time_difference(area)}", time_string)
 
-    def to_saved_report_title_format(self):
+    def to_saved_report_title_format(self, area="UTC"):
         """ Convert the this object to string representation in Saved Report title.
 
                 Format here is '%a, %d %b %Y %H:%M:%S +0000'
 
                 Returns: :py:class`str` object
                 """
-        return self.strftime(self.saved_report_title_format)
+        return self.strftime(f"{self.saved_report_title_format} {get_time_difference(area)}")
+
+
+def get_time_difference(area):
+    for zone in pytz.all_timezones:
+        if area in zone:
+            return _datetime.now(pytz.timezone(zone)).strftime('%z')
 
 
 def nice_seconds(t_s):
