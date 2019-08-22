@@ -14,14 +14,9 @@ from cfme.utils.wait import wait_for
 
 
 @pytest.fixture(scope="module")
-def vm_name():
-    return random_vm_name("dscvry")
-
-
-@pytest.fixture(scope="module")
-def vm_crud(vm_name, provider):
+def vm_crud(provider):
     collection = provider.appliance.provider_based_collection(provider)
-    return collection.instantiate(vm_name, provider)
+    return collection.instantiate(random_vm_name("dscvry"), provider)
 
 
 @pytest.mark.rhv2
@@ -75,6 +70,7 @@ def test_vm_discovery(request, setup_provider, provider, vm_crud):
         num_sec=600,
         delay=10,
         handle_exception=True,
+        fail_func=vm_crud.refresh_relationships(),
         message='Waiting for archived state'
     )
 
