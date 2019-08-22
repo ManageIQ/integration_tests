@@ -42,6 +42,8 @@ from importlib import import_module
 from pdb import Pdb
 from textwrap import dedent
 
+from cached_property import cached_property
+
 from cfme.fixtures.pytest_store import store
 from cfme.fixtures.pytest_store import write_line
 from cfme.utils import conf
@@ -90,9 +92,17 @@ class Rdb(Pdb):
         self._prompt_msg = str(prompt_msg)
         self._stdout = sys.stdout
         self._stdin = sys.stdin
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # bind to random port
-        self.sock.bind(('0.0.0.0', 0))
+
+    def __del__(self):
+        """Close the socket since its cached"""
+        self.sock.close()
+        super().__del__()
+
+    @cached_property
+    def sock(self):
+        """Create a cached socket and bind it to random port"""
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('0.0.0.0', 0))
 
     def do_continue(self, arg):
         sys.stdout = self._stdout

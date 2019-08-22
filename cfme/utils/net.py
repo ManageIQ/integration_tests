@@ -30,10 +30,9 @@ def random_port(tcp=True):
     """
     # Port 0 will allocate an ephemeral port
     socktype = socket.SOCK_STREAM if tcp else socket.SOCK_DGRAM
-    s = socket.socket(socket.AF_INET, socktype)
-    s.bind(('', 0))
-    addr, port = s.getsockname()
-    s.close()
+    with socket.socket(socket.AF_INET, socktype) as s:
+        s.bind(('', 0))
+        addr, port = s.getsockname()
     return port
 
 
@@ -50,13 +49,13 @@ def my_ip_address(http=False):
 
 def ip_echo_socket(port=32123):
     """A simple socket server, for use with :py:func:`my_ip_address`"""
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('', port))
-    s.listen(0)
-    while True:
-        conn, addr = s.accept()
-        conn.sendall(addr[0])
-        conn.close()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', port))
+        s.listen(0)
+        while True:
+            conn, addr = s.accept()
+            conn.sendall(addr[0])
+            conn.close()
 
 
 def net_check(port, addr=None, force=False):
