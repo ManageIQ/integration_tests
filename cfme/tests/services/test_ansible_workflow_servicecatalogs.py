@@ -12,6 +12,9 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
+    pytest.mark.parametrize('workflow_type', ['multiple_job_workflow', 'inventory_sync_workflow'],
+        ids=['multiple_job_workflow', 'inventory_sync_workflow'],
+        scope='module'),
     pytest.mark.ignore_stream('upstream')
 ]
 
@@ -43,14 +46,13 @@ def tower_manager(config_manager_obj):
 
 
 @pytest.fixture(scope="function")
-def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog):
-    job_type = 'workflow'
+def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog, workflow_type):
     config_manager_obj = tower_manager
     provider_name = config_manager_obj.yaml_data.get('name')
     try:
-        template = config_manager_obj.yaml_data['provisioning_data'][job_type]
+        template = config_manager_obj.yaml_data['provisioning_data'][workflow_type]
     except KeyError:
-        pytest.skip("No such Ansible template: {} found in cfme_data.yaml".format(job_type))
+        pytest.skip("No such Ansible template: {} found in cfme_data.yaml".format(workflow_type))
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
         name=dialog.label,
@@ -65,7 +67,8 @@ def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog)
 
 
 @pytest.mark.meta(automates=[BZ(1719051)])
-def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem, request):
+def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem, request,
+        workflow_type):
     """Tests ordering of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
@@ -91,7 +94,7 @@ def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem,
     )
 
 
-def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, request):
+def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, request, workflow_type):
     """Tests retiring of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
