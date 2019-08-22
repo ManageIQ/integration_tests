@@ -628,7 +628,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                                check_existing=True, validate_inventory=True)
 
     @variable(alias='rest')
-    def is_refreshed(self, refresh_timer=None, refresh_delta=600):
+    def is_refreshed(self, refresh_timer=None, refresh_delta=600, force_refresh=True):
         if refresh_timer:
             if refresh_timer.is_it_time():
                 logger.info(' Time for a refresh!')
@@ -639,7 +639,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             return False
         td = self.appliance.utc_time() - rdate
         if td > datetime.timedelta(0, refresh_delta):
-            self.refresh_provider_relationships()
+            if force_refresh:
+                self.refresh_provider_relationships()
             return False
         else:
             return True
