@@ -16,9 +16,8 @@ def dig_code(node):
     line_param = '-L {},+{}'.format(lineno, offset)
     cmd_params = ['git', 'blame', line_param, filename, '--show-email']
 
-    proc = subprocess.Popen(cmd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    proc.wait()
-    lc_info = proc.stdout.readlines()
+    proc = subprocess.run(cmd_params, stdin=subprocess.DEVNULL, capture_output=True)
+    lc_info = proc.stdout.decode().strip().split('\n')
     contact_stats = defaultdict(int)
     for line in lc_info:
         contact = re.findall(r'.{8} \(\<(.*?)\> ', line)
