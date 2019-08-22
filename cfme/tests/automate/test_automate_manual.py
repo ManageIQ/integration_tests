@@ -36,35 +36,6 @@ def test_customize_request_security_group():
     pass
 
 
-@pytest.mark.tier(2)
-def test_automate_git_domain_displayed_in_dialog():
-    """
-    Check that the domain imported from git is displayed and usable in the
-    pop-up tree in the dialog editor.
-    You can use eg. https://github.com/ramrexx/CloudForms_Essentials.git
-    for that
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/15h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.7
-        casecomponent: Automate
-        tags: automate
-        title: Test automate git domain displayed in dialog
-        testSteps:
-            1. Import domain given in step 2
-            2. You can use eg. https://github.com/ramrexx/CloudForms_Essentials.git
-        expectedResults:
-            1.
-            2. Check that the domain imported from git is displayed and usable in the pop-up tree
-               in the dialog editor.
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_automate_engine_database_connection():
     """

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from textwrap import dedent
+
 import fauxfactory
 import pytest
 
@@ -139,3 +141,74 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
         provision_request.wait_for_request(method='ui')
         request.addfinalizer(provision_request.remove_request)
         assert result.validate(wait="60s")
+
+
+@pytest.fixture(scope="module")
+def setup_dynamic_dialog(appliance, custom_instance):
+    # Create custom instance with ruby method
+    code = dedent(
+        """
+        $evm.log(:info, "Hello World")
+        """
+    )
+    instance = custom_instance(ruby_code=code)
+
+    # Create dynamic dialog
+    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
+    ele_name = "ele_{}".format(fauxfactory.gen_alphanumeric())
+
+    element_data = {
+        "element_information": {
+            "ele_label": "ele_{}".format(fauxfactory.gen_alphanumeric()),
+            "ele_name": ele_name,
+            "ele_desc": fauxfactory.gen_alphanumeric(),
+            "dynamic_chkbox": True,
+            "choose_type": "Text Box",
+        },
+        "options": {"entry_point": instance.tree_path},
+    }
+
+    service_dialog = appliance.collections.service_dialogs.create(
+        label=dialog, description="my dialog"
+    )
+    tab = service_dialog.tabs.create(
+        tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()), tab_desc="my tab desc"
+    )
+    box = tab.boxes.create(
+        box_label="box_{}".format(fauxfactory.gen_alphanumeric()), box_desc="my box desc"
+    )
+    box.elements.create(element_data=[element_data])
+
+    yield service_dialog
+    service_dialog.delete_if_exists()
+
+
+@pytest.mark.tier(2)
+def test_automate_method_with_dialog(request, appliance, catalog, setup_dynamic_dialog):
+    """
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/15h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.7
+        casecomponent: Automate
+        tags: automate
+    """
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(),
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=setup_dynamic_dialog.label
+    )
+    request.addfinalizer(catalog_item.delete_if_exists)
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*Hello World.*"]
+    ).waiting(timeout=120):
+        service_catalogs = ServiceCatalogs(
+            appliance, catalog=catalog_item.catalog, name=catalog_item.name
+        )
+        provision_request = service_catalogs.order()
+        provision_request.wait_for_request()
+        request.addfinalizer(provision_request.remove_request)
