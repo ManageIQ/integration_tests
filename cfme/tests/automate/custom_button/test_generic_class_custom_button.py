@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
 from cfme.utils.update import update
 
+
 pytestmark = [pytest.mark.tier(2), test_requirements.custom_button]
 
 
@@ -19,8 +20,12 @@ def button_group(appliance, gen_definition):
     group.delete_if_exists()
 
 
+@pytest.mark.meta(automates=[1744478])
 def test_custom_group_on_generic_class_crud(appliance, gen_definition):
     """ Test custom button group crud operation on generic class definition
+
+    Bugzilla:
+        1744478
 
     Polarion:
         assignee: ndhandre
@@ -40,7 +45,7 @@ def test_custom_group_on_generic_class_crud(appliance, gen_definition):
         image="fa-user",
     )
     view = appliance.browser.create_view(GenericObjectDefinitionDetailsView)
-    assert view.flash.assert_success_message(
+    view.flash.assert_success_message(
         f'Custom Button Group "{group.name}" has been successfully added.'
     )
     assert group.exists
@@ -49,24 +54,26 @@ def test_custom_group_on_generic_class_crud(appliance, gen_definition):
     with update(group):
         group.name = fauxfactory.gen_numeric_string(13, start="btn_group", separator="-")
         group.description = fauxfactory.gen_alphanumeric(start="disc", separator="-")
-    assert view.flash.assert_success_message(
+    view.flash.assert_success_message(
         f'Custom Button Group "{group.name}" has been successfully saved.'
     )
     assert group.exists
 
     # delete group
     group.delete()
+    # TODO (ndhandre): For now, we can not guess exact flash message but change as per BZ-1744478.
     view.flash.assert_success_message('Button Group:"undefined" was successfully deleted')
     assert not group.exists
 
 
-@pytest.mark.meta(automates=[1534539])
+@pytest.mark.meta(automates=[1534539, 1744478])
 @pytest.mark.parametrize("btn_state", [True, False], ids=["with_group", "undefined"])
 def test_custom_button_on_generic_class_crud(appliance, button_group, btn_state):
     """Test custom button crud operation on generic class definition
 
     Bugzilla:
         1534539
+        1744478
 
     Polarion:
         assignee: ndhandre
@@ -89,21 +96,27 @@ def test_custom_button_on_generic_class_crud(appliance, button_group, btn_state)
         request="InspectMe",
     )
     view = appliance.browser.create_view(GenericObjectDefinitionDetailsView)
-    assert view.flash.assert_success_message(
-        f'Custom Button "{button.name}" has been successfully added.'
-    )
+
+    if btn_state:
+        msg = (f'Custom Button "{button.name}" has been successfully added'
+               f'under the selected button group.')
+    else:
+        msg = f'Custom Button "{button.name}" has been successfully added.'
+
+    view.flash.assert_success_message(msg)
     assert button.exists
 
     # update button
     with update(button):
         button.name = fauxfactory.gen_numeric_string(start="btn", separator="-")
         button.description = fauxfactory.gen_alphanumeric(start="disc", separator="-")
-    assert view.flash.assert_success_message(
+    view.flash.assert_success_message(
         f'Custom Button "{button.name}" has been successfully saved.'
     )
     assert button.exists
 
     # delete button
     button.delete()
-    assert view.flash.assert_success_message('Button:"undefined" was successfully deleted')
+    # TODO (ndhandre): For now, we can not guess exact flash message but change as per BZ-1744478.
+    view.flash.assert_success_message('Button:"undefined" was successfully deleted')
     assert not button.exists
