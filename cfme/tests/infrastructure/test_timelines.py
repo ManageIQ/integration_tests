@@ -448,6 +448,9 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
     Metadata:
         test_flag: events, provision, timelines
 
+    Bugzilla:
+        1622952
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
