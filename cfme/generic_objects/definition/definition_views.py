@@ -160,15 +160,14 @@ class GenericObjectDefinitionEditView(GenericObjectDefinitionAddEditView):
 
     @property
     def is_displayed(self):
-        return (
-            self.in_generic_object_definition
-            and self.title.text
-            == "Edit{tup[0]} Generic Object {tup[1]}".format(
-                tup=(" a", "Definition '{}'".format(self.context["object"].name))
-                if self.browser.appliance.version >= "5.11"
-                else ("", "Class")
+        if self.browser.appliance.version >= "5.11":
+            expected_title = "Edit a Generic Object Definition '{}'".format(
+                self.context["object"].name
             )
-        )
+        else:
+            expected_title = "Edit Generic Object Class"
+
+        return self.in_generic_object_definition and self.title.text == expected_title
 
 
 class GenericObjectDefinitionDetailsView(GenericObjectDefinitionView):
