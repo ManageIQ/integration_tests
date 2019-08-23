@@ -60,22 +60,6 @@ def test_update_webui_ipv6():
 
 
 @pytest.mark.manual
-def test_embedded_ansible_update_bad_version_59017():
-    """
-    Tests updating an appliance which has embedded ansible role enabled,
-    also confirms that the
-    role continues to function correctly after the update has completed
-    Test Source
-
-    Polarion:
-        assignee: jhenner
-        initialEstimate: 1/4h
-        casecomponent: Appliance
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.upgrade
 @pytest.mark.tier(2)
 def test_upgrade_single_inplace_ipv6():
@@ -97,19 +81,5 @@ def test_upgrade_single_inplace_ipv6():
                check webui is available
                add additional provider/provision vms
         startsin: 5.9
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_update_yum_bad_version_59017():
-    """
-    Tests appliance update between versions
-    Test Source
-
-    Polarion:
-        assignee: jhenner
-        initialEstimate: 1/4h
-        casecomponent: Appliance
     """
     pass
