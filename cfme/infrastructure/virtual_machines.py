@@ -175,7 +175,35 @@ class VmsTemplatesAllView(InfraVmView):
             self.entities.title.text == 'All VMs & Templates')
 
     def reset_page(self):
+        """It resets the 'search filter' to empty or removes the value of 'search filter' if already
+        present"""
         self.entities.search.remove_search_filters()
+
+
+class OrphanedVmsAllView(VmsTemplatesAllView):
+    """This view is for all Orphaned Vms page"""
+
+    @property
+    def is_displayed(self):
+        selected = self.sidebar.vmstemplates.tree.currently_selected
+        return (
+            self.in_infra_vms
+            and selected == ["All VMs & Templates", "<Orphaned>"]
+            and self.entities.title.text == "Orphaned VM or Templates"
+        )
+
+
+class ArchivedVmsAllView(VmsTemplatesAllView):
+    """This view is for all Archived Vms page"""
+
+    @property
+    def is_displayed(self):
+        selected = self.sidebar.vmstemplates.tree.currently_selected
+        return (
+            self.in_infra_vms
+            and selected == ["All VMs & Templates", "<Archived>"]
+            and self.entities.title.text == "Archived VM or Templates"
+        )
 
 
 class VmTemplatesAllForProviderView(InfraVmView):
@@ -1298,6 +1326,26 @@ class VmAllWithTemplates(CFMENavigateStep):
         if self.view.pagination.is_displayed:
             self.view.pagination.set_items_per_page(1000)
         self.view.reset_page()
+
+
+@navigator.register(InfraTemplateCollection, 'OrphanedAll')
+@navigator.register(InfraVmCollection, 'OrphanedAll')
+class OrphanedVms(CFMENavigateStep):
+    VIEW = OrphanedVmsAllView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates', '<Orphaned>')
+
+
+@navigator.register(InfraTemplateCollection, 'ArchivedAll')
+@navigator.register(InfraVmCollection, 'ArchivedAll')
+class ArchivedVms(CFMENavigateStep):
+    VIEW = ArchivedVmsAllView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates', '<Archived>')
 
 
 @navigator.register(InfraTemplateCollection, 'AllForProvider')

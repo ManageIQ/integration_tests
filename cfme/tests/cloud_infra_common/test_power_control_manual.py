@@ -269,37 +269,6 @@ def test_power_operations_from_global_region(provider, context):
 
 
 @pytest.mark.tier(2)
-def test_power_options_on_archived_orphaned_vms_all_page():
-    """
-    This test case is to check Power option drop-down button is disabled on archived and orphaned
-    VMs all page.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/2h
-        caseimportance: low
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Control
-        tags: power
-        testSteps:
-            1. Add provider infrastructure provider
-            2. Navigate to Archived or orphaned VMs all page
-            3. Select any VM and click on power option drop-down
-        expectedResults:
-            1.
-            2.
-            3. As we don't perform any power operations on archived or orphaned VMs. So power
-               button drop-down should not present there at all.
-
-    Bugzilla:
-        1655477
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_check_compliance_policy_option_on_vm_summery_page():
     """
     Polarion:

@@ -493,6 +493,30 @@ class InstanceCollection(VMCollection):
         return entities
 
 
+class ArchivedInstancesAllView(InstanceAllView):
+    """This view is for all Archived Instances page"""
+
+    @property
+    def is_displayed(self):
+        selected = self.sidebar.instances_by_provider.tree.currently_selected
+        return (
+            self.in_cloud_instance and
+            self.entities.title.text == 'Archived Instances' and
+            selected == ['Instances by Provider', '<Archived>']
+        )
+
+
+@navigator.register(InstanceCollection, 'ArchivedAll')
+@navigator.register(Instance, 'ArchivedAll')
+class ArchivedInstances(CFMENavigateStep):
+    VIEW = ArchivedInstancesAllView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.view.sidebar.instances_by_provider.tree.click_path('Instances by Provider',
+                                                                '<Archived>')
+
+
 @navigator.register(InstanceCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = InstanceAllView

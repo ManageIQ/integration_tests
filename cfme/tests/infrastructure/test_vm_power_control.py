@@ -35,7 +35,7 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def testing_vm(appliance, request, provider, vm_name):
+def testing_vm(appliance, provider, vm_name):
     """Fixture to provision vm to the provider being tested"""
     vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
 
@@ -48,7 +48,7 @@ def testing_vm(appliance, request, provider, vm_name):
 
 
 @pytest.fixture(scope="function")
-def archived_vm(provider, testing_vm):
+def archived_vm(testing_vm):
     """Fixture to archive testing VM"""
     testing_vm.mgmt.delete()
     testing_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
@@ -64,7 +64,7 @@ def orphaned_vm(provider, testing_vm):
 
 
 @pytest.fixture(scope="function")
-def testing_vm_tools(appliance, request, provider, vm_name, full_template):
+def testing_vm_tools(appliance, provider, vm_name, full_template):
     """Fixture to provision vm with preinstalled tools to the provider being tested"""
     vm = appliance.collections.infra_vms.instantiate(vm_name, provider, full_template.name)
 
@@ -654,3 +654,68 @@ def test_retire_vm_with_vm_user_role(new_user, appliance, testing_vm):
         testing_vm.retire()
         assert testing_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
                                                    from_details=True)
+
+
+@pytest.fixture(params=['archived', 'orphaned'])
+def archive_orphan_vm(request, provider, testing_vm):
+    """This fixture is used to create archived or orphaned VM"""
+    if request.param == "archived":
+        # Archive VM by retiring it
+        testing_vm.mgmt.delete()
+        testing_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
+                                            from_details=False, from_any_provider=True)
+    else:
+        # Orphan VM by removing provider from CFME
+        provider.delete_if_exists(cancel=False)
+        testing_vm.wait_for_vm_state_change(desired_state='orphaned', timeout=720,
+                                            from_details=False, from_any_provider=True)
+    yield request.param, testing_vm
+
+
+@pytest.mark.meta(automates=[1655477, 1686015])
+def test_power_options_on_archived_orphaned_vms_all_page(appliance, archive_orphan_vm):
+    """This test case is to check Power option drop-down button is disabled on archived and orphaned
+    VMs all page. Also it performs the power operations on vm and checked expected flash messages.
+
+    Bugzilla:
+        1655477
+        1686015
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/2h
+        caseimportance: low
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Control
+        tags: power
+        testSteps:
+            1. Add infrastructure provider
+            2. Navigate to Archived or orphaned VMs all page
+            3. Select any VM and click on power option drop-down
+    """
+    infra_vms = appliance.collections.infra_vms
+    state, testing_vm = archive_orphan_vm
+    if state == "archived":
+        view = navigate_to(infra_vms, 'ArchivedAll')
+
+        # Selecting particular archived vm
+        testing_vm.find_quadicon(from_archived_all=True).check()
+    else:
+        view = navigate_to(infra_vms, 'OrphanedAll')
+
+        # Selecting particular orphaned vm
+        testing_vm.find_quadicon(from_orphaned_all=True).check()
+
+    # After selecting particular archived/orphaned vm; 'Power' drop down gets enabled.
+    # Reading all the options available in 'power' drop down
+    for action in view.toolbar.power.items:
+        # Performing power actions on archived/orphaned vm
+        view.toolbar.power.item_select(action, handle_alert=True)
+        if action == 'Power On':
+            action = 'Start'
+        elif action == 'Power Off':
+            action = 'Stop'
+        view.flash.assert_message(f'{action} action does not apply to selected items')
+        view.flash.dismiss()
