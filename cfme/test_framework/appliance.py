@@ -91,11 +91,8 @@ class ApplianceHolderPlugin(object):
     held_appliance = attr.ib()
     appliances = attr.ib(default=attr.Factory(list))
 
-    @pytest.fixture(scope="session")
-    def appliance(self):
-        return self.held_appliance
-
     def pytest_sessionstart(self):
+        # TODO: izapolsk move somewhere
         if isinstance(self.held_appliance, DummyAppliance) or self.held_appliance.is_dev:
             return
         if store.parallelizer_role != 'slave':

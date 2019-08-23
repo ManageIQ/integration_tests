@@ -2,6 +2,9 @@ import attr
 import pytest
 
 
+from cfme.test_framework.appliance import PLUGIN_KEY
+
+
 @attr.s
 class ApplianceCluster(object):
     """
@@ -74,7 +77,29 @@ def setup_remote_provider(multi_region_cluster, setup_multi_region_cluster, prov
 
 
 @pytest.fixture(scope='function')
-def activate_global_appliance(multi_region_cluster):
-    global_appliance = multi_region_cluster.global_appliance
-    with global_appliance:
+def activate_global_appliance(appliance, request):
+    holder = request.config.pluginmanager.get_plugin(PLUGIN_KEY)
+    old_appliance = holder.held_appliance
+    from cfme.utils.appliance import IPAppliance
+    global_appliance = IPAppliance.from_url('https://10.8.198.83/')
+    with global_appliance as gapp:
+        # framework will try working with default appliance if browser restarts w/o this
+        # workaround. in addition it will try using old appliance in other cases
+        # TODO: turn this into some global method later
+        holder.held_appliance = gapp
+
         yield
+        holder.held_appliance = old_appliance
+
+
+@pytest.fixture(scope='function')
+def setup_and_activate_multi_region_cluster(activate_global_appliance):
+    return
+
+
+@pytest.fixture(scope='function')
+def env(request):
+    if 'multi-region-app' in request.node.nodeid:
+        return request.getfixturevalue('setup_and_activate_multi_region_cluster')
+    else:
+        return

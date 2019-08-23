@@ -96,6 +96,17 @@ from cfme.utils.providers import list_providers
 from cfme.utils.providers import ProviderFilter
 
 
+ONE = 'one'
+SECOND = 'second'
+ALL = 'all'
+NONE = None
+DEFAULT = 'default'
+LATEST = 'latest'
+ONE_PER_VERSION = 'one_per_version'
+ONE_PER_CATEGORY = 'one_per_category'
+ONE_PER_TYPE = 'one_per_type'
+
+
 def _param_check(metafunc, argnames, argvalues):
     """Helper function to check if parametrizing is necessary
 
