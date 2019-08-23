@@ -53,7 +53,7 @@ def test_container_provider_crud(request, appliance, has_no_providers, provider)
 
     assert provider.name == str(view.entities.get_first_entity().data.get('name', {}))
 
-    provider.delete(cancel=False)
+    provider.delete()
 
     assert view.is_displayed
 

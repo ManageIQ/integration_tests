@@ -587,7 +587,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                 raise AssertionError("Provider wasn't updated. It seems form isn't accurately"
                                      " filled")
 
-    def delete(self, cancel=True):
+    def delete(self, cancel=False):
         """
         Deletes a provider from CFME using UI
 

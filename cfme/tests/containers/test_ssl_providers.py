@@ -73,7 +73,7 @@ def test_add_provider_naming_conventions(provider, appliance, soft_assert, sync_
         except AssertionError:
             soft_assert(False, provider_name + ' wasn\'t added successfully')
         else:
-            new_provider.delete(cancel=False)
+            new_provider.delete()
             new_provider.wait_for_delete()
 
 
@@ -108,7 +108,7 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert, sync_ssl_
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     default_sec_protocol + ' security protocol')
     else:
-        new_provider.delete(cancel=False)
+        new_provider.delete()
         new_provider.wait_for_delete()
 
 
@@ -156,7 +156,7 @@ def test_add_mertics_provider_ssl(provider, appliance, test_item,
                         default_sec_protocol=test_item.default_sec_protocol,
                         metrics_sec_protocol=test_item.metrics_sec_protocol))
     else:
-        new_provider.delete(cancel=False)
+        new_provider.delete()
         new_provider.wait_for_delete()
 
 
