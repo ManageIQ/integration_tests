@@ -2,6 +2,7 @@
 """This module contains tests that test the universally applicable canned methods in Automate."""
 from datetime import date
 from datetime import timedelta
+from textwrap import dedent
 
 import fauxfactory
 import pytest
@@ -180,3 +181,72 @@ def test_miq_password_decrypt(klass):
         execute_methods=True,
     )
     assert result.validate()
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1700524])
+@pytest.mark.ignore_stream("5.10")
+def test_service_retirement_from_automate_method(request, generic_catalog_item, custom_instance):
+    """
+    Bugzilla:
+        1700524
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.11
+        casecomponent: Automate
+        testSteps:
+            1. Create service catalog item and order
+            2. Create a writeable domain and copy ManageIQ/System/Request to this domain
+            3. Create retire_automation_service instance and set meth5 to retire_automation_service.
+            4. Create retire_automation_service method with sample code given below:
+               > service = $evm.root['service']
+               > $evm.log(:info, "create_retire_request for  service #{service}")
+               > request = $evm.execute(:create_retire_request, service)
+               > $evm.log(:info, "Create request for create_retire_request #{request}")
+            5. Execute this method using simulation
+        expectedResults:
+            1. Service provision request should be provisioned successfully
+            2.
+            3.
+            4.
+            5. Service should be retired successfully
+    """
+    # Ordering catalog item and deleting request once service has been reached to 'Finished' state
+    service_request = generic_catalog_item.appliance.rest_api.collections.service_templates.get(
+        name=generic_catalog_item.name
+    ).action.order()
+    request.addfinalizer(lambda: service_request.action.delete())
+    wait_for(lambda: service_request.request_state == "finished", fail_func=service_request.reload,
+             timeout=180, delay=10)
+
+    # Ruby code to execute create_retire_request
+    script = dedent(
+        """
+        service = $evm.root['service']
+        $evm.log(:info, 'create_retire_request for service #{service}')
+        request = $evm.execute(:create_retire_request, service)
+        $evm.log(:info, 'Create request for create_retire_request #{request}')
+        """
+    )
+    instance = custom_instance(ruby_code=script)
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=['.*Create request for create_retire_request.*']).waiting(timeout=120):
+
+        # Executing automate method
+        simulate(
+            appliance=generic_catalog_item.appliance,
+            target_type="Service",
+            target_object=f"{generic_catalog_item.name}",
+            message="create",
+            request=f"{instance.name}",
+            execute_methods=True,
+        )
+
+    retire_request = generic_catalog_item.appliance.rest_api.collections.requests.get(
+        description=f"Service Retire for: {generic_catalog_item.name}")
+    wait_for(lambda: retire_request.request_state == "finished", fail_func=retire_request.reload,
+             timeout=180, delay=10)
