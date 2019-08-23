@@ -40,7 +40,7 @@ def import_tags(appliance):
             'gunzip tags.yml.gz'
         ).success
         assert client.run_command(
-            'vmdb && bin/rake rhconsulting:tags:import[/tmp/tags.yml]').success
+            'cd /var/www/miq/vmdb && bin/rake rhconsulting:tags:import[/tmp/tags.yml]').success
     except AssertionError:
         client.run_command('cd /tmp && rm -f tags.yml*')
         pytest.skip('Tags import is failed')
