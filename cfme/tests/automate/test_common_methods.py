@@ -6,11 +6,13 @@ from textwrap import dedent
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
+from widgetastic_patternfly import CandidateNotFound
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
 from cfme.markers.env_markers.provider import ONE
 from cfme.provisioning import do_vm_provisioning
@@ -283,7 +285,7 @@ def test_automate_quota_units(setup_provider, provider, request, appliance, set_
     Polarion:
         assignee: ghubale
         casecomponent: Automate
-        caseimportance: high
+        caseimportance: low
         initialEstimate: 1/4h
         tags: automate
     """
@@ -322,17 +324,20 @@ def test_automate_quota_units(setup_provider, provider, request, appliance, set_
         ), f"Provisioning failed: {provision_request.row.last_message.text}"
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_folder(provider):
     """Create Vm folder on VMWare provider"""
-    folder = provider.mgmt.create_folder(f"{fauxfactory.gen_alpha()}")
+    folder = provider.mgmt.create_folder(fauxfactory.gen_alphanumeric(
+        start="test_folder_", length=20)
+    )
     yield folder
-    vm_folder.Destroy()
+    fd = folder.Destroy()
+    wait_for(lambda: fd.info.state == 'success', delay=10, timeout=150)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.provider([VMwareProvider], scope="module", override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 @pytest.mark.meta(automates=[1716858])
 def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
     """
@@ -342,7 +347,6 @@ def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
     Polarion:
         assignee: ghubale
         casecomponent: Automate
-        caseimportance: low
         initialEstimate: 1/4h
         tags: automate
     """
@@ -353,7 +357,11 @@ def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
         vm.move_into_folder(folder) unless folder.nil?
         """
     )
-    instance = custom_instance(script)
+    instance = custom_instance(ruby_code=script)
+
+    view = navigate_to(testing_vm, "Details")
+    tree_path = view.sidebar.vmstemplates.tree.currently_selected
+
     simulate(
         appliance=appliance,
         attributes_values={
@@ -365,7 +373,20 @@ def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
         request="Call_Instance",
         execute_methods=True,
     )
+    # manipulate tree path. Remove folder - 'Templates' and append with vm_folder name
+    tree_path.pop()
+    tree_path.append(vm_folder.name)
 
     # Navigating to Vms details page and checking folder of the Vm in accordion of CFME UI
     view = navigate_to(testing_vm, "Details")
-    assert vm_folder.name in view.sidebar.vmstemplates.tree.currently_selected
+
+    # Checking new folder appeared
+    def _check():
+        try:
+            view.sidebar.vmstemplates.tree.fill(tree_path)
+            return True
+        except CandidateNotFound:
+            return False
+
+    wait_for(lambda: _check, fail_func=view.browser.refresh, timeout=600, delay=5,
+             message="Waiting for vm folder name to appear")
