@@ -2,6 +2,7 @@
 import datetime
 
 import pytest
+from manageiq_client.filters import Q
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
@@ -183,15 +184,20 @@ def test_check_vm_retirement_requester(
     vm_name, report = vm_retirement_report
     saved_report = report.queue(wait_for_finish=True)
 
+    # filtering the request by description because description sometimes changes with version
+    requester_id = (
+        appliance.rest_api.collections.requests.filter(
+            Q("description", "=", f"VM Retire for: {vm_name}*")
+        )
+        .resources[0]
+        .requester_id
+    )
+
     # obtaining the retirement requester's userid from retirement request
-    requester_userid = appliance.rest_api.collections.users.get(
-        id=appliance.rest_api.collections.requests.get(
-            description="VM Retire for: {vm_name} - ".format(vm_name=vm_name)
-        ).requester_id
-    ).userid
+    requester_userid = appliance.rest_api.collections.users.get(id=requester_id).userid
 
     # the report filter is such that we will only obtain one row in the report
-    row_data = next(saved_report.data.rows)
+    row_data = saved_report.data.find_row("Name", vm_name)
     assert (
         row_data["Name"],
         row_data["Retirement Requester"],
