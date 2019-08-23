@@ -272,6 +272,7 @@ class TestServiceCatalogViaREST(object):
 
 @pytest.mark.meta(coverage=[1678149])
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
 def test_copy_catalog_bundle():
     """
@@ -290,5 +291,30 @@ def test_copy_catalog_bundle():
             1.
             2.
             3. Able to copy catalog Bundle
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1671522])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_add_bundle_in_bundle():
+    """
+    Bugzilla:
+        1671522
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog bundle1
+            2. Create catalog bundle2
+            3. Try to add bundle2 in bundle1
+        expectedResults:
+            1.
+            2.
+            3. Shouldn't add bundle in the bundle
     """
     pass
