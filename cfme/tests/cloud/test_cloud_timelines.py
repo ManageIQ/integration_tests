@@ -391,7 +391,11 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(automates=[1730819], blockers=[BZ(1730819, forced_streams=["5.11"])])
+@pytest.mark.meta(automates=[1730819], blockers=[
+    BZ(1730819,
+       forced_streams=["5.11"],
+       unblock=lambda provider: not provider.one_of(AzureProvider))
+])
 def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
     """
     Metadata:
