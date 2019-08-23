@@ -11,7 +11,6 @@ from cfme.tests.automate.custom_button import CustomButtonSSUIDropdwon
 from cfme.tests.automate.custom_button import log_request_check
 from cfme.tests.automate.custom_button import TextInputDialogSSUIView
 from cfme.tests.automate.custom_button import TextInputDialogView
-from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
@@ -40,59 +39,19 @@ TEXT_DISPLAY = {
 
 
 @pytest.fixture(scope="module")
-def service(appliance):
-    service_name = "service_{}".format(fauxfactory.gen_numeric_string(3))
-    service = appliance.rest_api.collections.services.action.create(
-        name=service_name, display=True
-    )[0]
-    yield service
-    service.action.delete()
-
-
-@pytest.fixture(scope="module")
-def definition(appliance):
-    with appliance.context.use(ViaREST):
-        definition = appliance.collections.generic_object_definitions.create(
-            name="generic_class_{}".format(fauxfactory.gen_numeric_string(3)),
-            description="Generic Object Definition",
-            attributes={"addr01": "string"},
-            associations={"services": "Service"},
-            methods=["add_vm", "remove_vm"],
-        )
-        yield definition
-        if definition.exists:
-            definition.delete()
-
-
-@pytest.fixture(scope="module")
-def objects(appliance, definition, service):
-    with appliance.context.use(ViaREST):
-        instance = appliance.collections.generic_objects.create(
-            name="generic_instance_{}".format(fauxfactory.gen_numeric_string(3)),
-            definition=definition,
-            attributes={"addr01": "Test Address"},
-            associations={"services": [service]},
-        )
-        service.action.add_resource(
-            resource=appliance.rest_api.collections.generic_objects.find_by(name=instance.name)[
-                0
-            ]._ref_repr()
-        )
-        instance.my_service = MyService(appliance, name=service.name)
-
-        obj_dest = {
-            "GENERIC": {
-                "All": (instance.my_service, "GenericObjectInstance"),
-                "Details": (instance, "MyServiceDetails"),
-            },
-            "SERVICE": {
-                "All": (instance.my_service, "All"),
-                "Details": (instance.my_service, "Details"),
-            },
-        }
-        yield obj_dest
-        if instance.exists:
-            instance.delete()
+def objects(appliance, add_generic_object_to_service):
+    instance = add_generic_object_to_service
+    obj_dest = {
+        "GENERIC": {
+            "All": (instance.my_service, "GenericObjectInstance"),
+            "Details": (instance, "MyServiceDetails"),
+        },
+        "SERVICE": {
+            "All": (instance.my_service, "All"),
+            "Details": (instance.my_service, "Details"),
+        },
+    }
+    yield obj_dest
 
 
 @pytest.fixture(params=OBJECTS, ids=[obj.capitalize() for obj in OBJECTS], scope="module")
@@ -316,7 +275,7 @@ def test_custom_button_automate_service_obj(
     blockers=[BZ(1659452, unblock=lambda serv_button_group: "group" not in serv_button_group)]
 )
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-def test_custom_button_text_display(appliance, context, serv_button_group, service):
+def test_custom_button_text_display(appliance, context, serv_button_group, gen_rest_service):
     """ Test custom button text display on option
 
     Polarion:
@@ -338,7 +297,7 @@ def test_custom_button_text_display(appliance, context, serv_button_group, servi
         1659452
     """
 
-    my_service = MyService(appliance, name=service.name)
+    my_service = MyService(appliance, name=gen_rest_service.name)
     button, group = serv_button_group
 
     with appliance.context.use(context):
@@ -646,9 +605,9 @@ def test_custom_button_open_url_service_obj(objects, button_group):
 
 
 @pytest.fixture(params=["Service", "Provider"], scope="module")
-def unassigned_btn_setup(request, appliance, provider, service):
+def unassigned_btn_setup(request, appliance, provider, gen_rest_service):
     if request.param == "Service":
-        obj = MyService(appliance, name=service.name)
+        obj = MyService(appliance, name=gen_rest_service.name)
         destinations = [ViaUI, ViaSSUI]
     else:
         # only service is different than other custom button object so selecting one i.e. provider
