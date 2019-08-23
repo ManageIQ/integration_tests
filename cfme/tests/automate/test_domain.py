@@ -8,7 +8,11 @@ from cfme.automate.explorer.instance import InstanceCopyView
 from cfme.automate.explorer.klass import ClassCopyView
 from cfme.automate.explorer.method import MethodCopyView
 from cfme.automate.simulation import simulate
+from cfme.base.credential import Credential
 from cfme.exceptions import OptionNotAvailable
+from cfme.rest.gen_data import groups as _groups
+from cfme.rest.gen_data import tenants as _tenants
+from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
@@ -393,3 +397,59 @@ def test_copy_to_domain(domain):
     method = domain.browser.create_view(MethodCopyView)
     method.flash.wait_displayed()
     method.flash.assert_message("Copy selected Automate Method was saved")
+
+
+@pytest.fixture(scope="function")
+def new_user(request, appliance):
+    """This fixture creates custom user with tenant attached"""
+    tenant = _tenants(request, appliance)
+    role = appliance.rest_api.collections.roles.get(name="EvmRole-super_administrator")
+    group = _groups(request, appliance, role, tenant=tenant)
+    user, user_data = _users(request, appliance, group=group.description)
+    yield appliance.collections.users.instantiate(
+        name=user[0].name,
+        credential=Credential(principal=user_data[0]["userid"], secret=user_data[0]["password"]),
+    ), tenant
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1678122])
+@pytest.mark.ignore_stream("5.10")
+def test_tenant_attached_with_domain(request, new_user, domain):
+    """
+    Note: This RFE which has introduced extra column for tenant on domain all view
+
+    Bugzilla:
+        1678122
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.11
+        casecomponent: Automate
+        setup: Create new user
+        testSteps:
+            1. Log in with admin. Create automate domain and navigate to domains all page
+            2. Log in with new user. Create automate domain and navigate to domains all page
+        expectedResults:
+            1. Automate domain should be assigned with tenant - 'My Company'
+            2. Automate domain should be assigned with new user's tenant
+    """
+    # Domain created by admin user attached with root tenant "My Company"
+    user, tenant = new_user
+    view = navigate_to(domain.parent, "All")
+    assert view.domains.row(name=domain.name)["Tenant"].text == "My Company"
+
+    # Log in with new user
+    with user:
+        # Domain created by new user attached with new tenant assigned to this user
+        new_domain = domain.appliance.collections.domains.create(
+            name=fauxfactory.gen_alpha(), description=fauxfactory.gen_alpha(), enabled=True
+        )
+        request.addfinalizer(new_domain.delete_if_exists)
+        for domain in view.domains.read():
+            if domain['Name'] == new_domain.name:
+                assert domain['Tenant'] == tenant.name
+            else:
+                assert domain['Tenant'] == "My Company"
