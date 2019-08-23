@@ -257,6 +257,24 @@ class TestAutomationRequestsRESTAPI(object):
         # testing BZ 1418338
         edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
+    @pytest.mark.tier(1)
+    @pytest.mark.meta(automates=[1723830])
+    @pytest.mark.long_running
+    def test_multiple_automation_requests(self, collection, appliance, vm):
+        """
+        Bugzilla:
+            1723830
+
+        Polarion:
+            assignee: ghubale
+            initialEstimate: 1/30h
+            casecomponent: Automate
+        """
+        requests_data = _automation_requests_data(vm, approve=False, num=100)
+        response = collection.action.create(*requests_data)
+        create_pending_requests(collection, appliance.rest_api, response)
+        deny_requests(collection, appliance.rest_api, response, from_detail=False)
+
 
 class TestAutomationRequestsCommonRESTAPI(object):
     """Tests using /api/requests (common collection for all requests types)."""
