@@ -12,14 +12,15 @@ def gen_rest_service(appliance):
 
     rest_service = appliance.rest_api.collections.services.action.create(
         name=fauxfactory.gen_numeric_string(16, start="gen_rest_serv", separator="-"), display=True
-    )
-    rest_service = rest_service[0]
+    )[0]
+
     yield rest_service
-    rest_service.action.delete()
+    if rest_service.exists:
+        rest_service.action.delete()
 
 
 @pytest.fixture(scope="module")
-def gen_definition(appliance):
+def generic_definition(appliance):
     """Generic object definition or class"""
 
     with appliance.context.use(ViaREST):
@@ -35,16 +36,17 @@ def gen_definition(appliance):
 
 
 @pytest.fixture(scope="module")
-def generic_object(gen_definition, gen_rest_service, appliance):
+def generic_object(generic_definition, gen_rest_service, appliance):
     """Generic object associated with service"""
 
     myservice = MyService(appliance, name=gen_rest_service.name)
+
     with appliance.context.use(ViaREST):
         instance = appliance.collections.generic_objects.create(
             name=fauxfactory.gen_numeric_string(20, start="gen_rest_instance", separator="-"),
-            definition=gen_definition,
+            definition=generic_definition,
             attributes={"addr01": "Test Address"},
-            associations={"services": [myservice]},
+            associations={"services": [gen_rest_service]},
         )
         instance.my_service = myservice
         yield instance

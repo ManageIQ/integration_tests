@@ -43,13 +43,13 @@ def tags(request, appliance, categories):
 
 
 @pytest.fixture(scope="module")
-def generic_object_button_group(appliance, gen_definition):
+def generic_object_button_group(appliance, generic_definition):
     def _generic_object_button_group(create_action=True):
         if create_action:
             with appliance.context.use(ViaUI):
                 group_name = "button_group_{}".format(fauxfactory.gen_alphanumeric())
                 group_desc = "Group_button_description_{}".format(fauxfactory.gen_alphanumeric())
-                groups_buttons = gen_definition.collections.generic_object_groups_buttons
+                groups_buttons = generic_definition.collections.generic_object_groups_buttons
                 generic_object_button_group = groups_buttons.create(
                     name=group_name, description=group_desc, image="fa-user"
                 )
@@ -61,11 +61,11 @@ def generic_object_button_group(appliance, gen_definition):
 
 
 @pytest.fixture(scope="module")
-def generic_object_button(appliance, generic_object_button_group, gen_definition):
+def generic_object_button(appliance, generic_object_button_group, generic_definition):
     def _generic_object_button(button_group):
         with appliance.context.use(ViaUI):
             button_parent = (
-                generic_object_button_group(button_group) if button_group else gen_definition
+                generic_object_button_group(button_group) if button_group else generic_definition
             )
             button_name = 'button_{}'.format(fauxfactory.gen_alphanumeric())
             button_desc = 'Button_description_{}'.format(fauxfactory.gen_alphanumeric())
