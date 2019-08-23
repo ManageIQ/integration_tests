@@ -18,7 +18,11 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import PaginationPane
+from widgetastic_manageiq import ReactCodeMirror
+from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import ScriptBox
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
@@ -49,11 +53,17 @@ class CopyTemplateForm(ServicesCatalogView):
 
 class TemplateForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
-    template_type = BootstrapSelect("type")
+    template_type = VersionPicker({
+        "5.11": ReactSelect("type"),
+        LOWEST: BootstrapSelect("type")
+    })
     name = Input(name='name')
     description = Input(name="description")
     draft = Checkbox(name='draft')
-    content = ScriptBox(locator="//pre[@class=' CodeMirror-line ']/span")
+    content = VersionPicker({
+        "5.11": ReactCodeMirror(),
+        LOWEST: ScriptBox(locator="//pre[@class=' CodeMirror-line ']/span")
+    })
 
 
 class AddTemplateView(TemplateForm):
