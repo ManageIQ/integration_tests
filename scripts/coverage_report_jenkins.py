@@ -899,7 +899,7 @@ def coverage_report_jenkins(jenkins_url, jenkins_jobs, jenkins_user, jenkins_tok
             with diaper:
                 sprout.destroy_pool(pool_id)
     else:
-        # Use and existing appliance.
+        # Use an existing appliance.
         with DefaultAppliance(hostname=appliance_ip) as appliance:
             exit(aggregate_coverage(
                 appliance,

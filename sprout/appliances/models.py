@@ -25,7 +25,8 @@ from cached_property import threaded_cached_property
 from sprout import critical_section, redis
 from sprout.log import create_logger
 
-from cfme.utils.appliance import Appliance as CFMEAppliance, DefaultAppliance
+from cfme.utils.appliance import Appliance as CFMEAppliance
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.bz import Bugzilla
 from cfme.utils.conf import cfme_data
 from cfme.utils.providers import get_mgmt
