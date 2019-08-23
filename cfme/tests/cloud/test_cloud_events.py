@@ -86,7 +86,7 @@ def test_manage_nsg_group(appliance, provider, register_event):
     provider.mgmt.remove_netsec_group(nsg_name, resource_group)
 
 
-@pytest.mark.meta(blockers=[BZ(1724312)], automates=[1724312])
+@pytest.mark.meta(blockers=[BZ(1724312), BZ(1733383)], automates=[1724312, 1733383])
 def test_vm_capture(appliance, request, provider, register_event):
     """
     tests that generalize and capture vm azure events are received and parsed by CFME
@@ -96,6 +96,7 @@ def test_vm_capture(appliance, request, provider, register_event):
 
     Bugzilla:
         1724312
+        1733383
 
     Polarion:
         assignee: jdupuy
