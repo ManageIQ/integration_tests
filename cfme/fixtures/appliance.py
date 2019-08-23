@@ -289,3 +289,46 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     app.db.extend_partition()
     app.evmserverd.start()
     return app
+
+
+def _walk_to_obj_parent(obj):
+    old = None
+    while True:
+        if old is obj:
+            break
+        old = obj
+        try:
+            obj = obj._parent_request
+        except AttributeError:
+            pass
+    return obj
+
+
+@pytest.mark.hookwrapper
+def pytest_fixture_setup(fixturedef, request):
+    # this hack is necessary for dynamic scope
+    if hasattr(_walk_to_obj_parent(request).function, 'appliance'):
+        marks = _walk_to_obj_parent(request).function.provider._marks
+
+        for mark in marks:
+            if mark.kwargs.get('fixture_name', 'appliance') == fixturedef.argname:
+                kwargs = {}
+                for argname in fixturedef.argnames:
+                    fixdef = request._get_active_fixturedef(argname)
+                    result, arg_cache_key, exc = fixdef.cached_result
+                    request._check_scope(argname, request.scope, fixdef.scope)
+                    kwargs[argname] = result
+
+                my_cache_key = request.param_index
+
+                holder = request.config.pluginmanager.get_plugin('appliance-holder')
+                current_appliance = holder.held_appliance
+
+                fixturedef.cached_result = (current_appliance, my_cache_key, None)
+                request.param = current_appliance
+                yield current_appliance
+                break
+        else:
+            yield
+    else:
+        yield
