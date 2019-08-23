@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+from random import choice
+
 import fauxfactory
 import pytest
+from manageiq_client.filters import Q
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
@@ -135,3 +138,44 @@ def test_delete_vm_from_collection(vm):
         casecomponent: Infra
     """
     delete_resources_from_collection([vm], not_found=True, num_sec=300, delay=10)
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1684681])
+@pytest.mark.provider(
+    classes=[InfraProvider],
+    selector=ONE,
+    override=True,
+    required_fields=[["cap_and_util", "capandu_vm"]],
+)
+def test_filtering_vm_with_multiple_ips(appliance, provider):
+    """
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Add a provider.
+        testSteps:
+            1. Select a VM with multiple IP addresses and note one ipaddress.
+            2. Send a GET request with the noted ipaddress.
+                GET /api/vms?expand=resources&attributes=ipaddresses&filter[]=ipaddresses=':ipaddr'
+        expectedResults:
+            1.
+            2. Selected VM must be present in the resources sent by response.
+
+    Bugzilla:
+        1684681
+    """
+    # 1
+    vm = appliance.collections.infra_vms.instantiate(
+        provider.data["cap_and_util"]["capandu_vm"], provider
+    )
+    # 2
+    result = appliance.rest_api.collections.vms.filter(
+        Q("ipaddresses", "=", choice(vm.all_ip_addresses))
+    )
+    assert_response(appliance)
+    assert vm.name in [resource.name for resource in result.resources]
