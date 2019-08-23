@@ -6,7 +6,7 @@ import sys
 from urllib.parse import urlparse
 
 from cfme.utils.appliance import get_or_create_current_appliance
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import RegularAppliance
 
 
 def log(message):
@@ -30,7 +30,7 @@ def main():
     if not args.address:
         appliance = get_or_create_current_appliance()
     else:
-        appliance = IPAppliance(hostname=urlparse(args.address).netloc)
+        appliance = RegularAppliance(hostname=urlparse(args.address).netloc)
 
     appliance.install_vddk(
         reboot=args.reboot, force=args.force, vddk_url=args.vddk_url, log_callback=log)

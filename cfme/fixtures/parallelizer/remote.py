@@ -227,21 +227,18 @@ if __name__ == '__main__':
 
     # TODO: clean the logic up here
 
-    from cfme.utils.appliance import IPAppliance, stack, DummyAppliance
+    from cfme.utils.appliance import stack, load_appliances, DummyAppliance
 
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
     import cfme.utils.log
     cfme.utils.log.setup_for_worker(args.worker)
     slave_log = cfme.utils.log.logger
-    is_dummy = json.loads(args.appliance).get("is_dummy")
 
     try:
-        if is_dummy:
+        appliance = load_appliances([json.loads(args.appliance)], {})[0]
+        if isinstance(appliance, DummyAppliance):
             slave_log.info("Loading dummy appliance...")
-            appliance = DummyAppliance.from_json(args.appliance)
-        else:
-            appliance = IPAppliance.from_json(args.appliance)
     except ValueError:
         slave_log.error("Error parsing appliance json")
         raise

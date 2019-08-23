@@ -4,7 +4,7 @@
 import argparse
 import sys
 
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import RegularAppliance
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
         '(required for proper operation)', action="store_true", default=False)
 
     args = parser.parse_args()
-    ip_a = IPAppliance(hostname=args.address)
+    ip_a = RegularAppliance(hostname=args.address)
     # Don't reboot here, so we can print updates to the console when we do
     res = ip_a.update_rhel(*args.urls, reboot=False, streaming=True, cleanup=args.cleanup)
 

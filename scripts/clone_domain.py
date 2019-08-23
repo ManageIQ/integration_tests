@@ -9,7 +9,7 @@ This can take several minutes to run.
 import argparse
 import sys
 
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import RegularAppliance
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
         help='Destination Domain name')
     args = parser.parse_args()
 
-    ip_a = IPAppliance(hostname=args.hostname)
+    ip_a = RegularAppliance(hostname=args.hostname)
     status, out = ip_a.clone_domain(args.source, args.dest)
     return status
 
