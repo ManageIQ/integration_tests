@@ -6,21 +6,22 @@ import pytest
 from cached_property import cached_property
 
 from cfme.markers.env import EnvironmentMarker
+from cfme.markers.env_markers import _param_check
 from cfme.utils import conf
 from cfme.utils.log import logger
 from cfme.utils.providers import all_types
 from cfme.utils.providers import list_providers
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.pytest_shortcuts import fixture_filter
+from cfme.utils.testgen import ALL
+from cfme.utils.testgen import LATEST
+from cfme.utils.testgen import ONE
+from cfme.utils.testgen import ONE_PER_CATEGORY
+from cfme.utils.testgen import ONE_PER_TYPE
+from cfme.utils.testgen import ONE_PER_VERSION
+from cfme.utils.testgen import SECOND
 from cfme.utils.version import Version
 
-ONE = 'one'
-SECOND = 'second'
-ALL = 'all'
-LATEST = 'latest'
-ONE_PER_VERSION = 'one_per_version'
-ONE_PER_CATEGORY = 'one_per_category'
-ONE_PER_TYPE = 'one_per_type'
 
 PROVIDER_MARKER_FIXTURE_NAME = 'provider'
 
@@ -76,52 +77,6 @@ class DPFilter(ProviderFilter):
             return None
         return any([prov_class in all_types()[provider.type_name].__mro__
                     for prov_class in self.classes])
-
-
-def _param_check(metafunc, argnames, argvalues):
-    """Helper function to check if parametrizing is necessary
-
-    * If no argnames were specified, parametrization is unnecessary.
-    * If argvalues were generated, parametrization is necessary.
-    * If argnames were specified, but no values were generated, the test cannot run successfully,
-      and will be uncollected using the :py:mod:`markers.uncollect` mark.
-
-    See usage in :py:func:`parametrize`
-
-    Args:
-        metafunc: metafunc objects from pytest_generate_tests
-        argnames: argnames list for use in metafunc.parametrize
-        argvalues: argvalues list for use in metafunc.parametrize
-
-    Returns:
-        * ``True`` if this test should be parametrized
-        * ``False`` if it shouldn't be parametrized
-        * ``None`` if the test will be uncollected
-
-    """
-    assert isinstance(argvalues, list), "iterators break pytest expectations"
-    # If no parametrized args were named, don't parametrize
-    if not argnames:
-        return False
-    # If parametrized args were named and values were generated, parametrize
-    elif any(argvalues):
-        return True
-    # If parametrized args were named, but no values were generated, mark this test to be
-    # removed from the test collection. Otherwise, py.test will try to find values for the
-    # items in argnames by looking in its fixture pool, which will almost certainly fail.
-    else:
-        # module and class are optional, but function isn't
-        modname = getattr(metafunc.module, '__name__', None)
-        classname = getattr(metafunc.cls, '__name__', None)
-        funcname = metafunc.function.__name__
-
-        test_name = '.'.join([_f for _f in (modname, classname, funcname) if _f])
-        uncollect_msg = 'Parametrization for {} yielded no values,'\
-            ' marked for uncollection'.format(test_name)
-        logger.warning(uncollect_msg)
-
-        # apply the mark
-        pytest.mark.uncollect(reason=uncollect_msg)(metafunc.function)
 
 
 def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
@@ -439,32 +394,6 @@ def providers_by_class(
 
 class ProviderEnvironmentMarker(EnvironmentMarker):
     NAME = PROVIDER_MARKER_FIXTURE_NAME
-
-    @classmethod
-    def get_closest_kwarg_markers(cls, test_item, kwarg_name='fixture_name'):
-        """use iter_markers, and apply a marker kwarg filter, returning the first marker matching
-        Like pytest.nodes implementation, its relying on the first item returned by iter_marker
-        to be the 'lowest' level mark
-
-        Args:
-            test_item: a test definition, or node, that has iter_markers
-            kwarg_name: the kwarg to organize markers by for closeness
-
-        Returns:
-            dictionary of marks keyed by fixture name
-        """
-        provider_marks = list(test_item.iter_markers(name=cls.NAME))
-        if not provider_marks:
-            # no matching marks, nothing to parametrize
-            return
-        marks_by_kwarg = defaultdict(list)
-        for mark in provider_marks:
-            marks_by_kwarg[mark.kwargs.get(kwarg_name, cls.NAME)].append(mark)
-
-        # pop the first item in the list for the closest marker
-        closest_marks = {fix: marks.pop(0) if marks else None
-                         for fix, marks in marks_by_kwarg.items()}
-        return closest_marks
 
     def process_env_mark(self, metafunc):
         """ Process the provider env marks

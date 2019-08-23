@@ -102,7 +102,15 @@ class ApplianceException(Exception):
     pass
 
 
-class IPAppliance:
+class BaseAppliance(object):
+    """
+        Represents base appliance class intended to hold base properties existing in every appliance
+
+    """
+    pass
+
+
+class IPAppliance(BaseAppliance):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
     it knows both the provider, vm_name and can there for derive the IP address.
@@ -141,6 +149,7 @@ class IPAppliance:
     sssd = SystemdService.declare(unit_name='sssd')
     sshd = SystemdService.declare(unit_name='sshd')
     supervisord = SystemdService.declare(unit_name='supervisord')
+    type = None
 
     CONFIG_MAPPING = {
         'hostname': 'hostname',
@@ -156,6 +165,7 @@ class IPAppliance:
         'ssh_port': 'ssh_port',
         'project': 'project',
         'version': 'version',
+        'type': 'type'
     }
     CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
@@ -200,7 +210,7 @@ class IPAppliance:
     def __init__(
             self, hostname, ui_protocol='https', ui_port=None, browser_steal=False, project=None,
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None,
-            is_dev=False, version=None,
+            is_dev=False, version=None, type=None
     ):
         if not isinstance(hostname, str):
             raise TypeError('Appliance\'s hostname must be a string!')
@@ -214,6 +224,7 @@ class IPAppliance:
         self.ssh_port = ssh_port or ports.SSH
         self.db_port = db_port or ports.DB
         self.db_host = db_host
+        self.type = type or self.type
         self.browser = ViaUI(owner=self)
         self.ssui = ViaSSUI(owner=self)
         self.rest_context = ViaREST(owner=self)
@@ -2612,6 +2623,30 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self. _switch_migration_ui(False)
 
 
+class RegularAppliance(IPAppliance):
+    # TODO: make everything use regular appliance
+    type = 'regular'
+
+
+class PodAppliance(IPAppliance):
+    type = 'pod'
+
+
+class DevAppliance(IPAppliance):
+    # TODO: move dev stuff here
+    type = 'dev'
+
+
+class UpgradedAppliance(IPAppliance):
+    # TODO: implement this
+    type = 'upgraded'
+
+
+class MultiRegionAppliance(BaseAppliance):
+    # TODO: implement this
+    type = 'multi-region'
+
+
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
 
@@ -3006,7 +3041,11 @@ def load_appliances(appliance_list, global_kwargs):
                 raise ValueError(
                     f"No valid IPAppliance kwargs found in config for appliance #{idx}"
                 )
-            appliance = IPAppliance(**{mapping[k]: v for k, v in kwargs.items() if k in mapping})
+            appliance_type = kwargs.pop('type', DEFAULT_APP_TYPE)
+            appliance_class = APP_TYPES[appliance_type]
+
+            appliance = appliance_class(**{mapping[k]: v for k, v in kwargs.items()
+                                           if k in mapping})
 
             result.append(appliance)
     return result
@@ -3039,7 +3078,7 @@ def collections_for_appliance(appliance):
 
 
 @attr.s
-class DummyAppliance:
+class DummyAppliance(BaseAppliance):
     """a dummy with minimal attribute set"""
     hostname = 'DummyApplianceHostname'
     browser_steal = False
@@ -3051,6 +3090,7 @@ class DummyAppliance:
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
     url = 'http://dummies.r.us'
     is_dummy = attr.ib(default=True)
+    type = 'dummy'
 
     @property
     def browser(self):
@@ -3225,3 +3265,11 @@ class Navigatable(NavigatableMixin):
 class MiqImplementationContext(sentaku.ImplementationContext):
     """ Our context for Sentaku"""
     pass
+
+
+DEFAULT_APP_TYPE = RegularAppliance.type
+APP_TYPES = {RegularAppliance.type: RegularAppliance,
+             PodAppliance.type: PodAppliance,
+             DevAppliance.type: DevAppliance,
+             UpgradedAppliance.type: UpgradedAppliance,
+             MultiRegionAppliance.type: MultiRegionAppliance}
