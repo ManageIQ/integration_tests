@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from textwrap import dedent
+
 import fauxfactory
 import pytest
 
@@ -650,3 +652,96 @@ def test_method_for_log_and_notify(request, klass, notify_level, log_level):
             result.validate(wait="60s")
     else:
         result.validate(wait="60s")
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1698184, forced_streams=['5.10'])], automates=[1698184])
+def test_null_coalescing_fields(request, klass):
+    """
+    Bugzilla:
+        1698184
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: Automate
+        tags: automate
+        testSteps:
+            1.  Create a Ruby method or Ansible playbook method with Input Parameters.
+            2.  Use Data Type null coalescing
+            3.  Make the default value something like this : ${#var3} || ${#var2} || ${#var1}
+        expectedResults:
+            1.
+            2.
+            3. Normal null coalescing behavior
+    """
+    var1, var2, var3, var4 = [fauxfactory.gen_alpha() for _ in range(4)]
+
+    klass.schema.add_fields(
+        *[
+            {
+                "name": var,
+                "type": var_type,
+                "data_type": "String",
+                "default_value": value,
+            }
+            for var, value, var_type in [
+                [var1, "fred", "Attribute"],
+                [var2, "george", "Attribute"],
+                [var3, " ", "Attribute"],
+                [var4, "", "Method"],
+            ]
+        ]
+    )
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        location="inline",
+        script=dedent(
+            """
+            $evm.log(:info, "Hello world")
+            """
+        ),
+        inputs={
+            "arg1": {
+                "data_type": "null coalescing",
+                "default_value": "".join(('${#', var1, '} ||${#', var2, '} ||${#', var3, '}'))
+            },
+            "arg2": {
+                "data_type": "null coalescing",
+                "default_value": "".join(('${#', var2, '} ||${#', var1, '} ||${#', var3, '}'))
+            },
+        },
+    )
+    request.addfinalizer(method.delete_if_exists)
+
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={var4: {"value": method.name}}
+    )
+    request.addfinalizer(instance.delete_if_exists)
+
+    log = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[r'.*\[{\"arg1\"=>\"fred\", \"arg2\"=>\"george\"}\].*'],
+    )
+    log.start_monitoring()
+
+    # Executing automate method using simulation
+    simulate(
+        appliance=instance.klass.appliance,
+        message="create",
+        request="Call_Instance",
+        execute_methods=True,
+        attributes_values={
+            "namespace": instance.klass.namespace.name,
+            "class": instance.klass.name,
+            "instance": instance.name,
+        },
+    )
+
+    assert log.validate()

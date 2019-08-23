@@ -659,33 +659,6 @@ def test_vm_name_automate_method():
 
 
 @pytest.mark.tier(1)
-def test_null_coalescing_fields():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.10
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1.  Create a Ruby method or Ansible playbook method with Input Parameters.
-            2.  Use Data Type null coalescing
-            3.  Make the default value something like this : ${#var3} || ${#var2} || ${#var1}
-        expectedResults:
-            1.
-            2.
-            3. Normal null coalescing behavior
-
-    Bugzilla:
-        1698184
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_dialog_element_values_passed_to_button():
     """
     Polarion:
