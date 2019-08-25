@@ -543,20 +543,14 @@ def test_action_power_on_audit(request, vm, vm_off, policy_for_testing):
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1549529,
-            forced_streams=["5.10", "upstream"],
-            unblock=lambda provider: provider.one_of(VMwareProvider),
-        )
-    ]
-)
 def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
     powered back on, it deletes the last snapshot.
+
+    Bugzilla:
+        1745065
 
     Metadata:
         test_flag: actions, provision
@@ -590,8 +584,6 @@ def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, p
         message="wait for snapshot appear",
         delay=5,
     )
-    assert vm.current_snapshot_description == "Created by EVM Policy Action"
-    assert vm.current_snapshot_name == snapshot_name
     # Snapshot created and validated, so let's delete it
     snapshots_before = vm.total_snapshots
     # Power on to invoke last snapshot deletion
