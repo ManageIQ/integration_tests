@@ -159,6 +159,7 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != "Ansible Tower")
 def test_ansible_tower_service_dialog_creation_from_template(request, config_manager):
     """
     Polarion:
@@ -173,4 +174,5 @@ def test_ansible_tower_service_dialog_creation_from_template(request, config_man
     except IndexError:
         pytest.skip("No job template was found")
     view = navigate_to(job_template, 'ServiceDialog')
+    view.options.dialog_name.fill('test_dialog')
     view.flash.assert_success_message('Service Dialog {} was successfully created'.format(text))
