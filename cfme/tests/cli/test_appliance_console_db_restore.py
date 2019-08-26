@@ -496,13 +496,14 @@ def test_appliance_console_restore_db_replicated(
     # Start the replication again
     appl2.set_pglogical_replication(replication_type=':global')
     appl2.add_pglogical_replication_subscription(appl1.hostname)
+
     # Assert providers exist after restore and replicated to second appliances
-    assert providers_before_restore == set(appl1.managed_provider_names), (
-        'Restored DB is missing some providers'
+    assert providers_before_restore == set(appl1.managed_provider_names)
+    wait_for(
+        lambda: providers_before_restore == set(appl2.managed_provider_names),
+        timeout=20
     )
-    assert providers_before_restore == set(appl2.managed_provider_names), (
-        'Restored DB is missing some providers'
-    )
+
     # Verify that existing provider can detect new VMs on both apps
     virtual_crud_appl1 = provider_app_crud(VMwareProvider, appl1)
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
