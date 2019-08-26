@@ -6,7 +6,8 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import FailPatternMatchError
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -108,12 +109,6 @@ def test_provider_log_updated(appliance, provider, log_exists):
     assert log_before != log_after, "Log hashes are the same"
 
 
-@pytest.mark.meta(blockers=[BZ(1633656,
-                               unblock=lambda provider: provider.one_of(AzureProvider, EC2Provider),
-                               forced_streams=["5.10", "upstream"]
-                               )
-                            ]
-                  )
 def test_provider_log_level(appliance, provider, log_exists):
     """
     Tests that log level in advanced settings affects log files
@@ -130,20 +125,43 @@ def test_provider_log_level(appliance, provider, log_exists):
         initialEstimate: 1/4h
         casecomponent: Configuration
         testSteps:
-            1. Change log level to debug
+            1. Change log level to info
             2. Refresh provider
-            3. Check logs contain debug level
-            4. Reset level back
+            3. Check logs do contain info messages
+            4. Change log level to warn
+            5. Refresh provider
+            6. Check there are no info messages in the log
+            7. Reset log level back
     """
     assert log_exists, "Log file {}.log doesn't exist".format(provider.log_name)
     log_level = appliance.server.advanced_settings['log']['level_{}'.format(provider.log_name)]
-    # set log level to debug
+    log = f'/var/www/miq/vmdb/log/{provider.log_name}.log'
+    # set log level to info
     wait_for(lambda: appliance.server.update_advanced_settings(
-        {'log': {'level_{}'.format(provider.log_name): 'debug'}}), timeout=300)
+        {'log': {'level_{}'.format(provider.log_name): 'info'}}), timeout=300)
+    lv_info = LogValidator(log, matched_patterns=['.*INFO.*'], failure_patterns=['.*DEBUG.*'])
+    lv_info.start_monitoring()
+    provider.refresh_provider_relationships()
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-    debug_in_logs = appliance.ssh_client.run_command(
-        "cat /var/www/miq/vmdb/log/{}.log | grep DEBUG".format(provider.log_name))
+    assert lv_info.validate(wait="60s")
+
+    # set log level to warn
+    wait_for(lambda: appliance.server.update_advanced_settings(
+        {'log': {'level_{}'.format(provider.log_name): 'warn'}}), timeout=300)
+    lv = LogValidator(log, failure_patterns=['.*INFO.*'])
+
+    def _no_info():
+        lv.start_monitoring()
+        provider.refresh_provider_relationships()
+        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        try:
+            assert lv.validate()
+        except FailPatternMatchError:
+            return False
+
+    # after changing the log level it doesn't take effect immediately, so might require 1-2 extra
+    # times to make sure there are no unwanted messages (from before the log change)
+    wait_for(_no_info, num_sec=900, delay=40, message="no INFOs in the log")
     # set log level back
     appliance.server.update_advanced_settings(
         {'log': {'level_{}'.format(provider.log_name): log_level}})
-    assert debug_in_logs.success
