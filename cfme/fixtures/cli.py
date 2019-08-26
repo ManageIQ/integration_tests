@@ -448,7 +448,7 @@ def configure_standby_replication_node(appl, pwd, primary_ip):
     interaction.answer(resc('Configure Replication Manager (repmgrd) for automatic '
                        r'failover? (Y/N): '), 'y')
     interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
-    interaction.answer('Press any key to continue.', '', timeout=5 * 60)
+    interaction.answer('Press any key to continue.', '', timeout=10 * 60)
 
 
 def reconfigure_standby_replication_node(appl, pwd, primary_ip, repmgr_reconfigure=False):
