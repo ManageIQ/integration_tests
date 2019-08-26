@@ -6,11 +6,15 @@ import yaml
 import cfme.rest.gen_data as rest_gen_data
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
+from cfme.generic_objects.instance.ui import MyServiceGenericObjectInstanceView
 from cfme.services.myservice import MyService
+from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [test_requirements.generic_objects]
@@ -40,6 +44,23 @@ def categories(request, appliance):
 @pytest.fixture(scope="module")
 def tags(request, appliance, categories):
     return rest_gen_data.tags(request, appliance, categories)
+
+
+@pytest.fixture
+def button_with_dialog(appliance, generic_object, dialog):
+    generic_definition = generic_object.definition
+    with appliance.context.use(ViaUI):
+        button = generic_definition.collections.generic_object_buttons.create(
+            name=fauxfactory.gen_alpha(),
+            description=fauxfactory.gen_alpha(),
+            request="call_instance",
+            image="ff ff-network-interface",
+            dialog=dialog.label
+        )
+
+        yield button
+
+        button.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -284,3 +305,38 @@ def test_import_export_generic_object_definition(request, appliance, gen_obj_def
     ).success
 
     assert gen_obj_def_import_export.exists
+
+
+@pytest.mark.meta(automates=[1729341, 1743266])
+def test_generic_object_with_service_button(appliance, generic_object, button_with_dialog):
+    """
+    Bugzilla:
+        1729341
+        1743266
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/6h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: GenericObjects
+    """
+    # add generic object to service
+    myservice = MyService(appliance, name=generic_object.associations.get("services")[0].name)
+    myservice.add_resource_generic_object(generic_object)
+
+    # now navigate to the details of the generic_object
+    view = navigate_to(generic_object, "MyServiceDetails")
+    view.toolbar.button(button_with_dialog.name).custom_button.click()
+    view = generic_object.create_view(TextInputDialogView, wait=10)
+    view.service_name.fill("Custom Button Execute")
+    wait_for(lambda: not view.submit.disabled, timeout="10s")
+    view.submit.click()
+
+    # now for the actual test, make sure after hitting submit we're on the correct page
+    try:
+        view = generic_object.create_view(MyServiceGenericObjectInstanceView, wait=10)
+    except TimedOutError:
+        pytest.fail("Could not wait for service's generic object view to displayed.")

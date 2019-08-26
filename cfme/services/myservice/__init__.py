@@ -3,6 +3,7 @@ import sentaku
 
 from cfme.common import Taggable
 from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import ViaREST
 from cfme.utils.update import Updateable
 
 
@@ -33,6 +34,19 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
         self.description = description
         self.vm_name = vm_name
         self.parent = self.appliance.context
+
+    @property
+    def rest_obj(self):
+        return self.appliance.rest_api.collections.services.find_by(name=self.name)[0]
+
+    def add_resource_generic_object(self, gen_obj):
+        """ Add a generic object instance to the service """
+        with self.appliance.context.use(ViaREST):
+            self.rest_obj.action.add_resource(
+                resource=self.appliance.rest_api.collections.generic_objects.get(
+                    name=gen_obj.name
+                )._ref_repr()
+            )
 
 
 from cfme.services.myservice import ui, ssui  # NOQA last for import cycles
