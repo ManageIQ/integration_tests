@@ -11,6 +11,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE),
     pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.ignore_stream("5.11")
 ]
 
 IDS = [

@@ -4,6 +4,8 @@ import requests
 
 from cfme.utils.appliance.implementations.ui import navigate_to
 
+pytestmark = [pytest.mark.ignore_stream("5.11")]
+
 
 @pytest.mark.tier(3)
 def test_verify_rss_links(appliance):

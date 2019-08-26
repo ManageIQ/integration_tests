@@ -22,7 +22,6 @@ from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import CloudProvidersView
 from cfme.fixtures.provider import enable_provider_regions
 from cfme.markers.env_markers.provider import ONE
-from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.utils import appliance
 from cfme.utils import conf
 from cfme.utils import ssh
@@ -700,16 +699,6 @@ def test_display_network_topology(appliance, openstack_provider):
 
 
 class TestProvidersRESTAPI(object):
-    @pytest.fixture(scope="function")
-    def arbitration_profiles(self, request, appliance, cloud_provider):
-        num_profiles = 2
-        response = _arbitration_profiles(
-            request, appliance, cloud_provider, num=num_profiles)
-        assert_response(appliance)
-        assert len(response) == num_profiles
-
-        return response
-
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_cloud_networks_query(self, cloud_provider, appliance, from_detail, setup_provider):
