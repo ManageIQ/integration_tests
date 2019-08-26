@@ -114,7 +114,7 @@ class Rdb(Pdb):
     do_c = do_cont = do_continue
 
     def interaction(self, *args, **kwargs):
-        print(self._prompt_msg, stream=self.stdout)
+        print(self._prompt_msg, file=self.stdout)
         Pdb.interaction(self, *args, **kwargs)
 
     def set_trace(self, *args, **kwargs):
