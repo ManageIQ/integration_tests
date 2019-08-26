@@ -7,10 +7,9 @@ import pytest
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.net import find_pingable
+from cfme.utils.net import wait_pingable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import TimedOutError
-from cfme.utils.wait import wait_for
 
 
 @pytest.fixture(scope='module')
@@ -41,13 +40,7 @@ def utility_vm():
         pytest.skip(msg)
 
     try:
-        found_ip, _ = wait_for(
-            find_pingable,
-            func_args=[vm],
-            fail_condition=None,
-            delay=5,
-            num_sec=300
-        )
+        found_ip = wait_pingable(vm, wait=300)
     except TimedOutError:
         msg = 'Timed out waiting for reachable proxy VM IP'
         logger.exception(msg)
