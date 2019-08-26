@@ -36,9 +36,7 @@ LOCATIONS = [
 
 
 pytestmark = [
-    pytest.mark.parametrize(
-        "model_object,destination", LOCATIONS
-    ),
+    pytest.mark.parametrize("model_object,destination", LOCATIONS),
     test_requirements.general_ui
 ]
 
