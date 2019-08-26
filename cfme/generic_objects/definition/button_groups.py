@@ -97,13 +97,15 @@ class GenericObjectButtonsCollection(BaseCollection):
             'description': description,
             'display': display,
             'image': image,
-            'dialog': dialog,
             'open_url': open_url,
             'display_for': display_for,
             'request': request,
             'submit_version': submit_version,
             'system_message': system_message
         })
+        # TODO: for some reason this was not being filled if included in dict above
+        if dialog:
+            view.fill({"dialog": dialog})
         if attributes:
             for name, type in attributes.items():
                 view.attribute_value_table.fill([{'Name': name}, {'Value': type}])
