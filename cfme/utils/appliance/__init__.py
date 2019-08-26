@@ -1680,16 +1680,20 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         supervisord = self.supervisord.running if self.version < '5.11' else True
         return self.is_embedded_ansible_role_enabled and supervisord
 
-    def wait_for_embedded_ansible(self, timeout=1200):
+    def wait_for_embedded_ansible(self):
         """Waits for embedded ansible to be ready
 
         Args:
             timeout: Number of seconds to wait until timeout (default ``1200``)
         """
+
+        timeout = 1200
         if self.is_pod:
             # openshift's ansible pod gets ready very long first time.
             # it even gets restarted once or twice
             timeout *= 2
+        elif self.version < '5.11':
+            timeout = 2400
 
         wait_for(
             func=lambda: self.is_embedded_ansible_running,
