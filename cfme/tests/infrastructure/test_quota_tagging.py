@@ -318,8 +318,8 @@ def test_quota_vm_reconfigure(
         )
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method="ui")
-    assert small_vm.configuration != original_config
     assert provision_request.row.reason.text == "Quota Exceeded"
+    assert small_vm.configuration == original_config
 
 
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
