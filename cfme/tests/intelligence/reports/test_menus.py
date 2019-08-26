@@ -226,3 +226,36 @@ def test_reports_menu_with_duplicate_reports(appliance, request, group, report_m
     ).copy()
     request.addfinalizer(custom_report_2.delete_if_exists)
     assert not expected_report.exists
+
+
+@pytest.mark.parametrize("group", GROUPS)
+def test_reset_report_menus(appliance, get_custom_report, group, report_menus):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: low
+        initialEstimate: 1/12h
+        setup:
+            1. Create a custom report.
+        testSteps:
+            1. Select the custom report and move it to a different menu.
+            2. Reset it.
+            3. Check if the report is available under the selected menu.
+    """
+    folder, subfolder = "Tenants", "Tenant Quotas"
+    # move the report
+    report_menus.move_reports(group, folder, subfolder, get_custom_report.menu_name)
+
+    # assert the report exists in the moved menu
+    assert appliance.collections.reports.instantiate(
+        type=folder, subtype=subfolder, menu_name=get_custom_report.menu_name
+    ).exists
+
+    # reset the report menu
+    report_menus.reset_to_default(group)
+
+    # assert the report does not exist in the moved menu
+    assert not appliance.collections.reports.instantiate(
+        type=folder, subtype=subfolder, menu_name=get_custom_report.menu_name
+    ).exists

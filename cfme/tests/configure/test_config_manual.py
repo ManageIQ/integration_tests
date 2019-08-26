@@ -35,24 +35,6 @@ def test_validate_landing_pages_for_rbac():
 
 
 @pytest.mark.manual
-@test_requirements.settings
-@pytest.mark.tier(1)
-def test_my_settings_default_views_alignment():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Settings
-        caseimportance: medium
-        initialEstimate: 1/20h
-        testSteps:
-            1. Go to My Settings -> Default Views
-        expectedResults:
-            1. All icons are aligned correctly
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.configuration
 @pytest.mark.tier(1)
 def test_configure_icons_roles_by_server():
