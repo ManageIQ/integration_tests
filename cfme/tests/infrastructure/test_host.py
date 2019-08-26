@@ -312,3 +312,22 @@ def test_infrastructure_hosts_icons_states(
             actual_state, power_state
         ),
     )
+
+
+@test_requirements.rhev
+@pytest.mark.rhv3
+@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], override=True, selector=ONE)
+@pytest.mark.meta(automates=[1528859])
+def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
+    """Tests hosts not displayed several times after removing and adding provider.
+
+        Polarion:
+            assignee: anikifor
+            initialEstimate: 1/20h
+            casecomponent: Infra
+        """
+    host_count = navigate_to(appliance.collections.hosts, "All").paginator.items_amount
+    provider.delete(cancel=False)
+    provider.wait_for_delete()
+    provider.create()
+    assert host_count == navigate_to(appliance.collections.hosts, "All").paginator.items_amount
