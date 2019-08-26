@@ -25,6 +25,19 @@ def config_system(config_manager):
     return fauxfactory.gen_choice(config_manager.systems)
 
 
+@pytest.fixture
+def ansible_tower_dialog_through_ui(appliance):
+    """Returns service dialog object."""
+    service_dialogs = appliance.collections.service_dialogs
+    service_dialog = service_dialogs.instantiate(
+        label=fauxfactory.gen_alpha(8),
+        description=fauxfactory.gen_alpha(8)
+    )
+    yield service_dialog
+
+    service_dialog.delete_if_exists()
+
+
 @pytest.mark.tier(3)
 def test_config_manager_detail_config_btn(request, config_manager):
     """
@@ -160,7 +173,8 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != "Ansible Tower")
-def test_ansible_tower_service_dialog_creation_from_template(request, config_manager):
+def test_ansible_tower_service_dialog_creation_from_template(request, config_manager,
+        ansible_tower_dialog_through_ui):
     """
     Polarion:
         assignee: nachandr
@@ -174,5 +188,8 @@ def test_ansible_tower_service_dialog_creation_from_template(request, config_man
     except IndexError:
         pytest.skip("No job template was found")
     view = navigate_to(job_template, 'ServiceDialog')
-    view.options.dialog_name.fill('test_dialog')
-    view.flash.assert_success_message('Service Dialog {} was successfully created'.format(text))
+    service_dialog = ansible_tower_dialog_through_ui
+    view.options.dialog_name.fill(service_dialog.label)
+    view.save_button.click()
+    view.flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
+        service_dialog.label))

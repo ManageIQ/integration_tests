@@ -2,6 +2,7 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Text
+from widgetastic.widget import TextInput
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
@@ -24,7 +25,6 @@ from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
-import pytest
 
 
 class TowerExplorerAccordion(View):
@@ -54,7 +54,6 @@ class TowerExplorerProviderToolbar(View):
 
 class TowerExplorerSystemJobTemplatesToolbar(View):
     reload = Button(title='Refresh this page')
-    configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     download = Dropdown('Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
@@ -64,8 +63,6 @@ class TowerExplorerSystemJobTemplatesDetailsToolbar(View):
     reload = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
-    download = Dropdown('Download')
-    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class TowerExplorerView(BaseLoggedInPage):
@@ -123,7 +120,7 @@ class TowerExplorerJobTemplateDetailsEntities(View):
 
 
 class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
-    toolbar = View.nested(TowerExplorerSystemJobTemplatesToolbar)
+    toolbar = View.nested(TowerExplorerSystemJobTemplatesDetailsToolbar)
     entities = View.nested(TowerExplorerJobTemplateDetailsEntities)
 
     @property
@@ -137,12 +134,12 @@ class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
 
 
 class OptionForm(View):
-    dialog_name = Text('//*[@id="dialog_name"]')
+    dialog_name = TextInput('dialog_name')
 
 
 class TowerExplorerJobServiceDialogView(TowerExplorerView):
-    toolbar = View.nested(TowerExplorerSystemJobTemplatesDetailsToolbar)
     options = View.nested(OptionForm)
+    save_button = Button('Save')
 
     @property
     def is_displayed(self):
@@ -242,6 +239,5 @@ class TowerExplorerJobServiceDialog(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        pytest.set_trace()
         self.prerequisite_view.toolbar.configuration.item_select(
             'Create Service Dialog from this Template')
