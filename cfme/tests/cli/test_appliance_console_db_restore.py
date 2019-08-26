@@ -159,8 +159,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Configure primary replication node
-    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip,
-        TimedCommand('y', 60), '')
+    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip, TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
 
     # Configure secondary replication node
@@ -211,17 +210,18 @@ def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
 
 
 def restore_db(appl, location=''):
-    interaction = SSHExpect(appl)
-    interaction.send('ap')
-    interaction.answer('Press any key to continue.', '', timeout=40)
-    interaction.answer('Choose the advanced setting: ', '6')
-    interaction.answer(resc('Choose the restore database file source: |1| '), '1')
-    interaction.answer(resc('Enter the location of the local restore file: '
-                            '|/tmp/evm_db.backup| '), location)
-    interaction.answer(resc('Should this file be deleted after completing the restore? '
-                            '(Y/N): '), 'N')
-    interaction.answer(resc('Are you sure you would like to restore the database? (Y/N): '), 'Y')
-    interaction.answer('Press any key to continue.', '', timeout=60)
+    with SSHExpect(appl) as interaction:
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer(resc('Choose the restore database file source: |1| '), '1')
+        interaction.answer(resc('Enter the location of the local restore file: '
+                                '|/tmp/evm_db.backup| '), location)
+        interaction.answer(resc('Should this file be deleted after completing the restore? '
+                                '(Y/N): '), 'N')
+        interaction.answer(resc(
+            'Are you sure you would like to restore the database? (Y/N): '), 'Y')
+        interaction.answer('Press any key to continue.', '', timeout=60)
 
 
 @pytest.mark.rhel_testing
@@ -285,25 +285,25 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
     appl2.db.drop()
     appl2.db.create()
 
-    interaction = SSHExpect(appl2)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('6')
-    interaction.expect(re.escape(
-        'Choose the restore database file source: |1| '))
-    interaction.send('')
-    interaction.expect(re.escape(
-        'Enter the location of the local restore file: |/tmp/evm_db.backup| '))
-    interaction.send(backup_file_name)
-    interaction.expect(re.escape(
-        'Should this file be deleted after completing the restore? (Y/N): '))
-    interaction.send('n')
-    interaction.expect(re.escape(
-        'Are you sure you would like to restore the database? (Y/N): '))
-    interaction.send('y')
-    interaction.expect('Press any key to continue.', timeout=80)
+    with SSHExpect(appl2) as interaction:
+        interaction.send('ap')
+        interaction.expect('Press any key to continue.', timeout=40)
+        interaction.send('')
+        interaction.expect('Choose the advanced setting: ')
+        interaction.send('6')
+        interaction.expect(re.escape(
+            'Choose the restore database file source: |1| '))
+        interaction.send('')
+        interaction.expect(re.escape(
+            'Enter the location of the local restore file: |/tmp/evm_db.backup| '))
+        interaction.send(backup_file_name)
+        interaction.expect(re.escape(
+            'Should this file be deleted after completing the restore? (Y/N): '))
+        interaction.send('n')
+        interaction.expect(re.escape(
+            'Are you sure you would like to restore the database? (Y/N): '))
+        interaction.send('y')
+        interaction.expect('Press any key to continue.', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
@@ -585,22 +585,22 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     fetch_v2key(appl1, appl2)
 
     # Do the backup
-    interaction = SSHExpect(appl1)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('4')
-    interaction.expect(r'Choose the backup output file destination: \|1\| ')
-    interaction.send('2')
-    interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
-    interaction.send(nfs_dump_file_name)
-    # Enter the location to save the remote backup file to
-    interaction.expect(re.escape(
-        'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
-    interaction.send(nfs_restore_dir_path)
-    # Running Database backup to nfs://XX.XX.XX.XX/srv/export...
-    interaction.expect('Press any key to continue.', timeout=240)
+    with SSHExpect(appl1) as interaction:
+        interaction.send('ap')
+        interaction.expect('Press any key to continue.', timeout=40)
+        interaction.send('')
+        interaction.expect('Choose the advanced setting: ')
+        interaction.send('4')
+        interaction.expect(r'Choose the backup output file destination: \|1\| ')
+        interaction.send('2')
+        interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
+        interaction.send(nfs_dump_file_name)
+        # Enter the location to save the remote backup file to
+        interaction.expect(re.escape(
+            'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
+        interaction.send(nfs_restore_dir_path)
+        # Running Database backup to nfs://XX.XX.XX.XX/srv/export...
+        interaction.expect('Press any key to continue.', timeout=240)
 
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
