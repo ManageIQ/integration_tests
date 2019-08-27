@@ -60,7 +60,7 @@ class TowerExplorerSystemJobTemplatesToolbar(View):
 
 
 class TowerExplorerSystemJobTemplatesDetailsToolbar(View):
-    reload = Button(title='Refresh this page')
+    refresh = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -140,11 +140,16 @@ class OptionForm(View):
 class TowerExplorerJobServiceDialogView(TowerExplorerView):
     options = View.nested(OptionForm)
     save_button = Button('Save')
+    cancel_button = Button('Cancel')
 
     @property
     def is_displayed(self):
-        expected_title = 'Adding a new Service Dialog from "{}"'.format(self.context['object'].name)
-        return self.title.text == expected_title
+        return (
+            self.in_tower_explorer
+            and self.title.text
+            == 'Adding a new Service Dialog from "{}"'.format(self.context['object'].name)
+            and self.sidebar.job_templates.is_opened
+        )
 
 
 @attr.s
