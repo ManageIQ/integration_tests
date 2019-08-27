@@ -9,11 +9,15 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils import providers
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.rest import assert_response
@@ -1261,3 +1265,43 @@ def test_custom_logos_via_api(appliance, image_type, request):
     # fetch the latest product_info
     branding_info = api.get(href)["branding_info"]
     assert branding_info[image_type] == expected_name.format(image_type)
+
+
+@pytest.mark.provider(
+    [InfraProvider, CloudProvider], selector=ONE_PER_CATEGORY, override=True
+)
+def test_provider_specific_vm(
+    appliance, request, setup_provider, provider, soft_assert
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Add multiple provider and query vms related to a specific provider.
+                GET /api/providers/:provider_id/vms
+        expectedResults:
+            1. Should receive all VMs related to the provider.
+    """
+    provider_class = InfraProvider if provider.one_of(InfraProvider) else CloudProvider
+    provider_list = providers.list_providers_by_class(provider_class)
+    provider_list.remove(provider)
+
+    provider_2 = random.choice(provider_list)
+    provider_2.create_rest()
+    request.addfinalizer(provider_2.delete_rest)
+
+    provider_1_vms = provider.rest_api_entity.vms.all
+    provider_2_vms, __ = wait_for(
+        lambda: provider_2.rest_api_entity.vms.all,
+        fail_func=provider_2.refresh_provider_relationships,
+        timeout=300,
+        delay=5,
+    )
+
+    for vm in provider_1_vms:
+        soft_assert(vm.ems.name == provider.name)
+    for vm in provider_2_vms:
+        soft_assert(vm.ems.name == provider_2.name)
