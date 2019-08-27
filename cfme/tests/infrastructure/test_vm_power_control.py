@@ -672,14 +672,15 @@ def archive_orphan_vm(request, provider, testing_vm):
     yield request.param, testing_vm
 
 
-@pytest.mark.meta(automates=[1655477, 1686015])
-def test_power_options_on_archived_orphaned_vms_all_page(appliance, archive_orphan_vm):
+@pytest.mark.meta(automates=[1655477, 1686015, 1745915])
+def test_power_options_on_archived_orphaned_vms_all_page(provider, appliance, archive_orphan_vm):
     """This test case is to check Power option drop-down button is disabled on archived and orphaned
     VMs all page. Also it performs the power operations on vm and checked expected flash messages.
 
     Bugzilla:
         1655477
         1686015
+        1745915
 
     Polarion:
         assignee: ghubale
@@ -711,6 +712,13 @@ def test_power_options_on_archived_orphaned_vms_all_page(appliance, archive_orph
     # After selecting particular archived/orphaned vm; 'Power' drop down gets enabled.
     # Reading all the options available in 'power' drop down
     for action in view.toolbar.power.items:
+        if (
+                action == "Reset"
+                and state == "orphaned"
+                and BZ(1745915, forced_streams=["5.10"]).blocks
+                and provider.one_of(SCVMMProvider)
+        ):
+            continue
         # Performing power actions on archived/orphaned vm
         view.toolbar.power.item_select(action, handle_alert=True)
         if action == 'Power On':

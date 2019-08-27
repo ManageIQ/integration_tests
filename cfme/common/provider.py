@@ -700,7 +700,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         logger.debug('Refreshing provider relationships')
         col = self.appliance.rest_api.collections.providers.find_by(name=self.name)
         try:
-            col[0].action.refresh()
+            if col[0].exists:
+                col[0].action.refresh()
         except IndexError:
             raise Exception("Provider collection empty")
 
