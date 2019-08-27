@@ -88,8 +88,8 @@ def serv_button_group(appliance, request):
             request="InspectMe",
         )
         yield button, button_gp
-        button_gp.delete_if_exists()
         button.delete_if_exists()
+        button_gp.delete_if_exists()
 
 
 @pytest.mark.tier(1)
@@ -272,7 +272,21 @@ def test_custom_button_automate_service_obj(
 
 
 @pytest.mark.meta(
-    blockers=[BZ(1659452, unblock=lambda serv_button_group: "group" not in serv_button_group)]
+    blockers=[
+        # for 5.10 group ui
+        BZ(
+            1659452,
+            unblock=lambda serv_button_group, context: "button" in serv_button_group
+            or ("group" in serv_button_group and context == ViaSSUI),
+        ),
+        # for 5.10 and 5.11 group ssui
+        BZ(
+            1745492,
+            unblock=lambda serv_button_group, context: "button" in serv_button_group
+            or ("group" in serv_button_group and context == ViaUI),
+        ),
+    ],
+    automates=[1659452, 1745492],
 )
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 def test_custom_button_text_display(appliance, context, serv_button_group, gen_rest_service):
@@ -295,6 +309,7 @@ def test_custom_button_text_display(appliance, context, serv_button_group, gen_r
     Bugzilla:
         1650066
         1659452
+        1745492
     """
 
     my_service = MyService(appliance, name=gen_rest_service.name)
@@ -309,7 +324,8 @@ def test_custom_button_text_display(appliance, context, serv_button_group, gen_r
         )
         for destination in destinations:
             view = navigate_to(my_service, destination)
-            custom_button_group = Dropdown(view, group.text)
+            custom_button_group = Dropdown(view, group.hover if context is ViaUI else group.text)
+
             if group.display is True:
                 assert "" in custom_button_group.items
             else:
