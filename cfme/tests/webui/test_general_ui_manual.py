@@ -58,38 +58,14 @@ def test_notification_window_can_be_closed_by_clicking_x():
     pass
 
 
-@pytest.mark.manual("manualonly")
-@pytest.mark.tier(1)
-def test_infrastructure_provider_left_panel_titles():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/18h
-        testSteps:
-            1. Add an infrastructure provider and navigate to it's Details page.
-            2. Select Properties on the panel and check all items, whether they have their titles.
-            3. Select Relationships on the panel and check all items,
-                whether they have their titles.
-        expectedResults:
-            1.
-            2. Properties panel must have all items and clicking on each item should display
-                the correct page.
-            3. Relationships panel must have all items and clicking on each item should display
-                the correct page.
-    """
-    pass
-
-
-@pytest.mark.manual("manualonly")
+@pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1651194, 1503213])
 @test_requirements.general_ui
 @pytest.mark.provider([InfraProvider, CloudProvider], selector=ONE)
 def test_pdf_summary_provider(provider):
     """
-    Polarion:
+q    Polarion:
         assignee: pvala
         casecomponent: WebUI
         caseimportance: medium

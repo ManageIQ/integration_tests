@@ -1,17 +1,25 @@
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.base.ui import LoginPage
 from cfme.cloud.provider import CloudProvider
+from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import ContainerProviderAddView
 from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import PhysicalProviderAddView
+from cfme.common.provider_views import ProviderDetailsView
+from cfme.common.provider_views import ProviderTimelinesView
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.datastore import ProviderAllDatastoresView
+from cfme.infrastructure.provider import ProviderClustersView
+from cfme.infrastructure.provider import ProviderTemplatesView
+from cfme.infrastructure.provider import ProviderVmsView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE
@@ -20,10 +28,22 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
 pytestmark = [test_requirements.general_ui]
+
+ALL_OPTIONS = {
+    "properties": {"Summary": ProviderDetailsView, "Timelines": ProviderTimelinesView},
+    "relationships": {
+        "Clusters (": ProviderClustersView,
+        "Hosts (": ProviderAllHostsView,
+        "Datastores (": ProviderAllDatastoresView,
+        "VMs (": ProviderVmsView,
+        "Templates (": ProviderTemplatesView,
+    },
+}
 
 
 @pytest.fixture()
@@ -507,6 +527,53 @@ def test_provider_details_page_refresh_after_clear_cookies(
 
     login_view = appliance.server.create_view(LoginPage, wait="40s")
     assert login_view.is_displayed
+
+
+@pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
+@pytest.mark.parametrize("option", ALL_OPTIONS)
+def test_infrastructure_provider_left_panel_titles(
+    setup_provider, provider, option, soft_assert
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/18h
+        testSteps:
+            1. Add an infrastructure provider and navigate to it's Details page.
+            2. Select Properties on the panel and check all items, whether they have their titles.
+            3. Select Relationships on the panel and check all items,
+                whether they have their titles.
+        expectedResults:
+            1.
+            2. Properties panel must have all items and clicking on each item should display
+                the correct page.
+            3. Relationships panel must have all items and clicking on each item should display
+                the correct page.
+    """
+    view = navigate_to(provider, "Details")
+    accordion = getattr(view.entities.sidebar, option)
+
+    for panel in ALL_OPTIONS[option]:
+        # Sometimes the panel doesn't enable immediately,
+        # using wait_for to give it some time to enable
+        wait_for(
+            lambda: not accordion.tree.is_disabled(partial_match(panel)),
+            fail_func=view.browser.refresh,
+            num=40,
+            delay=2,
+            message="Wait until the panel enables",
+            handle_exception=True,
+            silent_failure=True
+        )
+        if not accordion.tree.is_disabled(partial_match(panel)):
+            accordion.tree.select(partial_match(panel))
+            test_view = provider.create_view(ALL_OPTIONS[option][panel], wait="20s")
+            soft_assert(test_view.is_displayed, f"{test_view} not displayed.")
+        else:
+            logger.info(f"'{panel}' was not tested, it did not enable.")
 
 
 @pytest.mark.manual
