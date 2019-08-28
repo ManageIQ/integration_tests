@@ -28,7 +28,7 @@ config.post_activation
 # assumes sdb, update disk device as needed
 systemctl stop evmserverd
 /etc/init.d/${postgres_svcname} stop
-umount ${postgres_prefix}/var/lib/pgsql/data/
+umount ${postgres_prefix}/data/
 lvremove -f vg_data/lv_pg
 vgremove vg_data
 pvremove /dev/sdb1

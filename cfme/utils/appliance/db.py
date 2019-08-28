@@ -34,7 +34,8 @@ class ApplianceDB(AppliancePlugin):
 
     @property
     def pg_prefix(self):
-        return '/opt/rh/rh-postgresql95/root' if self.appliance.version < '5.11' else ''
+        return ('/var/opt/rh/rh-postgresql95/lib/pgsql' if self.appliance.version < '5.11' else
+                '/var/lib/pgsql')
 
     @cached_property
     def client(self):
@@ -245,27 +246,32 @@ class ApplianceDB(AppliancePlugin):
 
         pg_prefix = self.pg_prefix
         # back up pg_hba.conf
-        client.run_command(
-            'mv {pg_prefix}/var/lib/pgsql/data/pg_hba.conf '
-            '{pg_prefix}/var/lib/pgsql/data/pg_hba.conf.sav'.format(pg_prefix=pg_prefix))
+        assert client.run_command(
+            'mv {pg_prefix}/data/pg_hba.conf '
+            '{pg_prefix}/data/pg_hba.conf.sav'.format(pg_prefix=pg_prefix)).success
 
         if with_ssl:
             ssl = 'hostssl all all all cert map=sslmap'
         else:
             ssl = ''
 
-        # rewrite pg_hba.conf
+        # we expect this to be already present in the pg_hba.conf
+        #
+        #   TYPE    DATABASE    USER  ADDRESS METHOD
+        #   local   all         all           peer map=usermap
+        #   local   replication all           peer map=usermap
+        #   hostssl all         all   all     md5
+        #   host    replication all   all     md5
+
         write_pg_hba = dedent("""\
-        cat > {pg_prefix}/var/lib/pgsql/data/pg_hba.conf <<EOF
-        local all postgres,root trust
-        host all all 0.0.0.0/0 md5
-        hostssl all all all md5
+        cat >> {pg_prefix}/data/pg_hba.conf <<EOF
+        local   all postgres,root             trust
+        host    all all             0.0.0.0/0 md5
+        hostssl all all             all       md5
         {ssl}
         EOF
         """.format(ssl=ssl, pg_prefix=pg_prefix))
-        client.run_command(write_pg_hba)
-        client.run_command("chown postgres:postgres "
-            "{pg_prefix}/var/lib/pgsql/data/pg_hba.conf".format(pg_prefix=pg_prefix))
+        assert client.run_command(write_pg_hba).success
 
         # restart postgres
         return self.appliance.db_service.restart()
