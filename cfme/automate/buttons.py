@@ -10,6 +10,7 @@ from widgetastic.widget import ColourInput
 from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Select
+from widgetastic.widget import Table
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
@@ -640,6 +641,7 @@ class ButtonGroupDetailView(AutomateCustomizationView):
         text_filter=lambda text: re.sub(r"\s+Display on Button\s*$", "", text),
     )
     hover = SummaryFormItem("Basic Information", "Hover Text")
+    assigned_buttons = Table('//h3[contains(text(), "Basic Information")]/following-sibling::table')
 
     @property
     def is_displayed(self):
@@ -853,6 +855,16 @@ class ButtonGroupCollection(BaseCollection):
         for btn_grp in self.appliance.rest_api.collections.custom_button_sets.all:
             btn_grp.action.delete()
 
+    def instantiate_with_rest(self, id):
+        from cfme.tests.automate.custom_button import CLASS_MAP
+        gp, *_ = self.appliance.rest_api.collections.custom_button_sets.find_by(id=id)
+        rest_btn_type = gp.set_data.get("applies_to_class")
+        for maps in CLASS_MAP.values():
+            if maps.get("rest") == rest_btn_type:
+                ui_btn_type = maps.get("ui")
+                break
+        return self.instantiate(text=gp.name, hover=gp.description, type=ui_btn_type)
+
 
 @navigator.register(ButtonGroupCollection, "All")
 class ButtonGroupAll(CFMENavigateStep):
@@ -864,6 +876,7 @@ class ButtonGroupAll(CFMENavigateStep):
 
 
 @navigator.register(ButtonGroupCollection, "ObjectType")
+@navigator.register(ButtonGroup, "ObjectType")
 class ButtonGroupObjectType(CFMENavigateStep):
     VIEW = ButtonGroupObjectTypeView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
