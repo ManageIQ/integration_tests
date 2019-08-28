@@ -133,12 +133,8 @@ class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
         )
 
 
-class OptionForm(View):
+class TowerCreateServiceDialogFromTemplateView(TowerExplorerView):
     dialog_name = TextInput('dialog_name')
-
-
-class TowerExplorerJobServiceDialogView(TowerExplorerView):
-    options = View.nested(OptionForm)
     save_button = Button('Save')
     cancel_button = Button('Cancel')
 
@@ -175,6 +171,15 @@ class AnsibleTowerSystemsCollection(BaseCollection):
 @attr.s
 class AnsibleTowerJobTemplate(BaseEntity, Taggable):
     name = attr.ib()
+
+    def create_service_dailog(self, name):
+        view = navigate_to(self, "CreateServiceDialog")
+        changes = view.fill({"dialog_name": name})
+        if changes:
+            view.save_button.click()
+            return self.appliance.collections.service_dialogs.instantiate(label=name)
+        else:
+            view.cancel_button.click()
 
 
 @attr.s
@@ -238,9 +243,9 @@ class TowerExplorerJobTemplateDetails(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(AnsibleTowerJobTemplate, 'ServiceDialog')
-class TowerExplorerJobServiceDialog(CFMENavigateStep):
-    VIEW = TowerExplorerJobServiceDialogView
+@navigator.register(AnsibleTowerJobTemplate, 'CreateServiceDialog')
+class TowerCreateServiceDialogFromTemplate(CFMENavigateStep):
+    VIEW = TowerCreateServiceDialogFromTemplateView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

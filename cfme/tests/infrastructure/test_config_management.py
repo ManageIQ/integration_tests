@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.ansible_tower.explorer import TowerCreateServiceDialogFromTemplateView
 from cfme.utils.testgen import config_managers
 from cfme.utils.testgen import generate
 from cfme.utils.update import update
@@ -173,15 +173,11 @@ def test_ansible_tower_service_dialog_creation_from_template(request, config_man
         job_template = config_manager.appliance.collections.ansible_tower_job_templates.all()[0]
     except IndexError:
         pytest.skip("No job template was found")
-    view = navigate_to(job_template, 'ServiceDialog')
     dialog_label = fauxfactory.gen_alpha(8)
-    view.options.dialog_name.fill(dialog_label)
-    view.save_button.click()
+    dialog = job_template.create_service_dailog(dialog_label)
+    view = job_template.browser.create_view(TowerCreateServiceDialogFromTemplateView)
     view.flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
         dialog_label))
+    assert dialog.exists
 
-    service_dialogs = appliance.collections.service_dialogs
-    service_dialog = service_dialogs.instantiate(
-        label=dialog_label
-    )
-    service_dialog.delete_if_exists()
+    dialog.delete_if_exists()
