@@ -245,7 +245,7 @@ pytesseract==0.2.6
 pytest==3.4.1
 pytest-polarion-collect==0.15
 python-box==3.2.4
-python-bugzilla==2.2.0
+python-bugzilla==2.3.0
 python-cinderclient==4.1.0
 python-dateutil==2.8.0
 python-glanceclient==2.16.0
