@@ -592,6 +592,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     fetch_v2key(appl1, appl2)
 
     # Do the backup
+    appl1.db.workaround_BZ_1741481()
     with SSHExpect(appl1) as interaction:
         interaction.send('ap')
         interaction.expect('Press any key to continue.', timeout=40)
@@ -669,6 +670,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     fetch_v2key(appl1, appl2)
 
     # Do the backup
+    appl1.db.workaround_BZ_1741481()
     with SSHExpect(appl1) as interaction:
         interaction.send('ap')
         interaction.expect('Press any key to continue.', timeout=40)

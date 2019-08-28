@@ -29,6 +29,18 @@ class ApplianceDB(AppliancePlugin):
     """Holder for appliance DB related methods and functions"""
     _ssh_client = attr.ib(default=None)
 
+    def workaround_BZ_1741481(self):
+        # Temporary solution to resolve bug BZ 1741481
+        self.appliance.ssh_client.run_command(dedent("""
+            cat >> /var/lib/pgsql/data/pg_hba.conf <<EOF
+            # TYPE  DATABASE    USER  ADDRESS METHOD
+            local   all         all           peer map=usermap
+            local   replication all           peer map=usermap
+            hostssl all         all   all     md5
+            host    replication all   all     md5
+            EOF"""))
+        self.appliance.db_service.reload()
+
     @cached_property
     def service_name(self):
         return VersionPicker({
@@ -176,13 +188,8 @@ class ApplianceDB(AppliancePlugin):
 
     def backup(self, database_path="/tmp/evm_db.backup"):
         """Backup VMDB database using appliance console"""
-        if BZ(1741481).blocks:
-            self.appliance.ssh_client.run_command("""
-                grep 'local replication all peer map=usermap' \
-                        /var/lib/pgsql/data/pg_hba.conf ||
-                echo 'local replication all peer map=usermap' \
-                        >> /var/lib/pgsql/data/pg_hba.conf""")
-            self.appliance.db_service.reload()
+
+        self.workaround_BZ_1741481()
         self.logger.info('Backing up database using appliance console')
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
