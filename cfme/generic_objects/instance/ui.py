@@ -23,6 +23,7 @@ from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ParametrizedSummaryTable
 
 
+# views
 class GenericObjectInstanceToolbar(View):
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -85,6 +86,7 @@ class MyServiceGenericObjectInstanceView(BaseLoggedInPage):
         )
 
 
+# entity methods
 @MiqImplementationContext.external_for(GenericObjectInstance.exists.getter, ViaUI)
 def exists(self):
     if self.definition.instance_count > 0:
@@ -112,6 +114,7 @@ def get_tags(self, tenant="My Company Tags"):
     return Taggable.get_tags(self, tenant=tenant)
 
 
+# navigator registers
 @navigator.register(GenericObjectInstanceCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = GenericObjectInstanceAllView

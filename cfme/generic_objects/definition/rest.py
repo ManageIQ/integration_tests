@@ -7,6 +7,7 @@ from cfme.utils.rest import assert_response
 from cfme.utils.rest import create_resource
 
 
+# collection methods
 @MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaREST)
 def create(self, name, description, attributes=None, associations=None, methods=None):
     body = {'name': name, 'description': description, 'properties': {}}
@@ -31,6 +32,18 @@ def create(self, name, description, attributes=None, associations=None, methods=
     return entity
 
 
+@MiqImplementationContext.external_for(GenericObjectDefinitionCollection.all, ViaREST)
+def all(self):
+    rest_generic_object_definitions = (
+        self.appliance.rest_api.collections.generic_object_definitions.all
+    )
+    return [
+        self.instantiate(name=gobj_def.name, description=gobj_def.description)
+        for gobj_def in rest_generic_object_definitions
+    ]
+
+
+# entity methods
 @MiqImplementationContext.external_for(GenericObjectDefinition.update, ViaREST)
 def update(self, updates):
     definition = self.appliance.rest_api.collections.generic_object_definitions.find_by(
