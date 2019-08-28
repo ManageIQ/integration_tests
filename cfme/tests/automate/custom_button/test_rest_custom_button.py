@@ -6,6 +6,8 @@ from cfme.rest import gen_data
 from cfme.tests.automate.custom_button import CLASS_MAP
 from cfme.tests.automate.custom_button import OBJ_TYPE
 from cfme.tests.automate.custom_button import OBJ_TYPE_59
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -18,8 +20,27 @@ pytestmark = [
     pytest.mark.uncollectif(
         lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
     ),
-    pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE]),
+    pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE],
+                            scope="module"),
 ]
+
+
+@pytest.fixture(scope="module")
+def group(request, appliance, obj_type):
+    # create group (custom button set)
+    button_type = CLASS_MAP[obj_type]["rest"]
+    response = gen_data.custom_button_sets(request, appliance, button_type)
+    assert_response(appliance)
+    return response[0]
+
+
+@pytest.fixture(scope="module")
+def buttons(request, appliance, obj_type):
+    # create unassigned button (custom button)
+    button_type = CLASS_MAP[obj_type]["rest"]
+    response = gen_data.custom_buttons(request, appliance, button_type, num=2)
+    assert_response(appliance)
+    return response
 
 
 class TestCustomButtonRESTAPI(object):
@@ -159,3 +180,41 @@ class TestCustomButtonRESTAPI(object):
             )
             condition.reload()
             assert condition.description == edited[index].description == record[0].description
+
+
+@pytest.mark.meta(blockers=[BZ(1745198)], automates=[1737449])
+def test_associate_unassigned_buttons_rest(appliance, group, buttons):
+    """Test associate unassigned button with group
+
+    Bugzilla:
+        1737449
+        1745198
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        startsin: 5.10
+        casecomponent: CustomButton
+        tags: custom_button
+    """
+
+    # Add associate unassigned buttons to group with rest
+    set_data = group.set_data
+    set_data["button_order"] = [int(b.id) for b in buttons]
+    data = {"set_data": set_data}
+    group.action.edit(**data)
+    assert_response(appliance)
+
+    # Check association with UI
+    gp = appliance.collections.button_groups.instantiate_with_rest(group.id)
+
+    # Point to new object type so that teardown button(removed with rest) and new buttons, group
+    # (created with rest) reflect on UI without any selenium exception.
+    view = navigate_to(gp, "ObjectType")
+    view.browser.refresh()
+
+    view = navigate_to(gp, "Details")
+    ui_assinged_btns = {btn["Text"].text for btn in view.assigned_buttons}
+
+    assert ui_assinged_btns == {btn.name for btn in buttons}
