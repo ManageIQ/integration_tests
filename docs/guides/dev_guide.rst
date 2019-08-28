@@ -407,8 +407,186 @@ conftest.py. If they're generic/useful enough consider putting them into
 one of the `fixtures/` directory for use in `cfme_tests` or the `plugin/`
 directory for use in both projects.
 
+Requirements workflow
+^^^^^^^^^^^^^^^^^^^^^
+We have recently updated our requirements workflow in the hope that it provides a more
+streamlined experience. The requirements workflow revolves around the ``miq requirement``
+command:
+
+.. code-block:: console
+
+    Usage: miq requirement [OPTIONS] COMMAND [ARGS]...
+
+      Functions for adding, updating, and freezing requirements
+
+    Options:
+      --help  Show this message and exit.
+
+    Commands:
+      add          Add and install/update a package to current virtualenv.
+      freeze       Freeze all requirements (non-imported and imported)
+      remove       Remove and uninstall a package from the current virtualenv.
+      scan         Scan repository files for imports from pip-installable...
+      upgrade      Upgrade (or downgrade) a package to version specified, or...
+      upgrade-all  Scan and update all packages that are not constrained
+
+
+To understand the impacts of each of these commands we must first discuss the requirements
+files that we have included. They are:
+
+1. ``requirements/template_scanned.txt``:
+    This template file contains the package names
+    (no versions) that have been detected in import statements in the repo. This file
+    is updated automatically through the ``miq requirement scan`` command. Contributors can
+    also add directly to this file via the ``miq requirement add <package-name>`` command.
+2. ``requirements/template_non_imported.txt``:
+    This template file contains package names (no versions) of packages that are not directly
+    imported, but are needed for tooling/development.
+    Things like pre-commit, cfme-testcases, pytest-polarion-collect. This can be updated manually
+    or through the ``miq requirement add -e`` the additional option ``e`` is what makes it considered
+    an extra/additional package.
+3. ``requirements/constraints.txt``:
+    This file specifies any version constraints we must impose on any of the packages in
+    ``template_scanned.txt`` and ``template_non_imported.txt``. It also includes any version
+    constraints we must impose on any dependencies of those packages. This file can be
+    edited manually or by specifying a version when you use the ``add`` command e.g.
+    ``miq requirement add <package-name>==0.1``
+4. ``requirements/frozen.txt``:
+    This file should never be edited manually. Instead if you upgrade or add a package, you
+    should run ``miq requirement freeze`` to update this. This file is used by our automation and
+    quickstart.
+
+Help text for each of the commands:
+
+1. ``miq requirement add``
+
+.. code-block:: console
+
+    Usage: miq requirement add [OPTIONS] PACKAGE_NAME
+
+      Add and install/update a package to current virtualenv.
+
+    Options:
+      --scan-template TEXT    The path to the template file (pip -r arg) for
+                              scanned imports, will be overwritten  [default:
+                              requirements/template_scanned_imports.txt]
+      --extra-template TEXT   The path to the template file (pip -r arg) for extra
+                              packages (e.g. pre-commit), will be overwritten
+                              [default: requirements/template_non_imported.txt]
+      --constraint-file TEXT  The path to the constraint file (pip -r arg) for
+                              extra packages (e.g. pre-commit), will be
+                              overwritten  [default: requirements/constraints.txt]
+      -e, --extra             Is the package an extra package, i.e. not imported
+                              [default: False]
+      --upgrade               Upgrade an existing package to the most recent
+                              version.  [default: False]
+      --help                  Show this message and exit.
+
+2. ``miq requirement freeze``
+
+.. code-block:: console
+
+    Usage: miq requirement freeze [OPTIONS]
+
+      Freeze all requirements (non-imported and imported)
+
+    Options:
+      --frozen-file TEXT  The path to the frozen file for ALL imports  [default:
+                          requirements/frozen.txt]
+      --help              Show this message and exit.
+
+3. ``miq requirement scan``
+
+.. code-block:: console
+
+    Usage: miq requirement scan [OPTIONS]
+
+      Scan repository files for imports from pip-installable packages
+
+    Options:
+      --scan-template TEXT    The path to the template file (pip -r arg) for
+                              scanned imports, will be overwritten  [default:
+                              requirements/template_scanned_imports.txt]
+      --constraint-file TEXT  The path to the constraint file (pip -r arg) for
+                              extra packages (e.g. pre-commit), will be
+                              overwritten  [default: requirements/constraints.txt]
+      --package-map TEXT      The path to the package map for tricky imports
+                              [default: requirements/package_map.yaml]
+      --help                  Show this message and exit.
+
+
+4. ``miq requirement upgrade-all``
+
+.. code-block:: console
+
+    Usage: miq requirement upgrade-all [OPTIONS]
+
+      Scan and update all packages that are not constrained
+
+    Options:
+      --scan-template TEXT   The path to the template file (pip -r arg) for
+                             scanned imports, will be overwritten  [default:
+                             requirements/template_scanned_imports.txt]
+      --extra-template TEXT  The path to the template file (pip -r arg) for extra
+                             packages (e.g. pre-commit), will be overwritten
+                             [default: requirements/template_non_imported.txt]
+      --frozen-file TEXT     The path to the frozen file for ALL imports
+                             [default: requirements/frozen.txt]
+      -f, --freeze           Freeze requirements after updating.  [default: False]
+      --help                 Show this message and exit.
+
+5. ``miq requirement upgrade``
+
+.. code-block:: console
+
+    Usage: miq requirement upgrade [OPTIONS] PACKAGE_NAME
+
+    Upgrade (or downgrade) a package to version specified, or latest version
+
+    Options:
+    --constraint-file TEXT  The path to the constraint file (pip -r arg) for
+                          extra packages (e.g. pre-commit), will be
+                          overwritten  [default: requirements/constraints.txt]
+    --extra-template TEXT   The path to the template file (pip -r arg) for extra
+                          packages (e.g. pre-commit), will be overwritten
+                          [default: requirements/template_non_imported.txt]
+    --scan-template TEXT    The path to the template file (pip -r arg) for
+                          scanned imports, will be overwritten  [default:
+                          requirements/template_scanned_imports.txt]
+    -e, --extra             Is the package an extra package, i.e. not imported
+                          [default: False]
+    --help                  Show this message and exit.
+This command is really an alias to the ``miq requirement add`` command. It has the added
+benefit of that if you run ``miq requirement upgrade <package-name>`` on a package that
+currently has constraints defined, it will install the most recent version and remove the
+constraint from ``requirements/constraints.txt``. IMPORTANT NOTE: you still must pass
+the ``-e, --extra`` parameter if the package is an non-imported package.
+
+6. ``miq requirement remove``
+
+.. code-block:: console
+
+    Usage: miq requirement remove [OPTIONS] PACKAGE_NAME
+
+      Remove and uninstall a package from the current virtualenv.
+
+    Options:
+      --scan-template TEXT    The path to the template file (pip -r arg) for
+                              scanned imports, will be overwritten  [default:
+                              requirements/template_scanned_imports.txt]
+      --extra-template TEXT   The path to the template file (pip -r arg) for extra
+                              packages (e.g. pre-commit), will be overwritten
+                              [default: requirements/template_non_imported.txt]
+      --constraint-file TEXT  The path to the constraint file (pip -r arg) for
+                              extra packages (e.g. pre-commit), will be
+                              overwritten  [default: requirements/constraints.txt]
+      --help                  Show this message and exit.
+
+This command will uninstall the package and remove it from ``template_non_import.txt``,
+``template_scanned.txt``, and ``constraints.txt``, if it is in those files.
+
 Bugzilla Guide
---------------
+^^^^^^^^^^^^^^
 See the :doc:`./bugzilla`
 
 This Document
