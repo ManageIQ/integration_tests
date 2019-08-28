@@ -1383,23 +1383,23 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     def read_repos(self):
         """Reads repofiles so it gives you mapping of id and url."""
-        result = {}
+        repo_id_url_mapping = {}
         name_regexp = re.compile(r"^\[update-([^\]]+)\]")
         baseurl_regexp = re.compile(r"baseurl\s*=\s*([^\s]+)")
         for repofile in self.get_repofile_list():
-            result = self.ssh_client.run_command("cat /etc/yum.repos.d/{}".format(repofile))
-            if result.failed:
+            ssh_result = self.ssh_client.run_command("cat /etc/yum.repos.d/{}".format(repofile))
+            if ssh_result.failed:
                 # Something happened meanwhile?
                 continue
-            out = result.output.strip()
+            out = ssh_result.output.strip()
             name_match = name_regexp.search(out)
             if name_match is None:
                 continue
             baseurl_match = baseurl_regexp.search(out)
             if baseurl_match is None:
                 continue
-            result[name_match.groups()[0]] = baseurl_match.groups()[0]
-        return result
+            repo_id_url_mapping[name_match.groups()[0]] = baseurl_match.groups()[0]
+        return repo_id_url_mapping
 
     # Regexp that looks for product type and version in the update URL
     product_url_regexp = re.compile(
@@ -1453,12 +1453,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 # It is already there, so just enable it
                 self.enable_disable_repo(repo_id, True)
                 return repo_id
-        product, ver = match.groups()
-        repos = self.find_product_repos()
-        if product in repos:
-            for v, i in repos[product].items():
-                logger.info("Deleting %s repo with version %s (%s)", product, v, i)
-                self.ssh_client.run_command("rm -f /etc/yum.repos.d/{}.repo".format(i))
         return self.write_repofile(fauxfactory.gen_alpha(), repo_url, **kwargs)
 
     def enable_disable_repo(self, repo_id, enable):
@@ -1484,14 +1478,23 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         If the ``skip_broken`` kwarg is passed, and evaluated as True, broken packages will be
         ignored in the yum update.
 
+        Kwargs:
+            log_callback: logger to log against
+            skip_broken (boolean): Pass --skip-broken to the yum update call. Defaults to False.
+            reboot (boolean): Reboot the appliance after the upgrade. Defaults to True.
+            streaming (boolean): Pass stream_output arg to SSHClient. Defaults to False.
+            cleanup (boolean): Clean the /etc/yum.repos.d directory of all files except
+            redhat.repo. Defaults to True.
 
+        Returns:
+            SSHResult object
         """
         urls = list(urls)
         log_callback = kwargs.pop("log_callback")
         skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
         streaming = kwargs.pop("streaming", False)
-        cleanup = kwargs.pop('cleanup', False)
+        cleanup = kwargs.pop('cleanup', True)
         log_callback('updating appliance')
         if not urls:
             basic_info = conf.cfme_data.get('basic_info', {})
@@ -1511,6 +1514,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             client = self.ssh_client
 
         if cleanup:
+            logger.info("Cleaning the /etc/yum.repos.d directory")
             client.run_command(
                 "cd /etc/yum.repos.d && find . -not -name 'redhat.repo' "
                 "-not -name 'rhel-source.repo' -not -name . -exec rm {} \\;")
