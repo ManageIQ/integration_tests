@@ -17,6 +17,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
 
 
+# collection methods
 @MiqImplementationContext.external_for(GenericObjectDefinitionCollection.create, ViaUI)
 def create(self, name, description, attributes=None, associations=None, methods=None,
            custom_image_file_path=None, cancel=False):
@@ -57,6 +58,7 @@ def create(self, name, description, attributes=None, associations=None, methods=
     return entity
 
 
+# entity methods
 @MiqImplementationContext.external_for(GenericObjectDefinition.update, ViaUI)
 def update(self, updates, reset=False, cancel=False):
     """Update generic object definition
@@ -116,6 +118,7 @@ def instance_count(self):
     return int(view.summary("Relationships").get_text_of("Instances"))
 
 
+# navigator registers
 @navigator.register(GenericObjectDefinitionCollection)
 class All(CFMENavigateStep):
     VIEW = GenericObjectDefinitionAllView
