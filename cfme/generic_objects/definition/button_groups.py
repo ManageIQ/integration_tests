@@ -56,12 +56,7 @@ class GenericObjectButton(BaseEntity, Updateable):
             updates: Provided by update() context manager.
         """
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
-
-        if changed:
-            view.save.click()
-        else:
-            view.cancel.click()
+        view.fill_with(updates, on_change=view.save, no_change=view.cancel)
 
         view.flash.assert_no_error()
 
@@ -224,12 +219,7 @@ class GenericObjectButtonGroup(BaseEntity, Updateable):
             updates: Provided by update() context manager.
         """
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
-
-        if changed:
-            view.save.click()
-        else:
-            view.cancel.click()
+        view.fill_with(updates, on_change=view.save, no_change=view.cancel)
 
         view.flash.assert_no_error()
 
