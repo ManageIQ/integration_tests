@@ -91,7 +91,7 @@ def test_custom_menu_display(appliance, request):
     update_adv_setting_and_wait(appliance, ADVANCE_SETTING_CUSTOM_MENU)
     request.addfinalizer(lambda: update_adv_setting_and_wait(appliance, {"ui": "<<reset>>"}))
 
-    view = navigate_to(appliance.server, "LoggedIn")
+    view = navigate_to(appliance.server, "LoggedIn", force=True)
 
     for menu in ["RedHat", "ManageIQ"]:
         view.navigation.select(menu)
