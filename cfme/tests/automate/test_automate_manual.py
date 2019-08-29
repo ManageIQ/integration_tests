@@ -349,27 +349,6 @@ def test_automate_import_namespace_attributes_updated():
 
 
 @pytest.mark.tier(3)
-def test_automate_user_has_groups():
-    """
-    https://bugzilla.redhat.com/show_bug.cgi?id=1411424
-    This method should work:  groups = $evm.vmdb(:user).first.miq_groups
-    $evm.log(:info, "Displaying the user"s groups: #{groups.inspect}")
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        tags: automate
-        startsin: 5.8
-
-    Bugzilla:
-        1411424
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_restrict_domain_crud():
     """
     When you create a role that can only view automate domains, it can
