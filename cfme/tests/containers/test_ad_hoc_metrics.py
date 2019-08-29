@@ -1,6 +1,7 @@
 import pytest
 import requests
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -13,7 +14,8 @@ pytestmark = [
     pytest.mark.provider(gen_func=providers,
                          filters=[ProviderFilter(classes=[ContainersProvider],
                                                  required_flags=['metrics_collection'])],
-                         scope='function')
+                         scope='function'),
+    test_requirements.containers
 ]
 
 

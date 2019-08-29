@@ -4,6 +4,7 @@ from collections import namedtuple
 import dateparser
 import pytest
 
+from cfme import test_requirements
 from cfme.common.provider_views import ContainerProvidersView
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -14,7 +15,9 @@ pytestmark = [
     pytest.mark.meta(server_roles='+smartproxy'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='function')]
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
+]
 
 AttributeToVerify = namedtuple('AttributeToVerify', ['table', 'attr', 'verifier'])
 

@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
@@ -17,7 +18,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
 ]
 
 

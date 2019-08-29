@@ -5,6 +5,7 @@ from traceback import format_exc
 import pytest
 from wrapanapi.utils import eval_strings
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import TimedOutError
@@ -16,7 +17,8 @@ pytestmark = [
         server_roles='+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor'),
     pytest.mark.tier(1),
     pytest.mark.long_running_env,
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
 ]
 
 

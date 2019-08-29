@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.node import Node
 from cfme.containers.node import NodeCollection
 from cfme.containers.provider import ContainersProvider
@@ -16,7 +17,9 @@ pytestmark = [
     pytest.mark.provider(gen_func=providers,
                          filters=[ProviderFilter(classes=[ContainersProvider],
                                                  required_flags=['cmqe_logging'])],
-                         scope='function')]
+                         scope='function'),
+    test_requirements.containers
+]
 
 TEST_ITEMS = [
     ContainersTestItem(ContainersProvider, 'test_logging_containerprovider', collection_obj=None),
