@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.update import update
@@ -13,7 +12,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.meta(blockers=[BZ(1677548, forced_streams=["5.11"])]),
     test_requirements.ansible,
 ]
 
@@ -207,7 +205,11 @@ def test_embedded_ansible_repository_invalid_url_crud(request, appliance, wait_f
         url='https://github.com/sbulage/invalid_repo_url.git',
         description=fauxfactory.gen_alpha())
     view = navigate_to(repository, "Details")
-    assert view.entities.summary("Properties").get_text_of("Status") == "failed"
+    assert (
+        view.entities.summary("Properties").get_text_of("Status") == "failed"
+        if appliance.version < "5.11"
+        else "error"
+    )
 
     repository.delete_if_exists()
 
