@@ -177,6 +177,7 @@ def methodized(metafunc):
 
     def func(self, param, appliance):
         return metafunc(param, appliance)
+    func.__doc__ = metafunc.__doc__
     return func
 
 
