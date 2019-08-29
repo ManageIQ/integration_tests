@@ -140,6 +140,16 @@ def test_delete_active_vm_snapshot(small_test_vm):
     view.tree.click_path(small_test_vm.name, 'Active VM (Active)')
     assert not view.toolbar.delete.is_displayed
 
+@pytest.mark.rhv3
+@test_requirements.rhev
+@pytest.mark.provider([RHEVMProvider], override=True)
+@pytest.mark.meta(automates=[BZ(1571291)])
+def test_delete_snapshot_and_reload(small_test_vm):
+    snapshot = new_snapshot(small_test_vm)
+    snapshot.create()
+    # sth here
+    snapshot.delete()
+    wait_for(lambda: not snapshot.exists)
 
 @pytest.mark.rhv3
 @test_requirements.rhev
