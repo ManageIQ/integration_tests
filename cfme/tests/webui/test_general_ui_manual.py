@@ -65,7 +65,7 @@ def test_notification_window_can_be_closed_by_clicking_x():
 @pytest.mark.provider([InfraProvider, CloudProvider], selector=ONE)
 def test_pdf_summary_provider(provider):
     """
-q    Polarion:
+    Polarion:
         assignee: pvala
         casecomponent: WebUI
         caseimportance: medium

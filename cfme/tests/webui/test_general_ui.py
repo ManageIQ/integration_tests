@@ -570,7 +570,7 @@ def test_infrastructure_provider_left_panel_titles(
         )
         if not accordion.tree.is_disabled(partial_match(panel)):
             accordion.tree.select(partial_match(panel))
-            test_view = provider.create_view(ALL_OPTIONS[option][panel], wait="20s")
+            test_view = provider.create_view(ALL_OPTIONS[option][panel], wait="40s")
             soft_assert(test_view.is_displayed, f"{test_view} not displayed.")
         else:
             logger.info(f"'{panel}' was not tested, it did not enable.")
