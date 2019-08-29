@@ -68,6 +68,23 @@ def service_level_tag(appliance):
 
 
 @pytest.fixture(scope='module')
+def third_tag(appliance):
+    """The third tag for multiple conditions"""
+    category = appliance.collections.categories.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        description=fauxfactory.gen_alphanumeric(32),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
+    tag = category.collections.tags.create(
+        name=fauxfactory.gen_alphanumeric(8).lower(),
+        display_name=fauxfactory.gen_alphanumeric(32)
+    )
+    yield tag
+
+    tag.delete_if_exists()
+
+
+@pytest.fixture(scope='module')
 def vms_for_tagging(provider, appliance):
     """Get two existing vms for tagging"""
     view = navigate_to(provider, 'ProviderVms')
@@ -280,9 +297,12 @@ def test_tag_expression_not_or_condition(
     check_vm_visibility(group, first_vm, True)
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_tag_expression_and_with_or_with_not():
+@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+def test_tag_expression_and_with_or_with_not(
+        request, vms_for_tagging, location_tag, service_level_tag, third_tag,
+        group_with_tag_expression, check_vm_visibility
+):
     """
     Polarion:
         assignee: anikifor
@@ -294,12 +314,36 @@ def test_tag_expression_and_with_or_with_not():
             1. Combine tags with AND and NOT and OR conditions
             2. Check item visibility
     """
-    pass
+    first_vm, second_vm = vms_for_tagging
+    # create expression A and not (B or C)
+    group = group_with_tag_expression(
+        f"fill_tag(My Company Tags : {location_tag.category.display_name}, "
+        f"{location_tag.display_name});select_first_expression;click_and;"
+        f"fill_tag(My Company Tags : {service_level_tag.category.display_name}, "
+        f"{service_level_tag.display_name});select_last_expression;click_not;"
+        f"select_last_expression;click_or;fill_tag(My Company Tags : "
+        f"{third_tag.category.display_name}, {third_tag.display_name})"
+    )
+
+    first_vm.add_tag(location_tag)
+    request.addfinalizer(lambda: first_vm.remove_tag(location_tag))
+    check_vm_visibility(group, first_vm, True)
+
+    first_vm.add_tag(service_level_tag)
+    request.addfinalizer(lambda: first_vm.remove_tag(service_level_tag))
+    check_vm_visibility(group, first_vm, False)
+
+    second_vm.add_tag(third_tag)
+    request.addfinalizer(lambda: second_vm.remove_tag(third_tag))
+    check_vm_visibility(group, second_vm, False)
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_tag_expression_and_with_or():
+@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+def test_tag_expression_and_with_or(
+        request, vms_for_tagging, location_tag, service_level_tag, third_tag,
+        group_with_tag_expression, check_vm_visibility
+):
     """
     Polarion:
         assignee: anikifor
@@ -311,4 +355,24 @@ def test_tag_expression_and_with_or():
             1. Combine tags with AND and OR conditions
             2. Check item visibility
     """
-    pass
+    first_vm, second_vm = vms_for_tagging
+    # create expression: A and (B or C)
+    group = group_with_tag_expression(
+        f"fill_tag(My Company Tags : {location_tag.category.display_name}, "
+        f"{location_tag.display_name});select_first_expression;click_and;"
+        f"fill_tag(My Company Tags : {service_level_tag.category.display_name}, "
+        f"{service_level_tag.display_name});select_last_expression;click_or;"
+        f"fill_tag(My Company Tags : {third_tag.category.display_name}, {third_tag.display_name})"
+    )
+
+    first_vm.add_tag(location_tag)
+    request.addfinalizer(lambda: first_vm.remove_tag(location_tag))
+    check_vm_visibility(group, first_vm, False)
+
+    first_vm.add_tag(service_level_tag)
+    request.addfinalizer(lambda: first_vm.remove_tag(service_level_tag))
+    check_vm_visibility(group, first_vm, True)
+
+    second_vm.add_tags([service_level_tag, third_tag])
+    request.addfinalizer(lambda: second_vm.remove_tags([service_level_tag, third_tag]))
+    check_vm_visibility(group, second_vm, False)
