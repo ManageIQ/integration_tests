@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
@@ -17,7 +18,9 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='module')]
+    pytest.mark.provider([ContainersProvider], scope='module'),
+    test_requirements.containers
+]
 
 
 DataSet = namedtuple('DataSet', ['obj', 'collection_obj'])

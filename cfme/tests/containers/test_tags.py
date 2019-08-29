@@ -1,12 +1,14 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.blockers import BZ
 
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
 ]
 
 container_test_items = [

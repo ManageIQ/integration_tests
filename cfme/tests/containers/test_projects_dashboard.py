@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.provider import ContainersProvider
@@ -11,7 +12,8 @@ pytestmark = [
     pytest.mark.ignore_stream('5.8'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
 ]
 
 PROJECT_NAME = 'test-project-dashboard'  # Predefine project for this test

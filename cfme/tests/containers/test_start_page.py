@@ -3,6 +3,7 @@ from collections import namedtuple
 
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.container import ContainerAllView
 from cfme.containers.image_registry import ImageRegistryAllView
 from cfme.containers.node import NodeAllView
@@ -17,13 +18,12 @@ from cfme.containers.service import ServiceAllView
 from cfme.containers.template import TemplateAllView
 from cfme.containers.volume import VolumeAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.version import current_version
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < "5.8"),
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
 ]
 
 
