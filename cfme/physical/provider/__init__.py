@@ -60,7 +60,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
             logger.error("Couldn't find number of servers")
         return int(num)
 
-    def delete(self, cancel=True):
+    def delete(self, cancel=False):
         """
         Deletes a provider from CFME
 
