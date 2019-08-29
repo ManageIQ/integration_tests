@@ -2,6 +2,7 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Text
+from widgetastic.widget import TextInput
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
@@ -56,6 +57,12 @@ class TowerExplorerSystemJobTemplatesToolbar(View):
     policy = Dropdown('Policy')
     download = Dropdown('Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class TowerExplorerSystemJobTemplatesDetailsToolbar(View):
+    refresh = Button(title='Refresh this page')
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
 
 class TowerExplorerView(BaseLoggedInPage):
@@ -113,7 +120,7 @@ class TowerExplorerJobTemplateDetailsEntities(View):
 
 
 class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
-    toolbar = View.nested(TowerExplorerSystemJobTemplatesToolbar)
+    toolbar = View.nested(TowerExplorerSystemJobTemplatesDetailsToolbar)
     entities = View.nested(TowerExplorerJobTemplateDetailsEntities)
 
     @property
@@ -122,6 +129,21 @@ class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
             self.in_tower_explorer
             and self.title.text
             == 'Job Template (Ansible Tower) "{}"'.format(self.context["object"].name)
+            and self.sidebar.job_templates.is_opened
+        )
+
+
+class TowerCreateServiceDialogFromTemplateView(TowerExplorerView):
+    dialog_name = TextInput('dialog_name')
+    save_button = Button('Save')
+    cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_tower_explorer
+            and self.title.text
+            == 'Adding a new Service Dialog from "{}"'.format(self.context['object'].name)
             and self.sidebar.job_templates.is_opened
         )
 
@@ -149,6 +171,15 @@ class AnsibleTowerSystemsCollection(BaseCollection):
 @attr.s
 class AnsibleTowerJobTemplate(BaseEntity, Taggable):
     name = attr.ib()
+
+    def create_service_dailog(self, name):
+        view = navigate_to(self, "CreateServiceDialog")
+        changes = view.fill({"dialog_name": name})
+        if changes:
+            view.save_button.click()
+            return self.appliance.collections.service_dialogs.instantiate(label=name)
+        else:
+            view.cancel_button.click()
 
 
 @attr.s
@@ -210,3 +241,13 @@ class TowerExplorerJobTemplateDetails(CFMENavigateStep):
         except ItemNotFound:
             raise ItemNotFound('Could not locate template "{}"'.format(self.obj.name))
         row.click()
+
+
+@navigator.register(AnsibleTowerJobTemplate, 'CreateServiceDialog')
+class TowerCreateServiceDialogFromTemplate(CFMENavigateStep):
+    VIEW = TowerCreateServiceDialogFromTemplateView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select(
+            'Create Service Dialog from this Template')
