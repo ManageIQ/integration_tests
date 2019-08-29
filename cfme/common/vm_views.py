@@ -526,7 +526,10 @@ class ManagementEngineView(BaseLoggedInPage):
 
     @View.nested
     class form(View):  # noqa
-        server = BootstrapSelect('server_id')
+        server = VersionPicker({
+            "5.11": ReactSelect('serverId'),
+            LOWEST: BootstrapSelect('server_id')
+        })
         save_button = Button('Save')
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
