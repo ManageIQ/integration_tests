@@ -93,17 +93,35 @@ class HostNetworkDetailsView(View):
         "{} (Network)".format(self.context["object"].name) == self.breadcrumb.active_location)
 
 
+class HostDetailsAccordionView(View):
+
+    @View.nested
+    class properties(Accordion):  # noqa
+        ACCORDION_NAME = "Properties"
+        tree = BootstrapNav(locator='//div[@id="host_prop"]//ul')
+
+    @View.nested
+    class relationships(Accordion):  # noqa
+        ACCORDION_NAME = "Relationships"
+        tree = BootstrapNav(locator='//div[@id="host_rel"]//ul')
+
+    @View.nested
+    class security(Accordion):  # noqa
+        ACCORDION_NAME = "Security"
+        tree = BootstrapNav(locator='//div[@id="host_sec"]//ul')
+
+    @View.nested
+    class configuration(Accordion):  # noqa
+        ACCORDION_NAME = "Configuration"
+        tree = BootstrapNav(locator='//div[@id="host_config"]//ul')
+
+
 class HostDetailsView(ComputeInfrastructureHostsView):
     """Main Host details page."""
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
     toolbar = View.nested(HostDetailsToolbar)
     entities = View.nested(HostDetailsEntities)
-
-    @View.nested
-    class security_accordion(Accordion):  # noqa
-        ACCORDION_NAME = "Security"
-
-        navigation = BootstrapNav('.//div/ul')
+    sidebar = View.nested(HostDetailsAccordionView)
 
     @property
     def is_displayed(self):
