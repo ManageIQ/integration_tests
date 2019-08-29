@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
+from textwrap import dedent
+
 import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassSchemaEditView
+from cfme.automate.simulation import simulate
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate]
@@ -201,3 +205,72 @@ def test_automate_schema_field_without_type(klass):
     assert view.schema.save_button.disabled
     assert view.schema.reset_button.disabled
     assert not view.schema.cancel_button.disabled
+
+
+@pytest.mark.tier(1)
+def test_state_machine_variable(klass):
+    """
+    Test whether storing the state machine variable works and the value is
+    available in another state.
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/4h
+        tags: automate
+    """
+    schema_field1, schema_field2, state_var = [fauxfactory.gen_alpha() for i in range(3)]
+
+    script1 = dedent(
+        f"""
+        $evm.set_state_var(:var1, "{state_var}")
+        """
+    )
+    script2 = dedent(
+        """
+        state_value = $evm.get_state_var(:var1)
+        $evm.log('info', "Value of state var returned #{state_value}")
+        """
+    )
+    klass.schema.add_fields(
+        *[
+            {"name": field, "type": "State", "data_type": "String"}
+            for field in [schema_field1, schema_field2]
+        ]
+    )
+
+    methods = list(
+        map(
+            lambda script: klass.methods.create(
+                name=fauxfactory.gen_alphanumeric(), location="inline", script=script
+            ),
+            [script1, script2],
+        )
+    )
+
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={schema_field1: {"value": f"METHOD::{methods[0].name}"},
+                schema_field2: {"value": f"METHOD::{methods[1].name}"}},
+    )
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[f'.*Value of state var returned {state_var}.*'],
+    ).waiting(timeout=120):
+
+        # Executing automate method
+        simulate(
+            appliance=klass.appliance,
+            attributes_values={
+                "namespace": klass.namespace.name,
+                "class": klass.name,
+                "instance": instance.name,
+            },
+            message="create",
+            request="Call_Instance",
+            execute_methods=True,
+        )
