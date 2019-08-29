@@ -12,7 +12,10 @@ from cfme.utils.virtual_machines import deploy_template
 
 pytestmark = [
     pytest.mark.provider([InfraProvider],
-    required_fields=[['templates', 'small_template']]),
+    required_fields=[['templates', 'small_template'],
+                    ['provisioning', 'template'],
+                    ['provisioning', 'host'],
+                    ['provisioning', 'datastore']]),
     test_requirements.vmware,
     test_requirements.rhev
 ]
