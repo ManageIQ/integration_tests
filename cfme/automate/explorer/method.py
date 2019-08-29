@@ -457,9 +457,7 @@ class MethodCollection(BaseCollection):
 
         add_page = navigate_to(self, 'Add')
 
-        if self.browser.product_version < '5.11':
-            location = location
-        else:
+        if self.browser.product_version > '5.11' and location.islower():
             location = location.capitalize()
 
         add_page.fill({'location': location})

@@ -168,35 +168,6 @@ def test_automate_git_domain_import_with_no_connection():
     pass
 
 
-@pytest.mark.tier(1)
-def test_automate_retry_onexit_increases():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        tags: automate
-        testSteps:
-            1. Import the attached file, it will create a domain called OnExitRetry
-            2. Enable the domain
-            3. Go to Automate / Simulation
-            4. Simulate Request with instance OnExitRetry, execute methods
-            5. Click submit, open the tree on right and expand ae_state_retries
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. It should be 1 by now and subsequent clicks on Retry should raise the
-               number if it works properly.
-
-    Bugzilla:
-        1365442
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_automate_simulation_result_has_hash_data():
     """
@@ -249,25 +220,6 @@ def test_automate_git_import_without_master():
 
     Bugzilla:
         1508881
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_state_machine_variable():
-    """
-    Test whether storing the state machine variable works and the value is
-    available in another state.
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/4h
-        tags: automate
-        testSteps:
-            1. Test whether storing the state machine variable works and the value is available in
-               another state.
     """
     pass
 
