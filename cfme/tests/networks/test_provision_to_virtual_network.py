@@ -16,10 +16,7 @@ pytestmark = [
                          required_fields=[['provisioning', 'template']],
                          scope='module'
                          ),
-    pytest.mark.uncollectif(lambda provider: provider.version < 4.2,
-                            reason='ovn functionality is limited in 4.1'),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.ignore_stream('5.8'),
     test_requirements.provision,
 ]
 
@@ -42,6 +39,7 @@ def network(provider, appliance):
 
 
 @pytest.mark.rhv1
+@test_requirements.rhev
 @pytest.mark.meta(
     blockers=[
         GH('ManageIQ/integration_tests:8128'),
@@ -56,7 +54,7 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
         test_flag: provision
 
     Polarion:
-        assignee: mmojzis
+        assignee: anikifor
         casecomponent: Provisioning
         initialEstimate: 1/4h
     """
