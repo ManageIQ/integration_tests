@@ -135,7 +135,7 @@ def setup_basic_script(provider, script_type):
     script_path_source = path.join(yml_templates_path, script_type + "_" + basic_script)
     script_path = path.join(basic_yml_path, script_type + "_" + basic_script)
     copyfile(script_path_source, script_path)
-    with open(script_path, 'rw') as f:
+    with open(script_path, 'r') as f:
         doc = load(f)
         values_dict = get_values_from_conf(provider, script_type)
     for key in values_dict:
@@ -154,7 +154,7 @@ def setup_basic_script(provider, script_type):
 def open_yml(script, script_type):
     copyfile((path.join(basic_yml_path, script_type + "_" + basic_script)),
              path.join(basic_yml_path, script + yml))
-    with open(path.join(basic_yml_path, script + yml), 'rw') as f:
+    with open(path.join(basic_yml_path, script + yml), 'r') as f:
         return load(f)
 
 
