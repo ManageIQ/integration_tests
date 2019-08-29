@@ -141,7 +141,7 @@ configuration = pytest.mark.requirement(
 control = pytest.mark.requirement(
     "Control",
     description='Control / Compliance policies and enforcement',
-    assignee_id='mmojzis',
+    assignee_id='jdupuy',
 )
 
 containers = pytest.mark.requirement(
