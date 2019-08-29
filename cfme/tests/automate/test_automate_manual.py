@@ -140,34 +140,6 @@ def test_automate_git_domain_import_with_no_connection():
 
 
 @pytest.mark.tier(3)
-def test_automate_simulation_result_has_hash_data():
-    """
-    The UI should display the result objects if the Simulation Result has
-    hash data.
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: automate
-        testSteps:
-            1. Create a Instance under /System/Request called ListUser, update it so that it points
-               to a ListUser Method
-            2. Create ListUser Method under /System/Request, paste the Attached Method
-            3. Run Simulation
-        expectedResults:
-            1.
-            2.
-            3. The UI should display the result objects
-
-    Bugzilla:
-        1445089
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_git_import_without_master():
     """
     Git repository doesn't have to have master branch
