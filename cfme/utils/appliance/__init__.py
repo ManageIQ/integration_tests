@@ -1836,7 +1836,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
     @property
     def is_embedded_ansible_running(self):
-        return self.is_embedded_ansible_role_enabled and self.supervisord.running
+        supervisord = self.supervisord.running if self.version < '5.11' else True
+        return self.is_embedded_ansible_role_enabled and supervisord
 
     def wait_for_embedded_ansible(self, timeout=1200):
         """Waits for embedded ansible to be ready
