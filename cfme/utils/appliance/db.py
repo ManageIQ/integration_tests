@@ -12,6 +12,7 @@ from cfme.utils.appliance.plugin import AppliancePlugin
 from cfme.utils.appliance.plugin import AppliancePluginException
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
+from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
@@ -29,7 +30,7 @@ class ApplianceDB(AppliancePlugin):
     @cached_property
     def service_name(self):
         return VersionPicker({
-            '5.10': 'rh-postgresql95-postgresql',
+            LOWEST: 'rh-postgresql95-postgresql',
             '5.11': 'postgresql'}).pick(self.appliance.version)
 
     @property
