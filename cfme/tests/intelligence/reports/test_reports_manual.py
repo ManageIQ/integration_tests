@@ -65,60 +65,6 @@ def test_date_should_be_change_in_editing_reports_scheduled():
 
 @pytest.mark.manual
 @test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_manage_report_menu_accordion_with_users():
-    """
-    Bugzilla:
-        1535023
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-        setup:
-            1. Create a new report called report01
-            2. Create a new user under EvmGroup-super_administrator called
-            testuser
-            3. "Edit Report Menus" and add the report01 under EvmGroup-
-            super_administrator"s Provisioning -> Activities
-            4. Login using testuser and navigate to Reports
-        testSteps:
-            1. Check if the report01 is present under Provisioning -> Activities
-        expectedResults:
-            1. The report01 must be present under Provisioning -> Activities
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-def test_report_menus_moving_reports():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: low
-        initialEstimate: 1/12h
-        setup:
-            1. Navigate to  Cloud Intel -> Reports -> Edit reports menu
-            2. Select EvmGroupAdministrator -> Configuration Management -> Virtual Machines
-        testSteps:
-            1. Select 5 Reports and move them to the left.
-            2. Reset it.
-            3. Select all reports and move them to the left
-        expectedResults:
-            1. All 5 reports should be moved.
-            2. All settings must be reset.
-            3. All reports should be moved.
-
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
     "report_type", ["hosts", "vm_operation", "policy_events", "custom"]
