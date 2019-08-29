@@ -7,6 +7,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
+from cfme.rest.gen_data import users as _users
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -749,3 +750,50 @@ def test_null_coalescing_fields(request, klass):
     )
 
     assert log.validate()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1411424])
+def test_automate_user_has_groups(request, appliance, custom_instance):
+    """
+    This method should work:  groups = $evm.vmdb(:user).first.miq_groups
+    $evm.log(:info, "Displaying the user"s groups: #{groups.inspect}")
+
+    Bugzilla:
+        1411424
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/12h
+        tags: automate
+        startsin: 5.8
+    """
+    user, user_data = _users(request, appliance)
+
+    script = dedent(
+        f"""
+        group = $evm.vmdb(:user).find_by_name("{user[0].name}").miq_groups
+        $evm.log(:info, "Displaying the user's groups: #{{group.inspect}}")
+        """
+    )
+    instance = custom_instance(ruby_code=script)
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[f'.*{user_data[0]["group"]["description"]}.*'],
+    ).waiting(timeout=120):
+
+        # Executing automate method using simulation
+        simulate(
+            appliance=instance.klass.appliance,
+            message="create",
+            request="Call_Instance",
+            execute_methods=True,
+            attributes_values={
+                "namespace": instance.klass.namespace.name,
+                "class": instance.klass.name,
+                "instance": instance.name,
+            },
+        )
