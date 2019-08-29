@@ -8,6 +8,7 @@ import pytest
 from humanfriendly import parse_size
 from humanfriendly import tokenize
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.chargeback import assignments
 from cfme.utils.blockers import GH
@@ -33,7 +34,8 @@ pytestmark = [
     pytest.mark.parametrize('interval', intervals, scope='module'),
     pytest.mark.long_running_env,
     pytest.mark.provider([ContainersProvider], scope='module'),
-    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8798')])
+    pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8798')]),
+    test_requirements.containers  # This should eventually move to the chargeback req
 ]
 
 # We cannot calculate the accurate value because the prices in the reports

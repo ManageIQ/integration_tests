@@ -1,11 +1,15 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import NodeNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [pytest.mark.usefixtures('setup_provider')]
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'),
+    test_requirements.containers
+]
 
 
 TEST_DEST = ('All', 'Details')

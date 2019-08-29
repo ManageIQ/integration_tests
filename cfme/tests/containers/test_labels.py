@@ -5,6 +5,7 @@ from traceback import format_exc
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.image import Image
 from cfme.containers.image import ImageCollection
 from cfme.containers.pod import Pod
@@ -29,7 +30,9 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='module')]
+    pytest.mark.provider([ContainersProvider], scope='module'),
+    test_requirements.containers
+]
 
 # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
 DataSet = namedtuple('DataSet', ['obj', 'collection_obj'])

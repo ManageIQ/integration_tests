@@ -2,13 +2,15 @@ from random import choice
 
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(3),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
 ]
 
 

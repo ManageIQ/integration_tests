@@ -1,10 +1,12 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 
 
 pytestmark = [
-    pytest.mark.provider(classes=[ContainersProvider], required_flags=['prometheus_alerts'])
+    pytest.mark.provider(classes=[ContainersProvider], required_flags=['prometheus_alerts']),
+    test_requirements.containers
 ]
 
 # TODO There needs to be more to this test

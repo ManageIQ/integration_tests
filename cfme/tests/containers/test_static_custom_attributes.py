@@ -8,6 +8,7 @@ from string import digits
 import pytest
 from manageiq_client.api import APIException
 
+from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider.openshift import CustomAttribute
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -16,7 +17,8 @@ from cfme.utils.log import logger
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2),
-    pytest.mark.provider([ContainersProvider], scope='function')
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
 ]
 
 

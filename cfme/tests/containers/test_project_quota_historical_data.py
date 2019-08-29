@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-pytestmark = [pytest.mark.tier(0)]
+from cfme import test_requirements
+
+pytestmark = [
+    pytest.mark.tier(0),
+    test_requirements.containers
+]
 
 
 @pytest.mark.manual

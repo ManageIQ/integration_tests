@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.containers.container import Container
 from cfme.containers.container import ContainerCollection
 from cfme.containers.image import Image
@@ -27,7 +28,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(1),
-    pytest.mark.provider([ContainersProvider], scope='module')
+    pytest.mark.provider([ContainersProvider], scope='module'),
+    test_requirements.containers
 ]
 
 TEST_ITEMS = [

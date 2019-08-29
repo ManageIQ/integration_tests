@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
 from cfme.containers.provider import ContainersProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [pytest.mark.provider([ContainersProvider], scope='function')]
+pytestmark = [
+    pytest.mark.provider([ContainersProvider], scope='function'),
+    test_requirements.containers
+]
 
 
 def is_menu_visible(appliance, link_text):

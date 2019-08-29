@@ -5,14 +5,14 @@ import pytest
 from fauxfactory import gen_alphanumeric
 from fauxfactory import gen_integer
 
+from cfme import test_requirements
 from cfme.common.provider_views import ContainerProvidersView
 from cfme.containers.provider import ContainersProvider
-from cfme.utils.version import current_version
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < "5.8.0.3"),
-    pytest.mark.provider([ContainersProvider], scope='module')
+    pytest.mark.provider([ContainersProvider], scope='module'),
+    test_requirements.containers
 ]
 
 alphanumeric_name = gen_alphanumeric(10)
