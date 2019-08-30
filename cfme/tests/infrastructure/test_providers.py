@@ -16,8 +16,10 @@ from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.discovery,
@@ -332,6 +334,46 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
 
     prov.delete()
     prov.wait_for_delete()
+
+
+@pytest.mark.rhv3
+@test_requirements.rhev
+@pytest.mark.meta(automates=[1691109, 1731237])
+@pytest.mark.provider([RHEVMProvider], selector=ONE_PER_VERSION, override=True, scope="function")
+def test_rhv_guest_devices_count(appliance, setup_provider, provider):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/6h
+        testSteps:
+            1. Check GuestDevice.count in a rails console
+            2. Refresh RHV provider
+            3. Check GuestDevice.count again
+        expectedResults:
+            1.
+            2.
+            3. The count is the same as in step 1
+    Bugzilla:
+        1691109
+        1731237
+    """
+    def _gd_count():  # find the Guest Device count in the output
+        command = "GuestDevice.count"
+        gd_count_command = appliance.ssh_client.run_rails_console(command).output
+        return int(gd_count_command[gd_count_command.find(command) + len(command):])
+
+    def _refresh_provider():
+        provider.refresh_provider_relationships()
+        # takes a bit more time to update Guest Devices initially
+        return provider.is_refreshed() and _gd_count() != 0
+
+    gd_count_before = _gd_count()
+
+    wait_for(_refresh_provider, timeout=300, delay=30)
+    gd_count_after = _gd_count()
+    assert gd_count_before == gd_count_after, "guest devices count changed after refresh!"
 
 
 def test_infrastructure_add_provider_trailing_whitespaces(appliance):
