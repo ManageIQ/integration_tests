@@ -629,7 +629,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
         interaction.send(nfs_restore_file_path)
         interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
         interaction.send('y')
-        interaction.expect('Press any key to continue.', timeout=40)
+        interaction.expect('Press any key to continue.', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
