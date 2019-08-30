@@ -75,6 +75,9 @@ def test_order_tower_catalog_item(appliance, config_manager, catalog_item, reque
     Metadata:
         test_flag: provision
 
+    Bugzilla:
+        1717500
+
     Polarion:
         assignee: nachandr
         initialEstimate: 1/4h
