@@ -454,25 +454,6 @@ def test_automate_restrict_domain_crud():
 
 
 @pytest.mark.tier(3)
-def test_automate_embedded_method():
-    """
-    For a "new" method when adding Embedded Methods the UI hangs in the
-    tree view when the method is selected
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: high
-        initialEstimate: 1/12h
-        tags: automate
-
-    Bugzilla:
-        1523379
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_git_verify_ssl():
     """
     Polarion:
@@ -530,36 +511,6 @@ def test_list_of_diff_vm_storages_via_rails():
 
     Bugzilla:
         1574444
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_method_for_log_and_notify():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1. Create an Automate domain or use an existing writeable Automate domain
-            2. Create a new Automate Method
-            3. In the Automate Method screen embed ManageIQ/System/CommonMethods/Utils/log_object
-               you can pick this
-               method from the UI tree picker
-            4. In your method add a line akin to
-               ManageIQ::Automate::System::CommonMethods::Utils::LogObject.log_and_notify
-               (:info, "Hello Testing Log & Notify", $evm.root['vm'], $evm)
-            5. Check the logs
-            6. In your UI session you should see a notification
-
-    PR:
-        https://github.com/ManageIQ/manageiq-content/pull/423
     """
     pass
 
