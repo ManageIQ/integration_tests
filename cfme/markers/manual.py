@@ -1,4 +1,4 @@
-"""manual: Marker for marking tests asmanual tests."""
+"""manual: Marker for marking tests as manual tests."""
 import pytest
 
 from cfme.fixtures.pytest_store import store

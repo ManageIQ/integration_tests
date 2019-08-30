@@ -129,7 +129,7 @@ docker-py==1.10.6
 docker-pycreds==0.4.0
 docutils==0.15.2
 dogpile.cache==0.7.1
-dump2polarion==0.39.1
+dump2polarion==0.40.0
 entrypoints==0.3
 fauxfactory==3.0.6
 flake8==3.7.7
@@ -215,7 +215,7 @@ pickleshare==0.7.5
 pika==1.0.1
 Pillow==6.0.0
 pluggy==0.6.0
-polarion-docstrings==0.16.1
+polarion-docstrings==0.17.0
 prettytable==0.7.2
 progress==1.5
 prometheus-client==0.6.0
@@ -239,7 +239,7 @@ pyparsing==2.4.0
 pyperclip==1.7.0
 pytesseract==0.2.6
 pytest==3.4.1
-pytest-polarion-collect==0.15
+pytest-polarion-collect==0.16.2
 python-box==3.2.4
 python-bugzilla==2.2.0
 python-cinderclient==4.1.0

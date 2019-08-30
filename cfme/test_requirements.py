@@ -108,18 +108,6 @@ c_and_u = pytest.mark.requirement(
     assignee_id='nachandr',
 )
 
-custom_button = pytest.mark.requirement(
-    "Custom Buttons",
-    description='Custom Buttons and Custom Groups',
-    assignee_id='ndhandre',
-)
-
-customer_stories = pytest.mark.requirement(
-    "Customer Stories",
-    description='Integration of multiple FAs, Customer Day2 Scenarios',
-    assignee_id='ndhandre',
-)
-
 chargeback = pytest.mark.requirement(
     "Chargeback",
     description='Chargeback rates, calculations, and reports',
@@ -149,6 +137,17 @@ containers = pytest.mark.requirement(
     description='Integration of OpenShift in MIQ/CFME',
     assignee_id='juwatts',
 )
+
+custom_button = pytest.mark.requirement(
+    "Custom Buttons",
+    description='Custom Buttons and Custom Groups',
+    assignee_id='ndhandre',
+)
+
+customer_stories = pytest.mark.requirement(
+    "Customer Stories",
+    description='Integration of multiple FAs, Day 2 Operations type tests',
+    assignee_id='ndhandre',)
 
 dashboard = pytest.mark.requirement(
     "Dashboard",
