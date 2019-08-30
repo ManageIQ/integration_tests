@@ -22,18 +22,21 @@ pytestmark = [
 
 
 @pytest.mark.parametrize("navigation", ["provider_vms", "all_vms", "vm_summary"])
-@pytest.mark.meta(blockers=[
-    BZ(1717483, forced_streams=['5.11']),
-    BZ(1686617,
-       forced_streams=["5.10"],
-       unblock=lambda navigation: navigation != 'provider_vms'),
-    BZ(1686619,
-       forced_streams=["5.10"],
-       unblock=lambda navigation: navigation != 'provider_vms'),
-    BZ(1717539,
-       unblock=lambda navigation: navigation != 'provider_vms')
-])
-def test_policy_simulation_ui(appliance, provider, navigation):
+@pytest.mark.meta(
+    blockers=[
+        BZ(1686617,
+           forced_streams=["5.10"],
+           unblock=lambda navigation: navigation != 'provider_vms'),
+        BZ(1686619,
+           forced_streams=["5.10"],
+           unblock=lambda navigation: navigation != 'provider_vms'),
+        BZ(1717539,
+           unblock=lambda navigation: navigation != 'provider_vms'),
+        BZ(1704395,
+           unblock=lambda navigation: navigation != 'provider_vms'),
+    ], automates=[1670456, 1686617, 1686619, 1688359, 1717483, 1717539, 1704395]
+)
+def test_policy_simulation_ui(provider, navigation):
     """
     Bugzilla:
         1670456
@@ -43,6 +46,7 @@ def test_policy_simulation_ui(appliance, provider, navigation):
         1550503
         1717483
         1717539
+        1704395
 
     Polarion:
         assignee: jdupuy
