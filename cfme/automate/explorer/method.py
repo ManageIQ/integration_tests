@@ -471,7 +471,7 @@ class MethodCollection(BaseCollection):
                 'inputs': inputs,
                 'embedded_method': embedded_method
             })
-        if location == 'playbook':
+        if location.lower() == 'playbook':
             add_page.fill({
                 'playbook_name': name,
                 'playbook_display_name': display_name,
