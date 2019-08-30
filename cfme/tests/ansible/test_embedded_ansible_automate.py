@@ -116,7 +116,8 @@ def management_event_instance(management_event_class, management_event_method):
     return management_event_class.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
-        fields={"meth1": {"value": management_event_method.name}})
+        fields={"meth1": {"value": management_event_method.name}}
+    )
 
 
 @pytest.fixture(scope="module")
