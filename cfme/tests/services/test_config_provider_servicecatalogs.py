@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
+from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 
@@ -12,8 +13,9 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
-    pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey'],
-        ids=['template_job', 'template_limit_job', 'template_survey_job'],
+    pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
+        'textarea_survey'],
+        ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
         scope='module'),
     pytest.mark.ignore_stream('upstream'),
     pytest.mark.uncollectif(lambda appliance,
@@ -66,10 +68,15 @@ def catalog_item(appliance, request, config_manager, ansible_tower_dialog, catal
     return catalog_item
 
 
+@pytest.mark.meta(automates=[BZ(1717500)])
+# The 'textarea_survey' job type automates BZ 1717500
 def test_order_tower_catalog_item(appliance, config_manager, catalog_item, request, job_type):
     """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision
+
+    Bugzilla:
+        1717500
 
     Polarion:
         assignee: nachandr
