@@ -304,12 +304,17 @@ class VMEvent(object):
             raise ValueError('Targets must not be empty')
 
 
+@pytest.mark.meta(automates=[1747132])
 def test_infra_timeline_create_event(new_vm, soft_assert):
     """Test that the event create is visible on the management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
 
     Metadata:
         test_flag: events, provision, timelines
+
+    Bugzilla:
+        1670550
+        1747132
 
     Polarion:
         assignee: jdupuy
@@ -320,6 +325,8 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     vm_event = VMEvent(new_vm, event)
     if BZ(1670550).blocks:
         targets = (new_vm, )
+    elif BZ(1747132).blocks:
+        targets = (new_vm, new_vm.cluster, new_vm.provider)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
@@ -334,6 +341,9 @@ def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
 
     Metadata:
         test_flag: events, provision, timelines
+
+    Bugzilla:
+        1670550
 
     Polarion:
         assignee: jdupuy
@@ -359,6 +369,9 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
     Metadata:
         test_flag: events, provision, timelines
 
+    Bugzilla:
+        1670550
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -382,6 +395,9 @@ def test_infra_timeline_start_event(new_vm, soft_assert):
     Metadata:
         test_flag: events, provision, timelines
 
+    Bugzilla:
+        1670550
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -404,6 +420,9 @@ def test_infra_timeline_suspend_event(new_vm, soft_assert):
 
     Metadata:
         test_flag: events, provision, timelines
+
+    Bugzilla:
+        1670550
 
     Polarion:
         assignee: jdupuy
@@ -451,6 +470,7 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
 
     Bugzilla:
         1622952
+        1670550
 
     Polarion:
         assignee: jdupuy
@@ -474,6 +494,9 @@ def test_infra_timeline_migrate_event(new_vm, soft_assert):
 
     Metadata:
         test_flag: events, provision, timelines
+
+    Bugzilla:
+        1670550
 
     Polarion:
         assignee: jdupuy
@@ -500,6 +523,9 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     Metadata:
         test_flag: events, provision, timelines
 
+    Bugzilla:
+        1670550
+
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/4h
@@ -525,6 +551,7 @@ def test_infra_timeline_delete_event(new_vm, soft_assert):
 
     Bugzilla:
         1550488
+        1670550
 
     Polarion:
         assignee: jdupuy
