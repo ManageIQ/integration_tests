@@ -318,6 +318,7 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
+@test_requirements.alert
 def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, request, appliance):
     """Tests execution of an ansible playbook method by triggering a management event from an
     alert.
