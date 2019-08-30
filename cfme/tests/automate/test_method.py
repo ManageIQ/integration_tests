@@ -479,7 +479,7 @@ def test_automate_service_quota_runs_only_once(appliance, generic_catalog_item):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1718495, forced_streams=['5.10'])], automate=[1718495, 1523379])
+@pytest.mark.meta(blockers=[BZ(1718495, forced_streams=['5.10'])], automates=[1718495, 1523379])
 def test_embedded_method_selection(klass):
     """
     Bugzilla:
@@ -500,7 +500,7 @@ def test_embedded_method_selection(klass):
     path = ("Datastore", "ManageIQ (Locked)", "System", "CommonMethods", "Utils", "log_object")
     view = navigate_to(klass.methods, "Add")
     view.fill({'location': "Inline", "embedded_method": path})
-    assert view.embedded_method_table.read()[0]['Path'] == "/" + "/".join(path[2:])
+    assert view.embedded_method_table.read()[0]['Path'] == f"/{'/'.join(path[2:])}"
 
 
 @pytest.mark.tier(1)
