@@ -28,7 +28,6 @@ from cfme.tests.control import wait_for_ssa_enabled
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
@@ -597,21 +596,15 @@ def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, p
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
-@pytest.mark.meta(
-    blockers=[
-        BZ(
-            1549529,
-            forced_streams=["5.10", "upstream"],
-            unblock=lambda provider: provider.one_of(VMwareProvider),
-        )
-    ]
-)
 def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
     several time that it generates a couple of snapshots. Then the 'Delete all Snapshots' is
     assigned to power on event, VM is powered on and it waits for all snapshots to disappear.
+
+    Bugzilla:
+        1745065
 
     Metadata:
         test_flag: actions, provision
@@ -649,9 +642,6 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, 
             message="wait for snapshot %d to appear" % (n + 1),
             delay=5,
         )
-        current_snapshot = vm.current_snapshot_name
-        logger.debug("Current Snapshot Name: {}".format(current_snapshot))
-        assert current_snapshot == snapshot_name
         vm.mgmt.ensure_state(VmState.RUNNING)
 
     for i in range(4):
