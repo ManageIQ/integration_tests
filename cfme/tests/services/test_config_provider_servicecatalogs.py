@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
+from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 
@@ -12,7 +13,8 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
-    pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey', 'textarea_survey'],
+    pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
+        'textarea_survey'],
         ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
         scope='module'),
     pytest.mark.ignore_stream('upstream'),
