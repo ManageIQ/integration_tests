@@ -481,9 +481,13 @@ def test_automate_service_quota_runs_only_once(appliance, generic_catalog_item):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1718495])
-def test_embedded_method_selection():
+@pytest.mark.meta(blockers=[BZ(1718495, forced_streams=['5.10'])], automates=[1718495, 1523379])
+def test_embedded_method_selection(klass):
     """
+    Bugzilla:
+        1718495
+        1523379
+
     Polarion:
         assignee: ghubale
         initialEstimate: 1/8h
@@ -494,11 +498,11 @@ def test_embedded_method_selection():
         expectedResults:
             1.
             2. Selected embedded method should be visible
-
-    Bugzilla:
-        1718495
     """
-    pass
+    path = ("Datastore", "ManageIQ (Locked)", "System", "CommonMethods", "Utils", "log_object")
+    view = navigate_to(klass.methods, "Add")
+    view.fill({'location': "Inline", "embedded_method": path})
+    assert view.embedded_method_table.read()[0]['Path'] == f"/{'/'.join(path[2:])}"
 
 
 @pytest.mark.tier(1)

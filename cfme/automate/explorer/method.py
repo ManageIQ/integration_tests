@@ -255,7 +255,6 @@ class MethodAddView(AutomateExplorerView):
     playbook_input_parameters = PlaybookInputParameters()
 
     # Add embedded method
-    # TODO(ghubale@redhat.com): Make use of this table once this BZ(1718495) got fixed
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
@@ -299,7 +298,6 @@ class MethodEditView(AutomateExplorerView):
     playbook_input_parameters = PlaybookInputParameters()
 
     # Edit embedded method
-    # TODO(ghubale@redhat.com): Make use of this table once this BZ(1718495) got fixed
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
