@@ -7,6 +7,7 @@ from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 REG_METHODS = ('rhsm', 'sat6')
@@ -204,18 +205,21 @@ def test_rhsm_registration_check_repo_names(
     """
     ver = temp_appliance_preconfig_funcscope.version.series()
     repos = cfme_data.redhat_updates.repos
+    repo_names = VersionPicker({
+        '5.10': repos.post_510,
+        '5.11': repos.post_511}).pick(ver)
+
+    if not repo_names:
+        pytest.skip(f'This test is not ready for CFME series {ver}')
 
     # TODO We need the context manager here as RedHatUpdates doesn't yet support Collections.
     with temp_appliance_preconfig_funcscope:
-        repo_names = repos.post_510
         view = navigate_to(RedHatUpdates, 'Edit')
-        soft_assert(
-            view.repo_name.read() == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, repo_names))
+        soft_assert(view.repo_name.read() == repo_names)
         """checks current repo names"""
         view.repo_default_name.click()
         """resets repos with default button and checks they are also correct"""
-        soft_assert(
-            view.repo_name.read() == 'cf-me-{}-for-rhel-7-rpms {}'.format(ver, repo_names))
+        soft_assert(view.repo_name.read() == repo_names)
 
 
 @pytest.mark.rhel_testing
