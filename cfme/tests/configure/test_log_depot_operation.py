@@ -19,8 +19,7 @@ from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 
-pytestmark = [pytest.mark.long_running, test_requirements.log_depot,
-              pytest.mark.meta(blockers=[BZ(1706903)])]
+pytestmark = [pytest.mark.long_running, test_requirements.log_depot]
 
 
 class LogDepotType(object):
@@ -162,9 +161,7 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
         try:
             date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
             date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
-            # if the file is correct, check ansible logs (~/ROOT/var/log/tower/setup-*) are there
-            logs_ansible = "ROOT/var/log/tower/setup" if zip_file.name.startswith("Current") \
-                else "log/ansible_tower"
+            logs_ansible = "log/ansible_tower"
             if ftp.login != 'anonymous' and check_ansible_logs:  # can't login as anon using SSH
                 with SSHClient(hostname=ftp.host,
                                username=ftp.login,
