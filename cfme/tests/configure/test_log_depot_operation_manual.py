@@ -72,54 +72,6 @@ def test_log_collect_all_zone_multiple_servers():
 
 
 @pytest.mark.tier(1)
-def test_log_collect_current_zone():
-    """
-    using any type of depot check collect current log function under zone
-    (using structure one server under zone, zone and server should be
-    configured)
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_log_collect_all_zone_zone_setup():
-    """
-    using any type of depot check collect all log function under zone
-    (settings under server should not be configured, under zone should be
-    configured)
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_log_collect_current_zone_zone_setup():
-    """
-    using any type of depot check collect current log function under zone
-    (settings under server should not be configured, under zone should be
-    configured)
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_log_multiple_servers_unconfigured():
     """
     Verify that buttons are unclickable (grayed) when log collection
