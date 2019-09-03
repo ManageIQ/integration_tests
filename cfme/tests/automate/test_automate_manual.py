@@ -355,25 +355,6 @@ def test_automate_git_credentials_changed():
     pass
 
 
-@pytest.mark.tier(1)
-def test_automate_git_import_case_insensitive():
-    """
-    bin/rake evm:automate:import PREVIEW=false
-    GIT_URL=https://github.com/mkanoor/SimpleDomain REF=test2branch
-    This should not cause an error (the actual name of the branch is
-    Test2Branch).
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/8h
-        tags: automate
-        startsin: 5.7
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_automate_import_namespace_attributes_updated():
     """
