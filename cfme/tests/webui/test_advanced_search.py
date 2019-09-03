@@ -59,6 +59,13 @@ def _select_filter(filters, filter_name, param):
 
 
 def _can_open_advanced_search(param, appliance):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: WebUI
+        caseimportance: high
+        initialEstimate: 1/10h
+    """
     view = _navigation(param, appliance)
     assert view.search.is_advanced_search_possible, (f"Advanced search not displayed "
                                                      f"for {param.entity} "
@@ -75,6 +82,13 @@ def _can_open_advanced_search(param, appliance):
 
 
 def _filter_crud(param, appliance):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: WebUI
+        caseimportance: high
+        initialEstimate: 1/10h
+    """
     filter_name = fauxfactory.gen_string('alphanumeric', 10)
     filter_value = fauxfactory.gen_string('alphanumeric', 10)
     filter_value_updated = fauxfactory.gen_string('alphanumeric', 10)
@@ -140,6 +154,9 @@ def _filter_crud(param, appliance):
             assert not view.my_filters.navigation.has_item(filter_name), "Filter wasn't deleted!"
 
 
+_tests = [_can_open_advanced_search, _filter_crud]
+
+
 def methodized(metafunc):
     """Transform function to method by adding self argument
 
@@ -149,6 +166,7 @@ def methodized(metafunc):
 
     def func(self, param, appliance):
         return metafunc(param, appliance)
+    func.__doc__ = metafunc.__doc__
     return func
 
 
@@ -156,9 +174,8 @@ def inject_tests(metaclass):
     """Attach tests to decorated class
 
     uses _tests - list of test functions
-    TODO: inject with __doc__ set and meta parsed by pytest-polarion-collect/polarion-docstrings
     """
-    for test in []:  # test names, see TODO
+    for test in _tests:
         method = methodized(test)
         setattr(metaclass, f"test{test.__name__}", method)
     return metaclass
@@ -175,6 +192,7 @@ def base_pytestmarks(param_values, setup_prov=False):
         )] + ([pytest.mark.usefixtures("setup_provider")] if setup_prov else [])
 
 
+@inject_tests
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 class TestCloud(object):
     params_values = [
@@ -193,28 +211,8 @@ class TestCloud(object):
     ]
     pytestmark = base_pytestmarks(params_values, True)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 class TestNetwork(object):
     params_values = [
@@ -231,28 +229,8 @@ class TestNetwork(object):
         SearchParam('balancers', 'All', 'network_load_balancers', 'Load Balancer : Name', None)]
     pytestmark = base_pytestmarks(params_values, True)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY, )
 class TestInfra(object):
     params_values = [
@@ -275,28 +253,8 @@ class TestInfra(object):
     ]
     pytestmark = base_pytestmarks(params_values, True)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 @pytest.mark.provider([PhysicalProvider], selector=ONE_PER_CATEGORY)
 class TestPhysical(object):
     params_values = [
@@ -306,28 +264,8 @@ class TestPhysical(object):
     ]
     pytestmark = base_pytestmarks(params_values, True)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 @pytest.mark.provider([ContainersProvider], selector=ONE_PER_CATEGORY)
 class TestContainers(object):
     params_values = [
@@ -358,28 +296,8 @@ class TestContainers(object):
     ]
     pytestmark = base_pytestmarks(params_values, True)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 class TestAnsibleTower(object):
     params_values = [
         SearchParam('ansible_tower_providers', 'All', 'ansible_tower_explorer_provider',
@@ -395,28 +313,8 @@ class TestAnsibleTower(object):
                     'Ansible Tower Job : Name', None)]
     pytestmark = base_pytestmarks(params_values)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 class TestStorage(object):
     params_values = [
         SearchParam('volumes', 'All', 'block_store_volumes', 'Cloud Volume : Name', None),
@@ -431,28 +329,8 @@ class TestStorage(object):
     ]
     pytestmark = base_pytestmarks(params_values)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 class TestConfigManagement(object):
     params_values = [
         SearchParam(ConfigManager, 'All', 'configuration_management',
@@ -464,50 +342,9 @@ class TestConfigManagement(object):
     ]
     pytestmark = base_pytestmarks(params_values)
 
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
 
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
-
-
+@inject_tests
 @pytest.mark.meta(blockers=[BZ(1733489)])
 class TestServices(object):
     params_values = [SearchParam(MyService, 'All', 'myservices', 'Service : Name', 'myservice')]
     pytestmark = base_pytestmarks(params_values)
-
-    def test_can_open_advanced_search(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _can_open_advanced_search(param, appliance)
-
-    @pytest.mark.meta(automates=[BZ(1402392)])  # TODO apply marker when using inject_tests
-    def test_filter_crud(self, param, appliance):
-        """
-        Polarion:
-            assignee: anikifor
-            casecomponent: WebUI
-            caseimportance: high
-            initialEstimate: 1/10h
-        """
-        _filter_crud(param, appliance)
