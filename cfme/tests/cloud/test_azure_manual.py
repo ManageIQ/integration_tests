@@ -26,28 +26,6 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
     pass
 
 
-@pytest.mark.tier(2)
-def test_vm_terminate_deletedisk_azure():
-    """
-    New for 5.6.1, when terminating a VM in Azure, we need to go to the
-    storage account and make sure the disk has also been removed.  You can
-    check the VM details for the exact disk location prior to deleting.
-    Note that Azure itself does not delete the disk when a VM is deleted,
-    so this may initially cause some confusion.
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.6.1
-        upstream: yes
-    Bugzilla:
-        1353306
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_refresh_with_empty_iot_hub_azure():
     """
