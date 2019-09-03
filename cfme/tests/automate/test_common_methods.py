@@ -6,11 +6,14 @@ from textwrap import dedent
 
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
+from cfme.provisioning import do_vm_provisioning
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -250,3 +253,71 @@ def test_service_retirement_from_automate_method(request, generic_catalog_item, 
         description=f"Service Retire for: {generic_catalog_item.name}")
     wait_for(lambda: retire_request.request_state == "finished", fail_func=retire_request.reload,
              timeout=180, delay=10)
+
+
+@pytest.fixture
+def set_root_tenant_quota(request, appliance):
+    field, value = request.param
+    root_tenant = appliance.collections.tenants.get_root_tenant()
+    root_tenant.set_quota(**{'{}_cb'.format(field): True, field: value})
+    yield
+    root_tenant.set_quota(**{'{}_cb'.format(field): False})
+
+
+@pytest.mark.tier(3)
+@pytest.mark.usefixtures("setup_provider")
+@pytest.mark.meta(automates=[1334318])
+@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.parametrize(
+    ['set_root_tenant_quota'],
+    [
+        [('memory', '1000')],
+    ],
+    indirect=['set_root_tenant_quota'],
+    ids=['memory']
+)
+def test_automate_quota_units(request, set_root_tenant_quota, provisioning, provider, appliance):
+    """
+    Bugzilla:
+        1334318
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: low
+        initialEstimate: 1/4h
+        tags: automate
+    """
+    vm_name = random_vm_name(context='quota')
+
+    prov_data = {
+        "catalog": {'vm_name': vm_name},
+        "environment": {'automatic_placement': True},
+        "network": {'vlan': partial_match(provisioning['vlan'])},
+        'hardware': {'memory': '1024'},
+    }
+
+    @request.addfinalizer
+    def _finalize():
+        collection = appliance.provider_based_collection(provider)
+        vm_obj = collection.instantiate(vm_name, provider, provisioning["template"])
+        try:
+            vm_obj.cleanup_on_provider()
+        except Exception:
+            logger.warning('Failed deleting VM from provider: %s', vm_name)
+
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=[f'.*Getting Tenant Quota Values for:.*.memory=>1073741824000.*'],
+    ).waiting(timeout=120):
+        # Provisioning VM via lifecycle
+        do_vm_provisioning(appliance, template_name=provisioning["template"], provider=provider,
+                           vm_name=vm_name, provisioning_data=prov_data, wait=False, request=None)
+
+        # nav to requests page to check quota validation
+        request_description = f'Provision from [{provisioning["template"]}] to [{vm_name}]'
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        provision_request.wait_for_request(method='ui')
+        assert provision_request.is_succeeded(
+            method="ui"
+        ), f"Provisioning failed: {provision_request.row.last_message.text}"

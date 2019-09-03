@@ -418,22 +418,6 @@ def test_automate_user_has_groups():
 
 
 @pytest.mark.tier(3)
-def test_automate_quota_units():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: low
-        initialEstimate: 1/4h
-        tags: automate
-
-    Bugzilla:
-        1334318
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_restrict_domain_crud():
     """
     When you create a role that can only view automate domains, it can
