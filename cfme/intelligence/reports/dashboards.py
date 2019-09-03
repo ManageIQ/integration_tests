@@ -75,13 +75,7 @@ class EditDashboardView(DashboardFormCommon):
         return (
             self.in_intel_reports and
             self.title.text == 'Editing Dashboard "{}"'.format(self.context["object"].name) and
-            self.dashboards.is_opened and
-            self.dashboards.tree.currently_selected == [
-                "All Dashboards",
-                "All Groups",
-                self.context["object"].group,
-                self.context["object"].name
-            ]
+            self.dashboards.is_opened and self.correct_tree_item_selected()
         )
 
 
@@ -122,13 +116,7 @@ class DashboardDetailsView(CloudIntelReportsView):
                 self.context["object"].title,
                 self.context["object"].name
             ) and
-            self.dashboards.is_opened and
-            self.dashboards.tree.currently_selected == [
-                "All Dashboards",
-                "All Groups",
-                self.context["object"].group,
-                self.context["object"].name
-            ]
+            self.dashboards.is_opened and self.correct_tree_item_selected()
         )
 
 
