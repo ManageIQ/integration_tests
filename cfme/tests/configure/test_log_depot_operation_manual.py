@@ -140,38 +140,6 @@ def test_log_multiple_servers_unconfigured():
     pass
 
 
-@pytest.mark.tier(1)
-def test_log_collect_all_zone_unconfigured():
-    """
-    check collect all logs under zone when both levels are unconfigured.
-    Expected result - all buttons are disabled
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_log_collect_current_zone_all_unconfigured():
-    """
-    check collect logs under zone when both levels are unconfigured.
-    Expected result - all buttons are disabled
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/2h
-    """
-    pass
-
-
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_log_collection_via_ftp_over_ipv6():
