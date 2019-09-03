@@ -604,6 +604,7 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, 
     assigned to power on event, VM is powered on and it waits for all snapshots to disappear.
 
     Bugzilla:
+        1549529
         1745065
 
     Metadata:
