@@ -250,7 +250,7 @@ def test_quick_search_without_vm_filter(appliance, request, vms, subset_of_vms):
     view.flash.assert_no_error()
     vm = sample(subset_of_vms, 1)[0]
     # Make sure that we empty the regular view.entities.search field after the test
-    request.addfinalizer(view.entities.search.clear_simple_search())
+    request.addfinalizer(view.entities.search.clear_simple_search)
     # Filter this host only
     view.entities.search.simple_search(vm)
     view.flash.assert_no_error()
