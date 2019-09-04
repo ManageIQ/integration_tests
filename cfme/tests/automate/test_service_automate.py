@@ -154,13 +154,10 @@ def setup_dynamic_dialog(appliance, custom_instance):
     instance = custom_instance(ruby_code=code)
 
     # Create dynamic dialog
-    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
-    ele_name = "ele_{}".format(fauxfactory.gen_alphanumeric())
-
     element_data = {
         "element_information": {
-            "ele_label": "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            "ele_name": ele_name,
+            "ele_label": fauxfactory.gen_alphanumeric(start="ele_"),
+            "ele_name": fauxfactory.gen_alphanumeric(start="ele_"),
             "ele_desc": fauxfactory.gen_alphanumeric(),
             "dynamic_chkbox": True,
             "choose_type": "Text Box",
@@ -169,13 +166,13 @@ def setup_dynamic_dialog(appliance, custom_instance):
     }
 
     service_dialog = appliance.collections.service_dialogs.create(
-        label=dialog, description="my dialog"
+        label=fauxfactory.gen_alphanumeric(start="dialog_"), description="my dialog"
     )
     tab = service_dialog.tabs.create(
-        tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()), tab_desc="my tab desc"
+        tab_label=fauxfactory.gen_alphanumeric(start="tab_"), tab_desc="my tab desc"
     )
     box = tab.boxes.create(
-        box_label="box_{}".format(fauxfactory.gen_alphanumeric()), box_desc="my box desc"
+        box_label=fauxfactory.gen_alphanumeric(start="box_"), box_desc="my box desc"
     )
     box.elements.create(element_data=[element_data])
 
