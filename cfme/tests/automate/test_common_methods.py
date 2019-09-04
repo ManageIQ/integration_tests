@@ -13,6 +13,7 @@ from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
@@ -259,24 +260,22 @@ def test_service_retirement_from_automate_method(request, generic_catalog_item, 
 def set_root_tenant_quota(request, appliance):
     field, value = request.param
     root_tenant = appliance.collections.tenants.get_root_tenant()
-    root_tenant.set_quota(**{'{}_cb'.format(field): True, field: value})
+    view = navigate_to(root_tenant, "ManageQuotas")
+    reset_data = view.form.read()
+    root_tenant.set_quota(**{f'{field}_cb': True, field: value})
     yield
-    root_tenant.set_quota(**{'{}_cb'.format(field): False})
+    root_tenant.set_quota(**reset_data)
 
 
 @pytest.mark.tier(3)
-@pytest.mark.usefixtures("setup_provider")
 @pytest.mark.meta(automates=[1334318])
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider], override=True, selector=ONE_PER_TYPE)
 @pytest.mark.parametrize(
-    ['set_root_tenant_quota'],
-    [
-        [('memory', '1000')],
-    ],
-    indirect=['set_root_tenant_quota'],
-    ids=['memory']
+    "set_root_tenant_quota", [("memory", "1000")], indirect=["set_root_tenant_quota"],
+    ids=["memory"]
 )
-def test_automate_quota_units(request, set_root_tenant_quota, provisioning, provider, appliance):
+def test_automate_quota_units(setup_provider, provider, request, appliance, set_root_tenant_quota,
+                              provisioning):
     """
     Bugzilla:
         1334318
@@ -308,7 +307,7 @@ def test_automate_quota_units(request, set_root_tenant_quota, provisioning, prov
 
     with LogValidator(
             "/var/www/miq/vmdb/log/automation.log",
-            matched_patterns=[f'.*Getting Tenant Quota Values for:.*.memory=>1073741824000.*'],
+            matched_patterns=['.*Getting Tenant Quota Values for:.*.memory=>1073741824000.*'],
     ).waiting(timeout=120):
         # Provisioning VM via lifecycle
         do_vm_provisioning(appliance, template_name=provisioning["template"], provider=provider,
