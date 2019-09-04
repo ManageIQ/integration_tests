@@ -6,6 +6,7 @@ from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import ClickableMixin
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Select
@@ -231,6 +232,7 @@ class PlaybookInputParameters(View):
 
 
 class MethodAddView(AutomateExplorerView):
+    fill_strategy = WaitFillViewStrategy()
     title = Text('#explorer_title_text')
 
     location = BootstrapSelect('cls_method_location', can_hide_on_select=True)
@@ -318,12 +320,14 @@ class MethodEditView(AutomateExplorerView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
-            self.datastore.is_opened and
-            'Editing Automate Method "{}"'.format(self.context['object'].name) in self.title.text
-            and (BZ(1704439).blocks or check_tree_path(
+            self.in_explorer
+            and self.datastore.is_opened
+            and (f'Editing Automate Method "{self.context["object"].name}"' in self.title.text)
+            and check_tree_path(
                 self.datastore.tree.currently_selected,
-                self.context['object'].tree_path, partial=True))
+                self.context["object"].tree_path,
+                partial=True,
+            )
         )
 
 
@@ -407,10 +411,6 @@ class Method(BaseEntity, Copiable):
 
     def update(self, updates):
 
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
-
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -432,10 +432,6 @@ class Method(BaseEntity, Copiable):
             result_view.flash.assert_no_error()
             result_view.flash.assert_message(
                 'Automate Method "{}": Delete successful'.format(self.name))
-
-            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
-                self.browser.refresh()
 
 
 @attr.s
@@ -460,7 +456,6 @@ class MethodCollection(BaseCollection):
 
         add_page.fill({'location': location})
         if location.lower() == 'inline':
-            add_page.wait_displayed()
             add_page.fill({
                 'inline_name': name,
                 'inline_display_name': display_name,
