@@ -360,15 +360,17 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
     def copy(self, name=None):
         view = navigate_to(self, 'Copy')
 
+        # there is default name like `Copy of *`
         if name:
             view.name.fill(name)
 
+        copied_name = view.name.value
         view.add.click()
         view.flash.assert_no_error()
 
         # Catalog item can be any type
         item_args = self.__dict__
-        item_args["name"] = view.name.value
+        item_args["name"] = copied_name
         return self.__class__(**item_args)
 
     def add_button_group(self, **kwargs):
