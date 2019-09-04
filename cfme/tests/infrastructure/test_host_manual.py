@@ -507,7 +507,7 @@ def test_host_removal():
     Polarion:
         assignee: prichard
         casecomponent: Infra
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/4h
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
@@ -533,7 +533,7 @@ def test_host_refresh():
     Polarion:
         assignee: prichard
         casecomponent: Infra
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/4h
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
@@ -627,7 +627,7 @@ def test_host_viewing():
     Polarion:
         assignee: prichard
         casecomponent: Infra
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/4h
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
@@ -653,7 +653,7 @@ def test_host_tagging():
     Polarion:
         assignee: prichard
         casecomponent: Infra
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/4h
         testSteps:
             1. Navigate to the Compute > Infrastructure > Hosts view.
