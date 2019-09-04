@@ -1,22 +1,27 @@
 import attr
 from navmazing import NavigateToAttribute
+from navmazing import NavigateToSibling
 
 from cfme.exceptions import OptionNotAvailable
 from cfme.generic_objects.definition.definition_views import GenericObjectActionsDetailsView
 from cfme.generic_objects.definition.definition_views import GenericObjectAddButtonView
+from cfme.generic_objects.definition.definition_views import GenericObjectButtonDetailsView
 from cfme.generic_objects.definition.definition_views import GenericObjectButtonGroupAddView
 from cfme.generic_objects.definition.definition_views import GenericObjectButtonGroupDetailsView
+from cfme.generic_objects.definition.definition_views import GenericObjectButtonGroupEditView
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionAllView
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
+from cfme.generic_objects.definition.definition_views import GenericObjectEditButtonView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.update import Updateable
 
 
 @attr.s
-class GenericObjectButton(BaseEntity):
+class GenericObjectButton(BaseEntity, Updateable):
 
     name = attr.ib()
     description = attr.ib()
@@ -42,6 +47,17 @@ class GenericObjectButton(BaseEntity):
         view.configuration.item_select('Remove this Button from Inventory', handle_alert=not cancel)
         view = self.create_view(GenericObjectDefinitionAllView)
         assert view.is_displayed
+        view.flash.assert_no_error()
+
+    def update(self, updates):
+        """Update this button in UI.
+
+        Args:
+            updates: Provided by update() context manager.
+        """
+        view = navigate_to(self, "Edit")
+        view.fill_with(updates, on_change=view.save, no_change=view.cancel)
+
         view.flash.assert_no_error()
 
 
@@ -149,16 +165,28 @@ class ButtonAll(CFMENavigateStep):
 
 @navigator.register(GenericObjectButton, 'Details')
 class ButtonDetails(CFMENavigateStep):
-    VIEW = GenericObjectAddButtonView
+    VIEW = GenericObjectButtonDetailsView
 
-    prerequisite = NavigateToAttribute('parent', 'Details')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.configuration.item_select('Add a new Button')
+        path = self.prerequisite_view.accordion.classes.tree.read()
+        path.append(self.obj.name)
+        self.prerequisite_view.accordion.classes.tree.fill(path)
+
+
+@navigator.register(GenericObjectButton, "Edit")
+class ButtonEdit(CFMENavigateStep):
+    VIEW = GenericObjectEditButtonView
+
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select("Edit this Button")
 
 
 @attr.s
-class GenericObjectButtonGroup(BaseEntity):
+class GenericObjectButtonGroup(BaseEntity, Updateable):
 
     name = attr.ib()
     description = attr.ib()
@@ -174,14 +202,25 @@ class GenericObjectButtonGroup(BaseEntity):
         """
         view = navigate_to(self, 'Details')
 
-        if not view.toolbar.configuration.item_enabled('Remove this Button Group from Inventory'):
+        if not view.configuration.item_enabled('Remove this Button Group from Inventory'):
             raise OptionNotAvailable(
                 "Remove this Button Group is not enabled, there are buttons assigned to this group")
         else:
             view.configuration.item_select(
-                'Remove this Button Group from Inventory', handle_alert=not cancel)
-        view = self.create_view(GenericObjectDefinitionAllView)
-        assert view.is_displayed
+                'Remove this Button Group from Inventory', handle_alert=not cancel
+            )
+        view = self.create_view(GenericObjectDefinitionAllView, wait=10)
+        view.flash.assert_no_error()
+
+    def update(self, updates):
+        """Update this button in UI.
+
+        Args:
+            updates: Provided by update() context manager.
+        """
+        view = navigate_to(self, "Edit")
+        view.fill_with(updates, on_change=view.save, no_change=view.cancel)
+
         view.flash.assert_no_error()
 
 
@@ -214,8 +253,7 @@ class GenericObjectButtonGroupsCollection(BaseCollection):
             view.cancel.click()
         else:
             view.add.click()
-        view = self.parent.create_view(GenericObjectDefinitionDetailsView)
-        assert view.is_displayed
+        view = self.parent.create_view(GenericObjectDefinitionDetailsView, wait=10)
         view.flash.assert_no_error()
         group = self.instantiate(name=name, description=description, image=image, display=display)
         return group
@@ -267,3 +305,13 @@ class ButtonGroupDetails(CFMENavigateStep):
         self.prerequisite_view.accordion.classes.tree.click_path(
             'All Generic Object Classes', self.obj.parent.parent.name, 'Actions',
             '{} (Group)'.format(self.obj.name))
+
+
+@navigator.register(GenericObjectButtonGroup, "Edit")
+class ButtonGroupEdit(CFMENavigateStep):
+    VIEW = GenericObjectButtonGroupEditView
+
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select("Edit this Button Group")

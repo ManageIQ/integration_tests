@@ -231,7 +231,7 @@ class GenericObjectEditButtonView(GenericObjectAddEditButtonView):
     @property
     def is_displayed(self):
         return (
-            self.title.text == "Edit Custom Button '{}'".format(self.context['object'].name) and
+            self.title.text == f"Edit Custom Button '{self.context['object'].name}'" and
             self.in_generic_object_definition and
             self.button_type.is_displayed
         )
@@ -277,11 +277,34 @@ class GenericObjectButtonGroupAddView(GenericObjectDefinitionView):
             self.browser.element('//body').click()
 
 
-class GenericObjectButtonGroupDetailsView(GenericObjectDefinitionView):
+class GenericObjectButtonGroupEditView(GenericObjectButtonGroupAddView):
+    save = Button('Save')
+    reset = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == f"Edit Custom Button Group '{self.context['object'].name}'" and
+            self.in_generic_object_definition
+        )
+
+
+class GenericObjectButtonDetailsView(GenericObjectDefinitionView):
     title = Text('#explorer_title_text')
     configuration = Dropdown(text='Configuration')
     basic_information = SummaryForm('Basic Information')
     accordion = View.nested(AccordionForm)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.basic_information.is_displayed and
+            self.in_generic_object_definition and
+            self.title.text == f"Custom Button {self.context['object'].name}"
+        )
+
+
+class GenericObjectButtonGroupDetailsView(GenericObjectButtonDetailsView):
     button_table = Table('//h3[contains(text(), "Buttons")]/following-sibling::table')
 
     @property
