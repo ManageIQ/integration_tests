@@ -473,6 +473,7 @@ def test_cloud_provision_from_template_with_attached_disks(
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.meta(blockers=[BZ(1746931)])
 @pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
                       override=True)
 def test_provision_with_boot_volume(request, instance_args, provider, soft_assert,
@@ -543,6 +544,7 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.meta(blockers=[BZ(1746931)])
 @pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
                       override=True)
 def test_provision_with_additional_volume(request, instance_args, provider, small_template,
