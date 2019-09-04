@@ -303,6 +303,9 @@ def test_collect_unconfigured(appliance):
     server_log_depot.clear()
     # check button is disable after removing log depot
     assert not view.toolbar.collect.is_displayed
+    # check it's also disabled on zone level
+    view_zone = navigate_to(appliance.server.zone.collect_logs, 'DiagnosticsCollectLogs')
+    assert not view_zone.toolbar.collect.is_displayed
 
 
 @pytest.mark.parametrize('from_slave', [True, False], ids=['from_slave', 'from_master'])
