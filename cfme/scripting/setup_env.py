@@ -261,18 +261,36 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
     remote_apps = apps[1:]
 
     print("Global Appliance Configuration")
-    command_set0 = ('ap', '', '7', '1', '1', '2', 'n', '99', pwd, TimedCommand(pwd, 360), '')
-    global_app.appliance_console.run_commands(command_set0)
+    app_creds = {
+        "username": credentials["database"]["username"],
+        "password": credentials["database"]["password"],
+        "sshlogin": credentials["ssh"]["username"],
+        "sshpass": credentials["ssh"]["password"],
+    }
+
+    app_params = dict(region=99, dbhostname='localhost', username=app_creds['username'],
+                      password=app_creds['password'], dbname='vmdb_production',
+                      dbdisk=global_app.unpartitioned_disks[0])
+    global_app.appliance_console_cli.configure_appliance_internal(**app_params)
     global_app.evmserverd.wait_for_running()
     global_app.wait_for_web_ui()
+
     print("Done: Global @ {}".format(gip))
 
     for num, app in enumerate(remote_apps):
-        region_n = str(num + 1 * 10)
+        region_n = str((num + 1) * 10)
         print("Remote Appliance Configuration")
-        command_set1 = ('ap', '', '7', '2', gip, '', pwd, '', '1', '2', 'n', region_n, pwd,
-                        TimedCommand(pwd, 360), '')
-        app.appliance_console.run_commands(command_set1)
+        app_params = dict(region=region_n,
+                          dbhostname='localhost',
+                          username=app_creds['username'],
+                          password=app_creds['password'],
+                          dbname='vmdb_production',
+                          dbdisk=app.unpartitioned_disks[0],
+                          fetch_key=gip,
+                          sshlogin=app_creds['sshlogin'],
+                          sshpass=app_creds['sshpass'])
+
+        app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
         app.evmserverd.wait_for_running()
         app.wait_for_web_ui()
         print("Done: Remote @ {}, region: {}".format(app.hostname, region_n))
@@ -292,7 +310,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
             stack.push(app)
             prov = get_crud(prov_id)
             print("Adding provider {} to appliance {}".format(prov_id, app.hostname))
-            prov.create()
+            prov.create_rest()
             stack.pop()
 
     print("Done!")
