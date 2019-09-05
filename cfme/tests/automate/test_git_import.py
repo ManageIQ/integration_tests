@@ -352,3 +352,28 @@ def test_domain_import_git_rest(appliance, request):
         domain.delete_if_exists()
 
     assert automate_domain.exists
+
+
+@pytest.mark.tier(1)
+def test_automate_git_import_case_insensitive(request, appliance):
+    """
+    bin/rake evm:automate:import PREVIEW=false
+    GIT_URL=https://github.com/RedHatQE/ManageIQ-automate-git REF=TestBranch
+    This should not cause an error (the actual name of the branch is
+    TestBranch).
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/8h
+        tags: automate
+        startsin: 5.7
+    """
+    appliance.ssh_client.run_rake_command(
+        "evm:automate:import PREVIEW=false "
+        "GIT_URL=https://github.com/RedHatQE/ManageIQ-automate-git REF=TestBranch"
+    )
+    domain = appliance.collections.domains.instantiate(name="testdomain")
+    request.addfinalizer(domain.delete_if_exists)
+    assert domain.exists
