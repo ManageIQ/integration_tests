@@ -288,7 +288,7 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
     assert src_vm_obj.mac_address == migrated_vm.mac_address
 
 
-@pytest.mark.tier(4)
+@pytest.mark.tier(3)
 @pytest.mark.parametrize(
     "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", ubuntu16_template]], indirect=True)
 def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_single_datastore):
