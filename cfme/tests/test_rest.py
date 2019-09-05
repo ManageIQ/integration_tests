@@ -487,7 +487,7 @@ def test_datetime_filtering(appliance, provider):
     collection.reload()
     vms_num = len(collection)
     assert vms_num > 3
-    baseline_vm = collection[vms_num / 2]
+    baseline_vm = collection[vms_num // 2]
     baseline_datetime = baseline_vm._data['created_on']  # YYYY-MM-DDTHH:MM:SSZ
 
     def _get_filtered_resources(operator):
@@ -527,7 +527,7 @@ def test_date_filtering(appliance, provider):
     collection.reload()
     vms_num = len(collection)
     assert vms_num > 3
-    baseline_vm = collection[vms_num / 2]
+    baseline_vm = collection[vms_num // 2]
     baseline_date, _ = baseline_vm._data['created_on'].split('T')  # YYYY-MM-DD
 
     def _get_filtered_resources(operator):
