@@ -652,6 +652,7 @@ def test_control_breadcrumbs(appliance, page):
         initialEstimate: 1/30h
         startsin: 5.11
     """
+    # To properly test BZ 1740290, we must first navigate to ControlExplorer page
     view = navigate_to(appliance.server, "ControlExplorer")
     assert view.breadcrumb.locations == BREADCRUMB_LOCATIONS["ControlExplorer"]
     assert view.breadcrumb.is_displayed
