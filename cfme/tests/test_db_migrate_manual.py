@@ -288,19 +288,23 @@ def test_update_webui_custom_css():
         1553841
 
     Test css customization"s function correctly after webui update.
+    Old bugzilla, css customisation is not possible to be done in production,
+    but custom.css file can be changed
 
     Polarion:
         assignee: jhenner
         casecomponent: Appliance
         caseimportance: medium
-        initialEstimate: 1/6h
-        setup: provision appliance
-               add custom css file
-               add repo file to /etc/yum.repos.d/
-               add RHSM settings
-               update through webui
-               check webui is available
-               check customization"s still work
+        initialEstimate: 1/15h
+
+        setup:  1. provision appliance
+                2. ssh to the appliance
+                3. change custom CSS file - you can run command:
+        vmdb && cd public &&\
+        wget 'https://image.spreadshirtmedia.com/image-server/v1/designs/m11541836-6,width=100.png'\
+        && echo "html {cursor: url('m11541836-6,width=100.png'), pointer;}" >> custom.css
+                4. open webui and check css changed you made (different cursor)
+
         startsin: 5.9
     """
     pass
