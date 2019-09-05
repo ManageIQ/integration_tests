@@ -54,6 +54,7 @@ from cfme.utils.path import data_path
 from cfme.utils.path import patches_path
 from cfme.utils.path import scripts_path
 from cfme.utils.ssh import SSHTail
+from cfme.utils.ssh_expect import SSHExpect
 from cfme.utils.version import get_stream
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
@@ -153,8 +154,11 @@ class ApplianceConsole(object):
         2. '' clears info screen,
         3. '14' Hardens appliance using SCAP configuration,
         4. '' complete."""
-        command_set = ('ap', '', '13', '')
-        self.appliance.appliance_console.run_commands(command_set)
+        with SSHExpect(self.appliance) as interaction:
+            interaction.send('ap')
+            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Choose the advanced setting: ', '15')
+            interaction.answer('Press any key to continue.', '', timeout=20)
 
     def scap_check_rules(self):
         """Check that rules have been applied correctly."""
