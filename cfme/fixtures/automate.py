@@ -5,6 +5,7 @@ import pytest
 
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
+from cfme.utils.update import update
 
 
 @pytest.fixture(scope='module')
@@ -100,7 +101,8 @@ def import_datastore(appliance, import_data):
         import_type="file", file_path=file_path
     )
     domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
-
+    assert domain.exists
+    with update(domain):
+        domain.enabled = True
     yield domain
-
     domain.delete_if_exists()

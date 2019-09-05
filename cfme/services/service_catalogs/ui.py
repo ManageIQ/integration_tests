@@ -88,7 +88,6 @@ class OrderServiceCatalogView(OrderForm):
         return (
             self.in_service_catalogs and
             self.service_catalogs.is_opened and
-            'Service "{}"'.format(self.context['object'].name) in self.title.text and
             self.submit_button.is_displayed
         )
 

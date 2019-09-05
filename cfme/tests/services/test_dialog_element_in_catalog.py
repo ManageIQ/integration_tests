@@ -228,34 +228,6 @@ def test_dynamic_field_on_refresh_button():
     pass
 
 
-@pytest.mark.meta(coverage=[1705021])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_refresh_of_dynamic_field_contains_word_password():
-    """
-
-    Bugzilla:
-        1705021
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testSteps:
-            1. Import Datastore and dialog
-            2. Add service catalog with above created dialog
-            3. Navigate to order page of service
-            4. In service Order page
-        expectedResults:
-            1.
-            2.
-            3.
-            4. It does work well without the 'password' name
-    """
-    pass
-
-
 @pytest.mark.meta(coverage=[1702343])
 @pytest.mark.manual
 @pytest.mark.tier(2)
