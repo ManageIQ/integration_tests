@@ -67,8 +67,11 @@ class ApplianceConsole(AppliancePlugin):
         2. '' clears info screen,
         3. '14' Hardens appliance using SCAP configuration,
         4. '' complete."""
-        command_set = ('ap', '', '13', '')
-        self.appliance.appliance_console.run_commands(command_set)
+        with SSHExpect(self.appliance) as interaction:
+            interaction.send('ap')
+            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Choose the advanced setting: ', '15')
+            interaction.answer('Press any key to continue.', '', timeout=20)
 
     def scap_check_rules(self):
         """Check that rules have been applied correctly."""
