@@ -21,6 +21,7 @@ def _get_associations_dict(appliance, associations, definition):
     return assoc_dict
 
 
+# collection methods
 @MiqImplementationContext.external_for(GenericObjectInstanceCollection.create, ViaREST)
 def create(self, name, definition, attributes=None, associations=None):
     definition_rest = self.appliance.rest_api.collections.generic_object_definitions.get(
@@ -44,6 +45,29 @@ def create(self, name, definition, attributes=None, associations=None):
     return entity
 
 
+@MiqImplementationContext.external_for(GenericObjectInstanceCollection.all, ViaREST)
+def all(self):
+    generic_objects = []
+    for rest_generic_object in self.appliance.rest_api.collections.generic_objects.all:
+        # get the generic_object_definition
+        rest_generic_definition = (
+            self.appliance.rest_api.collections.generic_object_definitions.find_by(
+                id=rest_generic_object.generic_object_definition_id
+            )[0]
+        )
+        generic_definition = self.appliance.collections.generic_object_definitions.instantiate(
+            name=rest_generic_definition.name,
+            description=rest_generic_definition.description
+        )
+        # instantiate the generic_object
+        generic_objects.append(self.instantiate(
+            name=rest_generic_object.name,
+            definition=generic_definition
+        ))
+    return generic_objects
+
+
+# entity methods
 @MiqImplementationContext.external_for(GenericObjectInstance.update, ViaREST)
 def update(self, updates):
     instance = self.appliance.rest_api.collections.generic_objects.find_by(

@@ -36,6 +36,7 @@ class GenericObjectInstanceCollection(BaseCollection, sentaku.modeling.ElementMi
     ENTITY = GenericObjectInstance
 
     create = sentaku.ContextualMethod()
+    all = sentaku.ContextualMethod()
 
 
 from cfme.generic_objects.instance import rest, ui  # NOQA last for import cycles
