@@ -80,7 +80,7 @@ def test_tag_container_objects(test_param, appliance, provider, tag, tag_place):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -102,7 +102,7 @@ def test_tag_container_objects_dashboard_view(test_param, appliance, provider, t
        Polarion:
            assignee: juwatts
            casecomponent: Containers
-           caseimportance: medium
+           caseimportance: high
            initialEstimate: 1/6h
        """
 

@@ -155,7 +155,7 @@ def test_cve_location_update_value(provider, soft_assert, delete_all_container_t
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -175,7 +175,7 @@ def test_image_inspector_registry_update_value(provider, soft_assert, delete_all
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

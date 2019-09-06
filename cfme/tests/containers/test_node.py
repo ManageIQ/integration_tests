@@ -22,7 +22,7 @@ def test_nodes_navigate(soft_assert, appliance):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

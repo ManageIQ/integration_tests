@@ -31,7 +31,7 @@ def test_edit_selected_containers_provider(provider):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -56,7 +56,7 @@ def test_ocp_operator_out_of_the_box(appliance):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -91,7 +91,7 @@ def test_pause_and_resume_provider(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

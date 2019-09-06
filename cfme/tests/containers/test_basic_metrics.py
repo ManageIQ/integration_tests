@@ -68,7 +68,7 @@ def test_basic_metrics(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -92,7 +92,7 @@ def test_validate_metrics_collection_db(provider,
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -108,7 +108,7 @@ def test_validate_metrics_collection_provider_gui(appliance, provider,
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -129,7 +129,7 @@ def test_flash_msg_not_contains_html_tags(provider):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -157,7 +157,7 @@ def test_typo_in_metrics_endpoint_type(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

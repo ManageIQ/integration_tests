@@ -33,7 +33,7 @@ def test_datawarehouse_invisible(is_datawarehouse_menu_visible):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/4h
     """

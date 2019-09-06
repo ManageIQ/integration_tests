@@ -138,7 +138,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
 
         Polarion:
             assignee: juwatts
-            caseimportance: medium
+            caseimportance: high
             casecomponent: Containers
             initialEstimate: 1/6h
     """

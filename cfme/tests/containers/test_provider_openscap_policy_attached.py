@@ -68,7 +68,7 @@ def test_check_compliance_provider_policy(provider, soft_assert, delete_all_cont
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

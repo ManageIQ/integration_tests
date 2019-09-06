@@ -82,7 +82,7 @@ def test_projects_dashboard_pods(provider, soft_assert, container_project_instan
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -107,7 +107,7 @@ def test_projects_dashboard_icons(provider, appliance, soft_assert, container_pr
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -137,7 +137,7 @@ def test_project_has_provider(appliance, soft_assert, provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
