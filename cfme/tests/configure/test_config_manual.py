@@ -68,7 +68,7 @@ def test_replication_subscription_crud():
     Polarion:
         assignee: izapolsk
         casecomponent: Configuration
-        caseimportance: medium
+        caseimportance: critical
         initialEstimate: 1/4h
         testSteps:
             1. Set up two appliances where first appliance resides in global region (99) and
@@ -105,6 +105,7 @@ def test_add_duplicate_subscription():
         assignee: izapolsk
         casecomponent: Configuration
         caseimportance: low
+        caseposneg: negative
         initialEstimate: 1/6h
         testSteps:
             1. Set up two appliances where first appliance resides in global region (99) and
@@ -138,6 +139,7 @@ def test_add_bad_subscription():
     Polarion:
         assignee: izapolsk
         casecomponent: Configuration
+        caseposneg: negative
         caseimportance: low
         initialEstimate: 1/4h
         testSteps:
@@ -168,6 +170,7 @@ def test_edit_bad_subscription():
     Polarion:
         assignee: izapolsk
         casecomponent: Configuration
+        caseposneg: negative
         caseimportance: low
         initialEstimate: 1/4h
         testSteps:
@@ -270,7 +273,8 @@ def test_subscription_disruption():
     Polarion:
         assignee: izapolsk
         casecomponent: Configuration
-        caseimportance: low
+        caseposneg: negative
+        caseimportance: medium
         initialEstimate: 1/4h
         testSteps:
             1. Set up two appliances where first appliance resides in global region (99) and
@@ -313,7 +317,7 @@ def test_subscription_region_unavailable():
     Polarion:
         assignee: izapolsk
         casecomponent: Configuration
-        caseimportance: medium
+        caseimportance: high
         initialEstimate: 1/4h
         testSteps:
             1. Set up two appliances where first appliance resides in global region (99) and
