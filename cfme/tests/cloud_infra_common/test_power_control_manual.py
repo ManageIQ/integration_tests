@@ -243,7 +243,7 @@ def test_power_operations_from_global_region(provider, context):
     Polarion:
         assignee: izapolsk
         initialEstimate: 1/2h
-        caseimportance: medium
+        caseimportance: high
         caseposneg: positive
         testtype: functional
         startsin: 5.6

@@ -217,7 +217,7 @@ def test_reports_in_global_region(context, report):
     Polarion:
         assignee: izapolsk
         casecomponent: Reporting
-        caseimportance: medium
+        caseimportance: critical
         initialEstimate: 1/2h
         testSteps:
             1. Set up Multi-Region deployment with 2 remote region appliances

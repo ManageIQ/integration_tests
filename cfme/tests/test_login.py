@@ -254,7 +254,7 @@ def test_multiregion_displayed_on_login(context, setup_multi_region_cluster, mul
     Polarion:
         assignee: izapolsk
         initialEstimate: 1/10h
-        caseimportance: low
+        caseimportance: medium
         caseposneg: positive
         testtype: functional
         startsin: 5.11

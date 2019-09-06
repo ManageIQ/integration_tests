@@ -26,6 +26,7 @@ def test_vm_reconfigure_from_global_region(context):
 
     Polarion:
         assignee: izapolsk
+        caseimportance: medium
         casecomponent: Infra
         initialEstimate: 1/3h
         testSteps:
@@ -34,7 +35,6 @@ def test_vm_reconfigure_from_global_region(context):
             2. Reconfigure the VM using the Global appliance.
         expectedResults:
             1.
-            2.
-            3. VM reconfigured, no errors.
+            2. VM reconfigured, no errors.
     """
     pass

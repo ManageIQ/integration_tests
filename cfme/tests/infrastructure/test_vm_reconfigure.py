@@ -634,6 +634,7 @@ def test_vm_reconfigure_from_global_region(context):
 
     Polarion:
         assignee: izapolsk
+        caseimportance: medium
         casecomponent: Infra
         initialEstimate: 1/3h
         testSteps:
