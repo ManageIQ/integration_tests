@@ -3,7 +3,6 @@ import pytest
 from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
@@ -11,6 +10,10 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
+    pytest.mark.usefixtures("config_manager_obj_module_scope"),
+    pytest.mark.uncollectif(
+        lambda config_manager_obj_module_scope: "ansible" not in config_manager_obj_module_scope
+    ),
     pytest.mark.parametrize('workflow_type', ['multiple_job_workflow', 'inventory_sync_workflow'],
         ids=['multiple_job_workflow', 'inventory_sync_workflow'],
         scope='module'),
@@ -18,31 +21,13 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.config_managers(metafunc)
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-
-        if not args['config_manager_obj'].yaml_data['provisioning']:
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope='module')
-
-
 @pytest.fixture(scope="module")
-def tower_manager(config_manager_obj, appliance):
+def tower_manager(config_manager_obj_module_scope):
     """ Fixture that sets up Ansible Tower provider"""
-    config_manager_obj.appliance = appliance
-    if config_manager_obj.type == "Ansible Tower":
-        config_manager_obj.create(validate=True)
-    yield config_manager_obj
-    config_manager_obj.delete()
+    if config_manager_obj_module_scope.type == "Ansible Tower":
+        config_manager_obj_module_scope.create(validate=True)
+    yield config_manager_obj_module_scope
+    config_manager_obj_module_scope.delete()
 
 
 @pytest.fixture(scope="function")

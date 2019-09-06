@@ -5,33 +5,29 @@ from cfme import test_requirements
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.rest import query_resource_attributes
-from cfme.utils.testgen import config_managers
-from cfme.utils.testgen import generate
 from cfme.utils.wait import wait_for
 
 
-pytest_generate_tests = generate(
-    # config_managers generates list of managers from cfme_data
-    gen_func=config_managers,
-    # Filter the config manager types for Tower
-    managers_type='ansible',
-    scope='module'
-)
-pytestmark = [test_requirements.rest]
+pytestmark = [
+    test_requirements.rest,
+    pytest.mark.usefixtures('config_manager_obj_module_scope'),
+    pytest.mark.uncollectif(
+        lambda config_manager_obj_module_scope: "ansible" not in config_manager_obj_module_scope
+    )
+]
 
 
-@pytest.fixture(scope='module')
-def config_manager(config_manager_obj, appliance):
+@pytest.fixture(scope='class')
+def config_manager(config_manager_obj_class_scope):
     """Fixture that provides a random config manager and sets it up."""
-    config_manager_obj.appliance = appliance
-    if config_manager_obj.type != 'Ansible Tower':
+    if config_manager_obj_class_scope.type != 'Ansible Tower':
         pytest.skip('A non "Ansible Tower" configuration manager provider was selected for test,'
                     'Please verify cfme_data.yaml content.')
 
-    config_manager_obj.create(validate=True)  # actually add it to CFME
-    yield config_manager_obj
+    config_manager_obj_class_scope.create(validate=True)  # actually add it to CFME
+    yield config_manager_obj_class_scope
 
-    config_manager_obj.delete()
+    config_manager_obj_class_scope.delete()
 
 
 @pytest.fixture
@@ -233,7 +229,7 @@ class TestAuthenticationsRESTAPI(object):
         assert_response(appliance)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def config_manager_rest(config_manager_obj):
     """Creates provider using REST API."""
     config_manager_obj.create_rest()

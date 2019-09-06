@@ -3,7 +3,6 @@ import pytest
 from cfme import test_requirements
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
 from cfme.utils.log import logger
@@ -11,6 +10,10 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.service,
+    pytest.mark.usefixtures('config_manager_obj_module_scope'),
+    pytest.mark.uncollectif(
+        lambda config_manager_obj_module_scope: "ansible" not in config_manager_obj_module_scope
+    ),
     pytest.mark.tier(2),
     pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
         'textarea_survey'],
@@ -20,33 +23,24 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.config_managers(metafunc)
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(list(zip(argnames, argvalue_tuple)))
+@pytest.fixture
+def config_manager_obj(appliance, cfg_mgr_key):
+    collection = "satellite_providers"
+    if "ansible" in cfg_mgr_key:
+        collection = "ansible_tower_providers"
 
-        if not args['config_manager_obj'].yaml_data['provisioning']:
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope='module')
+    yield getattr(appliance.collections, collection).instantiate(key=cfg_mgr_key)
 
 
 @pytest.fixture(scope="module")
-def config_manager(config_manager_obj, appliance):
+def config_manager(config_manager_obj_module_scope):
     """ Fixture that provides a random config manager and sets it up"""
-    config_manager_obj.appliance = appliance
-    if config_manager_obj.type == "Ansible Tower":
-        config_manager_obj.create(validate=True)
+    if config_manager_obj_module_scope.type == "Ansible Tower":
+        config_manager_obj_module_scope.create(validate=True)
     else:
-        config_manager_obj.create()
-    yield config_manager_obj
-    config_manager_obj.delete()
+        config_manager_obj_module_scope.create()
+    yield config_manager_obj_module_scope
+    config_manager_obj_module_scope.delete()
 
 
 @pytest.fixture(scope="function")
