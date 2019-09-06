@@ -295,15 +295,17 @@ def test_update_webui_custom_css():
         assignee: jhenner
         casecomponent: Appliance
         caseimportance: medium
-        initialEstimate: 1/15h
+        initialEstimate: 1/6h
 
         setup:  1. provision appliance
                 2. ssh to the appliance
                 3. change custom CSS file - you can run command:
-        vmdb && cd public &&\
-        wget 'https://image.spreadshirtmedia.com/image-server/v1/designs/m11541836-6,width=100.png'\
-        && echo "html {cursor: url('m11541836-6,width=100.png'), pointer;}" >> custom.css
-                4. open webui and check css changed you made (different cursor)
+                    echo 'body {background-color: #FF00EF;}' >> /var/www/miq/vmdb/public/custom.css
+                4. add repo file to /etc/yum.repos.d/
+                5. add RHSM settings
+                6. update through webui
+                7. check webui is available
+                8. check customizations still work
 
         startsin: 5.9
     """
