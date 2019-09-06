@@ -2,7 +2,6 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Text
 from widgetastic.widget import View
-from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
@@ -82,16 +81,14 @@ class DetailsServiceCatalogView(ServicesCatalogsView):
 
 class OrderServiceCatalogView(OrderForm):
     title = Text('#explorer_title_text')
-    breadcrumb = BreadCrumb()
     submit_button = Button('Submit')
 
     @property
     def is_displayed(self):
-        title = '{service_catalog}'.format(service_catalog=self.context['object'].name)
         return (
             self.in_service_catalogs and
             self.service_catalogs.is_opened and
-            self.breadcrumb.active_location == title and
+            self.title.text == 'Service "{}"'.format(self.context['object'].name) and
             self.submit_button.is_displayed
         )
 

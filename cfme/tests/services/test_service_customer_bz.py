@@ -111,6 +111,7 @@ def test_refresh_dynamic_field(appliance, import_datastore, import_data,
     cat_item, ele_label = catalog_item_with_imported_dialog
     service_catalogs = ServiceCatalogs(appliance, cat_item.catalog, cat_item.name)
     view = navigate_to(service_catalogs, 'Order')
+    view.wait_displayed("5s")
     view.fields(ele_label).fill("Password")
     # If Refresh works submit button will enable
     wait_for(lambda: not view.submit_button.disabled, timeout=7)
