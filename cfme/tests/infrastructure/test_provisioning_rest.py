@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+from manageiq_client.filters import Q
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -286,3 +287,64 @@ def test_provision_attributes(appliance, provider, small_template, soft_assert):
     # workaround for BZ1437689 to make sure the vm is not provisioned
     provision_request.action.deny(reason='denied')
     query_resource_attributes(provision_request, soft_assert=soft_assert)
+
+
+@pytest.fixture
+def request_task(appliance, request, provider, provision_data):
+    # create a provision request by provisioning a VM
+    vm_name = provision_data["vm_fields"]["vm_name"]
+    request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
+    provision_request = appliance.rest_api.collections.provision_requests.action.create(
+        **provision_data
+    )[0]
+    assert_response(appliance)
+
+    # wait until the request is finished
+    wait_for(
+        lambda: provision_request.request_state == "finished",
+        fail_func=provision_request.reload,
+        num_sec=1800,
+        delay=20,
+    )
+
+    # Return the request_task related to the subject vm
+    return provision_request.request_tasks.filter(
+        Q("description", "=", f"Provision from *to*{vm_name}*")
+    ).resources[0]
+
+
+@pytest.mark.provider([VMwareProvider], override=True, scope="module")
+def test_edit_provider_request_task(appliance, request, provider, request_task):
+    """
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        initialEstimate: 1/4h
+        casecomponent: Rest
+        setup:
+            1. Create a provision request.
+        testSteps:
+            1. Edit the provision request task:
+                POST /api/provision_requests/:id/request_tasks/:request_task_id
+                {
+                "action" : "edit",
+                "resource" : {
+                    "options" : {
+                    "request_param_a" : "value_a",
+                    "request_param_b" : "value_b"
+                    }
+                }
+                }
+        expectedResults:
+            1. Task must be edited successfully.
+    """
+    # edit the request_task by adding new elements
+    request_task.action.edit(
+        options={"request_param_a": "value_a", "request_param_b": "value_b"}
+    )
+    assert_response(appliance)
+
+    # assert the presence of newly added elements
+    request_task.reload()
+    assert request_task.options["request_param_a"] == "value_a"
+    assert request_task.options["request_param_b"] == "value_b"
