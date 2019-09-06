@@ -289,35 +289,6 @@ def test_notification_show_notification_when_quota_is_exceed():
     pass
 
 
-@pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1644351])
-def test_quota_not_fails_after_vm_reconfigure_disk_remove():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/4h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.8
-        casecomponent: Infra
-        tags: quota
-        testSteps:
-            1. Add infra provider and Add disk(s) to a vm instance
-            2. Turn quota on
-            3. Try to remove the disk(s)
-        expectedResults:
-            1.
-            2.
-            3. Request should be successful and size of disk(s) should be included in quota
-               requested.
-
-     Bugzilla:
-        1644351
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1515979])
 def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
