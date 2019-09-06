@@ -75,6 +75,7 @@ def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[BZ(1705021)])
+@pytest.mark.customer_scenario
 @pytest.mark.parametrize(
     "import_data",
     [DatastoreImport("bz_1705021.zip", "bz_1705021", None)],
@@ -96,7 +97,6 @@ def test_refresh_dynamic_field(appliance, import_datastore, import_data,
     Polarion:
         assignee: nansari
         casecomponent: Services
-        customerscenario: true
         initialEstimate: 1/4h
         tags: service
     setup:
