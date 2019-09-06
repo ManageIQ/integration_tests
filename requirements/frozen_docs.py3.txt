@@ -130,6 +130,7 @@ docker-pycreds==0.4.0
 docutils==0.15.2
 dogpile.cache==0.7.1
 dump2polarion==0.44.0
+dynaconf[yaml]==2.1.0
 entrypoints==0.3
 fauxfactory==3.0.6
 flake8==3.7.7
