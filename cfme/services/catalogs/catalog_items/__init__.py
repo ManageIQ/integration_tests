@@ -248,6 +248,21 @@ class EditCatalogItemView(BasicInfoForm):
             wait_for(lambda: not self.save.disabled, timeout='10s', delay=0.2)
 
 
+class CopyCatalogItemView(ServicesCatalogView):
+    name = Input(name="name")
+
+    add = Button("Add")
+    cancel = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == f'Service Catalog Item "{self.context["object"].name}"'
+            and self.catalog_items.is_opened
+            and self.catalog_items.is_dimmed
+        )
+
+
 class TabbedEditCatalogItemView(ServicesCatalogView):
     fill_strategy = WaitFillViewStrategy()
     save = Button('Save')
@@ -341,6 +356,22 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         view.flash.assert_success_message(VersionPick(
             {LOWEST: 'The selected Catalog Item was deleted',
              '5.11': 'The catalog item "{}" has been successfully deleted'.format(self.name)}))
+
+    def copy(self, name=None):
+        view = navigate_to(self, 'Copy')
+
+        # there is default name like `Copy of *`
+        if name:
+            view.name.fill(name)
+
+        copied_name = view.name.value
+        view.add.click()
+        view.flash.assert_no_error()
+
+        # Catalog item can be any type
+        item_args = self.__dict__
+        item_args["name"] = copied_name
+        return self.__class__(**item_args)
 
     def add_button_group(self, **kwargs):
         button_name = kwargs.get("text", "gp_{}".format(fauxfactory.gen_alpha()))
@@ -693,6 +724,15 @@ class CatalogItemEditStep(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Item')
+
+
+@navigator.register(BaseCatalogItem, "Copy")
+class CatalogItemCopyStep(CFMENavigateStep):
+    VIEW = CopyCatalogItemView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select("Copy Selected Item")
 
 
 @navigator.register(BaseCatalogItem, 'AddButtonGroup')

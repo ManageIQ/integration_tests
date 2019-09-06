@@ -8,6 +8,7 @@ from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [pytest.mark.tier(2), test_requirements.custom_button]
@@ -121,3 +122,42 @@ def test_custom_button_unassigned_behavior_catalog_level(appliance, generic_serv
             view = navigate_to(service, "Details")
             button = Button(view, btn)
             assert button.is_displayed
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1740556], blockers=[BZ(1740556)])
+def test_catalog_item_copy_with_custom_buttons(request, generic_catalog_item):
+    """
+    Bugzilla:
+        1740556
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: positive
+        startsin: 5.11
+        casecomponent: CustomButton
+        tags: custom_button
+        testSteps:
+            1. Add catalog_item
+            2. Add custom button over catalog item
+            3. Copy catalog item
+            4. Check for button on copied catalog item
+    """
+    # add button on catalog item
+    btn_data = {
+        "text": gen_numeric_string(start="button_"),
+        "hover": gen_numeric_string(start="hover_"),
+        "image": "fa-user",
+    }
+
+    btn = generic_catalog_item.add_button(**btn_data)
+
+    # copy catalog item
+    new_cat_item = generic_catalog_item.copy()
+    request.addfinalizer(new_cat_item.delete_if_exists)
+
+    # check for catalog item and button on copied
+    assert new_cat_item.exists
+    assert new_cat_item.button_exists(btn)
