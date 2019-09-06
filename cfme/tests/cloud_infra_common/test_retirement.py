@@ -310,6 +310,7 @@ def test_vm_retirement_from_global_region(setup_multi_region_cluster,
 
     Polarion:
         assignee: izapolsk
+        caseimportance: high
         casecomponent: Provisioning
         initialEstimate: 1/3h
         testSteps:
@@ -340,6 +341,7 @@ def test_vm_retirement_from_global_region_via_rest():
 
     Polarion:
         assignee: izapolsk
+        caseimportance: medium
         casecomponent: Provisioning
         initialEstimate: 1/3h
         testSteps:

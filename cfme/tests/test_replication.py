@@ -107,22 +107,6 @@ def test_replication_re_add_deleted_remote():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_replication_central_admin_ansible_playbook_service_from_global():
-    """
-    Playbook service is ordered from the master region catalog.
-
-    Polarion:
-        assignee: izapolsk
-        casecomponent: Replication
-        subcomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/3h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_replication_remote_to_global_by_ip_pglogical():
     """

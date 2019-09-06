@@ -674,7 +674,7 @@ def test_provision_from_template_from_global_region(setup_multi_region_cluster,
     """
     Polarion:
         assignee: izapolsk
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Provisioning
         initialEstimate: 1/10h
     """
