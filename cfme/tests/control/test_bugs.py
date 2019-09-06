@@ -36,6 +36,14 @@ BAD_CONDITIONS = [
 ]
 
 
+BREADCRUMB_LOCATIONS = dict(
+    ControlExplorer=["Control", "Explorer", "Policy Profiles", "All Policy Profiles"],
+    ControlSimulation=["Control", "Simulation", "Policies"],
+    ControlImportExport=["Control", "Import / Export"],
+    ControlLog=["Control", "Log"]
+)
+
+
 def create_policy(request, collection):
     args = (VMControlPolicy, fauxfactory.gen_alpha())
     kwargs = {}
@@ -624,3 +632,30 @@ def test_policy_condition_multiple_ors(
             assert state == "Policy simulation successful."
         else:
             assert state == "Policy simulation failed with: false"
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1740290])
+@pytest.mark.parametrize("page", ["ControlSimulation", "ControlImportExport", "ControlLog"],
+                         ids=["Simulation", "ImportExport", "Log"])
+def test_control_breadcrumbs(appliance, page):
+    """
+    Test to make sure breadcrumbs are visible and properly displayed
+
+    Bugzilla:
+        1740290
+
+    Polarion:
+        assignee: jdupuy
+        caseimportance: high
+        casecomponent: Control
+        initialEstimate: 1/30h
+        startsin: 5.11
+    """
+    # To properly test BZ 1740290, we must first navigate to ControlExplorer page
+    view = navigate_to(appliance.server, "ControlExplorer")
+    assert view.breadcrumb.locations == BREADCRUMB_LOCATIONS["ControlExplorer"]
+    assert view.breadcrumb.is_displayed
+    view = navigate_to(appliance.server, page)
+    assert view.breadcrumb.is_displayed
+    assert view.breadcrumb.locations == BREADCRUMB_LOCATIONS[page]
