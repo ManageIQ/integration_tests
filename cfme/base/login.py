@@ -1,6 +1,7 @@
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Text
 from widgetastic.widget import View
+from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import FlashMessages
 from widgetastic_patternfly import NavDropdown
 from widgetastic_patternfly import VerticalNavigation
@@ -20,6 +21,7 @@ class BaseLoggedInPage(View):
     configuration_settings = Text('//li[.//a[@title="Configuration"]]')  # 5.11+
     settings = SettingsNavDropdown(id="dropdownMenu2")
     navigation = VerticalNavigation('#maintab')
+    breadcrumb = BreadCrumb()
 
     @property
     def is_displayed(self):
