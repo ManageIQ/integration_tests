@@ -61,7 +61,7 @@ def test_relationships_tables(soft_assert, provider, has_persistent_volume, appl
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -106,7 +106,7 @@ def test_container_status_relationships_data_integrity(provider, appliance, soft
     Polarion:
         assignee: juwatts
         initialEstimate: 1/4h
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
     """
 

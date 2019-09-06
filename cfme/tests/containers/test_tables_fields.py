@@ -76,7 +76,7 @@ def test_tables_fields(provider, test_item, soft_assert, appliance):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -107,7 +107,7 @@ def test_containers_details_view_title(appliance):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

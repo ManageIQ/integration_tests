@@ -48,7 +48,7 @@ def test_start_page(appliance, soft_assert):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

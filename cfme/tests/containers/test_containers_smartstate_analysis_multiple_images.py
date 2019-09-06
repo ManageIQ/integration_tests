@@ -64,7 +64,7 @@ def test_check_compliance_on_multiple_images(provider, random_image_instances, a
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -97,7 +97,7 @@ def test_containers_smartstate_analysis_multiple_images(provider, test_item,
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

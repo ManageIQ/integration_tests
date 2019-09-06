@@ -19,7 +19,7 @@ def test_reload_button_provider(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

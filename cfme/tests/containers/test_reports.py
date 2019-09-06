@@ -66,7 +66,7 @@ def test_container_reports_base_on_options(soft_assert, appliance):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -92,7 +92,7 @@ def test_report_pods_per_ready_status(appliance, soft_assert, provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -115,7 +115,7 @@ def test_report_nodes_by_capacity(appliance, soft_assert, node_hardwares_db_data
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -150,7 +150,7 @@ def test_report_nodes_by_cpu_usage(appliance, soft_assert, vporizer):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -171,7 +171,7 @@ def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -192,7 +192,7 @@ def test_report_number_of_nodes_per_cpu_cores(appliance, soft_assert, node_hardw
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -212,7 +212,7 @@ def test_report_projects_by_number_of_pods(appliance, soft_assert):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -238,7 +238,7 @@ def test_report_projects_by_cpu_usage(appliance, soft_assert, vporizer):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -259,7 +259,7 @@ def test_report_projects_by_memory_usage(appliance, soft_assert, vporizer):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -281,7 +281,7 @@ def test_report_pod_counts_for_container_images_by_project(appliance, provider, 
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -314,7 +314,7 @@ def test_report_recently_discovered_pods(appliance, provider, soft_assert):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -332,7 +332,7 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -358,7 +358,7 @@ def test_report_projects_by_number_of_containers(appliance, provider, soft_asser
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
