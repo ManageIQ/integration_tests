@@ -62,7 +62,7 @@ def test_manageiq_ansible_add_custom_attributes(appliance, ansible_custom_attrib
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -92,7 +92,7 @@ def test_manageiq_ansible_edit_custom_attributes(appliance, ansible_custom_attri
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -124,7 +124,7 @@ def test_manageiq_ansible_add_custom_attributes_same_name(appliance, ansible_cus
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -158,7 +158,7 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(appliance, ansible_cust
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -183,7 +183,7 @@ def test_manageiq_ansible_remove_custom_attributes(appliance, ansible_custom_att
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

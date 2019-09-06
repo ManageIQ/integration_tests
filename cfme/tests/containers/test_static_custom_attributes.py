@@ -60,7 +60,7 @@ def test_add_static_custom_attributes(add_delete_custom_attributes, provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -84,7 +84,7 @@ def test_edit_static_custom_attributes(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -113,7 +113,7 @@ def test_delete_static_custom_attributes(add_delete_custom_attributes, request, 
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -156,7 +156,7 @@ def test_add_attribute_with_empty_name(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -176,7 +176,7 @@ def test_add_date_attr_with_wrong_value(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -196,7 +196,7 @@ def test_edit_non_exist_attribute(provider):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -224,7 +224,7 @@ def test_delete_non_exist_attribute(provider):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -240,7 +240,7 @@ def test_add_already_exist_attribute(provider):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -260,7 +260,7 @@ def test_very_long_name_with_special_characters(request, provider):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -276,7 +276,7 @@ def test_very_long_value_with_special_characters(request, provider):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

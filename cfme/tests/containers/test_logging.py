@@ -78,7 +78,7 @@ def test_external_logging_activated(provider, appliance, test_item, kibana_loggi
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

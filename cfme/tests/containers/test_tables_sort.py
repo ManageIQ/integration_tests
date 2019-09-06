@@ -35,7 +35,7 @@ def test_tables_sort(test_item, soft_assert, appliance):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

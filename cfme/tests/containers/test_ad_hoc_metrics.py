@@ -47,7 +47,7 @@ def test_ad_hoc_metrics_overview(provider, metrics_up_and_running):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
@@ -60,7 +60,7 @@ def test_ad_hoc_metrics_select_filter(provider, metrics_up_and_running):
     """
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """

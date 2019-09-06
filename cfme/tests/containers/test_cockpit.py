@@ -26,7 +26,7 @@ def test_cockpit_button_access(appliance, provider, cockpit, request):
 
     Polarion:
         assignee: juwatts
-        caseimportance: medium
+        caseimportance: high
         casecomponent: Containers
         initialEstimate: 1/6h
     """
