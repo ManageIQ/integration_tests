@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from wait_for import wait_for
 
 from cfme import test_requirements
+from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
-
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
+    test_requirements.customer_stories,
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE,
@@ -67,3 +71,47 @@ def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
                                                               "ServiceProvision_Template/"
                                                               "CatalogItemInitialization")
     view.cancel_button.click()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[BZ(1705021)])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1705021.zip", "bz_1705021", None)],
+    ids=["sample_domain"],
+)
+# Parametrizing for import_dialog fixture
+@pytest.mark.parametrize("file_name", ["bz_1705021.yml"],
+    ids=["sample_dialog"],
+)
+def test_refresh_dynamic_field(appliance, import_datastore, import_data,
+                               catalog_item_with_imported_dialog):
+    """Tests refresh dynamic field when field name has 'password' in label.
+    Metadata:
+        test_flag: provision
+
+    Bugzilla:
+        1705021
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        tags: service
+    setup:
+        1. Import bz dialog
+        2. Import  bz datastore
+        3. Create catalog item
+    testSteps:
+        1. Order service catalog and refresh dynamic field
+    expectedResults:
+        1. Refreshing dynamic field should work and submit button should enable
+    """
+    cat_item, ele_label = catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, cat_item.catalog, cat_item.name)
+    view = navigate_to(service_catalogs, 'Order')
+    view.wait_displayed("5s")
+    view.fields(ele_label).fill("Password")
+    # If Refresh works submit button will enable
+    wait_for(lambda: not view.submit_button.disabled, timeout=7)

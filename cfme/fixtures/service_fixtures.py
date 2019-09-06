@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
+import yaml
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
+from cfme.automate.dialog_import_export import DialogImportExport
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -16,6 +18,8 @@ from cfme.rest.gen_data import service_templates_rest as _service_templates
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
@@ -225,3 +229,36 @@ def generic_service(appliance, generic_catalog_item):
         service.delete()
     if provision_request.exists:
         provision_request.remove_request(method="rest")
+
+
+@pytest.fixture()
+def import_dialog(appliance, file_name):
+    """This fixture will help to import dialog file."""
+
+    # Download dialog file from FTP server
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+    file_path = fs.download(file_name)
+
+    # Import dialog yml to appliance
+    import_export = DialogImportExport(appliance)
+    import_export.import_dialog(file_path)
+
+    # Read yml to get the field name
+    with open(file_path, "r") as stream:
+        dialog = yaml.load(stream, Loader=yaml.BaseLoader)
+        # It returns list of dicts
+        ele_label = dialog[0]['dialog_tabs'][0]['dialog_groups'][0]['dialog_fields'][0]['name']
+
+    # File name contains 'yml' , replacing it
+    sd = appliance.collections.service_dialogs.instantiate(label=file_name.replace(".yml", ""))
+    yield sd, ele_label
+    sd.delete_if_exists()
+
+
+@pytest.fixture(scope="function")
+def catalog_item_with_imported_dialog(appliance, provider, provisioning, import_dialog, catalog):
+    """Catalog Item with imported dialog"""
+    catalog_item = create_catalog_item(appliance, provider, provisioning, import_dialog[0], catalog)
+    yield catalog_item, import_dialog[1]
+    catalog_item.delete_if_exists()
+    catalog.delete_if_exists()
