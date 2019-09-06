@@ -21,6 +21,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
+from cfme.utils.update import Updateable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import UpDownSelect
 
@@ -106,7 +107,7 @@ class DomainEditView(DomainForm):
             self.title.text == 'Editing Automate Domain "{}"'.format(self.context['object'].name))
 
 
-class Domain(BaseEntity, Fillable):
+class Domain(BaseEntity, Fillable, Updateable):
     """A class representing one Domain in the UI."""
 
     def __init__(

@@ -67,7 +67,7 @@ class BaseOrderForm(View):
             for widget in (self.input, self.dropdown, self.param_input,
                            self.param_dropdown, self.select):
                 try:
-                    widget.wait_displayed('2s')
+                    widget.wait_displayed('15s')
                     return widget
                 except TimedOutError:
                     pass
