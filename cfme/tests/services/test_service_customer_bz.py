@@ -80,6 +80,7 @@ def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
     [DatastoreImport("bz_1705021.zip", "bz_1705021", None)],
     ids=["sample_domain"],
 )
+# Parametrizing for import_dialog fixture
 @pytest.mark.parametrize("file_name", ["bz_1705021.yml"],
     ids=["sample_dialog"],
 )
@@ -95,18 +96,17 @@ def test_refresh_dynamic_field(appliance, import_datastore, import_data,
     Polarion:
         assignee: nansari
         casecomponent: Services
+        customerscenario: true
         initialEstimate: 1/4h
         tags: service
-    testSteps:
+    setup:
         1. Import bz dialog
         2. Import  bz datastore
         3. Create catalog item
-        4. Order service catalog and refresh dynamic field
+    testSteps:
+        1. Order service catalog and refresh dynamic field
     expectedResults:
-        1. Imported dialog
-        2. Imported domain
-        3.
-        4. Refreshing dynamic field should work and submit button should enable
+        1. Refreshing dynamic field should work and submit button should enable
     """
     cat_item, ele_label = catalog_item_with_imported_dialog
     service_catalogs = ServiceCatalogs(appliance, cat_item.catalog, cat_item.name)
