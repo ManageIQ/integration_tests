@@ -10,6 +10,8 @@ from cfme.utils import conf
 from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -26,7 +28,7 @@ SIZES = {"KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4}
 def get_vhd_name(url, pattern="hyperv"):
     """ Given URL finds VHD file name """
     html = urlopen(url).read().decode("utf-8")
-    files = re.findall('href="(.*vhd)"', html)
+    files = re.findall('href="(.*vhd)"', html) or re.findall('href="(.*zip)"', html)
     image_name = None
     for name in files:
         if pattern in name:
@@ -59,12 +61,21 @@ def cfme_vhd(provider, appliance):
     if not image_name:
         pytest.skip("No hyperv vhd image at {}".format(url))
     # download the image to SCVMM library
-    provider.mgmt.download_file(url + image_name, image_name)
+    if appliance.version > "5.10":
+        unzip = True
+        cfme_vhd = image_name.replace(".zip", ".vhd")
+    else:
+        unzip = False
+        cfme_vhd = image_name
+    provider.mgmt.download_file(url + image_name, image_name, unzip=unzip)
     provider.mgmt.update_scvmm_library()
     # check to make sure that the file is in the library
-    assert image_name in provider.mgmt.list_vhds()
+    try:
+        wait_for(lambda: cfme_vhd in provider.mgmt.list_vhds(), delay=20, num_sec=180)
+    except TimedOutError:
+        pytest.fail("VHD was not downloaded properly in SCVMM library!")
 
-    yield image_name
+    yield cfme_vhd
 
 
 @pytest.fixture
@@ -129,6 +140,8 @@ def scvmm_appliance(provider, cfme_vhd):
         provider.key, version=version, template=template_name, vm_name_prefix='test-cfme'
     )
 
+    delete_zip = scvmm_appliance.version >= "5.11"
+
     yield scvmm_appliance
 
     # 1) delete VM
@@ -138,6 +151,8 @@ def scvmm_appliance(provider, cfme_vhd):
     template.delete()
     # 3) delete the VHD
     provider.mgmt.delete_vhd(cfme_vhd)
+    if delete_zip:
+        provider.mgmt.delete_app_package(cfme_vhd.replace(".vhd", ".zip"))
     provider.mgmt.update_scvmm_library()
 
 
