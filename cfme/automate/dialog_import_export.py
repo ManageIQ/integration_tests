@@ -71,7 +71,7 @@ class DialogImportExport(Updateable, NavigatableMixin):
 
 
 @navigator.register(DialogImportExport, "DialogImportExport")
-class DialogsImportExportPage(CFMENavigateStep):
+class DialogImportExportPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
     VIEW = DialogImportExportView
 
