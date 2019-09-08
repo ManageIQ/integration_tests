@@ -10,7 +10,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=['+embedded_ansible']),
-    pytest.mark.ignore_stream('upstream'),
+    pytest.mark.ignore_stream('upstream', "5.11"),
     test_requirements.rest,
 ]
 
@@ -72,6 +72,7 @@ class TestReposRESTAPI(object):
             casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
+            endsin: 5.10
         """
         new_description = "Test Repository {}".format(fauxfactory.gen_alphanumeric(5))
 
@@ -108,6 +109,7 @@ class TestReposRESTAPI(object):
             casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
+            endsin: 5.10
 
         Bugzilla:
             1477520
@@ -148,6 +150,7 @@ class TestPayloadsRESTAPI(object):
             casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
+            endsin: 5.10
         """
         collection = appliance.rest_api.collections.configuration_script_payloads
         collection.reload()
@@ -166,6 +169,7 @@ class TestPayloadsRESTAPI(object):
             casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
+            endsin: 5.10
         """
         script_payloads = appliance.rest_api.collections.configuration_script_payloads
         script_payloads.reload()
@@ -182,6 +186,7 @@ class TestPayloadsRESTAPI(object):
             casecomponent: Ansible
             caseimportance: medium
             initialEstimate: 1/4h
+            endsin: 5.10
         """
         script_sources = appliance.rest_api.collections.configuration_script_sources
         script_sources.reload()
