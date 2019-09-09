@@ -51,7 +51,6 @@ def test_automation_request_task():
         expectedResults:
             1.
             2. Task must be edited successfully.
-
     """
     pass
 

@@ -434,3 +434,49 @@ class TestAutomationRequestsCommonRESTAPI(object):
             assert status == 200
             for result in response['results']:
                 assert result['request_type'] == 'automation'
+
+
+@pytest.fixture
+def request_task(appliance, vm):
+    requests = appliance.rest_api.collections.automation_requests.action.create(
+        _automation_requests_data(vm)[0]
+    )
+    assert_response(appliance.rest_api)
+    wait_for_requests(requests)
+    return requests[0].request_tasks.all[0]
+
+
+def test_edit_automation_request_task(appliance, request_task):
+    """
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Create an automation request.
+        testSteps:
+            1. Edit the automation request task:
+                POST /api/automation_requests/:id/request_tasks/:request_task_id
+                {
+                "action" : "edit",
+                "resource" : {
+                    "options" : {
+                    "request_param_a" : "value_a",
+                    "request_param_b" : "value_b"
+                    }
+                }
+        expectedResults:
+            1. Task must be edited successfully.
+
+    """
+    # edit the request_task by adding new elements
+    request_task.action.edit(
+        options={"request_param_a": "value_a", "request_param_b": "value_b"}
+    )
+    assert_response(appliance)
+
+    # assert the presence of newly added elements
+    request_task.reload()
+    assert request_task.options["request_param_a"] == "value_a"
+    assert request_task.options["request_param_b"] == "value_b"
