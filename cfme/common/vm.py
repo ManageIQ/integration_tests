@@ -7,6 +7,7 @@ from datetime import timedelta
 
 import attr
 from cached_property import cached_property
+from manageiq_client.filters import Q
 from riggerlib import recursive_update
 
 from cfme.base.login import BaseLoggedInPage
@@ -497,6 +498,29 @@ class BaseVM(
         if cancel:
             view.cancel_button.click()
             view.flash.assert_no_error()
+
+    @property
+    def rest_api_entity(self):
+        return self.appliance.rest_api.collections.vms.filter(
+            Q("name", "=", self.name)
+            & Q("ems_id", "=", self.provider.rest_api_entity.id)
+        ).resources[0]
+
+    def wait_for_power_state_change_rest(self, desired_state, timeout=1200):
+        """Wait for a VM/Instance power state to change to a desired state.
+
+        Args:
+            desired_state: A string indicating the desired state
+            timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
+        """
+        return wait_for(
+            lambda: self.rest_api_entity.power_state == desired_state,
+            fail_func=self.rest_api_entity.reload,
+            num_sec=timeout,
+            delay=45,
+            handle_exception=True,
+            message=f"Waiting for VM/Instance power state to change to {desired_state}"
+        ).out
 
 
 @attr.s
