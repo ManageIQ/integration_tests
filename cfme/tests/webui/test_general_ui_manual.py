@@ -112,3 +112,106 @@ def test_pdf_summary_provider(provider):
         1503213
     """
     pass
+
+
+@pytest.mark.manual('manualonly')
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1740131])
+def test_red_hat_cloud_page_internal_server_error():
+    """
+    Bugzilla:
+        1740131
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/18h
+        startsin: 5.11
+        setup:
+            1. Enable Internet Connectivity role
+            2. Register the appliance
+        testSteps:
+            1. Navigate to Red Hat Cloud > Providers
+        expectedResults:
+            1. There should be no 500 Internal Server Error
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1741030])
+def test_provider_documentation():
+    """
+    Bugzilla:
+        1741030
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/18h
+        startsin: 5.11
+        setup:
+            1. Take a fresh appliance with no provider
+        testSteps:
+            1. Log into the appliance and check where the link provided
+                in `Learn more about this in the documentation.` points to.
+        expectedResults:
+            1. Link must point to downstream documentation and not upstream.
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1733207])
+def test_vm_right_size_recommendation_back_button():
+    """
+    Bugzilla:
+        1733207
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/18h
+        setup:
+            1. Add provider to appliance.
+        testSteps:
+            1. Navigate to a VM's details page.
+            2. From `Configuration` dropdown, select `Right Size Recommendations`.
+            3. Click on `Back` button.
+        expectedResults:
+            1.
+            2.
+            3. Back button must bring back to the details page.
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1745660])
+def test_compliance_column_header():
+    """
+    Bugzilla:
+        1745660
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/18h
+        setup:
+            1. Add a infra/cloud provider
+        testSteps:
+            1. Navigate to All VMs/Instances page.
+            2. Select the List View
+            3. Click on the Compliance Column Header
+        expectedResults:
+            1.
+            2.
+            3. There should be no 500 Internal Server Error and the page must be displayed as is.
+    """
+    pass
