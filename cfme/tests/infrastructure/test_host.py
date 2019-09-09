@@ -8,6 +8,7 @@ from wait_for import TimedOutError
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
+from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -15,10 +16,12 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.tests.networks.test_sdn_downloads import handle_extra_tabs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -390,3 +393,30 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     except TimedOutError:
         pytest.fail("Hosts were not refreshed within given time")
     assert evm_tail.validate(wait="30s")
+
+
+@test_requirements.infra_hosts
+@pytest.mark.meta(coverage=[1738664])
+@pytest.mark.parametrize(
+    "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"]
+)
+def test_infrastructure_hosts_bz_1738664(
+    appliance, setup_provider, provider, report_format
+):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/3h
+    Bugzilla:
+        1738664
+
+    """
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    hosts_view.toolbar.download.item_select(report_format)
+    if report_format == "Print or export as PDF":
+        handle_extra_tabs(hosts_view)
+    hosts_view.navigation.select("Compute")
+    provider_view = provider.create_view(InfraProviderDetailsView)
+    assert provider_view.is_displayed
