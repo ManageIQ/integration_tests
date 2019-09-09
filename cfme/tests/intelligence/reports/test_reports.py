@@ -417,7 +417,7 @@ def test_report_fullscreen_enabled(request, tenant_report, set_and_get_tenant_qu
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1504010])
-@pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY, required_flags=["provision"])
 def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
     """
     Polarion:
@@ -440,23 +440,16 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
         1504010
     """
     subject_vm = appliance.rest_api.collections.vms.get(name=vm)
-    response = subject_vm.action.stop()
+    subject_vm.action.stop()
     assert_response(appliance)
-    # Wait for task to be finished.
-    wait_for(
-        lambda: response.task.state == "Finished",
-        fail_func=response.task.reload,
-        timeout=50,
-        delay=2,
-    )
+
     # Wait for VM power state to change
-    # Note: Simply waiting for vm power_state to change doesn't work
     subject_vm.reload()
     wait_for(
         lambda: subject_vm.power_state == "off",
         fail_func=subject_vm.reload,
-        timeout=100,
-        delay=2,
+        timeout=1200,
+        delay=45,
     )
 
     saved_report = appliance.collections.reports.instantiate(
@@ -467,5 +460,4 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
     request.addfinalizer(saved_report.delete_if_exists)
 
     view = navigate_to(saved_report, "Details")
-    vm_names = [row.vm_name.text for row in view.table.rows()]
-    assert vm not in vm_names
+    assert vm not in [row.vm_name.text for row in view.table.rows()]
