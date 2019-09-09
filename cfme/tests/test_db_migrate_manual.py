@@ -297,15 +297,22 @@ def test_update_webui_custom_css():
         caseimportance: medium
         initialEstimate: 1/6h
 
-        setup:  1. provision appliance
-                2. ssh to the appliance
-                3. change custom CSS file - you can run command:
+        setup:     provision appliance
+
+        testSteps:
+                1. ssh to the appliance
+                2. change custom CSS file - you can run command:
                     echo 'body {background-color: #FF00EF;}' >> /var/www/miq/vmdb/public/custom.css
-                4. add repo file to /etc/yum.repos.d/
-                5. add RHSM settings
-                6. update through webui
-                7. check webui is available
-                8. check customizations still work
+                3. add repo file to /etc/yum.repos.d/
+                4. add RHSM settings
+                5. update through webui
+
+        expectedResults:
+                1.
+                2.
+                3.
+                4.
+                5. webui is available and customizations still work
 
         startsin: 5.9
     """
