@@ -177,7 +177,7 @@ lxml==4.3.3
 manageiq-client==0.6.0
 MarkupSafe==1.1.1
 mccabe==0.6.1
-miq-version==0.1.11
+miq-version==0.2
 mistune==0.8.4
 mock==2.0.0
 msgpack==0.6.1
