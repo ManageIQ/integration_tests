@@ -5,6 +5,7 @@ import fauxfactory
 import pytest
 from manageiq_client.api import APIException
 from manageiq_client.api import ManageIQClient as MiqApi
+from manageiq_client.filters import Q
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
@@ -2344,3 +2345,60 @@ def test_populate_default_dialog_values(
     assert response.options["dialog"]["dialog_static"] == 2
     # default value for dynamic element is returned by the automate method
     assert response.options["dialog"]["dialog_dynamic"] == 7
+
+
+@pytest.fixture
+def request_task(appliance, service_templates):
+    service_request = service_templates[0].action.order()
+    assert_response(appliance)
+
+    wait_for(
+        lambda: service_request.request_state == "finished",
+        fail_func=service_request.reload,
+        num_sec=200,
+        delay=5,
+    )
+    service_template_name = service_templates[0].name
+    return service_request.request_tasks.filter(
+        Q(
+            "description",
+            "=",
+            f"Provisioning [{service_template_name}] for Service [{service_template_name}]*",
+        )
+    ).resources[0]
+
+
+def test_edit_service_request_task(appliance, request_task):
+    """
+        Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Create a service request.
+        testSteps:
+            1. Edit the service request task:
+                POST /api/service_requests/:id/request_tasks/:request_task_id
+                {
+                "action" : "edit",
+                "resource" : {
+                    "options" : {
+                    "request_param_a" : "value_a",
+                    "request_param_b" : "value_b"
+                    }
+                }
+        expectedResults:
+            1. Task must be edited successfully.
+
+    """
+    # edit the request_task by adding new elements
+    request_task.action.edit(
+        options={"request_param_a": "value_a", "request_param_b": "value_b"}
+    )
+    assert_response(appliance)
+
+    # assert the presence of newly added elements
+    request_task.reload()
+    assert request_task.options["request_param_a"] == "value_a"
+    assert request_task.options["request_param_b"] == "value_b"

@@ -102,35 +102,6 @@ def test_provider_specific_vm():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.rest
-def test_edit_request_task():
-    """
-        Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        testSteps:
-            1. Create a service request.
-            2. Edit the service request task:
-                POST /api/service_requests/:id/request_tasks/:request_task_id
-                {
-                "action" : "edit",
-                "resource" : {
-                    "options" : {
-                    "request_param_a" : "value_a",
-                    "request_param_b" : "value_b"
-                    }
-                }
-        expectedResults:
-            1.
-            2. Task must be edited successfully.
-
-    """
-    pass
-
-
 @test_requirements.rest
 @pytest.mark.manual()
 @pytest.mark.tier(1)
