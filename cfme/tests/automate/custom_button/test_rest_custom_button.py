@@ -26,7 +26,7 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def group(request, appliance, obj_type):
+def group_rest(request, appliance, obj_type):
     # create group (custom button set)
     button_type = CLASS_MAP[obj_type]["rest"]
     response = gen_data.custom_button_sets(request, appliance, button_type)
@@ -35,7 +35,7 @@ def group(request, appliance, obj_type):
 
 
 @pytest.fixture(scope="module")
-def buttons(request, appliance, obj_type):
+def buttons_rest(request, appliance, obj_type):
     # create unassigned button (custom button)
     button_type = CLASS_MAP[obj_type]["rest"]
     response = gen_data.custom_buttons(request, appliance, button_type, num=2)
@@ -183,7 +183,7 @@ class TestCustomButtonRESTAPI(object):
 
 
 @pytest.mark.meta(blockers=[BZ(1745198)], automates=[1737449])
-def test_associate_unassigned_buttons_rest(appliance, group, buttons):
+def test_associate_unassigned_buttons_rest(appliance, group_rest, buttons_rest):
     """Test associate unassigned button with group
 
     Bugzilla:
@@ -200,14 +200,15 @@ def test_associate_unassigned_buttons_rest(appliance, group, buttons):
     """
 
     # Add associate unassigned buttons to group with rest
-    set_data = group.set_data
-    set_data["button_order"] = [int(b.id) for b in buttons]
+    set_data = group_rest.set_data
+    set_data["button_order"] = [int(b.id) for b in buttons_rest]
     data = {"set_data": set_data}
-    group.action.edit(**data)
+    group_rest.action.edit(**data)
     assert_response(appliance)
 
     # Check association with UI
-    gp = appliance.collections.button_groups.instantiate_with_rest(group.id)
+    group_collection = appliance.collections.button_groups
+    gp = group_collection.ENTITY.from_id(group_collection, group_rest.id)
 
     # Point to new object type so that teardown button(removed with rest) and new buttons, group
     # (created with rest) reflect on UI without any selenium exception.
@@ -217,4 +218,4 @@ def test_associate_unassigned_buttons_rest(appliance, group, buttons):
     view = navigate_to(gp, "Details")
     ui_assinged_btns = {btn["Text"].text for btn in view.assigned_buttons}
 
-    assert ui_assinged_btns == {btn.name for btn in buttons}
+    assert ui_assinged_btns == {btn.name for btn in buttons_rest}

@@ -745,6 +745,31 @@ class ButtonGroup(BaseEntity, Updateable):
 
     _collections = {"buttons": ButtonCollection}
 
+    @classmethod
+    def from_id(cls, collection, id):
+        """Constructor for ButtonGroup
+        Args:
+            collection: parent
+            id: rest entity id
+        """
+        from cfme.tests.automate.custom_button import CLASS_MAP
+        gp, *_ = collection.appliance.rest_api.collections.custom_button_sets.find_by(id=id)
+        rest_btn_type = gp.set_data.get("applies_to_class")
+
+        for maps in CLASS_MAP.values():
+            if maps.get("rest") == rest_btn_type:
+                ui_btn_type = maps.get("ui")
+                break
+
+        return cls(
+            collection,
+            text=gp.name.split("|")[0],
+            hover=gp.description,
+            type=ui_btn_type,
+            display=gp.set_data.get("display"),
+            image=gp.set_data.get("button_icon"),
+        )
+
     @property
     def buttons(self):
         return self.collections.buttons
@@ -850,20 +875,17 @@ class ButtonGroupCollection(BaseCollection):
             assign_buttons=assign_buttons,
         )
 
+    def all(self):
+        """return all available custom button groups"""
+        return [
+            self.ENTITY.from_id(self, gp.id)
+            for gp in self.appliance.rest_api.collections.custom_button_sets.all
+        ]
+
     def delete_all(self):
         """This method will help to clean all custom button groups (rest)"""
         for btn_grp in self.appliance.rest_api.collections.custom_button_sets.all:
             btn_grp.action.delete()
-
-    def instantiate_with_rest(self, id):
-        from cfme.tests.automate.custom_button import CLASS_MAP
-        gp, *_ = self.appliance.rest_api.collections.custom_button_sets.find_by(id=id)
-        rest_btn_type = gp.set_data.get("applies_to_class")
-        for maps in CLASS_MAP.values():
-            if maps.get("rest") == rest_btn_type:
-                ui_btn_type = maps.get("ui")
-                break
-        return self.instantiate(text=gp.name, hover=gp.description, type=ui_btn_type)
 
 
 @navigator.register(ButtonGroupCollection, "All")
