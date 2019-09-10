@@ -7,7 +7,6 @@ import pytest
 import requests
 
 from cfme import test_requirements
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -65,7 +64,6 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
 
 @pytest.mark.rhel_testing
 @pytest.mark.parametrize("number_dashboards", list(range(1, 4)))
-@pytest.mark.meta(blockers=[BZ(1666712)])
 def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, appliance):
     """Create some custom dashboards and check their presence. Then check their contents.
 
@@ -74,6 +72,9 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, 
         caseimportance: high
         casecomponent: Reporting
         initialEstimate: 1/12h
+
+    Bugzilla:
+        1666712
     """
     # Very useful construct. List is mutable, so we can prepare the generic delete finalizer.
     # Then we add everything that succeeded with creation. Simple as that :)
