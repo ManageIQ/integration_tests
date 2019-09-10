@@ -43,12 +43,12 @@ def template_name(provisioning):
 
 
 @pytest.fixture
-def prov_data(provider, vm_name, template_name):
+def prov_data(provider, vm_name, template_name, provisioning):
     if provider.one_of(OpenStackProvider):
         return {
             "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
             "environment": {'automatic_placement': True},
-            "properties": {'instance_type': partial_match('m1.large')}
+            "properties": {'instance_type': partial_match(provisioning["instance_type2"])}
         }
 
 
@@ -130,14 +130,21 @@ def entities(appliance, request, max_quota_test_instance):
 
 @pytest.fixture(scope='function')
 def set_entity_quota_tag(request, entities, appliance):
-    tag, value = request.param
+    tag_name, value = request.param
     tag = appliance.collections.categories.instantiate(
-        display_name=tag).collections.tags.instantiate(
+        display_name=tag_name).collections.tags.instantiate(
         display_name=value)
     entities.add_tag(tag)
     yield
     # will refresh page as navigation to configuration is blocked if alert are on requests page
     appliance.server.browser.refresh()
+    # Tag assignment for groups and users is changed in 5.11. Now entities.remove_tag(tag) doesn't
+    # work because of change in title of assigned tags. Hence I updated tag instantiation with
+    # tag_name only as per title.
+    if appliance.version > '5.11':
+        tag = appliance.collections.categories.instantiate(
+            display_name=tag_name.strip(' *')).collections.tags.instantiate(
+            display_name=tag_name.strip(' *'))
     entities.remove_tag(tag)
 
 
