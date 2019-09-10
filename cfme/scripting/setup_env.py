@@ -12,8 +12,7 @@ from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance import stack
 from cfme.utils.conf import credentials
 from cfme.utils.providers import get_crud
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
+
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 pwd = None
@@ -98,32 +97,30 @@ def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
     ip0 = apps[0].hostname
     ip1 = apps[1].hostname
     ip2 = apps[2].hostname
-    opt = '5' if cfme_version >= "5.8" else '8'
-    rep = '6' if cfme_version >= "5.8" else '9'
-    mon = VersionPicker({
-        Version.lowest(): '12',
-        '5.8': '9',
-        '5.9.3': '8'
-    }).pick(cfme_version)
-    port = (ip0, '') if cfme_version >= "5.8" else (ip0,)
-    command_set0 = ('ap', '', opt, '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+
+    port = (ip0, '')
+    command_set0 = ('ap', '', '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
     wait_for(lambda: apps[0].db.is_dedicated_active)
     print("Dedicated database provisioned and configured {}".format(ip0))
-    command_set1 = ('ap', '', opt, '1', '2', '1', 'y') + port + ('', '', pwd,
+
+    command_set1 = ('ap', '', '7', '1', '2', '1', 'y') + port + ('', '', pwd,
         TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].evmserverd.wait_for_running()
     apps[1].wait_for_web_ui()
     print("Non-VMDB appliance provisioned and region created {}".format(ip1))
-    command_set2 = ('ap', '', rep, '1', '1', '', '', pwd, pwd, ip0, 'y', '')
+
+    command_set2 = ('ap', '', '8', '1', '1', '', '', pwd, pwd, ip0, 'y', '')
     apps[0].appliance_console.run_commands(command_set2)
     print("Primary HA node configured {}".format(ip0))
-    command_set3 = ('ap', '', rep, '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y',
+
+    command_set3 = ('ap', '', '8', '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y',
         TimedCommand('y', 300), '')
     apps[2].appliance_console.run_commands(command_set3)
     print("Secondary HA node provision and configured {}".format(ip2))
-    command_set4 = ('ap', '', mon, '1', '')
+
+    command_set4 = ('ap', '', '10', '1', '')
     apps[1].appliance_console.run_commands(command_set4)
     print("HA configuration complete")
     print("Appliance pool lease time is {}".format(lease))
