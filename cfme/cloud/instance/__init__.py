@@ -253,15 +253,6 @@ class Instance(VM):
             navigate_to(self, 'Details')
             return True
 
-    def get_vm_via_rest(self):
-        # Try except block, because instances collection isn't available on 5.4
-        try:
-            instance = self.appliance.rest_api.collections.instances.get(name=self.name)
-        except AttributeError:
-            raise Exception("Collection instances isn't available")
-        else:
-            return instance
-
     def get_collection_via_rest(self):
         return self.appliance.rest_api.collections.instances
 
