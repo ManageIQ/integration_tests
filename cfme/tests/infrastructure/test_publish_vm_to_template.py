@@ -2,20 +2,25 @@ import pytest
 from wrapanapi import VmState
 
 from cfme import test_requirements
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.virtual_machines import deploy_template
 
 pytestmark = [
-    pytest.mark.provider([InfraProvider],
-    required_fields=[['templates', 'small_template'],
-                    ['provisioning', 'template'],
-                    ['provisioning', 'host'],
-                    ['provisioning', 'datastore']]),
+    pytest.mark.provider(gen_func=providers,
+                         filters=[ProviderFilter(classes=[RHEVMProvider, VMwareProvider],
+                                                 required_fields=[
+                                                     ['templates', 'small_template'],
+                                                     ['provisioning', 'template'],
+                                                     ['provisioning', 'host'],
+                                                     ['provisioning', 'datastore']])],
+                         scope='module',
+                         selector=ONE_PER_TYPE),
     test_requirements.vmware,
     test_requirements.rhev
 ]
@@ -42,9 +47,6 @@ def vm_crud(provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.provider([RHEVMProvider, VMwareProvider], override=True, scope="module",
-                      required_fields=[['templates', 'small_template']],
-                      selector=ONE_PER_TYPE)
 def test_publish_vm_to_template(request, setup_provider, vm_crud):
     """ Try to publish VM to template.
     Steps:
