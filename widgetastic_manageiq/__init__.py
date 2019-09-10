@@ -289,8 +289,8 @@ class MultiBoxSelect(View):
 
     """
 
-    available_options = Select(id=Parameter("@available_items"))
-    chosen_options = Select(id=Parameter("@chosen_items"))
+    available_options = Select(locator='//div[contains(text(), "Unassigned:")]/select')
+    chosen_options = Select(locator='//div[contains(text(), "Selected:")]/select')
     move_into_button = Button(**{"data-submit": Parameter("@move_into")})
     move_from_button = Button(**{"data-submit": Parameter("@move_from")})
 

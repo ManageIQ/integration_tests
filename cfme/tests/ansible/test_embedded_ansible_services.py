@@ -523,6 +523,12 @@ def test_service_ansible_playbook_pass_extra_vars(
     if action == "retirement":
         ansible_service.retire()
         view = navigate_to(ansible_service, "RetiredDetails")
+        wait_for(
+            lambda: view.retirement_tab.is_displayed,
+            delay=20,
+            fail_func=view.toolbar.reload.click(),
+            timeout=120
+        )
         view.retirement_tab.click()
 
     stdout = getattr(view, action).standart_output

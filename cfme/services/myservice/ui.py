@@ -179,7 +179,7 @@ class MyServiceRetiredDetailsView(MyServiceDetailView):
         return (
             self.in_myservices
             and self.myservice.is_opened
-            and self.title.text == 'Service "{}"'.format(self.context["object"].name)
+            and self.title.text == f'Service "{self.context["object"].name}"'
         )
 
 
