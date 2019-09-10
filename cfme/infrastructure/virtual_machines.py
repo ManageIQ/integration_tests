@@ -938,9 +938,6 @@ class InfraVm(VM):
     def genealogy(self):
         return Genealogy(self)
 
-    def get_collection_via_rest(self):
-        return self.appliance.rest_api.collections.vms
-
     @property
     def cluster_id(self):
         """returns id of cluster current vm belongs to"""
