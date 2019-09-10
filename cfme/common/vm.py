@@ -506,7 +506,7 @@ class BaseVM(
             & Q("ems_id", "=", self.provider.rest_api_entity.id)
         ).resources[0]
 
-    def wait_for_power_state_change_rest(self, desired_state, timeout=1200):
+    def wait_for_power_state_change_rest(self, desired_state, timeout=1200, delay=45):
         """Wait for a VM/Instance power state to change to a desired state.
 
         Args:
@@ -517,7 +517,7 @@ class BaseVM(
             lambda: self.rest_api_entity.power_state == desired_state,
             fail_func=self.rest_api_entity.reload,
             num_sec=timeout,
-            delay=45,
+            delay=delay,
             handle_exception=True,
             message=f"Waiting for VM/Instance power state to change to {desired_state}"
         ).out
