@@ -2,6 +2,7 @@
 """This module tests events that are invoked by Cloud/Infra VMs."""
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.vm_views import PolicySimulationDetailsView
 from cfme.common.vm_views import PolicySimulationView
@@ -18,6 +19,7 @@ pytestmark = [
         selector=ONE_PER_CATEGORY,
         scope="module"
     ),
+    test_requirements.control
 ]
 
 
