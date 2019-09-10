@@ -2,7 +2,10 @@
 import pytest
 from selenium.common.exceptions import NoSuchElementException
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
+
+pytestmark = [test_requirements.timelines]
 
 
 @pytest.mark.tier(2)

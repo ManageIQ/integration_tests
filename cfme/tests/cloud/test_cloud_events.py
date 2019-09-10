@@ -4,6 +4,7 @@ import time
 
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -12,7 +13,8 @@ from cfme.utils.log import logger
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([AzureProvider], scope='module'),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider'),
+    test_requirements.events
 ]
 
 

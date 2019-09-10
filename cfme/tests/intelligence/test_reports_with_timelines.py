@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.control.explorer import policies
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -11,7 +12,8 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE),
     pytest.mark.usefixtures("setup_provider"),
-    pytest.mark.ignore_stream("5.11")
+    pytest.mark.ignore_stream("5.11"),
+    test_requirements.report
 ]
 
 IDS = [
