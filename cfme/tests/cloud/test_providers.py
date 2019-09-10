@@ -493,7 +493,7 @@ def test_azure_subscription_required(request, provider):
 
 @pytest.mark.tier(2)
 @test_requirements.azure
-@pytest.mark.usefixtures('has_no_cloud_providers')
+@pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
 def test_azure_multiple_subscription(appliance, request, soft_assert):
     """
     Verifies that different azure providers have different resources access
@@ -517,7 +517,7 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
     prov_inventory = []
     for provider in providers:
         request.addfinalizer(provider.clear_providers)
-        provider.create()
+        provider.create(check_existing=True)
         provider.validate_stats()
         prov_inventory.append((provider.name,
                                provider.num_vm(),
