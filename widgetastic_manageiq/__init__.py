@@ -988,7 +988,7 @@ class ScriptBox(Widget):
 
     def __locator__(self):
         if not self.locator:
-            self.locator = "//textarea[contains(@id, 'method_data')]"
+            self.locator = "//div[.//textarea[contains(@id, 'method_data')]]"
         return self.locator
 
     @property
