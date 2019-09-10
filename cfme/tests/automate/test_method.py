@@ -365,7 +365,8 @@ def generic_object_definition(appliance):
             attributes={"location": "string"},
             associations={"vms": "Vm", "services": "Service"}
         )
-        yield definition
+    yield definition
+    with appliance.context.use(ViaREST):
         definition.delete_if_exists()
 
 
