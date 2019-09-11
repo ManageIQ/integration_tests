@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
@@ -93,6 +94,7 @@ def vm_name():
 
 
 @pytest.mark.rhv1
+@test_requirements.provision
 def test_pxe_provision_from_template(appliance, provider, vm_name, setup_provider,
                                      request, setup_pxe_servers_vm_prov):
     """Tests provisioning via PXE

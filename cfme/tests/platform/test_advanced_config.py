@@ -2,6 +2,8 @@ from copy import deepcopy
 
 import pytest
 
+from cfme import test_requirements
+
 
 @pytest.fixture(scope="function")
 def vmdb_config(appliance):
@@ -24,6 +26,7 @@ def reset_nonleaf(config):
 
 
 @pytest.mark.parametrize("configurer", (reset_leaf, reset_nonleaf))
+@test_requirements.appliance
 def test_advanced_config_reset_pzed(appliance, vmdb_config, configurer):
     """Check whether we can use "<<reset>>" string to reset the leaf element
     of the advanced config.

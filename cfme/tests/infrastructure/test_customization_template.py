@@ -2,11 +2,15 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.pxe import SystemImageType
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [
+    test_requirements.provision,
+    pytest.mark.tier(3)
+]
 
 
 @pytest.fixture(scope="module")

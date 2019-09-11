@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
+
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1577303])
+@test_requirements.appliance
 def test_fixauth_dryrun_has_feedback(temp_appliance_preconfig):
     """
     Check whether the fixauth says it is running in dry mode

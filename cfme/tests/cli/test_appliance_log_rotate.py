@@ -2,6 +2,8 @@ import datetime
 
 import dateutil
 
+from cfme import test_requirements
+
 
 LOGS = ["/var/www/miq/vmdb/log/evm.log",
         "/var/opt/rh/rh-postgresql95/lib/pgsql/data/pg_log/postgresql.log"]
@@ -16,6 +18,7 @@ def advance_appliance_date_by_day(appliance):
     appliance.ssh_client.run_command("date -s '{}'".format(advanced_txt_date))
 
 
+@test_requirements.appliance
 def test_appliance_log_rotate(temp_appliance_preconfig_funcscope):
     """ Checks whether the log is logrotated daily.
 

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.configure import about
 
 
+@test_requirements.appliance
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_appliance_version(appliance):

@@ -74,6 +74,12 @@ alert = pytest.mark.requirement(
     assignee_id='jdupuy',
 )
 
+appliance = pytest.mark.requirement(
+    "Appliance",
+    description='Appliance',
+    assignee_id='jhenner'
+)
+
 app_console = pytest.mark.requirement(
     "Appliance Console",
     description='Appliance console operations support',
@@ -322,6 +328,13 @@ rest = pytest.mark.requirement(
     assignee_id='pvala',
 )
 
+restore = pytest.mark.requirement(
+    "CFME Database Backup Restore",
+    description='Database backup and restore tests',
+    assignee_id='jhenner',
+)
+
+
 retirement = pytest.mark.requirement(
     "VM/Instance Retirement",
     description='Retirement of VMs/Instances and visibility of objects after retirement',
@@ -344,6 +357,12 @@ satellite = pytest.mark.requirement(
     "Configuration Management: Satellite",
     description='Configuration Management providers, specifically Red Hat Satellite',
     assignee_id='tpapaioa',
+)
+
+scheduled_ops = pytest.mark.requirement(
+    'Scheduled Operations',
+    description='Scheduled Operations',
+    assignee_id='jhenner',
 )
 
 scvmm = pytest.mark.requirement(
@@ -418,9 +437,15 @@ tower = pytest.mark.requirement(
     assignee_id='nachandr',
 )
 
-upgrade = pytest.mark.requirement(
-    "CFME Upgrade and Database Migrations",
-    description='Upgrading application and migrating databases',
+update = pytest.mark.requirement(
+    "CFME update tests",
+    description='Application update tests',
+    assignee_id='jhenner',
+)
+
+db_migration = pytest.mark.requirement(
+    "CFME Database Migrations",
+    description='Database migration tests',
     assignee_id='jhenner',
 )
 
