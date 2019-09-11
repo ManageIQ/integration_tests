@@ -20,8 +20,8 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import trackerbot
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.net import wait_pingable
 from cfme.utils.path import project_path

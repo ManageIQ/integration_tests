@@ -9,7 +9,7 @@ from cfme.infrastructure.pxe import get_pxe_server_from_config
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils import testgen
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),

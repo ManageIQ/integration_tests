@@ -19,8 +19,8 @@ from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import auth_data
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class

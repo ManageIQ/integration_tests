@@ -16,8 +16,8 @@ from wait_for import TimedOutError
 from wrapanapi import VmState
 
 from cfme.exceptions import CUCommandException
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.ssh import SSHClient
 from cfme.utils.virtual_machines import deploy_template

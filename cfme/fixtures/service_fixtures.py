@@ -18,7 +18,7 @@ from cfme.rest.gen_data import service_templates_rest as _service_templates
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger

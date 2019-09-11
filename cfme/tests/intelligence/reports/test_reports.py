@@ -7,7 +7,7 @@ from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response

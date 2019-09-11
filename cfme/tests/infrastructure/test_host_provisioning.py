@@ -5,7 +5,7 @@ from cfme.infrastructure.pxe import get_pxe_server_from_config
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 

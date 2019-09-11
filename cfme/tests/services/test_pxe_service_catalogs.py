@@ -12,7 +12,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 

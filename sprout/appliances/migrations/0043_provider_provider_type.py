@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 
 def add_type_to_provider(apps, schema_editor):
-    from cfme.utils.conf import cfme_data
+    from cfme.utils.config_data import cfme_data
     Provider = apps.get_model("appliances", "Provider")  # noqa
     for provider in Provider.objects.using(schema_editor.connection.alias).all():
         # Need to replicate the functionality from the model here

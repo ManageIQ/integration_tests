@@ -6,7 +6,7 @@ import pytest
 from cfme import test_requirements
 from cfme.intelligence.reports.reports import ImportExportCustomReportsView
 from cfme.intelligence.reports.widgets import ImportExportWidgetsCommitView
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.ftp import FTPException
 from cfme.utils.log import logger

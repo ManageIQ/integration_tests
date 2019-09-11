@@ -3,7 +3,7 @@ from os import path as os_path
 import pytest
 
 from cfme.utils.appliance import ApplianceException
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 
 

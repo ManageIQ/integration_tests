@@ -5,8 +5,8 @@ from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable

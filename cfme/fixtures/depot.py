@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
 from cfme.utils.virtual_machines import deploy_template

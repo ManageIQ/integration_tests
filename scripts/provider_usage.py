@@ -6,8 +6,8 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 
 from cfme.utils import appliance
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import jenkins
+from cfme.utils.config_data import cfme_data
 from cfme.utils.path import template_path
 from cfme.utils.providers import get_mgmt
 

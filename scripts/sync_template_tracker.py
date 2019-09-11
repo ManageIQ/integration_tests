@@ -14,7 +14,7 @@ from wrapanapi import EC2System
 from wrapanapi import Openshift
 
 from cfme.utils import trackerbot
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import add_stdout_handler
 from cfme.utils.log import logger
 from cfme.utils.path import log_path

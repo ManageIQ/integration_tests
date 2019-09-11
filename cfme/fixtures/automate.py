@@ -3,7 +3,7 @@ from collections import namedtuple
 import fauxfactory
 import pytest
 
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.update import update
 

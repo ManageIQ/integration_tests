@@ -5,7 +5,7 @@ from threading import Thread
 
 from miq_version import TemplateName
 
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import add_stdout_handler
 from cfme.utils.log import logger
 from cfme.utils.providers import list_provider_keys

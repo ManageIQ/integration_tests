@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 
 server_roles_conf = cfme_data.get('server_roles',
                                   {'all': [], 'sets': {}})

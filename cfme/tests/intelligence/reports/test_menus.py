@@ -7,7 +7,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.path import data_path
 

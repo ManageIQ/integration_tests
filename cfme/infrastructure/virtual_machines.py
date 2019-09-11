@@ -52,7 +52,7 @@ from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name

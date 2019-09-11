@@ -11,8 +11,8 @@ from multiprocessing.pool import ThreadPool
 
 import pytz
 
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import add_stdout_handler
 from cfme.utils.log import logger
 from cfme.utils.providers import get_mgmt

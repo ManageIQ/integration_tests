@@ -5,7 +5,7 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 

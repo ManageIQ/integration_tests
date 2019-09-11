@@ -3,7 +3,7 @@ NOT TESTED YET
 """
 import re
 
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.template.base import log_wrap
 from cfme.utils.template.base import ProviderTemplateUpload

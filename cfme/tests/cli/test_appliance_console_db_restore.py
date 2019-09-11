@@ -9,8 +9,8 @@ from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class

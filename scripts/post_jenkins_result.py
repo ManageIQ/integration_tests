@@ -6,8 +6,8 @@ from datetime import datetime
 import requests
 
 from artifactor.plugins.post_result import test_report
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.trackerbot import post_jenkins_result
 
 job_name = os.environ['JOB_NAME']

@@ -8,7 +8,7 @@ from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.rest import assert_response
 
 

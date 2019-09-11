@@ -4,7 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for

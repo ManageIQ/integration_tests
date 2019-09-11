@@ -11,9 +11,9 @@ from wrapanapi import VmState
 
 from cfme.utils.appliance import Appliance
 from cfme.utils.appliance import IPAppliance
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials as cred
 from cfme.utils.conf import provider_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import add_stdout_handler
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable

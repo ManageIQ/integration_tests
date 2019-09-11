@@ -5,8 +5,8 @@ import re
 import pytest
 from lxml import etree
 
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import xunit
+from cfme.utils.config_data import cfme_data
 from cfme.utils.pytest_shortcuts import extract_fixtures_values
 # pylint: disable=no-name-in-module
 

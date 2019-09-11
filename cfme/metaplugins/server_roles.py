@@ -45,7 +45,7 @@ see keys of :py:data:`cfme.configure.configuration.server_roles`.
 """
 from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.markers.meta import plugin
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 
 available_roles = set(ServerInformation.SERVER_ROLES)
 

@@ -14,7 +14,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection

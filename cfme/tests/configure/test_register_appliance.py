@@ -5,7 +5,7 @@ import pytest
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for

@@ -23,8 +23,8 @@ from glanceclient import Client
 from keystoneauth1 import loading
 from keystoneauth1 import session
 
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 
 
 def parse_cmd_line():

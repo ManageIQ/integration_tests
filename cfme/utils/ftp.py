@@ -13,8 +13,8 @@ from time import strptime
 
 import fauxfactory
 
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 
 

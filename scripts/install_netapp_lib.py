@@ -6,7 +6,7 @@ import argparse
 
 from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.appliance import IPAppliance
-from cfme.utils.conf import cfme_data
+from cfme.utils.config_data import cfme_data
 
 
 def log(s):
