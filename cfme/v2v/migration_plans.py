@@ -152,6 +152,7 @@ class AddMigrationPlanView(View):
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description = TextInput(name="description")
         choose_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
+        alert = Text('.//div[contains(@class, "alert")]')
         fill_strategy = WaitFillViewStrategy("15s")
 
         @property
