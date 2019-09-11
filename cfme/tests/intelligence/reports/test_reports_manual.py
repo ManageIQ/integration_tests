@@ -25,8 +25,8 @@ def test_reports_generate_custom_conditional_filter_report():
             1. Create a service with one of the above naming conventions (vm-test,My-Test)
             2. Have at least one VM in the service so the reporting will parse it
             3. Create a report with a conditional filter in it, such as:
-                conditions: !ruby/object:MiqExpression exp: and: - IS NOT NULL: field:
-                Vm.service-name - IS NOT NULL: field: Vm-ems_cluster_name.
+               conditions: !ruby/object:MiqExpression exp: and: - IS NOT NULL: field:
+               Vm.service-name - IS NOT NULL: field: Vm-ems_cluster_name.
         testSteps:
             1. Queue the report.
         expectedResults:

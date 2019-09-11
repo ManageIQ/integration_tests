@@ -54,7 +54,7 @@ def test_policy_simulation_ui(provider, navigation):
         assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
-        initialEstimate: 1/6hr
+        initialEstimate: 1/6h
     """
     # get a vm
     collection = provider.appliance.provider_based_collection(provider)

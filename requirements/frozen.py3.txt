@@ -217,7 +217,7 @@ pickleshare==0.7.5
 pika==1.0.1
 Pillow==6.0.0
 pluggy==0.6.0
-polarion-docstrings==0.18
+polarion-docstrings==0.20
 pre-commit==1.17.0
 prettytable==0.7.2
 progress==1.5
