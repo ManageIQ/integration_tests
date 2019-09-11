@@ -6,14 +6,11 @@ Since: 2013-02-20
 """
 import re
 from datetime import datetime
-from ftplib import FTP
 
 import fauxfactory
 import pytest
-from pytz import timezone
 
 from cfme import test_requirements
-from cfme.configure.configuration.diagnostics_settings import CollectLogsBase
 from cfme.utils import conf
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -126,11 +123,10 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
         server_log_depot.depot_type = log_depot.protocol
-        if log_depot.protocol != 'dropbox':
-            server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
-            server_log_depot.uri = uri
-            server_log_depot.username = log_depot.credentials.username
-            server_log_depot.password = log_depot.credentials.password
+        server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
+        server_log_depot.uri = uri
+        server_log_depot.username = log_depot.credentials.username
+        server_log_depot.password = log_depot.credentials.password
     yield server_log_depot
     server_log_depot.clear()
 
@@ -207,9 +203,6 @@ def service_request(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.uncollectif(lambda appliance, log_depot:
-                         not appliance.is_downstream and log_depot.protocol == 'dropbox',
-                         reason='Dropbox test only for downstream version of product')
 @pytest.mark.meta(automates=[1656318, 1706989])
 def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
@@ -236,48 +229,10 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         ftp.recursively_delete()
 
     # Start the collection
-    # set collect_time as time on dropbox and remove TZ for further comparison
-    tz_name = 'America/New_York'
-    collect_time = datetime.now(timezone('UTC')).astimezone(timezone(tz_name)).replace(tzinfo=None)
     configured_depot.collect_all()
     # Check it on FTP
-    if log_depot.protocol != 'dropbox':
-        check_ftp(appliance=appliance, ftp=log_depot.ftp, server_name=appliance.server.name,
-                  server_zone_id=appliance.server.sid, check_ansible_logs=True)
-    elif appliance.is_downstream:  # check for logs on dropbox, not applicable for upstream
-        try:
-            username = conf.credentials['rh_dropbox']['username']
-            password = conf.credentials['rh_dropbox']['password']
-            host = conf.cfme_data['rh_dropbox']['download_host']
-        except KeyError:
-            pytest.skip('There are no Red Hat Dropbox credentials!')
-
-        dropbox = FTP(host=host, user=username, passwd=password)
-        contents = dropbox.nlst()
-
-        server_string = '{}_{}'.format(appliance.server.name, appliance.server.zone.id)
-        date_group = '(_.*?){4}'
-        pattern = re.compile(
-            r"(^{})(.*?){}{}[.]zip$".format(CollectLogsBase.ALERT_PROMPT,
-                                            server_string, date_group))
-        zip_files = list(filter(pattern.match, contents))
-        assert zip_files, "No logs found!"
-        # Check the time of the last file
-        datetimes = []
-        for zip_file in zip_files:
-            # files look like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
-            # 20170127_043343 - date and time
-            date = zip_file.split("_")
-            date_from = '{}{}'.format(date[-4], date[-3])
-            # removing ".zip" from the name
-            date_to = '{}{}'.format(date[-2], date[-1][:-4])
-            try:
-                date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
-                date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
-            except ValueError:
-                assert False, "Wrong file matching of {}".format(zip_file)
-            datetimes.append(date_to)
-        assert max(datetimes) >= collect_time
+    check_ftp(appliance=appliance, ftp=log_depot.ftp, server_name=appliance.server.name,
+              server_zone_id=appliance.server.sid, check_ansible_logs=True)
 
 
 @pytest.mark.tier(3)
