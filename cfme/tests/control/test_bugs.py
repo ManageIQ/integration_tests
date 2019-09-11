@@ -478,7 +478,7 @@ def test_alert_for_disk_usage(setup_disk_usage_alert):
         assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
-        initialEstimate: 1/6hr
+        initialEstimate: 1/6h
         testSteps:
             1. Go to Control > Explorer > Alerts
             2. Configuration > Add new alert
@@ -489,7 +489,7 @@ def test_alert_for_disk_usage(setup_disk_usage_alert):
             6. Assign the alert to a Alert Profile
             7. Assign the Alert Profile to the Server
             8. In advanced config, change:
-                  events:
+                events:
                   :disk_usage_gt_percent: 80
                 to:
                   events:
@@ -540,7 +540,7 @@ def test_accordion_after_condition_creation(appliance, condition_class):
         assignee: jdupuy
         casecomponent: Control
         caseimportance: medium
-        initialEstimate: 1/12hr
+        initialEstimate: 1/12h
 
     For this test, we must make a condition 'manually' and so that we can access the view
     during the condition creation.

@@ -60,6 +60,15 @@ custom_fields:
     - testtype
     - upstream
 
+blacklisted_tests:
+    - cfme/tests/openstack/
+    - cfme/tests/perf/
+    - cfme/tests/physical_infrastructure/
+    - cfme/tests/networks/nuage/
+    - cfme/tests/test_modules_importable
+    - hawkular
+    - \[.*rhos
+
 docstrings:
     required_fields:
         - assignee

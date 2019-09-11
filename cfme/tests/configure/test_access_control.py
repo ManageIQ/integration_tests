@@ -2163,7 +2163,7 @@ def test_add_project():
         assignee: apagac
         casecomponent: Configuration
         caseimportance: low
-        initialEstimate: 1/10
+        initialEstimate: 1/10h
         testSteps:
             1. Go to Configuration -> Access Control
             2. Select a Tenant
