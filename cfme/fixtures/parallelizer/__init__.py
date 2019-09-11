@@ -614,7 +614,7 @@ def report_collection_diff(slaveid, from_collection, to_collection):
         from_collection,
         to_collection,
         fromfile='master',
-        tofile=slaveid,
+        tofile=str(slaveid),
     )
 
     # diff is a line generator, stringify it
