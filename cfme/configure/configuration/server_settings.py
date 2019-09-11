@@ -403,12 +403,7 @@ class ServerInformation(Updateable, Pretty):
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
         view = navigate_to(self.appliance.server, 'Server')
-        try:
-            updated = view.smtp_server.fill(updates)
-        except Exception:
-            # workaround for 5.7 version as sometimes throws Exception
-            view = navigate_to(self.appliance.server, 'Server', use_resetter=True)
-            updated = view.smtp_server.fill(updates)
+        updated = view.smtp_server.fill(updates)
         if view.smtp_server.verify.active:
             view.smtp_server.verify.click()
         self._save_action(view, updated, reset)
