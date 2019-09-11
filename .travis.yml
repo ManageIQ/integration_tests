@@ -35,10 +35,9 @@ jobs:
       python: '3.7'
       env:
       install:
-      - pip3 install pre-commit flake8
-      - pip3 install polarion-docstrings
-      - pre-commit install-hooks
+      - pip install pre-commit flake8
       script:
+      - pre-commit clean
       - pre-commit run --all-files
       after_failure:
       - git diff
