@@ -2,6 +2,10 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [
+    test_requirements.provision
+]
+
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
@@ -21,7 +25,6 @@ def test_provision_bad_password():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_provision_request_approved_msg():
     """
@@ -84,7 +87,6 @@ def test_public_ip_reuse_azure():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_template_list_of_provider():
     """
@@ -104,7 +106,6 @@ def test_template_list_of_provider():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_vmware_default_placement_vmware():
     """
@@ -124,7 +125,6 @@ def test_vmware_default_placement_vmware():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_provision_with_storage_profile_vsphere():
     """
@@ -143,7 +143,6 @@ def test_provision_with_storage_profile_vsphere():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_vm_placement_with_duplicated_folder_name_vmware():
     """
@@ -195,7 +194,6 @@ def test_multiple_vm_provision_with_public_ip_azure():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_provision_request_info():
     """
@@ -325,7 +323,6 @@ def test_service_provision_managed_image_azure():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_admin_username_azure():
     """
@@ -371,7 +368,6 @@ def test_create_provisioning_dialog_without_dialog_type():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_auto_placement_provision_to_dvswitch_vlan_vmware():
     """
@@ -403,7 +399,6 @@ def test_auto_placement_provision_to_dvswitch_vlan_vmware():
 
 
 @pytest.mark.manual
-@test_requirements.provision
 @pytest.mark.tier(2)
 def test_add_multiple_iso_datastore():
     """

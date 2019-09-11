@@ -4,7 +4,8 @@ from cfme import test_requirements
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_dedicated_db_migration_local():
     """
@@ -35,7 +36,8 @@ def test_upgrade_dedicated_db_migration_local():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_single_inplace_ipv6():
     """
@@ -61,7 +63,8 @@ def test_upgrade_single_inplace_ipv6():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.restore
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_single_negative_v2_key_fix_auth():
     """
@@ -82,7 +85,8 @@ def test_upgrade_single_negative_v2_key_fix_auth():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_custom_css():
     """Test css customization"s function correctly after upgrades.
@@ -110,7 +114,8 @@ def test_upgrade_custom_css():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_custom_widgets():
     """
@@ -139,7 +144,7 @@ def test_upgrade_custom_widgets():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_rh_rhsm_sat6_cred_save_crud():
     """
@@ -166,7 +171,8 @@ def test_rh_rhsm_sat6_cred_save_crud():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_multi_ext_inplace():
     """
@@ -204,7 +210,7 @@ def test_upgrade_multi_ext_inplace():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_update_custom_widgets():
     """
@@ -232,7 +238,7 @@ def test_update_custom_widgets():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_rh_registration_rhsm_proxy_on_ipv6():
     """
@@ -257,7 +263,7 @@ def test_rh_registration_rhsm_proxy_on_ipv6():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_rh_registration_ui_proxy():
     """
@@ -280,7 +286,7 @@ def test_rh_registration_ui_proxy():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_update_webui_custom_css():
     """
@@ -320,7 +326,7 @@ def test_update_webui_custom_css():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_rh_registration_proxy_crud():
     """
@@ -349,7 +355,7 @@ def test_rh_registration_proxy_crud():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_rh_unregistration_ui():
     """
@@ -376,7 +382,8 @@ def test_rh_unregistration_ui():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_multi_replication_inplace():
     """
@@ -414,7 +421,7 @@ def test_upgrade_multi_replication_inplace():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_update_webui_ipv6():
     """
@@ -441,7 +448,7 @@ def test_update_webui_ipv6():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_upgrade_check_repo_names():
     """
@@ -465,6 +472,8 @@ def test_upgrade_check_repo_names():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@test_requirements.update
+@test_requirements.db_migration
 def test_upgrade_appliance_console_scap():
     """
     "ap" launches appliance_console, "" clears info screen, "14/17"
@@ -483,7 +492,8 @@ def test_upgrade_appliance_console_scap():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_multi_ha_inplace():
     """
@@ -507,7 +517,8 @@ def test_upgrade_multi_ha_inplace():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('5.10')
 def test_upgrade_multi_replication_inplace_55():
@@ -526,7 +537,8 @@ def test_upgrade_multi_replication_inplace_55():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('5.11')
 def test_upgrade_multi_replication_inplace_56():
@@ -545,7 +557,7 @@ def test_upgrade_multi_replication_inplace_56():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_update_webui_ha():
     """
@@ -570,7 +582,7 @@ def test_update_webui_ha():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_rh_rhsm_reregistering():
     """
@@ -601,7 +613,7 @@ def test_rh_rhsm_reregistering():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_update_webui_replication():
     """

@@ -297,6 +297,7 @@ def test_tag(provisioner, prov_data, provider, vm_name):
 
 @pytest.mark.rhv3
 @pytest.mark.meta(blockers=[1204115])
+@test_requirements.scheduled_ops
 def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     """ Tests provision scheduling.
 

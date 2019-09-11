@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
 from cfme.infrastructure.pxe import get_template_from_config
@@ -90,6 +91,7 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
+@test_requirements.provision
 def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioning, provider,
                            smtp_test, request):
     """Tests host provisioning

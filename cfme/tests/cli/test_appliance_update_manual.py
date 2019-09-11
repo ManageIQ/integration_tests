@@ -5,7 +5,7 @@ from cfme import test_requirements
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_upgrade_rubyrep_to_pglogical():
     """
@@ -33,7 +33,7 @@ def test_upgrade_rubyrep_to_pglogical():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
 @pytest.mark.tier(2)
 def test_update_webui_ipv6():
     """
@@ -60,7 +60,8 @@ def test_update_webui_ipv6():
 
 
 @pytest.mark.manual
-@test_requirements.upgrade
+@test_requirements.update
+@test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_single_inplace_ipv6():
     """

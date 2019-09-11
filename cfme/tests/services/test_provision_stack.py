@@ -200,6 +200,7 @@ def svc_cleanup(service):
     service.delete()
 
 
+@test_requirements.provision
 @pytest.mark.meta(blockers=[BZ(1754543)])
 def test_provision_stack(order_stack, stack_created):
     """Tests stack provisioning

@@ -4,6 +4,7 @@ import fauxfactory
 import pytest
 from wait_for import wait_for
 
+from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -15,6 +16,10 @@ from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers_by_class
 from cfme.utils.ssh import SSHClient
+
+pytestmark = [
+    test_requirements.restore
+]
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
