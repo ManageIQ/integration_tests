@@ -44,7 +44,7 @@ def klass(namespace):
 
 @pytest.fixture(scope="module")
 def request_cls(domain):
-    """This fixture copy the 'Request' class under custom domain"""
+    """This fixture copies the 'Request' class under custom domain"""
     original_class = (
         domain.parent.instantiate(name="ManageIQ")
         .namespaces.instantiate(name="System")
@@ -61,11 +61,11 @@ def custom_instance(request_cls):
     type of automate method."""
     def method(ruby_code):
         meth = request_cls.methods.create(
-            name="meth_{}".format(fauxfactory.gen_alphanumeric(4)), script=ruby_code
+            name=fauxfactory.gen_alphanumeric(start="meth_", length=6), script=ruby_code
         )
 
         instance = request_cls.instances.create(
-            name="inst_{}".format(fauxfactory.gen_alphanumeric(4)),
+            name=fauxfactory.gen_alphanumeric(start="inst_", length=6),
             fields={"meth1": {"value": meth.name}},
         )
         return instance
