@@ -438,6 +438,11 @@ class MigrationPlan(BaseEntity):
         view = navigate_to(self, "Complete")
         return view.plans_completed_list.is_plan_succeeded(self.name)
 
+    def delete_not_started_plan(self):
+        """ Find migration plan and delete."""
+        view = navigate_to(self, "NotStarted")
+        return view.plans_not_started_list.delete_plan(self.name)
+
     def get_plan_vm_list(self, wait_for_migration=True):
         """
         Navigates to plan details and waits for plan to complete
@@ -578,6 +583,7 @@ class AddMigrationPlan(CFMENavigateStep):
 
 
 @navigator.register(MigrationPlanCollection, "NotStarted")
+@navigator.register(MigrationPlan, "NotStarted")
 class NotStartedPlans(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 

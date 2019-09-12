@@ -454,7 +454,7 @@ def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert
 
 
 @pytest.mark.tier(2)
-def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider):
+def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider, request):
     """
     Test Migration plan with duplicate names
 
@@ -473,7 +473,7 @@ def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider):
     """
     migration_plan_collection = appliance.collections.v2v_migration_plans
     name = "plan_{}".format(fauxfactory.gen_alphanumeric())
-    migration_plan_collection.create(
+    migration_plan = migration_plan_collection.create(
         name=name,
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
@@ -481,8 +481,13 @@ def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider):
         vm_list=mapping_data_vm_obj_mini.vm_list,
         start_migration=False
     )
+
+    @request.addfinalizer
+    def _cleanup():
+        migration_plan.delete_not_started_plan()
     view = navigate_to(migration_plan_collection, "Add")
     view.general.infra_map.fill(mapping_data_vm_obj_mini.infra_mapping_data.get("name"))
     view.general.name.fill(name)
     view.general.description.fill("description")
     assert view.general.alert.read() == "Name {name} already exists".format(name=name)
+    view.cancel_btn.click()

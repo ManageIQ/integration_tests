@@ -4729,6 +4729,10 @@ class MigrationPlansList(Widget):
     ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR = (
         './/button[contains(@class,"btn btn-primary")' ' and text()="Archive"]'
     )
+    ITEM_DELETE_BUTTON_LOCATOR = (
+        './/div[contains(@class,"dropdown-kebab-pf")]/ul/li/a[normalize-space(.)="Delete plan"]'
+    )
+    ITEM_PROMPT_DELETE_BUTTON_LOCATOR = './/div[@role="document"]//button[@class="btn btn-primary"]'
     ITEM_MODAL_CANCEL_BUTTON_LOCATOR = './/button[contains(@class,"btn-cancel btn")]'
     ITEM_MODAL_TEXT_LOCATOR = './/div[ contains(@class,"modal-body")]'
     ITEM_SCHEDULE_BUTTON_LOCATOR = (
@@ -4831,12 +4835,28 @@ class MigrationPlansList(Widget):
         try:
             el = self._get_plan_element(plan_name)
             self.browser.click(self.ITEM_KEBAB_DROPDOWN_LOCATOR, parent=el)
-            self.browser.click(self.ITEM_ARCHIVE_BUTTON_LOCATOR, parent=el)
+            self.browser.click(self.ITEM_MODAL_BUTTON_LOCATOR, parent=el)
             if plan_name in self.root_browser.element(self.ITEM_MODAL_TEXT_LOCATOR).text:
                 if not cancel:
-                    self.root_browser.click(self.ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR)
+                    self.root_browser.click(self.ITEM_ARCHIVE_BUTTON_LOCATOR)
                 else:
                     self.root_browser.click(self.ITEM_MODAL_CANCEL_BUTTON_LOCATOR)
+            if plan_name not in self.all_items:
+                return True
+        except NoSuchElementException:
+            return False
+
+    def delete_plan(self, plan_name, cancel=False):
+        """Deletes the plan by its name"""
+        try:
+            el = self._get_plan_element(plan_name)
+            self.browser.click(self.ITEM_KEBAB_DROPDOWN_LOCATOR, parent=el)
+            if not cancel:
+                self.root_browser.click(self.ITEM_DELETE_BUTTON_LOCATOR)
+                del_btn = self.root_browser.element(self.ITEM_PROMPT_DELETE_BUTTON_LOCATOR)
+                del_btn.click()
+            else:
+                self.root_browser.click(self.ITEM_MODAL_CANCEL_BUTTON_LOCATOR)
             if plan_name not in self.all_items:
                 return True
         except NoSuchElementException:
