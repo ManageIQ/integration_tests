@@ -585,6 +585,43 @@ the ``-e, --extra`` parameter if the package is an non-imported package.
 This command will uninstall the package and remove it from ``template_non_import.txt``,
 ``template_scanned.txt``, and ``constraints.txt``, if it is in those files.
 
+**Examples**
+
+1. As an example, let's say Bob writes a new test, and wants to make use of the fancy new test module
+``autopass``. Bob's test case directly imports ``autopass``.
+Before writing his test case, Bob must install ``autopass`` in his virtual environment.
+
+He runs ``miq requirement add autopass``, to install the package and add it to ``template_scanned_imports.txt``
+He then runs ``miq requirement freeze`` to update ``requirements/frozen.txt`` with the new package.
+
+Upon writing his test case, Bob realizes that there is a nasty bug in ``autopass==4.2.2``, and he
+must impose a constraint on ``autopass``'s version. To do this, he must run
+
+``miq requirement add autopass==4.2.1``
+
+This will add the version constraint to ``requirements/constraints.txt``. Bob runs ``miq requirement freeze`` to
+then add this package (& version) to ``requirements/frozen.txt``. He would then write his test, commit and push
+his changes to a PR. Note that Bob could also use ``miq requirement upgrade autopass==4.2.1`` to downgrade
+his requirement. ``upgrade`` is really an alias to ``add``, and if no version is specified, it will
+upgrade an installed package to the latest version.
+
+
+2. Alice has written some fancy new flake8 plugin, ``autolint``. This plugin is not imported anywhere in the
+framework, but is used as part of ``pre-commit``. Since this package is not imported anywhere, she must
+add it as an extra package. This is done by,
+
+``miq requirement add autolint -e``, followed by, ``miq requirement freeze``
+
+If there is any version control needed, her process is the same as Bob's only that she must supply the ``-e``
+flag.
+
+If at any point, Alice wants to remove her package she would run
+``miq requirement remove autolint``, followed by ``miq requirement freeze``. If a new version of
+``autolint`` has come out that Alice wants to use, she can upgrade to the latest version by running:
+
+``miq requirement upgrade autolint -e``
+
+
 Bugzilla Guide
 ^^^^^^^^^^^^^^
 See the :doc:`./bugzilla`
