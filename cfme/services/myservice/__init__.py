@@ -3,7 +3,6 @@ import sentaku
 
 from cfme.common import Taggable
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance import ViaREST
 from cfme.utils.update import Updateable
 
 
@@ -27,6 +26,7 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
     reconfigure_service = sentaku.ContextualMethod()
     launch_vm_console = sentaku.ContextualMethod()
     service_power = sentaku.ContextualMethod()
+    add_resource_generic_object = sentaku.ContextualMethod()
 
     def __init__(self, appliance, name=None, description=None, vm_name=None):
         self.appliance = appliance
@@ -36,19 +36,11 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
         self.parent = self.appliance.context
 
     @property
-    def rest_obj(self):
+    def rest_api_entity(self):
         return self.appliance.rest_api.collections.services.find_by(name=self.name)[0]
 
-    def add_resource_generic_object(self, gen_obj):
-        """ Add a generic object instance to the service """
-        with self.appliance.context.use(ViaREST):
-            self.rest_obj.action.add_resource(
-                resource=self.appliance.rest_api.collections.generic_objects.get(
-                    name=gen_obj.name
-                )._ref_repr()
-            )
 
-
-from cfme.services.myservice import ui, ssui  # NOQA last for import cycles
+from cfme.services.myservice import ui, ssui, rest  # NOQA last for import cycles
 importscan.scan(ui)
 importscan.scan(ssui)
+importscan.scan(rest)
