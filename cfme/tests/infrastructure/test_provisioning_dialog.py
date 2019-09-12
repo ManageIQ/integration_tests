@@ -423,6 +423,7 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
     """
     template_name = provisioning.get('template_2_nics', None)
     prov_data['catalog']['vm_name'] = vm_name
+    prov_data['network']['vlan'] = '<Use template nics>'
 
     vm = provisioner(template_name, prov_data)
 
