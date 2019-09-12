@@ -325,8 +325,8 @@ def test_generic_object_with_service_button(appliance, generic_object, button_wi
     """
     # add generic object to service
     myservice = MyService(appliance, name=generic_object.associations.get("services")[0].name)
-    myservice.add_resource_generic_object(generic_object)
-
+    with appliance.context.use(ViaREST):
+        myservice.add_resource_generic_object(generic_object)
     # now navigate to the details of the generic_object
     view = navigate_to(generic_object, "MyServiceDetails")
     view.toolbar.button(button_with_dialog.name).custom_button.click()
@@ -337,6 +337,6 @@ def test_generic_object_with_service_button(appliance, generic_object, button_wi
 
     # now for the actual test, make sure after hitting submit we're on the correct page
     try:
-        view = generic_object.create_view(MyServiceGenericObjectInstanceView, wait=10)
+        generic_object.create_view(MyServiceGenericObjectInstanceView, wait=10)
     except TimedOutError:
         pytest.fail("Could not wait for service's generic object view to displayed.")
