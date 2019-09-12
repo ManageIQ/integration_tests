@@ -9,7 +9,6 @@ from cfme import test_requirements
 from cfme.intelligence.reports.schedules import ScheduleDetailsView
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.path import data_path
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
@@ -135,7 +134,6 @@ def test_reports_schedule_crud(schedule_data, appliance, request):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1667064)])
 def test_menuwidget_crud(appliance, request):
     """
     Bugzilla:
@@ -170,7 +168,6 @@ def test_menuwidget_crud(appliance, request):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1667064)])
 def test_reportwidget_crud(appliance, request):
     """
     Bugzilla:
@@ -204,7 +201,6 @@ def test_reportwidget_crud(appliance, request):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
 def test_chartwidget_crud(appliance, request):
     """
     Polarion:
@@ -232,7 +228,7 @@ def test_chartwidget_crud(appliance, request):
 
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1653796), BZ(1667064)])
+@pytest.mark.ignore_stream("5.11", "upstream")  # BZ 1728328
 def test_rssfeedwidget_crud(appliance, request):
     """
     Polarion:
@@ -271,7 +267,6 @@ def test_rssfeedwidget_crud(appliance, request):
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1667064)])
 def test_dashboard_crud(appliance, request):
     """
     Polarion:

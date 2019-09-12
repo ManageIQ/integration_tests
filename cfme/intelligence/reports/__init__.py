@@ -10,6 +10,7 @@ from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import MultiBoxSelect
 
@@ -28,6 +29,20 @@ class CloudIntelReportsView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return self.in_intel_reports and self.configuration.is_displayed
+
+    def correct_tree_item_selected(self):
+        # The bug is currently targeted only to 5.10, but we have the
+        # problem on 5.11 as well, so we probably need to use
+        # forced_streams.
+        if BZ(1667064, forced_streams=['5.11']).blocks:
+            return True
+
+        return self.dashboards.tree.currently_selected == [
+            "All Dashboards",
+            "All Groups",
+            self.context["object"].group,
+            self.context["object"].name
+        ]
 
     @View.nested
     class saved_reports(Accordion):  # noqa
