@@ -30,29 +30,6 @@ def test_osp_flavors_can_be_selected_creating_migration_plan():
 
 
 @pytest.mark.tier(2)
-def test_osp_creating_multiple_migration_plans_with_same_name():
-    """
-    title: OSP: Test duplicate names in creating migration plan
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        testSteps:
-            1. Create infrastructure mapping for Vmware to OSP
-            2. Create two migration plan with same name
-        expectedResults:
-            1. Mapping created and visible in UI
-            2. Duplicate migration plan name should not be allowed.
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_osp_if_no_password_is_exposed_in_logs_during_migration():
     """
     title: OSP: Test if no password is exposed in logs during migration

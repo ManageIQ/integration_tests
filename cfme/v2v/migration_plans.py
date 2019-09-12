@@ -152,6 +152,7 @@ class AddMigrationPlanView(View):
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description = TextInput(name="description")
         choose_vm = RadioGroup('.//div[contains(@id,"vm_choice_radio")]')
+        alert = Text('.//div[contains(@class, "alert")]')
         fill_strategy = WaitFillViewStrategy("15s")
 
         @property
@@ -437,6 +438,11 @@ class MigrationPlan(BaseEntity):
         view = navigate_to(self, "Complete")
         return view.plans_completed_list.is_plan_succeeded(self.name)
 
+    def delete_not_started_plan(self):
+        """ Find migration plan and delete."""
+        view = navigate_to(self, "NotStarted")
+        return view.plans_not_started_list.delete_plan(self.name)
+
     def get_plan_vm_list(self, wait_for_migration=True):
         """
         Navigates to plan details and waits for plan to complete
@@ -577,6 +583,7 @@ class AddMigrationPlan(CFMENavigateStep):
 
 
 @navigator.register(MigrationPlanCollection, "NotStarted")
+@navigator.register(MigrationPlan, "NotStarted")
 class NotStartedPlans(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
