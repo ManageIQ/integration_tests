@@ -58,34 +58,6 @@ def test_automation_request_task():
 
 @pytest.mark.manual
 @test_requirements.rest
-def test_edit_provider_request_task():
-    """
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        initialEstimate: 1/4h
-        casecomponent: Rest
-        testSteps:
-            1. Create a provision request.
-            2. Edit the provision request task:
-                POST /api/provision_requests/:id/request_tasks/:request_task_id
-                {
-                "action" : "edit",
-                "resource" : {
-                    "options" : {
-                    "request_param_a" : "value_a",
-                    "request_param_b" : "value_b"
-                    }
-                }
-        expectedResults:
-            1.
-            2. Task must be edited successfully.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
 def test_provider_specific_vm():
     """
     Polarion:
