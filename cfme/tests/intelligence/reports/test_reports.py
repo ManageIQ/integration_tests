@@ -13,7 +13,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
-from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
@@ -143,14 +142,13 @@ def rbac_api(appliance, request):
 # =========================================== Tests ===============================================
 
 
-@test_requirements.rest
 @pytest.mark.tier(1)
 def test_non_admin_user_reports_access_rest(appliance, request, rbac_api):
     """ This test checks if a non-admin user with proper privileges can access all reports via API.
 
     Polarion:
         assignee: pvala
-        casecomponent: Reporting
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/12h
         tags: report
@@ -417,7 +415,9 @@ def test_report_fullscreen_enabled(request, tenant_report, set_and_get_tenant_qu
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1504010])
-@pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY, required_flags=["provision"])
+@pytest.mark.provider(
+    [BaseProvider], selector=ONE_PER_CATEGORY, required_flags=["provision"]
+)
 def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
     """
     Polarion:
@@ -439,19 +439,19 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
     Bugzilla:
         1504010
     """
-    subject_vm = appliance.rest_api.collections.vms.get(name=vm)
-    subject_vm.action.stop()
+    subject_vm = appliance.provider_based_collection(provider).instantiate(
+        name=vm, provider=provider
+    )
+    assert subject_vm.rest_api_entity.exists
+
+    # power off the VM
+    subject_vm.rest_api_entity.action.stop()
     assert_response(appliance)
 
-    # Wait for VM power state to change
-    subject_vm.reload()
-    wait_for(
-        lambda: subject_vm.power_state == "off",
-        fail_func=subject_vm.reload,
-        timeout=1200,
-        delay=45,
-    )
+    # wait until VM's power state changes
+    assert subject_vm.wait_for_power_state_change_rest("off")
 
+    # queue the report
     saved_report = appliance.collections.reports.instantiate(
         type="Operations",
         subtype="Virtual Machines",
