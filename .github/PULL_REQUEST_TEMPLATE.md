@@ -27,13 +27,14 @@ Note: You can introduce Screenshots/Gifs for providing more information.
 - It's an internal RH service and only runs against signed whitelisted commits.
 - It runs against a single appliance.
 - Need to provide specific pytest expression else default it will run smoke tests [-m smoke].
+- DOUBLE CURLY BRACES REQUIRED. Examples are in single to not get picked
 
 Some examples are:
-- {{pytest: cfme/tests/test_foo_file.py -v}}
-- {{pytest: cfme/tests/test_foo_file.py -k "test_foo_1 or test_foo_2" -v}}
-- {{pytest: cfme/tests/ -k "test_foo_1 or test_foo_2 or test_foo_3" -v}}
-- {{pytest: cfme/tests/test_foo_file.py --use-provider rhv43 -v}}
-- {{pytest: cfme/tests/test_foo_file.py --long-running -v}}
+- {pytest: cfme/tests/test_foo_file.py -v}
+- {pytest: cfme/tests/test_foo_file.py -k "test_foo_1 or test_foo_2" -v}
+- {pytest: cfme/tests/ -k "test_foo_1 or test_foo_2 or test_foo_3" -v}
+- {pytest: cfme/tests/test_foo_file.py --use-provider rhv43 -v}
+- {pytest: cfme/tests/test_foo_file.py --long-running -v}
 
 Notes:
 - If PRT fails other than PR purpose/intent; please add a respective comment.
