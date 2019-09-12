@@ -938,17 +938,10 @@ class InfraVm(VM):
     def genealogy(self):
         return Genealogy(self)
 
-    def get_vm_via_rest(self):
-        return self.appliance.rest_api.collections.vms.get(name=self.name)
-
-    def get_collection_via_rest(self):
-        return self.appliance.rest_api.collections.vms
-
     @property
     def cluster_id(self):
         """returns id of cluster current vm belongs to"""
-        vm = self.get_vm_via_rest()
-        return int(vm.ems_cluster_id)
+        return int(self.rest_api_entity.ems_cluster_id)
 
     @attr.s
     class CfmeRelationship(object):

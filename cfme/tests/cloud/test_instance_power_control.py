@@ -95,7 +95,7 @@ def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900
 
 def wait_for_pwr_state_change(instance, state_change_time, timeout=720):
     def _wait_for():
-        vm = instance.get_vm_via_rest()
+        vm = instance.rest_api_entity
         if vm.state_changed_on != state_change_time:
             return True
 
@@ -557,7 +557,7 @@ class TestInstanceRESTAPI(object):
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-        vm = testing_instance.get_vm_via_rest()
+        vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.stop()
         else:
@@ -581,7 +581,7 @@ class TestInstanceRESTAPI(object):
         """
         testing_instance.wait_for_instance_state_change(
             desired_state=testing_instance.STATE_OFF, timeout=1200)
-        vm = testing_instance.get_vm_via_rest()
+        vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.start()
         else:
@@ -604,7 +604,7 @@ class TestInstanceRESTAPI(object):
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-        vm = testing_instance.get_vm_via_rest()
+        vm = testing_instance.rest_api_entity
         state_change_time = vm.state_changed_on
         if from_detail:
             vm.action.reboot_guest()
@@ -616,7 +616,7 @@ class TestInstanceRESTAPI(object):
         # We may also miss a quick reboot during the wait_for.
         # Just check for when the state last changed
         wait_for_pwr_state_change(testing_instance, state_change_time)
-        state_change_time = testing_instance.get_vm_via_rest().state_changed_on
+        state_change_time = testing_instance.rest_api_entity.state_changed_on
         # If the VM is not on after this state change, wait for another
         if vm.power_state != testing_instance.STATE_ON:
             wait_for_pwr_state_change(testing_instance, state_change_time)
@@ -639,7 +639,7 @@ class TestInstanceRESTAPI(object):
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-        vm = testing_instance.get_vm_via_rest()
+        vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.reset()
         else:
@@ -666,7 +666,7 @@ class TestInstanceRESTAPI(object):
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-        vm = testing_instance.get_vm_via_rest()
+        vm = testing_instance.rest_api_entity
 
         if from_detail:
             vm.action.suspend()
@@ -699,7 +699,7 @@ class TestInstanceRESTAPI(object):
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-        vm = testing_instance.get_vm_via_rest()
+        vm = testing_instance.rest_api_entity
 
         if from_detail:
             vm.action.pause()
@@ -730,7 +730,7 @@ class TestInstanceRESTAPI(object):
             initialEstimate: 1/4h
         """
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-        vm = testing_instance.get_vm_via_rest()
+        vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.terminate()
         else:
