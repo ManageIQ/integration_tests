@@ -73,7 +73,7 @@ def control_policy(appliance, new_instance):
 
 @pytest.fixture(scope='function')
 def azone(new_instance, appliance):
-    zone_id = new_instance.get_vm_via_rest().availability_zone_id
+    zone_id = new_instance.rest_api_entity.availability_zone_id
     rest_zones = new_instance.appliance.rest_api.collections.availability_zones
     zone_name = next(zone.name for zone in rest_zones if zone.id == zone_id)
     inst_zone = appliance.collections.cloud_av_zones.instantiate(name=zone_name,

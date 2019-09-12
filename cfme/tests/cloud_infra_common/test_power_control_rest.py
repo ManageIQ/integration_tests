@@ -37,18 +37,11 @@ def vm_obj(provider, setup_provider, small_template, vm_name):
 
 
 def wait_for_vm_state_change(vm_obj, state):
-    vm = vm_obj.get_vm_via_rest()
     if vm_obj.provider.one_of(GCEProvider, EC2Provider, SCVMMProvider):
         num_sec = 4000  # extra time for slow providers
     else:
         num_sec = 1200
-
-    def _state_changed():
-        vm.reload()
-        return vm.power_state == state
-    wait_for(_state_changed, num_sec=num_sec, delay=45, silent_failure=True,
-        message="Wait for VM state `{}` (current state: {})".format(state, vm.power_state),
-        fail_func=vm_obj.refresh_relationships)
+    vm_obj.wait_for_power_state_change_rest(desired_state=state, timeout=num_sec)
 
 
 def verify_vm_power_state(vm, state):
