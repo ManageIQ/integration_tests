@@ -288,19 +288,32 @@ def test_update_webui_custom_css():
         1553841
 
     Test css customization"s function correctly after webui update.
+    Old bugzilla, css customisation is not possible to be done in production,
+    but custom.css file can be changed
 
     Polarion:
         assignee: jhenner
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
-        setup: provision appliance
-               add custom css file
-               add repo file to /etc/yum.repos.d/
-               add RHSM settings
-               update through webui
-               check webui is available
-               check customization"s still work
+
+        setup:     provision appliance
+
+        testSteps:
+                1. ssh to the appliance
+                2. change custom CSS file - you can run command:
+                    echo 'body {background-color: #FF00EF;}' >> /var/www/miq/vmdb/public/custom.css
+                3. add repo file to /etc/yum.repos.d/
+                4. add RHSM settings
+                5. update through webui
+
+        expectedResults:
+                1.
+                2.
+                3.
+                4.
+                5. webui is available and customizations still work
+
         startsin: 5.9
     """
     pass
