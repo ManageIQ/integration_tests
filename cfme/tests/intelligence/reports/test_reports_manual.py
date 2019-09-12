@@ -260,3 +260,130 @@ def test_reports_online_vms():
         1504010
     """
     pass
+
+
+@test_requirements.report
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1743579])
+def test_created_on_time_report_field():
+    """
+    Bugzilla:
+        1743579
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup:
+            1. Add a provider and provision a VM
+        testSteps:
+            1. Create a report based on 'VMs and Instances' with [Created on Time, Name] field.
+        expectedResults:
+            1. `Created on Time` field column must not be empty for the recently created VM.
+    """
+    pass
+
+
+@test_requirements.report
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1741588])
+def test_case_insensitive_report_filtering():
+    """
+    Bugzilla:
+        1741588
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup:
+            1. Queue a report based on VMs and Instances(make sure it is not empty).
+            2. Filter the report with `VM Name` - case exactly matching the subject VM name
+                and note the result.
+            3. Filter the report with `VM Name` - case not matching the subject VM name
+                and note the result.
+        testSteps:
+            1. Compare both the results.
+        expectedResults:
+            1. Both the results must be same.
+    """
+    pass
+
+
+@test_requirements.report
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1725142])
+def test_reports_service_unavailable():
+    """
+    Bugzilla:
+        1725142
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup:
+            1. Load customer database on the appliance.
+        testSteps:
+            1. Navigate to Reports.
+            2. Navigate to `Details` page of the report with >31k rows.
+        expectedResults:
+            1. Reports must be accessible, there should be no 503 service unavailable error.
+            2. Details page must be accessible.
+    """
+    pass
+
+
+@pytest.mark.ignore_stream("5.10")
+@test_requirements.report
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1714197])
+def test_optimization_reports():
+    """
+    Bugzilla:
+        1714197
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/2h
+        startsin: 5.11
+        testSteps:
+            1. Navigate to Overview > Optimization.
+            2. Queue all the 7 parametrized reports and check if it exists.
+        expectedResults:
+            1.
+            2. Reports must exist.
+    """
+    pass
+
+
+@pytest.mark.ignore_stream("5.10")
+@test_requirements.report
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1743651])
+def test_reports_timelines_tab():
+    """
+    Bugzilla:
+        1743651
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: low
+        initialEstimate: 1/2h
+        startsin: 5.11
+        testSteps:
+            1. Copy a report based on timeline and check if the Timelines tab is visible.
+        expectedResults:
+            1. Timelines tab must not be visible.
+    """
+    pass
