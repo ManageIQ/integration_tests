@@ -1,9 +1,11 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
+pytestmark = [test_requirements.filtering]
 filter_value = 'beautifulpotato'
 filter_option = "Cloud Volume : Name"
 
