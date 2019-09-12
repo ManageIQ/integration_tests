@@ -26,11 +26,11 @@ The Workflow
   shut down
 
 """
-import difflib
 import json
 import os
 import signal
 import subprocess
+import sys
 from collections import defaultdict
 from collections import deque
 from collections import namedtuple
@@ -45,6 +45,7 @@ import attr
 import pytest
 import zmq
 from _pytest import runner
+from deepdiff import DeepDiff
 
 from cfme.fixtures import terminalreporter
 from cfme.fixtures.parallelizer import remote
@@ -123,11 +124,12 @@ class SlaveDetail(object):
         devnull = open(os.devnull, 'w')
         # worker output redirected to null; useful info comes via messages and logs
         self.process = subprocess.Popen([
-            'python', remote.__file__,
+            sys.executable, remote.__file__,
             '--worker', self.id,
             '--appliance', self.appliance.as_json,
             '--ts', conf.runtime['env']['ts'],
-            '--config', json.dumps(self.worker_config)
+            '--config', json.dumps(self.worker_config),
+
 
         ], stdout=devnull)
         at_exit(self.process.kill)
@@ -175,7 +177,6 @@ class ParallelSession(object):
         self.sock.bind(zmq_endpoint)
 
         # clean out old slave config if it exists
-
         self.worker_config = {
             'args': self.config.args,
             'options': dict(  # copy to avoid aliasing
@@ -199,7 +200,7 @@ class ParallelSession(object):
         #      firing up the debugger and doing it manually. This is making room for
         #      planned future abilities to dynamically add and remove slaves via automation
 
-        # check for unexpected slave shutdowns and redistribute tests
+        # check for unexpected slave shutdowns and redistribute testsslavein
         for slave in self.slaves.values():
             returncode = slave.poll()
             if returncode:
@@ -361,10 +362,12 @@ class ParallelSession(object):
         tests_len = len(tests)
         self.sent_tests += tests_len
         if tests:
-            self.print_message('sent {} tests to {} ({}/{}, {:.1f}%)'.format(
-                tests_len, slave.id, self.sent_tests, collect_len,
-                self.sent_tests * 100. / collect_len
-            ))
+            test_perc = self.sent_tests * 100 / collect_len
+            self.print_message(
+                f'sent {tests_len} tests '
+                f'to {slave.id} \n'
+                f'Total sent: {self.sent_tests} of {collect_len}, ({test_perc:.1f}%)'
+            )
         return tests
 
     def pytest_sessionstart(self, session):
@@ -609,17 +612,8 @@ def report_collection_diff(slaveid, from_collection, to_collection):
         # Well, that was easy.
         return
 
-    # diff the two, so we get some idea of what's wrong
-    diff = difflib.unified_diff(
-        from_collection,
-        to_collection,
-        fromfile='master',
-        tofile=str(slaveid),
-    )
-
-    # diff is a line generator, stringify it
-    diff = '\n'.join([line.rstrip() for line in diff])
-    return '{slaveid} diff:\n{diff}\n'.format(slaveid=slaveid, diff=diff)
+    deep = DeepDiff(from_collection, to_collection, ignore_order=True)
+    return f'{slaveid} diff:\n{deep}\n'
 
 
 class TerminalDistReporter(object):

@@ -145,10 +145,10 @@ class ProviderFilter(object):
             allowed_flags = set(defined_flags) - set(excluded_flags)
 
             if set(test_flags) - allowed_flags:
-                logger.info("Filtering Provider %s out because it does not have the right flags, "
-                            "%s does not contain %s",
-                            provider.name, list(allowed_flags),
-                            list(set(test_flags) - allowed_flags))
+                logger.debug("Filtering Provider %s out because it does not have the right flags, "
+                             "%s does not contain %s",
+                             provider.name, list(allowed_flags),
+                             list(set(test_flags) - allowed_flags))
                 return False
         return True
 
