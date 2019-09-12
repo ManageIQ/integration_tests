@@ -263,3 +263,65 @@ def test_retire_multiple_services():
             4. Services should retire and vms as well
     """
     pass
+
+
+@pytest.mark.meta(coverage=[1718102])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_load_multiple_services():
+    """
+    Bugzilla:
+        1718102
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Create catalog and catalog item
+            2. Order the catalog items
+            3. create 999 services from rails "999.times {Service.first.dup.save}"
+            4. Go to My services
+            5. Refresh the page and load the 1000 services
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. The page should load in less than 10 seconds
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1737559])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_load_service_with_button():
+    """
+    Bugzilla:
+        1737559
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Import Datastore and dialog
+            2. Create button with above dialog
+            3. Create catalog item
+            4. Order the service
+            5. Go to My services
+            6. Click on created service
+            7. load the service with a button
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7. Service should load without an error in log
+    """
+    pass

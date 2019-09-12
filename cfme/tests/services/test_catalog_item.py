@@ -462,3 +462,175 @@ def test_service_provisioning_email(request, appliance, catalog_item):
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert result.validate(wait="60s")
+
+
+@pytest.mark.meta(coverage=[1746344])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_assigned_unassigned_catalog_items():
+    """
+    Bugzilla:
+        1746344
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        caseimportance: medium
+        initialEstimate: 1/16h
+        startsin: 5.10
+        testSteps:
+            1. Create two or more Catalog items
+            2. Go to Services->Catalogs->Catalogs
+            3. Choose Configuration->Add a new Catalog
+            4. Select several items in unassigned catalog items list using shift+arrows on keyboard
+            5. Click "Move selected items right" button
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Selected items should be moved
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1744459])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_reorder_buttons_in_catalog_items():
+    """
+    Bugzilla:
+        1744459
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        caseimportance: medium
+        initialEstimate: 1/16h
+        startsin: 5.10
+        testSteps:
+            1. Add a catalog item
+            2. Add a few custom buttons from its summary from the toolbar (Configuration)
+            3. Select the actions treenode
+            4. In the toolbar select Configuration -> Reorder
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Cancel/save button should be present on the bottom
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1740899])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_dialog_dropdown_int_required():
+    """
+    Bugzilla:
+        1740899
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.10
+        testSteps:
+            1. Create a dialog dropdown that is required with a value type of integer
+            2. Order a catalog item that uses that dialog
+            3. Make a selection for the dropdown
+        expectedResults:
+            1.
+            2.
+            3. The field should validate successfully
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1740814])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_change_ansible_tower_job_template():
+    """
+    Bugzilla:
+        1740814
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        caseimportance: medium
+        initialEstimate: 1/16h
+        startsin: 5.11
+        testSteps:
+            1. Add a Ansible Tower provider
+            2. Add an Ansible Tower Catalog Item with 'Display in Catalog' Checked
+            3. Edit the Catalog item, change the Tower job template
+        expectedResults:
+            1.
+            2.
+            3. 'Display in Catalog' remains checked after template change
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1602072])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_catalog_item_price_currency():
+    """
+    Bugzilla:
+        1602072
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.11
+        testSteps:
+            1. Add a generic item with price and currency
+            2. Add an ansible playbook item with price and currency
+            3. Add generic item with currency but no price
+            4. Add generic item with currency but non-float price
+            5. Add ansible playbook item with currency but no price
+            6. Add Ansible Playbook item with currency but non-float price
+            7. Unset currency in generic
+        expectedResults:
+            1. Able to add price and currency
+            2. Able to add price and currency
+            3. Validation should be fail for generic item with currency but no price
+            4. Validation should be fail for generic item with currency but non-float price
+            5. Validation Should be fail for ansible playbook item with currency but no price
+            6. Validation should be fail for ansible playbook item with currency but non-float price
+            7. Able to unset currency in generic catalog item
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1740399])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_copy_catalog_item_with_tags():
+    """
+    Bugzilla:
+        1740399
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog
+            2. Create catalog item
+            3. Assign some tags from Policy > Edit Tags
+            4. Make a copy of catalog item
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Tags to be copied with catalog item
+    """
+    pass
