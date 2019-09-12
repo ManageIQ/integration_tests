@@ -26,6 +26,7 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
     reconfigure_service = sentaku.ContextualMethod()
     launch_vm_console = sentaku.ContextualMethod()
     service_power = sentaku.ContextualMethod()
+    add_resource_generic_object = sentaku.ContextualMethod()
 
     def __init__(self, appliance, name=None, description=None, vm_name=None):
         self.appliance = appliance
@@ -34,7 +35,12 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
         self.vm_name = vm_name
         self.parent = self.appliance.context
 
+    @property
+    def rest_api_entity(self):
+        return self.appliance.rest_api.collections.services.find_by(name=self.name)[0]
 
-from cfme.services.myservice import ui, ssui  # NOQA last for import cycles
+
+from cfme.services.myservice import ui, ssui, rest  # NOQA last for import cycles
 importscan.scan(ui)
 importscan.scan(ssui)
+importscan.scan(rest)
