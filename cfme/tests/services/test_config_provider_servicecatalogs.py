@@ -125,3 +125,27 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type):
     assert order_request.is_succeeded(method='ui'), msg
     myservice = MyService(appliance, catalog_item.name)
     myservice.retire()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.ignore_stream('upstream')
+def test_check_tower_job_status(appliance, catalog_item, request):
+    """Tests order Ansible Tower catalog item and check status on Jobs page
+    Metadata:
+        test_flag: provision
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Services
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    service_catalogs.order()
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
+    cells = {'Description': catalog_item.name}
+
+    order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
+    order_request.wait_for_request(method='ui')
+    msg = "Ansible Tower Job failed"
+    assert appliance.collections.ansible_tower_jobs.is_job_finished(), msg
