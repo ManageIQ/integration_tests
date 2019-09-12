@@ -770,3 +770,112 @@ def test_service_dialog_expression_method():
             5. Expression method should work
     """
     pass
+
+
+@pytest.mark.meta(coverage=[1729379, 1749650])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_service_dynamic_dialog_tagcontrol():
+    """
+    Bugzilla:
+        1729379
+        1749650
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Import datastore and import dialog
+            2. Add catalog item with above dialog
+            3. Navigate to order page of service
+            4. In service order page
+            5. Choose a value from the tag control drop down
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Tag control drop down should show correct values
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1744413])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_datepicker_in_service_request():
+    """
+    Bugzilla:
+        1744413
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Create Dialog with Date picker
+            2. Create Service with the dialog and order the service
+            3. Mention a date for the date picker
+            4. Navigate to Services -> Requests -> [your_service] -> Dialog Options
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Date picker should show correct selected dates
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1740823])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_dialog_dropdown_integer_required():
+    """
+    Bugzilla:
+        1740823
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.10
+        testSteps:
+            1. Create a multi select dropdown using the default "One, Two, Three" values.
+            2. Add dialog to catalog item
+            3. Order the new item
+            4. Go to your multi select dropdown and choose the value "<None>"
+            5. Select additional options, notice that displayed list of choices includes "<None>"
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. "<None>" should not be displayed in the list of selected options
+    """
+    pass
+
+
+@pytest.mark.meta(coverage=[1720617])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_edit_import_dialog():
+    """
+    Bugzilla:
+        1720617
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.10
+        testSteps:
+            1. Import import the dialog
+            2. Edit the above dialog
+        expectedResults:
+            1.
+            2. Imported Dialog should be edited
+    """
+    pass

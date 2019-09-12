@@ -38,3 +38,30 @@ def test_copy_request_bz1194479(appliance, provider, catalog_item, request):
                                                                  partial_check=True)
     service_request.wait_for_request()
     assert navigate_to(service_request, 'Details')
+
+
+@pytest.mark.meta(coverage=[1749953])
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_services_requester_dropdown_sorting():
+    """
+    Bugzilla:
+        1749953
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Create catalog
+            2. Order the catalog items
+            3. Go to Services -> Requests
+            4. click on the Requester dropdown
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Requester dropdown should Be Organized alphabetically
+    """
+    pass

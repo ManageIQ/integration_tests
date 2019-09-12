@@ -328,3 +328,26 @@ def test_service_dialog_check_on_ssui():
             6. Automation code shouldn't load when opening a service
     """
     pass
+
+
+@pytest.mark.meta(coverage=[1743734])
+@pytest.mark.manual
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_list_supported_languages_on_ssui():
+    """
+    Bugzilla:
+        1743734
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.11
+        caseimportance: medium
+        casecomponent: SelfServiceUI
+        initialEstimate: 1/16h
+        testSteps:
+            1. Log into SSUI, see what languages are available
+        expectedResults:
+            1. Service UI should list the Supported languages:
+    """
+    pass
