@@ -31,7 +31,7 @@ class CloudIntelReportsView(BaseLoggedInPage):
         return self.in_intel_reports and self.configuration.is_displayed
 
     def correct_tree_item_selected(self):
-        # The bug is currently targetted only to 5.10, but we have the
+        # The bug is currently targeted only to 5.10, but we have the
         # problem on 5.11 as well, so we probably need to use
         # forced_streams.
         if BZ(1667064, forced_streams=['5.11']).blocks:
