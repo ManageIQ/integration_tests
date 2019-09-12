@@ -10,6 +10,7 @@ from widgetastic.widget import ColourInput
 from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Select
+from widgetastic.widget import Table
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
@@ -640,6 +641,7 @@ class ButtonGroupDetailView(AutomateCustomizationView):
         text_filter=lambda text: re.sub(r"\s+Display on Button\s*$", "", text),
     )
     hover = SummaryFormItem("Basic Information", "Hover Text")
+    assigned_buttons = Table('//h3[contains(text(), "Basic Information")]/following-sibling::table')
 
     @property
     def is_displayed(self):
@@ -742,6 +744,31 @@ class ButtonGroup(BaseEntity, Updateable):
     assign_buttons = attr.ib(default=None)
 
     _collections = {"buttons": ButtonCollection}
+
+    @classmethod
+    def from_id(cls, collection, id):
+        """Constructor for ButtonGroup
+        Args:
+            collection: parent
+            id: rest entity id
+        """
+        from cfme.tests.automate.custom_button import CLASS_MAP
+        gp, *_ = collection.appliance.rest_api.collections.custom_button_sets.find_by(id=id)
+        rest_btn_type = gp.set_data.get("applies_to_class")
+
+        for maps in CLASS_MAP.values():
+            if maps.get("rest") == rest_btn_type:
+                ui_btn_type = maps.get("ui")
+                break
+
+        return cls(
+            collection,
+            text=gp.name.split("|")[0],
+            hover=gp.description,
+            type=ui_btn_type,
+            display=gp.set_data.get("display"),
+            image=gp.set_data.get("button_icon"),
+        )
 
     @property
     def buttons(self):
@@ -848,6 +875,13 @@ class ButtonGroupCollection(BaseCollection):
             assign_buttons=assign_buttons,
         )
 
+    def all(self):
+        """return all available custom button groups"""
+        return [
+            self.ENTITY.from_id(self, gp.id)
+            for gp in self.appliance.rest_api.collections.custom_button_sets.all
+        ]
+
     def delete_all(self):
         """This method will help to clean all custom button groups (rest)"""
         for btn_grp in self.appliance.rest_api.collections.custom_button_sets.all:
@@ -864,6 +898,7 @@ class ButtonGroupAll(CFMENavigateStep):
 
 
 @navigator.register(ButtonGroupCollection, "ObjectType")
+@navigator.register(ButtonGroup, "ObjectType")
 class ButtonGroupObjectType(CFMENavigateStep):
     VIEW = ButtonGroupObjectTypeView
     prerequisite = NavigateToAttribute("appliance.server", "AutomateCustomization")
