@@ -382,17 +382,18 @@ def test_service_reconfigure_in_distributed_environment():
     pass
 
 
-@pytest.mark.meta(coverage=[1678149])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1678149])
+@pytest.mark.ignore_stream("5.10")
 @pytest.mark.tier(2)
-def test_copy_catalog_item():
+def test_copy_catalog_item(request, generic_catalog_item):
     """
     Bugzilla:
         1678149
+
     Polarion:
         assignee: nansari
         casecomponent: Services
-        initialEstimate: 1/4h
+        initialEstimate: 1/16h
         startsin: 5.11
         testSteps:
             1. Create catalog
@@ -403,7 +404,12 @@ def test_copy_catalog_item():
             2.
             3. Able to copy catalog item
     """
-    pass
+    # copy catalog item
+    new_cat_item = generic_catalog_item.copy()
+    request.addfinalizer(new_cat_item.delete_if_exists)
+
+    # check for catalog item
+    assert new_cat_item.exists
 
 
 @pytest.mark.meta(coverage=[1678123])
