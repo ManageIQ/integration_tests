@@ -121,6 +121,7 @@ class SlaveManager(object):
 
         """
         self.log.info("entering runtest loop")
+
         for item, nextitem in self._test_generator():
             if self.config.option.collectonly:
                 self.message('{}'.format(item.nodeid))
@@ -145,7 +146,10 @@ class SlaveManager(object):
 
     def _test_generator(self):
         node_iter = self._iter_nodes()
-        run_node = next(node_iter)
+        try:
+            run_node = next(node_iter)
+        except StopIteration:
+            return []
 
         for next_node in node_iter:
             yield run_node, next_node
