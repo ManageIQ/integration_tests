@@ -4835,10 +4835,10 @@ class MigrationPlansList(Widget):
         try:
             el = self._get_plan_element(plan_name)
             self.browser.click(self.ITEM_KEBAB_DROPDOWN_LOCATOR, parent=el)
-            self.browser.click(self.ITEM_MODAL_BUTTON_LOCATOR, parent=el)
+            self.browser.click(self.ITEM_ARCHIVE_BUTTON_LOCATOR, parent=el)
             if plan_name in self.root_browser.element(self.ITEM_MODAL_TEXT_LOCATOR).text:
                 if not cancel:
-                    self.root_browser.click(self.ITEM_ARCHIVE_BUTTON_LOCATOR)
+                    self.root_browser.click(self.ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR)
                 else:
                     self.root_browser.click(self.ITEM_MODAL_CANCEL_BUTTON_LOCATOR)
             if plan_name not in self.all_items:
