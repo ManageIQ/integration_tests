@@ -453,3 +453,65 @@ def test_tenant_attached_with_domain(request, new_user, domain):
                 assert domain['Tenant'] == tenant.name
             else:
                 assert domain['Tenant'] == "My Company"
+
+
+@pytest.fixture(scope='module')
+def user(appliance):
+    """Creates new user with role which does not have permission of modifying automate domains"""
+    product_features = [
+        (['Everything', 'Automation', 'Automate', 'Explorer', 'Automate Domains', 'Modify'], False)
+    ]
+    role = appliance.collections.roles.create(name=fauxfactory.gen_alphanumeric(),
+                                              product_features=product_features)
+
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(),
+        role=role.name,
+        tenant=appliance.collections.tenants.get_root_tenant().name
+    )
+
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric().lower(),
+        credential=Credential(
+            principal=fauxfactory.gen_alphanumeric(4),
+            secret=fauxfactory.gen_alphanumeric(4),
+        ),
+        email=fauxfactory.gen_email(),
+        groups=group,
+        cost_center="Workload",
+        value_assign="Database",
+    )
+    yield user
+    user.delete_if_exists()
+    group.delete_if_exists()
+    role.delete_if_exists()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1365493])
+def test_automate_restrict_domain_crud(user, custom_instance):
+    """
+    When you create a role that can only view automate domains, it can view automate domains but it
+    cannot manipulate the domains themselves as well as can not CRUD on namespaces, classes,
+    instances etc.
+
+    Bugzilla:
+        1365493
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: automate
+    """
+    instance = custom_instance(ruby_code=None)
+    with user:
+        view = navigate_to(instance, "Details")
+        assert not view.configuration.is_displayed
+        view = navigate_to(instance.klass, "Details")
+        assert not view.configuration.is_displayed
+        view = navigate_to(instance.klass.namespace, "Details")
+        assert not view.configuration.is_displayed
+        view = navigate_to(instance.klass.namespace.domain, "Details")
+        assert not view.configuration.is_displayed

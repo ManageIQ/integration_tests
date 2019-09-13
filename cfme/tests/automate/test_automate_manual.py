@@ -349,26 +349,6 @@ def test_automate_import_namespace_attributes_updated():
 
 
 @pytest.mark.tier(3)
-def test_automate_restrict_domain_crud():
-    """
-    When you create a role that can only view automate domains, it can
-    view automate domains, it cannot manipulate the domains themselves,
-    but can CRUD on namespaces, classes, instances ....
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: automate
-
-    Bugzilla:
-        1365493
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_git_verify_ssl():
     """
     Polarion:
