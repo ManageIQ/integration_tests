@@ -526,6 +526,9 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
     domain = attr.ib(default='ManageIQ (Locked)')
     provider = attr.ib(default=None)
     item_type = None
+    provisioning_entry_point = attr.ib(default=None)
+    retirement_entry_point = attr.ib(default=None)
+    reconfigure_entry_point = attr.ib(default=None)
 
     @cached_property
     def _fill_dict(self):
@@ -534,7 +537,10 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
             'description': self.description,
             'display': self.display_in,
             'select_catalog': self.catalog_name,
-            'select_dialog': self.dialog
+            'select_dialog': self.dialog,
+            'provisioning_entry_point': self.provisioning_entry_point,
+            'retirement_entry_point': self.retirement_entry_point,
+            'reconfigure_entry_point': self.reconfigure_entry_point
         }
 
 
