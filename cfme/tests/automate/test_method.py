@@ -12,6 +12,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import ViaUI
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import FailPatternMatchError
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -31,19 +32,21 @@ def original_class(domain):
 
 
 @pytest.mark.sauce
-@pytest.mark.meta(automates=[1704439])
+@pytest.mark.meta(automates=[1704439, 1591797])
 @pytest.mark.parametrize(
-    "method_type", ["inline", "Ansible Tower Job Template", "Ansible Tower Workflow Template"]
+    "method_type", ["inline", "Ansible Tower Job Template", "Ansible Tower Workflow Template"],
+    ids=["inline", "job", "workflow"]
 )
 @pytest.mark.uncollectif(
     lambda method_type, appliance: method_type
     in ("Ansible Tower Job Template", "Ansible Tower Workflow Template")
-    and appliance.version < 5.11
+    and appliance.version < 5.11, reason="These type of methods introduced in 5.11"
 )
 def test_method_crud(method_type, klass):
     """
     Bugzilla:
         1704439
+        1591797
 
     Polarion:
         assignee: ghubale
