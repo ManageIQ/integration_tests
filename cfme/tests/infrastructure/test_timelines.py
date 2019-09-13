@@ -323,7 +323,7 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     """
     event = 'create'
     vm_event = VMEvent(new_vm, event)
-    if BZ(1747132).blocks:
+    if BZ(1747132, forced_streams=["5.10"]).blocks:
         targets = (new_vm, new_vm.cluster, new_vm.provider)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
@@ -539,7 +539,7 @@ def test_infra_timeline_delete_event(new_vm, soft_assert):
     """
     event = 'delete'
     vm_event = VMEvent(new_vm, event)
-    if BZ(1747132).blocks:
+    if BZ(1747132, forced_streams=["5.10"]).blocks:
         targets = (new_vm, new_vm.cluster, new_vm.provider)
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
