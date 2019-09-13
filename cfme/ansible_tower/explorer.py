@@ -189,7 +189,10 @@ class AnsibleTowerJobTemplatesCollection(BaseCollection, TaggableCollection):
     def all(self):
         """Return entities for all items in Ansible Job templates collection"""
         view = navigate_to(self, "All")
-        return [self.instantiate(e) for e in view.entities.all_entity_names]
+        for row in view.entities.elements:
+            if 'Job Template' in row.type.text:
+                return self.instantiate(template_name=row.name.text)
+        # return [self.instantiate(e) for e in view.entities.all_entity_names]
 
 
 @navigator.register(Server, "AnsibleTowerExplorer")
