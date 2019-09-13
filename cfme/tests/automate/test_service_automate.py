@@ -209,3 +209,142 @@ def test_automate_method_with_dialog(request, appliance, catalog, setup_dynamic_
         provision_request = service_catalogs.order()
         provision_request.wait_for_request()
         request.addfinalizer(provision_request.remove_request)
+
+
+@pytest.fixture(scope="function")
+def copy_klass(domain):
+    """This fixture copies ServiceProvision_Template which is required while selecting instance in
+    catalog item"""
+    domain.parent.instantiate(name="ManageIQ").namespaces.instantiate(
+        name="Service"
+    ).namespaces.instantiate(name="Provisioning").namespaces.instantiate(
+        name="StateMachines"
+    ).classes.instantiate(
+        name="ServiceProvision_Template"
+    ).copy_to(
+        domain.name
+    )
+
+    klass = (
+        domain.namespaces.instantiate(name="Service")
+        .namespaces.instantiate(name="Provisioning")
+        .namespaces.instantiate(name="StateMachines")
+        .classes.instantiate(name="ServiceProvision_Template")
+    )
+    yield klass
+    klass.delete_if_exists()
+
+
+@pytest.fixture(scope="function")
+def catalog_item_setup(request, copy_klass, domain, catalog, dialog):
+    """
+    This fixture is used to create custom instance pointing to method. Selecting this instance as
+    provisioning entry point for generic catalog item.
+    """
+    # Script for setting service variable
+    script1 = dedent(
+        """
+        $evm.set_service_var('service_var', "test value for service var")
+        """
+    )
+
+    # Script for checking service variable
+    script2 = dedent(
+        """
+        var = $evm.service_var_exists?('service_var') && $evm.get_service_var('service_var')
+        $evm.log("info", "service var: service_var = #{var}")
+        """
+    )
+    script = [script1, script2]
+
+    var = fauxfactory.gen_alpha()
+    copy_klass.schema.add_fields({'name': var, 'type': 'State'})
+
+    cat_list = []
+    for i in range(2):
+        # Creating automate methods
+        method = copy_klass.methods.create(name=fauxfactory.gen_alphanumeric(),
+                                           display_name=fauxfactory.gen_alphanumeric(),
+                                           location='inline',
+                                           script=script[i]
+                                           )
+
+        # Creating automate instances
+        instance = copy_klass.instances.create(
+            name=fauxfactory.gen_alphanumeric(),
+            display_name=fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
+            fields={var: {"value": f"METHOD::{method.name}"}}
+        )
+
+        # Making provisioning entry points to select while creating generic catalog items
+        entry_point = (
+            "Datastore",
+            f"{domain.name}",
+            "Service",
+            "Provisioning",
+            "StateMachines",
+            f"{copy_klass.name}",
+            f"{instance.display_name} ({instance.name})",
+        )
+        # Creating generic catalog items
+        catalog_item = domain.appliance.collections.catalog_items.create(
+            domain.appliance.collections.catalog_items.GENERIC,
+            name=fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
+            display_in=True,
+            catalog=catalog,
+            dialog=dialog,
+            provisioning_entry_point=entry_point
+        )
+        cat_list.append(catalog_item)
+        request.addfinalizer(cat_list[i].delete_if_exists)
+    yield catalog_item, cat_list
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1678136])
+@pytest.mark.ignore_stream("5.10")
+def test_passing_value_between_catalog_items(request, appliance, catalog_item_setup):
+    """
+    Bugzilla:
+         1678136
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Automate
+        caseimportance: high
+        initialEstimate: 1/6h
+        startsin: 5.11
+        tags: automate
+    """
+    catalog_item, cat_list = catalog_item_setup
+
+    # Creating catalog bundle of two catalog items
+    catalog_bundle = appliance.collections.catalog_bundles.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description="catalog_bundle",
+        display_in=True,
+        catalog=catalog_item.catalog,
+        dialog=catalog_item.dialog,
+        catalog_items=[cat_list[0].name, cat_list[1].name],
+    )
+    request.addfinalizer(catalog_bundle.delete_if_exists)
+
+    with LogValidator("/var/www/miq/vmdb/log/automation.log",
+                      matched_patterns=[
+                          ".*service var:.*service_var = test value for service var.*"],
+                      ).waiting(timeout=120):
+
+        # Ordering service catalog bundle
+        service_catalogs = ServiceCatalogs(
+            appliance, catalog_bundle.catalog, catalog_bundle.name
+        )
+        service_catalogs.order()
+        request_description = (
+            f'Provisioning Service [{catalog_bundle.name}] from [{catalog_bundle.name}]'
+        )
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        provision_request.wait_for_request(method='ui')
+        request.addfinalizer(provision_request.remove_request)
+        assert provision_request.is_succeeded(method="ui")
