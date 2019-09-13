@@ -3,11 +3,13 @@ import random
 import socket
 
 import pytest
+from wait_for import TimedOutError
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
+from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -15,6 +17,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -331,3 +334,59 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
     provider.wait_for_delete()
     provider.create()
     assert host_count == navigate_to(appliance.collections.hosts, "All").paginator.items_amount
+
+
+@pytest.fixture
+def setup_provider_min_hosts(request, provider, min_hosts=2):
+    num_hosts = len(provider.data.get('hosts', {}))
+    if num_hosts < min_hosts:
+        pytest.skip(f'Not enough hosts({num_hosts}) to run test. Need at least {min_hosts}')
+    """Function-scoped fixture to set up a provider"""
+    return setup_or_skip(request, provider)
+
+
+@test_requirements.infra_hosts
+def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts, provider):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/6h
+        testSteps:
+            1. Navigate to the Compute > Infrastructure > Providers view.
+            2. Click on a provider guadicon, and then the hosts link along the top row of the view.
+            3. Select all hosts (need at least 2 hosts) by checking the box in upper left of
+               quadicons.
+            4. Click "Refresh Relationships and Power States" under the Configuration
+               dropdowm, and then click "OK" when prompted.
+        expectedResults:
+            1. Providers view is displayed.
+            2. Hosts view is displayed.
+            3.
+            4. "Refresh initiated for X Hosts from the CFME Database" is displayed in green
+               banner where "X" is the number of selected hosts. Properties for each host are
+               refreshed. Making changes to test pre-commithooks
+    """
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    num_hosts = len(hosts_view.entities.get_all())
+    if num_hosts < 2:
+        pytest.skip('not enough hosts in appliance UI to run test')
+    evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                            matched_patterns=[f"'Refresh Provider' successfully initiated for "
+                                              f"{num_hosts} Hosts"],
+                            hostname=appliance.hostname)
+    evm_tail.start_monitoring()
+    for h in hosts_view.entities.get_all():
+        h.check()
+    hosts_view.toolbar.configuration.item_select('Refresh Relationships and Power States',
+                                                 handle_alert=True)
+    hosts_view.flash.assert_success_message(
+        f'Refresh initiated for {num_hosts} Hosts from the CFME Database'
+    )
+    try:
+        wait_for(provider.is_refreshed, func_kwargs={'force_refresh': False}, num_sec=300,
+                 delay=10)
+    except TimedOutError:
+        pytest.fail("Hosts were not refreshed within given time")
+    assert evm_tail.validate(wait="30s")
