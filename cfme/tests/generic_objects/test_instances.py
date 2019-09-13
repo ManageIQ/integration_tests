@@ -307,6 +307,7 @@ def test_import_export_generic_object_definition(request, appliance, gen_obj_def
     assert gen_obj_def_import_export.exists
 
 
+@test_requirements.customer_stories
 @pytest.mark.meta(automates=[1729341, 1743266])
 def test_generic_object_with_service_button(appliance, generic_object, button_with_dialog):
     """
