@@ -2,10 +2,12 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
+from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
@@ -93,6 +95,11 @@ def get_report(appliance, request):
 
 
 @pytest.fixture
+def vm(appliance, provider, request):
+    return _vm(request, provider, appliance)
+
+
+@pytest.fixture
 def create_custom_tag(appliance):
     # cannot create a category with uppercase in the name
     category_name = fauxfactory.gen_alphanumeric().lower()
@@ -135,14 +142,13 @@ def rbac_api(appliance, request):
 # =========================================== Tests ===============================================
 
 
-@test_requirements.rest
 @pytest.mark.tier(1)
 def test_non_admin_user_reports_access_rest(appliance, request, rbac_api):
     """ This test checks if a non-admin user with proper privileges can access all reports via API.
 
     Polarion:
         assignee: pvala
-        casecomponent: Reporting
+        casecomponent: Rest
         caseimportance: medium
         initialEstimate: 1/12h
         tags: report
@@ -405,3 +411,53 @@ def test_report_fullscreen_enabled(request, tenant_report, set_and_get_tenant_qu
 
     view = navigate_to(non_empty_report, "Details", use_resetter=False)
     assert view.configuration.item_enabled("Show full screen Report")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1504010])
+@pytest.mark.provider(
+    [BaseProvider], selector=ONE_PER_CATEGORY, required_flags=["provision"]
+)
+def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testSteps:
+            1. Add a provider.
+            2. Power off a VM.
+            3. Queue report (Operations > Virtual Machines > Online VMs (Powered On)).
+            4. See if the powered off VM is present in the queued report.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. VM must not be present in the report data.
+
+    Bugzilla:
+        1504010
+    """
+    subject_vm = appliance.provider_based_collection(provider).instantiate(
+        name=vm, provider=provider
+    )
+    assert subject_vm.rest_api_entity.exists
+
+    # power off the VM
+    subject_vm.rest_api_entity.action.stop()
+    assert_response(appliance)
+
+    # wait until VM's power state changes
+    assert subject_vm.wait_for_power_state_change_rest("off")
+
+    # queue the report
+    saved_report = appliance.collections.reports.instantiate(
+        type="Operations",
+        subtype="Virtual Machines",
+        menu_name="Online VMs (Powered On)",
+    ).queue(wait_for_finish=True)
+    request.addfinalizer(saved_report.delete_if_exists)
+
+    view = navigate_to(saved_report, "Details")
+    assert vm not in [row.vm_name.text for row in view.table.rows()]

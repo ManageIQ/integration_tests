@@ -237,34 +237,6 @@ def test_reports_in_global_region(context, report):
 @test_requirements.report
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1504010])
-def test_reports_online_vms():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/2h
-        testSteps:
-            1. Add a provider.
-            2. Power off a VM.
-            3. Queue report (Operations > Virtual Machines > Online VMs (Powered On)).
-            4. See if the powered off VM is present in the queued report.
-        expectedResults:
-            1.
-            2.
-            3.
-            4. VM must not be present in the report data.
-
-    Bugzilla:
-        1504010
-    """
-    pass
-
-
-@test_requirements.report
-@pytest.mark.manual
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1743579])
 def test_created_on_time_report_field():
     """
