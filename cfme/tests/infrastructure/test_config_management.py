@@ -160,7 +160,11 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != "Ansible Tower")
-def test_ansible_tower_service_dialog_creation_from_template(request, config_manager, appliance):
+@pytest.mark.parametrize('template_type', ['Job Template (Ansible Tower)',
+    'Workflow Template (Ansible Tower)'], ids=['job', 'workflow'],
+    scope='module')
+def test_ansible_tower_service_dialog_creation_from_template(request, config_manager, appliance,
+        template_type):
     """
     Polarion:
         assignee: nachandr
@@ -170,7 +174,8 @@ def test_ansible_tower_service_dialog_creation_from_template(request, config_man
 
     """
     try:
-        job_template = config_manager.appliance.collections.ansible_tower_job_templates.all()[0]
+        job_template = config_manager.appliance.collections.ansible_tower_job_templates.filter(
+            {"job_type": template_type}).all()[0]
     except IndexError:
         pytest.skip("No job template was found")
     dialog_label = fauxfactory.gen_alpha(8)
