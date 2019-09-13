@@ -491,3 +491,32 @@ def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider, requ
     view.general.description.fill("description")
     assert view.general.alert.read() == "Name {name} already exists".format(name=name)
     view.cancel_btn.click()
+
+
+@pytest.mark.tier(2)
+def test_duplicate_mapping_name(appliance, mapping_data_vm_obj_mini):
+    """
+    Test Infrastructure mapping with duplicate names
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+        testSteps:
+            1. Create two Infra map with same name
+        expectedResults:
+            1. Infra map with duplicate name shows error message
+    """
+    name = mapping_data_vm_obj_mini.infra_mapping_data.get("name")
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    # mapping created is cleaned up in mapping_data_vm_obj_mini fixture
+    view = navigate_to(infrastructure_mapping_collection, "Add")
+    view.general.name.fill(name)
+    view.general.description.fill("description")
+    assert view.general.alert.read() == (
+        "Infrastructure mapping {name} already exists".format(name=name))
+    view.general.cancel_btn.click()

@@ -105,6 +105,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
         plan_type = BootstrapSelect("targetProvider")
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description_help_text = Text(locator='.//div[contains(@id,"description")]/span')
+        alert = Text('.//div[contains(@class, "alert")]')
         fill_strategy = WaitFillViewStrategy()
 
         def after_fill(self, was_change):
