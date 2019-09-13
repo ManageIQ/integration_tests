@@ -232,12 +232,14 @@ def copy_klass(domain):
         .classes.instantiate(name="ServiceProvision_Template")
     )
     yield klass
+    klass.delete_if_exists()
 
 
 @pytest.fixture(scope="function")
-def setup(request, copy_klass, domain, catalog, dialog):
+def catalog_item_setup(request, copy_klass, domain, catalog, dialog):
     """
-    This fixture is used to make setup for test case
+    This fixture is used to create custom instance pointing to method. Selecting this instance as
+    provisioning entry point for generic catalog item.
     """
     # Script for setting service variable
     script1 = dedent(
@@ -303,7 +305,7 @@ def setup(request, copy_klass, domain, catalog, dialog):
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1678136])
 @pytest.mark.ignore_stream("5.10")
-def test_passing_value_between_catalog_items(request, appliance, setup):
+def test_passing_value_between_catalog_items(request, appliance, catalog_item_setup):
     """
     Bugzilla:
          1678136
@@ -313,9 +315,10 @@ def test_passing_value_between_catalog_items(request, appliance, setup):
         casecomponent: Automate
         caseimportance: high
         initialEstimate: 1/6h
+        startsin: 5.11
         tags: automate
     """
-    catalog_item, cat_list = setup
+    catalog_item, cat_list = catalog_item_setup
 
     # Creating catalog bundle of two catalog items
     catalog_bundle = appliance.collections.catalog_bundles.create(
