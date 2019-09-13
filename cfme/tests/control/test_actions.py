@@ -596,9 +596,9 @@ def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, p
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
-@pytest.mark.meta(blockers=[BZ(1748410, forced_streams=["5.10"])],
-                  automates=[1748410],
-                  unblock=lambda provider: provider.one_of(VMwareProvider))
+@pytest.mark.meta(blockers=[BZ(1748410, forced_streams=["5.10"],
+                               unblock=lambda provider: provider.one_of(VMwareProvider))],
+                  automates=[1748410])
 def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
