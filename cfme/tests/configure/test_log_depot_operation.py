@@ -15,6 +15,7 @@ from cfme.utils import conf
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ftp import FTPClient
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
@@ -75,7 +76,7 @@ def pytest_generate_tests(metafunc):
         return
 
     fixtures = ['log_depot']
-    data = conf.cfme_data.get("log_db_operations", {})
+    data = cfme_data.get("log_db_operations", {})
     depots = []
     ids = []
     if not data:

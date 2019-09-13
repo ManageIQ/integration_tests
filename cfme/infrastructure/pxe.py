@@ -17,12 +17,12 @@ from cfme.base import BaseCollection
 from cfme.base import BaseEntity
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
-from cfme.utils import conf
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.config_data import cfme_data
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import project_path
 from cfme.utils.pretty import Pretty
@@ -1082,7 +1082,7 @@ def get_template_from_config(template_config_name, create=False, appliance=None)
     Convenience function to grab the details for a template from the yamls and create template.
     """
     assert appliance is not None
-    template_config = conf.cfme_data.get('customization_templates', {})[template_config_name]
+    template_config = cfme_data.get('customization_templates', {})[template_config_name]
 
     script_data = load_data_file(str(project_path.join(template_config['script_file'])),
                                  replacements=template_config['replacements'])
@@ -1107,7 +1107,7 @@ def get_pxe_server_from_config(pxe_config_name, appliance):
     Convenience function to grab the details for a pxe server fomr the yamls.
     """
 
-    pxe_config = conf.cfme_data.get('pxe_servers', {})[pxe_config_name]
+    pxe_config = cfme_data.get('pxe_servers', {})[pxe_config_name]
 
     return PXEServer(name=pxe_config['name'],
                      depot_type=pxe_config['depot_type'],

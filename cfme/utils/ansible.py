@@ -18,6 +18,7 @@ from yaml import safe_dump
 
 from cfme.utils import conf
 from cfme.utils.appliance import current_appliance
+from cfme.utils.config_data import cfme_data
 from cfme.utils.providers import providers_data
 
 local_git_repo = "manageiq_ansible_module"
@@ -89,7 +90,7 @@ def get_values_for_users_test():
 def get_values_for_custom_attributes_test(provider):
     return {
         'entity_type': 'provider',
-        'entity_name': conf.cfme_data.get('management_systems', {})
+        'entity_name': cfme_data.get('management_systems', {})
         [provider.key].get('name', []),
         'miq_url': config_formatter(),
         'miq_username': conf.credentials['default'].username,

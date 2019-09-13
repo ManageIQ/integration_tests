@@ -16,9 +16,10 @@ from copy import copy
 from cfme.common.provider import all_types
 from cfme.exceptions import UnknownProviderType
 from cfme.utils import conf
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 
-providers_data = conf.cfme_data.get("management_systems", {})
+providers_data = cfme_data.get("management_systems", {})
 # Dict of active provider filters {name: ProviderFilter}
 global_filters = {}
 
@@ -132,7 +133,7 @@ class ProviderFilter(object):
         if self.required_flags:
             test_flags = [flag.strip() for flag in self.required_flags]
 
-            defined_flags = conf.cfme_data.get('test_flags', '')
+            defined_flags = cfme_data.get('test_flags', '')
             if isinstance(defined_flags, str):
                 defined_flags = defined_flags.split(',')
             defined_flags = [flag.strip() for flag in defined_flags]
@@ -289,14 +290,14 @@ def list_provider_keys(provider_type=None):
     Returns: List of provider keys (strings).
     """
     try:
-        all_keys = list(conf.cfme_data.management_systems.keys())
+        all_keys = list(cfme_data.management_systems.keys())
     except (KeyError, AttributeError):
         all_keys = []
 
     if provider_type:
         filtered_keys = []
         for key in all_keys:
-            if conf.cfme_data.management_systems[key].type == provider_type:
+            if cfme_data.management_systems[key].type == provider_type:
                 filtered_keys.append(key)
         return filtered_keys
     else:

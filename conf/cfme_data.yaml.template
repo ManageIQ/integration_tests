@@ -1,679 +1,680 @@
-basic_info:
-    app_version: 5.2.0
-    cfme_images_url:
-        downstream-59z: http://some-host.com/builds/
-ansible_links:
-  playbook_repositories:
-    v2v: https://github.com/v2v-test/ansible_playbooks.git
-management_systems:
-    vsphere5:
-        name: vsphere 5
-        default_name: Virtual Center (10.0.0.2)
-        endpoints:
-            default:
-                credentials: vsphere5
-                hostname: vsphere5.example.com
-                ipaddress: 10.0.0.1
-        host_vnc_port:
-            start: 5900
-            end: 5980
-        server_zone: default
-        type: virtualcenter
-        discovery_range:
-            start: 10.0.0.1
-            end: 10.0.0.2
-        datacenters:
-            - default
-        clusters:
-            - iscsi
-        hosts:
-            - name: myhost
-              credentials:
-                  default: myhost
-                  remote_login: remote_login_cred
-                  web_services: web_services_cred
-              type: esxi
-              test_fleece: True
-        datastores:
-            - type: iscsi
-              name: iscsi_storage
-              test_fleece: True
-            - type: vmfs
-              name: vmfs_storage
-              test_fleece: False
-        tags:
-            Provisioning Scope: All
-        policy_profiles:
-            - example policy profile x
-        test_vm_power_control:
-            - vm_name
-        provisioning:
-            pxe_template: pxe_prov_template
-            pxe_server: pxe_server
-            pxe_image: image
-            pxe_kickstart: customizationscript
-            pxe_root_password: password
-            template: provisioning_template_name
-            host: target provisioning host name (from hosts above)
-            datastore: target provisioning datastore name (from datastores above)
-        templates:
-            console_template:
-                name: template1
-                creds: template1Creds
-            small_template:
-                name: template2
-                creds: template2Creds
-    rhevm31:
-        name: RHEV 3.1
-        default_name: RHEV-M (10.0.0.3)
-        endpoints:
-            default:
-                credentials: rhevm31
-                hostname: rhevm.example.com
-                ipaddress: 10.0.0.1
-                api_port: 3000
-                verify_tls: False
-                cat_certs:
-            candu:
-                cu_credentials: rhevm31-cu_db_cred_name_from_credentials.yaml
-                api_port:
-                database: ovirt_engine_history
-                hostname: rhevm.example.com
-        server_zone: default
-        type: rhevm
-        discovery_range:
-            start: 10.0.0.3
-            end: 10.0.0.3
-        clusters:
-            - iscsi
-        hosts:
-            - name: myhost
-              credentials:
-                  default: myhost
-                  remote_login: remote_login_cred
-                  web_services: web_services_cred
-              type: rhel
-              test_fleece: False
-        datastores:
-            - type: iscsi
-              name: rhevm_iscsi
-              test_fleece: True
-        tags:
-            Provisioning Scope: All
-        policy_profiles:
-            - example policy profile y
-        test_vm_power_control:
-            - vm_name
-        provisioning:
-            template: provisioning_template_name
-            host: target provisioning host name (from hosts above)
-            datastore: target provisioning datastore name (from datastores above)
-            vlan: name of vlan to attach to vm (required only for rhevm providers)
-    ec2:
-        name: EC2 US East
-        default_name: EC2 US East
-        region: us-west-1
-        region_name: US West
-        endpoints:
-            default:
-                credentials: aws
-        hostname: ec2.us-east-1.amazonaws.com
-        ipaddress: 207.171.162.181
-        server_zone: default
-        type: ec2
-        clusters:
-            - us-east-1
-        tags:
-            Provisioning Scope: All
-        # EC2 Power Control is currently broken
-        #test_vm_power_control:
-        #    - instance_id_or_name
-    openstack:
-        name: rhos-01
-        hostname: rhos-01i
-        ipaddress: 10.0.0.4
-        port: 5000
-        endpoints:
-            default:
-                hostname: rhos-01
-                ipaddress: 10.0.0.4
-                api_port:
-                credentials: rhos
-            events:
-                event_stream: AMQP
-                hostname: 10.0.0.4
-                api_port:
-                security_protocol: Non-SSL
-                credentials: rhos
-        auth_url: http://10.0.0.4:35357/v2.0/
-        tenant: demo
-        server_zone: default
-        type: openstack
-        network: defaultnetwork
-        test_vm_power_control:
-            - pwr-ctl-vm-1-dnd
-    lenovo:
-        name: lenovo
-        type: lenovo
-        endpoints:
-            default:
-                credentials: lenovo
-                ipaddress: 10.0.0.1
-                hostname: lenovo.hostname
-                api_port: 3000
-    redfish:
-        name: redfish
-        type: redfish
-        endpoints:
-            default:
-                credentials: redfish
-                hostname: redfish.hostname
-                security_protocol: SSL
-                api_port: 443
-    nuage:
-        name: nuage_net
-        type: nuage
-        api_version: v5_0
-        api_version_name: Version 5.0
-        endpoints:
-            default:
-                hostname:
-                credentials: nuage
-                security_protocol: SSL
-                api_port:
-    vcloud:
-        name: vmware_cloud
-        type: vcloud
-        api_version: 9.0
-        api_version_name: vCloud API 9.0
-        endpoints:
-            default:
-                hostname: 10.11.12.13
-                credentials: vcloud
-                api_port: 443
+cfme-qe-test-envs:
+    basic_info:
+        app_version: 5.2.0
+        cfme_images_url:
+            downstream-59z: http://some-host.com/builds/
+    ansible_links:
+      playbook_repositories:
+        v2v: https://github.com/v2v-test/ansible_playbooks.git
+    management_systems:
+        vsphere5:
+            name: vsphere 5
+            default_name: Virtual Center (10.0.0.2)
+            endpoints:
+                default:
+                    credentials: vsphere5
+                    hostname: vsphere5.example.com
+                    ipaddress: 10.0.0.1
+            host_vnc_port:
+                start: 5900
+                end: 5980
+            server_zone: default
+            type: virtualcenter
+            discovery_range:
+                start: 10.0.0.1
+                end: 10.0.0.2
+            datacenters:
+                - default
+            clusters:
+                - iscsi
+            hosts:
+                - name: myhost
+                  credentials:
+                      default: myhost
+                      remote_login: remote_login_cred
+                      web_services: web_services_cred
+                  type: esxi
+                  test_fleece: True
+            datastores:
+                - type: iscsi
+                  name: iscsi_storage
+                  test_fleece: True
+                - type: vmfs
+                  name: vmfs_storage
+                  test_fleece: False
+            tags:
+                Provisioning Scope: All
+            policy_profiles:
+                - example policy profile x
+            test_vm_power_control:
+                - vm_name
+            provisioning:
+                pxe_template: pxe_prov_template
+                pxe_server: pxe_server
+                pxe_image: image
+                pxe_kickstart: customizationscript
+                pxe_root_password: password
+                template: provisioning_template_name
+                host: target provisioning host name (from hosts above)
+                datastore: target provisioning datastore name (from datastores above)
+            templates:
+                console_template:
+                    name: template1
+                    creds: template1Creds
+                small_template:
+                    name: template2
+                    creds: template2Creds
+        rhevm31:
+            name: RHEV 3.1
+            default_name: RHEV-M (10.0.0.3)
+            endpoints:
+                default:
+                    credentials: rhevm31
+                    hostname: rhevm.example.com
+                    ipaddress: 10.0.0.1
+                    api_port: 3000
+                    verify_tls: False
+                    cat_certs:
+                candu:
+                    cu_credentials: rhevm31-cu_db_cred_name_from_credentials.yaml
+                    api_port:
+                    database: ovirt_engine_history
+                    hostname: rhevm.example.com
+            server_zone: default
+            type: rhevm
+            discovery_range:
+                start: 10.0.0.3
+                end: 10.0.0.3
+            clusters:
+                - iscsi
+            hosts:
+                - name: myhost
+                  credentials:
+                      default: myhost
+                      remote_login: remote_login_cred
+                      web_services: web_services_cred
+                  type: rhel
+                  test_fleece: False
+            datastores:
+                - type: iscsi
+                  name: rhevm_iscsi
+                  test_fleece: True
+            tags:
+                Provisioning Scope: All
+            policy_profiles:
+                - example policy profile y
+            test_vm_power_control:
+                - vm_name
+            provisioning:
+                template: provisioning_template_name
+                host: target provisioning host name (from hosts above)
+                datastore: target provisioning datastore name (from datastores above)
+                vlan: name of vlan to attach to vm (required only for rhevm providers)
+        ec2:
+            name: EC2 US East
+            default_name: EC2 US East
+            region: us-west-1
+            region_name: US West
+            endpoints:
+                default:
+                    credentials: aws
+            hostname: ec2.us-east-1.amazonaws.com
+            ipaddress: 207.171.162.181
+            server_zone: default
+            type: ec2
+            clusters:
+                - us-east-1
+            tags:
+                Provisioning Scope: All
+            # EC2 Power Control is currently broken
+            #test_vm_power_control:
+            #    - instance_id_or_name
+        openstack:
+            name: rhos-01
+            hostname: rhos-01i
+            ipaddress: 10.0.0.4
+            port: 5000
+            endpoints:
+                default:
+                    hostname: rhos-01
+                    ipaddress: 10.0.0.4
+                    api_port:
+                    credentials: rhos
+                events:
+                    event_stream: AMQP
+                    hostname: 10.0.0.4
+                    api_port:
+                    security_protocol: Non-SSL
+                    credentials: rhos
+            auth_url: http://10.0.0.4:35357/v2.0/
+            tenant: demo
+            server_zone: default
+            type: openstack
+            network: defaultnetwork
+            test_vm_power_control:
+                - pwr-ctl-vm-1-dnd
+        lenovo:
+            name: lenovo
+            type: lenovo
+            endpoints:
+                default:
+                    credentials: lenovo
+                    ipaddress: 10.0.0.1
+                    hostname: lenovo.hostname
+                    api_port: 3000
+        redfish:
+            name: redfish
+            type: redfish
+            endpoints:
+                default:
+                    credentials: redfish
+                    hostname: redfish.hostname
+                    security_protocol: SSL
+                    api_port: 443
+        nuage:
+            name: nuage_net
+            type: nuage
+            api_version: v5_0
+            api_version_name: Version 5.0
+            endpoints:
+                default:
+                    hostname:
+                    credentials: nuage
+                    security_protocol: SSL
+                    api_port:
+        vcloud:
+            name: vmware_cloud
+            type: vcloud
+            api_version: 9.0
+            api_version_name: vCloud API 9.0
+            endpoints:
+                default:
+                    hostname: 10.11.12.13
+                    credentials: vcloud
+                    api_port: 443
 
-configuration_managers:
-    sat6:
-        type: satellite
-        name: Satellite 6
-        url: my-satellite.example.com
-        ssl: false
-        credentials: satellite
-        provisioning: true
-        config_profiles:
-            - rhel7
-            - rhel6
-management_hosts:
-    esx:
-        name: esx-01
-        hostname: esx-01
-        ipaddress: 10.0.0.5
-        ipmi_address: 10.0.1.5
-        mac_address: ff:ee:dd:cc:bb:aa
-        credentials: esx
-        ipmi_credentials: ipmi
-        user_assigned_os: VMware ESX
-
-auth_modes:
-    ldap_server:
-        timeout_h: "1"
-        timeout_m: "0"
-        mode: ldap
-        hosts:
-            - ad1.example.com
-            - ad2.example.com
-            - ad3.example.com
-        port: "389"
-        user_type: principal
-        user_suffix: ad.example.com
-        get_groups: True
-        get_roles: True
-        follow_referrals: False
-        base_dn: dc=ad,dc=example,dc=com
-        bind_dn: administrator@ad.example.com
-        bind_password: password
-    aws_iam:
-        session_timeout_hours: "1"
-        session_timeout_mins: "0"
-        mode: amazon
-        get_groups: True
-        credentials: aws
-server_roles:
-    all:    # Do not change, unless there is a change in the UI!
-        - ems_operations
-        - ems_metrics_collector
-        - ems_metrics_coordinator
-        - reporting
-        - ems_metrics_processor
-        - scheduler
-        - smartproxy
-        - database_operations
-        - smartstate
-        - event
-        - user_interface
-        - web_services
-        - ems_inventory
-        - notifier
-        - automate
-        - rhn_mirror
-        - database_synchronization
-    sets:   # A role not specified in the set is considered to be false (except user_interface)
-            # There is a dict generated between `all` and specific set
-            # What is in `all` but not in the particular set, is False
-            # What is in `all` and also in the particular set, is True
-            # It is not a dictionary due to compatibility with the old code.
-        default:
-            - database_operations
-            - event
-            - ems_inventory
-            - ems_operations
-            - reporting
-            - scheduler
-            - smartstate
-            - web_services
-group_roles:
-    evmgroup-administrator:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - my_services
-                - catalogs
-                - requests
-                - workloads
-            clouds:
-                - providers
-                - availability_zones
-                - flavors
-                - security_groups
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-                - pxe
-                - requests
-            control:
-                - explorer
-                - simulation
-                - import_export
-                - log
-            automate:
-                - explorer
-                - simulation
-                - customization
-                - import_export
-                - log
-                - requests
-            optimize:
-                - utilization
-                - planning
-                - bottlenecks
-            configure:
-                - my_settings
-                - tasks
-                - smartproxies
-                - about
-    evmgroup-approver:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - requests
-                - workloads
-            clouds:
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-                - requests
-            control:
-                - explorer
-                - simulation
-                - log
-            configure:
-                - my_settings
-                - tasks
-                - about
-    evmgroup-auditor:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - workloads
-            clouds:
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-            control:
-                - explorer
-                - simulation
-                - log
-            optimize:
-                - utilization
-                - planning
-                - bottlenecks
-            configure:
-                - my_settings
-                - tasks
-                - about
-    evmgroup-desktop:
-        menus:
-            cloud_intelligence:
-                - dashboard
-            services:
-                - requests
-                - workloads
-            configure:
-                - my_settings
-                - about
-    evmgroup-operator:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - workloads
-            clouds:
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-            configure:
-                - my_settings
-                - tasks
-                - about
-    evmgroup-security:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - workloads
-            clouds:
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-            control:
-                - explorer
-                - simulation
-                - log
-            configure:
-                - my_settings
-                - tasks
-                - about
-    evmgroup-super_administrator:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - my_services
-                - catalogs
-                - requests
-                - workloads
-            clouds:
-                - providers
-                - availability_zones
-                - flavors
-                - security_groups
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-                - pxe
-                - requests
-            control:
-                - explorer
-                - simulation
-                - import_export
-                - log
-            automate:
-                - explorer
-                - simulation
-                - customization
-                - import_export
-                - log
-                - requests
-            optimize:
-                - utilization
-                - planning
-                - bottlenecks
-            configure:
-                - my_settings
-                - tasks
-                - configuration
-                - smartproxies
-                - about
-    evmgroup-support:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - workloads
-            clouds:
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-            control:
-                - explorer
-                - simulation
-                - log
-            configure:
-                - my_settings
-                - tasks
-                - about
-    evmgroup-user:
-        menus:
-            cloud_intelligence:
-                - dashboard
-                - reports
-                - chargeback
-                - timelines
-                - rss
-            services:
-                - workloads
-            clouds:
-                - instances
-            infrastructure:
-                - providers
-                - clusters
-                - hosts
-                - virtual_machines
-                - resource_pools
-                - datastores
-            configure:
-                - my_settings
-                - tasks
-                - about
-    evmgroup-user_limited_self_service:
-        menus:
-            services:
-                - requests
-            infrastructure:
-                - virtual_machines
-                - requests
-            configure:
-                - my_settings
-                - about
-    evmgroup-user_self_service:
-        menus:
-            services:
-                - requests
-            infrastructure:
-                - virtual_machines
-                - requests
-            configure:
-                - my_settings
-                - about
-    evmgroup-vm_user:
-        menus:
-            services:
-                - requests
-                - workloads
-            configure:
-                - my_settings
-                - about
-
-clone_retire_setup:
-    vmware_linux_workflow:
-        vm_name: firstVM
-        number_of_cpu: 1
-        vm_memory: 1024
-        owner_first_name: testFirst
-        owner_last_name: testLast
-        owner_email: test@company.com
-ip_echo:
-    host: "somehost"
-    port: 8080
-mail_collector:
-    test_email: "email@email.com"
-log_db_depot:
-    machine:
-        credentials: machine_creds
-        smb:
-            hostname: smb.example.com/sharename
-            path_on_host: /path/on/host
-            use_for_log_collection: True
-            use_for_db_backups: False
-        nfs:
-            hostname: nfs.example.com/path/on/host
-            use_for_log_collection: False
-            use_for_db_backups: True
-        ftp:
-            hostname: ftp.example.com
-            use_for_log_collection: True
-datastores_not_for_provision:
-    - datastore-name-1      # uses `in` operator
-    - datastore-name-2
-redhat_updates:
-    current_version: 1.2.3.4
-    registration:
-        rhsm:
-            test_registration: True
-            test_direct: True
-            test_rhn_mirror: True
-            use_http_proxy: True
-            url: subscription.rhn.redhat.com
-            enable_repo: cfme-repo-name
-        sat5:
-            test_registration: True
-            test_direct: True
-            use_http_proxy: True
-            url: https://sat5.example.com
-            add_channel: cfme-channel-name
-            organization: 2
+    configuration_managers:
         sat6:
-            test_registration: False
-            test_direct: False
-            test_rhn_mirror: False
-            use_http_proxy: False
-            url: https://sat6.example.com
-            enable_repo:
-        http_proxy:
-            url: 1.2.3.4:5678
-    appliances:
-        EVM:
-            register: True
-            update: True
-        EVM_2:
-            register: True
-            update: True
-    download_repo_files:
-        - url: http://my.example.com/repos/latest/my_repository.repo
-          reg_methods:
-              - rhsm
-              - rhn_mirror
-    enable_repos:
-    add_channels:
-storage:
-    managers:
-        netapp-mgr-id-1:
-            name: its name
-            type: NetApp Remote Service
-            hostname: some-server.example.com
-            ip: 1.2.3.4
-            credentials: netapp-storage
-    testing:
-        file_shares:
-            - col: val
-              col2: val2
+            type: satellite
+            name: Satellite 6
+            url: my-satellite.example.com
+            ssl: false
+            credentials: satellite
+            provisioning: true
+            config_profiles:
+                - rhel7
+                - rhel6
+    management_hosts:
+        esx:
+            name: esx-01
+            hostname: esx-01
+            ipaddress: 10.0.0.5
+            ipmi_address: 10.0.1.5
+            mac_address: ff:ee:dd:cc:bb:aa
+            credentials: esx
+            ipmi_credentials: ipmi
+            user_assigned_os: VMware ESX
 
-resources:
-     databases:
-        jdbc_drivers:
-            jdbc_drivers_url: jdbc driver file url
-        db_allocator:
-            db_allocate_url: url for allocation
-            db_deallocate_url: url for deallocation
+    auth_modes:
+        ldap_server:
+            timeout_h: "1"
+            timeout_m: "0"
+            mode: ldap
+            hosts:
+                - ad1.example.com
+                - ad2.example.com
+                - ad3.example.com
+            port: "389"
+            user_type: principal
+            user_suffix: ad.example.com
+            get_groups: True
+            get_roles: True
+            follow_referrals: False
+            base_dn: dc=ad,dc=example,dc=com
+            bind_dn: administrator@ad.example.com
+            bind_password: password
+        aws_iam:
+            session_timeout_hours: "1"
+            session_timeout_mins: "0"
+            mode: amazon
+            get_groups: True
+            credentials: aws
+    server_roles:
+        all:    # Do not change, unless there is a change in the UI!
+            - ems_operations
+            - ems_metrics_collector
+            - ems_metrics_coordinator
+            - reporting
+            - ems_metrics_processor
+            - scheduler
+            - smartproxy
+            - database_operations
+            - smartstate
+            - event
+            - user_interface
+            - web_services
+            - ems_inventory
+            - notifier
+            - automate
+            - rhn_mirror
+            - database_synchronization
+        sets:   # A role not specified in the set is considered to be false (except user_interface)
+                # There is a dict generated between `all` and specific set
+                # What is in `all` but not in the particular set, is False
+                # What is in `all` and also in the particular set, is True
+                # It is not a dictionary due to compatibility with the old code.
+            default:
+                - database_operations
+                - event
+                - ems_inventory
+                - ems_operations
+                - reporting
+                - scheduler
+                - smartstate
+                - web_services
+    group_roles:
+        evmgroup-administrator:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - my_services
+                    - catalogs
+                    - requests
+                    - workloads
+                clouds:
+                    - providers
+                    - availability_zones
+                    - flavors
+                    - security_groups
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                    - pxe
+                    - requests
+                control:
+                    - explorer
+                    - simulation
+                    - import_export
+                    - log
+                automate:
+                    - explorer
+                    - simulation
+                    - customization
+                    - import_export
+                    - log
+                    - requests
+                optimize:
+                    - utilization
+                    - planning
+                    - bottlenecks
+                configure:
+                    - my_settings
+                    - tasks
+                    - smartproxies
+                    - about
+        evmgroup-approver:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - requests
+                    - workloads
+                clouds:
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                    - requests
+                control:
+                    - explorer
+                    - simulation
+                    - log
+                configure:
+                    - my_settings
+                    - tasks
+                    - about
+        evmgroup-auditor:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - workloads
+                clouds:
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                control:
+                    - explorer
+                    - simulation
+                    - log
+                optimize:
+                    - utilization
+                    - planning
+                    - bottlenecks
+                configure:
+                    - my_settings
+                    - tasks
+                    - about
+        evmgroup-desktop:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                services:
+                    - requests
+                    - workloads
+                configure:
+                    - my_settings
+                    - about
+        evmgroup-operator:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - workloads
+                clouds:
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                configure:
+                    - my_settings
+                    - tasks
+                    - about
+        evmgroup-security:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - workloads
+                clouds:
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                control:
+                    - explorer
+                    - simulation
+                    - log
+                configure:
+                    - my_settings
+                    - tasks
+                    - about
+        evmgroup-super_administrator:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - my_services
+                    - catalogs
+                    - requests
+                    - workloads
+                clouds:
+                    - providers
+                    - availability_zones
+                    - flavors
+                    - security_groups
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                    - pxe
+                    - requests
+                control:
+                    - explorer
+                    - simulation
+                    - import_export
+                    - log
+                automate:
+                    - explorer
+                    - simulation
+                    - customization
+                    - import_export
+                    - log
+                    - requests
+                optimize:
+                    - utilization
+                    - planning
+                    - bottlenecks
+                configure:
+                    - my_settings
+                    - tasks
+                    - configuration
+                    - smartproxies
+                    - about
+        evmgroup-support:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - workloads
+                clouds:
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                control:
+                    - explorer
+                    - simulation
+                    - log
+                configure:
+                    - my_settings
+                    - tasks
+                    - about
+        evmgroup-user:
+            menus:
+                cloud_intelligence:
+                    - dashboard
+                    - reports
+                    - chargeback
+                    - timelines
+                    - rss
+                services:
+                    - workloads
+                clouds:
+                    - instances
+                infrastructure:
+                    - providers
+                    - clusters
+                    - hosts
+                    - virtual_machines
+                    - resource_pools
+                    - datastores
+                configure:
+                    - my_settings
+                    - tasks
+                    - about
+        evmgroup-user_limited_self_service:
+            menus:
+                services:
+                    - requests
+                infrastructure:
+                    - virtual_machines
+                    - requests
+                configure:
+                    - my_settings
+                    - about
+        evmgroup-user_self_service:
+            menus:
+                services:
+                    - requests
+                infrastructure:
+                    - virtual_machines
+                    - requests
+                configure:
+                    - my_settings
+                    - about
+        evmgroup-vm_user:
+            menus:
+                services:
+                    - requests
+                    - workloads
+                configure:
+                    - my_settings
+                    - about
 
-cfme_annotations_path: data/testcase_tiers_and_types.csv
+    clone_retire_setup:
+        vmware_linux_workflow:
+            vm_name: firstVM
+            number_of_cpu: 1
+            vm_memory: 1024
+            owner_first_name: testFirst
+            owner_last_name: testLast
+            owner_email: test@company.com
+    ip_echo:
+        host: "somehost"
+        port: 8080
+    mail_collector:
+        test_email: "email@email.com"
+    log_db_depot:
+        machine:
+            credentials: machine_creds
+            smb:
+                hostname: smb.example.com/sharename
+                path_on_host: /path/on/host
+                use_for_log_collection: True
+                use_for_db_backups: False
+            nfs:
+                hostname: nfs.example.com/path/on/host
+                use_for_log_collection: False
+                use_for_db_backups: True
+            ftp:
+                hostname: ftp.example.com
+                use_for_log_collection: True
+    datastores_not_for_provision:
+        - datastore-name-1      # uses `in` operator
+        - datastore-name-2
+    redhat_updates:
+        current_version: 1.2.3.4
+        registration:
+            rhsm:
+                test_registration: True
+                test_direct: True
+                test_rhn_mirror: True
+                use_http_proxy: True
+                url: subscription.rhn.redhat.com
+                enable_repo: cfme-repo-name
+            sat5:
+                test_registration: True
+                test_direct: True
+                use_http_proxy: True
+                url: https://sat5.example.com
+                add_channel: cfme-channel-name
+                organization: 2
+            sat6:
+                test_registration: False
+                test_direct: False
+                test_rhn_mirror: False
+                use_http_proxy: False
+                url: https://sat6.example.com
+                enable_repo:
+            http_proxy:
+                url: 1.2.3.4:5678
+        appliances:
+            EVM:
+                register: True
+                update: True
+            EVM_2:
+                register: True
+                update: True
+        download_repo_files:
+            - url: http://my.example.com/repos/latest/my_repository.repo
+              reg_methods:
+                  - rhsm
+                  - rhn_mirror
+        enable_repos:
+        add_channels:
+    storage:
+        managers:
+            netapp-mgr-id-1:
+                name: its name
+                type: NetApp Remote Service
+                hostname: some-server.example.com
+                ip: 1.2.3.4
+                credentials: netapp-storage
+        testing:
+            file_shares:
+                - col: val
+                  col2: val2
 
-clock_servers:
-    - 0.pool.ntp.org
-    - 1.pool.ntp.org
-    - 2.pool.ntp.org
+    resources:
+         databases:
+            jdbc_drivers:
+                jdbc_drivers_url: jdbc driver file url
+            db_allocator:
+                db_allocate_url: url for allocation
+                db_deallocate_url: url for deallocation
 
-vm_console:
-    cert:
-        install_dir: /var/www/miq/vmdb/certs
-        country: US
-        state: North Carolina
-        city: Durham
-        organization: CFME
-        organizational_unit: QE
+    cfme_annotations_path: data/testcase_tiers_and_types.csv
+
+    clock_servers:
+        - 0.pool.ntp.org
+        - 1.pool.ntp.org
+        - 2.pool.ntp.org
+
+    vm_console:
+        cert:
+            install_dir: /var/www/miq/vmdb/certs
+            country: US
+            state: North Carolina
+            city: Durham
+            organization: CFME
+            organizational_unit: QE

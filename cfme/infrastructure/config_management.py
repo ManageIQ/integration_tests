@@ -22,6 +22,7 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
@@ -521,12 +522,12 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def yaml_data(self):
         """Returns yaml data for this manager"""
-        return conf.cfme_data.configuration_managers[self.key]
+        return cfme_data.configuration_managers[self.key]
 
     @classmethod
     def load_from_yaml(cls, key):
         """Returns 'ConfigManager' object loaded from yamls, based on its key"""
-        data = conf.cfme_data.configuration_managers[key]
+        data = cfme_data.configuration_managers[key]
         creds = conf.credentials[data['credentials']]
         return cls(
             name=data['name'],
@@ -545,7 +546,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
 
 def get_config_manager_from_config(cfg_mgr_key):
-    cfg_mgr = conf.cfme_data.get('configuration_managers', {})[cfg_mgr_key]
+    cfg_mgr = cfme_data.get('configuration_managers', {})[cfg_mgr_key]
     if cfg_mgr['type'] == 'satellite':
         return Satellite.load_from_yaml(cfg_mgr_key)
     elif cfg_mgr['type'] == 'ansible':

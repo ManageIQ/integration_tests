@@ -1,8 +1,8 @@
 import pytest
 
-from cfme.utils import conf
+from cfme.utils.config_data import cfme_data as data
 
 
 @pytest.fixture(scope="session")
 def cfme_data(request):
-    return conf.cfme_data
+    return data

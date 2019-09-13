@@ -12,7 +12,6 @@ from wrapanapi.systems.container.rhopenshift import ApiException
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.fixtures.appliance import sprout_appliances
 from cfme.test_framework.appliance import PLUGIN_KEY
-from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils import trackerbot
 from cfme.utils.appliance import IPAppliance
@@ -21,6 +20,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.version import get_stream
 from cfme.utils.wait import wait_for
@@ -141,7 +141,7 @@ def template_tags(template):
 
 @pytest.fixture
 def template_folder(template):
-    upload_folder = conf.cfme_data['template_upload']['template_upload_openshift']['upload_folder']
+    upload_folder = cfme_data['template_upload']['template_upload_openshift']['upload_folder']
     return os.path.join(upload_folder, template['name'])
 
 

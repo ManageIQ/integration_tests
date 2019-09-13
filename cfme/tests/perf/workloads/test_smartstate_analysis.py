@@ -4,8 +4,8 @@ import time
 import pytest
 
 from cfme.infrastructure import host
-from cfme.utils import conf
 from cfme.utils.conf import cfme_performance
+from cfme.utils.config_data import cfme_data
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
 from cfme.utils.providers import get_crud
@@ -19,7 +19,7 @@ roles_smartstate = ['automate', 'database_operations', 'ems_inventory', 'ems_ope
 
 
 def get_host_data_by_name(provider, host_name):
-    for host_obj in conf.cfme_data.get('management_systems', {})[provider.key].get('hosts', []):
+    for host_obj in cfme_data.get('management_systems', {})[provider.key].get('hosts', []):
         if host_name == host_obj['name']:
             return host_obj
     return None

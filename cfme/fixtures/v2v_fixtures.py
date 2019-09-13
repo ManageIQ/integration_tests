@@ -16,6 +16,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.update import update
@@ -166,7 +167,7 @@ def __vddk_url(): # noqa
     """Get vddk url from cfme_data"""
     vddk_version = "v2v_vddk"
     try:
-        vddk_urls = conf.cfme_data.basic_info.vddk_url
+        vddk_urls = cfme_data.basic_info.vddk_url
     except (KeyError, AttributeError):
         pytest.skip("VDDK URLs not found in cfme_data.basic_info")
     url = vddk_urls.get(vddk_version)

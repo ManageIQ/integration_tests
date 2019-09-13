@@ -38,7 +38,7 @@ from sprout import settings, redis
 from sprout.irc_bot import send_message
 from sprout.log import create_logger
 
-from cfme.utils import conf
+from cfme.utils.config_data import cfme_data
 from cfme.utils.appliance import Appliance as CFMEAppliance
 from cfme.utils.net import wait_pingable
 from cfme.utils.path import project_path
@@ -393,7 +393,7 @@ def poke_trackerbot(self):
             if per_group[key]:
                 objects.append(per_group[key].pop(0))
     for template in objects:
-        if template["provider"]["key"] not in list(conf.cfme_data.management_systems.keys()):
+        if template["provider"]["key"] not in list(cfme_data.management_systems.keys()):
             # If we don't use that provider in yamls, set the template as not usable
             # 1) It will prevent adding this template if not added
             # 2) It'll mark the template as unusable if it already exists
@@ -415,7 +415,7 @@ def poke_trackerbot(self):
             if build_date <= (parsetime.today() - timedelta(days=group.template_obsolete_days)):
                 # It is already obsolete, so ignore it
                 continue
-        if conf.cfme_data.management_systems.get(template["provider"]["key"], {}).get(
+        if cfme_data.management_systems.get(template["provider"]["key"], {}).get(
                 "use_for_sprout", False
         ):  # only create provider in db if it is marked to use for sprout
             provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
@@ -517,7 +517,7 @@ def poke_trackerbot(self):
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
-        if conf.cfme_data.management_systems.get(provider_id, {}).get(
+        if cfme_data.management_systems.get(provider_id, {}).get(
                 "use_for_sprout", False
         ):  # only create provider in db if it is marked to use for sprout
             provider, create = Provider.objects.get_or_create(id=provider_id)

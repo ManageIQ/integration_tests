@@ -33,7 +33,7 @@ def pytest_generate_tests(metafunc):
     try:
         holder = metafunc.config.pluginmanager.get_plugin('appliance-holder')
         stream = holder.held_appliance.version.stream()
-        all_reg_data = conf.cfme_data.get('redhat_updates', {})['streams'][stream]
+        all_reg_data = cfme_data.get('redhat_updates', {})['streams'][stream]
     except KeyError:
         logger.warning('Could not find rhsm data for stream in yaml')
         metafunc.parametrize(argnames, [
@@ -49,7 +49,7 @@ def pytest_generate_tests(metafunc):
             if not reg_data or not reg_data.get('test_registration', False):
                 continue
 
-            proxy_data = conf.cfme_data.get('redhat_updates', {}).get('http_proxy', False)
+            proxy_data = cfme_data.get('redhat_updates', {}).get('http_proxy', False)
             if proxy_data and reg_data.get('use_http_proxy', False):
                 proxy_url = proxy_data['url']
                 proxy_creds_key = proxy_data['credentials']
@@ -238,7 +238,7 @@ def test_rh_updates(appliance_preupdate, appliance):
     with appliance_preupdate:
         red_hat_updates = RedHatUpdates(
             service='rhsm',
-            url=conf.cfme_data['redhat_updates']['registration']['rhsm']['url'],
+            url=cfme_data['redhat_updates']['registration']['rhsm']['url'],
             username=conf.credentials['rhsm']['username'],
             password=conf.credentials['rhsm']['password'],
             set_default_repository=set_default_repo

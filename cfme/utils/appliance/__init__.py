@@ -43,6 +43,7 @@ from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.appliance.services import SystemdException
 from cfme.utils.appliance.services import SystemdService
 from cfme.utils.conf import hidden
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import create_sublogger
 from cfme.utils.log import logger
 from cfme.utils.log import logger_wrap
@@ -1175,7 +1176,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # Retrieve time servers from yamls
         try:
             logger.debug('obtaining clock servers from config file')
-            time_servers = conf.cfme_data.clock_servers
+            time_servers = cfme_data.clock_servers
             assert time_servers
         except (KeyError, AttributeError, AssertionError):
             msg = 'No clock servers configured in cfme_data.yaml'
@@ -1492,7 +1493,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         cleanup = kwargs.pop('cleanup', True)
         log_callback('updating appliance')
         if not urls:
-            basic_info = conf.cfme_data.get('basic_info', {})
+            basic_info = cfme_data.get('basic_info', {})
             if os.environ.get('updates_urls'):
                 # try to pull URLs from env if var is non-empty
                 urls.extend(os.environ['update_urls'].split())
@@ -1661,7 +1662,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             raise exception_class(message)
 
         if vddk_url is None:  # fallback to VDDK 5.5
-            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", {}).get("v5_5")
+            vddk_url = cfme_data.get("basic_info", {}).get("vddk_url", {}).get("v5_5")
         if vddk_url is None:
             raise Exception("vddk_url not specified!")
 
@@ -1733,7 +1734,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         if sdk_url is None:
             try:
-                sdk_url = conf.cfme_data['basic_info']['netapp_sdk_url']
+                sdk_url = cfme_data['basic_info']['netapp_sdk_url']
             except KeyError:
                 raise Exception("cfme_data.yaml/basic_info/netapp_sdk_url is not present!")
 
@@ -2461,7 +2462,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
         log_callback('Installing SSL certificate')
 
-        cert = conf.cfme_data['vm_console'].get('cert')
+        cert = cfme_data['vm_console'].get('cert')
         if cert is None:
             raise Exception('vm_console:cert does not exist in cfme_data.yaml')
 
@@ -2938,7 +2939,7 @@ def provision_appliance(
     else:
         raise ApplianceException('Either version or template name must be specified')
 
-    prov_data = conf.cfme_data.get('management_systems', {})[provider_name]
+    prov_data = cfme_data.get('management_systems', {})[provider_name]
     from cfme.utils.providers import get_mgmt
     provider = get_mgmt(provider_name)
     if not vm_name:

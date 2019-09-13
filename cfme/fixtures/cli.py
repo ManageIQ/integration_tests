@@ -524,7 +524,7 @@ def update_appliance(appliance):
     with appliance:
         red_hat_updates = RedHatUpdates(
             service="rhsm",
-            url=conf.cfme_data["redhat_updates"]["registration"]["rhsm"]["url"],
+            url=cfme_data["redhat_updates"]["registration"]["rhsm"]["url"],
             username=conf.credentials["rhsm"]["username"],
             password=conf.credentials["rhsm"]["password"],
             set_default_repository=True,

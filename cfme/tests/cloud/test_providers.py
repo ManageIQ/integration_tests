@@ -23,10 +23,10 @@ from cfme.common.provider_views import CloudProvidersView
 from cfme.fixtures.provider import enable_provider_regions
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils import appliance
-from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import list_providers
 from cfme.utils.providers import ProviderFilter
@@ -117,7 +117,7 @@ def cfme_vhd(appliance, pwsh_ssh):
     stream = appliance.version.stream()
     try:
         # need to add the trailing slash for urljoin to work correctly
-        url = '{}/'.format(conf.cfme_data['basic_info']['cfme_images_url'][stream])
+        url = '{}/'.format(cfme_data['basic_info']['cfme_images_url'][stream])
     except KeyError:
         pytest.skip("Skipping since no such key found in yaml")
 

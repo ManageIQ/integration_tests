@@ -14,8 +14,8 @@ from cfme.common.provider import BaseProvider
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import conf
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -62,7 +62,7 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
 
     logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = appliance.db.client.session.query(mgmt_systems_tbl).filter(
-        mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
+        mgmt_systems_tbl.name == cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
 
     logger.info("ID fetched; testing metrics collection now")

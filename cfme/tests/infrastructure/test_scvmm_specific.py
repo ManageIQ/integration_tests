@@ -7,10 +7,10 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.utils import conf
 from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 
 
 pytestmark = [
@@ -52,7 +52,7 @@ def cfme_vhd(provider, appliance):
     """ Given a stream from the appliance, gets the cfme vhd"""
     stream = appliance.version.stream()
     try:
-        url = '{}/'.format(conf.cfme_data["basic_info"]["cfme_images_url"][stream])
+        url = '{}/'.format(cfme_data["basic_info"]["cfme_images_url"][stream])
     except KeyError:
         pytest.skip("No such stream: {} found in cfme_data.yaml".format(stream))
     # get image name

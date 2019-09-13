@@ -10,7 +10,7 @@ from cfme.control.explorer.policies import HostCompliancePolicy
 from cfme.control.explorer.policies import VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.tests.control import do_scan
-from cfme.utils import conf
+from cfme.utils.config_data import cfme_data
 from cfme.utils.update import update
 
 pytestmark = [
@@ -65,7 +65,7 @@ def compliance_vm(configure_fleecing_modscope, provider, full_template_modscope)
     if provider.version == 6.5:
         vm.create_on_provider(
             allow_skip="default",
-            host=conf.cfme_data['management_systems'][provider.key]['hosts'][0].name
+            host=cfme_data['management_systems'][provider.key]['hosts'][0].name
         )
     else:
         vm.create_on_provider(allow_skip="default")

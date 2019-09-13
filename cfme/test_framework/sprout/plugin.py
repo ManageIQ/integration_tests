@@ -12,6 +12,7 @@ from cfme.test_framework.sprout.client import SproutClient
 from cfme.test_framework.sprout.client import SproutException
 from cfme.utils import at_exit
 from cfme.utils import conf
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger as log
 from cfme.utils.path import project_path
 from cfme.utils.wait import wait_for
@@ -165,7 +166,7 @@ def mangle_in_sprout_appliances(config):
     for appliance in requested_appliances:
 
         appliance_args = {'hostname': appliance['url']}
-        provider_data = conf.cfme_data['management_systems'].get(appliance['provider'])
+        provider_data = cfme_data['management_systems'].get(appliance['provider'])
         if provider_data and provider_data['type'] == 'openshift':
             ocp_creds = conf.credentials[provider_data['credentials']]
             ssh_creds = conf.credentials[provider_data['ssh_creds']]

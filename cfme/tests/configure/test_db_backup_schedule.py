@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 from cfme.utils import conf
 from cfme.utils import testgen
+from cfme.utils.config_data import cfme_data
 from cfme.utils.pretty import Pretty
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
@@ -55,7 +56,7 @@ class DbBackupData(Pretty):
         """ Loads credentials that correspond to 'credentials' key from machine_data dict
         """
 
-        creds_key = conf.cfme_data.get('log_db_operations', {}).get('credentials', False)
+        creds_key = cfme_data.get('log_db_operations', {}).get('credentials', False)
         assert creds_key, \
             "No 'credentials' key found for machine {machine_id}".format(**self.__dict__)
 
@@ -85,7 +86,7 @@ class DbBackupData(Pretty):
 def pytest_generate_tests(metafunc):
     """ Generates DbBackupData fixture called 'db_backup_data' with all the necessary data
     """
-    data = conf.cfme_data.get('log_db_operations', {})
+    data = cfme_data.get('log_db_operations', {})
     if 'db_backup_data' in metafunc.fixturenames:
         argnames = 'db_backup_data'
         argvalues = []

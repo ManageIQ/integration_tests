@@ -15,7 +15,7 @@ from contextlib import contextmanager
 import pytest
 
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.utils import conf
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 
 
@@ -209,7 +209,7 @@ def get_vddk_url(provider):
     vddk_version = "v{}_{}".format(major, minor)
 
     try:
-        vddk_urls = conf.cfme_data.basic_info.vddk_url
+        vddk_urls = cfme_data.basic_info.vddk_url
     except (KeyError, AttributeError):
         pytest.skip("VDDK URLs not found in cfme_data.basic_info")
 

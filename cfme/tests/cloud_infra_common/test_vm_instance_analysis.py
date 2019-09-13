@@ -19,13 +19,13 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.provisioning import do_vm_provisioning
-from cfme.utils import conf
 from cfme.utils import safe_string
 from cfme.utils import ssh
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
 from cfme.utils.update import update
@@ -214,7 +214,7 @@ def set_agent_creds(appliance, request, provider):
 def local_setup_provider(request, setup_provider_modscope, provider, appliance):
     # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
-        vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", {}).get('v6_0', None)
+        vddk_url = cfme_data.get("basic_info", {}).get("vddk_url", {}).get('v6_0', None)
         if vddk_url is None:
             pytest.skip('Could not locate vddk url in cfme_data')
         else:

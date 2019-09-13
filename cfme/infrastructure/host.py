@@ -28,10 +28,10 @@ from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.networks.views import OneHostSubnetView
-from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ipmi import IPMI
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -591,7 +591,7 @@ class HostsCollection(BaseCollection):
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
     def _get_config(self, host_key):
-        host_config = conf.cfme_data.get('management_hosts', {})[host_key]
+        host_config = cfme_data.get('management_hosts', {})[host_key]
         credentials = Host.get_credentials_from_config(host_config['credentials'])
         ipmi_credentials = Host.Credential.from_config(host_config['ipmi_credentials'])
         ipmi_credentials.ipmi = True

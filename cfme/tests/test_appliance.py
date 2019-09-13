@@ -5,8 +5,8 @@ import os
 import pytest
 
 from cfme import test_requirements
-from cfme.utils import conf
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for_decorator
 
@@ -231,7 +231,7 @@ def test_html5_ssl_files_present(appliance, soft_assert):
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    cert = conf.cfme_data['vm_console']['cert']
+    cert = cfme_data['vm_console']['cert']
     cert_file = os.path.join(cert.install_dir, 'server.cer')
     key_file = os.path.join(cert.install_dir, 'server.cer.key')
     ssl_files = [cert_file, key_file]

@@ -9,8 +9,8 @@ from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.utils import conf
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -39,7 +39,7 @@ credentials_type = {
 
 
 def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
+    for host_obj in cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
         if host_name == host_obj['name']:
             return host_obj
     return None

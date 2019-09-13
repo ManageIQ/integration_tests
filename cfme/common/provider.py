@@ -26,6 +26,7 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.stats import tol_check
@@ -125,7 +126,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         if hasattr(self, 'provider_data') and self.provider_data is not None:
             return self.provider_data
         elif self.key is not None:
-            return conf.cfme_data['management_systems'][self.key]
+            return cfme_data['management_systems'][self.key]
         else:
             raise ProviderHasNoKey(
                 'Provider {} has no key, so cannot get yaml data'.format(self.name))

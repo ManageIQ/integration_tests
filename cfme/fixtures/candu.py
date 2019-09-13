@@ -5,6 +5,7 @@ import fauxfactory
 import pytest
 
 from cfme.utils import conf
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ssh import SSHClient
 
 
@@ -80,11 +81,11 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
 def candu_db_restore(temp_appliance_extended_db):
     app = temp_appliance_extended_db
     # get DB backup file
-    db_storage_hostname = conf.cfme_data.bottlenecks.hostname
+    db_storage_hostname = cfme_data.bottlenecks.hostname
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials.bottlenecks)
     rand_filename = "/tmp/db.backup_{}".format(fauxfactory.gen_alphanumeric())
     db_storage_ssh.get_file("{}/candu.db.backup".format(
-        conf.cfme_data.bottlenecks.backup_path), rand_filename)
+        cfme_data.bottlenecks.backup_path), rand_filename)
     app.ssh_client.put_file(rand_filename, "/tmp/evm_db.backup")
 
     app.evmserverd.stop()

@@ -14,9 +14,9 @@ from widgetastic_patternfly import Input
 
 from cfme.exceptions import ConsoleNotSupported
 from cfme.exceptions import ConsoleTypeNotSupported
-from cfme.utils import conf
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -352,10 +352,10 @@ class ServerInformation(Updateable, Pretty):
                 # From 5.8 version need to add WebMKS_SDK
                 if value == 'VMware WebMKS':
                     self.appliance.ssh_client.run_command('curl {} -o WebMKS_SDK.zip'.format(
-                        conf.cfme_data.vm_console.webmks_console.webmks_sdk_download_url))
+                        cfme_data.vm_console.webmks_console.webmks_sdk_download_url))
 
                     self.appliance.ssh_client.run_command('unzip -o ~/WebMKS_SDK.zip -d {}'.format(
-                        conf.cfme_data.vm_console.webmks_console.webmks_sdk_extract_location))
+                        cfme_data.vm_console.webmks_console.webmks_sdk_extract_location))
 
         view = navigate_to(self.appliance.server, 'Server')
         view.browser.refresh()

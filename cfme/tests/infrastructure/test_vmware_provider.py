@@ -12,9 +12,9 @@ from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -77,9 +77,9 @@ def test_appliance_scsi_control_vmware(request, appliance):
         initialEstimate: 1/4h
     """
     try:
-        url = (conf.cfme_data.basic_info.cfme_images_url.cfme_paravirtual_url_format
+        url = (cfme_data.basic_info.cfme_images_url.cfme_paravirtual_url_format
             .format(
-                baseurl=conf.cfme_data.basic_info.cfme_images_url.baseurl,
+                baseurl=cfme_data.basic_info.cfme_images_url.baseurl,
                 series=appliance.version.series(), ver=appliance.version
             )
         )

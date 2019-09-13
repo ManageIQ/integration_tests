@@ -8,7 +8,7 @@ from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures.provider import setup_or_skip
 from cfme.fixtures.pytest_store import store
-from cfme.utils import conf
+from cfme.utils.config_data import cfme_data
 from cfme.utils.log import logger
 
 
@@ -66,7 +66,7 @@ def test_metrics_collection(clean_setup_provider, provider, enable_candu):
 
     logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = store.current_appliance.db.client.session.query(mgmt_systems_tbl).filter(
-        mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
+        mgmt_systems_tbl.name == cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
 
     logger.info("ID fetched; testing metrics collection now")

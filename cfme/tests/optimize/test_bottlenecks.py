@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.config_data import cfme_data
 from cfme.utils.ssh import SSHClient
 from cfme.utils.timeutil import parsetime
 
@@ -46,11 +47,11 @@ def db_restore(temp_appliance_extended_db):
     ver = str(temp_appliance_extended_db.version).replace('.', '_')
     ver = ver[:3] if ver[3] == '_' else ver[:4]
     # get DB backup file
-    db_storage_hostname = conf.cfme_data.bottlenecks.hostname
+    db_storage_hostname = cfme_data.bottlenecks.hostname
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials.bottlenecks)
     rand_filename = "/tmp/db.backup_{}".format(fauxfactory.gen_alphanumeric())
     db_storage_ssh.get_file("{}/db.backup_{}".format(
-        conf.cfme_data.bottlenecks.backup_path, ver), rand_filename)
+        cfme_data.bottlenecks.backup_path, ver), rand_filename)
     app.ssh_client.put_file(rand_filename, "/tmp/evm_db.backup")
 
     app.evmserverd.stop()
