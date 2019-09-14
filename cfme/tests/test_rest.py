@@ -9,6 +9,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
@@ -16,8 +17,6 @@ from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
-from cfme.utils.providers import list_providers
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -1265,33 +1264,10 @@ def test_custom_logos_via_api(appliance, image_type, request):
     assert branding_info[image_type] == expected_name.format(image_type)
 
 
-@pytest.fixture
-def second_provider(appliance, request, provider):
-    # get and create second provider
-    providers_list = list_providers(
-        filters=[
-            ProviderFilter(
-                classes=[RHEVMProvider, VMwareProvider], required_tags=["default"]
-            )
-        ]
-    )
-    providers_list.remove(provider)
-    provider_2 = providers_list[0]
-    provider_2.create_rest()
-    request.addfinalizer(provider_2.delete_rest)
-
-    # wait until the data loads for the second provider
-    wait_for(
-        lambda: len(provider_2.rest_api_entity.vms.all) > 0,
-        fail_func=provider_2.refresh_provider_relationships,
-        timeout=300,
-        delay=5,
-    )
-    return provider_2
-
-
+@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([RHEVMProvider], fixture_name="second_provider")
 def test_provider_specific_vm(
-    appliance, request, setup_provider, provider, soft_assert, second_provider
+    appliance, request, soft_assert, provider, second_provider
 ):
     """
     Polarion:
@@ -1305,10 +1281,8 @@ def test_provider_specific_vm(
         expectedResults:
             1. Should receive all VMs related to the provider.
     """
-    # test GET all the VMs belonging to provider_1
-    for vm in provider.rest_api_entity.vms.all:
-        soft_assert(vm.ems.name == provider.name)
+    setup_or_skip(request, second_provider)
 
-    # test GET all the VMs belonging to provider_2
-    for vm in second_provider.rest_api_entity.vms.all:
-        soft_assert(vm.ems.name == second_provider.name)
+    for provider_obj in [provider, second_provider]:
+        for vm in provider_obj.rest_api_entity.vms.all:
+            soft_assert(vm.ems.name == provider_obj.name)
