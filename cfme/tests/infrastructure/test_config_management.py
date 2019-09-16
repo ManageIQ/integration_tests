@@ -11,6 +11,11 @@ from cfme.utils.update import update
 pytest_generate_tests = generate(gen_func=config_managers)
 pytestmark = [pytest.mark.meta(blockers=[1491704])]
 
+TEMPLATE_TYPE = {
+    "job": "Job Template (Ansible Tower)",
+    "workflow": "Workflow Template (Ansible Tower)",
+}
+
 
 @pytest.fixture
 def config_manager(config_manager_obj):
@@ -160,9 +165,7 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != "Ansible Tower")
-@pytest.mark.parametrize('template_type', ['Job Template (Ansible Tower)',
-    'Workflow Template (Ansible Tower)'], ids=['job', 'workflow'],
-    scope='module')
+@pytest.mark.parametrize('template_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
 def test_ansible_tower_service_dialog_creation_from_template(request, config_manager, appliance,
         template_type):
     """

@@ -193,8 +193,9 @@ class AnsibleTowerJobTemplatesCollection(BaseCollection, TaggableCollection):
         """Return entities for all items in Ansible Job templates collection"""
         view = navigate_to(self, "All")
         job_type = self.filters.get('job_type')
-        all_jobs = [self.instantiate(name=e.name,
-            job_type=e.data["type"]) for e in view.entities.get_all()]
+        all_jobs = [
+            self.instantiate(name=e.name, job_type=e.data["type"]) for e in view.entities.get_all()
+        ]
         return [j for j in all_jobs if j.job_type == job_type] if job_type else all_jobs
 
 
