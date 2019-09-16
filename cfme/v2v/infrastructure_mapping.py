@@ -23,6 +23,7 @@ from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import InfraMappingList
 from widgetastic_manageiq import InfraMappingTreeView
 from widgetastic_manageiq import MultiSelectList
+from widgetastic_manageiq import V2VFlashMessages
 from widgetastic_manageiq import V2VPaginatorPane
 
 
@@ -105,7 +106,7 @@ class InfrastructureMappingForm(InfrastructureMappingView):
         plan_type = BootstrapSelect("targetProvider")
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description_help_text = Text(locator='.//div[contains(@id,"description")]/span')
-        alert = Text('.//div[contains(@class, "alert")]')
+        flash = V2VFlashMessages('.//div[@class="modal-wizard-alert"]')
         fill_strategy = WaitFillViewStrategy()
 
         def after_fill(self, was_change):
