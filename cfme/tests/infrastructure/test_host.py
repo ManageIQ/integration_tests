@@ -18,6 +18,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.tests.networks.test_sdn_downloads import handle_extra_tabs
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
@@ -396,13 +397,12 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
 
 
 @test_requirements.infra_hosts
-@pytest.mark.meta(automates=[1738664])
-#@pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], coverage=[1738664])
+@pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], automates=[1738664])
 @pytest.mark.parametrize(
     "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
-    ids=["txt, "csv, "pdf"]
+    ids=["txt", "csv", "pdf"]
 )
-def test_infrastructure_hosts_bz_1738664(
+def test_infrastructure_hosts_navigation_after_download(
     appliance, setup_provider, provider, report_format
 ):
     """
