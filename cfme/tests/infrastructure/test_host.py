@@ -396,9 +396,11 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
 
 
 @test_requirements.infra_hosts
-@pytest.mark.meta(coverage=[1738664])
+@pytest.mark.meta(automates=[1738664])
+#@pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], coverage=[1738664])
 @pytest.mark.parametrize(
-    "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"]
+    "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
+    ids=["txt, "csv, "pdf"]
 )
 def test_infrastructure_hosts_bz_1738664(
     appliance, setup_provider, provider, report_format
@@ -407,7 +409,7 @@ def test_infrastructure_hosts_bz_1738664(
     Polarion:
         assignee: prichard
         casecomponent: Infra
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/3h
     Bugzilla:
         1738664
