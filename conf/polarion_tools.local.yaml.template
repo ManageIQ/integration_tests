@@ -1,42 +1,43 @@
-repo_address: https://github.com/ManageIQ/integration_tests
-polarion-project-id:
-xunit_import_properties:
-    polarion-lookup-method: name
-    polarion-testrun-status-id: inprogress
-    polarion-testrun-template-id:
-    polarion-group-id:
-    polarion-testrun-title:
-    polarion-testrun-id:
-testcase_import_properties:
-    lookup-method: name
-polarion_url:
+polarion_tools:
+    repo_address: https://github.com/ManageIQ/integration_tests
+    polarion-project-id:
+    xunit_import_properties:
+        polarion-lookup-method: name
+        polarion-testrun-status-id: inprogress
+        polarion-testrun-template-id:
+        polarion-group-id:
+        polarion-testrun-title:
+        polarion-testrun-id:
+    testcase_import_properties:
+        lookup-method: name
+    polarion_url:
 
-username:
-password:
+    username:
+    password:
 
-blacklisted_tests:
-    - 'test_import_own_module'
+    blacklisted_tests:
+        - 'test_import_own_module'
 
-whitelisted_tests:
-    - 'cfme/tests/v2v'
+    whitelisted_tests:
+        - 'cfme/tests/v2v'
 
-known_fields:
-    assignee: ""
-    initialEstimate: ""
-    caseimportance: high
-    caselevel: component
-    caseposneg: positive
-    caseautomation: automated
-    testtype: functional
-    casecomponent: "-"
-    subtype1: "-"
-    subtype2: "-"
-    tags: ""
-    setup: ""
-    teardown: ""
-    description: ""
-    linkedWorkItems: ""
-    testSteps: ""
-    expectedResults: ""
-    title: ""
-    work_item_id: ""
+    known_fields:
+        assignee: ""
+        initialEstimate: ""
+        caseimportance: high
+        caselevel: component
+        caseposneg: positive
+        caseautomation: automated
+        testtype: functional
+        casecomponent: "-"
+        subtype1: "-"
+        subtype2: "-"
+        tags: ""
+        setup: ""
+        teardown: ""
+        description: ""
+        linkedWorkItems: ""
+        testSteps: ""
+        expectedResults: ""
+        title: ""
+        work_item_id: ""

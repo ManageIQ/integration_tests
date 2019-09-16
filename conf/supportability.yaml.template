@@ -1,89 +1,90 @@
-'5.8':
-  providers:
-    infra:
-      - virtualcenter:
-        - 5.5
-        - 6.0
-        - 6.5
-      - rhevm:
-        - 4.1
-        - 4.2
-      - scvmm:
-        - 2012
-        - 2016
-    cloud:
-      - openstack:
-        - 11
-      - ec2
-      - gce
-      - azure:
-        - common
-        - msdn
-    container:
-      - openshift:
-        - 3.5
-        - 3.6
-        - 3.7
-'5.9':
-  providers:
-    infra:
-      - virtualcenter:
-        - 5.5
-        - 6.0
-        - 6.5
-      - rhevm:
-        - 4.1
-        - 4.2
-      - scvmm:
-        - 2012
-        - 2016
-    cloud:
-      - openstack:
-        - 11
-      - ec2
-      - gce
-      - azure:
-        - common
-        - msdn
-    container:
-      - openshift:
-        - 3.5
-        - 3.6
-        - 3.7
-        - 3.9
-    physical:
-        - lenovo
-    networks:
-        - nuage
-'master':
-  providers:
-    infra:
-      - virtualcenter:
-        - 5.5
-        - 6.0
-        - 6.5
-      - rhevm:
-        - 4.1
-        - 4.2
-      - scvmm:
-        - 2012
-        - 2016
-    cloud:
-      - openstack:
-        - 11
-      - ec2
-      - gce
-      - azure:
-        - common
-        - msdn
-    container:
-      - openshift:
-        - 3.5
-        - 3.6
-        - 3.7
-        - 3.9
-    physical:
-        - lenovo
-        - redfish
-    networks:
-        - nuage
+suportability:
+  '5.8':
+    providers:
+      infra:
+        - virtualcenter:
+          - 5.5
+          - 6.0
+          - 6.5
+        - rhevm:
+          - 4.1
+          - 4.2
+        - scvmm:
+          - 2012
+          - 2016
+      cloud:
+        - openstack:
+          - 11
+        - ec2
+        - gce
+        - azure:
+          - common
+          - msdn
+      container:
+        - openshift:
+          - 3.5
+          - 3.6
+          - 3.7
+  '5.9':
+    providers:
+      infra:
+        - virtualcenter:
+          - 5.5
+          - 6.0
+          - 6.5
+        - rhevm:
+          - 4.1
+          - 4.2
+        - scvmm:
+          - 2012
+          - 2016
+      cloud:
+        - openstack:
+          - 11
+        - ec2
+        - gce
+        - azure:
+          - common
+          - msdn
+      container:
+        - openshift:
+          - 3.5
+          - 3.6
+          - 3.7
+          - 3.9
+      physical:
+          - lenovo
+      networks:
+          - nuage
+  'master':
+    providers:
+      infra:
+        - virtualcenter:
+          - 5.5
+          - 6.0
+          - 6.5
+        - rhevm:
+          - 4.1
+          - 4.2
+        - scvmm:
+          - 2012
+          - 2016
+      cloud:
+        - openstack:
+          - 11
+        - ec2
+        - gce
+        - azure:
+          - common
+          - msdn
+      container:
+        - openshift:
+          - 3.5
+          - 3.6
+          - 3.7
+          - 3.9
+      physical:
+          - lenovo
+          - redfish
+      networks:
+          - nuage

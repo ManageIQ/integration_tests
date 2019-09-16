@@ -5,7 +5,7 @@ from cfme.utils import path
 
 class ConfigDataWrapper(object):
     """A wrapper for credentials"""
-    def __init__(self, env='cfme-qe-test-envs'):
+    def __init__(self, env='cfme_data'):
         self.settings = LazySettings(
             ENV_FOR_DYNACONF=env,
             INCLUDES_FOR_DYNACONF='{}/*.yaml'.format(path.conf_path.strpath),
@@ -27,3 +27,13 @@ class ConfigDataWrapper(object):
 
 
 cfme_data = ConfigDataWrapper()
+docker = ConfigDataWrapper(env='docker')
+env = ConfigDataWrapper(env='env')
+gpg = ConfigDataWrapper(env='gpg')
+cfme_performance = ConfigDataWrapper(env='cfme_performance')
+jenkins = ConfigDataWrapper(env='jenkins')
+migration_tests = ConfigDataWrapper(env='migration_tests')
+perf_tests = ConfigDataWrapper(env='perf_tests')
+polarion_tools = ConfigDataWrapper(env='polarion_tools')
+rdb = ConfigDataWrapper(env='rdb')
+supportability = ConfigDataWrapper(env='supportability')

@@ -1,4 +1,4 @@
-cfme-qe-test-envs:
+cfme_data:
     basic_info:
         app_version: 5.2.0
         cfme_images_url:
