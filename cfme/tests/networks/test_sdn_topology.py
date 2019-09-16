@@ -10,8 +10,11 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
-pytestmark = [pytest.mark.provider([EC2Provider, AzureProvider, GCEProvider, OpenStackProvider],
-                                   scope='module')]
+pytestmark = [
+    pytest.mark.provider([EC2Provider, AzureProvider, GCEProvider, OpenStackProvider],
+                         scope='module'),
+    pytest.mark.usefixtures('setup_provider')
+]
 
 
 @pytest.fixture(scope='module')
@@ -37,6 +40,8 @@ def test_topology_search(request, elements_collection):
     """
     elements = elements_collection.all()
     logger.info(str(elements))
+    if not elements:
+        pytest.fail('No elements to randomly choose from for topology search')
     element_to_search = random.choice(elements)
     search_term = element_to_search.name[:len(element_to_search.name) // 2]
     elements_collection.search(search_term)
