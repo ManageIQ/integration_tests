@@ -49,7 +49,8 @@ def remove_dup_packages(package_list, package):
     ]
     # get rid of all occurrences except the last since the last will be the recently appended item
     if len(duplicate_indices) > 1:
-        del package_list[duplicate_indices[0:-1]]
+        for index in duplicate_indices[0:-1]:
+            del package_list[index]
     return package_list
 
 
@@ -146,7 +147,7 @@ constraint_opt = click.option(
     'constraint_file',
     show_default=True,
     default=get_rel_path(str(DEFAULT_CONSTRAINT_FILE)),
-    help='The path to the constraint file (pip -r arg) for extra packages (e.g. pre-commit)'
+    help='The path to the constraints file (pip -r arg) for extra packages (e.g. pre-commit)'
          ', will be overwritten',
 )
 
@@ -236,11 +237,8 @@ def add(
     click.echo(f"Adding package {package_name} to requirements")
     # If there is a <, >, or = present in the package name then constraints are needed
     constraints_needed = bool(re.search("[=><]", package_name))
-    if constraints_needed:
-        # get the package name
-        name = re.split("[=><]", package_name)[0]
-    else:
-        name = package_name
+    # get package name
+    name = re.split("[=><]", package_name)[0] if constraints_needed else package_name
 
     # try to install the package
     if upgrade_or_not:
