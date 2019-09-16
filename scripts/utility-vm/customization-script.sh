@@ -26,10 +26,19 @@ rhel8y && mv /tmp/rhel8.repo /etc/yum.repos.d/rhel.repo
 
 yum install -y nfs-utils samba vsftpd
 
+# Create FS with little free space
+truncate -s 3M /srv/littlespace
+mkfs.ext2 /srv/littlespace
+echo /srv/littlespace /srv/export/littlespacedir/ ext2 defaults 0 0 >> /etc/fstab
+mkdir -p /srv/export/littlespacedir
+mount -a
+chown nobody:nobody /srv/export/littlespacedir
+chmod u+w /srv/export/littlespacedir
+
 # NFS setup
 mkdir -p /srv/export
 chmod a=rwx /srv/export
-echo "/srv/export *(rw)" >> /etc/exports
+echo "/srv/export *(rw,crossmnt)" >> /etc/exports
 rhel7y && ( systemctl enable nfs; systemctl start nfs )
 rhel8y && ( systemctl enable nfs-server; systemctl start nfs-server )
 
