@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import BaseProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
@@ -416,7 +416,7 @@ def test_report_fullscreen_enabled(request, tenant_report, set_and_get_tenant_qu
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1504010])
 @pytest.mark.provider(
-    [BaseProvider], selector=ONE_PER_CATEGORY, required_flags=["provision"]
+    [InfraProvider, CloudProvider], selector=ONE_PER_CATEGORY, required_flags=["provision"]
 )
 def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
     """
