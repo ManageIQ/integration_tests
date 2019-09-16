@@ -208,7 +208,7 @@ def test_add_cancelled_validation_cloud(request, appliance):
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
-def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
+def test_cloud_provider_add_with_bad_credentials(request, provider, enable_regions, appliance):
     """ Tests provider add with bad credentials
 
     Metadata:
@@ -241,6 +241,14 @@ def test_cloud_provider_add_with_bad_credentials(provider, enable_regions):
         for endp_name in list(provider.endpoints.keys()):
             if endp_name != 'default':
                 del provider.endpoints[endp_name]
+
+    @request.addfinalizer
+    def clear_form():
+        from cfme.common.provider_views import ProviderAddView
+        view = appliance.browser.create_view(ProviderAddView)
+        if view.is_displayed:
+            view.cancel.click()
+        assert not view.is_displayed
 
     with pytest.raises(Exception, match=flash):
         provider.create(validate_credentials=True)
@@ -698,10 +706,11 @@ def test_display_network_topology(appliance, openstack_provider):
     view.flash.assert_no_error()
 
 
+@pytest.mark.provider([CloudProvider], scope='class', override=True)
 class TestProvidersRESTAPI(object):
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_cloud_networks_query(self, cloud_provider, appliance, from_detail, setup_provider):
+    def test_cloud_networks_query(self, provider, appliance, from_detail, setup_provider):
         """Tests querying cloud providers and cloud_networks collection for network info.
 
         Metadata:
@@ -714,11 +723,11 @@ class TestProvidersRESTAPI(object):
             initialEstimate: 1/3h
         """
         if from_detail:
-            networks = appliance.rest_api.collections.providers.get(
-                name=cloud_provider.name).cloud_networks
+            networks = provider.rest_api_entity.cloud_networks
         else:
             networks = appliance.rest_api.collections.cloud_networks
         assert_response(appliance)
+        assert len(networks) > 0, 'No cloud networks found'
         assert networks.name == 'cloud_networks'
         assert len(networks.all) == networks.subcount
 
@@ -731,7 +740,7 @@ class TestProvidersRESTAPI(object):
         assert enabled_networks >= 1
 
     @pytest.mark.tier(3)
-    def test_security_groups_query(self, cloud_provider, appliance, setup_provider):
+    def test_security_groups_query(self, provider, appliance, setup_provider):
         """Tests querying cloud networks subcollection for security groups info.
 
         Metadata:
@@ -743,8 +752,10 @@ class TestProvidersRESTAPI(object):
             caseimportance: low
             initialEstimate: 1/4h
         """
-        network = appliance.rest_api.collections.providers.get(
-            name=cloud_provider.name).cloud_networks[0]
+        try:
+            network = provider.rest_api_entity.cloud_networks[0]
+        except IndexError:
+            pytest.fail(f'No networks found on cloud provider {provider}')
         network.reload(attributes='security_groups')
         security_groups = network.security_groups
         # "security_groups" needs to be present, even if it's just an empty list
