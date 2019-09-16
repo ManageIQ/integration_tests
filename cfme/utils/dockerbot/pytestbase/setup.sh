@@ -85,7 +85,7 @@ run_pip_update () {
     if [ -n "$WHEEL_HOST_URL" ]; then
         export PIP_TRUSTED_HOST="$WHEEL_HOST" PIP_FIND_LINKS="$WHEEL_HOST_URL"
     fi
-    gate "pip_install.txt" "pip3 install -Ur $CFME_REPO_DIR/requirements/frozen.py3.txt --no-cache-dir"
+    gate "pip_install.txt" "pip3 install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
     # ensures entrypoint updates
     run_n_log "pip3 install -e ."
 }
