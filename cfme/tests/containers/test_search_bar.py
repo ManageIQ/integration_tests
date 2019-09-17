@@ -46,7 +46,7 @@ def test_search_bar(provider, appliance, soft_assert):
             '***': None,
             exist_member_str: exist_member_str,
             '$$$': None,
-            exist_member_str[:len(exist_member_str) / 2]: exist_member_str
+            exist_member_str[:len(exist_member_str) // 2]: exist_member_str
         }
 
         try:
