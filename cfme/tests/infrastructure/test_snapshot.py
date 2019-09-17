@@ -16,6 +16,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.path import data_path
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
@@ -97,7 +98,9 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 
 
 @pytest.mark.rhv1
-@pytest.mark.meta(automates=[1608475])
+@pytest.mark.rhv3
+@test_requirements.rhev
+@pytest.mark.meta(automates=[1571291, 1608475])
 def test_snapshot_crud(small_test_vm, provider):
     """Tests snapshot crud
 
@@ -109,6 +112,11 @@ def test_snapshot_crud(small_test_vm, provider):
         casecomponent: Infra
         initialEstimate: 1/6h
     """
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/evm.log",
+        failure_patterns=[r".*ERROR.*"],
+    )
+    result.start_monitoring()
     # has_name is false if testing RHEVMProvider
     snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
@@ -116,6 +124,9 @@ def test_snapshot_crud(small_test_vm, provider):
     if provider.appliance.version >= "5.11" and provider.one_of(RHEVMProvider):
         assert snapshot.size
     snapshot.delete()
+    provider.refresh_provider_relationships()
+    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+    assert result.validate(wait="60s")
 
 
 @pytest.mark.rhv3
@@ -140,16 +151,6 @@ def test_delete_active_vm_snapshot(small_test_vm):
     view.tree.click_path(small_test_vm.name, 'Active VM (Active)')
     assert not view.toolbar.delete.is_displayed
 
-@pytest.mark.rhv3
-@test_requirements.rhev
-@pytest.mark.provider([RHEVMProvider], override=True)
-@pytest.mark.meta(automates=[BZ(1571291)])
-def test_delete_snapshot_and_reload(small_test_vm):
-    snapshot = new_snapshot(small_test_vm)
-    snapshot.create()
-    # sth here
-    snapshot.delete()
-    wait_for(lambda: not snapshot.exists)
 
 @pytest.mark.rhv3
 @test_requirements.rhev
