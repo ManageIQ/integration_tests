@@ -40,40 +40,6 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     pass
 
 
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream('5.10')
-def test_instance_quota_reconfigure_with_flavors():
-    """
-    Test reconfiguration of instance using flavors after setting quota but this is RFE which is not
-    yet implemented.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/6h
-        caseimportance: low
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.8
-        casecomponent: Cloud
-        tags: quota
-        title: test quota for ansible service
-        testSteps:
-            1. Add openstack provider
-            2. Set quota
-            3. Provision instance under the quota limit
-            4. Reconfigure this instance and provision it with changing flavors
-        expectedResults:
-            1.
-            2.
-            3. Provision instance successfully
-            4. Provision instance request should be denied
-
-    Bugzilla:
-        1473325
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_quota_for_ansible_service():
     """
