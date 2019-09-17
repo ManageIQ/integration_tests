@@ -92,6 +92,37 @@ def serv_button_group(appliance, request):
         button_gp.delete_if_exists()
 
 
+@pytest.fixture(scope="module")
+def service_button_group(appliance):
+    with appliance.context.use(ViaUI):
+        collection = appliance.collections.button_groups
+        button_gp = collection.create(
+            text=fauxfactory.gen_alphanumeric(start="group_"),
+            hover=fauxfactory.gen_alphanumeric(start="hover_"),
+            type=getattr(collection, "SERVICE"),
+        )
+        yield button_gp
+        button_gp.delete_if_exists()
+
+
+@pytest.fixture(params=["enablement", "visibility"], scope="module")
+def vis_enb_button_service(request, appliance, service_button_group):
+    """Create custom button on service type object with enablement/visibility expression"""
+    exp = {request.param: {"tag": "My Company Tags : Department", "value": "Engineering"}}
+
+    with appliance.context.use(ViaUI):
+        button = service_button_group.buttons.create(
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(start="hover_"),
+            display_for="Single entity",
+            system="Request",
+            request="InspectMe",
+            **exp
+        )
+        yield service_button_group, button, request.param
+        button.delete_if_exists()
+
+
 @pytest.mark.tier(1)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.parametrize(
@@ -683,3 +714,80 @@ def test_custom_button_unassigned_behavior_objs(
             view = navigate_to(obj, "Details")
             btn = Button(view, button.text)
             assert btn.is_displayed if dest is ViaSSUI else not btn.is_displayed
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1628727])
+@pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
+def test_custom_button_expression_ansible_service(
+    appliance, context, vis_enb_button_service, order_ansible_service_in_ops_ui
+):
+    """ Test custom button on ansible service as per expression enablement/visibility.
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/4h
+        caseimportance: medium
+        casecomponent: CustomButton
+        startsin: 5.9
+        testSteps:
+            1. Create custom button group on Service object type
+            2. Create a custom button with expression (Tag)
+                a. Enablement Expression
+                b. Visibility Expression
+            3. Navigate to object Detail page
+            4. Check: button should not enable/visible without tag
+            5. Check: button should enable/visible with tag
+
+    Bugzilla:
+        1628727
+        1509959
+        1513498
+    """
+    group, button, expression = vis_enb_button_service
+    service = MyService(appliance, order_ansible_service_in_ops_ui)
+    navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+
+    # tags
+    tag_cat = appliance.collections.categories.instantiate(
+        name="department", display_name="Department"
+    )
+    engineering_tag = tag_cat.collections.tags.instantiate(
+        name="engineering", display_name="Engineering"
+    )
+
+    # check button expression with tag and without tag
+    for tag in [False, True]:
+        # manage tag
+        with appliance.context.use(ViaUI):
+            current_tag_status = engineering_tag in service.get_tags()
+            if tag != current_tag_status:
+                if tag:
+                    service.add_tag(engineering_tag)
+                else:
+                    service.remove_tag(engineering_tag)
+
+        # check expression
+        with appliance.context.use(context):
+            view = navigate_to(service, "Details", wait_for_view=15)
+            custom_button_group = (
+                CustomButtonSSUIDropdwon(view, group.text)
+                if context is ViaSSUI
+                else Dropdown(view, group.text)
+            )
+
+            if tag:
+                if expression == "enablement":
+                    assert custom_button_group.item_enabled(button.text)
+                else:  # visibility
+                    assert button.text in custom_button_group.items
+            else:
+                if expression == "enablement":
+                    # Note: SSUI still fallow enablement behaviour like 5.9. In latest version
+                    # dropdown having single button and button is disabled then dropdown disabled.
+                    if context is ViaSSUI:
+                        assert not custom_button_group.item_enabled(button.text)
+                    else:
+                        assert not custom_button_group.is_enabled
+                else:  # visibility
+                    assert not custom_button_group.is_displayed
