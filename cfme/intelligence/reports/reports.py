@@ -494,7 +494,6 @@ class Report(BaseEntity, Updateable):
         saved_report = self.saved_reports.instantiate(
             first_row.run_at.text,
             first_row.queued_at.text,
-            self.is_candu
         )
         return saved_report
 
@@ -691,7 +690,6 @@ class SavedReportsCollection(BaseCollection):
                         self.instantiate(
                             row.run_at.text,
                             row.queued_at.text,
-                            self.parent.is_candu
                         )
                     )
         except NoSuchElementException:
