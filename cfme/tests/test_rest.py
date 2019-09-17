@@ -9,6 +9,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
@@ -1261,3 +1262,27 @@ def test_custom_logos_via_api(appliance, image_type, request):
     # fetch the latest product_info
     branding_info = api.get(href)["branding_info"]
     assert branding_info[image_type] == expected_name.format(image_type)
+
+
+@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([RHEVMProvider], fixture_name="second_provider")
+def test_provider_specific_vm(
+    appliance, request, soft_assert, provider, second_provider
+):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Add multiple provider and query vms related to a specific provider.
+                GET /api/providers/:provider_id/vms
+        expectedResults:
+            1. Should receive all VMs related to the provider.
+    """
+    setup_or_skip(request, second_provider)
+
+    for provider_obj in [provider, second_provider]:
+        for vm in provider_obj.rest_api_entity.vms.all:
+            soft_assert(vm.ems.name == provider_obj.name)
