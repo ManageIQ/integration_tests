@@ -130,7 +130,7 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot.clear()
 
 
-def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=False):
+def check_ftp(appliance, ftp, server_name, server_zone_id, check_contents=False):
     server_string = '{}_{}'.format(server_name, server_zone_id)
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
@@ -161,20 +161,22 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_ansible_logs=Fa
         try:
             date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
             date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
-            logs_ansible = "log/ansible_tower"
-            if ftp.login != 'anonymous' and check_ansible_logs:  # can't login as anon using SSH
+            log_files = ["log/ansible_tower", "pgsql/data/postgresql.conf"]
+            if ftp.login != 'anonymous' and check_contents:  # can't login as anon using SSH
                 with SSHClient(hostname=ftp.host,
                                username=ftp.login,
                                password=ftp.password) as log_ssh:
-                    result = log_ssh.run_command(
-                        "unzip -l ~{} | grep {}".format(zip_file.path, logs_ansible),
-                        ensure_user=True)
-                    assert '.log' in result.output
-                    log_file_size = result.output.split()[0]
-                    assert int(log_file_size) > 0, "Log file is empty!"
-
+                    for log in log_files:
+                        if "ansible" in log and BZ(1751961).blocks:
+                            continue
+                        result = log_ssh.run_command(
+                            "unzip -l ~{} | grep {}".format(zip_file.path, log), ensure_user=True
+                        )
+                        assert log in result.output
+                        log_file_size = result.output.split()[0]
+                        assert int(log_file_size) > 0, "Log file is empty!"
         except ValueError:
-            assert False, "Wrong file matching of {}".format(zip_file.name)
+            assert False, f"Wrong file matching in {zip_file.name} for {log}"
         datetimes.append((date_from, date_to, zip_file.name))
 
     # Check for the gaps
@@ -200,7 +202,7 @@ def service_request(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(automates=[1656318, 1706989])
+@pytest.mark.meta(automates=[1652116, 1656318, 1706989])
 def test_collect_log_depot(log_depot, appliance, service_request, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
@@ -210,6 +212,10 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         assignee: anikifor
         casecomponent: Configuration
         initialEstimate: 1/4h
+    Bugzilla:
+        1652116
+        1656318
+        1706989
     """
     # Wipe the FTP contents in the end
     @request.addfinalizer
@@ -229,7 +235,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
     configured_depot.collect_all()
     # Check it on FTP
     check_ftp(appliance=appliance, ftp=log_depot.ftp, server_name=appliance.server.name,
-              server_zone_id=appliance.server.sid, check_ansible_logs=True)
+              server_zone_id=appliance.server.sid, check_contents=True)
 
 
 @pytest.mark.tier(3)
