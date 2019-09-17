@@ -99,29 +99,6 @@ def test_osp_user_can_download_post_migration_ansible_playbook_log():
 
 
 @pytest.mark.tier(2)
-def test_osp_creating_multiple_mappings_with_same_name():
-    """
-    title: OSP: Test creating multiple mappings with same name
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        testSteps:
-            1. Create infrastructure mapping
-            2. Create infrastructure with duplicate name
-        expectedResults:
-            1. Mapping created and visible in UI
-            2. Duplicate name should not be allowed
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_osp_migrations_with_multi_zonal_setup():
     """
     title: OSP: Test migrations with multi-zonal setup

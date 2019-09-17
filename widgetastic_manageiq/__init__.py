@@ -53,6 +53,8 @@ from widgetastic_patternfly import BootstrapTreeview
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import FlashMessage
+from widgetastic_patternfly import FlashMessages
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import NavDropdown
 from widgetastic_patternfly import SelectItemNotFound
@@ -5849,3 +5851,26 @@ class DiagnosticsTreeView(BootstrapTreeview):
         # currently_selected returns [:server_info, :role_info] and since we only need
         # currently selected role, we use indexing
         return self.currently_selected[-1]
+
+
+class V2VFlashMessage(FlashMessage):
+    """Overriding text method of FlashMessage for V2V"""
+
+    @property
+    def text(self):
+        return self.browser.text(self)
+
+
+class V2VFlashMessages(FlashMessages):
+    """Overriding FlashMessages method for xpath of alerts in V2V"""
+
+    @property
+    def messages(self):
+        result = []
+        msg_xpath = './/div[contains(@class, "alert")]'
+        try:
+            for flash_div in self.browser.elements(msg_xpath, check_visibility=True):
+                result.append(V2VFlashMessage(self, flash_div, logger=self.logger))
+        except NoSuchElementException:
+            pass
+        return result
