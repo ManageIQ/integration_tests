@@ -2,6 +2,8 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.utils import Parameter
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
@@ -19,6 +21,12 @@ from widgetastic_manageiq import MultiBoxSelect
 
 
 class CatalogsMultiBoxSelect(MultiBoxSelect):
+    available_options = Select(
+        locator=ParametrizedLocator(".//div[contains(text(), {@available_items|quote})]/select")
+    )
+    chosen_options = Select(
+        locator=ParametrizedLocator(".//div[contains(text(), {@chosen_items|quote})]/select")
+    )
     move_into_button = Button(title=Parameter("@move_into"))
     move_from_button = Button(title=Parameter("@move_from"))
 
@@ -31,8 +39,8 @@ class CatalogForm(ServicesCatalogView):
     assign_catalog_items = CatalogsMultiBoxSelect(
         move_into="Move Selected buttons right",
         move_from="Move Selected buttons left",
-        available_items="available_fields",
-        chosen_items="selected_fields"
+        available_items="Unassigned",
+        chosen_items="Selected"
     )
 
     save_button = Button('Save')
