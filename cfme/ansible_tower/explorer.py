@@ -127,8 +127,10 @@ class TowerExplorerJobTemplateDetailsView(TowerExplorerView):
     def is_displayed(self):
         return (
             self.in_tower_explorer
-            and self.title.text
-            == 'Job Template (Ansible Tower) "{}"'.format(self.context["object"].name)
+            and self.title.text in {
+                'Job Template (Ansible Tower) "{}"'.format(self.context["object"].name),
+                'Workflow Template (Ansible Tower) "{}"'.format(self.context["object"].name)
+            }
             and self.sidebar.job_templates.is_opened
         )
 
@@ -171,6 +173,7 @@ class AnsibleTowerSystemsCollection(BaseCollection):
 @attr.s
 class AnsibleTowerJobTemplate(BaseEntity, Taggable):
     name = attr.ib()
+    job_type = attr.ib(None)
 
     def create_service_dailog(self, name):
         view = navigate_to(self, "CreateServiceDialog")
@@ -189,7 +192,11 @@ class AnsibleTowerJobTemplatesCollection(BaseCollection, TaggableCollection):
     def all(self):
         """Return entities for all items in Ansible Job templates collection"""
         view = navigate_to(self, "All")
-        return [self.instantiate(e) for e in view.entities.all_entity_names]
+        job_type = self.filters.get('job_type')
+        all_jobs = [
+            self.instantiate(name=e.name, job_type=e.data["type"]) for e in view.entities.get_all()
+        ]
+        return [j for j in all_jobs if j.job_type == job_type] if job_type else all_jobs
 
 
 @navigator.register(Server, "AnsibleTowerExplorer")
