@@ -1,0 +1,10 @@
+# this file is for mapping import names to library/package names so that
+# importlib_metadata can properly fetch them
+packages:
+  bugzilla: python-bugzilla
+  Crypto: pycryptodome
+  docker: docker-py
+  git: GitPython
+  github: PyGithub
+  widgetastic: widgetastic.core
+  widgetastic_patternfly: widgetastic.patternfly
