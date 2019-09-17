@@ -20,7 +20,7 @@ def test_crosshair_op_cluster_vsphere6():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -65,7 +65,7 @@ def test_proxy_remove_ec2():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: proxy
+        assignee: jhenner
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
@@ -94,7 +94,7 @@ def test_proxy_remove_gce():
     https://mojo.redhat.com/docs/DOC-1103999
 
     Polarion:
-        assignee: proxy
+        assignee: jhenner
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
@@ -458,7 +458,7 @@ def test_crosshair_op_azone_ec2():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -547,7 +547,7 @@ def test_bottleneck_datastore():
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -623,7 +623,7 @@ def test_bottleneck_provider():
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -755,7 +755,7 @@ def test_bottleneck_host():
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -805,7 +805,7 @@ def test_utilization_provider():
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -865,7 +865,7 @@ def test_crosshair_op_vm_vsphere6():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -882,7 +882,7 @@ def test_utilization_cluster():
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -919,7 +919,7 @@ def test_bottleneck_cluster():
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -1038,7 +1038,7 @@ def test_crosshair_op_instance_ec2():
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -1147,7 +1147,7 @@ def test_utilization_host():
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -1277,7 +1277,7 @@ def test_azone_group_by_tag_ec2():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
     """
     pass
 
@@ -1466,7 +1466,7 @@ def test_crosshair_op_host_vsphere6():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
     """
     pass
 

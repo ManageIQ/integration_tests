@@ -99,8 +99,6 @@ docstrings:
             - functional
             - nonfunctional
             - structural
-            - integration
-            - upgrade
         caseautomation:
             - automated
             - manualonly

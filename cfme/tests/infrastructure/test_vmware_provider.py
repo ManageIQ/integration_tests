@@ -118,7 +118,7 @@ def test_vmware_vds_ui_display(soft_assert, appliance, provider):
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Integrate VMware provider in CFME
             2.Compute > Infrastructure > Host > [Select host] > Properties > Network
@@ -155,7 +155,7 @@ def test_vmware_reconfigure_vm_controller_type(appliance, provider):
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
-        testtype: integration
+        testtype: functional
         title: Test Controller type is listed in "Reconfigure VM Disk" Controller Type Column
         testSteps:
             1.Integrate VMware provider in CFME
@@ -191,7 +191,7 @@ def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Integrate VMware provider in CFME
             2.Compute > Infrastructure > Networkiong
@@ -229,7 +229,7 @@ def test_vmware_inaccessible_datastore():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Integrate VMware provider in CFME
             2.Compute > Infrastructure > Datastores
@@ -257,7 +257,7 @@ def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Integrate VMware provider in CFME
             2.Compute > Infrastructure > Datastores
@@ -320,7 +320,7 @@ def test_vmware_inaccessible_datastore_vm_provisioning(request, appliance, provi
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/4h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Integrate VMware provider in CFME
             2.Compute > Infrastructure > Virtual Machines > Templates
@@ -358,7 +358,7 @@ def test_vmware_provisioned_vm_host_relationship(request, appliance, provider):
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/2h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Integrate VMware provider in CFME
             2.Compute > Infrastructure > Virtual Machines > Templates
@@ -393,7 +393,7 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
         casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/2h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Add VMware provider to CFME
             2.SSH to CFME appliance and perform following steps in rails console
@@ -442,7 +442,7 @@ def test_switches_class_present_ems(appliance, provider):
         casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/2h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Add VMware provider to CFME
             2.SSH to CFME appliance and perform following steps in rails console
@@ -488,7 +488,7 @@ def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
         casecomponent: Infra
         caseimportance: critical
         initialEstimate: 1/2h
-        testtype: integration
+        testtype: functional
         testSteps:
             1.Add VMware provider to CFME
             2.Check hosts count on hosts page

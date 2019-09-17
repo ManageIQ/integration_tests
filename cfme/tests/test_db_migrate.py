@@ -199,7 +199,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
-        testtype: upgrade
+        testtype: functional
     """
     appliance_preupdate.evmserverd.stop()
     result = appliance_preupdate.ssh_client.run_command('yum update -y', timeout=3600)

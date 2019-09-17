@@ -27,7 +27,7 @@ def test_upgrade_rubyrep_to_pglogical():
                configure pglogical replication
                confirm replication is working correctly
         startsin: 5.6
-        testtype: upgrade
+        testtype: functional
     """
     pass
 
