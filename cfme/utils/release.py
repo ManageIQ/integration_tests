@@ -23,10 +23,11 @@ def clean_commit(commit_msg):
 
 
 VALID_LABELS = [
-    "LegacyBranch",
+    "ansible",
     "blackify",
     "blockers-only",
     "collections-conversion",
+    "customer-case",
     "doc",
     "enhancement",
     "fix-framework",
@@ -36,6 +37,7 @@ VALID_LABELS = [
     "infra-related",
     "issue-bug",
     "issue-rfe",
+    "LegacyBranch",
     "manual",
     "new-test-or-feature",
     "Nuage",
@@ -43,9 +45,11 @@ VALID_LABELS = [
     "py3-compat",
     "rc-regression-fix",
     "Redfish",
+    "requirements",
     "RHV",
     "sprout",
     "tech-debt",
+    "test-cleanup",
     "widgetastic-conversion",
 ]
 
