@@ -143,7 +143,7 @@ def test_replication_appliance_set_type_global_ui():
         casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/6h
-        testtype: integration
+        testtype: functional
         testSteps:
             1. Have two appliances with same v2 keys and different regions
             2. Set one as Global and the other as Remote and add subscribe the
