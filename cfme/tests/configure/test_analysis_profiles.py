@@ -80,7 +80,7 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
         caseimportance: medium
         casecomponent: Configuration
         initialEstimate: 1/2h
-        testtype: integration
+        testtype: functional
     """
     vm_profile = analysis_profile_collection.create(
         name=fauxfactory.gen_alphanumeric(),

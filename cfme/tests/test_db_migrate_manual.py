@@ -76,7 +76,7 @@ def test_upgrade_single_negative_v2_key_fix_auth():
         setup: restore a backup without using its v2_key
                run "fix_auth --invalid <password>"
                this will allow evm to start without credential errors
-        testtype: upgrade
+        testtype: functional
     """
     pass
 
@@ -184,7 +184,7 @@ def test_upgrade_multi_ext_inplace():
                - Login as LDAP user A
                - Setup a provider
                - Provision a VM
-        testtype: upgrade
+        testtype: functional
         testSteps:
             1. Run upgrade according to the migration guide (version-dependent)
             2. Start the appliances back up
@@ -394,7 +394,7 @@ def test_upgrade_multi_replication_inplace():
                - Login as LDAP user A
                - Setup a provider
                - Provision a VM
-        testtype: upgrade
+        testtype: functional
         testSteps:
             1. Run upgrade according to the migration guide (version-dependent)
             2. Start the appliances back up
@@ -621,6 +621,6 @@ def test_update_webui_replication():
                check for updates
                apply update
                check replication/providers/vms
-        testtype: upgrade
+        testtype: functional
     """
     pass

@@ -105,7 +105,7 @@ def test_pxe_provision_from_template(appliance, provider, vm_name, setup_provide
         assignee: jhenner
         casecomponent: Provisioning
         initialEstimate: 1/6h
-        testtype: integration
+        testtype: functional
         upstream: yes
     """
 
