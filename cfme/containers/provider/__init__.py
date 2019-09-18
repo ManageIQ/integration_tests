@@ -46,6 +46,8 @@ from cfme.utils.browser import browser
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import ContainerSummaryTable
@@ -159,7 +161,9 @@ class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
     """
      Container Details page
     """
-    SUMMARY_TEXT = "Containers Providers"
+    SUMMARY_TEXT = VersionPicker({
+        LOWEST: 'Containers Providers',
+        '5.11': 'Container Providers'})
 
     @property
     def is_displayed(self):
