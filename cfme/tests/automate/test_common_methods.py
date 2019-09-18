@@ -11,9 +11,9 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.virtual_machines import InfraVmSummaryView
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
@@ -269,7 +269,7 @@ def set_root_tenant_quota(request, appliance):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1334318])
-@pytest.mark.provider([VMwareProvider], override=True, selector=ONE_PER_TYPE)
+@pytest.mark.provider([RHEVMProvider], override=True, selector=ONE)
 @pytest.mark.parametrize(
     "set_root_tenant_quota", [("memory", "1000")], indirect=["set_root_tenant_quota"],
     ids=["memory"]
@@ -293,7 +293,7 @@ def test_automate_quota_units(setup_provider, provider, request, appliance, set_
         "catalog": {'vm_name': vm_name},
         "environment": {'automatic_placement': True},
         "network": {'vlan': partial_match(provisioning['vlan'])},
-        'hardware': {'memory': '1024'},
+        'hardware': {'memory': '2048'},
     }
 
     @request.addfinalizer
