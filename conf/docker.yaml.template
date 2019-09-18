@@ -1,17 +1,18 @@
-appliances:
-    Downstream: https://xx.xx.xx.xx
-    Upstream: https://xx.xx.xx.xx
-cfme_cred_repo: https://repo
-cfme_cred_repo_dir: /cfme-qe-yamls
-cfme_repo: https://github.com/RedHatQE/cfme_tests
-cfme_repo_dir: /cfme_tests_te
-pytest: -k test_bad_password
-branch: origin/master
-selff: cfmeqe/sel_ff_chrome
-pytest_con: py_test_base
-artifactor_dir: /log_report
-log_depot: /home/username/log_depot/
-banner: True
-gh_token: AAAAAAA
-gh_owner: RedHatQE
-gh_repo: cfme_tests
+docker:
+    appliances:
+        Downstream: https://xx.xx.xx.xx
+        Upstream: https://xx.xx.xx.xx
+        cfme_cred_repo: https://repo
+        cfme_cred_repo_dir: /cfme-qe-yamls
+        cfme_repo: https://github.com/RedHatQE/cfme_tests
+        cfme_repo_dir: /cfme_tests_te
+        pytest: -k test_bad_password
+        branch: origin/master
+        selff: cfmeqe/sel_ff_chrome
+        pytest_con: py_test_base
+        artifactor_dir: /log_report
+        log_depot: /home/username/log_depot/
+        banner: True
+        gh_token: AAAAAAA
+        gh_owner: RedHatQE
+        gh_repo: cfme_tests

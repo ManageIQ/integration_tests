@@ -1,7 +1,8 @@
-polarion-project-id: PROJECTID
-xunit_import_properties:
-    polarion-lookup-method: name
-    polarion-testrun-status-id: inprogress
-testcase_import_properties:
-    lookup-method: name
-polarion_url: https://polarion.example.com
+polarion_tools:
+    polarion-project-id: PROJECTID
+    xunit_import_properties:
+        polarion-lookup-method: name
+        polarion-testrun-status-id: inprogress
+    testcase_import_properties:
+        lookup-method: name
+    polarion_url: https://polarion.example.com

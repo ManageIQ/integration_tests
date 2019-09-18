@@ -8,7 +8,7 @@ from cfme.utils import path
 
 
 class ConfigData(object):
-    """A wrapper for configs in yamls"""
+    """A wrapper for configs in yamls- reads and loads values from yaml files in conf/ dir."""
     def __init__(self, env='cfme_data'):
         self.settings = LazySettings(
             ENV_FOR_DYNACONF=env,
@@ -32,14 +32,25 @@ class ConfigData(object):
 
 class Configuration(object):
     """
-    holds the current configuration
+    Holds ConfigData objects in dictionary `settings`.
     """
     def __init__(self):
         self.settings = None
 
     def configure(self):
         """
-        do the defered initial loading of the configuration
+        Loads all the congfigs in settings dictionary where Key is filename(without extension)
+        and value is ConfigData object relevant to that file.
+
+        Example self.settings would look like:
+        {'cfme_data': <cfme.utils.config_copy.ConfigData at 0x7f2a943b14e0>,
+         'env': <cfme.utils.config_copy.ConfigData at 0x7f2a943b1be0>,
+         'gpg': <cfme.utils.config_copy.ConfigData at 0x7f2a943b1cc0>,
+         ...
+         ...
+         'polarion_tools': <cfme.utils.config_copy.ConfigData at 0x7f2a943ad438>,
+         'perf_tests': <cfme.utils.config_copy.ConfigData at 0x7f2a943ad2e8>}
+
         """
         if self.settings is None:
             self.settings = {
@@ -54,6 +65,9 @@ class Configuration(object):
         :param name: name of the configuration object
         """
         self.configure()
+        # For some reason '__path__' was being received in name
+        # for which we won't have valid key.
+        # hence the if check below.
         if not name == '__path__':
             return self.settings[name]
 
