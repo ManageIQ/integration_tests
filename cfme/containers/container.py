@@ -17,6 +17,8 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Table
@@ -42,7 +44,9 @@ class ContainerAllView(ContainerView):
 
     @View.nested
     class Filters(Accordion):  # noqa
-        ACCORDION_NAME = "Filters"
+        ACCORDION_NAME = VersionPicker({
+            LOWEST: "Filters",
+            '5.11': "Global Filters"})
 
         @View.nested
         class Navigation(VerticalNavigation):
