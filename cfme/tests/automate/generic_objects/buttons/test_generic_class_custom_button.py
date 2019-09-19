@@ -2,12 +2,53 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.base.login import BaseLoggedInPage
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
 from cfme.utils.appliance import ViaUI
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
 
 pytestmark = [pytest.mark.tier(2), test_requirements.custom_button]
+
+
+@pytest.fixture(scope="module")
+def generic_object_button(appliance, generic_object_button_group, generic_definition):
+    def _generic_object_button(button_group):
+        with appliance.context.use(ViaUI):
+            button_parent = (
+                generic_object_button_group(button_group) if button_group else generic_definition
+            )
+            button_name = 'button_{}'.format(fauxfactory.gen_alphanumeric())
+            button_desc = 'Button_description_{}'.format(fauxfactory.gen_alphanumeric())
+            generic_object_button = button_parent.collections.generic_object_buttons.create(
+                name=button_name,
+                description=button_desc,
+                image='fa-home',
+                request=fauxfactory.gen_alphanumeric()
+            )
+            view = appliance.browser.create_view(BaseLoggedInPage)
+            view.flash.assert_no_error()
+        return generic_object_button
+    return _generic_object_button
+
+
+@pytest.fixture(scope="module")
+def generic_object_button_group(appliance, generic_definition):
+    def _generic_object_button_group(create_action=True):
+        if create_action:
+            with appliance.context.use(ViaUI):
+                group_name = "button_group_{}".format(fauxfactory.gen_alphanumeric())
+                group_desc = "Group_button_description_{}".format(fauxfactory.gen_alphanumeric())
+                groups_buttons = generic_definition.collections.generic_object_groups_buttons
+                generic_object_button_group = groups_buttons.create(
+                    name=group_name, description=group_desc, image="fa-user"
+                )
+                view = appliance.browser.create_view(BaseLoggedInPage)
+                view.flash.assert_no_error()
+            return generic_object_button_group
+
+    return _generic_object_button_group
 
 
 @pytest.fixture(scope="module")
@@ -129,3 +170,31 @@ def test_custom_button_on_generic_class_crud(appliance, button_group, is_undefin
         #  Change flash as per BZ-1744478.
         view.flash.assert_success_message('Button:"undefined" was successfully deleted')
         assert not button.exists
+
+
+@pytest.mark.parametrize('button_group', [True, False],
+                         ids=['button_group_with_button', 'single_button'])
+def test_generic_objects_with_buttons_ui(appliance, add_generic_object_to_service,
+                                         button_group, generic_object_button):
+    """
+        Tests buttons ui visibility assigned to generic object
+
+        Metadata:
+            test_flag: ui
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: GenericObjects
+    """
+    instance = add_generic_object_to_service
+    generic_button = generic_object_button(button_group)
+    generic_button_group = generic_button.parent.parent
+
+    with appliance.context.use(ViaUI):
+        view = navigate_to(instance, 'MyServiceDetails')
+        if button_group:
+            assert view.toolbar.group(generic_button_group.name).custom_button.has_item(
+                generic_button.name)
+        else:
+            assert view.toolbar.button(generic_button.name).custom_button.is_displayed

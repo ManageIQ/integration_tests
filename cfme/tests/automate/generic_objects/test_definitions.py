@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+import yaml
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
@@ -11,6 +12,22 @@ from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 pytestmark = [test_requirements.generic_objects]
+
+
+GEN_OBJ_DIRECTORY = "/var/www/miq/vmdb/tmp/generic_object_definitions"
+
+
+@pytest.fixture
+def gen_obj_def_import_export(appliance):
+    with appliance.context.use(ViaREST):
+        definition = appliance.collections.generic_object_definitions.create(
+            name="rest_gen_class_imp_exp{}".format(fauxfactory.gen_alphanumeric()),
+            description="Generic Object Definition",
+            attributes={'addr01': 'string'},
+            methods=['add_vm', 'remove_vm']
+        )
+        yield definition
+        definition.delete_if_exists()
 
 
 @pytest.mark.sauce
@@ -103,3 +120,71 @@ def test_upload_image_generic_object_definition(appliance):
     # make sure only a single message is present
     assert len(view.flash.read()) == 1
     view.cancel.click()
+
+
+@pytest.mark.ignore_stream("5.10")
+def test_import_export_generic_object_definition(request, appliance, gen_obj_def_import_export):
+    """
+    Bugzilla:
+        1595259
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/6h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: GenericObjects
+        testSteps:
+            1. Create generic object definition via Rest
+            2. Export the generic object definition
+            3. Delete the generic object definition
+            4. Import the generic object definition
+        expectedResults:
+            1. The generic object definition should be present in CFME
+            2. Yaml file should be present on the appliance with the generic object details
+            3. Generic object definition is deleted
+            4. Generic object definition once again exists on the appliance
+    """
+    # Create the generic object directory
+    assert appliance.ssh_client.run_command("mkdir {}".format(GEN_OBJ_DIRECTORY)).success
+
+    @request.addfinalizer
+    def cleanup():
+        assert appliance.ssh_client.run_command("rm -rf {}".format(GEN_OBJ_DIRECTORY)).success
+
+    # Export the user defined generic object definitions
+    assert appliance.ssh_client.run_rake_command(
+        "evm:export:generic_object_definitions -- --directory {}".format(GEN_OBJ_DIRECTORY)
+    ).success
+    # Verify the file's information
+    try:
+        with appliance.ssh_client.open_sftp().open(
+                "{}/{}.yaml".format(GEN_OBJ_DIRECTORY, gen_obj_def_import_export.name)
+        ) as f:
+            data = yaml.safe_load(f)[0]["GenericObjectDefinition"]
+
+    except IOError:
+        pytest.fail(
+            "IOError: {}/{}.yaml not found on the appliance, "
+            "exporting the generic object definition failed".format(
+                GEN_OBJ_DIRECTORY, gen_obj_def_import_export.name
+            )
+        )
+
+    assert data.get("description") == gen_obj_def_import_export.description
+    assert data.get("name") == gen_obj_def_import_export.name
+
+    # Delete the generic object definition via the UI
+    gen_obj_def_import_export.delete_if_exists()
+
+    # Import the generic object yaml by running the rake command
+    assert appliance.ssh_client.run_rake_command(
+        "evm:import:generic_object_definitions -- --source {}/{}.yaml".format(
+            GEN_OBJ_DIRECTORY,
+            gen_obj_def_import_export.name,
+        )
+    ).success
+
+    assert gen_obj_def_import_export.exists
