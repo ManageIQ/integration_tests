@@ -121,7 +121,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
         assert result.success, "Couldn't start evmserverd: {}".format(result.output)
     app.wait_for_web_ui(timeout=600)
     app.db.reset_user_pass()
-    wait_for(lambda: navigate_to(app.server, 'LoginScreen'), handle_exception=True)
+    wait_for(navigate_to, (app.server, 'LoginScreen'), handle_exception=True, timeout='5m')
     app.server.login(app.user)
 
 
