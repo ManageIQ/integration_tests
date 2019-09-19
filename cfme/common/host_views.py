@@ -180,6 +180,7 @@ class HostsToolbar(View):
     lifecycle = Dropdown(text="Lifecycle")
     monitoring = Dropdown(text="Monitoring")
     power = Dropdown(text="Power")
+    download = Dropdown('Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
