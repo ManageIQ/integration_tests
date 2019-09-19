@@ -6,10 +6,15 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 
-pytestmark = [pytest.mark.tier(2), test_requirements.custom_button]
+pytestmark = [
+    pytest.mark.tier(2),
+    test_requirements.custom_button,
+    test_requirements.generic_objects
+]
 
 
 @pytest.fixture(scope="module")
@@ -63,12 +68,13 @@ def button_group(appliance, generic_definition):
         group.delete_if_exists()
 
 
-@pytest.mark.meta(automates=[1744478])
+@pytest.mark.meta(automates=[1744478, 1753289])
 def test_custom_group_on_generic_class_crud(appliance, generic_definition):
     """ Test custom button group crud operation on generic class definition
 
     Bugzilla:
         1744478
+        1753289
 
     Polarion:
         assignee: ndhandre
@@ -112,7 +118,7 @@ def test_custom_group_on_generic_class_crud(appliance, generic_definition):
         assert not group.exists
 
 
-@pytest.mark.meta(automates=[1534539, 1744478])
+@pytest.mark.meta(automates=[1534539, 1744478, 1753289])
 @pytest.mark.parametrize("is_undefined", [True, False], ids=["undefined", "with_group"])
 def test_custom_button_on_generic_class_crud(appliance, button_group, is_undefined):
     """Test custom button crud operation on generic class definition
@@ -120,6 +126,7 @@ def test_custom_button_on_generic_class_crud(appliance, button_group, is_undefin
     Bugzilla:
         1534539
         1744478
+        1753289
 
     Polarion:
         assignee: ndhandre
@@ -198,3 +205,163 @@ def test_generic_objects_with_buttons_ui(appliance, add_generic_object_to_servic
                 generic_button.name)
         else:
             assert view.toolbar.button(generic_button.name).custom_button.is_displayed
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1650559])
+def test_ansible_playbook_generic_object_button():
+    """
+    Bugzilla:
+        1650559
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/4h
+        casecomponent: GenericObjects
+        testSteps:
+            1. Go to automation->Automate->Generic Objects
+            2. Create Generic Objects Class
+            3. Go Add New button
+            4. Change button type to Ansible Playbook
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Ansible playbook fields should be displayed
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(blockers=[BZ(1753237)], coverage=[1753237])
+def test_generic_object_button_edit_multiple_times():
+    """
+    Bugzilla:
+        1753237
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/6h
+        casecomponent: GenericObjects
+        testSteps:
+            1. Create a "Generic Object Class"
+            2. Create a custom button that has the "Request" as "ca"
+            3. Edit the custom button request to "call_instance"
+            4. Click to edit the custom button again
+        expectedResults:
+            1.
+            2.
+            3.
+            4. The request field should say "call_instance"
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(blockers=[BZ(1753289), BZ(1744478)], coverage=[1753289, 1744478])
+def test_generic_object_button_delete_flash():
+    """
+    Bugzilla:
+        1744478
+        1753289
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/6h
+        casecomponent: GenericObjects
+        testSteps:
+            1. Add a generic object class
+            2. Create a button under the class
+            3. Delete the button
+        expectedResults:
+            1.
+            2.
+            3. Assert that the button name is in the flash message
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], coverage=[1753281, 1753388])
+def test_generic_object_button_delete_multiple():
+    """
+    Bugzilla:
+        1753281
+        1753388
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/30h
+        casecomponent: GenericObjects
+        testSteps:
+            1. Create a generic object class
+            2. Create a custom button under this class
+            3. Create a second button
+            4. Delete the second button
+        expectedResults:
+            1.
+            2.
+            3.
+            4. The second button should be deleted, not both, no 404 error
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.ansible
+@pytest.mark.meta(blockers=[BZ(1753338)], coverage=[1753338])
+def test_generic_object_button_execute_playbook():
+    """
+    Bugzilla:
+        1753338
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/30h
+        casecomponent: GenericObjects
+        testSteps:
+            1. Enable embedded ansible role
+            2. Add a repo with some playbooks
+                (e.g. https://github.com/ManageIQ/integration_tests_playbooks.git)
+            3. Add some Ansible credentials for a VMware provider
+            4. Create a catalog named "Catalog VMware"
+            5. Create a catalog item "VMware Catalog Item" under this catalog that executes
+                a playbook, if you're using the above repo you can use
+                e.g. "gather_all_vms_from_vmware.yml"
+            6. Order the service catalog and ensure that the playbook runs successfully
+            7. Now create a separate catalog "Test Custom Button"
+            8. Create a "generic" catalog item under this catalog "test custom button"
+            9. Order this service and ensure that the service appears under My Services
+            10. Create a generic object class "Test class"
+            11. Create a custom button of type "Ansible Playbook" that uses the catalog item
+                "VMware Catalog Item", with "Request" -> "Order_Ansible_Playbook"
+            12. Create a generic object instance under "Test class"
+            13. Associate the generic object instance with the service "Test Custom Button"
+                This can be done by REST action "add_resource" or by the rails console
+            14. Navigate to Services > My services > Services > Active Services > Test Custom Button
+            15. In the generic objects summary table, there should be one instance
+                associated with the service, click this instance
+            16. Click the generic object quadicon
+            17. The custom button you created in step 11 should be displayed, click that button.
+            18. Hit submit
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9.
+            10.
+            11.
+            12.
+            13.
+            14.
+            15.
+            16.
+            17.
+            18. The playbook should execute successfully
+    """
+    pass

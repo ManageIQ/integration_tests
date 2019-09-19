@@ -10,6 +10,7 @@ from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -188,3 +189,32 @@ def test_generic_object_with_service_button(appliance, generic_object, button_wi
         generic_object.create_view(MyServiceGenericObjectInstanceView, wait=10)
     except TimedOutError:
         pytest.fail("Could not wait for service's generic object view to displayed.")
+
+
+@pytest.mark.manual
+@pytest.mark.meta(blockers=[BZ(1741050)], coverage=[1741050])
+def test_generic_object_on_service_breadcrumb():
+    """
+    Bugzilla:
+        1741050
+
+    Polarion:
+        assignee: jdupuy
+        initialEstimate: 1/6h
+        casecomponent: GenericObjects
+        testSteps:
+            1. Generate a service viewable under My Services
+            2. Create Generic Object Class & Instance
+            3. Assign the generic object instance to the service
+            4. Navigate to the service
+            5. Click on the generic object instances
+            6. Check the breadcrumb link
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Breadcrumb should work properly
+    """
+    pass

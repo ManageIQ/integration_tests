@@ -13,7 +13,6 @@ from cfme.utils.update import update
 
 pytestmark = [test_requirements.generic_objects]
 
-
 GEN_OBJ_DIRECTORY = "/var/www/miq/vmdb/tmp/generic_object_definitions"
 
 
