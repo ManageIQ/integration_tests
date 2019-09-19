@@ -40,37 +40,6 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     pass
 
 
-@pytest.mark.tier(3)
-@pytest.mark.meta(coverage=[1363901])
-def test_quota_for_ansible_service():
-    """
-    This test case is to test quota for ansible service
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/4h
-        caseimportance: low
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.5
-        casecomponent: Configuration
-        tags: quota
-        testSteps:
-            1. create a service bundle including an Ansible Tower service type
-            2. make sure CloudForms quotas are enabled
-            3. provision the service
-        expectedResults:
-            1.
-            2.
-            3. No error in service bundle provisioning for Ansible Tower service types when quota
-               is enforce.
-
-    Bugzilla:
-        1363901
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1492158])
 def test_quota_calculation_using_service_dialog_overrides():
