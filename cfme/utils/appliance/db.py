@@ -663,7 +663,6 @@ class ApplianceDB(AppliancePlugin):
         self.appliance.evmserverd.stop()
         self.drop()
         self.create()
-        # confirm this step
         self.restore(database_path=db_path)
         self.fix_auth_key()
         if is_major:

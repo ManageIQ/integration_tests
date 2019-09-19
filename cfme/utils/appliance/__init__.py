@@ -456,7 +456,6 @@ class IPAppliance(object):
         try:
             server, = (r for r in results if r.href == shref)
         except ValueError:
-            # this exception occurs sometimes while working with customer db
             for server in results:
                 if server.is_master:
                     return server
