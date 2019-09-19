@@ -277,6 +277,10 @@ class NeedleNotFoundInLog(CFMEException):
     """Raised when log doesnt't contain needle"""
 
 
+class RestLookupError(CFMEException):
+    """raised when lookup of a rest entity fails"""
+
+
 @property
 def displayed_not_implemented(cls):
     raise NotImplementedError("This view has no unique markers for is_displayed check")
