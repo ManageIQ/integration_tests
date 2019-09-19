@@ -48,7 +48,11 @@ class ApplianceDB(AppliancePlugin):
         if self.appliance.db_host:
             return self.appliance.db_host
         try:
-            db_addr = self.appliance.wait_for_host_address()
+            db_addr = (
+                self.appliance.wait_for_host_address()
+                if self.appliance.evmserverd.is_active
+                else None
+            )
             if db_addr is None:
                 return self.appliance.hostname
             db_addr = db_addr.strip()
@@ -198,12 +202,16 @@ class ApplianceDB(AppliancePlugin):
                 result.output)
             self.logger.error(msg)
             raise ApplianceException(msg)
-        if self.appliance.version > '5.8':
-            result = self.ssh_client.run_command("fix_auth --databaseyml -i {}".format(
-                conf.credentials['database'].password), timeout=45)
-            if result.failed:
-                self.logger.error("Failed to change invalid db password: {}"
-                                  .format(result.output))
+        result = self.ssh_client.run_command(
+            "fix_auth --databaseyml -i {}".format(
+                conf.credentials["database"].password
+            ),
+            timeout=45,
+        )
+        if result.failed:
+            self.logger.error(
+                "Failed to change invalid db password: {}".format(result.output)
+            )
 
     def setup(self, **kwargs):
         """Configure database
@@ -640,3 +648,27 @@ class ApplianceDB(AppliancePlugin):
                                                    pwd=conf.credentials['database']['password'])
         result = self.ssh_client.run_command(db_check_command, ensure_host=ensure_host)
         return result.success
+
+    def restore_database(self, db_path, is_major=False):
+        """Restore a database on the appliance.
+
+        Args:
+            db_path (str): Path to the database. It is required that the database
+                            must already be present in the appliance.
+            is_major (bool): True if the database belongs to appliance version X
+                            and it is to be restored on appliance version Y
+                            False if the database belongs to appliance version X
+                            and it is to be restored on appliance version X
+        """
+        self.appliance.evmserverd.stop()
+        self.drop()
+        self.create()
+        # confirm this step
+        self.restore(database_path=db_path)
+        self.fix_auth_key()
+        if is_major:
+            self.migrate()
+            self.automate_reset()
+        self.appliance.evmserverd.start()
+        self.appliance.wait_for_web_ui(timeout=600)
+        self.reset_user_pass()
