@@ -671,3 +671,13 @@ class FTPFileWrapper(FTPFile):
             target path
         """
         return self.client.download(self.name, target)
+
+    @property
+    def filesize(self):
+        """Return file size"""
+        # Switch to Binary mode
+        self.client.ftp.sendcmd("TYPE i")
+        size = self.client.ftp.size(self.path)
+        # switch back to ASCII
+        self.client.ftp.sendcmd("TYPE A")
+        return size
