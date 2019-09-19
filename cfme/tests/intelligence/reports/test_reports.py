@@ -140,6 +140,29 @@ def rbac_api(appliance, request):
     )
 
 
+@pytest.fixture
+def restore_db(temp_appliance_preconfig, file_name):
+    db_file = FTPClientWrapper(cfme_data.ftpserver.entities.databases).get_file(file_name)
+    db_path = f"/tmp/{db_file.name}"
+
+    # Download the customer db on appliance
+    result = temp_appliance_preconfig.ssh_client.run_command(
+        f"curl -o {db_path} ftp://{db_file.link}"
+    )
+    assert result.success
+
+    def _check_file_size(file_path, expected_size):
+        return temp_appliance_preconfig.ssh_client.run_command(
+            f"stat {file_path} | grep {expected_size}"
+        ).success
+
+    # assert the whole database was downloaded to make sure we do not test with broken database
+    assert _check_file_size(db_path, db_file.filesize)
+
+    is_major = True if temp_appliance_preconfig.version > "5.11" else False
+    temp_appliance_preconfig.db.restore_database(db_path, is_major=is_major)
+
+
 # =========================================== Tests ===============================================
 
 
@@ -504,3 +527,39 @@ def test_reports_filter_content(
     expected = ["Allocated Memory in GB", "Allocated Storage in GB"]
     got = [row["Quota Name"].text for row in table.rows()]
     assert sorted(expected) == sorted(got)
+
+
+@pytest.mark.long_running
+@pytest.mark.customer_scenario
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1725142])
+@pytest.mark.parametrize("file_name", ["test_migration_db_510.backup"], ids=["customer_db"])
+def test_reports_service_unavailable(temp_appliance_preconfig, file_name, restore_db):
+    """
+    Bugzilla:
+        1725142
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup:
+            1. Load customer database on the appliance.
+        testSteps:
+            1. Navigate to Reports.
+            2. Navigate to `Details` page of the report with >31k rows.
+        expectedResults:
+            1. Reports must be accessible, there should be no 503 service unavailable error.
+            2. Details page must be accessible.
+    """
+    appliance = temp_appliance_preconfig
+
+    view = navigate_to(appliance.collections.reports, "All")
+    assert view.is_displayed
+
+    saved_report = appliance.collections.reports.instantiate(
+        type="Configuration Management",
+        subtype="Hosts",
+        menu_name="Host vLANs and vSwitches",
+    ).saved_reports.instantiate("06/17/19 11:46:59 UTC", "06/17/19 11:44:57 UTC", False)
+    assert saved_report.exists
