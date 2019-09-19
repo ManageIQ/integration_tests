@@ -659,6 +659,13 @@ def test_simulated_object_copy_on_button(appliance, provider, setup_provider, bu
         target_type = "Provider"
         target_obj = provider.name
 
+    attributes = {
+        "class": "Request",
+        "instance": "TestNotification",
+        "message": "digitronik_msg",
+        "namespace": "/System",
+    }
+
     # simulate and copy
     simulate(
         appliance=appliance,
@@ -669,6 +676,7 @@ def test_simulated_object_copy_on_button(appliance, provider, setup_provider, bu
         target_object=target_obj,
         execute_methods=True,
         pre_clear=True,
+        attributes_values=attributes
     )
 
     view = appliance.browser.create_view(AutomateSimulationView, wait="15s")
@@ -683,6 +691,12 @@ def test_simulated_object_copy_on_button(appliance, provider, setup_provider, bu
     view = navigate_to(button_coll, "Add")
     view.paste.click()
 
+    # check paste attributes
     assert view.advanced.system.read() == "Automation"
     assert view.advanced.message.read() == "test_bz"
     assert view.advanced.request.read() == "InspectMe"
+
+    attributes_on_page = [kv for kv in view.advanced.attribute.read().values() if kv["key"] != ""]
+
+    for attr in attributes_on_page:
+        assert attributes[attr["key"]] == attr["value"]
