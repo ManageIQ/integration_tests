@@ -16,6 +16,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.update import Updateable
 from cfme.utils.wait import TimedOutError
+from widgetastic_manageiq import WarningTextInput
 
 
 class ServiceCatalogs(Navigatable, Taggable, Updateable, sentaku.modeling.ElementMixin):
@@ -54,7 +55,7 @@ class BaseOrderForm(View):
     @ParametrizedView.nested
     class fields(ParametrizedView):  # noqa
         PARAMETERS = ("key",)
-        input = Input(id=Parameter("key"))
+        input = WarningTextInput(id=Parameter("key"))
         select = Select(id=Parameter("key"))
         param_input = Input(id=ParametrizedString("param_{key}"))
         dropdown = BootstrapSelect(locator=ParametrizedLocator(

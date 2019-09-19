@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from wait_for import TimedOutError
 from wait_for import wait_for
 
 from cfme import test_requirements
@@ -52,10 +53,15 @@ def dialog_cat_item(appliance, catalog):
     sd.delete_if_exists()
 
 
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1518971, 1720245])
+@pytest.mark.customer_scenario
 def test_dialog_element_regex_validation(appliance, dialog_cat_item):
     """Tests Service Dialog Elements with regex validation.
 
-    Testing BZ 1518971
+    Bugzilla:
+        1518971
+        1720245
 
     Polarion:
         assignee: nansari
@@ -66,10 +72,23 @@ def test_dialog_element_regex_validation(appliance, dialog_cat_item):
     catalog_item, ele_name = dialog_cat_item
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, 'Order')
-    view.fields(ele_name).fill("!@#%&")
-    wait_for(lambda: view.submit_button.disabled, timeout=7)
-    view.fields(ele_name).fill("test_123")
-    wait_for(lambda: not view.submit_button.disabled, timeout=7)
+
+    for value in ["test_123", "!@#$%", ""]:
+        view.fields(ele_name).fill(value)
+        assert view.fields(ele_name).read() == value
+
+        if value in ["!@#$%"]:
+            expected_warning = 'Entered text should match the format: ^([a-z0-9]+_*)*[a-z0-9]+$'
+            assert view.fields(ele_name).input.warning == expected_warning
+        try:
+            wait_for(
+                lambda: view.submit_button.disabled,
+                fail_condition=False if value == "!@#$%" else True,
+                timeout=10,
+                delay=2
+            )
+        except TimedOutError:
+            pytest.fail("'{}' fail to match regex validation".format(value))
 
 
 @pytest.mark.manual
@@ -91,35 +110,6 @@ def test_dialog_text_area_element_regex_validation():
             1.
             2.
             3. Regex validation should work
-    """
-    pass
-
-
-@pytest.mark.meta(coverage=[1720245])
-@pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
-@pytest.mark.tier(2)
-def test_dialog_regex_validation_button():
-    """
-    Bugzilla:
-        1720245
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        startsin: 5.11
-        testSteps:
-            1. Add dialog with Regular Expression - "^[0-9]*$"
-            2. Create catalog and catalog item
-            3. Navigate to Order page of the service
-            4. Type "a" and it will show a message that does not satisfy the regex.
-            5. Clear the field
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Submit button should have become active when the validate field cleared
     """
     pass
 

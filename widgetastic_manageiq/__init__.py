@@ -5667,6 +5667,18 @@ class SearchBox(TextInput):
         return True
 
 
+class WarningTextInput(TextInput):
+    WARNING_LOCATOR = ParametrizedLocator("{@locator}/../div")
+
+    @property
+    def warning(self):
+        try:
+            self.parent_browser.wait_for_element(self.WARNING_LOCATOR, timeout=3)
+            return self.parent_browser.text(self.WARNING_LOCATOR)
+        except NoSuchElementException:
+            return None
+
+
 class AutomateRadioGroup(RadioGroup):
     """RadioGroup for Custom Button"""
 
