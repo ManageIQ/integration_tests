@@ -60,7 +60,7 @@ def test_vm_genealogy_detected(
         test_flag: genealogy, provision
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -94,7 +94,7 @@ def test_compare_button_enabled():
     Test that compare button is enabled
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
@@ -128,7 +128,7 @@ def test_cloud_infra_genealogy():
     and vice-versa.
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
