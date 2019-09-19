@@ -74,8 +74,7 @@ def custom_instance(request_cls):
 
 
 # DatastoreImport help to pass import data to fixture import_datastore
-DatastoreImport = namedtuple("DatastoreImport", ["file_name", "from_domain", "to_domain",
-                                                 "description"])
+DatastoreImport = namedtuple("DatastoreImport", ["file_name", "from_domain", "to_domain"])
 
 
 @pytest.fixture()
@@ -103,8 +102,7 @@ def import_datastore(appliance, import_data):
     datastore = appliance.collections.automate_import_exports.instantiate(
         import_type="file", file_path=file_path
     )
-    domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain,
-                                          import_data.description)
+    domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
     assert domain.exists
     with update(domain):
         domain.enabled = True

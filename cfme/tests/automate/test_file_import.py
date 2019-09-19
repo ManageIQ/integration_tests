@@ -8,7 +8,7 @@ pytestmark = [test_requirements.automate, pytest.mark.tier(3)]
 
 @pytest.mark.parametrize(
     "import_data",
-    [DatastoreImport("bz_1715396.zip", "BZ_1715396", None, None)],
+    [DatastoreImport("bz_1715396.zip", "BZ_1715396", None)],
     ids=["sample_domain"],
 )
 def test_domain_import_file(import_datastore, import_data):

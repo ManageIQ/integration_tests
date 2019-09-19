@@ -329,21 +329,22 @@ def setup_ansible_repository(appliance, wait_for_ansible):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(automates=[1678132])
+@pytest.mark.meta(automates=[1678132, 1678135])
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.parametrize(
-    ("import_data", "item"),
-    ([DatastoreImport("automate_domain_bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
-                      None, "using CFME creds"), "CatalogItemInitialization_jira23"],
-     [DatastoreImport("automate_domain_bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
-                      None, "using CFME creds"), "CatalogItemInitialization_jira24"]),
+    ("import_data", "instance"),
+    ([DatastoreImport("bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
+                      None), "CatalogItemInitialization_jira23"],
+     [DatastoreImport("bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
+                      None), "CatalogItemInitialization_jira24"]),
     ids=["method_to_playbook", "playbook_to_playbook"]
 )
 def test_variable_pass(request, appliance, setup_ansible_repository, import_datastore, import_data,
-                       item, dialog, catalog):
+                       instance, dialog, catalog):
     """
     Bugzilla:
         1678132
+        1678135
 
     Polarion:
         assignee: ghubale
@@ -353,33 +354,30 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
         startsin: 5.11
         setup:
             1. Enable embedded ansible role
-        testSteps:
-            1. Add Ansible repo called billy -
+            2. Add Ansible repo called billy -
                https://github.com/ManageIQ/integration_tests_playbooks
-            2. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip ) to downloads
-               directory(Zip file with description - 'Automate domain' is attached with BZ(1678135)
-            3. Go to Automation/Automate Import/Export and import zip file
-            4. Click on "Toggle All/None" and hit the submit button
-            5. Go to Automation/Automate/Explorer and Enable the imported domain
-            6. Make sure all the playbook methods have all the information (see if Repository,
+            3. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip) to downloads
+               directory(Zip file named - 'Automate domain' is attached with BZ(1678135))
+            4. Go to Automation>Automate>Import/Export and import zip file
+            5. Click on "Toggle All/None" and hit the submit button
+            6. Go to Automation>Automate>Explorer and Enable the imported domain
+            7. Make sure all the playbook methods have all the information (see if Repository,
                Playbook and Machine credentials have values), update if needed
-            7. Import or create hello_world (simple ansible dialog with Machine credentials and
+            8. Import or create hello_world (simple ansible dialog with Machine credentials and
                hosts fields)
-            8. Create a Generic service using the hello_world dialog and select instance
-               'CatalogItemInitialization_jira23'(Note: This is the state machine which executes
-               playbooks and inline method successively) then order service
-            9. Run "grep dump_vars2 automation.log" from log directory
+        testSteps:
+            1. Create a Generic service using the hello_world dialog.
+            1a. Select instance 'CatalogItemInitialization_jira23'(Note: This is the state machine
+                which executes playbooks and inline method successively) then order service OR
+            1b. Select instance 'CatalogItemInitialization_jira24'(Note: This is the state machine
+                which executes playbooks successively) then order service
+            2. Run "grep dump_vars2 automation.log" from log directory
         expectedResults:
-            1. Ansible repository added
-            2.
-            3.
-            4. Domain imported
-            5. Domain enabled
-            6. Playbook method updated(if needed as mentioned in step)
-            7. Ansible dialog created
-            8. Generic service catalog item created
-            9. Variables should be passed through successive playbooks and you should see logs like
-               this(https://bugzilla.redhat.com/show_bug.cgi?id=1678132#c5)
+            1. Generic service catalog item created
+            2. For 1a scenario: Variables should be passed through successive playbooks and you
+               should see logs like this(https://bugzilla.redhat.com/show_bug.cgi?id=1678132#c5)
+               For 1b scenario: Variables should be passed through successive playbooks and you
+               should see logs like this(https://bugzilla.redhat.com/show_bug.cgi?id=1678135#c13)
     """
     # Making provisioning entry points to select while creating generic catalog items
     entry_point = (
@@ -389,7 +387,7 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
         "Provisioning",
         "StateMachines",
         "ServiceProvision_Template",
-        f"{item}",
+        f"{instance}",
     )
 
     # Creating generic catalog items

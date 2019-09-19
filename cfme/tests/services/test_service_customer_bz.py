@@ -79,7 +79,7 @@ def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
 @pytest.mark.customer_scenario
 @pytest.mark.parametrize(
     "import_data",
-    [DatastoreImport("bz_1705021.zip", "bz_1705021", None, None)],
+    [DatastoreImport("bz_1705021.zip", "bz_1705021", None)],
     ids=["sample_domain"],
 )
 # Parametrizing for import_dialog fixture
