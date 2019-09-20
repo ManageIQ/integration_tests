@@ -15,6 +15,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils import ssh
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -29,6 +30,29 @@ FormDataVmObj = namedtuple("FormDataVmObj", ["infra_mapping_data", "vm_list"])
 V2vProviders = namedtuple("V2vProviders", ["vmware_provider", "rhv_provider", "osp_provider"])
 
 
+def set_skip_event_history_flag(appliance):
+    """This flag is required for OSP to skip all old events and refresh inventory"""
+    appliance.update_advanced_settings(
+        {'ems': {'ems_openstack': {'event_handling': {'event_skip_history': True}}}})
+    appliance.evmserverd.restart()
+    appliance.evmserverd.wait_for_running()
+    appliance.wait_for_web_ui()
+
+
+def start_event_workers_for_osp(appliance, provider):
+    """This is a workaround to start event catchers until BZ 1753364 is fixed"""
+    provider_edit_view = navigate_to(provider, 'Edit')
+    endpoint_view = provider.endpoints_form(parent=provider_edit_view)
+    endpoint_view.events.event_stream.select("AMQP")
+    endpoint_view.events.event_stream.select("Ceilometer")
+    provider_edit_view.save.click()
+    # Test if workers are enabled and running
+    worker_status = appliance.ssh_client.run_rake_command(
+        "evm:status | grep 'Openstack::Cloud::EventCatcher'").success
+    if not worker_status:
+        pytest.skip("Openstack Eventcatcher workers are not running")
+
+
 @pytest.fixture(scope="module")
 def v2v_provider_setup(request, appliance, source_provider, provider):
     """ Fixture to setup providers """
@@ -41,8 +65,12 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
             rhv_provider = v2v_provider
             setup_or_skip(request, rhv_provider)
         elif v2v_provider.one_of(OpenStackProvider):
+            if appliance.version >= "5.11":
+                set_skip_event_history_flag(appliance)
             osp_provider = v2v_provider
             setup_or_skip(request, osp_provider)
+            if BZ(1753364).blocks:
+                start_event_workers_for_osp(appliance, osp_provider)
         else:
             pytest.skip("Provider {} is not a valid provider for v2v tests".format(provider.name))
     v2v_providers = V2vProviders(vmware_provider=vmware_provider,
