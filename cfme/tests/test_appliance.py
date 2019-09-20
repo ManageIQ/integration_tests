@@ -181,7 +181,7 @@ def test_cpu_total(appliance):
     assert int(result.output) >= 4
 
 
-@pytest.mark.meta(blockers=[BZ(1712929, forced_streams=['5.11'])])  # against RHEL
+@pytest.mark.meta(blockers=[BZ(1712929, forced_streams=['5.10', '5.11'])])  # against RHEL
 @pytest.mark.ignore_stream("upstream")
 def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present.
