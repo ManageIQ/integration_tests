@@ -110,6 +110,14 @@ def provider_credentials(appliance, provider, credential):
     if cred_type == "Amazon":
         credentials["access_key"] = creds.principal
         credentials["secret_key"] = creds.secret
+    elif cred_type == "Azure":
+        azure_creds = conf.credentials[provider.data['credentials']]
+        credentials["username"] = azure_creds.ui_username
+        credentials["password"] = azure_creds.ui_password
+        credentials["subscription_id"] = azure_creds.subscription_id
+        credentials["tenant_id"] = azure_creds.tenant_id
+        credentials["client_secret"] = azure_creds.password
+        credentials["client_id"] = azure_creds.username
     else:
         credentials["username"] = creds.principal
         credentials["password"] = creds.secret
