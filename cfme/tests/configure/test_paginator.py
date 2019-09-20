@@ -6,7 +6,6 @@ from widgetastic_patternfly import Dropdown
 from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 
 general_list_pages = [
     ('servers', None, 'Details', False),
@@ -97,13 +96,6 @@ def schedule(appliance):
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
-@pytest.mark.meta(blockers=[BZ(1724747, forced_streams=['5.11'], unblock=lambda place_info:
-                      '{}_{}'.format(place_info[0], place_info[2].lower())
-                      not in ['zones_diagnostics', 'zones_serversbyroles', 'zones_servers',
-                      'zones_candugapcollection', 'zones_rolesbyservers', 'zones_collectlogs']),
-                  BZ(1726345, forced_streams=['5.11'], unblock=lambda place_info:
-                      '{}_{}'.format(place_info[0], place_info[2].lower())
-                      not in ['regions_serversbyroles'])])
 def test_paginator_config_pages(appliance, place_info):
     """
         Check paginator is visible for config pages
