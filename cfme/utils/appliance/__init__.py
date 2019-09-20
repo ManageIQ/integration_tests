@@ -233,7 +233,7 @@ class ApplianceConsoleCli(object):
         self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
             " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, dbdisk=dbdisk), timeout=4 * 60)
+                dbname=dbname, dbdisk=dbdisk), timeout=5 * 60)
 
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
             username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass):
