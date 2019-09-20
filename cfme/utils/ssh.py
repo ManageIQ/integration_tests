@@ -123,7 +123,7 @@ class SSHClient(paramiko.SSHClient):
         stderr: If specified, overrides the system stderr file for streaming output.
     """
     def __init__(self, stream_output=False, **connect_kwargs):
-        super(SSHClient, self).__init__()
+        super().__init__()
         self._streaming = stream_output
         # deprecated/useless karg, included for backward-compat
         self._keystate = connect_kwargs.pop('keystate', None)
@@ -212,7 +212,7 @@ class SSHClient(paramiko.SSHClient):
             logger.debug('scp progress for %r: %s of %s ', filename, sent, size)
 
     def close(self):
-        super(SSHClient, self).close()
+        super().close()
         try:
             _client_session.remove(self)
         except (AttributeError, ValueError):
@@ -234,14 +234,14 @@ class SSHClient(paramiko.SSHClient):
             self._connect_kwargs.update(kwargs)
             wait_for(self._check_port, handle_exception=True, timeout='2m', delay=5)
             try:
-                conn = super(SSHClient, self).connect(**self._connect_kwargs)
+                conn = super().connect(**self._connect_kwargs)
             except paramiko.ssh_exception.BadHostKeyException:
                 if self.strict_host_key_checking:
                     raise
 
                 hk = self.get_host_keys()
                 del hk[self._connect_kwargs['hostname']]
-                conn = super(SSHClient, self).connect(**self._connect_kwargs)
+                conn = super().connect(**self._connect_kwargs)
                 logger.warning('Host key for host %s changed. Using the new one as '
                                'strict_host_key_checking is disabled.',
                                self._connect_kwargs['hostname'])
@@ -275,12 +275,12 @@ class SSHClient(paramiko.SSHClient):
             logger.warning(
                 'You are about to use sftp on a containerized appliance. It may not work.')
         self.connect()
-        return super(SSHClient, self).open_sftp(*args, **kwargs)
+        return super().open_sftp(*args, **kwargs)
 
     def get_transport(self, *args, **kwargs):
         if not self.connected:
             self.connect()
-        return super(SSHClient, self).get_transport(*args, **kwargs)
+        return super().get_transport(*args, **kwargs)
 
     def run_command(self, command, timeout=RUNCMD_TIMEOUT, ensure_host=False,
                     ensure_user=False, container=None):
@@ -756,7 +756,7 @@ class SSHClient(paramiko.SSHClient):
 class SSHTail(SSHClient):
 
     def __init__(self, remote_filename, **connect_kwargs):
-        super(SSHTail, self).__init__(stream_output=False, **connect_kwargs)
+        super().__init__(stream_output=False, **connect_kwargs)
         self._remote_filename = remote_filename
         self._sftp_client = None
         self._remote_file_size = None
