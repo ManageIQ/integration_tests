@@ -1,3 +1,5 @@
+import os
+
 import fauxfactory
 import pytest
 
@@ -14,6 +16,8 @@ from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
@@ -514,3 +518,49 @@ def test_automate_restrict_domain_crud(user, custom_instance):
         assert not view.configuration.is_displayed
         view = navigate_to(instance.klass.namespace.domain, "Details")
         assert not view.configuration.is_displayed
+
+
+@pytest.mark.tier(2)
+@pytest.mark.long_running
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1693362], blockers=[BZ(1693362)])
+@pytest.mark.parametrize("file_name", ["test_migration_db_510.backup"])
+def test_redhat_domain_sync_after_upgrade(temp_appliance_preconfig, file_name):
+    """
+    Bugzilla:
+        1693362
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Either dump database of appliance with version X to appliance with version Y
+               or upgrade the appliance
+            2. grep 'domain version on disk differs from db version' /var/www/miq/vmdb/log/evm.log
+            3. Check last_startup.txt file
+        expectedResults:
+            1.
+            2. You should find this string in logs: RedHat domain version on disk differs from db
+               version
+            3. You should find this string in file: RedHat domain version on disk differs from db
+               version
+    """
+    db_file = FTPClientWrapper(cfme_data.ftpserver.entities.databases).get_file(file_name)
+    db_path = os.path.join("/tmp", db_file.name)
+
+    # Download the customer db on appliance
+    assert temp_appliance_preconfig.ssh_client.run_command(
+        f"curl -o {db_path} ftp://{db_file.link}"
+    ).success
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/evm.log",
+        matched_patterns=[".*domain version on disk differs from db version.*",
+                          ".*RedHat domain version on disk differs from db version.*",
+                          ".*ManageIQ domain version on disk differs from db version.*"],
+    ).waiting(timeout=1000):
+        temp_appliance_preconfig.db.restore_database(
+            db_path, is_major=bool(temp_appliance_preconfig.version > "5.11")
+        )
