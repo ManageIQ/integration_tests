@@ -237,3 +237,78 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.fixture(scope="function")
+def instance(appliance, provider, small_template, setup_provider):
+    """ Fixture to provision instance on the provider
+    """
+    instance = appliance.collections.cloud_instances.instantiate(random_vm_name('pwr-c'),
+                                                                 provider,
+                                                                 small_template.name)
+    if not instance.exists_on_provider:
+        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+
+    yield instance
+    instance.cleanup_on_provider()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.parametrize(
+    ("set_roottenant_quota"),
+    [("storage", 0.001)],
+    indirect=["set_roottenant_quota"],
+    ids=["max_storage"],
+)
+def test_instance_quota_reconfigure_with_flavors(request, instance, set_roottenant_quota):
+    """
+    Note: Test reconfiguration of instance using flavors after setting quota but this is RFE which
+    is not yet implemented. Hence this test cases is based on existing scenario. Where instance
+    reconfiguration does honour quota. Also one more RFE(1506471) - 'Instance reconfiguration with
+    flavors should work with request' is closed as WONTFIX. So this scenario is not considered in
+    this test case.
+
+    # TODO(ghubale@redhat.com): Update scenario of this test cases if RFE(1473325) got fixed for any
+    # future version of cfme
+
+    Bugzilla:
+        1473325
+        1506471
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/6h
+        caseimportance: low
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: Cloud
+        tags: quota
+        testSteps:
+            1. Add openstack provider
+            2. Provision instance
+            3. Set quota limit
+            4. Reconfigure this instance with changing flavors
+        expectedResults:
+            1.
+            2. Provision instance successfully
+            3.
+            4. Reconfiguring instance request should succeed
+    """
+    current_instance_type = instance.appliance.rest_api.collections.flavors.get(
+        id=instance.rest_api_entity.flavor_id
+    ).name
+    flavor_name = (
+        "m1.small (1 CPU, 2.0 GB RAM, 20.0 GB Root Disk)"
+        if current_instance_type != "m1.small"
+        else "m1.tiny (1 CPU, 0.5 GB RAM, 1.0 GB Root Disk)"
+    )
+    instance.reconfigure(flavor_name)
+    provision_request = instance.appliance.collections.requests.instantiate(
+        f"VM Cloud Reconfigure for: {instance.name} - Flavor: {flavor_name.split(' ')[0]}"
+    )
+    provision_request.wait_for_request(method="ui")
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.is_succeeded(method="ui"), "Instance reconfigure failed: {}".format(
+        provision_request.row.last_message.text
+    )
