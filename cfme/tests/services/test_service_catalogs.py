@@ -7,8 +7,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
-from cfme.utils.appliance import ViaREST
-from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
@@ -545,24 +543,5 @@ def test_generic_object_details_displayed_from_a_service_do_not_include_associat
         tags: service
     Bugzilla:
         1576828
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@test_requirements.multi_region
-@test_requirements.service
-@pytest.mark.parametrize('context', [ViaREST, ViaUI])
-@pytest.mark.parametrize('catalog_location', ['global', 'remote'])
-@pytest.mark.parametrize('item_type', ['AMAZON', 'ANSIBLE', 'TOWER', 'AZURE', 'GENERIC',
-                                       'OPENSTACK', 'ORCHESTRATION', 'RHV', 'SCVMM', 'VMWARE'])
-def test_service_provision_retire_from_global_region(item_type, catalog_location, context):
-    """
-    Polarion:
-        assignee: izapolsk
-        caseimportance: high
-        casecomponent: Services
-        initialEstimate: 1/3h
     """
     pass

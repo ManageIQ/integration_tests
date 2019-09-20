@@ -249,7 +249,6 @@ def test_power_operations_from_global_region(provider, context):
         startsin: 5.6
         casecomponent: Control
         tags: power
-        title:test power operations from global region
         testSteps:
             1. Take two or more appliances
             2. Configure DB manually
