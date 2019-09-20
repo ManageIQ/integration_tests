@@ -100,10 +100,9 @@ class TowerJobsCollection(BaseCollection):
         view = navigate_to(self, 'All')
         jobs = []
 
-        for row in view.entities.elements:
-            for entity in [entity for entity in view.entities.get_all(surf_pages=True)]:
-                if int(entity.id) > int(id) and temp_name == row.template_name:
-                    jobs.append(self.instantiate(template_name=temp_name))
+        for entity in [entity for entity in view.entities.get_all(surf_pages=True)]:
+            if int(entity.id) > int(id) and temp_name == row.template_name:
+                jobs.append(self.instantiate(template_name=temp_name))
 
         return jobs
 
