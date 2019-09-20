@@ -85,15 +85,13 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
 
     @property
     def zone(self):
-        server, = self.appliance.rest_api.collections.servers.find_by(id=self.sid)
-        server.reload(attributes=['zone'])
-        zone = server.zone
-        zone_obj = self.appliance.collections.zones.instantiate(
-            name=zone['name'],
-            description=zone['description'],
-            id=zone['id']
+        entity = self.rest_api_entity
+        entity.reload(attributes=['zone'])
+        return self.appliance.collections.zones.instantiate(
+            name=entity.zone['name'],
+            description=entity.zone['description'],
+            id=entity.zone['id']
         )
-        return zone_obj
 
     @property
     def slave_servers(self):
@@ -114,7 +112,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         try:
             return self.appliance.rest_api.collections.servers.get(id=self.sid)
         except ValueError:
-            raise RestLookupError
+            raise RestLookupError(f'No server rest entity found matching ID {self.sid}')
 
     @property
     def advanced_settings(self):
