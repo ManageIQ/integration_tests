@@ -191,7 +191,7 @@ def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
             provider_type='openshift',
             provider=provider.key,
             template_type='openshift_pod',
-            wait_time='1800'
+            wait_time=1800
     ) as appliances:
         with appliances[0] as appliance:
             appliance.openshift_creds = appliance_data['openshift_creds']
