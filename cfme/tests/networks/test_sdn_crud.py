@@ -13,7 +13,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 def test_sdn_crud(provider, appliance):
     """ Test for functional addition of network manager with cloud provider

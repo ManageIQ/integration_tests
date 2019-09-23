@@ -15,7 +15,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhel_testing
 def test_add_cancelled_validation(request, appliance):
     """Tests that the flash message is correct when add is cancelled.
 

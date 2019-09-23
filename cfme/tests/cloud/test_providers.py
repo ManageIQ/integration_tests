@@ -254,7 +254,6 @@ def test_cloud_provider_add_with_bad_credentials(request, provider, enable_regio
         provider.create(validate_credentials=True)
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 @pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')

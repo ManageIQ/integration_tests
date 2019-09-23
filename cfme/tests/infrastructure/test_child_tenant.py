@@ -100,7 +100,6 @@ def new_user(appliance, new_group, new_credential):
         user.delete()
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.rhv3
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7385',
     unblock=lambda provider, appliance_version:

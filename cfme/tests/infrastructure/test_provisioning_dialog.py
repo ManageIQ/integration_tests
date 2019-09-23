@@ -221,7 +221,6 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
         assert thin != 'true', "The disk format should not be Thin"
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.rhv3
 @pytest.mark.parametrize("started", [True, False])
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
