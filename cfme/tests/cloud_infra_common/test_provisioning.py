@@ -88,7 +88,6 @@ def provisioned_instance(provider, instance_args, appliance):
                        .format(ex.message))
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.parametrize('instance_args', [True, False], ids=["Auto", "Manual"], indirect=True)
 def test_provision_from_template(provider, provisioned_instance):
     """ Tests instance provision from template via CFME UI

@@ -417,7 +417,6 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     wait_for(is_storage_extended)
 
 
-@pytest.mark.rhel_testing
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
     """ Commands:
     1. 'ap' launches appliance_console,
@@ -522,7 +521,6 @@ def test_appliance_console_external_auth_all(configured_appliance):
     assert evm_tail.validate(wait="30s")
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """ Commands:

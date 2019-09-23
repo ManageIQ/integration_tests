@@ -11,7 +11,8 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
-pytestmark = [test_requirements.configuration]
+pytestmark = [test_requirements.configuration,
+              pytest.mark.rhel_testing]
 
 
 @pytest.fixture

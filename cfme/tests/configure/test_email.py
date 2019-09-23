@@ -5,11 +5,12 @@ from cfme.utils.wait import wait_for
 
 
 pytestmark = [
-    test_requirements.configuration
+    test_requirements.configuration,
+    pytest.mark.rhel_testing,
+    pytest.mark.tier(3)
 ]
 
 
-@pytest.mark.tier(3)
 def test_send_test_email(smtp_test, random_string, appliance):
     """ This test checks whether the mail sent for testing really arrives.
 
