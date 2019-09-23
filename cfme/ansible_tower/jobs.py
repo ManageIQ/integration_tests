@@ -140,10 +140,10 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Jobs')
 
 
-@navigator.register(TowerJobsCollection)
+@navigator.register(TowerJobs)
 class Details(CFMENavigateStep):
     VIEW = AnsibleTowerJobsDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
-    def step(self):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.get_entity(name=self.obj.template_name).click()
