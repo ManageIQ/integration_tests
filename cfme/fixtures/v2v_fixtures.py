@@ -48,7 +48,8 @@ def start_event_workers_for_osp(appliance, provider):
     provider_edit_view.save.click()
     # Test if workers are enabled and running
     worker_status = appliance.ssh_client.run_rake_command(
-        "evm:status | grep 'Openstack::Cloud::EventCatcher'").success
+        "evm:status | grep 'Openstack::Cloud::EventCatcher'")
+    assert "started" in worker_status.output
     if not worker_status:
         pytest.skip("Openstack Eventcatcher workers are not running")
 
