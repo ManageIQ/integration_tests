@@ -12,6 +12,7 @@ from cfme.markers.env_markers.provider import providers
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import orchestration_path
@@ -69,7 +70,8 @@ def stack_data(appliance, provider, provisioning):
             'stack_name': stackname,
             'key': stack_prov['key_name'],
             'flavor': stack_prov['instance_type'],
-            'tenant_name': provisioning['cloud_tenant']
+            'tenant_name': provisioning['cloud_tenant'],
+            'private_network': provisioning['cloud_network']
         }
     else:
         stack_prov = provisioning['stack_provisioning']
@@ -88,7 +90,7 @@ def dialog_name():
 
 
 @pytest.fixture
-def template(appliance, provider, provisioning, dialog_name, stack):
+def template(appliance, provider, provisioning, dialog_name):
     template_group = provisioning['stack_provisioning']['template_type']
     template_type = provisioning['stack_provisioning']['template_type_dd']
     template_name = fauxfactory.gen_alphanumeric()
@@ -101,8 +103,6 @@ def template(appliance, provider, provisioning, dialog_name, stack):
                                  content=content)
     template.create_service_dialog_from_template(dialog_name)
     yield template
-    if stack.exists:
-        stack.retire_stack()
     if template.exists:
         template.delete()
 
@@ -146,14 +146,15 @@ def stack(appliance, provider, stack_data):
 
 
 @pytest.fixture
-def order_stack(appliance, request, service_catalogs, stack):
+def order_stack(appliance, service_catalogs, stack):
     """Fixture which prepares provisioned stack"""
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
-    request.addfinalizer(lambda: _cleanup(appliance, provision_request))
     assert provision_request.is_succeeded()
     stack.wait_for_exists()
-    return provision_request, stack
+    yield provision_request, stack
+    _cleanup(appliance, provision_request)
+    stack.wait_for_not_exists()
 
 
 def _cleanup(appliance=None, provision_request=None, service=None):
@@ -164,9 +165,10 @@ def _cleanup(appliance=None, provision_request=None, service=None):
     else:
         myservice = service
     if myservice.exists:
-        myservice.delete()
+        myservice.retire()
 
 
+@pytest.mark.meta(blockers=[BZ(1754543)])
 def test_provision_stack(order_stack):
     """Tests stack provisioning
 
@@ -180,8 +182,10 @@ def test_provision_stack(order_stack):
     """
     provision_request, stack = order_stack
     assert provision_request.is_succeeded()
+    assert stack.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1754543)])
 def test_reconfigure_service(appliance, service_catalogs, request):
     """Tests service reconfiguring
 
@@ -210,6 +214,7 @@ def test_reconfigure_service(appliance, service_catalogs, request):
                       override=True,
                       selector=ONE_PER_TYPE,
                       scope='module')
+@pytest.mark.meta(blockers=[BZ(1754543)])
 def test_remove_non_read_only_orch_template(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -233,6 +238,7 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
     assert not template.exists
 
 
+@pytest.mark.meta(blockers=[BZ(1754543)])
 @pytest.mark.provider([EC2Provider], selector=ONE_PER_TYPE, override=True, scope='module')
 def test_remove_read_only_orch_template_neg(appliance, provider, template, service_catalogs,
                                             request):
@@ -263,6 +269,7 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, servi
     assert not view.toolbar.configuration.item_enabled(msg)
 
 
+@pytest.mark.meta(blockers=[BZ(1754543)])
 def test_retire_stack(order_stack):
     """Tests stack retirement.
 
