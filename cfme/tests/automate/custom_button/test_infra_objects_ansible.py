@@ -9,9 +9,8 @@ from cfme.ansible import RemoteFile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import CredsHostsDialogView
+
 from cfme.utils.appliance.implementations.ui import navigate_to
-
-
 from cfme.utils.conf import credentials
 
 pytestmark = [

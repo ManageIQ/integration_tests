@@ -35,7 +35,7 @@ class RemoteFile(object):
             assert not self.is_available
 
     @contextmanager
-    def validate(self, wait=180):
+    def validate(self, wait=240):
         self.clean()
         yield
         try:
@@ -47,5 +47,4 @@ class RemoteFile(object):
             )
         except TimedOutError:
             import pytest
-
             pytest.fail(f"Fail to create file '{self.file_name}' on host '{self.hostname}'")
