@@ -1,5 +1,6 @@
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedString
+from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import ParametrizedLocator
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -10,6 +11,7 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 
 from cfme.base.login import BaseLoggedInPage
+from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BootstrapSwitch
 from widgetastic_manageiq import FileInput
@@ -192,6 +194,7 @@ class ButtonParameterForm(ParametersForm):
 
 class GenericObjectAddEditButtonView(GenericObjectDefinitionView):
     title = Text('#explorer_title_text')
+    form = ConditionalSwitchableView(reference="button_type")
 
     button_type = BootstrapSelect(name='button_type')
     name = Input(name='name')
@@ -208,6 +211,17 @@ class GenericObjectAddEditButtonView(GenericObjectDefinitionView):
     add_attribute_value_key = Button('Add Attribute/Value Pair')
     attributes = ButtonParameterForm(param_type="Attribute")
     cancel = Button('Cancel')
+
+    @form.register("Default")
+    class DefaultButtonFieldView(View):
+        pass
+
+    # the following are necessary for ansible playbook buttons in 5.11
+    @form.register("Ansible Playbook")
+    class AnsibleButtonFieldView(View):  # noqa
+        playbook_cat_item = BootstrapSelect(name='playbook_catalog_item')
+        inventory = AutomateRadioGroup(locator=".//input[@name='inventory']/..")
+        hosts = Input(locator=".//input[contains(@ng-model, 'hosts')]")
 
 
 class GenericObjectAddButtonView(GenericObjectAddEditButtonView):
