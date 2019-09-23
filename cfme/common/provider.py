@@ -20,6 +20,7 @@ from cfme.exceptions import AddProviderError
 from cfme.exceptions import HostStatsNotContains
 from cfme.exceptions import ProviderHasNoKey
 from cfme.exceptions import ProviderHasNoProperty
+from cfme.exceptions import RestLookupError
 from cfme.modeling.base import BaseEntity
 from cfme.utils import conf
 from cfme.utils import ParamClassName
@@ -151,7 +152,10 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
 
     @property
     def rest_api_entity(self):
-        return self.appliance.rest_api.collections.providers.get(name=self.name)
+        try:
+            return self.appliance.rest_api.collections.providers.get(name=self.name)
+        except ValueError:
+            raise RestLookupError(f'No provider rest entity found matching name {self.name}')
 
     @property
     def id(self):

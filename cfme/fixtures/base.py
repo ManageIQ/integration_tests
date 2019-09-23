@@ -58,3 +58,19 @@ def fix_missing_hostname(appliance):
 
             if ssh_client.run_command('grep $(hostname) /etc/hosts').failed:
                 logger.error('Failed to mangle /etc/hosts')
+
+
+@pytest.fixture(scope="session", autouse=True)
+def fix_missing_appliance_name(appliance):
+    """Fix for an empty appliance server name"""
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
+        return
+    logger.info('Checking appliance server name is set')
+    if appliance.server.name == '':
+        appliance.update_advanced_settings(
+            {
+                'server': {
+                    'name': getattr(appliance, '_default_name', 'EVM')
+                }
+            }
+        )

@@ -4,6 +4,7 @@ import attr
 import importscan
 import sentaku
 
+from cfme.exceptions import RestLookupError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
@@ -47,6 +48,25 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         return getattr(self.appliance._rest_api_server(), 'name', '')
 
     @property
+    def tree_path(self):
+        """Generate the path list for navigation purposes
+        list elements follow the tree path in the configuration accordion
+
+        Returns:
+            list of path elements for tree navigation
+        """
+        current = '' if self.is_slave else ' (current)'
+        # replace two spaces with one, formatting tweak when name is empty
+        name_string = f' {self.name} '.replace('  ', ' ')
+        path = [
+            self.zone.region.settings_string,
+            "Zones",
+            f"Zone: {self.rest_api_entity.zone.description} (current)",
+            f"Server:{name_string}[{self.sid}]{current}"  # variables have needed spaces
+        ]
+        return path
+
+    @property
     def settings(self):
         from cfme.configure.configuration.server_settings import ServerInformation
         setting = ServerInformation(appliance=self.appliance)
@@ -65,24 +85,34 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
 
     @property
     def zone(self):
-        server_res = self.appliance.rest_api.collections.servers.find_by(id=self.sid)
-        server, = server_res
-        server.reload(attributes=['zone'])
-        zone = server.zone
-        zone_obj = self.appliance.collections.zones.instantiate(
-            name=zone['name'], description=zone['description'], id=zone['id']
+        entity = self.rest_api_entity
+        entity.reload(attributes=['zone'])
+        return self.appliance.collections.zones.instantiate(
+            name=entity.zone['name'],
+            description=entity.zone['description'],
+            id=entity.zone['id']
         )
-        return zone_obj
 
     @property
     def slave_servers(self):
         return self.zone.collections.servers.filter({'slave': True}).all()
 
     @property
+    def is_slave(self):
+        return self in self.slave_servers
+
+    @property
     def _api_settings_url(self):
         return '/'.join(
             [self.appliance.rest_api.collections.servers._href, str(self.sid), 'settings']
         )
+
+    @property
+    def rest_api_entity(self):
+        try:
+            return self.appliance.rest_api.collections.servers.get(id=self.sid)
+        except ValueError:
+            raise RestLookupError(f'No server rest entity found matching ID {self.sid}')
 
     @property
     def advanced_settings(self):
