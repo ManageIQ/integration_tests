@@ -24,6 +24,7 @@ from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostTimelinesView
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import RestLookupError
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -457,7 +458,10 @@ class Host(
 
     @property
     def rest_api_entity(self):
-        return self.appliance.rest_api.collections.hosts.get(name=self.name)
+        try:
+            return self.appliance.rest_api.collections.hosts.get(name=self.name)
+        except ValueError:
+            raise RestLookupError(f'No host rest entity found matching name {self.name}')
 
 
 @attr.s

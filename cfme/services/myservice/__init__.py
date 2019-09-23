@@ -2,6 +2,7 @@ import importscan
 import sentaku
 
 from cfme.common import Taggable
+from cfme.exceptions import RestLookupError
 from cfme.utils.appliance import Navigatable
 from cfme.utils.update import Updateable
 
@@ -37,7 +38,10 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
 
     @property
     def rest_api_entity(self):
-        return self.appliance.rest_api.collections.services.find_by(name=self.name)[0]
+        try:
+            return self.appliance.rest_api.collections.services.get(name=self.name)[0]
+        except IndexError:
+            raise RestLookupError(f'No service rest entity found matching name {self.name}')
 
 
 from cfme.services.myservice import ui, ssui, rest  # NOQA last for import cycles
