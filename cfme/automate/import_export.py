@@ -36,6 +36,8 @@ class AutomateImportExportBaseView(BaseLoggedInPage):
 
 
 class AutomateImportExportView(AutomateImportExportBaseView):
+    error_flash = Text("//div[contains(@class, 'import-flash-message')]")
+
     @View.nested
     class import_file(View):  # noqa
         upload_file = FileInput(id="upload_file")

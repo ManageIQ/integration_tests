@@ -528,30 +528,6 @@ def test_git_refresh_with_renamed_yaml():
 
 
 @pytest.mark.tier(2)
-def test_upload_blank_line():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: negative
-        startsin: 5.10
-        casecomponent: Automate
-        testSteps:
-            1. Create blank zip(test.zip) and yaml(test.yml) file
-            2. Navigate to Automation > Automate > Import/Export and upload test.zip file
-            3. Navigate to Automation > Automate > Customization > Import/Export and upload test.yml
-        expectedResults:
-            1.
-            2. Error message should be displayed
-            3. Error message should be displayed
-
-    Bugzilla:
-        1720611
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_git_refresh_with_rapid_updates():
     """
     Polarion:
