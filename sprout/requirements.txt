@@ -4,6 +4,7 @@ Django<1.10
 celery[redis]<3.2
 django-object-actions
 django-ipware
+dynaconf[vault]
 flower
 gunicorn
 pika

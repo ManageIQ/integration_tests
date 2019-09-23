@@ -1,0 +1,10 @@
+{
+  "path": {
+    "auth/approle/role/cfme-qe-infra/role-id": {
+      "capabilities": ["read"]
+    },
+    "auth/approle/role/cfme-qe-infra/secret-id": {
+      "capabilities": ["create", "update"]
+    }
+  }
+}

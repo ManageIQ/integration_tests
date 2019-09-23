@@ -26,7 +26,7 @@ from appliances.tasks import (appliance_power_on, appliance_power_off, appliance
 
 from sprout.log import create_logger
 from cfme.utils.bz import Bugzilla
-from cfme.utils.providers import get_mgmt
+from sprout.appliances.utils.providers import get_mgmt
 from cfme.utils.version import Version
 
 from wrapanapi import Openshift
