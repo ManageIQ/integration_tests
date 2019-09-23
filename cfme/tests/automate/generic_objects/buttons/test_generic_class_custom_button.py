@@ -8,6 +8,7 @@ from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
+from cfme.utils.wait import TimedOutError
 
 
 pytestmark = [
@@ -207,10 +208,13 @@ def test_generic_objects_with_buttons_ui(appliance, add_generic_object_to_servic
             assert view.toolbar.button(generic_button.name).custom_button.is_displayed
 
 
-@pytest.mark.manual
-@pytest.mark.meta(coverage=[1650559])
-def test_ansible_playbook_generic_object_button():
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1650559])
+def test_ansible_playbook_generic_object_button(appliance, generic_definition):
     """
+    For this test we don't have to actually create the button, just verify that the
+    fields are properly displayed.
+
     Bugzilla:
         1650559
 
@@ -219,7 +223,7 @@ def test_ansible_playbook_generic_object_button():
         initialEstimate: 1/4h
         casecomponent: GenericObjects
         testSteps:
-            1. Go to automation->Automate->Generic Objects
+            1. Go to Automation->Automate->Generic Objects
             2. Create Generic Objects Class
             3. Go Add New button
             4. Change button type to Ansible Playbook
@@ -229,7 +233,21 @@ def test_ansible_playbook_generic_object_button():
             3.
             4. Ansible playbook fields should be displayed
     """
-    pass
+    with appliance.context.use(ViaUI):
+        view = navigate_to(generic_definition.generic_object_buttons, "Add")
+        view.button_type.fill("Ansible Playbook")
+        try:
+            view.form.playbook_cat_item.wait_displayed(timeout="2s")
+            view.form.inventory.wait_displayed(timeout="2s")
+        except TimedOutError:
+            pytest.fail("Ansible button fields did not appear")
+        view.form.inventory.fill("Specific Hosts")
+        try:
+            view.form.hosts.wait_displayed(timeout="5s")
+        except TimedOutError:
+            pytest.fail("Ansible hosts did not appear")
+        # click cancel so we don't get stuck on this page
+        view.cancel.click()
 
 
 @pytest.mark.manual
