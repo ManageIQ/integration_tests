@@ -263,7 +263,6 @@ def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_ass
     wait_for_instance_state(soft_assert, testing_instance, state="stopped")
 
 
-@pytest.mark.rhel_testing
 def test_start(appliance, provider, testing_instance, ensure_vm_stopped, soft_assert):
     """ Tests instance start
 

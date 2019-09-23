@@ -33,7 +33,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhel_testing
 @pytest.mark.rhv1
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):

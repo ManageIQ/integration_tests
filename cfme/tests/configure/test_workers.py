@@ -6,6 +6,8 @@ import pytest
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
+pytestmark = [pytest.mark.rhel_testing]
+
 Dropdown = namedtuple('Dropdown', 'dropdown id')
 
 DROPDOWNS = [
