@@ -69,6 +69,18 @@ def button_group(appliance, generic_definition):
         group.delete_if_exists()
 
 
+@pytest.fixture
+def button_without_group(appliance, generic_definition):
+    with appliance.context.use(ViaUI):
+        button = generic_definition.add_button(
+            name=fauxfactory.gen_alphanumeric(start="btn", separator="-"),
+            description=fauxfactory.gen_alphanumeric(),
+            request=fauxfactory.gen_alphanumeric()
+        )
+        yield button
+        button.delete_if_exists()
+
+
 @pytest.mark.meta(automates=[1744478, 1753289])
 def test_custom_group_on_generic_class_crud(appliance, generic_definition):
     """ Test custom button group crud operation on generic class definition
@@ -250,9 +262,8 @@ def test_ansible_playbook_generic_object_button(appliance, generic_definition):
         view.cancel.click()
 
 
-@pytest.mark.manual
-@pytest.mark.meta(blockers=[BZ(1753237)], coverage=[1753237])
-def test_generic_object_button_edit_multiple_times():
+@pytest.mark.meta(blockers=[BZ(1753237)], automates=[1753237])
+def test_generic_object_button_edited_request(button_without_group):
     """
     Bugzilla:
         1753237
@@ -272,7 +283,11 @@ def test_generic_object_button_edit_multiple_times():
             3.
             4. The request field should say "call_instance"
     """
-    pass
+    with update(button_without_group):
+        button_without_group.request = "call_instance"
+
+    view = navigate_to(button_without_group, "Edit")
+    assert view.request.read() == button_without_group.request
 
 
 @pytest.mark.manual
