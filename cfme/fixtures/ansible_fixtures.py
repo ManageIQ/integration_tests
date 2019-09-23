@@ -156,3 +156,31 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
     service = MyService(appliance, cat_item_name)
     if service.exists:
         service.delete()
+
+
+@pytest.fixture(scope="module")
+def ansible_catalog_item_create_empty_file(appliance, ansible_repository):
+    collection = appliance.collections.catalog_items
+    cat_item = collection.create(
+        collection.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(15, start="create_file_"),
+        fauxfactory.gen_alphanumeric(start="disc_"),
+        display_in_catalog=True,
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "create_empty_file.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(15, start="ansi_dialog_"),
+        }
+    )
+    catalog = appliance.collections.catalogs.create(
+        fauxfactory.gen_alphanumeric(start="cat_"),
+        description=fauxfactory.gen_alphanumeric(start="cat_dis_"),
+        items=[cat_item.name]
+    )
+
+    yield cat_item
+
+    cat_item.delete_if_exists()
+    catalog.delete_if_exists()
