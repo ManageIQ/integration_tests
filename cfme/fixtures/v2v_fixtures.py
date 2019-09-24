@@ -39,7 +39,7 @@ def set_skip_event_history_flag(appliance):
     appliance.wait_for_web_ui()
 
 
-def start_event_workers_for_osp(appliance, provider):
+def _start_event_workers_for_osp(appliance, provider):
     """This is a workaround to start event catchers until BZ 1753364 is fixed"""
     provider_edit_view = navigate_to(provider, 'Edit')
     endpoint_view = provider.endpoints_form(parent=provider_edit_view)
@@ -49,8 +49,9 @@ def start_event_workers_for_osp(appliance, provider):
     # Test if workers are enabled and running
     worker_status = appliance.ssh_client.run_rake_command(
         "evm:status | grep 'Openstack::Cloud::EventCatcher'")
-    assert "started" in worker_status.output
-    if not worker_status:
+    try:
+        assert "started" in worker_status.output
+    except AssertionError:
         pytest.skip("Openstack Eventcatcher workers are not running")
 
 
@@ -71,7 +72,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
             osp_provider = v2v_provider
             setup_or_skip(request, osp_provider)
             if BZ(1753364).blocks:
-                start_event_workers_for_osp(appliance, osp_provider)
+                _start_event_workers_for_osp(appliance, osp_provider)
         else:
             pytest.skip("Provider {} is not a valid provider for v2v tests".format(provider.name))
     v2v_providers = V2vProviders(vmware_provider=vmware_provider,
