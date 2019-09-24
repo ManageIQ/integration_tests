@@ -32,11 +32,13 @@ V2vProviders = namedtuple("V2vProviders", ["vmware_provider", "rhv_provider", "o
 
 def set_skip_event_history_flag(appliance):
     """This flag is required for OSP to skip all old events and refresh inventory"""
-    appliance.update_advanced_settings(
-        {'ems': {'ems_openstack': {'event_handling': {'event_skip_history': True}}}})
-    appliance.evmserverd.restart()
-    appliance.evmserverd.wait_for_running()
-    appliance.wait_for_web_ui()
+    config = appliance.advanced_settings
+    if not config['ems']['ems_openstack']['event_handling']['event_skip_history']:
+        appliance.update_advanced_settings(
+            {'ems': {'ems_openstack': {'event_handling': {'event_skip_history': True}}}})
+        appliance.evmserverd.restart()
+        appliance.evmserverd.wait_for_running()
+        appliance.wait_for_web_ui()
 
 
 def _start_event_workers_for_osp(appliance, provider):
@@ -67,8 +69,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
             rhv_provider = v2v_provider
             setup_or_skip(request, rhv_provider)
         elif v2v_provider.one_of(OpenStackProvider):
-            if appliance.version >= "5.11":
-                set_skip_event_history_flag(appliance)
+            set_skip_event_history_flag(appliance)
             osp_provider = v2v_provider
             setup_or_skip(request, osp_provider)
             if BZ(1753364).blocks:
