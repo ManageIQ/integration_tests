@@ -9,6 +9,7 @@ import fauxfactory
 import pytest
 from wait_for import wait_for
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
+from widgetastic.widget import Text
 from wrapanapi import VmState
 
 from cfme import test_requirements
@@ -673,7 +674,11 @@ def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
     view = navigate_to(floating_ips_collection, "All")
     view.toolbar.view_selector.select('Grid View')
     for entity in view.entities.get_all():
-        soft_assert('title="{}"'.format(entity.data['address']) in entity.data['quadicon'])
+        title = Text(
+            view,
+            f'//*[@id="miq-gtl-view"]//a[@title="{entity.data["address"]}"]'
+        )
+        soft_assert(title.is_displayed)
 
 
 @test_requirements.general_ui

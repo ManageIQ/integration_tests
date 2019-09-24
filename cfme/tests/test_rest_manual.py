@@ -55,24 +55,6 @@ def test_automation_request_task():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.rest
-def test_provider_specific_vm():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-        testSteps:
-            1. Add multiple provider and query vms related to a specific provider.
-                GET /api/providers/:provider_id/vms
-        expectedResults:
-            1. Should receive all VMs related to the provider.
-    """
-    pass
-
-
 @test_requirements.rest
 @pytest.mark.manual()
 @pytest.mark.tier(1)
