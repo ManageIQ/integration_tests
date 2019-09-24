@@ -374,3 +374,60 @@ def test_orphaned_instance_status():
         1701188
     """
     pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1740285])
+def test_power_operations_on_paused_provider():
+    """
+    Bugzilla:
+        1740285
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Infra
+        setup:
+            1. Add infrastructure provider - RHV
+        testSteps:
+            1. Pause a provider (RHV)
+            2. Navigate to its VMs and power one VM on
+            3. Go to tasks: Task has been queued
+            4. Resume the provider, wait for the refresh to finish
+            5. Go to tasks again, it will be in "Queued" state forever.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Power operations to be disabled on paused provider in the first place. If it's
+               possible to queue them, then it should be resumed when provider is resumed.
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1704221])
+def test_suspend_action_on_off_vm():
+    """
+    Bugzilla:
+        1704221
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Services
+        testSteps:
+            1. Have a service that provisions a VM. Shut it down so the VM enters Powered OFF state.
+            2. In SSUI, check different ways to manipulate with VM power:
+                - from My Services page
+                - from service details page
+                - from VM details page - here is the Suspend action disabled, which is correct
+        expectedResults:
+            1.
+            2. Suspend action should be disabled for powered off VMs, as seen in VM details page in
+               SSUI
+    """
+    pass
