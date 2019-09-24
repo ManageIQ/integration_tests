@@ -334,7 +334,7 @@ Werkzeug==0.16.0
 widgetastic.core==0.40
 widgetastic.patternfly==1.1.0
 widgetsnbextension==3.4.2
-wrapanapi==3.4.0
+wrapanapi==3.4.1
 wrapt==1.11.1
 xmltodict==0.12.0
 yaycl==0.3.0

@@ -29,6 +29,7 @@ from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.providers import list_providers
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response
@@ -537,6 +538,39 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
                                                                                prov_b[0]))
             soft_assert(prov_a[2] != prov_b[2], "Same num_templates for {} and {}".format(prov_a[0],
                                                                                      prov_b[0]))
+
+
+@pytest.mark.tier(3)
+@test_requirements.azure
+@pytest.mark.meta(automates=[1495318])
+@pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
+def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: low
+        initialEstimate: 1/6h
+        setup: prepare env
+               create an IoT Hub in Azure (using free tier pricing is good enough):
+               $ az iot hub create --name rmanes-iothub --resource-group iot_rg
+        testSteps:
+            1. refresh azure provider
+        expectedResults:
+            1. no errors found in logs
+    Bugzilla:
+        1495318
+    """
+    result = LogValidator("/var/www/miq/vmdb/log/evm.log", failure_patterns=[r".*ERROR.*"])
+    result.start_monitoring()
+    azure = provider.mgmt
+    if not azure.has_iothub():
+        azure.create_iothub("potatoiothub")
+        request.addfinalizer(lambda: azure.delete_iothub("potatoiothub"))
+    assert azure.has_iothub()
+    provider.refresh_provider_relationships()
+    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+    assert result.validate(wait="60s")
 
 
 @test_requirements.general_ui
