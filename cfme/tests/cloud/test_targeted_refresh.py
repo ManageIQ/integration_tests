@@ -161,6 +161,7 @@ def test_ec2_targeted_refresh_subnet():
 
 
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.11')
 def test_ec2_targeted_refresh_load_balancer():
     """
     AWS naming is ELB

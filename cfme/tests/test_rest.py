@@ -161,7 +161,7 @@ COLLECTIONS_ALL = {
 }
 
 COLLECTIONS_NOT_IN_510 = {"customization_templates", "pxe_images", "pxe_servers"}
-COLLECTIONS_NOT_IN_511 = {"container_deployments"}
+COLLECTIONS_NOT_IN_511 = {"container_deployments", "load_balancers"}
 
 COLLECTIONS_IN_510 = COLLECTIONS_ALL - COLLECTIONS_NOT_IN_510
 COLLECTIONS_IN_511 = COLLECTIONS_ALL - COLLECTIONS_NOT_IN_511

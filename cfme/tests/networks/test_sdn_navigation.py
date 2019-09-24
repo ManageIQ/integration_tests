@@ -17,6 +17,9 @@ pytestmark = [
 
 @pytest.mark.parametrize("tested_part", ["Cloud Subnets", "Cloud Networks", "Network Routers",
                          "Security Groups", "Network Ports", "Load Balancers"])
+@pytest.mark.uncollectif(
+    lambda tested_part, appliance: "Load Balancers" in tested_part and appliance.version > "5.11",
+    reason="Cloud Load Balancers are removed in 5.11, see BZ 1672949")
 def test_sdn_provider_relationships_navigation(provider, tested_part, appliance):
     """
     Metadata:
