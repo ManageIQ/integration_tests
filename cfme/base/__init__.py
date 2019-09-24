@@ -48,6 +48,13 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         return getattr(self.appliance._rest_api_server(), 'name', '')
 
     @property
+    def current_string(self):
+        """Returns the string ' (current)' if the appliance serving the UI request
+         matches this server instance. Used to generate the appropriate tree_path
+         for navigating configuration accordion trees."""
+        return ' (current)' if self.sid == self.appliance.server_id() else ''
+
+    @property
     def tree_path(self):
         """Generate the path list for navigation purposes
         list elements follow the tree path in the configuration accordion
@@ -55,15 +62,20 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
         Returns:
             list of path elements for tree navigation
         """
-        current = '' if self.is_slave else ' (current)'
-        # replace two spaces with one, formatting tweak when name is empty
         name_string = f' {self.name} '.replace('  ', ' ')
         path = [
             self.zone.region.settings_string,
             "Zones",
-            f"Zone: {self.rest_api_entity.zone.description} (current)",
-            f"Server:{name_string}[{self.sid}]{current}"  # variables have needed spaces
+            f"Zone: {self.zone.title_string()}",
+            f"Server:{name_string}[{self.sid}]{self.current_string}"  # variables have needed spaces
         ]
+        return path
+
+    @property
+    def diagnostics_tree_path(self):
+        """Generate tree path list for the diagnostics tree in the configuration accordion"""
+        path = self.tree_path
+        path.remove("Zones")
         return path
 
     @property
@@ -100,6 +112,11 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     @property
     def is_slave(self):
         return self in self.slave_servers
+
+    @property
+    def secondary_servers(self):
+        """ Find and return a list of all other servers in this server's zone. """
+        return [s for s in self.zone.collections.servers.all() if s.sid != self.sid]
 
     @property
     def _api_settings_url(self):
@@ -257,6 +274,61 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
         """"GET zones/:id/settings api endpoint to query zone configuration"""
         return self.appliance.rest_api.get(self._api_settings_url)
 
+    @property
+    def current_string(self):
+        """Returns the string ' (current)' if the appliance serving the UI request is in this zone.
+        Used to generate the appropriate tree_path for navigating configuration accordion trees."""
+        return ' (current)' if (
+            self.id == self.appliance.server.zone.id
+        ) else ''
+
+    def title_string(self, quote_str=''):
+        """Used to generate the title.text for Zone-related views.
+
+        Returns a string of the form:
+
+        "Zone Description" (current)
+        [or]
+        "Zone Description"
+
+        Args:
+            quote_str: The optional string to include before and after the
+                       zone description. To reproduce the title.text as shown
+                       above, quote_str='"'.
+
+                       In accordion trees, the zone appears in the form:
+
+                       Zone Description (current)
+                       [or]
+                       Zone Description
+
+                       (without the quotation marks surrounding the
+                       description). In this case, we can pass
+                       quote_str='' (the default).
+        """
+        return f"{quote_str}{self.description}{quote_str}{self.current_string}"
+
+    @property
+    def tree_path(self):
+        """Generate the tree path list for the settings tree in the configuration accordion
+
+        Returns:
+            list of path elements for tree navigation
+        """
+        path = [
+            self.region.settings_string,
+            "Zones",
+            f"Zone: {self.title_string()}"
+        ]
+        return path
+
+    @property
+    def diagnostics_tree_path(self):
+        """Generate tree path list for the diagnostics tree in the configuration accordion"""
+        path = self.tree_path
+        path.remove("Zones")
+        return path
+
     def update_advanced_settings(self, settings_dict):
         """PATCH settings from the zone's api/zones/:id/settings endpoint
 
@@ -311,8 +383,17 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
 
     @property
     def settings_string(self):
-        return "{} Region: Region {} [{}]".format(
-            self.appliance.product_name, self.number, self.number)
+        return f"{self.appliance.product_name} Region: Region {self.number} [{self.number}]"
+
+    @property
+    def tree_path(self):
+        return [self.settings_string]
+
+    @property
+    def zones_tree_path(self):
+        path = self.tree_path
+        path.append("Zones")
+        return path
 
     @property
     def replication(self):

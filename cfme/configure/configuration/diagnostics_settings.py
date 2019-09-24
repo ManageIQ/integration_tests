@@ -141,7 +141,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             uri: depot uri
             username: depot username
             password: depot password
-            second_server_collect: Set True to use slave server
+            second_server_collect: Set True to use secondary (non-current) server
             zone_collect: Set True to collect logs for zone
 
     """
@@ -181,9 +181,9 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         try:
             self.second_server_collect = updates.get('second_server_collect')
         except TypeError:
-            logger.info('Second Server is not given for update')
+            logger.info('Second Server not given for update')
         if self.second_server_collect and not self.zone_collect:
-            view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave')
+            view = navigate_to(self, 'DiagnosticsCollectLogsEditSecond')
         else:
             view = navigate_to(self, 'DiagnosticsCollectLogsEdit')
         updated = view.fill({'depot_type': depot_type})
@@ -240,7 +240,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
                 :py:class`utils.timeutil.datetime()`, time were last collection took place
         """
         if self.second_server_collect and not self.zone_collect:
-            view = navigate_to(self, 'DiagnosticsCollectLogsSlave')
+            view = navigate_to(self, 'DiagnosticsCollectLogsSecond')
         else:
             view = navigate_to(self, 'DiagnosticsCollectLogs')
         text = view.last_log_collection.read()
@@ -259,7 +259,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
             Returns: True if settings is default, and False if not
         """
         if self.second_server_collect and not self.zone_collect:
-            view = navigate_to(self, 'DiagnosticsCollectLogsSlave')
+            view = navigate_to(self, 'DiagnosticsCollectLogsSecond')
         else:
             view = navigate_to(self, 'DiagnosticsCollectLogs')
         return view.log_depot_uri.read() == "N/A"
@@ -268,7 +268,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         """ Set depot type to "No Depot" """
         if not self.is_cleared:
             if self.second_server_collect and not self.zone_collect:
-                view = navigate_to(self, 'DiagnosticsCollectLogsEditSlave')
+                view = navigate_to(self, 'DiagnosticsCollectLogsEditSecond')
             else:
                 view = navigate_to(self, 'DiagnosticsCollectLogsEdit')
             view.depot_type.fill('<No Depot>')
@@ -284,7 +284,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         """
         view = navigate_to(
             self,
-            'DiagnosticsCollectLogsSlave' if self.second_server_collect and not self.zone_collect
+            'DiagnosticsCollectLogsSecond' if self.second_server_collect and not self.zone_collect
             else 'DiagnosticsCollectLogs')
         last_collection = self.last_collection
         # Initiate the collection
@@ -297,15 +297,15 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         view.toolbar.collect.item_select(selection, handle_alert=None)
         if self.browser.alert_present:
             self.browser.handle_alert(prompt=self.ALERT_PROMPT)
-        slave_servers = self.appliance.server.slave_servers
-        first_slave_server = slave_servers[0] if slave_servers else None
+        secondary_servers = self.appliance.server.secondary_servers
+        secondary_server = secondary_servers[0] if secondary_servers else None
 
         if self.zone_collect:
             message = "Zone {}".format(self.appliance.server.zone.name)
         elif self.second_server_collect:
             message = "MiqServer {} [{}]".format(
-                first_slave_server.name,
-                first_slave_server.sid
+                secondary_server.name,
+                secondary_server.sid
             )
         else:
             message = "MiqServer {} [{}]".format(
@@ -373,7 +373,7 @@ class ServerCollectLogsView(ServerDiagnosticsView):
         selected_server = tree[-1].split(': ')[-1]
         if 'current' in selected_server:
             name, sid, current = selected_server.split()
-        else:  # no (current) for slave servers
+        else:  # no (current) if this is not the server associated with the current appliance
             name, sid = selected_server.split()
             current = None
 
@@ -386,7 +386,7 @@ class ServerCollectLogsView(ServerDiagnosticsView):
 
         return (
             self.in_server_collect_logs and
-            # compare with the selection in accordion as it can be a slave server
+            # compare with the selection in accordion as it can be another server
             self.title.text == self.form_expected_title(
                 name=name, sid=sid, current='' if current is None else ' (current)')
         )
@@ -399,31 +399,32 @@ class ServerCollectLogsView(ServerDiagnosticsView):
         )
 
 
-class ServerCollectLogsSlaveView(ServerCollectLogsView):
+class ServerCollectLogsSecondView(ServerCollectLogsView):
     @property
     def is_displayed(self):
-        # select the first slave server (there's only one slave server in the tests,
-        # but appliance.server.slave_servers returns a list)
+        # select the first server other than the current appliance
+        # (there's only one other server in the tests,
+        # but secondary_servers returns a list)
         try:
-            slave_server = self.context['object'].appliance.server.slave_servers[0]
+            secondary_server = self.context['object'].appliance.server.secondary_servers[0]
         except IndexError:
-            return False  # no slave servers - no ServerCollectLogsSlaveView
+            return False  # no other servers - no ServerCollectLogsSecondView
         return (
             self.in_server_collect_logs and
-            self.title.text == self.form_expected_title(name=slave_server.name,
-                                                        sid=slave_server.sid,
+            self.title.text == self.form_expected_title(name=secondary_server.name,
+                                                        sid=secondary_server.sid,
                                                         current='')
         )
 
 
-class ServerCollectLogsMasterView(ServerCollectLogsView):
+class ServerCollectLogsFirstView(ServerCollectLogsView):
     @property
     def is_displayed(self):
-        master_server = self.context['object'].appliance.server
+        first_server = self.context['object'].appliance.server
         return (
             self.in_server_collect_logs and
-            self.title.text == self.form_expected_title(name=master_server.name,
-                                                        sid=master_server.sid,
+            self.title.text == self.form_expected_title(name=first_server.name,
+                                                        sid=first_server.sid,
                                                         current=' (current)')
         )
 
@@ -478,7 +479,7 @@ class ServerCollectLog(CollectLogsBase):
             Return: Message value for server collect logs
         """
         if self.second_server_collect:
-            view = navigate_to(self, 'DiagnosticsCollectLogsSlave')
+            view = navigate_to(self, 'DiagnosticsCollectLogsSecond')
         else:
             view = navigate_to(self, 'DiagnosticsCollectLogs')
         return view.last_log_message.read()
@@ -516,12 +517,12 @@ class ZoneCollectLog(CollectLogsBase):
         self.appliance = appliance
         CollectLogsBase.__init__(self, appliance=appliance, zone_collect=True)
 
-    # Zone doesn't have Las log message info,
+    # Zone doesn't have last log message info,
     # but need to check if logs are collected for servers under zone
     @property
     def last_message(self):
         if self.second_server_collect:
-            view = navigate_to(self.appliance.server.collect_logs, 'DiagnosticsCollectLogsSlave')
+            view = navigate_to(self.appliance.server.collect_logs, 'DiagnosticsCollectLogsSecond')
         else:
             view = navigate_to(self.appliance.server.collect_logs, 'DiagnosticsCollectLogs')
         return view.last_log_message.read()
@@ -540,31 +541,30 @@ class DiagnosticsSummary(CFMENavigateStep):
 
 @navigator.register(ServerCollectLog, "DiagnosticsCollectLogs")
 class DiagnosticsCollectLogs(CFMENavigateStep):
-    VIEW = ServerCollectLogsMasterView
+    VIEW = ServerCollectLogsFirstView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
     def step(self, *args, **kwargs):
         # navigate to the master server
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
-            "Zone: {} (current)".format(self.appliance.server.zone.description),
-            "Server: {} [{}] (current)".format(self.appliance.server.name,
-                                self.appliance.server.sid))
+            f"Zone: {self.appliance.server.zone.description} (current)",
+            f"Server: {self.appliance.server.name} [{self.appliance.server.sid}] (current)")
         self.prerequisite_view.collectlogs.select()
 
 
-@navigator.register(ServerCollectLog, "DiagnosticsCollectLogsSlave")
-class DiagnosticsCollectLogsSlave(CFMENavigateStep):
-    VIEW = ServerCollectLogsSlaveView
+@navigator.register(ServerCollectLog, "DiagnosticsCollectLogsSecond")
+class DiagnosticsCollectLogsSecond(CFMENavigateStep):
+    VIEW = ServerCollectLogsSecondView
     prerequisite = NavigateToAttribute('appliance.server', 'Diagnostics')
 
     def step(self, *args, **kwargs):
-        # navigate to the slave server
-        slave_server = self.appliance.server.slave_servers[0]
+        # navigate to the secondary (non-current) server
+        secondary_server = self.appliance.server.secondary_servers[0]
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
-            "Zone: {} (current)".format(self.appliance.server.zone.description),
-            "Server: {} [{}]".format(slave_server.name, int(slave_server.sid)))
+            f"Zone: {self.appliance.server.zone.description} (current)",
+            f"Server: {secondary_server.name}, [{int(secondary_server.sid)}]")
         self.prerequisite_view.collectlogs.select()
 
 
@@ -578,10 +578,10 @@ class DiagnosticsCollectLogsEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.edit.click()
 
 
-@navigator.register(ServerCollectLog, "DiagnosticsCollectLogsEditSlave")
-class DiagnosticsCollectLogsEditSlave(CFMENavigateStep):
+@navigator.register(ServerCollectLog, "DiagnosticsCollectLogsEditSecond")
+class DiagnosticsCollectLogsEditSecond(CFMENavigateStep):
     VIEW = ServerCollectLogsEditView
-    prerequisite = NavigateToSibling('DiagnosticsCollectLogsSlave')
+    prerequisite = NavigateToSibling('DiagnosticsCollectLogsSecond')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.edit.click()
