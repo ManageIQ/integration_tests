@@ -33,7 +33,6 @@ from cfme.configure.configuration.server_settings import ServerWorkersTab511
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
-from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.intelligence.rss import RSSView
@@ -451,10 +450,7 @@ class Tasks(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        if self.obj.appliance.version > '5.7':
-            self.prerequisite_view.settings.select_item('Tasks')
-        else:
-            self.prerequisite_view.navigation.select('Settings', 'Tasks')
+        self.prerequisite_view.settings.select_item('Tasks')
 
 
 @navigator.register(Server)
@@ -796,9 +792,10 @@ class ServerDiagnosticsView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        expected_tree = self.context['object'].tree_path
-        expected_tree.remove('Zones')  # second item isn't included here
-        return (self.accordions.diagnostics.tree.currently_selected == expected_tree)
+        return (
+            self.accordions.diagnostics.tree.currently_selected ==
+            self.context['object'].diagnostics_tree_path
+        )
 
 
 class ServerDiagnosticsCollectLogsView(ServerDiagnosticsView):
@@ -813,9 +810,8 @@ class Diagnostics(CFMENavigateStep):
     prerequisite = NavigateToSibling('Configuration')
 
     def step(self, *args, **kwargs):
-        tree_path = self.obj.tree_path
-        tree_path.remove('Zones')
-        self.prerequisite_view.accordions.diagnostics.tree.click_path(*tree_path)
+        self.prerequisite_view.accordions.diagnostics.tree.click_path(
+            *self.obj.diagnostics_tree_path)
 
 
 @navigator.register(Server)
@@ -999,8 +995,7 @@ class RegionView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        expected_list = [self.context['object'].settings_string]
-        return (self.accordions.settings.tree.currently_selected == expected_list)
+        return self.accordions.settings.tree.currently_selected == self.context['object'].tree_path
 
 
 class RegionChangeNameView(RegionView):
@@ -1041,9 +1036,7 @@ class RegionDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self, *args, **kwargs):
-        # TODO: This string can now probably be built up with the relevant server, zone,
-        # region objects
-        self.prerequisite_view.accordions.settings.tree.click_path(self.obj.settings_string)
+        self.prerequisite_view.accordions.settings.tree.click_path(*self.obj.tree_path)
         self.view.details.select()
 
 
@@ -1114,8 +1107,8 @@ class ZoneListView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.settings.is_opened and
-            self.accordions.settings.tree.currently_selected == [
-                self.context['object'].settings_string, 'Zones'] and
+            self.accordions.settings.tree.currently_selected ==
+            self.context['object'].zones_tree_path and
             self.title.text == 'Settings Zones' and
             self.table.is_displayed)
 
@@ -1126,13 +1119,12 @@ class RegionZones(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.accordions.settings.tree.click_path(
-            self.obj.settings_string, 'Zones')
+        tree_path = self.obj.zones_tree_path
+        self.prerequisite_view.accordions.settings.tree.click_path(*tree_path)
         if not self.view.is_displayed:
             # Zones is too smart and does not reload upon clicking, this helps
             self.prerequisite_view.accordions.accesscontrol.open()
-            self.prerequisite_view.accordions.settings.tree.click_path(
-                self.obj.settings_string, 'Zones')
+            self.prerequisite_view.accordions.settings.tree.click_path(*tree_path)
 
 
 class RegionDiagnosticsView(ConfigurationView):
@@ -1150,10 +1142,6 @@ class RegionDiagnosticsView(ConfigurationView):
         tree = DiagnosticsTreeView("roles_by_server_treebox")
         selected_item = SummaryForm("Selected Item")
         configuration = Dropdown("Configuration")
-
-    @View.nested
-    class replication(WaitTab):  # noqa
-        TAB_NAME = "Replication"
 
     @View.nested
     class serversbyroles(WaitTab):  # noqa
@@ -1183,9 +1171,10 @@ class RegionDiagnosticsView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.diagnostics.is_opened and
-            self.accordions.diagnostics.tree.currently_selected == [
-                self.context['object'].settings_string] and
-            self.title.text.startswith('Diagnostics Region '))
+            self.accordions.diagnostics.tree.currently_selected ==
+            self.context['object'].tree_path and
+            self.title.text.startswith('Diagnostics Region ')
+        )
 
 
 class RegionDiagnosticsDatabaseView(RegionDiagnosticsView):
@@ -1204,7 +1193,7 @@ class RegionDiagnostics(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.accordions.diagnostics.tree.click_path(self.obj.settings_string)
+        self.prerequisite_view.accordions.diagnostics.tree.click_path(*self.obj.tree_path)
 
 
 @navigator.register(Region, 'DiagnosticsZones')
@@ -1229,21 +1218,6 @@ class RegionDiagnosticsRolesByServers(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.rolesbyservers.select()
-
-
-@navigator.register(Region, 'Replication')
-class RegionDiagnosticsReplication(CFMENavigateStep):
-    VIEW = RegionDiagnosticsView
-    prerequisite = NavigateToSibling('Diagnostics')
-
-    def am_i_here(self):
-        return False
-
-    def step(self, *args, **kwargs):
-        if self.obj.appliance.version < '5.7':
-            self.prerequisite_view.replication.select()
-        else:
-            raise DestinationNotFound('Replication destination is absent in 5.7')
 
 
 @navigator.register(Region, 'ServersByRoles')
@@ -1330,20 +1304,11 @@ class ZoneSettingsView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        server_zone = self.context['object'].appliance.server.zone
-        region = server_zone.region
-        is_current = (server_zone.id == self.context['object'].id)
-        current_string = " (current)" if is_current else ""
-        expected_list = [
-            region.settings_string,
-            "Zones",
-            "Zone: {}{}".format(self.context['object'].description, current_string)
-        ]
+        title_string = self.context['object'].title_string('"')
         return (
             self.accordions.settings.is_opened and
-            self.accordions.settings.tree.currently_selected == expected_list and
-            self.title.text == 'Settings Zone "{}"{}'.format(
-                self.context['object'].description, current_string)
+            self.accordions.settings.tree.currently_selected == self.context['object'].tree_path and
+            self.title.text == f"Settings Zone {title_string}"
         )
 
 
@@ -1477,15 +1442,12 @@ class ZoneDiagnosticsView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        expected_list = [
-            self.context['object'].region.settings_string,
-            "Zone: {} (current)".format(self.context['object'].description)
-        ]
+        title_string = self.context['object'].title_string('"')
         return (
             self.accordions.diagnostics.is_opened and
-            self.accordions.diagnostics.tree.currently_selected == expected_list and
-            self.title.text == 'Diagnostics Zone "{}" (current)'.format(
-                self.context['object'].description)
+            self.accordions.diagnostics.tree.currently_selected ==
+            self.context['object'].diagnostics_tree_path and
+            self.title.text == f"Diagnostics Zone {title_string}"
         )
 
 
@@ -1496,8 +1458,7 @@ class ZoneDiagnostics(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
-            self.obj.region.settings_string,
-            "Zone: {} (current)".format(self.obj.description))
+            *self.obj.diagnostics_tree_path)
 
 
 @navigator.register(Zone, 'RolesByServers')

@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
 
+
 general_list_pages = [
     ('servers', None, 'Details', False),
     ('servers', None, 'Authentication', False),
@@ -113,9 +114,9 @@ def test_paginator_config_pages(appliance, place_info):
         if place_name == 'regions':
             test_class = test_class.instantiate()
         elif place_name == 'servers':
-            test_class = test_class.get_master()
+            test_class = appliance.server
         elif place_name == 'zones':
-            test_class = appliance.collections.servers.get_master().zone
+            test_class = appliance.server.zone
     view = navigate_to(test_class, place_navigation)
     assert check_paginator_for_page(view) == paginator_expected_result
 

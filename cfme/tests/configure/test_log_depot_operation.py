@@ -266,13 +266,13 @@ def test_collect_unconfigured(appliance):
     assert not view_zone.toolbar.collect.is_displayed
 
 
-@pytest.mark.parametrize('from_slave', [True, False], ids=['from_slave', 'from_master'])
+@pytest.mark.parametrize('from_secondary', [True, False], ids=['from_secondary', 'from_current'])
 @pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
 @pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
 @pytest.mark.tier(3)
 def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_machine_ip, request,
                                   configured_external_appliance, zone_collect, collect_type,
-                                  from_slave):
+                                  from_secondary):
 
     """
     Polarion:
@@ -302,7 +302,7 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
     with appliance:
         uri = '{}{}'.format(log_depot.machine_ip, log_depot.access_dir)
         with update(collect_logs):
-            collect_logs.second_server_collect = from_slave
+            collect_logs.second_server_collect = from_secondary
             collect_logs.depot_type = log_depot.protocol
             collect_logs.depot_name = fauxfactory.gen_alphanumeric()
             collect_logs.uri = uri
@@ -314,14 +314,14 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
         else:
             collect_logs.collect_current()
 
-    slave_servers = appliance.server.slave_servers
-    first_slave_server = slave_servers[0] if slave_servers else None
+    secondary_servers = appliance.server.secondary_servers
+    secondary_server = secondary_servers[0] if secondary_servers else None
 
-    if from_slave and zone_collect:
-        check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
+    if from_secondary and zone_collect:
+        check_ftp(appliance, log_depot.ftp, secondary_server.name, secondary_server.sid)
         check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
-    elif from_slave:
-        check_ftp(appliance, log_depot.ftp, first_slave_server.name, first_slave_server.sid)
+    elif from_secondary:
+        check_ftp(appliance, log_depot.ftp, secondary_server.name, secondary_server.sid)
     else:
         check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
 
