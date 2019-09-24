@@ -8,6 +8,7 @@ from wait_for import TimedOutError
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
+from cfme.common.host_views import HostsCompareView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
@@ -25,6 +26,7 @@ from cfme.utils.conf import credentials
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
+from cfme.common.host_views import ComputeInfrastructureHostsView
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -438,3 +440,28 @@ def test_infrastructure_hosts_navigation_after_download(
         assert provider_view.is_displayed
     elif hosts_collection == "appliance":
         assert hosts_view.is_displayed
+
+
+@test_requirements.infra_hosts
+#@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
+def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/6h
+    Bugzilla:
+        1746214
+
+    """
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    num_hosts = len(hosts_view.entities.get_all())
+    if num_hosts < 2:
+        pytest.skip('not enough hosts in appliance UI to run test')
+    for h in hosts_view.entities.get_all():
+        h.check()
+    hosts_view.toolbar.configuration.item_select('Compare Selected items',
+                                                 handle_alert=True)
+    compare_hosts_view = provider.create_view(HostsCompareView)
+    assert compare_hosts_view.is_displayed
