@@ -36,8 +36,10 @@ class TowerJobsView(BaseLoggedInPage):
 
     @property
     def in_jobs(self):
-        return (self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automation', 'Ansible Tower', 'Jobs'])
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Automation', 'Ansible Tower', 'Jobs']
+        )
 
     @View.nested
     class my_filters(Accordion):  # noqa
@@ -71,7 +73,7 @@ class AnsibleTowerJobsDetailsView(TowerJobsView):
 
 
 @attr.s
-class TowerJobs(BaseEntity):
+class TowerJob(BaseEntity):
     template_name = attr.ib()
 
     @property
@@ -82,58 +84,48 @@ class TowerJobs(BaseEntity):
     def delete(self):
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove this Job', handle_alert=True)
+        view.flash.assert_no_error()
 
     @property
-    def is_job_finished(self):
+    def is_job_successful(self):
         return True if self.status == "successful" else False
 
 
 @attr.s
-class TowerJobsCollection(BaseCollection):
-    ENTITY = TowerJobs
+class TowerJobCollection(BaseCollection):
+    ENTITY = TowerJob
 
     def all(self):
-        template = self.filters.get('temp_name')
         view = navigate_to(self, 'All')
-        jobs = []
+        return [
+            self.instantiate(template_name=e.data["template_name"])
+            for e in view.entities.get_all(surf_pages=True)
+        ]
 
-        for entity in [entity for entity in view.entities.get_all(surf_pages=True)]:
-            jobs.append(self.instantiate(template_name=template))
+    def status(self, template_name):
+        view = navigate_to(self, 'All')
+        for e in view.entities.get_all(surf_pages=True):
+            if e.data["template_name"] == template_name:
+                return e.data["status"]
 
-        return jobs
+    def delete_all(self):
+        view = navigate_to(self, 'All')
+        view.paginator.check_all()
+        view.configuration.item_select('Remove Jobs', handle_alert=True)
 
-        @property
-        def status():
-            view = navigate_to(self, 'All')
-            for row in view.entities.elements:
-                if row.template_name.text == template:
-                    return row.status.text
-            return ''
+    def is_job_successful(self, template_name):
+        return True if self.status(template_name) == "successful" else False
 
-        @property
-        def is_all_finished(self):
-            jobs = self.all()
-            all_success = True
-            for job in jobs:
-                if job.status == "successfull":
-                    continue
-                else:
-                    all_success = False
-            return all_success
-
-        def delete_all(self):
-            view = navigate_to(self, 'All')
-            view.paginator.check_all()
-            view.configuration.item_select('Remove Jobs', handle_alert=True)
-
-        @property
-        def is_job_finished(self):
-            job = self.first_by_date()
-            if job.status == "successful":
-                return True if self.status == "successful" else False
+    @property
+    def are_all_successful(self):
+        view = navigate_to(self, 'All')
+        for e in view.entities.get_all(surf_pages=True):
+            if e.data["status"] != "successful":
+                return False
+        return True
 
 
-@navigator.register(TowerJobsCollection, 'All')
+@navigator.register(TowerJobCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = TowerJobsDefaultView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -142,7 +134,7 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Jobs')
 
 
-@navigator.register(TowerJobs)
+@navigator.register(TowerJob)
 class Details(CFMENavigateStep):
     VIEW = AnsibleTowerJobsDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
