@@ -44,7 +44,7 @@ def test_refresh_with_empty_iot_hub_azure():
     Bugzilla:
         1495318
     """
-    pass
+    pass  # :)
 
 
 @pytest.mark.tier(2)
