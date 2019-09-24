@@ -28,6 +28,7 @@ class TowerJobsToolbar(View):
 
 
 class TowerJobsView(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
     toolbar = View.nested(TowerJobsToolbar)
     paginator = PaginationPane()
@@ -35,9 +36,8 @@ class TowerJobsView(BaseLoggedInPage):
 
     @property
     def in_jobs(self):
-        # title = 'Ansible Tower Jobs'
         return (self.logged_in_as_current_user and
-                self.navigation.currently_selected == ['Automation', 'Ansible Tower', 'Jobs'])
+            self.navigation.currently_selected == ['Automation', 'Ansible Tower', 'Jobs'])
 
     @View.nested
     class my_filters(Accordion):  # noqa
@@ -48,8 +48,6 @@ class TowerJobsView(BaseLoggedInPage):
 
 
 class TowerJobsDefaultView(TowerJobsView):
-    title = Text('//div[@id="main-content"]//h1')
-
     @property
     def is_displayed(self):
         return (
@@ -58,7 +56,7 @@ class TowerJobsDefaultView(TowerJobsView):
         )
 
 
-class AnsibleTowerJobsDetailsView(View):
+class AnsibleTowerJobsDetailsView(TowerJobsView):
     @View.nested
     class entities(View):  # noqa
         """ Represents details page when it's switched to Summary/Table view """
@@ -69,8 +67,7 @@ class AnsibleTowerJobsDetailsView(View):
     @property
     def is_displayed(self):
         """Is this view being displayed?"""
-        title = '{} (Summary)'.format(self.obj.name)
-        return self.title.text == title
+        return self.title.text == '{} (Summary)'.format(self.context['object'].template_name)
 
 
 @attr.s
@@ -79,15 +76,16 @@ class TowerJobs(BaseEntity):
 
     @property
     def status(self):
-        view = navigate_to(self.parent, 'All')
-        for row in view.entities.elements:
-            if row.template_name.text == self.template_name:
-                return row.status.text
-        return ''
+        view = navigate_to(self, 'Details')
+        return view.entities.properties.get_text_of("Status")
 
     def delete(self):
-        view = navigate_to(self.parent, 'Details')
-        view.configuration.item_select('Remove Jobs', handle_alert=True)
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this Job', handle_alert=True)
+
+    @property
+    def is_job_finished(self):
+        return True if self.status == "successful" else False
 
 
 @attr.s
@@ -95,16 +93,22 @@ class TowerJobsCollection(BaseCollection):
     ENTITY = TowerJobs
 
     def all(self):
-        id = self.filters.get('id', 0)
-        temp_name = self.filters.get('temp_name')
+        template = self.filters.get('temp_name')
         view = navigate_to(self, 'All')
         jobs = []
 
         for entity in [entity for entity in view.entities.get_all(surf_pages=True)]:
-            if int(entity.id) > int(id) and temp_name == row.template_name:
-                jobs.append(self.instantiate(template_name=temp_name))
+            jobs.append(self.instantiate(template_name=template))
 
         return jobs
+
+        @property
+        def status():
+            view = navigate_to(self, 'All')
+            for row in view.entities.elements:
+                if row.template_name.text == template:
+                    return row.status.text
+            return ''
 
         @property
         def is_all_finished(self):
@@ -126,9 +130,7 @@ class TowerJobsCollection(BaseCollection):
         def is_job_finished(self):
             job = self.first_by_date()
             if job.status == "successful":
-                return True
-            else:
-                return False
+                return True if self.status == "successful" else False
 
 
 @navigator.register(TowerJobsCollection, 'All')
@@ -146,4 +148,4 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.get_entity(name=self.obj.template_name).click()
+        self.prerequisite_view.entities.get_entity(template_name=self.obj.template_name).click()

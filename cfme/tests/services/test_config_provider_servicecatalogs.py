@@ -10,6 +10,13 @@ from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 
 
+TEMPLATE_TYPE = {
+    "template": "template_job",
+    "template_limit": "template_limit_job",
+    "template_survey": "template_survey_job",
+    "textarea_survey": "textarea_survey_job"
+}
+
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
@@ -70,6 +77,7 @@ def catalog_item(appliance, request, config_manager, ansible_tower_dialog, catal
 
 @pytest.mark.meta(automates=[BZ(1717500)])
 # The 'textarea_survey' job type automates BZ 1717500
+@pytest.mark.parametrize('job_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
 def test_order_tower_catalog_item(appliance, config_manager, catalog_item, request, job_type):
     """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
@@ -104,6 +112,7 @@ def test_order_tower_catalog_item(appliance, config_manager, catalog_item, reque
 
 
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8610')])
+@pytest.mark.parametrize('job_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
 def test_retire_ansible_service(appliance, catalog_item, request, job_type):
     """Tests retiring of catalog items for Ansible Template and Workflow jobs
     Metadata:
@@ -129,7 +138,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type):
 
 @pytest.mark.tier(3)
 @pytest.mark.ignore_stream('upstream')
-def test_check_tower_job_status(appliance, catalog_item, request, config_manager_obj, job_type):
+def test_check_tower_job_status(appliance, catalog_item, request, config_manager_obj):
     """Tests order Ansible Tower catalog item and check status on Jobs page
     Metadata:
         test_flag: provision
@@ -140,15 +149,19 @@ def test_check_tower_job_status(appliance, catalog_item, request, config_manager
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    template = config_manager.yaml_data['provisioning_data'][job_type]
+    template = config_manager_obj.yaml_data['provisioning_data']['template']
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
-
     order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
-    msg = "Ansible Tower Job failed"
+    msg = "Request failed with the message {}".format(order_request.row.last_message.text)
+    assert order_request.is_succeeded(method='ui'), msg
 
-    temp = appliance.collections.ansible_tower_jobs.instantiate(template_name=template)
-    assert temp.is_job_finished(), msg
+    tower_job = appliance.collections.ansible_tower_jobs.instantiate(template_name=template)
+    msg = "Ansible Tower Job failed"
+    assert tower_job.is_job_finished, msg
+
+    if tower_job.exists:
+        tower_job.delete()
