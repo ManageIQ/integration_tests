@@ -122,24 +122,7 @@ def test_ec2_targeted_refresh_network(appliance, provider, request):
             2. Network UPDATE
             3. Network DELETE
     """
-    # create
-    network = provider.mgmt.create_network()
-    if not network:
-        pytest.fail("Network wasn't successfully created using API!")
-    request.addfinalizer(lambda: cleanup_if_exists(network))
-    network_collection = appliance.rest_api.collections.cloud_networks
-    wait_for(lambda: network_collection.get(ems_ref=network.uuid), delay=15, timeout=900,
-             handle_exception=True)
-
-    # update - change name
-    new_name = fauxfactory.gen_alpha()
-    network.rename(new_name)
-    wait_for(lambda: network_collection.get(name=new_name), delay=15, timeout=900,
-             handle_exception=True)
-
-    # delete
-    network.delete()
-    wait_for_deleted(network_collection, new_name)
+    pass
 
 
 @pytest.mark.manual
@@ -199,7 +182,7 @@ def test_ec2_targeted_refresh_stack():
     pass
 
 
-def test_ec2_targeted_refresh_volume(appliance, provider, request):
+def test_targeted_refresh_volume(appliance, provider, request):
     """
     AWS naming is EBS
 
@@ -237,12 +220,12 @@ def test_ec2_targeted_refresh_volume(appliance, provider, request):
     wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=900,
              handle_exception=True)
     # update size
-    # if not BZ().blocks:
-    #     new_size = 20
-    #     volume.resize(new_size)
-    #     wait_for(lambda: volume_collection.get(name=new_volume_name).size ==
-    #                     (new_size * 1024 * 1024 * 1024), delay=15, timeout=900,
-    #             handle_exception=True)
+    if not BZ(1754874, forced_streams=["5.10", "5.11"]).blocks:
+        new_size = 20
+        volume.resize(new_size)
+        wait_for(lambda: volume_collection.get(name=new_volume_name).size ==
+                        (new_size * 1024 * 1024 * 1024), delay=15, timeout=900,
+                handle_exception=True)
     # attach
     volume.attach(instance.uuid)
     wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=900,
