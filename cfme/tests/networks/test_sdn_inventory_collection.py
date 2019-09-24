@@ -108,6 +108,7 @@ def test_sdn_api_inventory_security_groups(provider, appliance):
     'cfme list: {cfme}'.format(sec=prov_sec_gp, cfme=cfme_sec_gp)
 
 
+@pytest.mark.ignore_stream('5.11')  # Load Balancers are deprecated in 5.11
 @pytest.mark.provider([EC2Provider, AzureProvider], override=True, scope='function')
 def test_sdn_api_inventory_loadbalancers(provider, appliance):
     """Pulls the list of loadbalancers from the Provider API and from the appliance. Compare the 2

@@ -36,7 +36,9 @@ def test_sdn_crud(provider, appliance):
     assert parent_name == provider.name
 
     testing_list = ["Cloud Networks", "Cloud Subnets", "Network Routers",
-                    "Security Groups", "Floating IPs", "Network Ports", "Load Balancers"]
+                    "Security Groups", "Floating IPs", "Network Ports"]
+    if appliance.version < '5.11':
+        testing_list.append("Load Balancers")
     for testing_name in testing_list:
         view = navigate_to(network_provider, 'Details')
         view.entities.relationships.click_at(testing_name)

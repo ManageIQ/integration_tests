@@ -145,6 +145,7 @@ PAGES_NOT_IN_511 = [
     "Cloud Intel / Reports",
     "Cloud Intel / Timelines",
     "Monitor / Alerts / Most Recent Alerts",
+    "Networks / Load Balancers",
     "Optimize / Bottlenecks",
     "Optimize / Planning",
     "Optimize / Utilization",
