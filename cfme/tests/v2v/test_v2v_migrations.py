@@ -18,6 +18,7 @@ from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     test_requirements.v2v,
@@ -38,6 +39,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.meta(blockers=[BZ(1751900, forced_streams=['5.10'])])
 @pytest.mark.parametrize(
     "mapping_data_vm_obj_single_datastore",
     [
