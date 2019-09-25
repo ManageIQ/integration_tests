@@ -61,11 +61,11 @@ def custom_instance(request_cls):
     type of automate method."""
     def method(ruby_code):
         meth = request_cls.methods.create(
-            name=fauxfactory.gen_alphanumeric(start="meth_", length=6), script=ruby_code
+            name=fauxfactory.gen_alphanumeric(start="meth_", length=10), script=ruby_code
         )
 
         instance = request_cls.instances.create(
-            name=fauxfactory.gen_alphanumeric(start="inst_", length=6),
+            name=fauxfactory.gen_alphanumeric(start="inst_", length=10),
             fields={"meth1": {"value": meth.name}},
         )
         return instance
