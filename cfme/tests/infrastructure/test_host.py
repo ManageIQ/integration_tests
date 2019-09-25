@@ -7,8 +7,8 @@ from wait_for import TimedOutError
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import HostsCompareView
+from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
