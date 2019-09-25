@@ -858,9 +858,8 @@ def test_ansible_service_order_vault_credentials(
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1734904)])
-def test_ansible_service_ansible_galaxy_role(
-    appliance, request, ansible_catalog_item, ansible_service, ansible_service_catalog
-):
+def test_ansible_service_ansible_galaxy_role(appliance, request, ansible_catalog_item,
+ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope):
     """Check Role is fetched from Ansible Galaxy by using roles/requirements.yml file
     from playbook.
 
@@ -873,6 +872,7 @@ def test_ansible_service_ansible_galaxy_role(
         initialEstimate: 1/3h
         tags: ansible_embed
     """
+    old_playbook_value = ansible_catalog_item.provisioning
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
             "playbook": "ansible_galaxy_role_users.yaml"
@@ -881,30 +881,12 @@ def test_ansible_service_ansible_galaxy_role(
     @request.addfinalizer
     def _revert():
         with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {"playbook": "dump_all_variables.yml"}
-
-        service = MyService(appliance, ansible_catalog_item.name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            # 'request_descr' and 'service_request' being used in finalizer to remove
-            # first service request
-            request_descr = (
-                "Provisioning Service "
-                f"[{ansible_catalog_item.name}] from [{ansible_catalog_item.name}]"
-            )
-            service_request_id = appliance.rest_api.collections.service_requests.get(
-                description=request_descr
-            ).id
-            appliance.rest_api.collections.service_requests.action.delete(
-                id=service_request_id
-            )
-        if service.exists:
-            service.delete()
+            ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
 
-    view = navigate_to(ansible_service, "Details")
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert (
         view.provisioning.results.get_text_of("Status") == "successful"
         if appliance.version < "5.11"

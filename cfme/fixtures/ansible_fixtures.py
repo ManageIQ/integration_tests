@@ -100,6 +100,26 @@ def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
     return service_catalog
 
 
+@pytest.fixture(scope="function")
+def ansible_service_request_funcscope(appliance, ansible_catalog_item):
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    yield service_request
+
+    if service_request.exists():
+        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
+
+@pytest.fixture(scope="function")
+def ansible_service_funcscope(appliance, ansible_catalog_item):
+    service = MyService(appliance, ansible_catalog_item.name)
+    yield service
+
+    if service.exists:
+        service.delete()
+
+
 @pytest.fixture(scope="module")
 def ansible_service_request(appliance, ansible_catalog_item):
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
