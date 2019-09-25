@@ -13,7 +13,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.update import update
-from cfme.utils.version import appliance_is_downstream
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -101,7 +100,9 @@ def test_crud_set_ownership_and_edit_tags(appliance, context, service_vm):
 @pytest.mark.parametrize('context', [ViaUI])
 @pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
 # PDF not present on upstream
-@pytest.mark.uncollectif(lambda filetype: filetype == 'PDF' and not appliance_is_downstream())
+@pytest.mark.uncollectif(lambda appliance, filetype:
+                         filetype == 'PDF' and not appliance.is_downstream,
+                         reason='PDF downloads not supported on upstream')
 def test_download_file(appliance, context, needs_firefox, service_vm, filetype):
     """Tests my service download files
 

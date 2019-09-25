@@ -5,18 +5,13 @@ from cfme.containers.node import Node
 from cfme.containers.node import NodeCollection
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider import ContainersTestItem
-from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.providers import ProviderFilter
-from cfme.utils.version import current_version
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[ContainersProvider],
-                                                 required_flags=['cmqe_logging'])],
+    pytest.mark.provider([ContainersProvider],
+                         required_flags=['cmqe_logging'],
                          scope='function'),
     test_requirements.containers
 ]

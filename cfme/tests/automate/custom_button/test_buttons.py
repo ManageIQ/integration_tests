@@ -12,7 +12,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check
 from cfme.tests.automate.custom_button import OBJ_TYPE
-from cfme.tests.automate.custom_button import OBJ_TYPE_59
 from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -41,9 +40,6 @@ def buttongroup(appliance):
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
 @pytest.mark.sauce
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(
-    lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
-)
 @pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE])
 def test_button_group_crud(request, appliance, obj_type):
     """Test crud operation for Button Group
@@ -103,9 +99,6 @@ def test_button_group_crud(request, appliance, obj_type):
 
 @pytest.mark.sauce
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(
-    lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
-)
 @pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE])
 def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
     """Test crud operation for Custom Button
@@ -416,10 +409,6 @@ def test_custom_button_simulation(request, appliance, provider, setup_provider, 
         assert False, "Requests not found in automation log"
 
 
-@pytest.mark.uncollectif(
-    lambda appliance, button_tag: appliance.version < "5.10" and button_tag == "Evm",
-    reason="Evm objects not available in lower version",
-)
 @pytest.mark.parametrize("button_tag", ["Evm", "Build"])
 @pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
 def test_custom_button_order_sort(appliance, request, provider, setup_provider, button_tag):

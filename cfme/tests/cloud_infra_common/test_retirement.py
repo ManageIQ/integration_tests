@@ -24,9 +24,8 @@ pytestmark = [
     pytest.mark.tier(1),
     pytest.mark.long_running,
     test_requirements.retirement,
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[CloudProvider, InfraProvider],
-                                                 required_flags=['provision', 'retire'])]),
+    pytest.mark.provider([CloudProvider, InfraProvider],
+                         required_flags=['provision', 'retire']),
 ]
 
 
@@ -222,7 +221,6 @@ def test_set_retirement_date(retire_vm, warn):
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
-@pytest.mark.uncollectif(lambda provider: provider.one_of(InfraProvider))  # TODO remove when common
 def test_set_retirement_offset(retire_vm, warn):
     """Tests setting the retirement by offset
 

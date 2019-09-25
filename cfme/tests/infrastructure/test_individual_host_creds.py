@@ -50,8 +50,8 @@ def get_host_data_by_name(provider_key, host_name):
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(
     lambda provider, creds:
-        creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
-    reason="Not relevant for RHEVM Provider."
+    creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
+    reason="Cred type not relevant for RHEVM Provider."
 )
 def test_host_good_creds(appliance, request, setup_provider, provider, creds):
     """
@@ -113,7 +113,7 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
 @pytest.mark.uncollectif(
     lambda provider, creds:
         creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
-    reason="Not relevant for RHEVM Provider."
+    reason="Cred type not relevant for RHEVM Provider."
 )
 def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     """

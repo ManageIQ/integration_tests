@@ -13,8 +13,6 @@
       - scvmm:
         - 2012
         - 2016
-      - kubevirt:
-        - kubevirt
     cloud:
       - openstack:
         - 11

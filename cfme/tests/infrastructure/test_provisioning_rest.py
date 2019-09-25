@@ -120,8 +120,7 @@ def test_provision(request, appliance, provider, provision_data):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider),
-                         reason='These profile names are RHV specific.')
+@pytest.mark.provider([RHEVMProvider], override=True)  # These profile names are RHV specific
 @pytest.mark.parametrize('vnic_profile', ['empty_vnic_profile', 'specific_vnic_profile'])
 def test_provision_vlan(request, appliance, provision_data, vnic_profile, provider):
     """Tests provision via REST API for vlan Empty/Specific vNic profile.

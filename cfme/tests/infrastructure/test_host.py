@@ -29,8 +29,7 @@ pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider],
                          required_fields=['hosts'], scope='module',
-                         selector=ONE_PER_VERSION,
-                         ),
+                         selector=ONE_PER_VERSION),
 ]
 
 VIEWS = ('Grid View', 'Tile View', 'List View')
@@ -93,7 +92,10 @@ def navigate_and_select_quads(provider):
     return edit_view
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider],
+                      required_fields=['hosts'],
+                      selector=ONE_PER_VERSION,
+                      override=True)
 def test_discover_host(request, provider, appliance, host_ips):
     """Tests hosts discovery.
 
@@ -134,7 +136,7 @@ def test_discover_host(request, provider, appliance, host_ips):
 @pytest.mark.uncollectif(
     lambda provider, creds:
         creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
-    reason="Not relevant for RHEVM Provider."
+    reason="cred type not relevant for RHEVM Provider."
 )
 def test_multiple_host_good_creds(setup_provider, provider, creds):
     """

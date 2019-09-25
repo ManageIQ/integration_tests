@@ -9,21 +9,6 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
 
-OBJ_TYPE_59 = [
-    "CLOUD_TENANT",
-    "CLOUD_VOLUME",
-    "CLUSTERS",
-    "CONTAINER_NODES",
-    "CONTAINER_PROJECTS",
-    "DATASTORES",
-    "GENERIC",
-    "HOSTS",
-    "PROVIDER",
-    "SERVICE",
-    "TEMPLATE_IMAGE",
-    "VM_INSTANCE",
-]
-
 OBJ_TYPE = [
     "AZONE",
     "CLOUD_NETWORK",
