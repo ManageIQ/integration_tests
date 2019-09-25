@@ -501,10 +501,15 @@ class BaseVM(
 
     @property
     def rest_api_entity(self):
-        return self.appliance.rest_api.collections.vms.filter(
-            Q("name", "=", self.name)
-            & Q("ems_id", "=", self.provider.rest_api_entity.id)
-        ).resources[0]
+        collection = "instances" if self.VM_TYPE == "Instance" else "vms"
+        return (
+            getattr(self.appliance.rest_api.collections, collection)
+            .filter(
+                Q("name", "=", self.name)
+                & Q("ems_id", "=", self.provider.rest_api_entity.id)
+            )
+            .resources[0]
+        )
 
     def wait_for_power_state_change_rest(self, desired_state, timeout=1200, delay=45):
         """Wait for a VM/Instance power state to change to a desired state.
