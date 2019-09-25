@@ -38,6 +38,18 @@ def buttongroup(appliance):
     return _buttongroup
 
 
+@pytest.fixture(params=OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE], scope="module")
+def button_group(appliance, request):
+    collection = appliance.collections.button_groups
+    button_gp = collection.create(
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(start="hover_"),
+        type=getattr(collection, request.param),
+    )
+    yield button_gp, request.param
+    button_gp.delete_if_exists()
+
+
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
 @pytest.mark.sauce
 @pytest.mark.tier(1)
@@ -700,3 +712,42 @@ def test_simulated_object_copy_on_button(appliance, provider, setup_provider, bu
 
     for attr in attributes_on_page:
         assert attributes[attr["key"]] == attr["value"]
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1755229)], automates=[1755229])
+def test_under_group_multiple_button_crud(appliance, button_group, dialog):
+    """Test multiple button creation and deletion under same group
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/10h
+        caseimportance: critical
+        startsin: 5.8
+        casecomponent: CustomButton
+        tags: custom_button
+        testSteps:
+            1. Create a Button Group
+            2. Create button and delete button
+            3. Repeat step-2 multiple time
+    """
+    button_gp, obj_type = button_group
+    view = navigate_to(button_gp, "Details")
+
+    for exp in ["enablement", "visibility"]:
+        expression = {exp: {"tag": "My Company Tags : Department", "value": "Engineering"}}
+
+        button = button_gp.buttons.create(
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(start="hover_"),
+            dialog=dialog,
+            system="Request",
+            request="InspectMe",
+            **expression
+        )
+        view.flash.assert_message(f'Custom Button "{button.hover}" was added')
+        assert button.exists
+        button.delete()
+        view.flash.assert_message(f'Button "{button.hover}": Delete successful')
+        assert not button.exists
+        button_gp.exists
