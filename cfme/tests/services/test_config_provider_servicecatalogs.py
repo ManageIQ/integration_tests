@@ -18,8 +18,7 @@ pytestmark = [
         ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
         scope='module'),
     pytest.mark.ignore_stream('upstream'),
-    pytest.mark.uncollectif(lambda appliance,
-        job_type: appliance.version < '5.10' and job_type == 'workflow')]
+]
 
 
 def pytest_generate_tests(metafunc):

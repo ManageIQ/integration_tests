@@ -5,17 +5,23 @@ from widgetastic_patternfly import DropdownItemNotFound
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 
+
+filter_fields = {
+    'required_fields': [['provisioning', 'template'],
+                        ['provisioning', 'host'],
+                        ['provisioning', 'datastore']],
+}
+infra_filter = ProviderFilter(classes=[InfraProvider], **filter_fields)
+not_vmware = ProviderFilter(classes=[VMwareProvider], inverted=True)
 
 pytestmark = [
     pytest.mark.meta(roles="+automate"),
-    pytest.mark.provider([InfraProvider],
-                         required_fields=[['provisioning', 'template'],
-                                          ['provisioning', 'host'],
-                                          ['provisioning', 'datastore']],
-                         scope="module"),
+    pytest.mark.provider(gen_func=providers, filters=[infra_filter], scope='module'),
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.long_running,
 ]
@@ -41,7 +47,7 @@ def create_vm(appliance, provider, request):
     vm.cleanup_on_provider()
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider], override=True, **filter_fields)
 @pytest.mark.meta(blockers=[BZ(1685201)])
 def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     """
@@ -61,7 +67,9 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: provider.one_of(VMwareProvider))
+@pytest.mark.provider(gen_func=providers,
+                      filters=[infra_filter, not_vmware],
+                      override=True)
 def test_vm_clone_neg(provider, clone_vm_name, create_vm):
     """Tests that we can't clone non-VMware VM
 

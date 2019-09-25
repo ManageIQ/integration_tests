@@ -52,7 +52,9 @@ pytestmark = [
 )
 @pytest.mark.uncollectif(
     lambda source_provider, mapping_data_vm_obj_single_datastore:
-    source_provider.version == 6.5 and "local" in mapping_data_vm_obj_single_datastore
+    source_provider.one_of(VMwareProvider) and source_provider.version == 6.5 and
+    "local" in mapping_data_vm_obj_single_datastore,
+    reason='Single datastore of local and source provider version 6.5 not supported'
 )
 def test_single_datastore_single_vm_migration(
     request, appliance, provider, mapping_data_vm_obj_single_datastore
@@ -104,7 +106,9 @@ def test_single_datastore_single_vm_migration(
 )
 @pytest.mark.uncollectif(
     lambda source_provider, mapping_data_vm_obj_single_network:
-    source_provider.version != 6.5 and "DPortGroup" in mapping_data_vm_obj_single_network
+    source_provider.one_of(VMwareProvider) and source_provider.version != 6.5 and
+    "DPortGroup" in mapping_data_vm_obj_single_network,
+    reason='Single network of DPortGroup only supported on source provider version 6.5'
 )
 def test_single_network_single_vm_migration(
     request, appliance, provider, mapping_data_vm_obj_single_network
@@ -207,7 +211,9 @@ def test_dual_datastore_dual_vm_migration(
 )
 @pytest.mark.uncollectif(
     lambda source_provider, mapping_data_vm_obj_dual_nics:
-    source_provider.version != 6.5 and "DPortGroup" in mapping_data_vm_obj_dual_nics
+    source_provider.one_of(VMwareProvider) and source_provider.version != 6.5 and
+    "DPortGroup" in mapping_data_vm_obj_dual_nics,
+    reason='Dual network of DPortGroup only supported on source provider version 6.5'
 )
 def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_dual_nics):
     """

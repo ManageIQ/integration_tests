@@ -176,7 +176,8 @@ def set_landing_page(appliance, my_settings, start_page):
     lambda start_page, appliance: (
         (appliance.version < "5.11" and start_page in PAGES_NOT_IN_510)
         or (appliance.version > "5.11" and start_page in PAGES_NOT_IN_511)
-    )
+    ),
+    reason='Start page not available on the appliance version under test'
 )
 @test_requirements.settings
 def test_landing_page_admin(
