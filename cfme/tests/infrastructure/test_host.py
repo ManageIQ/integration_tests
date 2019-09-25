@@ -26,8 +26,6 @@ from cfme.utils.conf import credentials
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
-from cfme.common.host_views import ComputeInfrastructureHostsView
-
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider],
@@ -443,7 +441,7 @@ def test_infrastructure_hosts_navigation_after_download(
 
 
 @test_requirements.infra_hosts
-#@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
+@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
 def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider):
     """
     Polarion:
