@@ -92,7 +92,8 @@ def serv_button_group(appliance, request):
         button_gp.delete_if_exists()
 
 
-@pytest.fixture(scope="module")
+# TODO(BZ-1755229): move to module scope as BZ fixed
+@pytest.fixture(scope="function")
 def service_button_group(appliance):
     with appliance.context.use(ViaUI):
         collection = appliance.collections.button_groups
@@ -105,7 +106,7 @@ def service_button_group(appliance):
         button_gp.delete_if_exists()
 
 
-@pytest.fixture(params=["enablement", "visibility"], scope="module")
+@pytest.fixture(params=["enablement", "visibility"])
 def vis_enb_button_service(request, appliance, service_button_group):
     """Create custom button on service type object with enablement/visibility expression"""
     exp = {request.param: {"tag": "My Company Tags : Department", "value": "Engineering"}}
@@ -743,6 +744,7 @@ def test_custom_button_expression_ansible_service(
         1628727
         1509959
         1513498
+        1755229
     """
     group, button, expression = vis_enb_button_service
     service = MyService(appliance, order_ansible_service_in_ops_ui)
@@ -783,7 +785,7 @@ def test_custom_button_expression_ansible_service(
                     assert button.text in custom_button_group.items
             else:
                 if expression == "enablement":
-                    # Note: SSUI still fallow enablement behaviour like 5.9. In latest version
+                    # Note: SSUI still follow enablement behaviour like 5.9. In latest version
                     # dropdown having single button and button is disabled then dropdown disabled.
                     if context is ViaSSUI:
                         assert not custom_button_group.item_enabled(button.text)
