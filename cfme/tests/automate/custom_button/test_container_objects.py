@@ -8,7 +8,6 @@ from cfme import test_requirements
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check
-from cfme.tests.automate.custom_button import OBJ_TYPE_59
 from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -21,7 +20,6 @@ pytestmark = [
     test_requirements.custom_button,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([ContainersProvider], selector=ONE_PER_TYPE),
-    pytest.mark.meta(blockers=[BZ(1640304, forced_streams=["5.10"])]),
 ]
 
 CONTAINER_OBJECTS = [
@@ -74,10 +72,6 @@ def setup_obj(appliance, provider, button_group):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
-    and appliance.version < "5.10"
-)
 @pytest.mark.parametrize(
     "display",
     list(DISPLAY_NAV.keys()),
@@ -125,10 +119,6 @@ def test_custom_button_display_container_obj(request, display, setup_obj, button
 
 
 @pytest.mark.meta(automates=[1729903, 1732489])
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
-    and appliance.version < "5.10"
-)
 def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
 
@@ -198,10 +188,6 @@ def test_custom_button_dialog_container_obj(appliance, dialog, request, setup_ob
         assert False, "Expected 1 requests not found in automation log"
 
 
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
-    and appliance.version < "5.10"
-)
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
 def test_custom_button_expression_container_obj(
     appliance, request, setup_obj, button_group, expression

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import miq_version
 import pytest
 from widgetastic.utils import partial_match
 
@@ -62,10 +61,11 @@ def host_with_credentials(provider, host_name):
 
 @pytest.mark.rhv1
 @pytest.mark.uncollectif(
-    lambda provider, appliance:
-    appliance.version == miq_version.UPSTREAM and provider.one_of(RHEVMProvider))
-@pytest.mark.meta(blockers=[BZ(1650179, forced_streams=['5.10'],
-    unblock=lambda provider: not provider.one_of(RHEVMProvider))])
+    lambda provider, appliance: not appliance.is_downstream and provider.one_of(RHEVMProvider)
+)
+@pytest.mark.meta(blockers=[BZ(1650179,
+                               forced_streams=['5.10'],
+                               unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_name, register_event,
                            soft_assert, host_with_credentials):
     """ Run host SmartState analysis

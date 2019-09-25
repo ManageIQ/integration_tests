@@ -3054,12 +3054,15 @@ class DummyAppliance(object):
     hostname = 'DummyApplianceHostname'
     browser_steal = False
     version = attr.ib(default=Version('5.11.0'), converter=_version_for_version_or_stream)
-    is_downstream = True
     is_pod = False
     is_dev = False
-    build = 'missing :)'
+    build = 'dummyappliance'
     managed_known_providers = []
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
+
+    @property
+    def is_downstream(self):
+        return not (self.version.is_in_series('master') or self.version.is_in_series('upstream'))
 
     @classmethod
     def from_config(cls, pytest_config):

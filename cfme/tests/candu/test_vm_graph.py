@@ -34,11 +34,12 @@ INTERVAL = ['Hourly', 'Daily']
 
 # ToDo: Currently disk activity for EC2 not collecting due to infra issue.
 # collect test as infra issue resolves.
-@pytest.mark.uncollectif(lambda provider, graph_type:
-                         ((provider.one_of(RHEVMProvider) or provider.one_of(AzureProvider)) and
-                          graph_type == "vm_cpu_state") or
-                         (provider.one_of(EC2Provider) and
-                          graph_type in ["vm_cpu_state", "vm_memory", "vm_disk"]))
+@pytest.mark.uncollectif(
+    lambda provider, graph_type:
+        (provider.one_of(RHEVMProvider, AzureProvider) and graph_type == "vm_cpu_state") or
+        (provider.one_of(EC2Provider) and graph_type in ["vm_cpu_state", "vm_memory", "vm_disk"]),
+    reason='Invalid graph_type and provider type combination'
+)
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)
 def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
     """ Test VM graphs for most recent hour displayed or not
@@ -95,13 +96,13 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
     assert graph_data > 0
 
 
-@pytest.mark.uncollectif(lambda provider, interval, graph_type:
-                         ((provider.one_of(RHEVMProvider) or provider.one_of(AzureProvider)) and
-                          graph_type == "vm_cpu_state") or
-                         (provider.one_of(EC2Provider) and
-                          graph_type in ["vm_cpu_state", "vm_memory", "vm_disk"]) or
-                         ((provider.one_of(CloudProvider) or provider.one_of(RHEVMProvider)) and
-                         interval == 'Daily'))
+@pytest.mark.uncollectif(
+    lambda provider, interval, graph_type:
+        (provider.one_of(RHEVMProvider, AzureProvider) and graph_type == "vm_cpu_state") or
+        (provider.one_of(EC2Provider) and graph_type in ["vm_cpu_state", "vm_memory", "vm_disk"]) or
+        (provider.one_of(CloudProvider, RHEVMProvider) and interval == 'Daily'),
+    reason='Invalid combintation of graph_type or interval and provider type'
+)
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)
 def test_vm_graph_screen(provider, interval, graph_type, enable_candu):

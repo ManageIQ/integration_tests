@@ -274,10 +274,10 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 
 
 @pytest.mark.rhv1
-@pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
-                         'Must be RHEVM provider version >= 4')
 def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
+
+    Only valid for RHV 4+ providers, due to EOL we are not explicitly checking/blocking on this
 
     Metadata:
         test_flag: snapshot, provision

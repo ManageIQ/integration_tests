@@ -276,8 +276,10 @@ def test_custom_button_automate_service_obj(
         # for 5.10 group ui
         BZ(
             1659452,
-            unblock=lambda serv_button_group, context: "button" in serv_button_group
-            or ("group" in serv_button_group and context == ViaSSUI),
+            unblock=lambda serv_button_group, context: "button" in serv_button_group or
+                                                       ("group" in serv_button_group and
+                                                        context == ViaSSUI),
+            forced_streams=['5.10']
         ),
         # for 5.10 and 5.11 group ssui
         BZ(

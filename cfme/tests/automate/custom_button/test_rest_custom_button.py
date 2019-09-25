@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.rest import gen_data
 from cfme.tests.automate.custom_button import CLASS_MAP
 from cfme.tests.automate.custom_button import OBJ_TYPE
-from cfme.tests.automate.custom_button import OBJ_TYPE_59
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
@@ -17,9 +16,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.custom_button,
-    pytest.mark.uncollectif(
-        lambda appliance, obj_type: obj_type not in OBJ_TYPE_59 and appliance.version < "5.10"
-    ),
     pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE],
                             scope="module"),
 ]

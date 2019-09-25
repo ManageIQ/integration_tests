@@ -43,8 +43,9 @@ def azone(appliance, provider):
         unblock=lambda provider, graph_type: not provider.one_of(AzureProvider) and
         graph_type != "azone_memory")]
 )
-@pytest.mark.uncollectif(lambda provider, graph_type: provider.one_of(EC2Provider)
-    and graph_type == "azone_disk")
+@pytest.mark.uncollectif(lambda provider, graph_type:
+                         provider.one_of(EC2Provider) and graph_type == "azone_disk",
+                         reason='azone_disk graph not supported on EC2')
 def test_azone_graph_screen(provider, azone, graph_type, interval, enable_candu):
     """Test Availibility zone graphs for Hourly
 

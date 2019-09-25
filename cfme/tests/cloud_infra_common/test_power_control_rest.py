@@ -8,7 +8,9 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.generators import random_vm_name
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 
@@ -177,8 +179,11 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
         soft_assert(verify_vm_power_state(vm, vm_obj.STATE_SUSPENDED), "vm not suspended")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider, AzureProvider),
-                         reason='Not supported for RHV or Azure provider')
+@pytest.mark.provider(
+    gen_func=providers,
+    filters=[ProviderFilter(BaseProvider),
+             ProviderFilter([RHEVMProvider, AzureProvider], inverted=True)]
+)
 def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance):
     """
     Test reset vm

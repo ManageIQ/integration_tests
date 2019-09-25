@@ -8,12 +8,23 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import providers
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.datafile import load_data_file
 from cfme.utils.path import orchestration_path
+from cfme.utils.providers import ProviderFilter
+
+filter_kwargs = {
+    'selector': ONE_PER_TYPE,
+    'required_fields': [['provisioning', 'stack_provisioning']],
+    'scope': 'module'
+}
+
+cloud_filter = ProviderFilter(classes=[CloudProvider], **filter_kwargs)
+not_ec2 = ProviderFilter(classes=[EC2Provider], inverted=True)
 
 pytestmark = [
     pytest.mark.meta(server_roles='+automate'),
@@ -21,9 +32,7 @@ pytestmark = [
     test_requirements.stack,
     pytest.mark.tier(2),
     pytest.mark.usefixtures("setup_provider_modscope"),
-    pytest.mark.provider([CloudProvider], selector=ONE_PER_TYPE,
-                         required_fields=[['provisioning', 'stack_provisioning']],
-                         scope='module'),
+    pytest.mark.provider(gen_func=providers, filters=[cloud_filter]),
 ]
 
 
@@ -194,8 +203,8 @@ def test_reconfigure_service(appliance, service_catalogs, request):
     myservice.reconfigure_service()
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider),
-                         reason='EC2 locks template between Stack order and template removal')
+# EC2 locks template between Stack order and template removal'
+@pytest.mark.provider(gen_func=providers, filters=[cloud_filter, not_ec2])
 def test_remove_non_read_only_orch_template(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -219,8 +228,7 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
     assert not template.exists
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider),
-                         reason='Only EC2 locks orchestration template')
+@pytest.mark.provider([EC2Provider], **filter_kwargs)
 def test_remove_read_only_orch_template_neg(appliance, provider, template, service_catalogs,
                                             request):
     """

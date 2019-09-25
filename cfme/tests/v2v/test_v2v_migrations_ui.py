@@ -318,7 +318,21 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
         pass
 
 
-@pytest.mark.uncollectif(lambda provider: provider.one_of(OpenStackProvider))
+@pytest.mark.provider(
+    classes=[RHEVMProvider],
+    selector=ONE_PER_VERSION,
+    required_flags=["v2v"],
+    scope="module",
+    override=True,
+)
+@pytest.mark.provider(
+    classes=[VMwareProvider],
+    selector=ONE_PER_TYPE,
+    fixture_name="source_provider",
+    required_flags=["v2v"],
+    scope="module",
+    override=True
+)
 def test_v2v_rbac(appliance, new_credential):
     """
     Test migration with role-based access control

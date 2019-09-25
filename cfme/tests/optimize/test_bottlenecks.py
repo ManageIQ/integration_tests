@@ -13,7 +13,8 @@ from cfme.utils.timeutil import parsetime
 
 pytestmark = [
     test_requirements.bottleneck,
-    pytest.mark.uncollectif(lambda appliance: appliance.is_pod),
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                            reason='Tests not supported on pod appliance'),
     pytest.mark.ignore_stream('5.11')]
 
 

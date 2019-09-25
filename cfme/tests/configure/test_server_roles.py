@@ -10,6 +10,8 @@ server_roles_conf = cfme_data.get('server_roles',
 @pytest.fixture(scope="session")
 def all_possible_roles(appliance):
     roles = server_roles_conf['all']
+    if roles == []:
+        pytest.skip('Empty server roles in cfme_data, cannot generate tests')
     if appliance.version < '5.11':
         roles.remove('internet_connectivity')
         roles.remove('remote_console')
@@ -26,8 +28,9 @@ def roles(request, all_possible_roles):
             result[role] = role in cfme_data.get('server_roles', {})['sets'][request.param]
     except (KeyError, AttributeError):
         pytest.skip(
-            f"Failed looking up role '{role}' in \
-            cfme_data['server_roles']['sets']['{request.param}']")
+            f"Failed looking up role '{role}' in "
+            f"cfme_data['server_roles']['sets']['{request.param}']"
+        )
     # Hard-coded protection
     result['user_interface'] = True
 
@@ -36,7 +39,6 @@ def roles(request, all_possible_roles):
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@pytest.mark.uncollectif(lambda: not server_roles_conf['all'])
 def test_server_roles_changing(request, roles, appliance):
     """ Test that sets and verifies the server roles in configuration.
 
