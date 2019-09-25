@@ -188,12 +188,13 @@ def test_miq_password_decrypt(klass):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1700524])
-@pytest.mark.ignore_stream("5.10")
 def test_service_retirement_from_automate_method(request, generic_catalog_item, custom_instance):
     """
     Bugzilla:
         1700524
+        1753669
 
     Polarion:
         assignee: ghubale
