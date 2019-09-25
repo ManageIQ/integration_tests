@@ -149,7 +149,7 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
         vnic_profile = '<Empty>'
     # For 'specific_vnic_profile'
     else:
-        vnic_profile = '{0} ({0})'.format(profile_name)
+        vnic_profile = profile_name
     provision_data['vm_fields']['vlan'] = vnic_profile
     request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
     appliance.rest_api.collections.provision_requests.action.create(**provision_data)
@@ -174,7 +174,7 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
     else:
         vnic_srv = provider.mgmt.api.system_service().vnic_profiles_service()
         profile_via_provider = vnic_srv.profile_service(profile.id).get()
-        assert profile_via_provider.name == profile_name, \
+        assert profile_via_provider.name == profile_name.split()[0], \
             "The vNIC profile name is {}, but should be {}".\
             format(profile_via_provider.name, profile_name)
 
