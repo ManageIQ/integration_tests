@@ -8,21 +8,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.tier(1)
-def test_embed_tower_dashboard():
-    """
-    Check dashboard view has been added to existing Tower provider screens
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_embed_tower_retire_service_with_instances_ec2():
     """
@@ -61,22 +46,6 @@ def test_embed_tower_exec_play_against_machine_multi_appliance():
     pass
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_playbooks():
-    """
-    playbooks included under ansible shown in a table view (automation-
-    ansible-playbooks)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_failover():
     """
@@ -101,22 +70,6 @@ def test_embed_tower_add_scm_credentials():
         assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_monitor_resources():
-    """
-    Check there is a method for monitoring embedded ansibles resource
-    usage.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/10h
         tags: ansible_embed
     """
     pass
@@ -187,22 +140,6 @@ def test_embed_tower_refresh_provider_repo_details():
     pass
 
 
-@pytest.mark.tier(2)
-def test_embed_tower_invisible():
-    """
-    Embedded Ansible Tower provider won"t be visible in the CFME UI (Tower
-    should be headless, its UI should not be enabled.) p1
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/12h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_ui_requests_notifications_negative():
     """
@@ -235,22 +172,6 @@ def test_embed_tower_repo_tag():
         assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_embed_tower_repo_details():
-    """
-    test clicking on a repo name should show details of the repository.
-    (Automation-Ansible-repositories table view showing added repos)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
         tags: ansible_embed
     """
     pass
@@ -294,21 +215,6 @@ def test_embed_tower_ui_requests_notifications():
     pass
 
 
-@pytest.mark.tier(1)
-def test_embed_tower_api_auth():
-    """
-    The Tower API should not be wide open, authentication is required.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_embed_tower_exec_play_against_gce():
     """
@@ -321,53 +227,6 @@ def test_embed_tower_exec_play_against_gce():
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_embed_tower_credentials():
-    """
-    Credentials included under ansible shown in a table view (automation-
-    ansible-credentials)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/12h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_creds_details():
-    """
-    Clicking on a cred name should show details of the Credentials.
-    (Automation-Ansible-Credentials Table view showing provider creds
-    added)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_ha():
-    """
-    Tower should be highly available. p2
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/4h
         tags: ansible_embed
     """
     pass
@@ -473,57 +332,6 @@ def test_embed_tower_playbooks_tag():
         assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_event_catcher_process():
-    """
-    EventCatcher process is started after Ansible role is enabled (rails
-    evm:status)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_add_machine_credentials_escalate_perm_sudo():
-    """
-    Allow user/admin to create/import credentials for machines which will
-    be managed (may need to be split into multiple tests to cover
-    -Machine, Network, Amazon Web Services, Rackspace, VMware vCenter, Red
-    Hat Satellite 6, Red Hat CloudForms, Google Compute Engine, Microsoft
-    Azure Classic, Microsoft Azure Resource Manager, OpenStack)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_add_machine_credentials_machine_root_pass():
-    """
-    Allow user/admin to create/import credentials for machines which will
-    be managed (may need to be split into multiple tests to cover
-    -Machine, Network, Amazon Web Services, Rackspace, VMware vCenter, Red
-    Hat Satellite 6, Red Hat CloudForms, Google Compute Engine, Microsoft
-    Azure Classic, Microsoft Azure Resource Manager, OpenStack)
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1h
         tags: ansible_embed
     """
     pass
