@@ -13,4 +13,5 @@ pytest_plugins = [
     "cfme.markers.marker_filters",
     "cfme.markers.uses",
     "cfme.markers.uncollect",
+    "cfme.markers.isolation",
 ]
