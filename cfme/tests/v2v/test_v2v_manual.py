@@ -76,29 +76,6 @@ def test_osp_retry_plan():
 
 
 @pytest.mark.tier(2)
-def test_osp_user_can_download_post_migration_ansible_playbook_log():
-    """
-    title: OSP: Test user can download post migration ansible playbook log
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        testSteps:
-            1. Create infrastructure mapping for Vmware to OSP
-            2. Create migration plan and run ansible playbooks
-            3. Start migration
-        expectedResults:
-            1. Mapping created and visible in UI
-            2. Plan created and visible in UI
-            3. Post migration logs should be downloadable
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_osp_migrations_with_multi_zonal_setup():
     """
     title: OSP: Test migrations with multi-zonal setup
@@ -191,29 +168,6 @@ def test_osp_migration_logs_from_conversion_host_can_be_retrieved_from_miq_appli
             2. Plan created and visible in UI
             3.
             4. Accessible logs in conversion host
-    """
-    pass
-
-
-@pytest.mark.tier(2)
-def test_osp_user_can_run_pre_migration_ansible_playbook():
-    """
-    title: OSP: Test user can run pre migration ansible playbook
-
-    Polarion:
-        assignee: ytale
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        testSteps:
-            1. Create infrastructure mapping
-            2. Create migration plan and select pre migration logs
-            3. Start migration
-        expectedResults:
-            1. Mapping created and visible in UI
-            2. Plan created and visible in UI
-            3. Pre migration playbook runs
     """
     pass
 

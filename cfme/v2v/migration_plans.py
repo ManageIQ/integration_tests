@@ -12,6 +12,7 @@ from widgetastic.widget import Select
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import PFIcon
 from widgetastic_patternfly import SelectorDropdown
 from widgetastic_patternfly import Text
@@ -315,6 +316,7 @@ class AddMigrationPlanView(View):
 class MigrationPlanRequestDetailsView(View):
     migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
     paginator_view = View.include(V2VPaginatorPane, use_parent=True)
+    download_logs = Dropdown("Download Log")
 
     @property
     def is_displayed(self):

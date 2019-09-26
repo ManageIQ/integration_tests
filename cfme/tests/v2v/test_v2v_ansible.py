@@ -13,6 +13,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.wait import wait_for
+from cfme.v2v.migration_plans import MigrationPlanRequestDetailsView
 
 
 pytestmark = [
@@ -161,6 +162,15 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     assert migration_plan.wait_for_state("In_Progress")
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
+
+    # Downloading pre and post migration logs
+    completed_plans_view = navigate_to(migration_plan, "Complete")
+    completed_plans_view.plans_completed_list.select_plan(migration_plan.name)
+    view = appliance.browser.create_view(MigrationPlanRequestDetailsView)
+    view.download_logs.item_select("Premigration log")
+    view.flash.assert_no_error()
+    view.download_logs.item_select("Postmigration log")
+    view.flash.assert_no_error()
 
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
