@@ -10,6 +10,7 @@ from cfme.base.credential import Credential
 from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersDiscoverView
 from cfme.common.provider_views import InfraProvidersView
+from cfme.common.provider_views import TemplatesCompareView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -18,6 +19,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -492,3 +494,30 @@ def test_infra_discovery_screen(appliance):
                    "to_ip4": ips['to']})
         view.start.click()
         view.flash.assert_message(ips['msg'])
+
+
+@test_requirements.infra_hosts
+#@pytest.mark.meta(blockers=[BZ(1746449, forced_streams=["5.10"])], automates=[1746449])
+def test_compare_provider_templates(appliance, setup_provider, provider):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/6h
+    Bugzilla:
+        1746449
+    !!!!!! I'll need to create similiar fixture to setup_provider_min_hosts, but for provider
+    templates
+    Consider parameterizing for say 3, 7, and all
+    """
+    view = navigate_to(provider, 'ProviderTemplates')
+    num_templates = len(view.entities.get_all())
+    if num_templates < 2:
+        pytest.skip('not enough templates in appliance UI to run test')
+    for t in view.entities.get_all()[:3]:
+        t.check()
+    view.toolbar.configuration.item_select('Compare Selected Templates',
+                                                 handle_alert=True)
+    compare_templates_view = provider.create_view(TemplatesCompareView)
+    assert compare_templates_view.is_displayed
