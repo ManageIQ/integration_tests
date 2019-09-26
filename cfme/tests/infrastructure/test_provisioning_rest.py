@@ -174,9 +174,10 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
     else:
         vnic_srv = provider.mgmt.api.system_service().vnic_profiles_service()
         profile_via_provider = vnic_srv.profile_service(profile.id).get()
-        assert profile_via_provider.name == profile_name.split()[0], \
-            "The vNIC profile name is {}, but should be {}".\
-            format(profile_via_provider.name, profile_name)
+        assert (                                                                   # noqa: F631
+            profile_via_provider.name == profile_name.split()[0],
+            f"The vNIC profile name is {profile_via_provider.name}, but should be {profile_name}"
+        )
 
 
 @pytest.mark.rhv3
