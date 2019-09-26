@@ -854,3 +854,41 @@ def test_ansible_service_order_vault_credentials(
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
     assert view.provisioning.results.get_text_of("Status") == "successful"
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[BZ(1734904)])
+def test_ansible_service_ansible_galaxy_role(appliance, request, ansible_catalog_item,
+ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope):
+    """Check Role is fetched from Ansible Galaxy by using roles/requirements.yml file
+    from playbook.
+
+    Bugzilla:
+        1734904
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/3h
+        tags: ansible_embed
+    """
+    old_playbook_value = ansible_catalog_item.provisioning
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
+            "playbook": "ansible_galaxy_role_users.yaml"
+        }
+
+    @request.addfinalizer
+    def _revert():
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
+
+    service_request = ansible_service_catalog.order()
+    service_request.wait_for_request(num_sec=300, delay=20)
+
+    view = navigate_to(ansible_service_funcscope, "Details")
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
