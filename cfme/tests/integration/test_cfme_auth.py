@@ -27,6 +27,7 @@ pytestmark = [
                auth_mode in ['external', 'ldaps'] and
                auth_data.auth_providers[prov_key].type == 'openldaps')),
         BZ(1593171)]),  # 510z groups page doesn't load
+    pytest.mark.browser_isolation,
     pytest.mark.usefixtures('prov_key', 'auth_mode', 'auth_provider', 'configure_auth', 'auth_user')
 ]
 

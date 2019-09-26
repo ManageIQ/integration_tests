@@ -7,6 +7,7 @@ browser session could be tainted after a test, the next test should not be affec
 import pytest
 
 from cfme.utils.appliance import find_appliance
+from cfme.utils.log import logger
 
 
 def pytest_addoption(parser):
@@ -17,14 +18,22 @@ def pytest_addoption(parser):
         help=(
             'Isolate browser sessions for each test. That makes sure that whatever state the '
             'browser is in after a test, it will be killed so the next test will have to check out '
-            'a fresh browser session.'))
+            'a fresh browser session.'
+        )
+    )
+
+
+def browser_implementation_quits(item):
+    appliance = find_appliance(item, require=False)
+    if appliance is not None:
+        for implementation in [appliance.browser, appliance.ssui]:
+            implementation.quit_browser()
+    else:
+        logger.debug('Browser isolation specified, but no appliance browsers available to quit on')
 
 
 @pytest.mark.hookwrapper(trylast=True)
 def pytest_runtest_teardown(item, nextitem):
     yield
     if item.config.getoption("browser_isolation"):
-        appliance = find_appliance(item, require=False)
-        if appliance is not None:
-            for implementation in [appliance.browser, appliance.ssui]:
-                implementation.quit_browser()
+        browser_implementation_quits(item)
