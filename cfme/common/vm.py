@@ -21,6 +21,7 @@ from cfme.common.vm_views import VMPropertyDetailView
 from cfme.exceptions import CFMEException
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import OptionNotAvailable
+from cfme.exceptions import RestLookupError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.services.requests import RequestsView
@@ -502,14 +503,19 @@ class BaseVM(
     @property
     def rest_api_entity(self):
         collection = "instances" if self.VM_TYPE == "Instance" else "vms"
-        return (
-            getattr(self.appliance.rest_api.collections, collection)
-            .filter(
-                Q("name", "=", self.name)
-                & Q("ems_id", "=", self.provider.rest_api_entity.id)
+        try:
+            return (
+                getattr(self.appliance.rest_api.collections, collection)
+                .filter(
+                    Q("name", "=", self.name)
+                    & Q("ems_id", "=", self.provider.rest_api_entity.id)
+                )
+                .resources[0]
             )
-            .resources[0]
-        )
+        except IndexError:
+            raise RestLookupError(
+                f"No {self.VM_TYPE} rest entity found matching name {self.name}"
+            )
 
     def wait_for_power_state_change_rest(self, desired_state, timeout=1200, delay=45):
         """Wait for a VM/Instance power state to change to a desired state.
