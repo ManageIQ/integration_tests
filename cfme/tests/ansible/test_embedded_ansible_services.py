@@ -901,10 +901,8 @@ def test_ansible_service_with_operations_role_disabled(appliance, ansible_catalo
 ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope):
     """If the embedded ansible role is *not* on the same server as the ems_operations role,
     then the run will never start.
-
     Bugzilla:
         1742839
-
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
@@ -915,3 +913,60 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     service_request.wait_for_request(num_sec=300, delay=20)
 
     assert ansible_service_funcscope.status == "Finished"
+
+
+@pytest.mark.meta(automates=[1444092, 1515561])
+@pytest.mark.parametrize(
+    "credential", CREDENTIALS, ids=[cred[0] for cred in CREDENTIALS]
+)
+@pytest.mark.provider(
+    [RHEVMProvider, EC2Provider, VMwareProvider, AzureProvider], selector=ONE_PER_TYPE
+)
+@pytest.mark.uncollectif(
+    lambda credential, provider: not (
+        (credential[0] == "Amazon" and provider.one_of(EC2Provider))
+        or (credential[0] == "VMware" and provider.one_of(VMwareProvider))
+        or (
+            credential[0] == "Red Hat Virtualization" and provider.one_of(RHEVMProvider)
+        )
+        or (credential[0] == "Azure" and provider.one_of(AzureProvider))
+    )
+)
+@pytest.mark.tier(3)
+def test_ansible_service_cloud_credentials(appliance, request, ansible_catalog_item,
+ansible_service_catalog, credential, provider_credentials, ansible_service_funcscope,
+ansible_service_request_funcscope):
+    """
+        When the service is viewed in my services it should also show that the Cloud Credentials
+        were attached to the service.
+
+    Bugzilla:
+        1444092
+        1515561
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/4h
+        tags: ansible_embed
+    """
+    # TODO: Include all providers once all playbooks are in place.
+    old_playbook_value = ansible_catalog_item.provisioning
+    playbook = credential[2]
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
+            "playbook": playbook,
+            "cloud_type": provider_credentials.credential_type,
+            "cloud_credential": provider_credentials.name,
+        }
+
+    @request.addfinalizer
+    def _revert():
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
+
+    service_request = ansible_service_catalog.order()
+    service_request.wait_for_request(num_sec=300, delay=20)
+
+    view = navigate_to(ansible_service_funcscope, "Details")
+    assert view.provisioning.credentials.get_text_of("Cloud") == provider_credentials.name
