@@ -97,7 +97,7 @@ def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900
 def wait_for_pwr_state_change(instance, state_change_time, timeout=720):
     return wait_for(
         lambda: instance.rest_api_entity.state_changed_on != state_change_time,
-        num_sec=720,
+        num_sec=timeout,
         delay=30,
         message='Waiting for instance state refresh'
     ).out
@@ -681,7 +681,8 @@ class TestInstanceRESTAPI(object):
 
         # assert and wait until the power state change is reflected in REST
         assert testing_instance.wait_for_power_state_change_rest(
-            desired_state=testing_instance.STATE_SUSPENDED
+            desired_state=testing_instance.STATE_SUSPENDED,
+            delay=15
         )
         # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="suspended")
@@ -694,7 +695,8 @@ class TestInstanceRESTAPI(object):
 
         # assert and wait until the power state change is reflected in REST
         assert testing_instance.wait_for_power_state_change_rest(
-            desired_state=testing_instance.STATE_ON
+            desired_state=testing_instance.STATE_ON,
+            delay=15
         )
         # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
@@ -725,7 +727,8 @@ class TestInstanceRESTAPI(object):
         assert_response(appliance.rest_api)
         # assert and wait until the power state change is reflected in REST
         assert testing_instance.wait_for_power_state_change_rest(
-            desired_state=testing_instance.STATE_PAUSED
+            desired_state=testing_instance.STATE_PAUSED,
+            delay=15
         )
         # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="paused")
@@ -738,7 +741,8 @@ class TestInstanceRESTAPI(object):
 
         # assert and wait until the power state change is reflected in REST
         assert testing_instance.wait_for_power_state_change_rest(
-            desired_state=testing_instance.STATE_ON
+            desired_state=testing_instance.STATE_ON,
+            delay=15
         )
         # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
