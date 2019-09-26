@@ -54,10 +54,10 @@ def test_v2v_custom_project_attribute(
 
     if project == "secondary":
         # Changing target cluster (openstack project) to other than default
-        component = mapping_data["clusters"][0].targets
+        component = mapping_data["clusters"][0]
         component.targets.pop()
         component.targets.append(partial_match(provider.data.clusters[1]))
-        map_cluster = component.targets[1]
+        map_cluster = component.targets[0]
 
     mapping = infrastructure_mapping_collection.create(**mapping_data)
     src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
