@@ -375,7 +375,8 @@ class MigrationPlan(BaseEntity):
     MIGRATION_STATES = {'Started': lambda self: self.plan_started(),
                         'In_Progress': lambda self: self.in_progress(),
                         'Completed': lambda self: self.completed(),
-                        'Successful': lambda self: self.successful()}
+                        'Successful': lambda self: self.successful(),
+                        'Stucked': lambda self: self.stucked_in_conversion()}
 
     def plan_started(self):
         """waits until the plan begins and starts showing progress time"""
@@ -437,6 +438,12 @@ class MigrationPlan(BaseEntity):
         """ Find migration plan and checks if plan is successful."""
         view = navigate_to(self, "Complete")
         return view.plans_completed_list.is_plan_succeeded(self.name)
+
+    def stucked_in_conversion(self):
+        """ Find migration plan stucked in conversion error"""
+        view = navigate_to(self, "InProgress")
+        error_msg = view.progress_card.is_plan_failed(self.name)
+        return "no conversion host" in error_msg
 
     def delete_not_started_plan(self):
         """ Find migration plan and delete."""

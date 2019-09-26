@@ -519,3 +519,34 @@ def test_duplicate_mapping_name(appliance, mapping_data_vm_obj_mini):
     view.general.description.fill("description")
     view.general.flash.assert_message(f"Infrastructure mapping {name} already exists")
     view.general.cancel_btn.click()
+
+
+def test_migration_with_no_conversion(appliance, provider, mapping_data_vm_obj_mini):
+    """
+    Test Migration plan without setting conversion hosts
+
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+    """
+    # Delete existing conversion entries from cloudforms
+    delete_hosts = appliance.ssh_client.run_rails_command(
+        "'MiqTask.delete_all; ConversionHost.delete_all'")
+    if not delete_hosts.success:
+        pytest.skip(
+            "Failed to delete all conversion hosts: {}".format(delete_hosts.output))
+
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    migration_plan = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
+        target_provider=provider,
+        vm_list=mapping_data_vm_obj_mini.vm_list,
+    )
+    assert migration_plan.wait_for_state("Stucked")
