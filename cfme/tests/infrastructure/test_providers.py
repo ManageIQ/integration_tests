@@ -497,7 +497,7 @@ def test_infra_discovery_screen(appliance):
 
 
 @test_requirements.infra_hosts
-#@pytest.mark.meta(blockers=[BZ(1746449, forced_streams=["5.10"])], automates=[1746449])
+@pytest.mark.meta(blockers=[BZ(1746449, forced_streams=["5.10"])], automates=[1746449])
 def test_compare_provider_templates(appliance, setup_provider, provider):
     """
     Polarion:
@@ -517,7 +517,6 @@ def test_compare_provider_templates(appliance, setup_provider, provider):
         pytest.skip('not enough templates in appliance UI to run test')
     for t in view.entities.get_all()[:3]:
         t.check()
-    view.toolbar.configuration.item_select('Compare Selected Templates',
-                                                 handle_alert=True)
+    view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
     compare_templates_view = provider.create_view(TemplatesCompareView)
     assert compare_templates_view.is_displayed
