@@ -376,11 +376,12 @@ def test_rhv_guest_devices_count(appliance, setup_provider, provider):
     assert gd_count_before == gd_count_after, "guest devices count changed after refresh!"
 
 
+@test_requirements.general_ui
 def test_infrastructure_add_provider_trailing_whitespaces(appliance):
     """Test to validate the hostname and username should be without whitespaces
 
     Polarion:
-        assignee: mmojzis
+        assignee: pvala
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/8h

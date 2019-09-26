@@ -55,6 +55,7 @@ def backup(appliance, provider):
         logger.warning('Exception during volume deletion - skipping..')
 
 
+@test_requirements.storage
 @pytest.mark.tier(3)
 def test_storage_volume_backup_create(backup):
     """
@@ -88,6 +89,7 @@ def test_storage_volume_backup_edit_tag_from_detail(backup):
     assert not tag_available
 
 
+@test_requirements.storage
 @pytest.mark.tier(3)
 def test_storage_volume_backup_delete(backup):
     """ Volume backup deletion method not support by 5.8

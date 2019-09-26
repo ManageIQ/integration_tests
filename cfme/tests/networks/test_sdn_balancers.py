@@ -10,6 +10,7 @@ from cfme.exceptions import DestinationNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
+    test_requirements.sdn,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([AzureProvider, EC2Provider, GCEProvider], scope='module'),
     pytest.mark.ignore_stream("5.11", "upstream")  # BZ 1672949 (RFE)

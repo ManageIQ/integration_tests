@@ -6,6 +6,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.wait import TimedOutError
 
 pytestmark = [
+    test_requirements.sdn,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([OpenStackProvider], scope="module")
 ]

@@ -2,12 +2,14 @@ import fauxfactory
 import pytest
 from wait_for import wait_for
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
+    test_requirements.sdn,
     pytest.mark.tier(1),
     pytest.mark.provider([EC2Provider, AzureProvider, GCEProvider]),
     pytest.mark.usefixtures('setup_provider')

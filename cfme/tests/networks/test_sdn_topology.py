@@ -55,6 +55,7 @@ def test_topology_search(request, elements_collection):
             )
 
 
+@test_requirements.sdn
 def test_topology_toggle_display(elements_collection):
     """Testing display functionality in Topology view.
 
