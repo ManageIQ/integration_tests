@@ -10,4 +10,3 @@ polarion-docstrings
 polarion-tools-common
 pre-commit
 pytest-polarion-collect
-pytest-report-parameters

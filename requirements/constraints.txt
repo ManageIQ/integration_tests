@@ -1,6 +1,4 @@
 azure-storage-common==1.4.0
-cfme-testcases==0.12
-dump2polarion==0.44
 pdfminer.six==20181108
 pytest<=3.4.1
 websocket-client<=0.40.2,>=0.32.0
