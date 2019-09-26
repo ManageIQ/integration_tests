@@ -49,6 +49,7 @@ VALID_LABELS = [
     "RHV",
     "sprout",
     "tech-debt",
+    "test-automation",
     "test-cleanup",
     "widgetastic-conversion",
 ]
