@@ -11,7 +11,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.provider([NetworkProvider], scope="module"),
-    test_requirements.discovery
+    test_requirements.sdn
 ]
 
 

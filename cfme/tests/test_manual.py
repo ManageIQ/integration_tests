@@ -888,26 +888,6 @@ def test_utilization_cluster():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_add_cloud_key_pair():
-    """
-    Add Cloud key pair
-    Add Ec2 provider, Clouds - Key pair, Give any name , select provider.
-    Click on Add .
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.5
-        title: Add Cloud Key pair
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_cluster():
@@ -1407,24 +1387,6 @@ def test_saved_chargeback_report_show_full_screen():
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(3)
-def test_cloud_key_pair_validation():
-    """
-    Cloud - Key pair - without filling data , click on add
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.5
-        title: Cloud Key pair validation
     """
     pass
 

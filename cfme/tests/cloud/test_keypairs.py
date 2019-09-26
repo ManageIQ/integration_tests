@@ -11,6 +11,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 pytestmark = [
+    test_requirements.cloud,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module")
 ]

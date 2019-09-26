@@ -114,6 +114,12 @@ chargeback = pytest.mark.requirement(
     assignee_id='tpapaioa',
 )
 
+cloud = pytest.mark.requirement(
+    "Cloud",
+    description='Generic cloud',
+    assignee_id='mmojzis'
+)
+
 cloud_init = pytest.mark.requirement(
     "Provisioning with cloud_init",
     description='Provisioning lifecycle with cloud-init resource configuration',
