@@ -585,8 +585,7 @@ class BaseVMCollection(BaseCollection):
         if check_existing and vm.exists:
             return vm
         if not provider.is_refreshed():
-            provider.refresh_provider_relationships()
-            wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+            provider.refresh_provider_relationships_and_wait()
         if not form_values:
             form_values = vm.vm_default_args
         else:
@@ -669,8 +668,7 @@ class BaseVMCollection(BaseCollection):
             return vm
         else:
             if not provider.is_refreshed():
-                provider.refresh_provider_relationships()
-                wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+                provider.refresh_provider_relationships_and_wait()
 
             if not form_values:
                 form_values = vm.vm_default_args_rest
