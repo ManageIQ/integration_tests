@@ -256,10 +256,13 @@ class RepositoryCollection(BaseCollection):
             delete_on_update=delete_on_update,
             update_on_launch=update_on_launch)
 
-        wait_for(lambda: repository.exists,
-                 fail_func=repo_list_page.browser.selenium.refresh,
-                 delay=5,
-                 timeout=900)
+        wait_for(
+            lambda: repository.exists,
+            fail_func=repo_list_page.browser.refresh,
+            delay=5,
+            timeout=1080,
+            message=f'Waiting for "{name}" repository',
+        )
 
         return repository
 
@@ -350,10 +353,10 @@ class Add(CFMENavigateStep):
         # workaround for disabled Dropdown
         dropdown = self.prerequisite_view.toolbar.configuration
         wait_for(
-            dropdown.item_enabled,
-            func_args=["Add New Repository"],
+            lambda: dropdown.is_enabled,
             timeout=120,
-            fail_func=self.prerequisite_view.browser.refresh
+            fail_func=self.prerequisite_view.browser.refresh,
+            message="Waiting for configuration [Add New Repository] enable",
         )
         dropdown.item_select("Add New Repository")
 
