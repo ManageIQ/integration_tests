@@ -709,9 +709,10 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         except IndexError:
             raise Exception("Provider collection empty")
 
-    def refresh_provider_relationships_and_wait(self, wait=600, delay=0):
+    def refresh_provider_relationships_and_wait(self, wait=600, delay=1, refresh_delta=10):
         self.refresh_provider_relationships()
-        wait_for(self.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=wait, delay=delay)
+        wait_for(self.is_refreshed, func_kwargs={'refresh_delta': refresh_delta}, timeout=wait,
+                 delay=delay)
 
     @refresh_provider_relationships.variant('ui')
     def refresh_provider_relationships_ui(self, from_list_view=False):

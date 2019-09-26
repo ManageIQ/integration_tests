@@ -1,6 +1,5 @@
 import fauxfactory
 import pytest
-from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider

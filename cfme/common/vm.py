@@ -412,8 +412,8 @@ class BaseVM(
             load_details: when found, should it load the vm details
         """
         def _refresh():
-            self.provider.refresh_provider_relationships()
             self.appliance.browser.widgetastic.browser.refresh()  # strange because ViaUI
+            self.provider.refresh_provider_relationships_and_wait()
 
         wait_for(
             lambda: self.exists,
