@@ -14,6 +14,7 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.v2v,
@@ -34,11 +35,14 @@ pytestmark = [
 ]
 
 
+@pytest.mark.meta(automates=[1744563])
 @pytest.mark.tier(1)
 def test_migration_post_attribute(appliance, provider, mapping_data_vm_obj_mini, soft_assert):
     """
     Test to validate v2v post-migrations usecases
 
+    Bugzilla:
+        1744563
     Polarion:
         assignee: ytale
         initialEstimate: 1/4h
@@ -57,6 +61,20 @@ def test_migration_post_attribute(appliance, provider, mapping_data_vm_obj_mini,
     source_view = navigate_to(src_vm_obj, "Details")
     summary = source_view.entities.summary("Properties").get_text_of("Container")
     source_cpu, source_socket, source_core, source_memory = re.findall(r"\d+", summary)
+
+    if appliance.version > "5.10":
+        snapshots_before = src_vm_obj.total_snapshots
+
+        for x in range(3):
+            src_vm_obj.rest_api_entity.snapshots.action.create(name=f"{src_vm_obj.name}_snap_{x}",
+                                                               description='v2v_snap_test',
+                                                               memory=False,)
+        wait_for(
+            lambda: int(src_vm_obj.total_snapshots) == int(snapshots_before) + 3,
+            num_sec=800,
+            message="wait for snapshot to appear",
+            delay=5,
+        )
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
@@ -102,3 +120,11 @@ def test_migration_post_attribute(appliance, provider, mapping_data_vm_obj_mini,
     soft_assert(source_core == target_core)
     # Test7: memory on source and target vm
     soft_assert(source_memory == target_memory)
+    # Test8: check snapshot should be removed after migration
+    # It is expected to have 0 snapshot after migration, however for RHV it is 1 as current state of
+    # VM is considered as a snapshot. [Ref https://bugzilla.redhat.com/show_bug.cgi?id=1744563#c5]
+    if appliance.version > "5.10":
+        expected_count = 1 if provider.one_of(RHEVMProvider) else 0
+        ui_snap_count = target_view.entities.summary("Properties").get_text_of("Snapshots")
+        # Assert that the actual snapshot count showing in GUI should be equal to expected count
+        assert int(ui_snap_count) == expected_count
