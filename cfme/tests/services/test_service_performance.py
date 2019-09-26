@@ -38,4 +38,4 @@ def test_services_performance(appliance_with_performance_db):
 
     my_service = MyService(app)
     # Timeit seems to accept callable as well as string of Python code on cPython.
-    assert timeit(lambda: navigate_to(my_service, 'All'), number=1) < 60
+    assert timeit(lambda: navigate_to(my_service, 'All'), number=1) < 180
