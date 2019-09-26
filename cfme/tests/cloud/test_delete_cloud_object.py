@@ -8,7 +8,7 @@ from cfme.utils.wait import TimedOutError
 
 pytestmark = [
     pytest.mark.tier(2),
-    test_requirements.general_ui,
+    test_requirements.cloud,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([CloudProvider], required_fields=['remove_test'], scope="module")
 ]

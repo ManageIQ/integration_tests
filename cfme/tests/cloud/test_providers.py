@@ -570,6 +570,7 @@ def test_openstack_provider_has_dashboard(appliance, openstack_provider):
     assert view.is_displayed
 
 
+@test_requirements.ec2
 @pytest.mark.tier(3)
 @pytest.mark.provider([EC2Provider], scope="function", override=True)
 def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,

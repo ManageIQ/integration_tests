@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
@@ -12,6 +13,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
+    test_requirements.sdn,
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([AzureProvider, EC2Provider, OpenStackProvider, GCEProvider],
                          scope='module')
