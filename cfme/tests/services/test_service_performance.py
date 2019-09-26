@@ -12,8 +12,11 @@ from cfme.utils.conf import cfme_data
 @pytest.fixture
 def appliance_with_performance_db(temp_appliance_extended_db):
     app = temp_appliance_extended_db
-    db_backups = cfme_data['db_backups']
-    performance_db = db_backups['performance_510']
+    try:
+        db_backups = cfme_data['db_backups']
+        performance_db = db_backups['performance_510']
+    except KeyError as e:
+        pytest.skip(f"Couldn't find the performance DB in the cfme_data: {e}")
     download_and_migrate_db(app, performance_db.url, performance_db.desc)
     yield app
 
