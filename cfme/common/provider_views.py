@@ -576,3 +576,15 @@ class ContainerProviderEditView(ProviderEditView):
         for widget in self.COND_WIDGETS:
             if values.get(widget):
                 getattr(self, widget).fill(values.get(widget))
+
+
+class TemplatesCompareView(InfraProvidersView):
+    """Compare Templates page."""
+
+    @property
+    def is_displayed(self):
+        title = "Compare Templates"
+        return (self.logged_in_as_current_user and
+                # self.navigation.currently_selected == ['Compute', 'Infrastructure',
+                #                                       'Hosts', 'Compare Host / Node'] and
+                self.title.text == title)
