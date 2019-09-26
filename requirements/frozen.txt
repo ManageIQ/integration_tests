@@ -106,7 +106,7 @@ cachetools==3.1.0
 certifi==2019.3.9
 cffi==1.12.2
 cfgv==2.0.1
-cfme-testcases==0.12
+cfme-testcases==0.15.2
 chardet==3.0.4
 Click==7.0
 cliff==2.14.1
@@ -128,7 +128,7 @@ docker-py==1.10.6
 docker-pycreds==0.4.0
 docutils==0.15.2
 dogpile.cache==0.7.1
-dump2polarion==0.44.0
+dump2polarion==0.46.0
 entrypoints==0.3
 fauxfactory==3.0.6
 flake8==3.7.8
@@ -256,7 +256,6 @@ pyperclip==1.7.0
 pytesseract==0.3.0
 pytest==3.4.1
 pytest-polarion-collect==0.21.0
-pytest-report-parameters==0.5.0
 python-box==3.2.4
 python-bugzilla==2.3.0
 python-cinderclient==4.1.0
