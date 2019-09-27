@@ -13,7 +13,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.wait import wait_for
-from cfme.v2v.migration_plans import MigrationPlanRequestDetailsView
 
 
 pytestmark = [

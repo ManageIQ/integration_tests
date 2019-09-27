@@ -477,12 +477,6 @@ class MigrationPlanCollection(BaseCollection):
 
     ENTITY = MigrationPlan
 
-    def create_1(self, name, infra_map, vm_list):
-        return self.instantiate(
-            name=name,
-            infra_map=infra_map,
-            vm_list=vm_list)
-
     def create(
         self,
         name,
