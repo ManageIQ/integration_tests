@@ -876,7 +876,6 @@ FEATURES_511 = COMMON_FEATURES + [
 
 FEATURES_510 = COMMON_FEATURES + [
     "Cloud Intel",
-    "Red Hat Insights",
     "Optimize",
     "Access Rules for all Virtual Machines",
 ]
