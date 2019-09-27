@@ -1,5 +1,6 @@
 import attr
 from navmazing import NavigateToAttribute
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import Accordion
@@ -92,11 +93,8 @@ class TowerJob(BaseEntity):
         return True if self.status == "successful" else False
 
     def wait_for_completion(self, num_sec=1200, delay=10):
-        view = navigate_to(self, 'Details')
-
         def last_status():
-            logger.info("Last status message in UI: '{}'".format(
-                view.entities.properties.get_text_of("Status")))
+            logger.info("Last status message in UI: '{}'".format(self.status))
 
         wait_for(self.is_job_successful, num_sec=num_sec, delay=delay, fail_func=last_status,
                  message="Job finished")
@@ -114,26 +112,28 @@ class TowerJobsCollection(BaseCollection):
         ]
 
     def status(self, template_name):
+        """Get status of a specific job from the All page."""
         view = navigate_to(self, 'All')
         for e in view.entities.get_all(surf_pages=True):
             if e.data["template_name"] == template_name:
                 return e.data["status"]
+        raise NoSuchElementException("No job named {}".format(template_name))
 
     def delete_all(self):
         view = navigate_to(self, 'All')
         view.paginator.check_all()
         view.configuration.item_select('Remove Jobs', handle_alert=True)
+        view.flash.assert_no_error()
 
     def is_job_successful(self, template_name):
-        return True if self.status(template_name) == "successful" else False
+        try:
+            return True if self.status(template_name) == "successful" else False
+        except NoSuchElementException:
+            return None
 
     @property
-    def are_all_successful(self):
-        view = navigate_to(self, 'All')
-        for e in view.entities.get_all(surf_pages=True):
-            if e.data["status"] != "successful":
-                return False
-        return True
+    def are_all_jobs_successful(self):
+        return all([self.is_job_successful(job.template_name) for job in self.all()])
 
 
 @navigator.register(TowerJobsCollection, 'All')
