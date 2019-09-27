@@ -5,7 +5,9 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -99,6 +101,36 @@ def tagging_check(tag, request):
     return _tagging_check
 
 
+@pytest.fixture
+def tag_vm(provider, appliance):
+    """Get a random vm to tag"""
+    view = navigate_to(provider, 'ProviderVms')
+    all_names = view.entities.all_entity_names
+    return appliance.collections.infra_vms.instantiate(name=all_names[0], provider=provider)
+
+
+@pytest.fixture
+def tag_out_of_10k_values(appliance):
+    """Add 10000 values to one of the existing tag category"""
+    # Find the name of that category
+    result = appliance.ssh_client.run_rails_console("Classification.first.description").output
+    category_name = result.split("description")[-1].strip().strip('"')
+    # Add 10000 values to that category
+    values = appliance.ssh_client.run_rails_console(
+        "10000.times { |i| Classification.first.add_entry(:name => i.to_s, :description => i.to_s)}"
+    )
+    assert values.success
+    category = appliance.collections.categories.instantiate(category_name)
+    tag = category.collections.tags.instantiate(name="9786", display_name="9786")
+    yield tag
+
+    # remove those 10000 values from the appliance
+    remove = appliance.ssh_client.run_rails_console(
+        "10000.times { |i| Classification.first.entries.last.delete }"
+    )
+    assert remove.success
+
+
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
 def test_tag_cloud_objects(tagging_check, cloud_test_item, tag_place):
@@ -145,6 +177,25 @@ def test_tag_infra_objects(tagging_check, infra_test_item, tag_place):
         initialEstimate: 1/12h
     """
     tagging_check(infra_test_item, tag_place)
+
+
+@pytest.mark.meta(automates=[1726313])
+@pytest.mark.provider([InfraProvider], selector=ONE)
+def test_tag_vm_10k_category(tag_out_of_10k_values, tag_vm, request):
+    """ Test tagging a VM is successful even when a category has 10k values in it
+
+    Bugzilla:
+        1726313
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Tagging
+        initialEstimate: 1/6h
+    """
+    tag_vm.add_tag(tag=tag_out_of_10k_values)
+    tags = tag_vm.get_tags()
+    request.addfinalizer(lambda: tag_cleanup(tag_vm, tag_out_of_10k_values))
+    assert tag_out_of_10k_values in tags
 
 
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
