@@ -1,5 +1,4 @@
 import pytest
-import pytz
 from dateutil import parser
 
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -10,8 +9,8 @@ from cfme.utils.log_validator import LogValidator
 def test_configure_vmdb_last_start_time(appliance):
     """
         Go to Settings -> Configure -> Database
-        Compare Vmdb Last Start Time with output of command
-        "journalctl -u rh-postgresql{}-postgresql.service  --boot=0 | sed '4!d'"
+        Compare Vmdb Last Start Time with direct postgres query:
+        > select pg_postmaster_start_time() at time zone 'utc';
 
     Polarion:
         assignee: tpapaioa
@@ -19,23 +18,20 @@ def test_configure_vmdb_last_start_time(appliance):
         caseimportance: medium
         initialEstimate: 1/12h
     """
+    db_last_start_time = (
+        appliance.db.client.session.execute("select pg_postmaster_start_time() at time zone 'utc'")
+        .first()[0]
+        .strftime('%Y-%m-%d %H:%M:%S')
+    )
 
     view = navigate_to(appliance.server, 'DatabaseSummary')
+    ui_last_start_time = (
+        parser.parse(view.properties.get_text_of('Last Start Time'))
+        .strftime('%Y-%m-%d %H:%M:%S')
+    )
 
-    for item in view.properties.get_text_of('Data Directory').split('/'):
-        if 'rh-postgresql' in item:
-            logs_last_start_time = appliance.ssh_client.run_command(
-                "journalctl -u {}-postgresql.service  --boot=0 | sed '4!d'".format(item))
-            break
-
-    ui_last_start_time = parser.parse(view.properties.get_text_of('Last Start Time'))
-    # timedatectl is used here as we will get full timezone name, like 'US/Eastern',
-    #  which is easier and safer(to omit UnknownTimeZoneError) to use later
-    tz = pytz.timezone(appliance.ssh_client.run_command("timedatectl | grep 'Time zone'")
-                       .output.strip().split(' ')[2])
-    ui_last_start_updated = ui_last_start_time.replace(
-        tzinfo=ui_last_start_time.tzinfo).astimezone(tz)
-    assert ui_last_start_updated.strftime('%Y-%m-%d %H:%M:%S %Z') in logs_last_start_time.output
+    assert ui_last_start_time == db_last_start_time, (
+        f"Last start time {ui_last_start_time} does not match DB value {db_last_start_time}.")
 
 
 @pytest.mark.rhel_testing
