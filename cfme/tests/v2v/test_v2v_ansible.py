@@ -164,9 +164,7 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     assert migration_plan.wait_for_state("Successful")
 
     # Downloading pre and post migration logs
-    completed_plans_view = navigate_to(migration_plan, "Complete")
-    completed_plans_view.plans_completed_list.select_plan(migration_plan.name)
-    view = appliance.browser.create_view(MigrationPlanRequestDetailsView)
+    view = navigate_to(migration_plan, "CompletedPlanDetails")
     view.download_logs.item_select("Premigration log")
     view.flash.assert_no_error()
     view.download_logs.item_select("Postmigration log")

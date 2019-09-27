@@ -477,6 +477,12 @@ class MigrationPlanCollection(BaseCollection):
 
     ENTITY = MigrationPlan
 
+    def create_1(self, name, infra_map, vm_list):
+        return self.instantiate(
+            name=name,
+            infra_map=infra_map,
+            vm_list=vm_list)
+
     def create(
         self,
         name,
@@ -637,3 +643,13 @@ class MigrationPlanRequestDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.progress_card.select_plan(self.obj.name)
+
+
+@navigator.register(MigrationPlan, "CompletedPlanDetails")
+class CompletedPlanDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Complete")
+
+    VIEW = MigrationPlanRequestDetailsView
+
+    def step(self):
+        self.prerequisite_view.plans_completed_list.select_plan(self.obj.name)
