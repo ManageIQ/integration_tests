@@ -15,6 +15,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.rest import assert_response
@@ -216,6 +217,7 @@ def test_query_simple_collections(appliance, collection_name):
         list(collection)
 
 
+@pytest.mark.meta(automates=[1392595], coverage=[1754972])
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('collection_name', COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
@@ -223,7 +225,7 @@ def test_query_simple_collections(appliance, collection_name):
         collection_name in COLLECTIONS_OMITTED or
         _collection_not_in_this_version(appliance, collection_name)
 )
-def test_collections_actions(appliance, collection_name):
+def test_collections_actions(appliance, collection_name, soft_assert):
     """Tests that there are only actions with POST methods in collections.
 
     Other methods (like DELETE) are allowed for individual resources inside collections,
@@ -231,6 +233,7 @@ def test_collections_actions(appliance, collection_name):
 
     Bugzilla:
         1392595
+        1754972
 
     Metadata:
         test_flag: rest
@@ -241,14 +244,17 @@ def test_collections_actions(appliance, collection_name):
         caseimportance: high
         initialEstimate: 1/4h
     """
-    collection_href = '{}/{}'.format(appliance.rest_api._entry_point, collection_name)
-    response = appliance.rest_api.get(collection_href)
+    response = appliance.rest_api.get(
+        getattr(appliance.rest_api.collections, collection_name)._href
+    )
     actions = response.get('actions')
     if not actions:
         # nothing to test in this collection
         return
     for action in actions:
-        assert action['method'].lower() == 'post'
+        if BZ(1754972).blocks and collection_name == "pxe_servers":
+            pytest.skip("pxe_servers contains methods other than post.")
+        soft_assert(action['method'].lower() == 'post')
 
 
 @pytest.mark.tier(3)
@@ -645,7 +651,7 @@ def test_rest_paging(appliance, paging):
     assert response['subcount'] == expected_subcount
     assert len(response['resources']) == expected_subcount
 
-    expected_pages_num = (response['count'] / limit) + (1 if response['count'] % limit else 0)
+    expected_pages_num = (response['count'] // limit) + (1 if response['count'] % limit else 0)
     assert response['pages'] == expected_pages_num
 
     links = response['links']
@@ -723,7 +729,7 @@ def test_collection_class_valid(appliance, provider, vendor):
     # all returned entities must have the same type
     if response.count:
         rand_num = 5 if response.count >= 5 else response.count
-        rand_entities = random.sample(response, rand_num)
+        rand_entities = random.sample(response.resources, rand_num)
         for entity in rand_entities:
             assert entity.type == tested_type
 
@@ -1264,8 +1270,8 @@ def test_custom_logos_via_api(appliance, image_type, request):
     assert branding_info[image_type] == expected_name.format(image_type)
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
-@pytest.mark.provider([RHEVMProvider], fixture_name="second_provider")
+@pytest.mark.provider([VMwareProvider], override=True, selector=ONE)
+@pytest.mark.provider([RHEVMProvider], fixture_name="second_provider", selector=ONE)
 def test_provider_specific_vm(
     appliance, request, soft_assert, provider, second_provider
 ):
