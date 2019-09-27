@@ -112,10 +112,20 @@ def generic_objects(self):
     return self.collections.generic_objects
 
 
+@MiqImplementationContext.external_for(GenericObjectDefinition.generic_object_buttons.getter, ViaUI)
+def generic_object_buttons(self):
+    return self.collections.generic_object_buttons
+
+
 @MiqImplementationContext.external_for(GenericObjectDefinition.instance_count.getter, ViaUI)
 def instance_count(self):
     view = navigate_to(self, "Details")
     return int(view.summary("Relationships").get_text_of("Instances"))
+
+
+@MiqImplementationContext.external_for(GenericObjectDefinition.add_button, ViaUI)
+def add_button(self, name, description, request, **kwargs):
+    return self.generic_object_buttons.create(name, description, request, **kwargs)
 
 
 # navigator registers

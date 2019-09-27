@@ -29,6 +29,7 @@ class GenericObjectDefinition(BaseEntity, Updateable, sentaku.modeling.ElementMi
     add_button = sentaku.ContextualMethod()
     add_button_group = sentaku.ContextualMethod()
     generic_objects = sentaku.ContextualProperty()
+    generic_object_buttons = sentaku.ContextualProperty()
     instance_count = sentaku.ContextualProperty()
 
     name = attr.ib()

@@ -25,8 +25,8 @@ class GenericObjectButton(BaseEntity, Updateable):
 
     name = attr.ib()
     description = attr.ib()
-    image = attr.ib()
     request = attr.ib()
+    image = attr.ib(default='fa-home')
     button_type = attr.ib(default='Default')
     display = attr.ib(default=True)
     dialog = attr.ib(default=None)
@@ -37,6 +37,11 @@ class GenericObjectButton(BaseEntity, Updateable):
     attributes = attr.ib(default=None)
     role = attr.ib(default=None)
     button_group = attr.ib(default=None)
+
+    # extra fields for ansible playbook type buttons
+    playbook_cat_item = attr.ib(default=None)
+    inventory = attr.ib(default=None)
+    hosts = attr.ib(default=None)
 
     def delete(self, cancel=False):
         """Delete generic object button
@@ -66,9 +71,10 @@ class GenericObjectButtonsCollection(BaseCollection):
 
     ENTITY = GenericObjectButton
 
-    def create(self, name, description, request, image, button_type='Default',
+    def create(self, name, description, request, image='fa-home', button_type='Default',
                display=True, dialog=None, open_url=None, display_for=None, submit_version=None,
-               system_message=None, attributes=None, role=None, cancel=False):
+               system_message=None, attributes=None, role=None, cancel=False, inventory=None,
+               playbook_cat_item=None, hosts=None):
         """Add button to generic object definition or button group
 
             Args:
@@ -86,13 +92,20 @@ class GenericObjectButtonsCollection(BaseCollection):
                 attributes(dict): button attributes ex. {'address': 'string'}
                 role: role used for button
                 cancel(bool): cancel button creation, default if False
+                inventory(str): Name of inventory (Localhost, Target Machine, Specific Hosts)
+                playbook_cat_item(str): catalog item name for ansible playbook
+                hosts(str): if inventory is Specific Hosts, enter hosts here
 
             Returns: button object
 
         """
         view = navigate_to(self, 'Add')
+
         view.fill({
             'button_type': button_type,
+            'form': {
+                'playbook_cat_item': playbook_cat_item, 'inventory': inventory, 'hosts': hosts
+            },
             'name': name,
             'description': description,
             'display': display,
@@ -121,7 +134,8 @@ class GenericObjectButtonsCollection(BaseCollection):
                                 button_type=button_type, display=display, dialog=dialog,
                                 open_url=open_url, display_for=display_for,
                                 submit_version=submit_version, system_message=system_message,
-                                attributes=attributes, role=role)
+                                attributes=attributes, role=role, inventory=inventory,
+                                playbook_cat_item=playbook_cat_item, hosts=hosts)
 
     def all(self):
         """All existing buttons
