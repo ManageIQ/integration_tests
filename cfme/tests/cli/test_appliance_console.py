@@ -521,6 +521,7 @@ def test_appliance_console_external_auth_all(configured_appliance):
     assert evm_tail.validate(wait="30s")
 
 
+@pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """ Commands:
