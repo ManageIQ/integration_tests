@@ -217,23 +217,6 @@ def test_dialog_text_box_triggers_fields_shouldnt_refresh_too_soon_often():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dynamic_check_box_does_not_update_in_classic_ui():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: service
-    Bugzilla:
-        1570152
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_ssui_dd_values_are_not_loaded_in_dropdown_unless_refresh_button_is_pressed():
     """

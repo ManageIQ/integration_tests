@@ -10,6 +10,7 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.wait import TimedOutError
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -99,14 +100,14 @@ def test_refresh_dynamic_field(appliance, import_datastore, import_data,
         casecomponent: Services
         initialEstimate: 1/4h
         tags: service
-    setup:
-        1. Import bz dialog
-        2. Import  bz datastore
-        3. Create catalog item
-    testSteps:
-        1. Order service catalog and refresh dynamic field
-    expectedResults:
-        1. Refreshing dynamic field should work and submit button should enable
+        setup:
+            1. Import bz dialog
+            2. Import  bz datastore
+            3. Create catalog item
+        testSteps:
+            1. Order service catalog and refresh dynamic field
+        expectedResults:
+            1. Refreshing dynamic field should work and submit button should enable
     """
     cat_item, ele_label = catalog_item_with_imported_dialog
     service_catalogs = ServiceCatalogs(appliance, cat_item.catalog, cat_item.name)
@@ -115,3 +116,50 @@ def test_refresh_dynamic_field(appliance, import_datastore, import_data,
     view.fields(ele_label).fill("Password")
     # If Refresh works submit button will enable
     wait_for(lambda: not view.submit_button.disabled, timeout=7)
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[BZ(1570152)])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1570152.zip", "bz_1570152", None)],
+    ids=["sample_domain"],
+)
+# Parametrizing for import_dialog fixture
+@pytest.mark.parametrize("file_name", ["bz_1570152.yml"],
+    ids=["sample_dialog"],
+)
+def test_update_dynamic_checkbox_field(appliance, import_datastore, import_data,
+                                       catalog_item_with_imported_dialog):
+    """Tests update dynamic check box field when Selecting true in dropdown.
+    Metadata:
+        test_flag: provision
+
+    Bugzilla:
+        1570152
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/8h
+        tags: service
+        setup:
+            1. Import bz dialog
+            2. Import bz datastore
+            3. Create catalog item
+        testSteps:
+            1. Order service catalog and Select True from dropdown
+        expectedResults:
+            1. Selecting true from dropdown field should update dynamic check box field
+    """
+    cat_item, ele_label = catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, cat_item.catalog, cat_item.name)
+    view = navigate_to(service_catalogs, 'Order')
+    view.wait_displayed("5s")
+    view.fields(ele_label).dropdown.fill("true")
+    try:
+        wait_for(lambda: view.fields(
+            "checkbox").checkbox.read() is True and not view.submit_button.disabled, timeout=60)
+    except TimedOutError:
+        pytest.fail("Checkbox did not checked and Submit button did not enable in time")
