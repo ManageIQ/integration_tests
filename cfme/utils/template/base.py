@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 from contextlib import closing
@@ -277,6 +278,38 @@ class ProviderTemplateUpload(object):
             template.deploy(**deploy_args)
         return True
 
+    @log_wrap("checksum verification")
+    def checksum_verification(self):
+        # Download checksum from url
+        checksum = None
+        try:
+            response = request.urlopen('{}/SHA256SUM'.format(self.image_url))
+            checksums = response.read().decode('utf-8')
+            for line in checksums.split("\n"):
+                if self.image_name in line:
+                    checksum = line.strip().split()[0]
+        except URLError:
+            logger.warn('Failed download of checksum using urllib')
+        if not checksum:
+            logger.warn('Failed to get checksum of image from url')
+        else:
+            # Get checksum of downloaded file
+            sha256 = hashlib.sha256()
+            image_sha256 = None
+            try:
+                with open(self.image_name, 'rb') as f:
+                    for block in iter(lambda: f.read(65536), b''):
+                        sha256.update(block)
+                image_sha256 = sha256.hexdigest()
+            except Exception:
+                logger.warn('Failed to get checksum of image')
+            if image_sha256 and not checksum == image_sha256:
+                logger.exception('Local image checksum does not match checksum from url')
+                return False
+            else:
+                logger.info('Local image checksum matches checksum from url')
+                return True
+
     @log_wrap("download image locally")
     def download_image(self):
         ARCHIVE_TYPES = ['zip']
@@ -294,6 +327,8 @@ class ProviderTemplateUpload(object):
             except URLError:
                 logger.exception('Failed download of image using urllib')
                 return False
+
+        self.checksum_verification()
 
         # Unzips image  when suffix is zip or tar.gz and then changes image name to extracted one.
         # For EC2 and SCVMM images is zip used and for GCE is tar.gz used.
