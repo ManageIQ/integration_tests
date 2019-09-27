@@ -719,6 +719,9 @@ def test_simulated_object_copy_on_button(appliance, provider, setup_provider, bu
 def test_under_group_multiple_button_crud(appliance, button_group, dialog):
     """Test multiple button creation and deletion under same group
 
+    Bugzilla:
+        1755229
+
     Polarion:
         assignee: ndhandre
         initialEstimate: 1/10h
@@ -750,4 +753,4 @@ def test_under_group_multiple_button_crud(appliance, button_group, dialog):
         button.delete()
         view.flash.assert_message(f'Button "{button.hover}": Delete successful')
         assert not button.exists
-        button_gp.exists
+        assert button_gp.exists
