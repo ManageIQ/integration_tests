@@ -4,6 +4,7 @@ from widgetastic.utils import deflatten_dict
 from widgetastic.utils import Parameter
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.utils import ParametrizedString
+from widgetastic.widget import Checkbox
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Select
 from widgetastic.widget import Text
@@ -61,6 +62,7 @@ class BaseOrderForm(View):
             ".//div[contains(@class, 'bootstrap-select')]/select[@id={key|quote}]/.."))
         param_dropdown = BootstrapSelect(locator=ParametrizedLocator(
             ".//div[contains(@class, 'bootstrap-select')]/select[@id='param_{key}']/.."))
+        checkbox = Checkbox(id=Parameter("key"))
 
         @property
         def visible_widget(self):
