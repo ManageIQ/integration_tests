@@ -12,6 +12,8 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
@@ -86,13 +88,22 @@ class TowerJob(BaseEntity):
         view.toolbar.configuration.item_select('Remove this Job', handle_alert=True)
         view.flash.assert_no_error()
 
-    @property
     def is_job_successful(self):
         return True if self.status == "successful" else False
 
+    def wait_for_completion(self, num_sec=1200, delay=10):
+        view = navigate_to(self, 'Details')
+
+        def last_status():
+            logger.info("Last status message in UI: '{}'".format(
+                view.entities.properties.get_text_of("Status")))
+
+        wait_for(self.is_job_successful, num_sec=num_sec, delay=delay, fail_func=last_status,
+                 message="Job finished")
+
 
 @attr.s
-class TowerJobCollection(BaseCollection):
+class TowerJobsCollection(BaseCollection):
     ENTITY = TowerJob
 
     def all(self):
@@ -125,7 +136,7 @@ class TowerJobCollection(BaseCollection):
         return True
 
 
-@navigator.register(TowerJobCollection, 'All')
+@navigator.register(TowerJobsCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = TowerJobsDefaultView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
