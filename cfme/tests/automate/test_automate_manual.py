@@ -767,3 +767,248 @@ def test_variable_pass_method_playbook():
         1678132
     """
     pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1753860])
+def test_overwrite_import_domain():
+    """
+    Bugzilla:
+        1753860
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Create custom domain, namespace, class, instance, method. Do not delete this domain.
+            2. Navigate to automation > automate > import/export and export all classes and
+               instances to a file
+            3. Extract the file and update __domain__.yaml file of custom domain as below:
+               >> description: test_desc
+               >> enabled: false
+            4. Compress this domain file and import it via UI.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Description and enabled status of existing domain should update.
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1753586])
+@pytest.mark.customer_scenario
+def test_crud_imported_domains():
+    """
+    Bugzilla:
+        1753586
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Export the appliance domain as a zip file
+            2. Extracted the ManageIQ directory to a new dir on the local machine called
+               Domain_Test02
+            3. From within the new Domain_Test02 dir, edit the __domain__.yaml file so that the
+               'name' attribute equals Domain_Test02
+               NOTE: Do not change the 'source' attribute from 'system' to 'user' this time.
+            4. Archived the new Domain_Test02 dir and upload to CloudForms Appliance
+        expectedResults:
+            1.
+            2.
+            3.
+            4. The imported domains should be Custom Domains or these imported domains should gets
+               deleted from db
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1753523])
+def test_attribute_value_message():
+    """
+    Bugzilla:
+        1753523
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Create domain, namespace, class and instance pointing to method
+            2. Navigate to automate > automation > simulation page
+            3. Fill values for attribute/value pairs of namespace, class, instance and add message
+               attribute with any value and click on submit.
+            4. See automation.log
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Custom message attribute should be considered with instance in logs
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1752875])
+def test_existing_domain_child_override():
+    """
+    PR:
+     https://github.com/ManageIQ/manageiq-ui-classic/pull/4912
+
+    Bugzilla:
+        1752875
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Create custom domain and copy class - "ManageIQ/System/Request"
+            2. Lock this domain
+            3. Navigate to Automation > automate > Import/export and click on "export all classes
+               and instances to file"
+            4. Go to custom domain and unlock it. Remove instance - "ManageIQ/System/Request/" and
+               copy - "ManageIQ/System/Process/Request" (you can copy more classes or methods or
+               instances) to custom domain and again lock the domain.
+            5. Go to import/export page and click on 'choose file'. Select exported file and click
+               on upload
+            6. Select "Select domain you wish to import from:" - "custom_domain" and check Toggle
+               All/None
+            7. Click on commit button.
+            8. Then navigate to custom domain and unlock it
+            9. Perform step 5, 6 and 7(In this case, domain will get imported)
+            10. Go to custom domain
+        expectedResults:
+            1.
+            2.
+            3. Datastores exported on local system in zip format
+            4.
+            5.
+            6.
+            7. You should see flash message: "Error: Selected domain is locked"
+            8.
+            9. Selected domain imported successfully
+            10. You should see existing as well as imported namespace, class, instance or method
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1743227])
+def test_queue_up_schedule_run_now():
+    """
+    Bugzilla:
+        1743227
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Navigate to configuration > Settings > Schedules > Select "Add a new schedule"
+            2. Fill the name, description then select Action - "Automation task"
+            3. Select time options
+            4. Click on add button
+            5. Click on created schedule and select option - "Queue up this schedule to run now"
+            6. See automation logs
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Schedule should run forcefully
+            6. Task related automation logs should generate
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1741259])
+def test_copy_automate_method_without_edit():
+    """
+    Bugzilla:
+        1741259
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Navigate to Automation > Automate > Explorer
+            2. Select a method from the datastore
+            3. Try to copy and paste some code from the method without entering the edit mode
+        expectedResults:
+            1.
+            2.
+            3. You should be able to copy the highlighted text
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1747159])
+def test_retire_vm_automate():
+    """
+    Bugzilla:
+        1747159
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup:
+            1. Add infrastructure provider
+            2. Provision VM
+        testSteps:
+            1. Create custom domain, namespace, class, instance pointing to automate method
+            2. Add vm retire ruby code to automate method
+            3. Execute this method via simulation
+        expectedResults:
+            1.
+            2.
+            3. VM should retire
+    """
+    pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1672007])
+def test_invoke_custom_automation():
+    """
+    Bugzilla:
+        1672007
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Navigate to Control > explorer > actions
+            2. Select 'add a new action' from configuration dropdown
+            3. Add description and select 'Action Type' - Invoke custom automation
+            4. Fill attribute value pairs and click on save
+            5. Edit the created action and add new attribute value pair
+            6. Remove that newly added attribute value pair before clicking on save and then click
+               on save
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Save button should enable
+            6. Action should be saved successfully
+    """
+    pass
