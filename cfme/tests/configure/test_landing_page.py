@@ -97,7 +97,6 @@ ALL_LANDING_PAGES = list(SPECIAL_LANDING_PAGES.keys()) + [
     "Monitor / Alerts / Most Recent Alerts",
     "Monitor / Alerts / Overview",
     "Networks / Floating IPs",
-    "Networks / Load Balancers",
     "Networks / Network Ports",
     "Networks / Network Routers",
     "Networks / Networks",
@@ -149,6 +148,7 @@ PAGES_NOT_IN_511 = [
     "Optimize / Planning",
     "Optimize / Utilization",
     "Red Hat Access Insights",
+    "Networks / Load Balancers",
 ]
 
 
