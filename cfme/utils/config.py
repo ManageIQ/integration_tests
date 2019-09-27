@@ -8,6 +8,11 @@ import yaycl
 
 from cfme.utils import path
 
+YAML_KEYS = ['auth_data', 'cfme_data', 'cfme_performance', 'composite',
+            'credentials', 'docker', 'env', 'gpg', 'hidden', 'jenkins',
+            'migration_tests', 'perf_tests', 'polarion_tools', 'rdb',
+            'supportability']
+
 
 class ConfigData(object):
     """A wrapper for configs in yamls- reads and loads values from yaml files in conf/ dir."""
@@ -75,12 +80,11 @@ class Configuration(object):
          'perf_tests': <cfme.utils.config_copy.ConfigData at 0x7f2a943ad2e8>}
 
         """
-        if self.settings is None:
-            self.settings = {
-                file.basename[:-5]: ConfigData(env=file.basename[:-5])
-                for file in path.conf_path.listdir() if file.basename[-5:] == '.yaml' and
-                '.local.yaml' not in file.basename
-            }
+        self.settings = {
+            file.basename[:-5]: ConfigData(env=file.basename[:-5])
+            for file in path.conf_path.listdir() if file.basename[-5:] == '.yaml' and
+            '.local.yaml' not in file.basename
+        }
 
     def get_config(self, name):
         """returns a config object
@@ -88,13 +92,18 @@ class Configuration(object):
         :param name: name of the configuration object
         """
         self.configure()
-        if name == 'credentials':
-            return getattr(self.yaycl_config, name)
-        # For some reason '__path__' was being received in name
-        # for which we won't have valid key.
-        # hence the if check below.
-        if not name == '__path__':
-            return self.settings[name]
+        if name in YAML_KEYS:
+            if name == 'credentials' or name == 'hidden':
+                return getattr(self.yaycl_config, name)
+            # For some reason '__path__'/'__loader__' was being received in name
+            # for which we won't have valid key.
+            # hence the if check below.
+            if '__' not in name[0:2]:
+                return self.settings[name]
+
+    def del_config(self, name):
+        if name in self.settings:
+            del self.settings[name]
 
 
 @attr.s
@@ -107,5 +116,7 @@ class ConfigWrapper(object):
     def __getitem__(self, key):
         return self.configuration.get_config(key)
 
+    def __delitem__(self, key):
+        return self.configuration.del_config(key)
 
 global_configuration = Configuration()
