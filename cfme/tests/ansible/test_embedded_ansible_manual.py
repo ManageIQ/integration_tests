@@ -405,25 +405,6 @@ def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_playbook_machine_credentials_service_details_opsui():
-    """
-    Bugzilla:
-        1515561
-
-    When the service is viewed in my services it should also show that the cloud and
-    machine credentials were attached to the service.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_service_ansible_playbook_machine_credentials_service_details_sui():
     """
     Bugzilla:
