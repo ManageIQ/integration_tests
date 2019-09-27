@@ -3,6 +3,8 @@ classes to manage the cfme test framework configuration
 """
 import attr
 from dynaconf import LazySettings
+import os
+import yaycl
 
 from cfme.utils import path
 
@@ -36,6 +38,27 @@ class Configuration(object):
     """
     def __init__(self):
         self.settings = None
+        self.yaycl_config = None
+
+    def configure_creds(self, config_dir, crypt_key_file=None):
+        """
+        do the defered initial loading of the configuration
+
+        :param config_dir: path to the folder with configuration files
+        :param crypt_key_file: optional name of a file holding the key for encrypted
+            configuration files
+
+        :raises: AssertionError if called more than once
+
+        if the `utils.conf` api is removed, the loading can be transformed to eager loading
+        """
+        assert self.yaycl_config is None
+        if crypt_key_file and os.path.exists(crypt_key_file):
+            self.yaycl_config = yaycl.Config(
+                config_dir=config_dir,
+                crypt_key_file=crypt_key_file)
+        else:
+            self.yaycl_config = yaycl.Config(config_dir=config_dir)
 
     def configure(self):
         """
@@ -65,6 +88,8 @@ class Configuration(object):
         :param name: name of the configuration object
         """
         self.configure()
+        if name == 'credentials':
+            return getattr(self.yaycl_config, name)
         # For some reason '__path__' was being received in name
         # for which we won't have valid key.
         # hence the if check below.
@@ -81,3 +106,6 @@ class ConfigWrapper(object):
 
     def __getitem__(self, key):
         return self.configuration.get_config(key)
+
+
+global_configuration = Configuration()
