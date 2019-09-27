@@ -309,8 +309,6 @@ class HostsCompareView(ComputeInfrastructureHostsView):
     def is_displayed(self):
         title = "Compare Host / Node"
         return (self.logged_in_as_current_user and
-                # self.navigation.currently_selected == ['Compute', 'Infrastructure',
-                #                                       'Hosts', 'Compare Host / Node'] and
                 self.title.text == title)
 
 
