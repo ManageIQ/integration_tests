@@ -127,7 +127,7 @@ def test_login_evm_group(appliance, auth_user, user_obj, soft_assert):
         Test will configure auth and login
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Auth
         initialEstimate: 1/4h
     """
@@ -192,7 +192,7 @@ def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Auth
         initialEstimate: 1/4h
     """
@@ -273,7 +273,7 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
 
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         initialEstimate: 1/4h
         casecomponent: Auth
     """
@@ -301,7 +301,7 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
     """Test switching groups on a single user, between retreived group and built-in group
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         initialEstimate: 1/4h
         casecomponent: Auth
     """
@@ -366,7 +366,7 @@ def test_ldap_password_plaintext():
     Test that LDAP password is not logged in plaintext in evm.log.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
@@ -382,7 +382,7 @@ def test_black_console_ipa_ntp():
     Try to setup IPA on appliance when NTP daemon is stopped on server.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -410,7 +410,7 @@ def test_black_console_ipa():
     Test setting up IPA authentication with invalid host settings
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
@@ -432,7 +432,7 @@ def test_update_ldap_updates_login():
     entry_cache_timeout = 600
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -452,7 +452,7 @@ def test_saml_verify_user_login():
     default groups are already assigned for user in saml server.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
@@ -470,7 +470,7 @@ def test_black_console_ext_auth_options_enable():
     Test enabling ext_auth options through appliance_console
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
@@ -504,7 +504,7 @@ def test_authentication_user_created_after_success_login():
     Control - Users.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
     """
@@ -520,7 +520,7 @@ def test_authentication_ldap_switch_groups():
     between them
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -537,7 +537,7 @@ def test_external_auth_details_updated():
     updated for IPA
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -555,7 +555,7 @@ def test_verify_saml_sso():
     Verify SSO option works fine.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -578,7 +578,7 @@ def test_ldap_group_lookup_error_message():
     https://bugzilla.redhat.com/show_bug.cgi?id=1378213
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         caseimportance: low
         casecomponent: Configuration
         caseposneg: negative
@@ -599,7 +599,7 @@ def test_black_console_ext_auth_options_disable():
     Test disabling ext_auth options through appliance_console
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
@@ -636,7 +636,7 @@ def test_verify_look_up_ldap_groups():
     works fine.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify Look Up LDAP Groups option works fine.
@@ -660,7 +660,7 @@ def test_verify_user_validation_authentication():
     (httpd)" option ENABLED and DISABLED.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -678,7 +678,7 @@ def test_validate_lookup_button_provsioning():
     configure ldap and validate for lookup button in provisioning form
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
@@ -698,7 +698,7 @@ def test_verify_role_configuration_for_new_ldap_groups():
     NOTE: execute rbac test cases.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
@@ -718,7 +718,7 @@ def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
     audit.log and evm.log
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -736,7 +736,7 @@ def test_ldap_user_login():
     for the user.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
         testSteps:
@@ -769,7 +769,7 @@ def test_disable_local_login():
     disabled.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -787,7 +787,7 @@ def test_verify_ldap_user_login_when_email_has_an_apostrophe_character():
     https://bugzilla.redhat.com/show_bug.cgi?id=1379420
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         caseimportance: low
         casecomponent: Configuration
         initialEstimate: 1/3h
@@ -825,7 +825,7 @@ def test_ldap_auth_without_groups():
     Settings, when it is always needed.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -848,7 +848,7 @@ def test_login_fails_after_password_change():
     Verify user login  to CFME using old credential fails.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
@@ -872,7 +872,7 @@ def test_two_factor_auth_with_user_password_and_otp():
     and otp.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         initialEstimate: 1/3h
         casecomponent: Configuration
         caseimportance: medium
@@ -890,7 +890,7 @@ def test_auth_mode_new_trusted_forest_table_entry():
     forest table entry.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
@@ -909,7 +909,7 @@ def test_configure_ldap_authentication():
     appliance.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
         testSteps:
@@ -935,7 +935,7 @@ def test_ldap_invalid_user_login():
     test case).
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
@@ -961,7 +961,7 @@ def test_remove_display_name_for_user_in_ldap_and_verify_auth():
     1. Remove display name for user in ldap and verify auth.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
@@ -991,7 +991,7 @@ def test_change_search_base():
     dc=qetest,dc=com is expected to be retrieved.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -1010,7 +1010,7 @@ def test_external_auth_with_sssd_single_domain():
     Verify appliance_console is updated with “External Auth: “ correctly
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
@@ -1034,7 +1034,7 @@ def test_change_domain_sequence_sssd_group_retrieval():
     user1@qetest.com: qegroup1 qetest.com
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -1057,7 +1057,7 @@ def test_external_auth_configuration_with_ipa():
     with external auth for IPA
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
         title: External Auth configuration with IPA
@@ -1077,7 +1077,7 @@ def test_retrieve_ldaps_groups():
     validate the data comparing with ldap server data.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify retrieve ldaps groups works fine for ldap user from CFME webui.
@@ -1115,7 +1115,7 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
     "ldaptest". Observe that login fails for the user "ldaptest"
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -1134,7 +1134,7 @@ def test_verify_the_trusted_forest_settings_table_display_in_auth_page():
     forest settings table does not disappear.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
@@ -1152,7 +1152,7 @@ def test_switch_groups_for_user_with_multiple_groups():
     Login as user and verify switch groups works fine.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -1174,7 +1174,7 @@ def test_set_hostname_from_appliance_console_and_configure_external_auth():
     https://bugzilla.redhat.com/show_bug.cgi?id=1360928
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
@@ -1193,7 +1193,7 @@ def test_ldap_group_retrieval_base64():
     Refer the BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1367600
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -1211,7 +1211,7 @@ def test_authentication_user_not_in_ldap_but_in_db():
     in LDAP.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
@@ -1230,7 +1230,7 @@ def test_verify_database_user_login_fails_with_external_auth_configured():
     correct log messages.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -1249,7 +1249,7 @@ def test_external_auth_openldap_proxy_to_3_domains():
     refer the bz: https://bugzilla.redhat.com/show_bug.cgi?id=1306436
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -1270,7 +1270,7 @@ def test_auth_default_evm_groups_created():
     default groups are already assigned for user in ldap server.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
         title: verify user authentication works fine if default evm groups
@@ -1289,7 +1289,7 @@ def test_saml_configuration_works_fine_for_cfme():
     Verify appliance_console is updated with “External Auth: “ correctly
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/2h
         title: Verify SAML configuration works fine for CFME
@@ -1305,7 +1305,7 @@ def test_black_console_ext_auth_options_skip():
     Test skip update of ext_auth options through appliance_console
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
@@ -1354,7 +1354,7 @@ def test_multi_domain_configuration_for_external_auth_ldaps():
     displays only one. There will be BZ.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -1374,7 +1374,7 @@ def test_saml_get_user_groups_from_ext_auth_httpd():
     case of SAML)
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/2h
         title: saml: Verify “Get User Groups from External Authentication (httpd)” option.
@@ -1396,7 +1396,7 @@ def test_external_auth_config_for_ldap_appliance_console():
     and auth mode set to ‘Database’.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
@@ -1415,7 +1415,7 @@ def test_cfme_features_with_ldap():
     ldap.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1h
@@ -1437,7 +1437,7 @@ def test_black_console_ext_auth_options_all():
     Test enabling/disabling all ext_auth options through appliance_console
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
@@ -1473,7 +1473,7 @@ def test_ldaps_customized_port():
     Verify ldap user/group authentication.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/2h
@@ -1491,7 +1491,7 @@ def test_saml_multiple_appliances_same_realm():
     mentioned in Step#1 works fine.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/2h
@@ -1510,7 +1510,7 @@ def test_login_page_redirects_to_saml():
     to.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         initialEstimate: 1/4h
         title: Verify CFME login page redirects to SAML login page upon
@@ -1529,7 +1529,7 @@ def test_session_timeout():
     timeout value.
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h

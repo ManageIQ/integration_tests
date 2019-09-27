@@ -19,7 +19,7 @@ def test_group_roles(
 
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         caseimportance: medium
         casecomponent: Auth
         initialEstimate: 1/4h

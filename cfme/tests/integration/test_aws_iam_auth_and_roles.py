@@ -46,7 +46,7 @@ def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access
     NOTE: Only tests vertical navigation tree at the moment, not accordions within the page
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         caseimportance: medium
         casecomponent: Auth
         initialEstimate: 1/4h
