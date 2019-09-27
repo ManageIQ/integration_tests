@@ -1,6 +1,7 @@
 import pytest
 from deepdiff import DeepDiff
 
+from cfme import test_requirements
 from cfme.roles import role_access_ui_510z
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -36,6 +37,7 @@ def pytest_generate_tests(metafunc):
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="Is a rails server")
 @pytest.mark.meta(automates=[BZ(1530683)])
+@test_requirements.auth
 def test_group_roles(appliance, setup_aws_auth_provider, group_name, role_access, context,
                      soft_assert):
     """Basic default AWS_IAM group role auth + RBAC test

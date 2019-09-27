@@ -28,7 +28,10 @@ pytestmark = [
                auth_data.auth_providers[prov_key].type == 'openldaps')),
         BZ(1593171)]),  # 510z groups page doesn't load
     pytest.mark.browser_isolation,
-    pytest.mark.usefixtures('prov_key', 'auth_mode', 'auth_provider', 'configure_auth', 'auth_user')
+    pytest.mark.usefixtures(
+        'prov_key', 'auth_mode', 'auth_provider', 'configure_auth', 'auth_user'
+    ),
+    test_requirements.auth
 ]
 
 # map auth provider types, auth_modes, and user_types for test matrix
@@ -359,7 +362,6 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_ldap_password_plaintext():
     """
@@ -375,7 +377,6 @@ def test_ldap_password_plaintext():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(1)
 def test_black_console_ipa_ntp():
     """
@@ -404,7 +405,6 @@ def test_black_console_ipa_ntp():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-@test_requirements.auth
 def test_black_console_ipa():
     """
     Test setting up IPA authentication with invalid host settings
@@ -420,7 +420,6 @@ def test_black_console_ipa():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_update_ldap_updates_login():
     """
@@ -441,7 +440,6 @@ def test_update_ldap_updates_login():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_saml_verify_user_login():
     """
@@ -463,7 +461,6 @@ def test_saml_verify_user_login():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_black_console_ext_auth_options_enable():
     """
@@ -495,7 +492,6 @@ def test_black_console_ext_auth_options_enable():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(1)
 def test_authentication_user_created_after_success_login():
     """
@@ -512,7 +508,6 @@ def test_authentication_user_created_after_success_login():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_authentication_ldap_switch_groups():
     """
@@ -529,7 +524,6 @@ def test_authentication_ldap_switch_groups():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_external_auth_details_updated():
     """
@@ -547,7 +541,6 @@ def test_external_auth_details_updated():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_saml_sso():
     """
@@ -565,7 +558,6 @@ def test_verify_saml_sso():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_ldap_group_lookup_error_message():
     """
@@ -592,7 +584,6 @@ def test_ldap_group_lookup_error_message():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_black_console_ext_auth_options_disable():
     """
@@ -624,7 +615,6 @@ def test_black_console_ext_auth_options_disable():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_look_up_ldap_groups():
     """
@@ -645,7 +635,6 @@ def test_verify_look_up_ldap_groups():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_user_validation_authentication():
     """
@@ -671,7 +660,6 @@ def test_verify_user_validation_authentication():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_validate_lookup_button_provsioning():
     """
@@ -688,7 +676,6 @@ def test_validate_lookup_button_provsioning():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_role_configuration_for_new_ldap_groups():
     """
@@ -708,7 +695,6 @@ def test_verify_role_configuration_for_new_ldap_groups():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
     """
@@ -728,7 +714,6 @@ def test_verify_passwords_are_not_registered_in_plain_text_in_auth_logs():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(1)
 def test_ldap_user_login():
     """
@@ -755,7 +740,6 @@ def test_ldap_user_login():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_disable_local_login():
     """
@@ -779,7 +763,6 @@ def test_disable_local_login():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_verify_ldap_user_login_when_email_has_an_apostrophe_character():
     """
@@ -800,7 +783,6 @@ def test_verify_ldap_user_login_when_email_has_an_apostrophe_character():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_ldap_auth_without_groups():
     """
@@ -836,7 +818,6 @@ def test_ldap_auth_without_groups():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_login_fails_after_password_change():
     """
@@ -860,7 +841,6 @@ def test_login_fails_after_password_change():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_two_factor_auth_with_user_password_and_otp():
     """
@@ -882,7 +862,6 @@ def test_two_factor_auth_with_user_password_and_otp():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_auth_mode_new_trusted_forest_table_entry():
     """
@@ -901,7 +880,6 @@ def test_auth_mode_new_trusted_forest_table_entry():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(1)
 def test_configure_ldap_authentication():
     """
@@ -927,7 +905,6 @@ def test_configure_ldap_authentication():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_ldap_invalid_user_login():
     """
@@ -954,7 +931,6 @@ def test_ldap_invalid_user_login():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_remove_display_name_for_user_in_ldap_and_verify_auth():
     """
@@ -972,7 +948,6 @@ def test_remove_display_name_for_user_in_ldap_and_verify_auth():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_change_search_base():
     """
@@ -1001,7 +976,6 @@ def test_change_search_base():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_external_auth_with_sssd_single_domain():
     """
@@ -1020,7 +994,6 @@ def test_external_auth_with_sssd_single_domain():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_change_domain_sequence_sssd_group_retrieval():
     """
@@ -1044,7 +1017,6 @@ def test_change_domain_sequence_sssd_group_retrieval():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_external_auth_configuration_with_ipa():
     """
@@ -1066,7 +1038,6 @@ def test_external_auth_configuration_with_ipa():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(1)
 def test_retrieve_ldaps_groups():
     """
@@ -1086,7 +1057,6 @@ def test_retrieve_ldaps_groups():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
     """
@@ -1125,7 +1095,6 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_the_trusted_forest_settings_table_display_in_auth_page():
     """
@@ -1144,7 +1113,6 @@ def test_verify_the_trusted_forest_settings_table_display_in_auth_page():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_switch_groups_for_user_with_multiple_groups():
     """
@@ -1162,7 +1130,6 @@ def test_switch_groups_for_user_with_multiple_groups():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_set_hostname_from_appliance_console_and_configure_external_auth():
     """
@@ -1184,7 +1151,6 @@ def test_set_hostname_from_appliance_console_and_configure_external_auth():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_ldap_group_retrieval_base64():
     """
@@ -1221,7 +1187,6 @@ def test_authentication_user_not_in_ldap_but_in_db():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_verify_database_user_login_fails_with_external_auth_configured():
     """
@@ -1240,7 +1205,6 @@ def test_verify_database_user_login_fails_with_external_auth_configured():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_external_auth_openldap_proxy_to_3_domains():
     """
@@ -1259,7 +1223,6 @@ def test_external_auth_openldap_proxy_to_3_domains():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(1)
 def test_auth_default_evm_groups_created():
     """
@@ -1280,7 +1243,6 @@ def test_auth_default_evm_groups_created():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_saml_configuration_works_fine_for_cfme():
     """
@@ -1298,7 +1260,6 @@ def test_saml_configuration_works_fine_for_cfme():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_black_console_ext_auth_options_skip():
     """
@@ -1343,7 +1304,6 @@ def test_black_console_ext_auth_options_skip():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_multi_domain_configuration_for_external_auth_ldaps():
     """
@@ -1364,7 +1324,6 @@ def test_multi_domain_configuration_for_external_auth_ldaps():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_saml_get_user_groups_from_ext_auth_httpd():
     """
@@ -1383,7 +1342,6 @@ def test_saml_get_user_groups_from_ext_auth_httpd():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_external_auth_config_for_ldap_appliance_console():
     """
@@ -1407,7 +1365,6 @@ def test_external_auth_config_for_ldap_appliance_console():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_cfme_features_with_ldap():
     """
@@ -1430,7 +1387,6 @@ def test_cfme_features_with_ldap():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_black_console_ext_auth_options_all():
     """
@@ -1463,7 +1419,6 @@ def test_black_console_ext_auth_options_all():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_ldaps_customized_port():
     """
@@ -1483,7 +1438,6 @@ def test_ldaps_customized_port():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(3)
 def test_saml_multiple_appliances_same_realm():
     """
@@ -1501,7 +1455,6 @@ def test_saml_multiple_appliances_same_realm():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_login_page_redirects_to_saml():
     """
@@ -1520,7 +1473,6 @@ def test_login_page_redirects_to_saml():
 
 
 @pytest.mark.manual
-@test_requirements.auth
 @pytest.mark.tier(2)
 def test_session_timeout():
     """
