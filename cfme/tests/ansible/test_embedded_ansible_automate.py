@@ -11,6 +11,7 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -313,14 +314,17 @@ def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, re
 @pytest.fixture(scope='module')
 def setup_ansible_repository(appliance, wait_for_ansible):
     repositories = appliance.collections.ansible_repositories
+    # Repository name(test_playbooks_automate) is static because this is already in the datastore
+    # imported. If we used(fauxfactory.gen_alpha()) here then datastore import will fail with no
+    # ansible repository available.
     repository = repositories.create(
-        name="billy",
-        url="https://github.com/billfitzgerald0120/ansible_playbooks",
+        name="test_playbooks_automate",
+        url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
         description=fauxfactory.gen_alpha()
     )
     view = navigate_to(repository, "Details")
     wait_for(
-        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+        lambda: repository.status == "successful",
         timeout=60,
         fail_func=view.toolbar.refresh.click
     )
@@ -368,7 +372,7 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
         testSteps:
             1. Create a Generic service using the hello_world dialog.
             1a. Select instance 'CatalogItemInitialization_jira23'(Note: This is the state machine
-                which executes playbooks and inline method successively) then order service OR
+                which executes playbooks and inline method successively) then order service
             1b. Select instance 'CatalogItemInitialization_jira24'(Note: This is the state machine
                 which executes playbooks successively) then order service
             2. Run "grep dump_vars2 automation.log" from log directory
