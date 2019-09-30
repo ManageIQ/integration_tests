@@ -27,6 +27,7 @@ from cfme.utils import appliance
 from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
@@ -542,7 +543,7 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
 
 @pytest.mark.tier(3)
 @test_requirements.azure
-@pytest.mark.meta(automates=[1495318])
+@pytest.mark.meta(automates=[1495318], blockers=[BZ(1756984)])
 @pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
 def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
     """
@@ -567,7 +568,7 @@ def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
     if not azure.has_iothub():
         azure.create_iothub("potatoiothub")
         request.addfinalizer(lambda: azure.delete_iothub("potatoiothub"))
-    assert azure.has_iothub()
+        assert azure.has_iothub()
     provider.refresh_provider_relationships()
     wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
     assert result.validate(wait="60s")
