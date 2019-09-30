@@ -32,11 +32,18 @@ def volume(appliance, provider):
     volume_collection = appliance.collections.volumes
     name = fauxfactory.gen_alpha()
     if provider.one_of(OpenStackProvider):
-        volume = volume_collection.create(name=name,
-                                          tenant=provider.data['provisioning']['cloud_tenant'],
-                                          volume_size=STORAGE_SIZE,
-                                          provider=provider,
-                                          cancel=False)
+        if appliance.version >= "5.11":  # has mandatory availability zone
+            volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+                                              tenant=provider.data['provisioning']['cloud_tenant'],
+                                              volume_size=STORAGE_SIZE,
+                                              az=provider.data['provisioning']['availability_zone'],
+                                              provider=provider)
+        else:
+            volume = volume_collection.create(name=name,
+                                              tenant=provider.data['provisioning']['cloud_tenant'],
+                                              volume_size=STORAGE_SIZE,
+                                              provider=provider,
+                                              cancel=False)
     elif provider.one_of(EC2Provider):
         az = "{}a".format(provider.region)
         volume = volume_collection.create(name=name,
