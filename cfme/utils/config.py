@@ -30,6 +30,19 @@ class ConfigData(object):
         self.config = self.settings[key.upper()]
         return self.config
 
+    def __setitem__(self, key, value):
+        """This function allows you to mimic some behavior like runtime from yaycl
+            You can do following:
+                from cfme.utils import conf
+                conf ['env']['new_key'] = 'new_val'
+                conf ['env']['new_key']
+                # The new_key and its value is cached through the session
+        """
+        self.settings[key] = value
+
+    def __contains__(self, key):
+        return key in self.settings.as_dict() or key.upper() in self.settings.as_dict()
+
     def get(self, key, default=None):
         try:
             return self.__getattr__(key)
@@ -80,11 +93,12 @@ class Configuration(object):
          'perf_tests': <cfme.utils.config_copy.ConfigData at 0x7f2a943ad2e8>}
 
         """
-        self.settings = {
-            file.basename[:-5]: ConfigData(env=file.basename[:-5])
-            for file in path.conf_path.listdir() if file.basename[-5:] == '.yaml' and
-            '.local.yaml' not in file.basename
-        }
+        if self.settings is None:
+            self.settings = {
+                file.basename[:-5]: ConfigData(env=file.basename[:-5])
+                for file in path.conf_path.listdir() if file.basename[-5:] == '.yaml' and
+                '.local.yaml' not in file.basename
+            }
 
     def get_config(self, name):
         """returns a config object
@@ -95,10 +109,11 @@ class Configuration(object):
         if name in YAML_KEYS:
             if name == 'credentials' or name == 'hidden':
                 return getattr(self.yaycl_config, name)
-            # For some reason '__path__'/'__loader__' was being received in name
-            # for which we won't have valid key.
-            # hence the if check below.
-            if '__' not in name[0:2]:
+            try:
+                return self.settings[name]
+            except KeyError:
+                # seems like config was deleted, reload
+                self.settings[name] = ConfigData(env=name)
                 return self.settings[name]
 
     def del_config(self, name):
@@ -118,5 +133,6 @@ class ConfigWrapper(object):
 
     def __delitem__(self, key):
         return self.configuration.del_config(key)
+
 
 global_configuration = Configuration()
