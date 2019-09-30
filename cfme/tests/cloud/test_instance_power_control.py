@@ -94,7 +94,7 @@ def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900
         return False
 
 
-def wait_for_pwr_state_change(instance, state_change_time, timeout=720):
+def wait_for_power_state_refresh(instance, state_change_time, timeout=720):
     return wait_for(
         lambda: instance.rest_api_entity.state_changed_on != state_change_time,
         num_sec=timeout,
@@ -610,11 +610,11 @@ class TestInstanceRESTAPI(object):
         # On some providers the VM never actually shuts off, on others it might
         # We may also miss a quick reboot during the wait_for.
         # Just check for when the state last changed
-        wait_for_pwr_state_change(testing_instance, state_change_time)
+        wait_for_power_state_refresh(testing_instance, state_change_time)
         state_change_time = testing_instance.rest_api_entity.state_changed_on
         # If the VM is not on after this state change, wait for another
         if vm.power_state != testing_instance.STATE_ON:
-            wait_for_pwr_state_change(testing_instance, state_change_time)
+            wait_for_power_state_refresh(testing_instance, state_change_time)
 
         # assert and wait until the power state change is reflected in REST
         assert testing_instance.wait_for_power_state_change_rest(
