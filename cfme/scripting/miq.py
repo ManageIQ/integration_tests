@@ -6,11 +6,11 @@ from cfme.scripting.bz import main as bz_main
 from cfme.scripting.conf import main as conf_main
 from cfme.scripting.ipyshell import main as shell_main
 from cfme.scripting.polarion import main as polarion_main
+from cfme.scripting.release import main as rel_main
 from cfme.scripting.requirement import main as requirement_main
 from cfme.scripting.setup_env import main as setup_main
 from cfme.scripting.sprout import main as sprout_main
 from cfme.utils.dockerbot.sel_container import main as sel_con_main
-from cfme.utils.release import main as rel_main
 
 
 @click.group()
