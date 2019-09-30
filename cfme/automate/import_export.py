@@ -16,6 +16,7 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from widgetastic_manageiq import V2VFlashMessages
 
 
 class AutomateImportExportBaseView(BaseLoggedInPage):
@@ -36,7 +37,7 @@ class AutomateImportExportBaseView(BaseLoggedInPage):
 
 
 class AutomateImportExportView(AutomateImportExportBaseView):
-    error_flash = Text("//div[contains(@class, 'import-flash-message')]")
+    flash = V2VFlashMessages(locator="div.import-flash-message")
 
     @View.nested
     class import_file(View):  # noqa
