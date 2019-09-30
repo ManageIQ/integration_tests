@@ -104,7 +104,7 @@ class JSONApi(object):
         if request.method != 'POST':
             return json_success({
                 "available_methods": sorted(
-                    [m.description for m in self._methods.values()],
+                    [m.description for m in list(self._methods.values())],
                     key=lambda m: m["name"]),
             })
         try:

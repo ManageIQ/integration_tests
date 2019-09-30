@@ -3,7 +3,7 @@
 {% block bugs_body %}
 <h1>Enter a new bug query</h1>
 <h4>URLS with <pre>cmdtype=</pre> in them are unsupported.</h4>
-<form action={% url 'new_bug_query' %} method="POST" class="form-horizontal">
+<form action={% url 'appliances:new_bug_query' %} method="POST" class="form-horizontal">
     {% csrf_token %}
     <div class="form-group">
       <label for="name" class="col-md-2 control-label">Name:</label>
@@ -45,7 +45,7 @@ $(document).ready(function() {
         var url = e.val();
         $.ajax({
             type: "POST",
-            url: "{% url 'check_query' %}",
+            url: "{% url 'appliances:check_query' %}",
             data: {url: url},
             dataType: 'html'
         }).done(function(data){

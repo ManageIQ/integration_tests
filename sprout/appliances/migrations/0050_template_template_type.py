@@ -29,7 +29,7 @@ def add_type_to_template(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appliances', '0043_provider_provider_type'),
+        ('appliances', '0049_provider_provider_type'),
     ]
 
     operations = [
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                     (b'virtual_machine', b'Virtual Machine'),
                     (b'docker_vm', b'VM-based Docker container'),
                     (b'openshift_pod', b'Openshift pod')],
-                default=b'virtual_machine', max_length=16),
+                default=b'virtual_machine', max_length=24),
         ),
         migrations.RunPython(add_type_to_template),
     ]

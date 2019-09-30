@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False,
                 help_text=b'If template_obsolete_days set, this will enable deletion of obsolete '
-                'templates using that metric. WARNING! Use with care. Best use for upstream '
-                'templates.'),
+                b'templates using that metric. WARNING! Use with care. Best use for upstream '
+                b'templates.'),
         ),
     ]

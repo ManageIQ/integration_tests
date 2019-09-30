@@ -3,7 +3,7 @@
 {% block body %}
 <ul class="nav nav-tabs">
 {% for prov in providers %}
-    <li {% if prov.id == provider.id %}class="active"{% endif %}><a href={% url 'specific_provider' prov.id %}>{{prov.id}}</a></li>
+    <li {% if prov.id == provider.id %}class="active"{% endif %}><a href={% url 'appliances:specific_provider' prov.id %}>{{prov.id}}</a></li>
 {% endfor %}
 </ul>
 <div class="panel panel-primary">
@@ -20,9 +20,9 @@
         <br>
         {% if request.user.is_superuser %}
             {% if provider.disabled %}
-                <a href="{% url 'provider_enable' provider.id %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Enable</a>
+                <a href="{% url 'appliances:provider_enable' provider.id %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Enable</a>
             {% else %}
-                <a href="{% url 'provider_disable' provider.id %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-off"></span> Disable</a>
+                <a href="{% url 'appliances:provider_disable' provider.id %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-off"></span> Disable</a>
             {% endif %}
         {% endif %}
     </div>
@@ -83,7 +83,7 @@
             <tbody>
                 {% for username, count in provider.user_usage %}
                 <tr>
-                    <td>{% if request.user.is_superuser %}<a href="{% url 'user_appliances' username %}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
+                    <td>{% if request.user.is_superuser %}<a href="{% url 'appliances:user_appliances' username %}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
                     <td>{{ count }}</td>
                 </tr>
                 {% endfor %}
@@ -107,7 +107,7 @@
                     <td>
                         {% if appliance.owner %}
                             {% if request.user.is_superuser %}
-                                <a href="{% url 'user_appliances' appliance.owner.username %}#appliance-{{ appliance.id }}">{{ appliance.owner.username }}</a>
+                                <a href="{% url 'appliances:user_appliances' appliance.owner.username %}#appliance-{{ appliance.id }}">{{ appliance.owner.username }}</a>
                             {% else %}
                                 {{ appliance.owner }}
                             {% endif %}
@@ -132,7 +132,7 @@
             {% if provider.existing_templates.all %}
                 {% for template in provider.existing_templates.all %}
                     <tr id="template-{{ template.id }}">
-                        <td><a href="{% url 'group_templates' template.template_group.id %}#{{ template.id }}">{{ template.name }}</a></td>
+                        <td><a href="{% url 'appliances:group_templates' template.template_group.id %}#{{ template.id }}">{{ template.name }}</a></td>
                         <td>{{ template.preconfigured }}</td>
                     </tr>
                 {% endfor %}

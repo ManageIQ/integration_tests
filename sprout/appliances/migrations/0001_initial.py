@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
                     'id',
                     models.CharField(
                         help_text=b'Group name as trackerbot says. (eg. upstream, downstream-53z,'
-                        ' ...)',
+                        b' ...)',
                         max_length=32, serialize=False, primary_key=True)),
                 (
                     'template_pool_size',
@@ -121,7 +121,7 @@ class Migration(migrations.Migration):
                     models.IntegerField(
                         default=5,
                         help_text=b'How many simultaneous background provisioning tasks can run'
-                        ' on this provider.')),
+                        b' on this provider.')),
             ],
             options={
             },

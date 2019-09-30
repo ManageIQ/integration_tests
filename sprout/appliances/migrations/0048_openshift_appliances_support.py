@@ -3,13 +3,13 @@
 
 
 from django.db import migrations, models
-import json_field.fields
+from django.contrib.postgres.fields import JSONField
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appliances', '0041_auto_20180216_1634'),
+        ('appliances', '0047_auto_20180216_1634'),
     ]
 
     operations = [
@@ -27,8 +27,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='template',
             name='custom_data',
-            field=json_field.fields.JSONField(default={}, help_text=b'Some Templates '
-                                                                    b'require additional data '
-                                                                    b'for deployment'),
+            field=JSONField(default={}, help_text=b'Some Templates '
+                                                  b'require additional data '
+                                                  b'for deployment'),
         ),
     ]
