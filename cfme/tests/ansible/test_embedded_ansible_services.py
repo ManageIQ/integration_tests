@@ -12,7 +12,6 @@ from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.services.myservice import MyService
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -276,14 +275,8 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 
 @pytest.mark.tier(2)
-def test_service_ansible_playbook_provision_in_requests(
-    appliance,
-    ansible_catalog_item,
-    ansible_service_catalog,
-    ansible_service,
-    ansible_service_request,
-    request,
-):
+def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catalog_item,
+ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope, request):
     """Tests if ansible playbook service provisioning is shown in service requests.
 
     Polarion:
@@ -294,23 +287,9 @@ def test_service_ansible_playbook_provision_in_requests(
         tags: ansible_embed
     """
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
-    cat_item_name = ansible_catalog_item.name
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+    ansible_service_request_funcscope.wait_for_request()
 
-    @request.addfinalizer
-    def _finalize():
-        service = MyService(appliance, cat_item_name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-        if service.exists:
-            service.delete()
-
-    assert service_request.exists()
+    assert ansible_service_request_funcscope.exists()
 
 
 @pytest.mark.tier(2)
@@ -407,20 +386,11 @@ def test_service_ansible_retirement_remove_resources(
     ids=[value[0] for value in SERVICE_CATALOG_VALUES],
 )
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-def test_service_ansible_playbook_order_retire(
-    appliance,
-    ansible_catalog_item,
-    ansible_service_catalog,
-    ansible_service_request,
-    ansible_service,
-    host_type,
-    order_value,
-    result,
-    action,
-    request
-):
+def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item,
+ansible_service_catalog, ansible_service_request_funcscope, ansible_service_funcscope, host_type,
+order_value, result, action, request):
     """Test ordering and retiring ansible playbook service against default host, blank field and
-    unavailable host.
+        unavailable host.
 
     Polarion:
         assignee: sbulage
@@ -431,32 +401,17 @@ def test_service_ansible_playbook_order_retire(
     """
     ansible_service_catalog.ansible_dialog_values = {"hosts": order_value}
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
-    cat_item_name = ansible_catalog_item.name
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-
-    @request.addfinalizer
-    def _finalize():
-        service = MyService(appliance, cat_item_name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-        if service.exists:
-            service.delete()
+    ansible_service_request_funcscope.wait_for_request()
 
     if action == "retirement":
-        ansible_service.retire()
-    view = navigate_to(ansible_service, "Details")
+        ansible_service_funcscope.retire()
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert result == view.provisioning.details.get_text_of("Hosts")
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_playbook_plays_table(
-    ansible_service_catalog, ansible_service, ansible_service_request, soft_assert
-):
+def test_service_ansible_playbook_plays_table(ansible_service_catalog, ansible_service_funcscope,
+ansible_service_request_funcscope, soft_assert):
     """Plays table in provisioned and retired service should contain at least one row.
 
     Polarion:
@@ -467,11 +422,11 @@ def test_service_ansible_playbook_plays_table(
         tags: ansible_embed
     """
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
-    view = navigate_to(ansible_service, "Details")
+    ansible_service_request_funcscope.wait_for_request()
+    view = navigate_to(ansible_service_funcscope, "Details")
     soft_assert(view.provisioning.plays.row_count >= 1, "Plays table in provisioning tab is empty")
-    ansible_service.retire()
-    view = navigate_to(ansible_service, "RetiredDetails")
+    ansible_service_funcscope.retire()
+    view = navigate_to(ansible_service_funcscope, "RetiredDetails")
     soft_assert(view.retirement.plays.row_count >= 1, "Plays table in retirement tab is empty")
 
 
@@ -501,7 +456,7 @@ def test_service_ansible_playbook_order_credentials(
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
 def test_service_ansible_playbook_pass_extra_vars(
-    ansible_service_catalog, ansible_service_request, ansible_service, action
+    ansible_service_catalog, ansible_service_request_funcscope, ansible_service_funcscope, action
 ):
     """Test if extra vars passed into ansible during ansible playbook service provision and
     retirement.
@@ -514,20 +469,20 @@ def test_service_ansible_playbook_pass_extra_vars(
         tags: ansible_embed
     """
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
+    ansible_service_request_funcscope.wait_for_request()
     # To avoid NoSuchElementException
     if action == "provisioning":
-        view = navigate_to(ansible_service, "Details")
+        view = navigate_to(ansible_service_funcscope, "Details")
         view.provisioning_tab.click()
 
     if action == "retirement":
-        ansible_service.retire()
-        view = navigate_to(ansible_service, "RetiredDetails")
+        ansible_service_funcscope.retire()
+        view = navigate_to(ansible_service_funcscope, "RetiredDetails")
         wait_for(
             lambda: view.retirement_tab.is_displayed,
-            delay=20,
+            delay=50,
             fail_func=view.toolbar.reload.click(),
-            timeout=120
+            timeout=180
         )
         view.retirement_tab.click()
 
@@ -624,7 +579,7 @@ def test_custom_button_ansible_credential_list(
 
 @pytest.mark.tier(3)
 def test_ansible_group_id_in_payload(
-    ansible_service_catalog, ansible_service_request, ansible_service
+    ansible_service_catalog, ansible_service_request_funcscope, ansible_service_funcscope
 ):
     """Test if group id is presented in manageiq payload.
 
@@ -644,8 +599,8 @@ def test_ansible_group_id_in_payload(
         tags: ansible_embed
     """
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
-    view = navigate_to(ansible_service, "Details")
+    ansible_service_request_funcscope.wait_for_request()
+    view = navigate_to(ansible_service_funcscope, "Details")
     stdout = view.provisioning.standart_output
     wait_for(lambda: stdout.is_displayed, timeout=10)
     pre = stdout.text
@@ -674,15 +629,9 @@ def test_ansible_group_id_in_payload(
         or (credential[0] == "Azure" and provider.one_of(AzureProvider))
     )
 )
-def test_embed_tower_exec_play_against(
-    appliance,
-    request,
-    ansible_catalog_item,
-    ansible_service,
-    ansible_service_catalog,
-    credential,
-    provider_credentials,
-):
+def test_embed_tower_exec_play_against(appliance, request, ansible_catalog_item,
+ansible_service_catalog, credential, provider_credentials, ansible_service_funcscope,
+ansible_service_request_funcscope):
     """
     Polarion:
         assignee: sbulage
@@ -691,6 +640,7 @@ def test_embed_tower_exec_play_against(
         initialEstimate: 1/4h
         tags: ansible_embed
     """
+    old_playbook_value = ansible_catalog_item.provisioning
     playbook = credential[2]
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {
@@ -702,26 +652,17 @@ def test_embed_tower_exec_play_against(
     @request.addfinalizer
     def _revert():
         with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {
-                "playbook": "dump_all_variables.yml",
-                "cloud_type": "<Choose>",
-            }
-
-        service = MyService(appliance, ansible_catalog_item.name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-        if service.exists:
-            service.delete()
+            ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
-    view = navigate_to(ansible_service, "Details")
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    view = navigate_to(ansible_service_funcscope, "Details")
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
 
 
 @pytest.mark.tier(2)
@@ -737,15 +678,8 @@ def test_embed_tower_exec_play_against(
     ],
 )
 @pytest.mark.meta(automates=[BZ(1460788)])
-def test_service_ansible_verbosity(
-    appliance,
-    request,
-    ansible_catalog_item,
-    ansible_service_catalog,
-    ansible_service_request,
-    ansible_service,
-    verbosity,
-):
+def test_service_ansible_verbosity(appliance, request, ansible_catalog_item,
+ansible_service_catalog, ansible_service_request_funcscope, ansible_service_funcscope, verbosity):
     """Check if the different Verbosity levels can be applied to service and
     monitor the std out
     Bugzilla:
@@ -767,31 +701,15 @@ def test_service_ansible_verbosity(
     # Start Log check or given pattern
     log.start_monitoring()
 
-    @request.addfinalizer
-    def _revert():
-        service = MyService(appliance, ansible_catalog_item.name)
-        if ansible_service_request.exists():
-            ansible_service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(
-                id=service_request.id
-            )
-        if service.exists:
-            service.delete()
-
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
-    # 'request_descr' and 'service_request' being used in finalizer to remove
-    # first service request
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request = appliance.rest_api.collections.service_requests.get(
-        description=request_descr
-    )
+    ansible_service_request_funcscope.wait_for_request()
+
     # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
     # is being logging in evm.log
     assert log.validate(wait="60s")
     logger.info("Pattern found {}".format(log.matched_patterns))
 
-    view = navigate_to(ansible_service, "Details")
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert verbosity[0] == view.provisioning.details.get_text_of("Verbosity")
     assert verbosity[0] == view.retirement.details.get_text_of("Verbosity")
 
@@ -828,14 +746,8 @@ def test_ansible_service_linked_vm(
 
 
 @pytest.mark.tier(1)
-def test_ansible_service_order_vault_credentials(
-    appliance,
-    request,
-    ansible_catalog_item,
-    ansible_service_catalog,
-    ansible_service_request,
-    ansible_service,
-):
+def test_ansible_service_order_vault_credentials(appliance, request, ansible_catalog_item,
+ansible_service_catalog, ansible_service_request_funcscope, ansible_service_funcscope):
     """
     Add vault password and test in the playbook that encrypted yml can be
     decrypted.
@@ -868,11 +780,15 @@ def test_ansible_service_order_vault_credentials(
         vault_creds.delete_if_exists()
 
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
+    ansible_service_request_funcscope.wait_for_request()
 
-    view = navigate_to(ansible_service, "Details")
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
 
 
 @pytest.mark.tier(3)
