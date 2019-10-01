@@ -2452,6 +2452,125 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.server.authentication.configure(auth_mode='database')
         self.wait_for_web_ui()  # httpd restart in uninstall-ipa
 
+    @logger_wrap('Configuring SAML external auth provider')
+    def configure_saml(self, auth_provider, log_callback=None):
+        """This method configures an appliance for external authentication with a SAML provider
+
+            Apache file configurations are updated, waits for webui to take effect.
+            Args:
+                auth_provider: auth provider object derived from cfme.utils.auth.MIQAuthProvider
+        """
+        # appliance constants
+        TEMPLATE_DIR = "/opt/rh/cfme-appliance/TEMPLATE"
+        HTTP_DIR = "/etc/httpd/conf.d"
+        SAML_DIR = "/etc/httpd/saml2"
+        USER_CONF = "manageiq-remote-user.conf"
+        EXT_CONF = "manageiq-external-auth-saml.conf"
+        URL = f"https://{self.get_resolvable_hostname()}"
+
+        # saml constants
+        SAML_ENDPOINT = auth_provider.saml_endpoint
+        TESTING_REALM = auth_provider.realms.get("testing")
+
+        def _create_client(cert_string):
+            """ Create the client on the SAML server"""
+            keycloak_admin = auth_provider.get_keycloak_api(
+                realm_name=TESTING_REALM
+            )
+            # create the payload object
+            payload = dict(
+                clientId=URL,
+                adminUrl=f"{URL}/saml2",
+                baseUrl=URL,
+                protocol="saml",
+                redirectUris=[f"{URL}/saml2/postResponse", f"{URL}/saml2/paosResponse"],
+                defaultClientScopes=auth_provider.data.get("defaultClientScopes"),
+                attributes={
+                    "saml.encrypt": "true",
+                    "saml.assertion.signature": "true",
+                    "saml.server.signature": "true",
+                    "saml.signing.certificate": cert_string,
+                    "saml.encryption.certificate": cert_string,
+                    "saml_assertion_consumer_url_redirect": f"{URL}/saml2/postResponse",
+                    "saml_assertion_consumer_url_post": f"{URL}/saml2/postResponse",
+                    "saml_single_logout_service_url_redirect": f"{URL}/saml2/logout"
+                }
+            )
+            # send the payload
+            keycloak_admin.create_client(payload)
+
+        # 1) copy over template conf
+        self.ssh_client.run_command("mkdir -p /etc/httpd/saml2")
+        self.ssh_client.run_command(f"cp {TEMPLATE_DIR}/{HTTP_DIR}/{USER_CONF} {HTTP_DIR}/")
+        self.ssh_client.run_command(f"cp {TEMPLATE_DIR}/{HTTP_DIR}/{EXT_CONF} {HTTP_DIR}/")
+        # 2) Generate service provider files
+        self.ssh_client.run_command(
+            f"cd {SAML_DIR} && /usr/libexec/mod_auth_mellon/mellon_create_metadata.sh "
+            f"{URL} {URL}/saml2"
+        )
+        # 3) Rename service provider files
+        self.ssh_client.run_command(f"cd {SAML_DIR} && mv *.cert miqsp-cert.cert")
+        self.ssh_client.run_command(f"cd {SAML_DIR} && mv *.key miqsp-key.key")
+        self.ssh_client.run_command(f"cd {SAML_DIR} && mv *.xml miqsp-metadata.xml")
+
+        # 4) create client on the SAML server
+        cert_string = self.ssh_client.run_command(f"cat {SAML_DIR}/miqsp-cert.cert").output
+
+        def _clean_cert_string(cert_string):
+            """ get rid of unwanted -----BEGIN CERTIFICATE -------
+            """
+            cert_list = [l for l in cert_string.split("\n") if not l.startswith("----")]
+            return "".join(cert_list)
+
+        _create_client(_clean_cert_string(cert_string))
+
+        # 5) Obtain identity provider's idp-metadata.xml file
+        self.ssh_client.run_command(
+            f"cd {SAML_DIR} && "
+            f"curl -s -o idp-metadata.xml "
+            f"{SAML_ENDPOINT}/realms/{TESTING_REALM}/protocol/saml/descriptor"
+        )
+        # 6) Restart httpd
+        self.httpd.restart()
+        self.wait_for_web_ui()
+        # 7) UI configuration of auth provider type
+        self.server.authentication.configure(auth_mode='external', auth_provider=auth_provider)
+
+    @logger_wrap('Disabling saml external auth provider')
+    def disable_saml(self, auth_provider, log_callback=None):
+        """Switch UI back to database authentication, remove necessary files and delete client
+            from saml server
+        """
+        # appliance constants
+        HTTP_DIR = "/etc/httpd/conf.d"
+        SAML_DIR = "/etc/httpd/saml2"
+        USER_CONF = "manageiq-remote-user.conf"
+        EXT_CONF = "manageiq-external-auth-saml.conf"
+        URL = f"https://{self.ssh_client.run_command('hostname').output.strip()}"
+
+        # saml constants
+        TESTING_REALM = auth_provider.realms.get("testing")
+
+        def _delete_client():
+            keycloak_admin = auth_provider.get_keycloak_api(
+                realm_name=TESTING_REALM
+            )
+            # delete the client whose name corresponds to the appliance URL
+            keycloak_admin.delete_client(keycloak_admin.get_client_id(URL))
+
+        # 1) Delete the saml2 directory
+        self.ssh_client.run_command(f"rm -rf {SAML_DIR}")
+        # 2) Delete USER_CONF and EXT_CONF
+        self.ssh_client.run_command(f"rm -f {HTTP_DIR}/{USER_CONF}")
+        self.ssh_client.run_command(f"rm -f {HTTP_DIR}/{EXT_CONF}")
+        # 3) Delete the client from the SAML server
+        _delete_client()
+        # 4) restart httpd
+        self.httpd.restart()
+        self.wait_for_web_ui()
+        # 5) change back to database auth_mode
+        self.server.authentication.configure(auth_mode='database')
+
     @logger_wrap("Configuring VM Console: {}")
     def configure_vm_console_cert(self, log_callback=None):
         """This method generates a self signed SSL cert and installs it

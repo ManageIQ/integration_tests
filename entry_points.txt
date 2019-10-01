@@ -132,6 +132,7 @@ amazon = cfme.utils.auth:AmazonAuthProvider
 freeipa = cfme.utils.auth:FreeIPAAuthProvider
 openldap = cfme.utils.auth:OpenLDAPAuthProvider
 openldaps = cfme.utils.auth:OpenLDAPSAuthProvider
+saml = cfme.utils.auth:SAMLAuthProvider
 
 [manageiq.provider_categories]
 cloud = cfme.cloud.provider:CloudProvider
