@@ -66,7 +66,7 @@ def test_keypair_crud_with_key(provider, appliance):
             3. Delete keypair.
     """
     key = RSA.generate(1024)
-    public_key = key.publickey().exportKey('OpenSSH')
+    public_key = key.publickey().exportKey('OpenSSH').decode('utf-8')
     keypair = appliance.collections.cloud_keypairs.create(
         fauxfactory.gen_alphanumeric(),
         provider,
