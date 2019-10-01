@@ -17,7 +17,7 @@ pytestmark = [
         'textarea_survey'],
         ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
         scope='module'),
-    pytest.mark.ignore_stream('upstream')
+    pytest.mark.ignore_stream('upstream'),
 ]
 
 
@@ -150,9 +150,7 @@ def test_check_tower_job_status(appliance, catalog_item, request, config_manager
     assert order_request.is_succeeded(method='ui'), msg
 
     tower_job = appliance.collections.ansible_tower_jobs.instantiate(template_name=template)
+    request.addfinalizer(tower_job.delete_if_exists)
     tower_job.wait_for_completion()
     msg = "Ansible Tower Job failed"
     assert tower_job.is_job_successful(), msg
-
-    if tower_job.exists:
-        tower_job.delete()
