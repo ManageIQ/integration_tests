@@ -188,7 +188,7 @@ def mangle_in_sprout_appliances(config):
         log.info("- %s is %s", appliance['url'], appliance['name'])
     mgr.reset_timer()
     template_name = requested_appliances[0]["template_name"]
-    conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
+    conf["cfme_data"]["basic_info"]["appliance_template"] = template_name
     log.info("appliance_template: %s", template_name)
     with project_path.join('.appliance_template').open('w') as template_file:
         template_file.write('export appliance_template="{}"'.format(template_name))

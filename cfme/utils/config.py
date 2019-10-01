@@ -117,8 +117,9 @@ class Configuration(object):
                 return self.settings[name]
 
     def del_config(self, name):
-        if name in self.settings:
-            del self.settings[name]
+        if self.settings:
+            if name in self.settings:
+                del self.settings[name]
 
 
 @attr.s
