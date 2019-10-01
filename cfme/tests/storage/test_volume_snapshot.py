@@ -31,27 +31,24 @@ def volume(appliance, provider):
     # create new volume
     volume_collection = appliance.collections.volumes
     name = fauxfactory.gen_alpha()
+    volume_kwargs = {
+        'name': name,
+        'volume_size': STORAGE_SIZE,
+        'provider': provider,
+        'cancel': False
+    }
     if provider.one_of(OpenStackProvider):
+        volume_kwargs['tenant'] = provider.data['provisioning']['cloud_tenant']
         if appliance.version >= "5.11":  # has mandatory availability zone
-            volume = volume_collection.create(name=fauxfactory.gen_alpha(),
-                                              tenant=provider.data['provisioning']['cloud_tenant'],
-                                              volume_size=STORAGE_SIZE,
-                                              az=provider.data['provisioning']['availability_zone'],
-                                              provider=provider)
-        else:
-            volume = volume_collection.create(name=name,
-                                              tenant=provider.data['provisioning']['cloud_tenant'],
-                                              volume_size=STORAGE_SIZE,
-                                              provider=provider,
-                                              cancel=False)
+            volume_kwargs['az'] = provider.data['provisioning']['availability_zone']
+
     elif provider.one_of(EC2Provider):
-        az = "{}a".format(provider.region)
-        volume = volume_collection.create(name=name,
-                                          volume_type='General Purpose SSD (GP2)',
-                                          volume_size=STORAGE_SIZE,
-                                          provider=provider,
-                                          az=az,
-                                          cancel=False)
+        volume_kwargs['az'] = "{}a".format(provider.region)
+        volume_kwargs['volume_type'] = 'General Purpose SSD (GP2)'
+    else:
+        return False
+
+    volume = volume_collection.create(**volume_kwargs)
     assert volume.exists
     yield volume
 
