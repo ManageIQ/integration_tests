@@ -23,6 +23,7 @@ from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import CloudProvidersView
 from cfme.fixtures.provider import enable_provider_regions
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import SECOND
 from cfme.utils import appliance
 from cfme.utils import conf
 from cfme.utils import ssh
@@ -502,7 +503,10 @@ def test_azure_subscription_required(request, provider):
 @pytest.mark.tier(2)
 @test_requirements.azure
 @pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
-def test_azure_multiple_subscription(appliance, request, soft_assert):
+@pytest.mark.provider([AzureProvider], fixture_name="second_provider", selector=SECOND)
+def test_azure_multiple_subscription(
+        appliance, request, soft_assert, provider, second_provider, setup_provider
+):
     """
     Verifies that different azure providers have different resources access
 
@@ -518,10 +522,7 @@ def test_azure_multiple_subscription(appliance, request, soft_assert):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    pf = ProviderFilter(classes=[AzureProvider], required_flags=['crud'])
-    providers = list_providers([pf])
-    if len(providers) < 2:
-        pytest.skip("this test needs at least 2 AzureProviders")
+    providers = [provider, second_provider]
     prov_inventory = []
     for provider in providers:
         request.addfinalizer(provider.clear_providers)
