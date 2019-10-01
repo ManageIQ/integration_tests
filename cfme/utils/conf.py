@@ -1,8 +1,8 @@
 import sys
 
-from cfme.utils.config import global_configuration
-from cfme.utils.config import ConfigWrapper
 from cfme.utils import path
+from cfme.utils.config import ConfigWrapper
+from cfme.utils.config import global_configuration
 
 global_configuration.configure_creds(
     config_dir=path.conf_path.strpath,

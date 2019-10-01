@@ -1,10 +1,11 @@
 """
 classes to manage the cfme test framework configuration
 """
-import attr
-from dynaconf import LazySettings
 import os
+
+import attr
 import yaycl
+from dynaconf import LazySettings
 
 from cfme.utils import path
 
