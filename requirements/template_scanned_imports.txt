@@ -39,6 +39,7 @@ pygal
 pytesseract
 pytest
 python-bugzilla
+python-keycloak
 pytz
 requests
 riggerlib

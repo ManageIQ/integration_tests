@@ -2,6 +2,7 @@ from copy import deepcopy
 
 import attr
 from cached_property import cached_property
+from keycloak import KeycloakAdmin
 
 from cfme.configure.configuration.server_settings import AmazonAuthenticationView
 from cfme.configure.configuration.server_settings import ExternalAuthenticationView
@@ -267,4 +268,53 @@ class FreeIPAAuthProvider(MIQAuthProvider):
             if getattr(self, att):  # only include if set, don't pass key if None
                 external.update({att: getattr(self, att)})
 
+        return external
+
+
+@attr.s
+class SAMLAuthProvider(MIQAuthProvider):
+    """ External auth provider for SAML"""
+    auth_type = "saml"
+    view_class = LdapAuthenticationView
+
+    # overwrite bind_password as it's not necessary here
+    bind_password = attr.ib(default=None)
+
+    # attrs for SAML
+    username = attr.ib(default=None)
+    password = attr.ib(default=None)
+    realms = attr.ib(default=None)
+    default_client_scopes = attr.ib(default=None)
+
+    @property
+    def saml_endpoint(self):
+        port = self.ports.get("http")
+        return f"http://{self.host1}:{port}/auth"
+
+    @property
+    def keycloak_api(self):
+        """ one limitation of this api endpoint is that you must first connect to the
+            master realm, then connect to the desired realm. To get the api for a different realm,
+            use self.get_keycloak_api
+        """
+        server_url = f"{self.saml_endpoint}/"
+        realm = self.realms.get('master')
+        return KeycloakAdmin(
+            server_url=server_url,
+            realm_name=realm,
+            username=self.username,
+            password=self.password
+        )
+
+    def get_keycloak_api(self, realm_name="CFME"):
+        new_realm_api = self.keycloak_api
+        new_realm_api.realm_name = realm_name
+        return new_realm_api
+
+    def as_fill_external_value(self):
+        external = dict(
+            get_groups=True,
+            provider_type="Enable SAML",
+            enable_sso=True
+        )
         return external
