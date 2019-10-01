@@ -747,37 +747,6 @@ def test_overwrite_import_domain():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1753586])
-@pytest.mark.customer_scenario
-def test_crud_imported_domains():
-    """
-    Bugzilla:
-        1753586
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        testSteps:
-            1. Export the appliance domain as a zip file
-            2. Extracted the ManageIQ directory to a new dir on the local machine called
-               Domain_Test02
-            3. From within the new Domain_Test02 dir, edit the __domain__.yaml file so that the
-               'name' attribute equals Domain_Test02
-               NOTE: Do not change the 'source' attribute from 'system' to 'user' this time.
-            4. Archived the new Domain_Test02 dir and upload to CloudForms Appliance
-        expectedResults:
-            1.
-            2.
-            3.
-            4. The imported domains should be Custom Domains or these imported domains should gets
-               deleted from db
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1753523])
 def test_attribute_value_message():
     """

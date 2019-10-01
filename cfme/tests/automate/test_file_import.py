@@ -1,3 +1,4 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -8,6 +9,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.update import update
 
 pytestmark = [test_requirements.automate, pytest.mark.tier(3)]
 
@@ -90,3 +92,49 @@ def test_upload_blank_file(appliance, upload_file):
             view.import_file.upload_file.fill(datastore.file_path)
             view.import_file.upload.click()
             view.flash.assert_message("Error: import processing failed: domain: *")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1753586])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data",
+    [
+        DatastoreImport("bz_1753586_user.zip", "bz_1753586_user", None),
+        DatastoreImport("bz_1753586_user_locked.zip", "bz_1753586_user_locked", None),
+        DatastoreImport("bz_1753586_system.zip", "bz_1753586_system", None),
+    ],
+    ids=["user", "user_locked", "system"],
+)
+def test_crud_imported_domains(import_data, temp_appliance_preconfig):
+    """
+    Bugzilla:
+        1753586
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+    """
+    # Download datastore file from FTP server
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+    file_path = fs.download(import_data.file_name)
+
+    # Import datastore file to appliance
+    datastore = temp_appliance_preconfig.collections.automate_import_exports.instantiate(
+        import_type="file", file_path=file_path
+    )
+    domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
+    assert domain.exists
+    if import_data.file_name == "bz_1753586_system.zip":
+        # Imported domains with source - "system" can not be deleted or updated as those are
+        # defaults like ManageIQ and RedHat domains.
+        view = navigate_to(domain, "Details")
+        assert not view.configuration.is_displayed
+    else:
+        view = navigate_to(domain.parent, "All")
+        with update(domain):
+            domain.description = fauxfactory.gen_alpha()
+        domain.delete()
+        view.flash.assert_message(f'Automate Domain "{domain.description}": Delete successful')

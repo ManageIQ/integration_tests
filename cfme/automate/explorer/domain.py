@@ -240,12 +240,6 @@ class Domain(BaseEntity, Fillable, Updateable):
             domains_view = self.create_view(DomainListView)
             assert domains_view.is_displayed
             domains_view.flash.assert_no_error()
-            domains_view.flash.assert_message(
-                'Automate Domain "{}": Delete successful'.format(self.description or self.name))
-
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
 
     def lock(self):
         # Ensure this has correct data
@@ -292,13 +286,6 @@ class Domain(BaseEntity, Fillable, Updateable):
         view = self.create_view(DomainDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
-        if changed:
-            text = (updates.get('description', self.description)
-                    or updates.get('name', self.name))
-            view.flash.assert_message('Automate Domain "{}" was saved'.format(text))
-        else:
-            view.flash.assert_message(
-                'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
 
     def refresh(self, branch_or_tag=None, git_branch=None, cancel=False):
         view = navigate_to(self, 'Refresh')
