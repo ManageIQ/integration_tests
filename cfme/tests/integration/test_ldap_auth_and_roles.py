@@ -1,5 +1,6 @@
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.testgen import auth_groups
@@ -9,6 +10,7 @@ pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='ldap')
 
 
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
+@test_requirements.auth
 @pytest.mark.tier(2)
 def test_group_roles(
         request, appliance, configure_ldap_auth_mode, group_name, group_data, infra_provider):
@@ -19,7 +21,7 @@ def test_group_roles(
 
 
     Polarion:
-        assignee: apagac
+        assignee: jdupuy
         caseimportance: medium
         casecomponent: Auth
         initialEstimate: 1/4h
