@@ -40,13 +40,17 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
-pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider],
-    required_fields=[(['cap_and_util', 'test_chargeback'], True)])
-pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
+
+cloud_and_infra = ProviderFilter(classes=[CloudProvider, InfraProvider],
+                                 required_fields=[(['cap_and_util', 'test_chargeback'], True)])
+not_scvmm = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
+not_cloud = ProviderFilter(classes=[CloudProvider], inverted=True)
+not_ec2_gce = ProviderFilter(classes=[GCEProvider, EC2Provider], inverted=True)
+
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope='module'),
+    pytest.mark.provider(gen_func=providers, filters=[cloud_and_infra, not_scvmm], scope='module'),
     pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     test_requirements.chargeback,
 ]
@@ -510,7 +514,9 @@ def new_compute_rate(appliance):
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider(gen_func=providers,
+                      filters=[cloud_and_infra, not_scvmm, not_cloud],
+                      override=True)
 def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeback_report_default):
     """Test to validate CPU usage cost.
        Calculation is based on default Chargeback rate.
@@ -531,7 +537,9 @@ def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeba
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider, GCEProvider))
+@pytest.mark.provider(gen_func=providers,
+                      filters=[cloud_and_infra, not_scvmm, not_ec2_gce],
+                      override=True)
 def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
         chargeback_report_default):
     """Test to validate memory usage cost.
@@ -612,7 +620,9 @@ def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
 
 
 @pytest.mark.rhv3
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider(gen_func=providers,
+                      filters=[cloud_and_infra, not_scvmm, not_cloud],
+                      override=True)
 def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate CPU usage cost.
        Calculation is based on custom Chargeback rate.
@@ -633,7 +643,9 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
 
 
 @pytest.mark.rhv1
-@pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider, GCEProvider))
+@pytest.mark.provider(gen_func=providers,
+                      filters=[cloud_and_infra, not_scvmm, not_ec2_gce],
+                      override=True)
 def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate memory usage cost.
        Calculation is based on custom Chargeback rate.

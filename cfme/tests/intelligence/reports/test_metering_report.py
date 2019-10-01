@@ -25,13 +25,15 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
-pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider],
-                     required_fields=[(['cap_and_util', 'test_chargeback'], True)])
-pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
+cloud_and_infra = ProviderFilter(classes=[CloudProvider, InfraProvider],
+                                 required_fields=[(['cap_and_util', 'test_chargeback'], True)])
+not_scvmm = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support C&U
+not_cloud = ProviderFilter(classes=[CloudProvider], inverted=True)
+not_ec2_gce = ProviderFilter(classes=[GCEProvider, EC2Provider], inverted=True)
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope='module'),
+    pytest.mark.provider(gen_func=providers, filters=[cloud_and_infra, not_scvmm], scope='module'),
     test_requirements.chargeback,
 ]
 
@@ -269,7 +271,9 @@ def metering_report(appliance, vm_ownership, provider):
 # Tests to validate usage reported in the Metering report for various metrics.
 # The usage reported in the report should be approximately equal to the
 # usage estimated in the resource_usage fixture, therefore a small deviation is fine.
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider(gen_func=providers,
+                      filters=[cloud_and_infra, not_scvmm, not_cloud],
+                      override=True)
 def test_validate_cpu_usage(resource_usage, metering_report):
     """Test to validate CPU usage.This metric is not collected for cloud providers.
 
@@ -291,8 +295,9 @@ def test_validate_cpu_usage(resource_usage, metering_report):
             break
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.one_of(EC2Provider, GCEProvider))
+@pytest.mark.provider(gen_func=providers,
+                      filters=[cloud_and_infra, not_scvmm, not_ec2_gce],
+                      override=True)
 def test_validate_memory_usage(resource_usage, metering_report):
     """Test to validate memory usage.This metric is not collected for GCE, EC2.
 

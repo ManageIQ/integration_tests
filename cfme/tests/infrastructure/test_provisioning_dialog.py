@@ -179,7 +179,8 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     (not provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
     # Temporarily, our storage domain cannot handle Preallocated disks
     (provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
-    (provider.one_of(SCVMMProvider))
+    (provider.one_of(SCVMMProvider)),
+    reason='Invalid combination of disk format and provider type or appliance version (or both!)'
 )
 def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_name):
     """ Tests disk format selection in provisioning dialog.

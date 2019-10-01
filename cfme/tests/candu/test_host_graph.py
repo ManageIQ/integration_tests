@@ -8,7 +8,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.candu import compare_data
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -19,7 +18,6 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], selector=ONE_PER_TYPE,
                          required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')]),
-    pytest.mark.meta(blockers=[BZ(1635126, forced_streams=['5.10'])])
 ]
 
 
@@ -49,8 +47,8 @@ def host(appliance, provider):
 
 
 @pytest.mark.uncollectif(lambda provider, graph_type:
-                         provider.one_of(RHEVMProvider) and
-                         graph_type == "host_disk")
+                         provider.one_of(RHEVMProvider) and graph_type == "host_disk",
+                         reason='host_disk graph type not supported on RHEVM')
 @pytest.mark.parametrize('graph_type', HOST_RECENT_HR_GRAPHS)
 def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_candu):
     """ Test Host graphs for most recent hour displayed or not
@@ -106,8 +104,8 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
 
 
 @pytest.mark.uncollectif(lambda provider, graph_type:
-                         provider.one_of(RHEVMProvider) and
-                         graph_type == "host_disk")
+                         provider.one_of(RHEVMProvider) and graph_type == "host_disk",
+                         reason='host_disk graph type not supported on RHEVM')
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', HOST_GRAPHS)
 def test_host_graph_screen(provider, interval, graph_type, host, enable_candu):

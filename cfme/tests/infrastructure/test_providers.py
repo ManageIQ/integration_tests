@@ -302,7 +302,7 @@ def test_infra_provider_crud(provider):
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('verify_tls', [False, True], ids=['no_tls', 'tls'])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(RHEVMProvider))
+@pytest.mark.provider([RHEVMProvider], override=True)
 def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
     """Tests RHV provider creation with and without TLS encryption
 

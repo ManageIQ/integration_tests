@@ -142,7 +142,9 @@ def test_vm_reconfig_add_remove_hw_cold(provider, full_vm, ensure_vm_stopped, ch
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
 @pytest.mark.uncollectif(
     # Disk modes cannot be specified when adding disk to VM in RHV provider
-    lambda disk_mode, provider: disk_mode != 'persistent' and provider.one_of(RHEVMProvider))
+    lambda disk_mode, provider: disk_mode != 'persistent' and provider.one_of(RHEVMProvider),
+    reason='Disk modes cannot be specified on RHEVM, only persistent included'
+)
 @pytest.mark.meta(
     blockers=[BZ(1692801, forced_streams=['5.10'],
                  unblock=lambda provider: not provider.one_of(RHEVMProvider))]

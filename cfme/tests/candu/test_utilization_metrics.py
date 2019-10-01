@@ -5,7 +5,6 @@ from operator import attrgetter
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
@@ -187,8 +186,11 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(
-    lambda provider: provider.one_of(EC2Provider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider, GCEProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True
+)
 @pytest.mark.meta(automates=[BZ(1671580)])
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     """
@@ -209,7 +211,11 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True
+)
 def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     """
     Polarion:
@@ -228,7 +234,11 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True
+)
 def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     """
     Polarion:
@@ -248,7 +258,11 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True
+)
 def test_raw_metric_host_network(metrics_collection, appliance, provider):
     """
     Polarion:
@@ -267,7 +281,11 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.uncollectif(lambda provider: provider.one_of(CloudProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True
+)
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     """
     Polarion:

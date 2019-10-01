@@ -121,9 +121,6 @@ def setup_obj(button_group, provider):
 @pytest.mark.parametrize(
     "display", DISPLAY_NAV.keys(), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
 )
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
-)
 def test_custom_button_display_infra_obj(request, display, setup_obj, button_group):
     """ Test custom button display on a targeted page
 
@@ -174,12 +171,6 @@ def test_custom_button_display_infra_obj(request, display, setup_obj, button_gro
 
 
 @pytest.mark.parametrize("submit", SUBMIT, ids=["_".join(item.split()) for item in SUBMIT])
-@pytest.mark.meta(
-    blockers=[BZ(1628224, forced_streams=["5.10"], unblock=lambda submit: submit != "Submit all")]
-)
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
-)
 def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj, button_group):
     """ Test custom button for automate and requests count as per submit
 
@@ -277,10 +268,8 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
 
 
 @pytest.mark.meta(
-    blockers=[BZ(1685555, unblock=lambda button_group: "SWITCH" not in button_group)]
-)
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
+    blockers=[BZ(1685555,
+                 unblock=lambda button_group: "SWITCH" not in button_group)]
 )
 def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, button_group):
     """ Test custom button with dialog and InspectMe method
@@ -358,9 +347,6 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
 
 
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: appliance.version < "5.10" and "SWITCH" in button_group
-)
 def test_custom_button_expression_infra_obj(
     appliance, request, setup_obj, button_group, expression
 ):

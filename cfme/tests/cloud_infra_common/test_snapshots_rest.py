@@ -188,7 +188,7 @@ class TestRESTSnapshots(object):
                 raise
 
     @pytest.mark.rhv2
-    @pytest.mark.uncollectif(lambda provider: not provider.one_of(InfraProvider))
+    @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
     def test_revert_snapshot(self, appliance, provider, vm_snapshot):
         """Reverts VM/instance snapshot using REST API.
 

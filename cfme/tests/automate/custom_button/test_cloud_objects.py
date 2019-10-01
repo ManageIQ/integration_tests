@@ -8,7 +8,6 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.automate.custom_button import log_request_check
-from cfme.tests.automate.custom_button import OBJ_TYPE_59
 from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -101,10 +100,6 @@ def setup_objs(button_group, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
-    and appliance.version < "5.10"
-)
 @pytest.mark.parametrize(
     "display",
     list(DISPLAY_NAV.keys()), ids=["_".join(item.split()) for item in DISPLAY_NAV.keys()]
@@ -151,10 +146,6 @@ def test_custom_button_display_cloud_obj(appliance, request, display, setup_objs
 
 
 @pytest.mark.meta(automates=[1635797, 1574403, 1640592, 1710350, 1732436])
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
-    and appliance.version < "5.10"
-)
 def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, button_group):
     """ Test custom button with dialog and InspectMe method
 
@@ -232,10 +223,6 @@ def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, 
 
 
 @pytest.mark.meta(automates=[1628224])
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
-    and appliance.version < "5.10"
-)
 @pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
 def test_custom_button_automate_cloud_obj(appliance, request, submit, setup_objs, button_group):
     """ Test custom button for automate and requests count as per submit
@@ -330,10 +317,6 @@ def test_custom_button_automate_cloud_obj(appliance, request, submit, setup_objs
                 )
 
 
-@pytest.mark.uncollectif(
-    lambda appliance, button_group: not bool([obj for obj in OBJ_TYPE_59 if obj in button_group])
-    and appliance.version < "5.10"
-)
 @pytest.mark.parametrize("expression", ["enablement", "visibility"])
 def test_custom_button_expression_cloud_obj(
     appliance, request, setup_objs, button_group, expression
@@ -403,7 +386,9 @@ def test_custom_button_expression_cloud_obj(
 
 
 @pytest.mark.meta(
-    blockers=[BZ(1680525, unblock=lambda button_group: "CLOUD_NETWORK" not in button_group)]
+    blockers=[BZ(1680525,
+                 unblock=lambda button_group: "CLOUD_NETWORK" not in button_group,
+                 forced_streams=['5.10'])]
 )
 @pytest.mark.parametrize("btn_dialog", [False, True], ids=["simple", "dialog"])
 def test_custom_button_events_cloud_obj(request, dialog, setup_objs, button_group, btn_dialog):
