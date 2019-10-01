@@ -72,9 +72,9 @@ def ansible_credential(wait_for_ansible, appliance, full_template_modscope):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
-def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, ansible_action,
+def test_action_run_ansible_playbook_localhost(appliance, ansible_catalog_item, ansible_action,
         policy_for_testing, create_vm_modscope, ansible_credential, ansible_service_request,
-        ansible_service):
+        ansible_service_funcscope, request):
     """Tests a policy with ansible playbook action against localhost.
 
     Polarion:
@@ -88,7 +88,14 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
     request.addfinalizer(lambda: create_vm_modscope.remove_tag(added_tag))
     wait_for(ansible_service_request.exists, num_sec=600)
     ansible_service_request.wait_for_request()
-    view = navigate_to(ansible_service, "Details")
+
+    @request.addfinalizer
+    def _revert():
+        if ansible_service_request.exists:
+            ansible_service_request.wait_for_request()
+            ansible_service_request.remove_request()
+
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.details.get_text_of("Hosts") == "localhost"
     assert (
         view.provisioning.results.get_text_of("Status") == "successful"
@@ -99,9 +106,9 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
-def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_item, ansible_action,
+def test_action_run_ansible_playbook_manual_address(appliance, ansible_catalog_item, ansible_action,
         policy_for_testing, create_vm_modscope, ansible_credential, ansible_service_request,
-        ansible_service):
+        ansible_service_funcscope, request):
     """Tests a policy with ansible playbook action against manual address.
 
     Polarion:
@@ -121,8 +128,15 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
         }
     added_tag = vm.add_tag()
     request.addfinalizer(lambda: vm.remove_tag(added_tag))
-    wait_for(ansible_service_request_funcscope.exists, num_sec=600)
-    ansible_service_request_funcscope.wait_for_request()
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+
+    @request.addfinalizer
+    def _revert():
+        if ansible_service_request.exists:
+            ansible_service_request.wait_for_request()
+            ansible_service_request.remove_request()
+
     view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.details.get_text_of("Hosts") == vm.ip_address
     assert (
@@ -134,9 +148,9 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
-def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_item, ansible_action,
+def test_action_run_ansible_playbook_target_machine(appliance, ansible_catalog_item, ansible_action,
         policy_for_testing, create_vm_modscope, ansible_credential, ansible_service_request,
-        ansible_service):
+        ansible_service_funcscope, request):
     """Tests a policy with ansible playbook action against target machine.
 
     Polarion:
@@ -149,8 +163,15 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
         ansible_action.run_ansible_playbook = {"inventory": {"target_machine": True}}
     added_tag = vm.add_tag()
     request.addfinalizer(lambda: vm.remove_tag(added_tag))
-    wait_for(ansible_service_request_funcscope.exists, num_sec=600)
-    ansible_service_request_funcscope.wait_for_request()
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+
+    @request.addfinalizer
+    def _revert():
+        if ansible_service_request.exists:
+            ansible_service_request.wait_for_request()
+            ansible_service_request.remove_request()
+
     view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.details.get_text_of("Hosts") == vm.ip_address
     assert (
@@ -162,9 +183,9 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
-def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalog_item,
+def test_action_run_ansible_playbook_unavailable_address(appliance, request, ansible_catalog_item,
         create_vm_modscope, ansible_action, policy_for_testing, ansible_credential,
-        ansible_service_request, ansible_service):
+        ansible_service_request, ansible_service_funcscope):
     """Tests a policy with ansible playbook action against unavailable address.
 
     Polarion:
@@ -184,11 +205,22 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
         }
     added_tag = vm.add_tag()
     request.addfinalizer(lambda: vm.remove_tag(added_tag))
-    wait_for(ansible_service_request_funcscope.exists, num_sec=600)
-    ansible_service_request_funcscope.wait_for_request()
-    view = navigate_to(ansible_service, "Details")
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+
+    @request.addfinalizer
+    def _revert():
+        if ansible_service_request.exists:
+            ansible_service_request.wait_for_request()
+            ansible_service_request.remove_request()
+
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.details.get_text_of("Hosts") == "unavailable_address"
-    assert view.provisioning.results.get_text_of("Status") == "failed"
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
 
 
 @pytest.mark.tier(3)
@@ -205,4 +237,4 @@ def test_control_action_run_ansible_playbook_in_requests(request,
     vm = create_vm_modscope
     added_tag = vm.add_tag()
     request.addfinalizer(lambda: vm.remove_tag(added_tag))
-    assert ansible_service_request_funcscope.exists
+    assert ansible_service_request.exists
