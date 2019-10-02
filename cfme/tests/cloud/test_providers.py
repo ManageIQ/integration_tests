@@ -13,9 +13,11 @@ from widgetastic.widget import Text
 from wrapanapi import VmState
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.ec2 import EC2Endpoint
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.openstack import RHOSEndpoint
@@ -29,6 +31,7 @@ from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
@@ -1297,3 +1300,63 @@ def test_add_ec2_provider_with_non_default_url_endpoint():
             2. Refresh should complete without errors
     """
     pass
+
+
+def test_add_ec2_provider_with_sts_assume_role(appliance, request):
+    """
+    Requires:
+        1. Role which has all the required permissions to manage CMFE
+        2. Edit Trust relationship policy for this role to:
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": "arn:aws:iam::NNNNNNNNNNNN:root"
+                  },
+                  "Action": "sts:AssumeRole"
+                }
+              ]
+            }
+        3. Have policy with AssumeRole permission:
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": "sts:AssumeRole",
+                        "Resource": "arn:aws:iam::NNNNNNNNNNNN:role/RoleForCFME"
+                    }
+                ]
+            }
+        4. Have an user with only attached policy created in last step
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/2h
+        caseimportance: high
+        casecomponent: Cloud
+        testSteps:
+            1. Go to Compute -> Cloud -> Providers
+            2. Add EC2 Provider with these fields filled in:
+        expectedResults:
+            1.
+            2. Provider should be successfully added.
+    """
+    assume_role_creds = cfme_data['management_systems']['ec2west']['sts_assume_role']['credentials']
+    creds = Credential(principal=credentials[assume_role_creds]['username'],
+                       secret=credentials[assume_role_creds]['password'])
+    endpoint = EC2Endpoint(
+        assume_role_arn=cfme_data['management_systems']['ec2west']['sts_assume_role']['role_arn'],
+        credentials=creds)
+
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(
+        prov_class=EC2Provider, name=fauxfactory.gen_alphanumeric(5),
+        region_name=cfme_data['management_systems']['ec2west']['region_name'],
+        endpoints=endpoint)
+
+    request.addfinalizer(prov.delete_if_exists)
+    prov.create()
