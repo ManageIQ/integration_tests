@@ -19,15 +19,6 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_extended_db(temp_appliance_preconfig):
-    app = temp_appliance_preconfig
-    app.evmserverd.stop()
-    app.db.extend_partition()
-    app.evmserverd.start()
-    return app
-
-
-@pytest.fixture(scope="module")
 def db_tbl(temp_appliance_extended_db):
     app = temp_appliance_extended_db
     return app.db.client['bottleneck_events']
