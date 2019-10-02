@@ -243,3 +243,12 @@ def configure_fleecing_modscope(appliance, provider, setup_provider_modscope):
     yield
     appliance.uninstall_vddk()
     provider.remove_hosts_credentials()
+
+
+@pytest.fixture(scope="module")
+def temp_appliance_extended_db(temp_appliance_preconfig):
+    app = temp_appliance_preconfig
+    app.evmserverd.stop()
+    app.db.extend_partition()
+    app.evmserverd.start()
+    return app

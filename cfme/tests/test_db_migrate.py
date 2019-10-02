@@ -30,15 +30,6 @@ def pytest_generate_tests(metafunc):
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
 
 
-@pytest.fixture(scope="module")
-def temp_appliance_extended_db(temp_appliance_preconfig):
-    app = temp_appliance_preconfig
-    app.evmserverd.stop()
-    app.db.extend_partition()
-    app.evmserverd.start()
-    return app
-
-
 @pytest.fixture(scope="function")
 def temp_appliance_remote(temp_appliance_preconfig_funcscope):
     """Needed for db_migrate_replication as you can't drop a remote db due to subscription"""
@@ -72,16 +63,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     return temp_appliance_preconfig_funcscope_upgrade
 
 
-@pytest.mark.ignore_stream('upstream')
-@pytest.mark.tier(2)
-def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
-    """
-    Polarion:
-        assignee: jhenner
-        initialEstimate: 1/4h
-        casecomponent: Appliance
-    """
-    app = temp_appliance_extended_db
+def download_and_migrate_db(app, db_url, db_desc):
     # Download the database
     logger.info("Downloading database: {}".format(db_desc))
     url_basename = os_path.basename(db_url)

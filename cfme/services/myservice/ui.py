@@ -369,7 +369,7 @@ class MyServiceAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Services', 'My Services')
 
     def resetter(self, *args, **kwargs):
-        self.view.myservice.tree.click_path('Active Services')
+        self.prerequisite_view.navigation.select('Services', 'My Services')
 
 
 @navigator.register(MyService, 'Details')
