@@ -162,5 +162,12 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
 
+    # Downloading pre and post migration logs
+    view = navigate_to(migration_plan, "CompletedPlanDetails")
+    view.download_logs.item_select("Premigration log")
+    view.flash.assert_no_error()
+    view.download_logs.item_select("Postmigration log")
+    view.flash.assert_no_error()
+
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
     assert src_vm_obj.mac_address == migrated_vm.mac_address
