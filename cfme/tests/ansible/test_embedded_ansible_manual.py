@@ -645,38 +645,3 @@ def test_embed_tower_playbook_with_retry_interval():
             at least 60 seconds before trying again.
     """
     pass
-
-
-@pytest.mark.tier(2)
-def test_embed_tower_playbook_with_retry_method():
-    """
-
-    Bugzilla:
-        1625047
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        testSteps:
-            1. Enable Embedded Ansible
-            2. Add repo - https://github.com/billfitzgerald0120/ansible_playbooks
-            3. Import Ansible_StateMachine_Set_Retry
-            4. Enable domain
-            5. Create Catalog using set_retry_4_times playbook.
-            6. Add a dummy dialog
-            7. Add a catalog
-            8. Add a new Catalog item (Generic Type)
-            9. Order service
-        expectedResults:
-            1. Check Embedded Ansible Role is started.
-            2. Check repo is added.
-            3.
-            4.
-            5. Verify in the Catalog playbook set_retry_4_times is used.
-            6.
-            7.
-            8.
-            9. Check automation.log to make sure the playbook retried 3 times and then ended OK.
-    """
-    pass
