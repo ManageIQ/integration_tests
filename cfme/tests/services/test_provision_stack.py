@@ -166,6 +166,7 @@ def _cleanup(appliance=None, provision_request=None, service=None):
         myservice = service
     if myservice.exists:
         myservice.retire()
+        myservice.delete()
 
 
 @pytest.mark.meta(blockers=[BZ(1754543)])
