@@ -1114,7 +1114,7 @@ class InfraVm(VM):
         """
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
         if not self.provider.is_refreshed():
-            self.provider.refresh_provider_relationships(wait=True)
+            self.provider.refresh_provider_relationships(wait=600)
         provisioning = self.provider.data['provisioning']
         template_name = provisioning['template']
         template = self.appliance.rest_api.collections.templates.get(name=template_name,

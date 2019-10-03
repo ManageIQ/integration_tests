@@ -701,11 +701,10 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
 
     @variable(alias='rest')
     def refresh_provider_relationships(self, from_list_view=False,
-                                       wait=False, delay=1, refresh_delta=10):
+                                       wait=0, delay=1, refresh_delta=10):
         """
-        wait - False for no wait, True for 600 seconds, or specify number of seconds
+        wait[seconds], 0 for no wait
         """
-        wait = 600 if wait is True else wait
         if not wait and (delay != 1 or refresh_delta != 10):
             logger.info("Ignoring delay/refresh_delta parameter, because wait is set to 0")
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
