@@ -1488,3 +1488,72 @@ def test_session_timeout():
         title: Verify session timeout works fine for external auth.
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_certmonger_service():
+    """
+    Test that the certmonger service is running after SSL certs have been setup and appliance
+    rebooted.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        setup:
+            1. Have IDM (freeipa) server up and running
+        testSteps:
+            1. Configure appliance to use external auth via IDM server:
+                appliance_console_cli \
+                --ipaserver=<IPA_HOSTNAME> \
+                --ipaprincipal=<IPA_PRINCIPAL> \
+                --ipapassword=<IPA_PASSWD>
+            2. Setup SSL certs on the appliance:
+                appliance_console_cli \
+                --ca=ipa \
+                --http-cert
+            3. Reboot the appliance
+            4. View status of the certmonger service:
+                systemctl status certmonger
+        expectedResults:
+            1. Appliance configured.
+            2. Certs installed
+            3. Appliance rebooted
+            4. certmonger service running
+    Bugzilla:
+        1670604
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.auth
+@pytest.mark.tier(2)
+def test_group_lookup_oidc():
+    """
+    Test that group lookup is disabled when using OpenID-Connect.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Configure your appliance to use External auth:
+                Configuration -> Settings -> select Current Server -> Authentication -> Mode
+                -> set to External
+            2. On the same page, choose Provider Type: Enable OpenID-Connect
+            3. Navigate to Configuration -> Access Control -> Create a new Group
+            4. Ensure the "(Look up External Authentication Groups)" checkbox is not displayed
+        expectedResults:
+            1. Appliance configured
+            2. OIDC enabled
+            3.
+            4. Checkbox not displayed
+    Bugzilla:
+        1609321
+    """
+    pass

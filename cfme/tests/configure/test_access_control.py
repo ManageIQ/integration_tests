@@ -2700,3 +2700,142 @@ def test_tenant_template_visibility():
         initialEstimate: 1/10h
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_create_higher_permission_child_tenant():
+    """
+    Test creating a group with higher permission that the user currently has on a new tenant.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Create child tenant: "My tenant"
+            2. Create group with:
+                - "My Tenant admin group" with role: "EvmRole-tenant_administrator"
+                - Tenant: "My tenant"
+            3. Create tenant admin user "tenantadmin" with group "My Tenant admin group"
+            4. login as tenant admin
+            5. Try to create group with EvmRole-super_administrator
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. EvmRole-super_administrator should not be available
+    Bugzilla:
+        1418297
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_create_higher_permission():
+    """
+    Test creating a group with higher permission that the user currently has.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Create user with tenant_administrator role
+            2. Log in as that user
+            3. Go to Users
+        expectedResults:
+            1.
+            2.
+            3. Users without super-administator role and administator role visible
+    Bugzilla:
+        1447370
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_multiple_notifications():
+    """
+    Test that user that is a member of multiple groups receives only one notification.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Create a user, assign him to multiple groups
+            2. As the user, provision a VM
+        expectedResults:
+            1.
+            2. Only one notification displayed upon successfull provision
+    Bugzilla:
+        1549898
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_cluster_filters():
+    """
+    Test that filters work even when deleting the item they were in place for.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        setup:
+            1. Have a provider with multiple Datastores and Clusters.
+            2. Assume you have Datastore1 with Cluster1 and Datastore2 with Cluster2
+        testSteps:
+            1. Create a role and group with the filters for only Cluster1
+            2. Create a user with this group
+            3. Login and verify that you can see only Cluster1
+            4. Delete Datastore1 (with Cluster1)
+            5. Verify the user now can't see any cluster
+        expectedResults:
+            1.
+            2.
+            3. User can see only Cluster1
+            4.
+            5. User can't see any Cluster
+    Bugzilla:
+        1693183
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_delete_custom_super_admin():
+    """
+    Test that custom user with super_administrator group can be deleted.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Create a new user with group EvmGroup-super_administrator
+            2. Try to delete this user
+        expectedResults:
+            1.
+            2. User successfully deleted
+    Bugzilla:
+        1720273
+    """
+    pass
