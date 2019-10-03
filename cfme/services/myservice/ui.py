@@ -354,7 +354,7 @@ def download_file(self, extension):
 def reconfigure_service(self):
     # TODO refactor this method - it does nothing at the moment. Bug 1575935
     view = navigate_to(self, 'Reconfigure')
-    wait_for(lambda: view.submit_button.is_displayed, num_sec=5)
+    view.submit_button.wait_displayed('5s')
     view.submit_button.click()
     view.flash.assert_no_error()
     self.create_view(MyServiceDetailView, wait='5s')
