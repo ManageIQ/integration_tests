@@ -579,39 +579,6 @@ def test_embed_tower_repo_add_remote_zone():
 
 
 @pytest.mark.tier(2)
-def test_automate_ansible_playbook_method_copy():
-    """
-    When copying a method within the automate model the copied method
-    does not have the Embedded Methods that are a part of the source method
-
-    Bugzilla:
-        1592140
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        testSteps:
-            1. Configure a CFME appliance with the Embedded Ansible provider
-            2. Create Catalog item.
-            3. Create catalog.
-            4. Create Domain.
-            5. Create Method.
-            6. Create another domain.
-            7. Copy above method.
-        expectedResults:
-            1. Check Embedded Ansible Role is started.
-            2. Check catalog item is created.
-            3. Check catalog is added.
-            4. Check Domain is added.
-            5. Check method is added.
-            6. check second Domain attached.
-            7. Check method is being copied along with Path.
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_embed_tower_playbook_with_retry_interval():
     """
 

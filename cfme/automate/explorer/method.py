@@ -148,6 +148,9 @@ class MethodDetailsView(AutomateExplorerView):
     created_on = SummaryFormItem('Main Info', 'Created On', text_filter=parsetime.from_iso_with_utc)
     inputs = Table(locator='#params_grid', assoc_column='Input Name')
     script = ScriptBox()
+    embedded_method_table = Table(
+        "//*[@id='embedded_methods_div']/table[contains(@class, 'table')]"
+    )
 
     @property
     def is_displayed(self):
