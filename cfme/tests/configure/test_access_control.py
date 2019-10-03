@@ -1464,6 +1464,47 @@ def test_superadmin_tenant_admin_crud(appliance):
     assert not user.exists
 
 
+@pytest.mark.tier(2)
+@test_requirements.multi_tenancy
+def test_tenantadmin_user_crud(appliance):
+    """
+    Perform CRUD operations on users as Tenant administrator.
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Create new tenant admin user and assign him into group EvmGroup-tenant_administrator
+            2. As Tenant administrator, create new user, update user and delete user.
+    """
+    group_name = 'EvmGroup-tenant_administrator'
+    group_collection = appliance.collections.groups
+    group = group_collection.instantiate(description=group_name)
+    tenantadmin = new_user(appliance, [group])
+    request.addfinalizer(tenantadmin.delete)
+    request.addfinalizer(appliance.server.login_admin)
+    assert tenantadmin.exists
+
+    with tenantadmin:
+        appliance.server.logout()
+        navigate_to(appliance.server, 'LoggedIn')
+        assert appliance.server.current_full_name() == tenantadmin.name
+
+        group_name = 'EvmGroup-user'
+        group_collection = appliance.collections.groups
+        group = group_collection.instantiate(description=group_name)
+        tenantuser = new_user(appliance, [group])
+        request.addfinalizer(tenantuser.delete)
+        request.addfinalizer(appliance.server.login_admin)
+        assert tenantuser.exists
+        tenantuser.delete()
+        assert not tenantuser.exists
+
+
 @pytest.mark.tier(3)
 @test_requirements.multi_tenancy
 def test_tenant_unique_catalog(appliance, request, catalog_obj):
