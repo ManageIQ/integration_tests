@@ -700,19 +700,24 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self.mgmt.disconnect()
 
     @variable(alias='rest')
-    def refresh_provider_relationships(self, from_list_view=False):
+    def refresh_provider_relationships(self, from_list_view=False,
+                                       wait=False, delay=1, refresh_delta=10):
+        """
+        wait - False for no wait, True for 600 seconds, or specify number of seconds
+        """
+        wait = 600 if wait is True else wait
+        if not wait and (delay != 1 or refresh_delta != 10):
+            logger.info("Ignoring delay/refresh_delta parameter, because wait is set to 0")
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
         logger.debug('Refreshing provider relationships')
         col = self.appliance.rest_api.collections.providers.find_by(name=self.name)
         try:
             col[0].action.refresh()
+            if wait:
+                wait_for(self.is_refreshed, func_kwargs={'refresh_delta': refresh_delta},
+                         timeout=wait, delay=delay)
         except IndexError:
             raise Exception("Provider collection empty")
-
-    def refresh_provider_relationships_and_wait(self, wait=600, delay=1, refresh_delta=10):
-        self.refresh_provider_relationships()
-        wait_for(self.is_refreshed, func_kwargs={'refresh_delta': refresh_delta}, timeout=wait,
-                 delay=delay)
 
     @refresh_provider_relationships.variant('ui')
     def refresh_provider_relationships_ui(self, from_list_view=False):

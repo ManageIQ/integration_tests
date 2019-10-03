@@ -124,7 +124,7 @@ def test_snapshot_crud(small_test_vm, provider):
     if provider.appliance.version >= "5.11" and provider.one_of(RHEVMProvider):
         assert snapshot.size
     snapshot.delete()
-    provider.refresh_provider_relationships_and_wait()
+    provider.refresh_provider_relationships(wait=True)
     assert result.validate(wait="60s")
 
 

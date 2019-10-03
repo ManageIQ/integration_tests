@@ -354,7 +354,7 @@ class Instance(VM):
         from cfme.cloud.provider.ec2 import EC2Provider
 
         if not self.provider.is_refreshed():
-            self.provider.refresh_provider_relationships_and_wait()
+            self.provider.refresh_provider_relationships(wait=True)
         provisioning = self.provider.data['provisioning']
 
         provider_rest = self.appliance.rest_api.collections.providers.get(name=self.provider.name)
