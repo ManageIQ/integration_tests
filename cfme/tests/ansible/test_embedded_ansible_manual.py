@@ -381,27 +381,6 @@ def test_service_ansible_playbook_retire_non_ascii():
     pass
 
 
-@test_requirements.ansible
-@pytest.mark.tier(3)
-def test_automate_ansible_playbook_method_type_verbosity():
-    """
-
-    Bugzilla:
-        1542665
-
-    Check if ansible playbook method  can work with different verbosity
-    levels.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_embed_tower_playbook_with_retry_interval():
     """

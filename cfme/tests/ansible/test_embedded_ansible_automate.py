@@ -481,3 +481,66 @@ def test_import_domain_containing_playbook_method(request, appliance, setup_ansi
         f"Playbook 'invalid_1677575.yml' not found in repository '{setup_ansible_repository.name}'"
     )
     view.flash.assert_message(text=error_msg, partial=True)
+
+
+@test_requirements.ansible
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1542665])
+@pytest.mark.parametrize(
+    "verbosity",
+    [
+        "1 (Verbose)",
+        "2 (More Verbose)",
+        "3 (Debug)",
+        "4 (Connection Debug)",
+        "5 (WinRM Debug)",
+        "0 (Normal)",
+    ],
+)
+def test_automate_ansible_playbook_method_type_verbosity(request, ansible_repository, klass,
+                                                         verbosity):
+    """Check if ansible playbook method  can work with different verbosity levels.
+
+    Bugzilla:
+        1542665
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/4h
+        tags: ansible_embed
+    """
+    schema_name = fauxfactory.gen_alpha()
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        location="playbook",
+        repository=ansible_repository.name,
+        playbook="copy_file_example.yml",
+        machine_credential="CFME Default Credential",
+        verbosity=verbosity,
+    )
+    request.addfinalizer(method.delete_if_exists)
+
+    klass.schema.add_fields({'name': schema_name, 'type': 'Method', 'data_type': 'String'})
+
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        fields={schema_name: {"value": method.name}})
+
+    # Adding index 0 which will give pattern for e.g. pattern = "verbosity"=>0.
+    with LogValidator(
+            "/var/www/miq/vmdb/log/evm.log", matched_patterns=[f'"verbosity"=>{verbosity[0]}']
+    ).waiting(timeout=120):
+        simulate(
+            appliance=klass.appliance,
+            message="create",
+            request="Call_Instance",
+            execute_methods=True,
+            attributes_values={
+                "namespace": klass.namespace.name,
+                "class": klass.name,
+                "instance": instance.name,
+            },
+        )
