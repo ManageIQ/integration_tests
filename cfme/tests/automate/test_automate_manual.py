@@ -112,34 +112,6 @@ def test_automate_check_quota_regression():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.manual('manualonly')
-def test_automate_git_domain_import_with_no_connection():
-    """
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: automate
-        startsin: 5.7
-        testSteps:
-            1. Import a Git Domain into Automate
-            2. Server the connection to the GIT Server from the appliance
-               (Disable VPN or some other trick)
-            3. List all the Automate Domains using Automate-> Explorer
-        expectedResults:
-            1.
-            2.
-            3. The domain should be displayed properly
-
-    Bugzilla:
-        1391208
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_simulation_result_has_hash_data():
     """
     The UI should display the result objects if the Simulation Result has

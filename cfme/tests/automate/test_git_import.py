@@ -377,3 +377,66 @@ def test_automate_git_import_case_insensitive(request, appliance):
     domain = appliance.collections.domains.instantiate(name="testdomain")
     request.addfinalizer(domain.delete_if_exists)
     assert domain.exists
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1391208])
+@pytest.mark.parametrize(
+    ("url", "param_type", "param_value", "connection"),
+    [
+        (
+            "https://github.com/RedHatQE/ManageIQ-automate-git.git",
+            "branch",
+            "origin/master",
+            True,
+        ),
+        (
+            'https://github.com/RedHatQE/ManageIQ-automate-git.git',
+            'tag',
+            '0.1',
+            False,
+        ),
+    ],
+    ids=["with_connection", "without_connection"],
+)
+def test_automate_git_domain_import_with_no_connection(request, temp_appliance_preconfig,
+                                                       param_type, param_value, url, connection):
+    """
+    Bugzilla:
+        1391208
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: automate
+        startsin: 5.7
+        testSteps:
+            1. Import a Git Domain into Automate
+            2. Server the connection to the GIT Server from the appliance
+               (Disable VPN or some other trick)
+            3. List all the Automate Domains using Automate-> Explorer
+        expectedResults:
+            1.
+            2.
+            3. The domain should be displayed properly
+    """
+    if connection:
+        # Checking datastore import from github repository with internet connectivity
+        repo = temp_appliance_preconfig.collections.automate_import_exports.instantiate(
+            import_type="git", url=url, verify_ssl=True
+        )
+        domain = repo.import_domain_from(**{param_type: param_value})
+        temp_appliance_preconfig.ssh_client.run_command("echo '8.8.8.8 github.com' >> /etc/hosts")
+        request.addfinalizer(domain.delete)
+        assert domain.exists
+    else:
+        # Checking datastore import from github repository without internet connectivity
+        temp_appliance_preconfig.ssh_client.run_command("echo '8.8.8.8 github.com' >> /etc/hosts")
+        view = navigate_to(temp_appliance_preconfig.collections.automate_import_exports, "All")
+        view.import_git.fill({"url": url, "verify_ssl": True})
+        view.import_git.submit.click()
+        view.flash.assert_message(
+            "Error during repository fetch: hostname does not match certificate"
+        )
