@@ -378,3 +378,47 @@ def test_automate_git_import_case_insensitive(request, appliance):
     domain = appliance.collections.domains.instantiate(name="testdomain")
     request.addfinalizer(domain.delete_if_exists)
     assert domain.exists
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1391208])
+@pytest.mark.parametrize("connection", [True, False], ids=["with_connection", "without_connection"])
+def test_automate_git_domain_import_connection(request, temp_appliance_preconfig, connection):
+    """
+    Bugzilla:
+        1391208
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: automate
+        startsin: 5.7
+        testSteps:
+            1. Import a Git Domain into Automate
+            2. Server the connection to the GIT Server from the appliance
+               (Disable VPN or some other trick)
+            3. List all the Automate Domains using Automate-> Explorer
+        expectedResults:
+            1.
+            2.
+            3. The domain should be displayed properly
+    """
+    # Server role 'git_owner' needs to enabled explicitly on temp_appliance_preconfig
+    temp_appliance_preconfig.server.settings.enable_server_roles('git_owner')
+    repo = temp_appliance_preconfig.collections.automate_import_exports.instantiate(
+        import_type="git", url=GIT_REPO_URL, verify_ssl=True
+    )
+    if connection:
+        # Checking datastore import from github repository with internet connectivity
+        domain = repo.import_domain_from(branch="origin/master")
+        temp_appliance_preconfig.ssh_client.run_command("echo '8.8.8.8 github.com' >> /etc/hosts")
+        request.addfinalizer(domain.delete)
+        assert domain.exists
+    else:
+        # Checking datastore import from github repository without internet connectivity
+        temp_appliance_preconfig.ssh_client.run_command("echo '8.8.8.8 github.com' >> /etc/hosts")
+        msg = "Error during repository fetch: hostname does not match certificate"
+        with pytest.raises(AssertionError, match=msg):
+            repo.import_domain_from(branch="origin/master")
