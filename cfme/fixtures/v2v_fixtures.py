@@ -281,6 +281,16 @@ def set_conversion_host_api(
             message="Waiting for conversion configuration task to be finished")
 
 
+@pytest.fixture(scope="function")
+def delete_conversion_hosts(appliance):
+    # Delete existing conversion host entries from CFME
+    delete_hosts = appliance.ssh_client.run_rails_command(
+        "'MiqTask.delete_all; ConversionHost.delete_all'")
+    if not delete_hosts.success:
+        pytest.skip(
+            "Failed to delete all conversion hosts: {}".format(delete_hosts.output))
+
+
 def __configure_conversion_host_ui(appliance, target_provider, hostname, default,  # noqa
                                    conv_host_key, transformation_method,
                                    vmware_ssh_key, osp_cert_switch=None, osp_ca_cert=None):

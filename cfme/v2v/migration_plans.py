@@ -468,6 +468,11 @@ class MigrationPlan(BaseEntity):
         except TimedOutError:
             logger.info("Wait for state :%s timed out", state)
 
+    def delete_completed_plan(self):
+        """ Find migration plan and delete."""
+        view = navigate_to(self, "Complete")
+        return view.plans_completed_list.delete_plan(self.name)
+
 
 @attr.s
 class MigrationPlanCollection(BaseCollection):
