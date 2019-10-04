@@ -705,21 +705,18 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         """
         wait[seconds], 0 for no wait
         """
-        if not wait and (delay != 1 or refresh_delta != 10):
-            logger.info("Ignoring delay/refresh_delta parameter, because wait is set to 0")
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
         logger.debug('Refreshing provider relationships')
         col = self.appliance.rest_api.collections.providers.find_by(name=self.name)
         try:
             col[0].action.refresh()
-            if wait:
-                wait_for(self.is_refreshed, func_kwargs={'refresh_delta': refresh_delta},
-                         timeout=wait, delay=delay)
+            self.wait_for_relationship_refresh(wait, delay, refresh_delta)
         except IndexError:
             raise Exception("Provider collection empty")
 
     @refresh_provider_relationships.variant('ui')
-    def refresh_provider_relationships_ui(self, from_list_view=False):
+    def refresh_provider_relationships_ui(self, from_list_view=False, wait=0, delay=1,
+                                          refresh_delta=10):
         """Clicks on Refresh relationships button in provider"""
         if from_list_view:
             view = navigate_to(self, 'All')
@@ -730,6 +727,15 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             view = navigate_to(self, 'Details')
 
         view.toolbar.configuration.item_select(self.refresh_text, handle_alert=True)
+        self.wait_for_relationship_refresh(wait, delay, refresh_delta)
+
+    def wait_for_relationship_refresh(self, wait=600, delay=1, refresh_delta=10):
+        logger.info('Waiting for relationship refresh')
+        if wait:
+            wait_for(self.is_refreshed, func_kwargs={'refresh_delta': refresh_delta}, timeout=wait,
+                     delay=delay)
+        elif delay != 1 or refresh_delta != 10:
+            logger.info("Ignoring delay/refresh_delta parameter, because wait is set to 0")
 
     @variable(alias='rest')
     def last_refresh_date(self):
