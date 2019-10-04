@@ -35,9 +35,7 @@ from cfme.networks.views import ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.wait import wait_for
 
 HOST_RELATIONSHIPS = [
     ("Infrastructure Provider", InfraProviderDetailsView),
