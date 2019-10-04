@@ -35,6 +35,7 @@ from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 HOST_RELATIONSHIPS = [
@@ -292,6 +293,7 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
 @pytest.mark.rhv1
 @pytest.mark.provider([CloudProvider, InfraProvider])
 @pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1756984)])
 def test_provider_refresh_relationship(provider, setup_provider):
     """Tests provider refresh
 
@@ -302,8 +304,11 @@ def test_provider_refresh_relationship(provider, setup_provider):
         initialEstimate: 1/8h
         tags: relationship
     """
+    result = LogValidator("/var/www/miq/vmdb/log/evm.log", failure_patterns=[r".*ERROR.*"])
+    result.start_monitoring()
     provider.refresh_provider_relationships(method='ui')
     wait_for_relationship_refresh(provider)
+    assert result.validate(wait="60s")
 
 
 @test_requirements.relationships
