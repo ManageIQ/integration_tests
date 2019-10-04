@@ -72,7 +72,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
             set_skip_event_history_flag(appliance)
             osp_provider = v2v_provider
             setup_or_skip(request, osp_provider)
-            if BZ(1753364).blocks:
+            if BZ(1753364, forced_streams=['5.11']).blocks:
                 _start_event_workers_for_osp(appliance, osp_provider)
         else:
             pytest.skip("Provider {} is not a valid provider for v2v tests".format(provider.name))
