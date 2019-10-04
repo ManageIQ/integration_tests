@@ -1,7 +1,13 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.dialog_import_export import DialogImportExport
 from cfme.fixtures.automate import DatastoreImport
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
+from cfme.utils.log_validator import LogValidator
 
 pytestmark = [test_requirements.automate, pytest.mark.tier(3)]
 
@@ -31,3 +37,56 @@ def test_domain_import_file(import_datastore, import_data):
             3. Import should work. Check imported or not.
     """
     assert import_datastore.exists
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1720611])
+@pytest.mark.parametrize("upload_file", ["datastore_blank.zip", "dialog_blank.yml"],
+                         ids=["datastore", "dialog"])
+@pytest.mark.uncollectif(lambda upload_file: upload_file == "dialog_blank.yml" and
+                         BZ(1720611, forced_streams=['5.10']).blocks)
+def test_upload_blank_file(appliance, upload_file):
+    """
+    Bugzilla:
+        1720611
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: negative
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Create blank zip(test.zip) and yaml(test.yml) file
+            2. Navigate to Automation > Automate > Import/Export and upload test.zip file
+            3. Navigate to Automation > Automate > Customization > Import/Export and upload test.yml
+        expectedResults:
+            1.
+            2. Error message should be displayed
+            3. Error message should be displayed
+    """
+    # Download datastore file from FTP server
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+    file_path = fs.download(upload_file)
+
+    if upload_file == "dialog_blank.yml":
+        with LogValidator("/var/www/miq/vmdb/log/production.log",
+                          failure_patterns=[".*FATAL.*"]).waiting(timeout=120):
+
+            # Import dialog yml to appliance
+            import_export = DialogImportExport(appliance)
+            view = navigate_to(import_export, "DialogImportExport")
+            view.upload_file.fill(file_path)
+            view.upload.click()
+            view.flash.assert_message('Error: the uploaded file is blank')
+    else:
+        # Import datastore file to appliance
+        datastore = appliance.collections.automate_import_exports.instantiate(
+            import_type="file", file_path=file_path
+        )
+        view = navigate_to(appliance.collections.automate_import_exports, "All")
+        with LogValidator("/var/www/miq/vmdb/log/production.log",
+                          failure_patterns=[".*FATAL.*"]).waiting(timeout=120):
+            view.import_file.upload_file.fill(datastore.file_path)
+            view.import_file.upload.click()
+            view.flash.assert_message("Error: import processing failed: domain: *")
