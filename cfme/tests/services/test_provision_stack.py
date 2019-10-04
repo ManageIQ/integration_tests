@@ -208,7 +208,8 @@ def test_reconfigure_service(appliance, service_catalogs, request):
 @pytest.mark.provider(gen_func=providers,
                       filters=[cloud_filter, not_ec2],
                       override=True,
-                      selector=ONE_PER_TYPE)
+                      selector=ONE_PER_TYPE,
+                      scope='module')
 def test_remove_non_read_only_orch_template(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -232,7 +233,7 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
     assert not template.exists
 
 
-@pytest.mark.provider([EC2Provider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([EC2Provider], selector=ONE_PER_TYPE, override=True, scope='module')
 def test_remove_read_only_orch_template_neg(appliance, provider, template, service_catalogs,
                                             request):
     """
