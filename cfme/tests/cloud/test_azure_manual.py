@@ -26,27 +26,6 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
     pass
 
 
-@pytest.mark.tier(1)
-def test_refresh_with_empty_iot_hub_azure():
-    """
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/6h
-        setup: prepare env
-               create an IoT Hub in Azure (using free tier pricing is good enough):
-               $ az iot hub create --name rmanes-iothub --resource-group iot_rg
-        testSteps:
-            1. refresh azure provider
-        expectedResults:
-            1. no errors found in logs
-    Bugzilla:
-        1495318
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_regions_gov_azure():
     """
