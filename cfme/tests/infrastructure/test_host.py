@@ -349,7 +349,7 @@ def setup_provider_min_hosts(request, provider, min_hosts=2):
     num_hosts = len(provider.data.get('hosts', {}))
     if num_hosts < min_hosts:
         pytest.skip(f'Not enough hosts({num_hosts}) to run test. Need at least {min_hosts}')
-    """Function-scoped fixture to set up a provider"""
+    # Function-scoped fixture to set up a provider
     return setup_or_skip(request, provider)
 
 
@@ -376,21 +376,22 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
                banner where "X" is the number of selected hosts. Properties for each host are
                refreshed. Making changes to test pre-commithooks
     """
+    slice = 2
     hosts_view = navigate_to(provider.collections.hosts, "All")
-    num_hosts = len(hosts_view.entities.get_all())
+    num_hosts = len(hosts_view.entities._current_page_elements)
     if num_hosts < 2:
         pytest.skip('not enough hosts in appliance UI to run test')
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[f"'Refresh Provider' successfully initiated for "
-                                              f"{num_hosts} Hosts"],
+                                              f"{slice} Hosts"],
                             hostname=appliance.hostname)
     evm_tail.start_monitoring()
-    for h in hosts_view.entities.get_all():
+    for h in hosts_view.entities.get_all(slice=slice):
         h.check()
     hosts_view.toolbar.configuration.item_select('Refresh Relationships and Power States',
                                                  handle_alert=True)
     hosts_view.flash.assert_success_message(
-        f'Refresh initiated for {num_hosts} Hosts from the CFME Database'
+        f'Refresh initiated for {slice} Hosts from the CFME Database'
     )
     try:
         wait_for(provider.is_refreshed, func_kwargs={'force_refresh': False}, num_sec=300,
