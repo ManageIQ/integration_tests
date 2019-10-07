@@ -50,6 +50,31 @@ def new_role(appliance, name=None):
         vm_restriction='None')
 
 
+@pytest.fixture(scope='module')
+def new_tenant_admin(appliance, request):
+    tenant_collection = appliance.collections.tenants
+    child_tenant = tenant_collection.create(
+        name='tenant1{}'.format(fauxfactory.gen_alphanumeric()),
+        description='tenant1 description',
+        parent=tenant_collection.get_root_tenant()
+    )
+    request.addfinalizer(child_tenant.delete_if_exists)
+
+    role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
+    tenant_role = role.copy()
+    request.addfinalizer(tenant_role.delete_if_exists)
+
+    group_collection = appliance.collections.groups
+    group = group_collection.create(
+        description='tenant_grp{}'.format(fauxfactory.gen_alphanumeric()), role=tenant_role.name, tenant=child_tenant.name)
+    request.addfinalizer(group.delete_if_exists)
+
+    tenant_admin = new_user(appliance, group, name='tenant_admin')
+    yield tenant_admin
+
+    request.addfinalizer(tenant_admin.delete_if_exists)
+
+
 @pytest.fixture(scope='function')
 def check_item_visibility(tag):
     def _check_item_visibility(item, user_restricted):
@@ -1466,7 +1491,7 @@ def test_superadmin_tenant_admin_crud(appliance):
 
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
-def test_tenantadmin_user_crud(appliance):
+def test_tenantadmin_user_cruds(new_tenant_admin, request, appliance):
     """
     Perform CRUD operations on users as Tenant administrator.
 
@@ -1480,29 +1505,79 @@ def test_tenantadmin_user_crud(appliance):
         testSteps:
             1. Create new tenant admin user and assign him into group EvmGroup-tenant_administrator
             2. As Tenant administrator, create new user, update user and delete user.
-    """
+  
     group_name = 'EvmGroup-tenant_administrator'
     group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
     tenantadmin = new_user(appliance, [group])
-    request.addfinalizer(tenantadmin.delete)
-    request.addfinalizer(appliance.server.login_admin)
+    # request.addfinalizer(tenantadmin.delete)
+    # request.addfinalizer(appliance.server.login_admin)
     assert tenantadmin.exists
+    """
+    tenant_admin = new_tenant_admin
 
-    with tenantadmin:
+    with tenant_admin:
         appliance.server.logout()
         navigate_to(appliance.server, 'LoggedIn')
-        assert appliance.server.current_full_name() == tenantadmin.name
+        assert appliance.server.current_full_name() == tenant_admin.name
 
         group_name = 'EvmGroup-user'
         group_collection = appliance.collections.groups
         group = group_collection.instantiate(description=group_name)
-        tenantuser = new_user(appliance, [group])
-        request.addfinalizer(tenantuser.delete)
-        request.addfinalizer(appliance.server.login_admin)
-        assert tenantuser.exists
-        tenantuser.delete()
-        assert not tenantuser.exists
+        tenant_user = new_user(appliance, group)
+        request.addfinalizer(tenant_user.delete)
+        assert tenant_user.exists
+
+        with update(tenant_user):
+            tenant_user.name = "{}edited".format(tenant_user.name)
+
+        tenant_user.delete()
+        assert not tenant_user.exists
+
+
+@pytest.mark.tier(2)
+@test_requirements.multi_tenancy
+def test_tenantadmin_group_cruds(new_tenant_admin, request, appliance):
+    """
+    Perform CRUD operations on users as Tenant administrator.
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Create new tenant admin user and assign him into group EvmGroup-tenant_administrator
+            2. As Tenant administrator, create new user, update user and delete user.
+    group_name = 'EvmGroup-tenant_administrator'
+    group_collection = appliance.collections.groups
+    group = group_collection.instantiate(description=group_name)
+    tenantadmin = new_user(appliance, [group])
+    # request.addfinalizer(tenantadmin.delete)
+    # request.addfinalizer(appliance.server.login_admin)
+    assert tenantadmin.exists
+    """
+    tenant_admin = new_tenant_admin
+
+    with tenant_admin:
+        appliance.server.logout()
+        navigate_to(appliance.server, 'LoggedIn')
+        assert appliance.server.current_full_name() == tenant_admin.name
+
+        role = 'EvmRole-administrator'
+        group_collection = appliance.collections.groups
+        group = group_collection.create(
+        description='tenantgrp_{}'.format(fauxfactory.gen_alphanumeric()), role=role)
+        request.addfinalizer(group.delete_if_exists)
+        assert group.exists
+
+        with update(group):
+            group.description = "{}edited".format(group.description)
+
+        group.delete()
+        assert not group.exists
 
 
 @pytest.mark.tier(3)
