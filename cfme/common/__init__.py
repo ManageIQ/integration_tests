@@ -366,6 +366,7 @@ class TaggableCommonBase(object):
                 row = view.form.tags.row(category=category, assigned_value=tag)
             row[0].click()
         else:
+            category = category.strip(' *')
             view.form.tags(category).remove()
 
     def _tags_action(self, view, cancel, reset):
