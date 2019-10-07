@@ -378,7 +378,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     """
     slice = 2
     hosts_view = navigate_to(provider.collections.hosts, "All")
-    num_hosts = len(hosts_view.entities._current_page_elements)
+    num_hosts = hosts_view.entities.paginator.items_amount
     if num_hosts < 2:
         pytest.skip('not enough hosts in appliance UI to run test')
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
