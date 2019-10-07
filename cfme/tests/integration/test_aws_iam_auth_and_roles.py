@@ -3,11 +3,14 @@ from deepdiff import DeepDiff
 
 from cfme import test_requirements
 from cfme.roles import role_access_ui_510z
+from cfme.roles import role_access_ui_511z
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 
 
 def pytest_generate_tests(metafunc):
@@ -20,9 +23,9 @@ def pytest_generate_tests(metafunc):
     parameter_list = []
     id_list = []
     # TODO: Include SSUI role_access dict and VIASSUI context
-    # This is assigned generically, even though only onle role_access_ui tree is in use
-    # Likely to be version dependent with 5.11, and require a VersionPicker to assign role_access_ui
-    role_access_ui = role_access_ui_510z
+    role_access_ui = VersionPicker(
+        {Version.lowest(): role_access_ui_510z, "5.11": role_access_ui_511z}
+    ).pick()
     logger.info('Using the role access dict: %s', role_access_ui)
     roles_and_context = [(
         role_access_ui, ViaUI)
