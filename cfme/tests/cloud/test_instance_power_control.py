@@ -97,7 +97,7 @@ def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900
 def wait_for_power_state_refresh(instance, state_change_time, timeout=720):
     return wait_for(
         lambda: instance.rest_api_entity.state_changed_on != state_change_time,
-        num_sec=timeout,
+        num_sec=int(timeout),
         delay=30,
         message='Waiting for instance state refresh'
     ).out
