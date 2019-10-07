@@ -43,12 +43,12 @@ def template_name(provisioning):
 
 
 @pytest.fixture
-def prov_data(provider, vm_name, template_name):
+def prov_data(provider, vm_name, template_name, provisioning):
     if provider.one_of(OpenStackProvider):
         return {
             "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
             "environment": {'automatic_placement': True},
-            "properties": {'instance_type': partial_match('m1.large')}
+            "properties": {'instance_type': partial_match(provisioning["instance_type2"])}
         }
 
 

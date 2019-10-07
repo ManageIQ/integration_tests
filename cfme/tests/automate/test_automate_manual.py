@@ -933,7 +933,7 @@ def test_retire_vm_automate():
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1672007])
-def test_invoke_custom_automation():
+def test_action_invoke_custom_automation():
     """
     Bugzilla:
         1672007
