@@ -10,6 +10,7 @@ from cfme.cloud.flavor import ProviderFlavorAllView
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider import CloudProviderImagesView
 from cfme.cloud.provider import CloudProviderInstancesView
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
@@ -293,7 +294,8 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
 @pytest.mark.rhv1
 @pytest.mark.provider([CloudProvider, InfraProvider])
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1756984)])
+@pytest.mark.meta(blockers=[
+    BZ(1756984, unblock=lambda provider: not provider.one_of(AzureProvider))])
 def test_provider_refresh_relationship(provider, setup_provider):
     """Tests provider refresh
 
