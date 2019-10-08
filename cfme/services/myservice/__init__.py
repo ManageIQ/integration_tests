@@ -29,8 +29,13 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
     service_power = sentaku.ContextualMethod()
     add_resource_generic_object = sentaku.ContextualMethod()
 
-    def __init__(self, appliance, name=None, description=None, vm_name=None):
+    def __init__(self, appliance, name=None, name_base=None, description=None, vm_name=None):
         self.appliance = appliance
+        #TODO(jehnner) remove?
+        #if name_base:
+        #    self.name, = (s.name for s in self.appliance.rest_api.collections.services.all if name_base in s.name)
+        #else:
+        #    self.name = name
         self.name = name
         self.description = description
         self.vm_name = vm_name

@@ -1,3 +1,5 @@
+import re
+
 import fauxfactory
 import pytest
 from wait_for import wait_for
@@ -153,14 +155,57 @@ def order_stack(appliance, service_catalogs, stack):
     assert provision_request.is_succeeded()
     stack.wait_for_exists()
     yield provision_request, stack
-    _cleanup(appliance, provision_request)
+    prov_req_cleanup(appliance, provision_request)
     stack.wait_for_not_exists()
 
 
+def guess_svc_name(provision_request):
+    matchpairs = [
+        ('description', r'\[EVM\] Service \[([\w-]+)\].*'),
+        ('message', r'\[EVM\] Service \[([\w-]+)\].*'),
+        ('message', r'Server \[EVM\] Service \[([\w-]+)\].*')
+    ]
+
+        #[EVM] Service [6lpMBvLg1a-20191008-134345] Provisioned Successfully
+    #r'Provisioning Service \[(\w+)\] from \[\w+\]')),
+    for attr, pattern in matchpairs:
+        text = getattr(provision_request, attr)
+        match = re.match(pattern, text)
+        if match:
+            return match.group(1)
+    return None
+
+
+def prov_req_cleanup(appliance, provision_request):
+    #'[EVM] Service [JtCMIq08if-20191008-091234] Provisioned Successfully'
+    # func_args=(r'Provisioning Service \[(\w+)\] from \[\w+\]', provision_request.description)
+    provision_request.update()
+
+    svc_name = wait_for(
+        func=guess_svc_name,
+        func_args=(provision_request,),
+        fail_func=provision_request.update,
+        fail_condition=None,
+        timeout='5m').out
+
+    #svc_name_base = match.group(1)
+    #provision_request.wait_for_request()
+    #myservice = MyService(appliance, name_base=svc_name_base)
+
+    myservice = MyService(appliance, name=svc_name)
+    svc_cleanup(myservice)
+
+
+def svc_cleanup(service):
+    if service.exists:
+        service.retire()
+        service.delete()
+
+# REMOVE
 def _cleanup(appliance=None, provision_request=None, service=None):
     if not service:
         last_message = provision_request.get_request_row_from_ui()['Last Message'].text
-        service_name = last_message.split()[2].strip('[]')
+        service_name = re.match(r'Server \[EVM\] Service \[([^[]*)\].*', last_message).group(1)
         myservice = MyService(appliance, service_name)
     else:
         myservice = service
@@ -204,7 +249,7 @@ def test_reconfigure_service(appliance, service_catalogs, request):
     last_message = provision_request.get_request_row_from_ui()['Last Message'].text
     service_name = last_message.split()[2].strip('[]')
     myservice = MyService(appliance, service_name)
-    request.addfinalizer(lambda: _cleanup(service=myservice))
+    request.addfinalizer(lambda: svc_cleanup(myservice))
     assert provision_request.is_succeeded()
     myservice.reconfigure_service()
 
@@ -233,7 +278,7 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
         tags: stack
     """
     provision_request = service_catalogs.order()
-    request.addfinalizer(lambda: _cleanup(appliance, provision_request))
+    request.addfinalizer(lambda: prov_req_cleanup(appliance, provision_request))
     template.delete()
     wait_for(lambda: provision_request.status == 'Error', timeout='5m')
     assert not template.exists
@@ -242,7 +287,7 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
 @pytest.mark.meta(blockers=[BZ(1754543)])
 @pytest.mark.provider([EC2Provider], selector=ONE_PER_TYPE, override=True, scope='module')
 def test_remove_read_only_orch_template_neg(appliance, provider, template, service_catalogs,
-                                            request):
+                                            order_stack, request):
     """
     For RHOS/Azure the original template will remain stand-alone while the stack links
     to a new template read from the RHOS/Azure provider. Hence we can delete used orchestration
@@ -262,9 +307,6 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, servi
         casecomponent: Services
         tags: stack
     """
-    provision_request = service_catalogs.order()
-    request.addfinalizer(lambda: _cleanup(appliance, provision_request))
-    provision_request.wait_for_request(method='ui')
     view = navigate_to(template, 'Details')
     msg = "Remove this Orchestration Template from Inventory"
     assert not view.toolbar.configuration.item_enabled(msg)
