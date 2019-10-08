@@ -3448,7 +3448,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         if not surf_pages:
             return [
                 self.parent.entity_class(parent=self, entity_id=el["entity_id"], name=el["name"])
-                for el in self._current_page_elements[:slice]
+                for el in self._current_page_elements[slice]
             ]
         else:
             entities = []
@@ -3458,7 +3458,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                         self.parent.entity_class(
                             parent=self, entity_id=el["entity_id"], name=el["name"]
                         )
-                        for el in self._current_page_elements[:slice]
+                        for el in self._current_page_elements[slice]
                     ]
                 )
             return entities
