@@ -107,7 +107,6 @@ ALL_LANDING_PAGES = list(SPECIAL_LANDING_PAGES.keys()) + [
     "Optimize / Bottlenecks",
     "Optimize / Planning",
     "Optimize / Utilization",
-    "Red Hat Access Insights",
     "Services / Catalogs",
     "Services / My Services",
     "Services / Requests",
@@ -148,8 +147,6 @@ PAGES_NOT_IN_511 = [
     "Optimize / Bottlenecks",
     "Optimize / Planning",
     "Optimize / Utilization",
-    "Red Hat Access Insights",
-    "Networks / Load Balancers",
 ]
 
 
@@ -210,8 +207,6 @@ def test_landing_page_admin(
     # splitting steps splits Import and Export, which we do not wanted, so joining them with /
     if "Import / Export" in start_page:
         steps = steps[:-2] + ["Import / Export"]
-    elif "Red Hat Access Insights" in start_page:
-        steps = ["Red Hat Insights", "Actions"]
     elif "Most Recent Alerts" in start_page:
         steps = steps[:-1]
 
