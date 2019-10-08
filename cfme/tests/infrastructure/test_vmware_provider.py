@@ -11,28 +11,28 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
+
+filter_fields = [['provisioning', 'template'],
+                ['provisioning', 'host'],
+                ['provisioning', 'datastore']]
+
 pytestmark = [
     test_requirements.vmware,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
-    pytest.mark.provider([VMwareProvider],
-                        required_fields=[['provisioning', 'template'],
-                                        ['provisioning', 'host'],
-                                        ['provisioning', 'datastore'],
-                                        (["cap_and_util", "capandu_vm"], "cu-24x7")],
-                        scope="module")
+    pytest.mark.provider([VMwareProvider], required_fields=filter_fields, scope="module")
 ]
 
 
 @pytest.mark.tier(3)
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
 def test_vmware_provider_filters(appliance, provider, soft_assert):
     """
     N-3 filters for esx provider.
@@ -64,7 +64,7 @@ def test_vmware_provider_filters(appliance, provider, soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.long_running
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
 def test_appliance_scsi_control_vmware(request, appliance):
     """
     Appliance cfme-vsphere-paravirtual-*.ova has SCSI controller as Para
@@ -106,7 +106,7 @@ def test_appliance_scsi_control_vmware(request, appliance):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
 def test_vmware_vds_ui_display(soft_assert, appliance, provider):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
@@ -140,7 +140,9 @@ def test_vmware_vds_ui_display(soft_assert, appliance, provider):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1650441, forced_streams=['5.10', '5.11'])])
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider],
+    required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    selector=ONE, override=True)
 def test_vmware_reconfigure_vm_controller_type(appliance, provider):
     """
     Edit any VM which is provisioned for vSphere and select "Reconfigure this VM" option.
@@ -179,7 +181,7 @@ def test_vmware_reconfigure_vm_controller_type(appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
 def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
@@ -243,8 +245,10 @@ def test_vmware_inaccessible_datastore():
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1689369, forced_streams=['5.10', '5.11'])])
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE,
+    required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True)
+@pytest.mark.meta(automates=[1689369])
 def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     """
     Test CD/DVD Drives dropdown lists ISO files, dropdown is not blank
@@ -380,7 +384,7 @@ def test_vmware_provisioned_vm_host_relationship(request, appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
 def test_esxi_reboot_not_orphan_vms(appliance, provider):
     """
     By mimicking ESXi reboot effect on VMs in CFME, make sure they are not getting marked orphaned.
@@ -428,7 +432,7 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
 @pytest.mark.meta(automates=[1688900])
 def test_switches_class_present_ems(appliance, provider):
     """
@@ -473,7 +477,7 @@ def test_switches_class_present_ems(appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE, override=True)
 @pytest.mark.meta(automates=[1719399])
 def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
     """
@@ -514,3 +518,39 @@ def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
     # Using appliance.rest_api as hosts.all() do not return archived hosts, I need those too
     hosts_after = len(appliance.rest_api.collections.hosts.all)
     assert hosts_before == hosts_after
+
+
+@pytest.mark.tier(1)
+@pytest.mark.provider([VMwareProvider], selector=ONE,
+required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+override=True)
+@pytest.mark.meta(automates=[1755070])
+def test_vm_notes_ui(appliance, provider):
+    """
+    Check if the VM Notes are shown in the CFME UI for VMs on VMware.
+
+    Bugzilla:
+        1755070
+
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testtype: functional
+        testSteps:
+            1.Add VMware provider to CFME
+            2.Navigate to Compute->Infrastructure->Virtual Machines
+            3.Select a VM to view details and click on "Container" in the "Basic Information" table
+            4.Check if Notes field exists and Notes are shown
+    """
+    vms_collections = appliance.collections.infra_vms
+    vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
+    view = navigate_to(vm, 'VmContainer')
+    assert view.basic_information.get_field('Notes').is_displayed
+    # all cu-24x7 do have notes on them hence following check would work
+    # TODO: Once the following issue https://github.com/ManageIQ/wrapanapi/issues/422
+    # is fixed, update test to compare Notes found via API
+    # to check it against what's displayed in the UI.
+    assert view.basic_information.read()['Notes'] != '', ("VM notes field is empty in CFME or"
+        "VM does not have any notes")
