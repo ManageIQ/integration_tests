@@ -81,7 +81,7 @@ app_console = pytest.mark.requirement(
 auth = pytest.mark.requirement(
     "Authentication",
     description='Authentication in MIQ/CFME, external authentication provider support',
-    assignee_id='apagac',
+    assignee_id='jdupuy',
 )
 
 automate = pytest.mark.requirement(
