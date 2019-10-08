@@ -466,6 +466,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
             :py:class:`int` instance count.
         """
         view = navigate_to(self, 'Details')
+        view.browser.refresh()
         return int(view.entities.relationships.get_text_of('Instances'))
 
 

@@ -200,7 +200,7 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
     volume.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.10"],
+@pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.10", "5.11"],
                                unblock=lambda provider: provider.one_of(EC2Provider))])
 @test_requirements.storage
 def test_storage_volume_attached_delete(appliance, provider, instance_fixture, from_manager):
@@ -233,7 +233,7 @@ def test_storage_volume_attached_delete(appliance, provider, instance_fixture, f
     # attach
     volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
                            from_manager=from_manager)
-    wait_for(lambda: volume.status == 'in-use', delay=15, timeout=600)
+    wait_for(lambda: volume.instance_count == 1, delay=15, timeout=600)
 
     try:
         volume.delete(from_manager=from_manager)
@@ -248,7 +248,7 @@ def test_storage_volume_attached_delete(appliance, provider, instance_fixture, f
                                          'attached to one or more Instances'.format(volume.name))
     # detach
     volume.detach_instance(name=instance_fixture.name, from_manager=from_manager)
-    wait_for(lambda: volume.status == 'available', delay=15, timeout=600)
+    wait_for(lambda: volume.instance_count == 0, delay=15, timeout=600)
 
     volume.delete()
 
