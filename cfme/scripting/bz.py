@@ -26,15 +26,21 @@ from collections import namedtuple
 import click
 import pytest
 import yaml
+from bugzilla_data import BugzillaData
 
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.path import data_path
+from cfme.utils.version import current_version
 
 STATUS = {
     "open_bzs": {"val": "true", "text": "are open", "coverage_text": " open"},
     "closed_bzs": {"val": "false", "text": "are closed", "coverage_text": " closed"},
     "all_bzs": {"val": None, "text": "have coverage", "coverage_text": ""}
 }
+
+QUERY_PATH = data_path.join("/bugzilla-queries/")
+BZ_URL = "bugzilla.redhat.com"
 
 
 def get_report(directory):
@@ -108,6 +114,69 @@ def main():
 @click.argument("directory", default="cfme/tests/")
 def report(directory):
     get_report(directory)
+
+
+@main.command(help="Generate BZ report on bugs going into a z-stream")
+@click.option(
+    "--stream",
+    "-s",
+    "stream",
+    default=current_version().vstring,
+    help="Stream for which to get BZs (e.g. 5.10.11.0)",
+    show_default=True
+)
+@click.option(
+    "--query-file",
+    "-q",
+    "query_file",
+    default="fixed_in_query.yaml",
+    help="Template query file",
+    show_default=True
+)
+@click.option(
+    "--plot-style",
+    "-ps",
+    "plot_style",
+    default="component",
+    help="If plotting, sort according to plot style (e.g. 'component', 'qa_contact', etc)",
+    show_default=True
+)
+@click.option(
+    "--plot",
+    "-p",
+    "plot",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Make a plot"
+)
+@click.option(
+    "--output",
+    "-o",
+    "output",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Show information about BZs"
+)
+@click.option(
+    "--filename",
+    "-f",
+    "fname",
+    default=f"bz-report-{current_version().vstring}.yaml"
+)
+def build_report(stream, query_file, plot_style, plot, output, fname):
+    query_path = QUERY_PATH.join(query_file)
+    bz_data = BugzillaData(query_path, BZ_URL, plot_style, credential_file="None")
+    # overide query with current stream
+    bz_data.query["fixed_in"] = [stream]
+    if plot:
+        bz_data.generate_plot()
+    if output:
+        click.echo(bz_data.generate_output())
+
+    click.echo(f"Generating a bz report at {fname}")
+    bz_data.generate_report(filename=fname)
 
 
 @main.command(help="List open/closed BZs that have test coverage")
