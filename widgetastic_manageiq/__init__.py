@@ -646,7 +646,7 @@ class SummaryTable(VanillaTable):
         title: Title of the table (eg. ``Properties``)
     """
 
-    BASELOC = './/table[./thead/tr/th[contains(@align, "left") and normalize-space(.)={}]]'
+    BASELOC = ".//table[./thead/tr/th[normalize-space(.)={}]]"
     Image = namedtuple("Image", ["alt", "title", "src"])
 
     def __init__(self, parent, title, *args, **kwargs):

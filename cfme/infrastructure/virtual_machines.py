@@ -311,6 +311,15 @@ class InfraVmSummaryView(VMDetailsEntities):
     datastore_usage = SummaryTable(title="Datastore Actual Usage Summary")
 
 
+class InfraVmContainerView(VMDetailsEntities):
+    basic_information = SummaryTable(title="Basic Information")
+    device = SummaryTable(title="Devices")
+
+    @property
+    def is_displayed(self):
+        return self.basic_information.is_displayed and self.device.is_displayed
+
+
 class InfraVmDetailsView(InfraVmView):
     title = Text('#explorer_title_text')
     toolbar = ConditionalSwitchableView(reference='entities.title')
@@ -1453,6 +1462,15 @@ class VmDetails(CFMENavigateStep):
 
     def resetter(self, *args, **kwargs):
         self.view.toolbar.reload.click()
+
+
+@navigator.register(InfraVm, 'VmContainer')
+class VmContainer(CFMENavigateStep):
+    VIEW = InfraVmContainerView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.entities.summary('Properties').click_at('Container')
 
 
 @navigator.register(InfraVm, 'SnapshotsAll')
