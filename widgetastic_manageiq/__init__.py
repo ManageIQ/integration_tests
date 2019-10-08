@@ -3441,7 +3441,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         """ obtains all entities like QuadIcon displayed by view
         Args:
             surf_pages (bool): current page entities if False, all entities otherwise
-            slice(int): if None, return all elements, else return the first this many elements.
+            slice(int): if None, return all elements, else return the first {slice} elements.
 
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
