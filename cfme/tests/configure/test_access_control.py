@@ -66,7 +66,8 @@ def new_tenant_admin(appliance, request):
 
     group_collection = appliance.collections.groups
     group = group_collection.create(
-        description='tenant_grp{}'.format(fauxfactory.gen_alphanumeric()), role=tenant_role.name, tenant='My Company/' + child_tenant.name)
+        description='tenant_grp{}'.format(fauxfactory.gen_alphanumeric()), role=tenant_role.name,
+        tenant='My Company/' + child_tenant.name)
     request.addfinalizer(group.delete_if_exists)
 
     tenant_admin = new_user(appliance, group, name='tenant_admin')
@@ -1564,11 +1565,10 @@ def test_tenantadmin_group_cruds(new_tenant_admin, request, appliance):
         navigate_to(appliance.server, 'LoggedIn')
         assert appliance.server.current_full_name() == tenant_admin.name
 
-        role = 'EvmRole-administrator'
         group_collection = appliance.collections.groups
         group = group_collection.create(
-            description='tenantgrp_{}'.format(fauxfactory.gen_alphanumeric()), role=new_tenant_admin['role'],
-            tenant='My Company/' + new_tenant_admin['tenant'])
+            description='tenantgrp_{}'.format(fauxfactory.gen_alphanumeric()),
+            role=new_tenant_admin['role'], tenant='My Company/' + new_tenant_admin['tenant'])
         request.addfinalizer(group.delete_if_exists)
         assert group.exists
 
