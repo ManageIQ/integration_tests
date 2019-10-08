@@ -28,6 +28,7 @@ import pytest
 import yaml
 from bugzilla_data import BugzillaData
 
+from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.path import data_path
@@ -118,11 +119,11 @@ def report(directory):
 
 @main.command(help="Generate BZ report on bugs going into a z-stream")
 @click.option(
-    "--stream",
-    "-s",
-    "stream",
+    "--version",
+    "-v",
+    "version",
     default=current_version().vstring,
-    help="Stream for which to get BZs (e.g. 5.10.11.0)",
+    help="Version for which to get BZs (e.g. 5.10.11.0)",
     show_default=True
 )
 @click.option(
@@ -134,44 +135,32 @@ def report(directory):
     show_default=True
 )
 @click.option(
-    "--plot-style",
-    "-ps",
-    "plot_style",
-    default="component",
-    help="If plotting, sort according to plot style (e.g. 'component', 'qa_contact', etc)",
-    show_default=True
-)
-@click.option(
-    "--plot",
-    "-p",
-    "plot",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Make a plot"
-)
-@click.option(
     "--output",
     "-o",
     "output",
     is_flag=True,
     default=False,
     show_default=True,
-    help="Show information about BZs"
+    help="Show information about BZs in the terminal"
 )
 @click.option(
     "--filename",
     "-f",
     "fname",
-    default=f"bz-report-{current_version().vstring}.yaml"
+    default=f"bz-report-{current_version().vstring}.yaml",
+    help="Filename into which the report is written (must be yaml file)"
 )
-def build_report(stream, query_file, plot_style, plot, output, fname):
+def build_report(version, query_file, output, fname):
     query_path = QUERY_PATH.join(query_file)
-    bz_data = BugzillaData(query_path, BZ_URL, plot_style, credential_file="None")
+    bz_data = BugzillaData(
+        query_path,
+        BZ_URL,
+        "component",
+        login=True,
+        credentials=conf.credentials.bugzilla
+    )
     # overide query with current stream
-    bz_data.query["fixed_in"] = [stream]
-    if plot:
-        bz_data.generate_plot()
+    bz_data.query["fixed_in"] = [version]
     if output:
         click.echo(bz_data.generate_output())
 

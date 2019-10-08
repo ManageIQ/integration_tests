@@ -1,0 +1,16 @@
+- query:
+    product:
+        - Red Hat CloudForms Management Engine
+    include_fields:
+        - id
+        - summary
+        - component
+        - description
+        - status
+        - qa_contact
+        - creator
+        - assigned_to
+        - version
+        - fixed_in
+    fixed_in:
+        - "5.10.11.0"
