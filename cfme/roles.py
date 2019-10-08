@@ -310,7 +310,6 @@ role_access_ui_510z = {
         'Networks': ['Subnets', 'Load Balancers', 'Providers', 'Security Groups', 'Floating IPs',
                      'Network Ports', 'Topology', 'Networks', 'Network Routers'],
         'Optimize': ['Bottlenecks', 'Planning', 'Utilization'],
-        'Red Hat Insights': ['Rules', 'Overview', 'Inventory', 'Actions'],
         'Services': ['Requests', 'Workloads', 'Catalogs', 'My Services'],
         'Storage': {
             'Block Storage': ['Volume Snapshots', 'Managers', 'Volume Backups', 'Volumes',
