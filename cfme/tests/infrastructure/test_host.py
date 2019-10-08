@@ -376,22 +376,23 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
                banner where "X" is the number of selected hosts. Properties for each host are
                refreshed. Making changes to test pre-commithooks
     """
-    slice = 2
+    refresh = 2
+    my_slice = slice(0, refresh, None)
     hosts_view = navigate_to(provider.collections.hosts, "All")
     num_hosts = hosts_view.entities.paginator.items_amount
-    if num_hosts < 2:
+    if num_hosts < refresh:
         pytest.skip('not enough hosts in appliance UI to run test')
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[f"'Refresh Provider' successfully initiated for "
-                                              f"{slice} Hosts"],
+                                              f"{refresh} Hosts"],
                             hostname=appliance.hostname)
     evm_tail.start_monitoring()
-    for h in hosts_view.entities.get_all(slice=slice):
+    for h in hosts_view.entities.get_all(slice=my_slice):
         h.check()
     hosts_view.toolbar.configuration.item_select('Refresh Relationships and Power States',
                                                  handle_alert=True)
     hosts_view.flash.assert_success_message(
-        f'Refresh initiated for {slice} Hosts from the CFME Database'
+        f'Refresh initiated for {refresh} Hosts from the CFME Database'
     )
     try:
         wait_for(provider.is_refreshed, func_kwargs={'force_refresh': False}, num_sec=300,
