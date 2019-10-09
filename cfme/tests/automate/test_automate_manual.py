@@ -299,28 +299,6 @@ def test_automate_git_credentials_changed():
 
 
 @pytest.mark.tier(3)
-def test_automate_import_namespace_attributes_updated():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: low
-        initialEstimate: 1/12h
-        tags: automate
-        testSteps:
-            1. Export an Automate model
-            2. Change the display name and description in the exported namespace yaml file
-            3. Run an import with the updated data
-            4. Check if the namespace attributes get updated.Display name and description attributes
-               should get updated
-
-    Bugzilla:
-        1440226
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_git_verify_ssl():
     """
     Polarion:
