@@ -22,7 +22,6 @@ ACTION="${1}"
 shift 1;
 PIDFILE_GUNICORN="./.sprout.gunicorn.pid"
 PIDFILE_MEMCACHED="./.sprout.memcached.pid"
-PIDFILE_WORKER="./.sprout.worker.pid"
 PIDFILE_BEAT="./.sprout.beat.pid"
 PIDFILE_FLOWER="./.sprout.flower.pid"
 PIDFILE_LOGSERVER="./.sprout.logserver.pid"
@@ -30,10 +29,24 @@ LOGFILE="./sprout-manager.log"
 UPDATE_LOG="./update.log"
 GUNICORN_CMD="gunicorn --bind 127.0.0.1:${DJANGO_PORT:-8000} -w ${GUNICORN_WORKERS:-4} --access-logfile access.log --error-logfile error.log sprout.wsgi:application"
 MEMCACHED_CMD="memcached -l 127.0.0.1 -p ${MEMCACHED_PORT:-23156}"
-WORKER_CMD="./celery_runner worker --app=sprout.celery:app --concurrency=${CELERY_MAX_WORKERS:-4} --loglevel=INFO -Ofair"
+
+MAX_WORKERS=$(nproc --all)
+NWORKERS_SHARE=$(( MAX_WORKERS/5 ))
+NWORKERS_REMAINDER=$(( MAX_WORKERS%5 ))
+HPRI_WORKERS=$(( NWORKERS_SHARE*2 ))
+MPRI_WORKERS=$(( NWORKERS_SHARE*2 ))
+LPRI_WORKERS=$(( NWORKERS_SHARE+NWORKERS_REMAINDER ))
+PRI_WORKERS=("${HPRI_WORKERS}" "${MPRI_WORKERS}" "${LPRI_WORKERS}")
+PRI_QUEUES=('high' 'normal' 'low')
+
 BEAT_CMD="./celery_runner beat --app=sprout.celery:app"
 FLOWER_CMD="./celery_runner flower --app=sprout.celery:app"
 LOGSERVER_CMD="./logserver.py"
+
+function expand_worker_command() {
+    WORKER_CMD="./celery_runner worker --app=sprout.celery:app --concurrency=${nworkers} -n worker.${queue} -Q ${queue} --loglevel=INFO -Ofair"
+
+}
 
 true
 TRUE=$?
@@ -265,7 +278,10 @@ function reload_gunicorn() {
 # CELERY worker functions
 #
 function start_worker() {
+    queue=$1
+    nworkers=$2
     cddir
+    PIDFILE_WORKER="./.sprout.worker.${queue}.pid"
     if [ -e "${PIDFILE_WORKER}" ] ;
     then
         ps -p "$(cat "$PIDFILE_WORKER")" >/dev/null
@@ -278,14 +294,27 @@ function start_worker() {
     fi
 
     echo ">> Starting Worker"
-    $WORKER_CMD > $LOGFILE 2>&1 &
+    expand_worker_command
+    ${WORKER_CMD} > $LOGFILE 2>&1 &
     PID=$!
     echo $PID > $PIDFILE_WORKER
     echo ">> Worker is running!"
 }
 
+
+function start_workers() {
+    length=${#PRI_QUEUES[@]}
+    for ((i=0;i<$length;i++)); do
+        start_worker "${PRI_QUEUES[$i]}" "${PRI_WORKERS[$i]}"
+    done
+}
+
+
 function stop_worker() {
+    queue=$1
+
     cddir
+    PIDFILE_WORKER="./.sprout.worker.${queue}.pid"
     if [ -e "${PIDFILE_WORKER}" ] ;
     then
         PID=`cat $PIDFILE_WORKER`
@@ -309,6 +338,15 @@ function stop_worker() {
         return 1
     fi
 }
+
+
+function stop_workers() {
+    length=${#PRI_QUEUES[@]}
+    for ((i=0;i<$length;i++)); do
+        stop_worker "${PRI_QUEUES[$i]}"
+    done
+}
+
 
 ###
 #
@@ -416,14 +454,14 @@ function start_sprout() {
     start_logserver
     start_memcached
     start_gunicorn
-    start_worker
+    start_workers
     start_flower
     start_beat
 }
 
 function stop_sprout() {
     stop_beat
-    stop_worker
+    stop_workers
     stop_flower
     stop_gunicorn
     stop_memcached
@@ -494,21 +532,21 @@ function update_sprout() {
     then
         echo "> Stopping processes"
         stop_flower
-        stop_worker
+        stop_workers
         stop_gunicorn
         echo "> Running migrations"
         ./manage.py migrate >> $UPDATE_LOG
         echo "> Starting processes"
         start_gunicorn
-        start_worker
+        start_workers
         start_flower
     else
         # Easy case
         echo "> Reloading Sprout"
         reload_gunicorn
-        stop_worker
+        stop_workers
         stop_flower
-        start_worker
+        start_workers
         start_flower
     fi
     start_beat
@@ -525,8 +563,8 @@ function reload_sprout() {
     rm -f celerybeat-schedule
     reload_gunicorn
     stop_flower
-    stop_worker
-    start_worker
+    stop_workers
+    start_workers
     start_flower
     start_beat
     echo "> Reload finished"
@@ -547,14 +585,14 @@ function sprout_needs_update() {
 case "${ACTION}" in
     gunicorn-start) start_gunicorn ;;
     beat-start) start_beat ;;
-    worker-start) start_worker ;;
+    worker-start) start_workers ;;
     flower-start) start_flower ;;
     memcached-start) start_memcached ;;
     logserver-start) start_logserver ;;
     gunicorn-stop) stop_gunicorn ;;
 
     beat-stop) stop_beat ;;
-    worker-stop) stop_worker ;;
+    worker-stop) stop_workers ;;
     flower-stop) stop_flower ;;
     memcached-stop) stop_memcached ;;
     logserver-stop) stop_logserver ;;
