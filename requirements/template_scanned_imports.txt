@@ -14,6 +14,7 @@ debtcollector
 deepdiff
 diaper
 docker-py
+dynaconf[all]
 fauxfactory
 gevent
 humanfriendly

@@ -21,7 +21,6 @@ class SlaveManager(object):
         self.collection = None
         self.slaveid = conf['env']['slaveid'] = slaveid
         self.log = cfme.utils.log.logger
-        # conf.clear()
         # Override the logger in utils.log
 
         ctx = zmq.Context.instance()

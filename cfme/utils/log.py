@@ -220,13 +220,6 @@ class NamedLoggerAdapter(TraceLoggerAdapter):
 
 
 def _load_conf(logger_name=None):
-    # Reload logging conf from env, then update the logging_conf
-    # try:
-    #     del(conf['env'])
-    # except KeyError:
-    #     # env not loaded yet
-    #     pass
-
     logging_conf = _default_conf.copy()
 
     yaml_conf = conf.env.get('logging', {})

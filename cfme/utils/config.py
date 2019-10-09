@@ -5,6 +5,7 @@ import os
 
 import attr
 import yaycl
+from cached_property import cached_property
 from dynaconf import LazySettings
 
 from cfme.utils import path
@@ -56,7 +57,6 @@ class Configuration(object):
     Holds ConfigData objects in dictionary `settings`.
     """
     def __init__(self):
-        self.settings = None
         self.yaycl_config = None
 
     def configure_creds(self, config_dir, crypt_key_file=None):
@@ -79,7 +79,8 @@ class Configuration(object):
         else:
             self.yaycl_config = yaycl.Config(config_dir=config_dir)
 
-    def configure(self):
+    @cached_property
+    def settings(self):
         """
         Loads all the congfigs in settings dictionary where Key is filename(without extension)
         and value is ConfigData object relevant to that file.
@@ -94,19 +95,18 @@ class Configuration(object):
          'perf_tests': <cfme.utils.config_copy.ConfigData at 0x7f2a943ad2e8>}
 
         """
-        if self.settings is None:
-            self.settings = {
-                file.basename[:-5]: ConfigData(env=file.basename[:-5])
-                for file in path.conf_path.listdir() if file.basename[-5:] == '.yaml' and
-                '.local.yaml' not in file.basename
-            }
+        settings = {
+            f.purebasename: ConfigData(env=f.purebasename)
+            for f in path.conf_path.listdir() if '.local.yaml' not in f.basename and
+            f.ext in ['.yaml', '.yml']
+        }
+        return settings
 
     def get_config(self, name):
         """returns a config object
 
         :param name: name of the configuration object
         """
-        self.configure()
         if name in YAML_KEYS:
             if name == 'credentials' or name == 'hidden':
                 return getattr(self.yaycl_config, name)
