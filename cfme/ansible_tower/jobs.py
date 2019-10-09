@@ -90,7 +90,7 @@ class TowerJob(BaseEntity):
         view.flash.assert_no_error()
 
     def is_job_successful(self):
-        return True if self.status == "successful" else False
+        return self.status == "successful"
 
     def wait_for_completion(self, num_sec=1200, delay=10):
         def last_status():
