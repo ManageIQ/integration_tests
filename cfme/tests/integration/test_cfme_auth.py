@@ -299,9 +299,13 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
                          'Amazon auth_data needed for group switch testing')
 @pytest.mark.uncollectif(lambda auth_user: len(auth_user.groups or []) < 2,
                          reason='User does not have multiple groups')
+@pytest.mark.meta(blockers=[BZ(1759291)], automates=[1759291])
 def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, soft_assert, request,
                               user_obj):
     """Test switching groups on a single user, between retreived group and built-in group
+
+    Bugzilla:
+        1759291
 
     Polarion:
         assignee: jdupuy
