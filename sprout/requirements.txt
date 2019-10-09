@@ -6,6 +6,7 @@ django-object-actions
 django-ipware
 flower
 gunicorn
+kombu==4.5.0
 pika
 python-memcached
 redis==3.3.8

@@ -1055,9 +1055,9 @@ class Appliance(MetadataMixin):
         """Give appliances from shepherd to the pool where the maximum count is specified by pool
         or you can specify a custom limit
         """
-        from appliances.tasks import (
-            appliance_power_on, mark_appliance_ready, wait_appliance_ready, appliance_yum_update,
-            appliance_reboot)
+        from appliances.tasks.provisioning import (mark_appliance_ready, wait_appliance_ready)
+        from appliances.tasks.service_ops import (appliance_power_on, appliance_yum_update,
+                                                appliance_reboot)
         limit = custom_limit if custom_limit is not None else pool.total_count
         appliances = []
         if limit <= 0:
@@ -1105,7 +1105,7 @@ class Appliance(MetadataMixin):
     @classmethod
     def kill(cls, appliance_or_id, force_delete=False):
         # Completely delete appliance from provider
-        from appliances.tasks import kill_appliance
+        from appliances.tasks.service_ops import kill_appliance
         if isinstance(appliance_or_id, cls):
             self = Appliance.objects.get(id=appliance_or_id.id)
         else:
@@ -1311,7 +1311,7 @@ class AppliancePool(MetadataMixin):
                     raise ValueError("You are limited to {} VMs per pool, requested {}".format(
                         owner.quotas.per_pool_quota, num_appliances))
         user_filter = {'provider__user_groups__in': owner.groups.all()}
-        from appliances.tasks import request_appliance_pool
+        from appliances.tasks.provisioning import request_appliance_pool
         # Retrieve latest possible
         if not version:
             versions = Template.get_versions(template_group=group, ready=True, usable=True,

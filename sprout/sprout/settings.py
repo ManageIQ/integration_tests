@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 from datetime import timedelta
 import os
 
+from kombu import Queue, Exchange
+
 from cfme.utils.conf import credentials
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -180,100 +182,123 @@ ORPHANED_APPLIANCE_GRACE_TIME = dict(
     minutes=45,
 )
 
+CELERY_QUEUES = (
+    Queue('high', Exchange('high'), routing_key='high'),
+    Queue('normal', Exchange('normal'), routing_key='normal'),
+    Queue('low', Exchange('low'), routing_key='low'),
+)
+
+CELERY_DEFAULT_QUEUE = 'low'
+CELERY_DEFAULT_EXCHANGE = 'low'
+CELERY_DEFAULT_ROUTING_KEY = 'low'
+
+CELERY_ROUTES = {
+    # -- HIGH PRIORITY QUEUE -- #
+    'appliances.tasks.provisioning.*': {'queue': 'high'},
+
+    # -- NORMAL PRIORITY QUEUE -- #
+    'appliances.tasks.service_ops.*': {'queue': 'normal'},
+    'appliances.tasks.template.*': {'queue': 'normal'},
+
+    # -- LOW PRIORITY QUEUE -- #
+    'appliances.tasks.maintainance.*': {'queue': 'low'},
+
+}
+
 # Celery beat
 CELERYBEAT_SCHEDULE = {
     'check-templates': {
-        'task': 'appliances.tasks.check_templates',
+        'task': 'appliances.tasks.maintainance.check_templates',
         'schedule': timedelta(minutes=17),
     },
 
     'refresh-appliances': {
-        'task': 'appliances.tasks.refresh_appliances',
+        'task': 'appliances.tasks.maintainance.refresh_appliances',
         'schedule': timedelta(minutes=7),
     },
 
     'free-appliance-shepherd': {
-        'task': 'appliances.tasks.free_appliance_shepherd',
+        'task': 'appliances.tasks.provisioning.free_appliance_shepherd',
         'schedule': timedelta(seconds=30),
     },
 
-    'kill-unused-appliances': {
-        'task': 'appliances.tasks.kill_unused_appliances',
+    'kill-expired-appliances': {
+        'task': 'appliances.tasks.maintainance.kill_expired_appliances',
         'schedule': timedelta(minutes=1),
     },
 
     'kill-lost-appliances': {
-        'task': 'appliances.tasks.kill_lost_appliances',
+        'task': 'appliances.tasks.maintainance.kill_lost_appliances',
         'schedule': timedelta(minutes=75),
     },
 
     'kill-empty-pools': {
-        'task': 'appliances.tasks.remove_empty_appliance_pools',
+        'task': 'appliances.tasks.maintainance.remove_empty_appliance_pools',
         'schedule': timedelta(hours=2),
     },
 
     'delete-nonexistent-appliances': {
-        'task': 'appliances.tasks.delete_nonexistent_appliances',
+        'task': 'appliances.tasks.maintainance.delete_nonexistent_appliances',
         'schedule': timedelta(minutes=10),
     },
 
     'poke-trackerbot': {
-        'task': 'appliances.tasks.poke_trackerbot',
+        'task': 'appliances.tasks.template.poke_trackerbot',
         'schedule': timedelta(minutes=10),
     },
 
     'process-delayed-provision-tasks': {
-        'task': 'appliances.tasks.process_delayed_provision_tasks',
+        'task': 'appliances.tasks.provisioning.process_delayed_provision_tasks',
         'schedule': timedelta(seconds=20),
     },
 
     'scavenge-managed-providers': {
-        'task': 'appliances.tasks.scavenge_managed_providers',
+        'task': 'appliances.tasks.maintainance.scavenge_managed_providers',
         'schedule': timedelta(minutes=60),
     },
 
     'mailer-version-mismatch': {
-        'task': 'appliances.tasks.mailer_version_mismatch',
+        'task': 'appliances.tasks.maintainance.mailer_version_mismatch',
         'schedule': timedelta(minutes=60),
     },
 
     'pick-templates-for-deletion': {
-        'task': 'appliances.tasks.pick_templates_for_deletion',
+        'task': 'appliances.tasks.maintainance.pick_templates_for_deletion',
         'schedule': timedelta(minutes=60),
     },
 
     'obsolete-template-deleter': {
-        'task': 'appliances.tasks.obsolete_template_deleter',
+        'task': 'appliances.tasks.maintainance.obsolete_template_deleter',
         'schedule': timedelta(days=1),
     },
 
     'check-swap-in-appliances': {
-        'task': 'appliances.tasks.check_swap_in_appliances',
+        'task': 'appliances.tasks.maintainance.check_swap_in_appliances',
         'schedule': timedelta(minutes=60),
     },
 
     'synchronize-untracked-vms': {
-        'task': 'appliances.tasks.synchronize_untracked_vms',
+        'task': 'appliances.tasks.maintainance.synchronize_untracked_vms',
         'schedule': timedelta(hours=1),
     },
 
     'synchronize-appliances-metadata': {
-        'task': 'appliances.tasks.appliances_synchronize_metadata',
+        'task': 'appliances.tasks.maintainance.appliances_synchronize_metadata',
         'schedule': timedelta(minutes=45),
     },
 
     'sync-quotas-perf': {
-        'task': 'appliances.tasks.sync_quotas_perf',
+        'task': 'appliances.tasks.maintainance.sync_quotas_perf',
         'schedule': timedelta(hours=12),
     },
 
     'sync-provider-hw': {
-        'task': 'appliances.tasks.sync_provider_hw',
+        'task': 'appliances.tasks.maintainance.sync_provider_hw',
         'schedule': timedelta(minutes=61),
     },
 
     'read-docker-images-from-url': {
-        'task': 'appliances.tasks.read_docker_images_from_url',
+        'task': 'appliances.tasks.provisioning.read_docker_images_from_url',
         'schedule': timedelta(hours=12),
     }
 }
