@@ -46,9 +46,13 @@ def template_name(provisioning):
 def prov_data(provider, vm_name, template_name, provisioning):
     if provider.one_of(OpenStackProvider):
         return {
-            "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
-            "environment": {'automatic_placement': True},
-            "properties": {'instance_type': partial_match(provisioning["instance_type2"])}
+            "catalog": {"vm_name": vm_name, "catalog_name": {"name": template_name}},
+            "environment": {"automatic_placement": True},
+            "properties": {
+                "instance_type": partial_match(
+                    provisioning.get("instance_type2", "Instance type is not available")
+                )
+            },
         }
 
 

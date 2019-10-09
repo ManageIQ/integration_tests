@@ -49,18 +49,16 @@ def template_name(provisioning):
     return provisioning["image"]["name"]
 
 
-@pytest.fixture(scope="module")
-def roottenant(appliance):
-    # configuration tenants, not cloud tenants
-    return appliance.collections.tenants.get_root_tenant()
-
-
 @pytest.fixture
-def prov_data(vm_name, template_name):
+def prov_data(vm_name, template_name, provisioning):
     return {
-        "catalog": {'vm_name': vm_name, 'catalog_name': {'name': template_name}},
-        "environment": {'automatic_placement': True},
-        'properties': {'instance_type': partial_match('m1.large')}
+        "catalog": {"vm_name": vm_name, "catalog_name": {"name": template_name}},
+        "environment": {"automatic_placement": True},
+        "properties": {
+            "instance_type": partial_match(
+                provisioning.get("instance_type2", "Instance type is not available")
+            )
+        },
     }
 
 
@@ -73,13 +71,14 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
 
 
 @pytest.fixture
-def set_roottenant_quota(request, roottenant, appliance):
+def set_roottenant_quota(request, appliance):
+    roottenant = appliance.collections.tenants.get_root_tenant()
     field, value = request.param
-    roottenant.set_quota(**{'{}_cb'.format(field): True, field: value})
+    roottenant.set_quota(**{f'{field}_cb': True, field: value})
     yield
     # will refresh page as navigation to configuration is blocked if alert are on requests page
     appliance.server.browser.refresh()
-    roottenant.set_quota(**{'{}_cb'.format(field): False})
+    roottenant.set_quota(**{f'{field}_cb': False})
 
 
 @pytest.fixture
@@ -87,8 +86,8 @@ def catalog_item(appliance, provider, provisioning, template_name, dialog, catal
                  set_default):
     catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type,
-        name="test_{}".format(fauxfactory.gen_alphanumeric()),
-        description="test catalog",
+        name=fauxfactory.gen_alphanumeric(start="test_"),
+        description=fauxfactory.gen_alphanumeric(start="desc_"),
         display_in=True,
         catalog=catalog,
         dialog=dialog,
@@ -128,10 +127,9 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider,
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
-        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
+        'request': {'email': f'test_{fauxfactory.gen_alphanumeric()}@example.com'}})
     prov_data.update({'template_name': template_name})
-    request_description = 'Provision from [{template}] to [{vm}{msg}]'.format(
-        template=template_name, vm=vm_name, msg=extra_msg)
+    request_description = f'Provision from [{template_name}] to [{vm_name}{extra_msg}]'
     appliance.collections.cloud_instances.create(vm_name, provider, prov_data, auto_approve=approve,
                                                  override=True,
                                                  request_description=request_description)
@@ -176,7 +174,7 @@ def test_tenant_quota_enforce_via_service_cloud(request, appliance, context, set
             service_catalogs.add_to_shopping_cart()
         service_catalogs.order()
     # nav to requests page to check quota validation
-    request_description = 'Provisioning Service [{0}] from [{0}]'.format(catalog_item.name)
+    request_description = f'Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]'
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
@@ -231,8 +229,7 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
             service_catalogs.add_to_shopping_cart()
         service_catalogs.order()
     # nav to requests page to check quota validation
-    request_description = "Provisioning Service [{name}] from [{name}]".format(
-        name=catalog_item.name)
+    request_description = f"Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]"
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
@@ -241,8 +238,7 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
 
 @pytest.fixture(scope="function")
 def instance(appliance, provider, small_template, setup_provider):
-    """ Fixture to provision instance on the provider
-    """
+    """Fixture to provision instance on the provider"""
     instance = appliance.collections.cloud_instances.instantiate(random_vm_name('pwr-c'),
                                                                  provider,
                                                                  small_template.name)
