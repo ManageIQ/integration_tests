@@ -142,19 +142,23 @@ def service_catalogs(appliance, catalog_item, stack_data):
 
 
 @pytest.fixture
-def stack(appliance, provider, stack_data):
-    return appliance.collections.cloud_stacks.instantiate(stack_data['stack_name'],
-                                                          provider=provider)
+def stack_created(appliance, provider, order_stack, stack_data):
+    provision_request = order_stack
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.is_succeeded()
+    stack = appliance.collections.cloud_stacks.instantiate(stack_data['stack_name'],
+                                                           provider=provider)
+    stack.wait_for_exists()
+    yield stack
 
 
 @pytest.fixture
-def order_stack(appliance, service_catalogs, stack):
+def order_stack(appliance, provider, stack_data, service_catalogs):
     """Fixture which prepares provisioned stack"""
     provision_request = service_catalogs.order()
-    provision_request.wait_for_request(method='ui')
-    assert provision_request.is_succeeded()
-    stack.wait_for_exists()
-    yield provision_request, stack
+    stack = appliance.collections.cloud_stacks.instantiate(stack_data['stack_name'],
+                                                           provider=provider)
+    yield provision_request
     prov_req_cleanup(appliance, provision_request)
     stack.wait_for_not_exists()
 
@@ -166,8 +170,6 @@ def guess_svc_name(provision_request):
         ('message', r'Server \[EVM\] Service \[([\w-]+)\].*')
     ]
 
-        #[EVM] Service [6lpMBvLg1a-20191008-134345] Provisioned Successfully
-    #r'Provisioning Service \[(\w+)\] from \[\w+\]')),
     for attr, pattern in matchpairs:
         text = getattr(provision_request, attr)
         match = re.match(pattern, text)
@@ -177,10 +179,7 @@ def guess_svc_name(provision_request):
 
 
 def prov_req_cleanup(appliance, provision_request):
-    #'[EVM] Service [JtCMIq08if-20191008-091234] Provisioned Successfully'
-    # func_args=(r'Provisioning Service \[(\w+)\] from \[\w+\]', provision_request.description)
     provision_request.update()
-
     svc_name = wait_for(
         func=guess_svc_name,
         func_args=(provision_request,),
@@ -188,34 +187,21 @@ def prov_req_cleanup(appliance, provision_request):
         fail_condition=None,
         timeout='5m').out
 
-    #svc_name_base = match.group(1)
-    #provision_request.wait_for_request()
-    #myservice = MyService(appliance, name_base=svc_name_base)
-
     myservice = MyService(appliance, name=svc_name)
     svc_cleanup(myservice)
 
 
 def svc_cleanup(service):
-    if service.exists:
-        service.retire()
-        service.delete()
-
-# REMOVE
-def _cleanup(appliance=None, provision_request=None, service=None):
-    if not service:
-        last_message = provision_request.get_request_row_from_ui()['Last Message'].text
-        service_name = re.match(r'Server \[EVM\] Service \[([^[]*)\].*', last_message).group(1)
-        myservice = MyService(appliance, service_name)
-    else:
-        myservice = service
-    if myservice.exists:
-        myservice.retire()
-        myservice.delete()
+    # I think we do not really want conditional cleanups here -- to issue
+    # delete only if service exists. The service name can be guessed wrong. In
+    # that case we would not do cleanup as the `exists` returns false and
+    # the provider gets one more item of orphaned junk.
+    service.retire()
+    service.delete()
 
 
 @pytest.mark.meta(blockers=[BZ(1754543)])
-def test_provision_stack(order_stack):
+def test_provision_stack(order_stack, stack_created):
     """Tests stack provisioning
 
     Metadata:
@@ -226,9 +212,9 @@ def test_provision_stack(order_stack):
         initialEstimate: 1/3h
         casecomponent: Provisioning
     """
-    provision_request, stack = order_stack
+    provision_request = order_stack
     assert provision_request.is_succeeded()
-    assert stack.exists
+    assert stack_created.exists
 
 
 @pytest.mark.meta(blockers=[BZ(1754543)])
@@ -285,9 +271,9 @@ def test_remove_non_read_only_orch_template(appliance, provider, template, servi
 
 
 @pytest.mark.meta(blockers=[BZ(1754543)])
-@pytest.mark.provider([EC2Provider], selector=ONE_PER_TYPE, override=True, scope='module')
-def test_remove_read_only_orch_template_neg(appliance, provider, template, service_catalogs,
-                                            order_stack, request):
+@pytest.mark.provider([OpenStackProvider, AzureProvider, EC2Provider],
+                      selector=ONE_PER_TYPE, override=True, scope='module')
+def test_remove_read_only_orch_template_neg(appliance, provider, template, order_stack, request):
     """
     For RHOS/Azure the original template will remain stand-alone while the stack links
     to a new template read from the RHOS/Azure provider. Hence we can delete used orchestration
@@ -309,11 +295,24 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, servi
     """
     view = navigate_to(template, 'Details')
     msg = "Remove this Orchestration Template from Inventory"
-    assert not view.toolbar.configuration.item_enabled(msg)
+    wait_for(func=view.toolbar.configuration.item_enabled,
+             func_args=(msg,),
+             fail_condition=True,
+             fail_func=view.browser.refresh,
+             timeout='1m')
+    if provider.one_of(OpenStackProvider, AzureProvider):
+        wait_for(func=view.toolbar.configuration.item_enabled,
+                func_args=(msg,),
+                fail_condition=False,
+                fail_func=view.browser.refresh,
+                timeout='3m')
+    # We expect the stack to get created fine, so let's check that.
+    order_stack.wait_for_request()
+    assert order_stack.is_succeeded()
 
 
 @pytest.mark.meta(blockers=[BZ(1754543)])
-def test_retire_stack(order_stack):
+def test_retire_stack(stack_created):
     """Tests stack retirement.
 
     Steps:
@@ -329,9 +328,8 @@ def test_retire_stack(order_stack):
         casecomponent: Services
         tags: stack
     """
-    _, stack = order_stack
-    stack.retire_stack()
-    assert not stack.exists, "Stack still visible in UI"
+    stack_created.retire_stack()
+    assert not stack_created.exists, "Stack still visible in UI"
 
 
 @pytest.mark.manual
