@@ -27,4 +27,7 @@ def test_download_report(infra_provider, report, filetype):
         caseimportance: high
         initialEstimate: 1/20h
     """
+    if filetype == "pdf":
+        # TODO: fix pdf download or create a manual test
+        pytest.skip("pdf printing opens a window and all the next tests fail")
     report.download(filetype)
