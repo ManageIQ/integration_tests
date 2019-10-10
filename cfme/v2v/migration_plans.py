@@ -424,7 +424,7 @@ class MigrationPlan(BaseEntity):
             func=_in_progress,
             message="migration plan is in progress, be patient please",
             delay=5,
-            num_sec=1800,
+            num_sec=3600,
             fail_cond=False
         )
 

@@ -378,6 +378,17 @@ def __set_conversion_instance_for_osp_ui(appliance, source_provider,  # noqa
                                        osp_ca_cert=tls_cert_key)
 
 
+def cleanup_target(provider, migrated_vm):
+    """Helper function to cleanup instances and associated volumes from openstack"""
+    if provider.one_of(OpenStackProvider):
+        volumes = []
+        vm = provider.mgmt.get_vm(migrated_vm.name)
+        for vol in vm.raw._info['os-extended-volumes:volumes_attached']:
+            volumes.append(vol['id'])
+        migrated_vm.cleanup_on_provider()
+        provider.mgmt.delete_volume(*volumes)
+
+
 def get_vm(request, appliance, source_provider, template, datastore='nfs'):
     """ Helper method that takes template , source provider and datastore
         and creates VM on source provider to migrate .
