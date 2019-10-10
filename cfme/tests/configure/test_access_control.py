@@ -1545,7 +1545,7 @@ def test_tenantadmin_user_crud(new_tenant_admin, request, appliance):
 
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
-def test_tenantadmin_group_cruds(new_tenant_admin, request, appliance):
+def test_tenantadmin_group_crud(new_tenant_admin, request, appliance):
     """
     Perform CRUD operations on users as Tenant administrator.
 
@@ -1816,38 +1816,6 @@ def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request
                 domain2.delete()
         except NameError:
             pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@test_requirements.multi_tenancy
-def test_tenantadmin_user_crud():
-    """
-    As a Tenant Admin I want to be able to create users in my tenant
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/4h
-        startsin: 5.5
-        testSteps:
-            1. Login as super admin and create new tenant
-            2. Create new role by copying EvmRole-tenant_administrator
-            3. Create new group and choose role created in previous step and your
-            tenant
-            4. Create new tenant admin user and assign him into group created in
-            previous step
-            5. login as tenant admin
-            6. Perform crud operations
-
-            Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
-            Workaround is to add modify permissions to tenant_administrator role or Roles
-            must be created by superadministrator. In 5.5.0.13 after giving additional permissions
-            to tenant_admin,able to create new roles
-    """
-    pass
 
 
 @pytest.mark.manual
