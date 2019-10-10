@@ -5,7 +5,7 @@ from cfme.utils.wait import wait_for
 
 
 def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning_data, request,
-                       num_sec=1500, wait=True):
+                       num_sec=1500, wait=True, email="template_provisioner@example.com"):
     # generate_tests makes sure these have values
     vm = appliance.collections.infra_vms.instantiate(name=vm_name,
                                                      provider=provider,
@@ -13,7 +13,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     provisioning_data.update({
         'request': {
-            'email': 'template_provisioner@example.com',
+            'email': email,
             'first_name': 'Template',
             'last_name': 'Provisioner',
             'notes': note}})

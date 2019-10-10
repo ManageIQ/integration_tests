@@ -6,6 +6,7 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -13,6 +14,8 @@ from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log_validator import LogValidator
+from cfme.utils.update import update
 
 pytestmark = [
     test_requirements.quota,
@@ -421,3 +424,85 @@ def test_service_infra_tenant_quota_with_default_entry_point(request, appliance,
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.fixture
+def configure_mail(domain):
+    """This fixture copies email instance to custom domain"""
+    approver = fauxfactory.gen_email()
+    default_recipient = fauxfactory.gen_email()
+    from_user = fauxfactory.gen_email()
+    domain.parent.instantiate(name="ManageIQ").namespaces.instantiate(
+        name="Configuration"
+    ).classes.instantiate(name="Email").instances.instantiate(name="Default").copy_to(domain.name)
+    instance = (
+        domain.namespaces.instantiate(name="Configuration").classes.instantiate(name="Email")
+    ).instances.instantiate(name="Default")
+    with update(instance):
+        instance.fields = {
+            "approver": {"value": approver},
+            "default_recipient": {"value": default_recipient},
+            "from": {"value": from_user},
+        }
+    yield approver, default_recipient, from_user
+
+
+@pytest.mark.meta(automates=[1579031, 1759123])
+@pytest.mark.tier(1)
+@pytest.mark.provider([RHEVMProvider], override=True, selector=ONE)
+@pytest.mark.parametrize(
+    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
+    [
+        [('memory', '2'), {'hardware': {'memory': '4096'}}, ''],
+    ],
+    indirect=['set_roottenant_quota'],
+    ids=['max_memory']
+)
+def test_quota_exceed_mail_with_more_info_link(configure_mail, appliance, provider,
+                                               set_roottenant_quota, custom_prov_data, prov_data,
+                                               extra_msg, vm_name, template_name):
+    """
+    Bugzilla:
+        1579031
+        1759123
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/12h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Infra
+        tags: quota
+        setup:
+            1. Copy instance ManageIQ/Configuration/Email/Default to custom domain
+            2. Enter values for fields: approver, default_recipient, from and signature
+        testSteps:
+            1. Provide valid mail address while provisioning Vm to exceed quota
+        expectedResults:
+            1. Quota exceed mail should be sent
+    """
+    approver, default_recipient, from_user = configure_mail
+    mail_to = fauxfactory.gen_email()
+    prov_data.update(custom_prov_data)
+    prov_data['catalog']['vm_name'] = vm_name
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[
+            f'"to"=>"{default_recipient}", "from"=>"{from_user}".*.Virtual Machine Request from '
+            f'{mail_to} was Denied."',
+            f'"to"=>"{mail_to}", "from"=>"{from_user}".*.Your Virtual Machine Request was Approved,'
+            f' pending Quota Validation.".*'],
+    ).waiting(timeout=120):
+
+        do_vm_provisioning(appliance, template_name=template_name, provider=provider,
+                           vm_name=vm_name, provisioning_data=prov_data, wait=False, request=None,
+                           email=mail_to)
+
+        # nav to requests page to check quota validation
+        request_description = f'Provision from [{template_name}] to [{vm_name}{extra_msg}]'
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        provision_request.wait_for_request(method='ui')
+        assert provision_request.row.reason.text == "Quota Exceeded"

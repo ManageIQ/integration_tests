@@ -318,29 +318,6 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove():
     pass
 
 
-@pytest.mark.tier(1)
-@pytest.mark.manual('manualonly')
-def test_quota_exceed_mail_with_more_info_link():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/12h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Infra
-        tags: quota
-        testSteps:
-            1. Setup smtp for cfme using https://mojo.redhat.com/videos/925032
-            2. See if you are Able to see the expected link address in an email for Quota Exceeded.
-
-    Bugzilla:
-        1579031
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
     """Test that used Quota gets recounted and reduced, when a VM is
