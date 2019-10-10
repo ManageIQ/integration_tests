@@ -15,6 +15,7 @@ from cfme.utils.pytest_shortcuts import fixture_filter
 from cfme.utils.version import Version
 
 ONE = 'one'
+SECOND = 'second'
 ALL = 'all'
 LATEST = 'latest'
 ONE_PER_VERSION = 'one_per_version'
@@ -294,6 +295,14 @@ def providers(metafunc, filters=None, selector=ALL, fixture_name='provider'):
     if selector == ONE:
         if matching_provs:
             allowed_providers = [matching_provs[0]]
+        else:
+            allowed_providers = []
+    elif selector == SECOND:
+        if matching_provs:
+            try:
+                allowed_providers = [matching_provs[1]]
+            except IndexError:
+                pytest.skip("no second provider was found")
         else:
             allowed_providers = []
     elif selector == LATEST:
