@@ -523,6 +523,8 @@ class BaseVM(
         Args:
             desired_state: A string indicating the desired state
             timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
+
+        TODO: Change this to use Sentaku
         """
         return wait_for(
             lambda: self.rest_api_entity.power_state == desired_state,
