@@ -14,6 +14,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.rest import assert_response
 from cfme.utils.wait import RefreshTimer
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -93,14 +94,13 @@ def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900
         return False
 
 
-def wait_for_pwr_state_change(instance, state_change_time, timeout=720):
-    def _wait_for():
-        vm = instance.rest_api_entity
-        if vm.state_changed_on != state_change_time:
-            return True
-
+def wait_for_power_state_refresh(instance, state_change_time, timeout=720):
     return wait_for(
-        _wait_for, num_sec=timeout, delay=30, message='Waiting for instance state refresh')
+        lambda: instance.rest_api_entity.state_changed_on != state_change_time,
+        num_sec=int(timeout),
+        delay=30,
+        message='Waiting for instance state refresh'
+    ).out
 
 
 def wait_for_termination(provider, instance):
@@ -524,22 +524,6 @@ def test_instance_power_options_from_off(provider, testing_instance,
 @test_requirements.rest
 class TestInstanceRESTAPI(object):
     """ Tests using the /api/instances collection. """
-    def verify_vm_power_state(self, vm, state):
-        vm.reload()
-        if isinstance(state, (list, tuple)):
-            return vm.power_state in state
-        return vm.power_state == state
-
-    def verify_action_result(self, rest_api, assert_success=True):
-        assert rest_api.response.status_code == 200
-        response = rest_api.response.json()
-        if 'results' in response:
-            response = response['results'][0]
-        message = response['message']
-        success = response['success']
-        if assert_success:
-            assert success
-        return success, message
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_stop(self, provider, testing_instance, ensure_vm_running,
@@ -555,13 +539,19 @@ class TestInstanceRESTAPI(object):
             caseimportance: high
             initialEstimate: 1/4h
         """
-        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        testing_instance.wait_for_power_state_change_rest(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.stop()
         else:
             appliance.rest_api.collections.instances.action.stop(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
+
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_OFF
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="stopped")
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -578,14 +568,20 @@ class TestInstanceRESTAPI(object):
             caseimportance: high
             initialEstimate: 1/4h
         """
-        testing_instance.wait_for_instance_state_change(
+        testing_instance.wait_for_power_state_change_rest(
             desired_state=testing_instance.STATE_OFF, timeout=1200)
         vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.start()
         else:
             appliance.rest_api.collections.instances.action.start(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
+
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_ON
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -602,23 +598,29 @@ class TestInstanceRESTAPI(object):
             caseimportance: high
             initialEstimate: 1/4h
         """
-        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        testing_instance.wait_for_power_state_change_rest(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.rest_api_entity
         state_change_time = vm.state_changed_on
         if from_detail:
             vm.action.reboot_guest()
         else:
             appliance.rest_api.collections.instances.action.reboot_guest(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
 
         # On some providers the VM never actually shuts off, on others it might
         # We may also miss a quick reboot during the wait_for.
         # Just check for when the state last changed
-        wait_for_pwr_state_change(testing_instance, state_change_time)
+        wait_for_power_state_refresh(testing_instance, state_change_time)
         state_change_time = testing_instance.rest_api_entity.state_changed_on
         # If the VM is not on after this state change, wait for another
         if vm.power_state != testing_instance.STATE_ON:
-            wait_for_pwr_state_change(testing_instance, state_change_time)
+            wait_for_power_state_refresh(testing_instance, state_change_time)
+
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_ON
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.provider([OpenStackProvider],
@@ -637,15 +639,19 @@ class TestInstanceRESTAPI(object):
             caseimportance: high
             initialEstimate: 1/4h
         """
-        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        testing_instance.wait_for_power_state_change_rest(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.reset()
         else:
             appliance.rest_api.collections.instances.action.reset(vm)
-        self.verify_action_result(appliance.rest_api)
-        wait_for(lambda: vm.power_state != testing_instance.STATE_ON, num_sec=720, delay=45,
-            fail_func=vm.reload)
+        assert_response(appliance.rest_api)
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_ON,
+            timeout=720
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.provider([AzureProvider, OpenStackProvider],
@@ -664,21 +670,35 @@ class TestInstanceRESTAPI(object):
             caseimportance: high
             initialEstimate: 1/4h
         """
-        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        testing_instance.wait_for_power_state_change_rest(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.rest_api_entity
 
         if from_detail:
             vm.action.suspend()
         else:
             appliance.rest_api.collections.instances.action.suspend(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
+
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_SUSPENDED,
+            delay=15
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="suspended")
 
         if from_detail:
             vm.action.start()
         else:
             appliance.rest_api.collections.instances.action.start(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
+
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_ON,
+            delay=15
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.provider([OpenStackProvider],
@@ -697,21 +717,34 @@ class TestInstanceRESTAPI(object):
             caseimportance: high
             initialEstimate: 1/4h
         """
-        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        testing_instance.wait_for_power_state_change_rest(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.rest_api_entity
 
         if from_detail:
             vm.action.pause()
         else:
             appliance.rest_api.collections.instances.action.pause(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_PAUSED,
+            delay=15
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="paused")
 
         if from_detail:
             vm.action.start()
         else:
             appliance.rest_api.collections.instances.action.start(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
+
+        # assert and wait until the power state change is reflected in REST
+        assert testing_instance.wait_for_power_state_change_rest(
+            desired_state=testing_instance.STATE_ON,
+            delay=15
+        )
+        # check if the power state change is reflected on UI and provider
         wait_for_instance_state(soft_assert, testing_instance, state="started")
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -728,13 +761,13 @@ class TestInstanceRESTAPI(object):
             caseimportance: high
             initialEstimate: 1/4h
         """
-        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        testing_instance.wait_for_power_state_change_rest(desired_state=testing_instance.STATE_ON)
         vm = testing_instance.rest_api_entity
         if from_detail:
             vm.action.terminate()
         else:
             appliance.rest_api.collections.instances.action.terminate(vm)
-        self.verify_action_result(appliance.rest_api)
+        assert_response(appliance.rest_api)
 
         wait_for_instance_state(soft_assert, testing_instance, state="terminated")
 
@@ -743,7 +776,8 @@ class TestInstanceRESTAPI(object):
             testing_instance.STATE_ARCHIVED,
             testing_instance.STATE_UNKNOWN
         )
-        soft_assert(self.verify_vm_power_state(vm, terminated_states), "instance not terminated")
+        vm.reload()
+        soft_assert(vm.power_state in terminated_states, "instance not terminated")
 
 
 @pytest.mark.meta(automates=[1701188, 1655477, 1686015, 1738584])
