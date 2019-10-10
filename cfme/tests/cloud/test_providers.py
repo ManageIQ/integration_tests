@@ -1261,3 +1261,39 @@ def test_add_ec2_provider_with_instance_without_name():
             2. Refresh should complete without errors
     """
     pass
+
+
+@test_requirements.ec2
+@pytest.mark.manual
+def test_ec2_regions_up_to_date():
+    """
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: high
+        initialEstimate: 1/3h
+        testSteps:
+            1. Compare regions in AWS Console with regions for EC2 in CFME
+        expectedResults:
+            1. There should be same regions in CFME as in AWS Console.
+    """
+    pass
+
+
+@test_requirements.ec2
+@pytest.mark.manual
+def test_add_ec2_provider_with_non_default_url_endpoint():
+    """
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: high
+        initialEstimate: 1/6h
+        testSteps:
+            1. Add an ec2 provider with non default url endpoint
+            2. Wait for refresh
+        expectedResults:
+            1. Provider should be added with no issues
+            2. Refresh should complete without errors
+    """
+    pass
