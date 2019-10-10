@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
+from cfme.fixtures.v2v_fixtures import set_conversion_host_api
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -533,3 +534,35 @@ def test_duplicate_mapping_name(appliance, mapping_data_vm_obj_mini):
     view.general.description.fill("description")
     view.general.flash.assert_message(f"Infrastructure mapping {name} already exists")
     view.general.cancel_btn.click()
+
+
+def test_migration_with_no_conversion(appliance, delete_conversion_hosts, source_provider,
+                                      request, provider, mapping_data_vm_obj_mini):
+    """
+    Test Migration plan without setting conversion hosts
+    Polarion:
+        assignee: sshveta
+        initialEstimate: 1/2h
+        caseimportance: high
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+    """
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    migration_plan = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
+        target_provider=provider,
+        vm_list=mapping_data_vm_obj_mini.vm_list,
+    )
+
+    @request.addfinalizer
+    def _cleanup():
+        migration_plan.delete_completed_plan()
+        set_conversion_host_api(appliance, "vddk", source_provider, provider)
+
+    view = navigate_to(migration_plan, "InProgress")
+    assert not view.progress_card.is_plan_started(migration_plan.name)
+    assert "no conversion host" in view.progress_card.get_error_text(migration_plan.name)

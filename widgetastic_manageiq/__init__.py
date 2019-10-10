@@ -5353,6 +5353,7 @@ class MigrationProgressBar(Widget):
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
     ERROR_LOCATOR = './/div/span[contains(@class,"pficon-error-circle-o")]'
+    ERROR_TXT = './/p[contains(@class, "blank-slate-pf-info")]'
     PROGRESS_BARS = './/div[@class="progress-bar"]'
     PROGRESS_DESCRIPTION = './/div[contains(@class,"progress-description")]'
 
@@ -5418,6 +5419,15 @@ class MigrationProgressBar(Widget):
         if timer_displayed and not spinner_displayed:
             return True
         return False
+
+    def get_error_text(self, plan_name):
+        """Returns error text for debugging failure"""
+        el = self._get_card_element(plan_name)
+        error_displayed = self.browser.is_displayed(self.ERROR_LOCATOR, parent=el)
+        if error_displayed:
+            error_text = self.browser.text(self.ERROR_TXT, parent=el)
+            self.browser.click(".//button[contains(text(), 'Cancel Migration')]", parent=el)
+            return error_text
 
     def is_plan_visible(self, plan_name):
         """Returns true if migration plan card is shown in-progress section, else False"""
