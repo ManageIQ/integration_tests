@@ -165,7 +165,7 @@ def find_pingable(mgmt_vm):
          In priority: first pingable address, address 'selected' by wrapanapi (possibly None)
      """
     for ip in getattr(mgmt_vm, 'all_ips', []):
-        if is_pingable(ip):
+        if not ip.lower().startswith('fe80::') and is_pingable(ip):
             logger.info('Found reachable IP for VM: %s', ip)
             return ip
         else:
