@@ -1,5 +1,9 @@
 import pytest
 
+from cfme import test_requirements
+
+pytestmark = [test_requirements.auth]
+
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
@@ -713,5 +717,99 @@ def test_session_timeout():
         caseimportance: low
         initialEstimate: 1/6h
         title: Verify session timeout works fine for external auth.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_pwd_trailing_whitespace():
+    """
+    Test changing password to one with trailing whitespace.
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_pwd_special_chars():
+    """
+    Test password with special characters.
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_pwd_blank():
+    """
+    Test changing password to a blank one.
+    Test creating user with a blank password.
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_pwd_16_chars():
+    """
+    Password > 16 char
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_login_invalid_user():
+    """
+    Login with invalid user
+    Authentication expected to fail, check audit.log and evm.log for
+    correct log messages.
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: low
+        caseposneg: negative
+        initialEstimate: 1/4h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+def test_pwd_leading_whitespace():
+    """
+    Password with leading whitespace
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/8h
     """
     pass
