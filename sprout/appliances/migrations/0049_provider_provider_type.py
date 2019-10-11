@@ -23,7 +23,7 @@ def add_type_to_provider(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appliances', '0042_openshift_appliances_support'),
+        ('appliances', '0048_openshift_appliances_support'),
     ]
 
     operations = [

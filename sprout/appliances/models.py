@@ -19,7 +19,7 @@ from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
-from json_field import JSONField
+from django.contrib.postgres.fields import JSONField
 
 from cached_property import threaded_cached_property
 
@@ -475,7 +475,7 @@ class Group(MetadataMixin):
 
     def pick_versions_to_delete(self):
         to_delete = {}
-        for zstream, versions in self.zstreams_versions.items():
+        for zstream, versions in list(self.zstreams_versions.items()):
             versions = sorted(versions, key=Version, reverse=True)
             versions_to_delete = versions[1:]
             if versions_to_delete:
@@ -566,7 +566,7 @@ class Template(MetadataMixin):
     ready = models.BooleanField(default=False, help_text="Template is ready-to-be-used")
     exists = models.BooleanField(default=True, help_text="Template exists in the provider.")
     usable = models.BooleanField(default=False, help_text="Template is marked as usable")
-    custom_data = JSONField(default={}, help_text="Some Templates require additional data "
+    custom_data = JSONField(default='{}', help_text="Some Templates require additional data "
                                                   "for deployment")
 
     preconfigured = models.BooleanField(default=True, help_text="Is prepared for immediate use?")
@@ -575,14 +575,14 @@ class Template(MetadataMixin):
 
     parent_template = models.ForeignKey(
         "self", blank=True, null=True, related_name="child_templates",
-        help_text="What was source of this template?")
+        help_text="What was source of this template?", on_delete=models.CASCADE)
     container = models.CharField(
         max_length=32, null=True, blank=True,
         help_text=(
             'Whether the appliance is located in a container in the VM. '
             'This then specifies the container name.'))
     ga_released = models.BooleanField(default=False)
-    template_type = models.CharField(max_length=16, choices=TEMPLATE_TYPES,
+    template_type = models.CharField(max_length=24, choices=TEMPLATE_TYPES,
                                      default=DEFAULT_TEMPLATE_TYPE)
 
     class Meta:
@@ -1228,7 +1228,7 @@ class AppliancePool(MetadataMixin):
     override_cpu = models.IntegerField(null=True, blank=True)
 
     provider_type = models.CharField(max_length=32, null=True, blank=True)
-    template_type = models.CharField(max_length=16, choices=Template.TEMPLATE_TYPES,
+    template_type = models.CharField(max_length=24, choices=Template.TEMPLATE_TYPES,
                                      default=Template.DEFAULT_TEMPLATE_TYPE)
 
     class Meta:
@@ -1397,7 +1397,7 @@ class AppliancePool(MetadataMixin):
     def appliance_filter_params(self):
         params = self.filter_params
         result = {}
-        for key, value in params.items():
+        for key, value in list(params.items()):
             result["template__{}".format(key)] = value
         return result
 

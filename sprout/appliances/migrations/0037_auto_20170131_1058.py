@@ -7,15 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        (b'appliances', '0037_auto_20170131_1058'),
-        (b'appliances', '0038_auto_20170131_1512'),
-        (b'appliances', '0039_auto_20170131_1512'),
-        (b'appliances', '0040_provider_memory_limit'),
-        (b'appliances', '0041_auto_20170131_1518'),
-        (b'appliances', '0042_auto_20170131_1526'),
-        (b'appliances', '0043_auto_20170131_1609')]
-
     dependencies = [
         ('appliances', '0036_template_ga_released'),
     ]

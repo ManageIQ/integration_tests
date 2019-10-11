@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             field=models.IntegerField(
                 default=1,
                 help_text=b'How many simultaneous template configuring tasks can run on this'
-                ' provider.'),
+                          b' provider.'),
             preserve_default=True,
         ),
     ]

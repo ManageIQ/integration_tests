@@ -3,7 +3,7 @@
 {% block body %}
 <ul class="nav nav-tabs">
 {% for group in groups %}
-    <li {% if group.id == group_id %}class="active"{% endif %}><a href={% url 'group_templates' group.id %}>{{group.id}} ({{ group.existing_templates|length }})</a></li>
+    <li {% if group.id == group_id %}class="active"{% endif %}><a href={% url 'appliances:group_templates' group.id %}>{{group.id}} ({{ group.existing_templates|length }})</a></li>
 {% endfor %}
 </ul>
 
@@ -27,7 +27,7 @@
             {% if version %}<td rowspan={{ version_rowspans|keyvalue:version }}>{{ version }}</td>{% endif %}
             {% if date %}<td rowspan={{ date_version_rowspans|keyvalue:datetuple }}>{{ date }}</td>{% endif %}
             <td><input type="checkbox" class="deletecb" id="checkbox-{{ template.id }}" data-templateid="{{ template.id }}" {% if not template.suggested_delete or not request.user.is_superuser %}disabled{% endif %}></td>
-            <td><a href="{% url 'specific_provider' provider.id %}#template-{{ template.id }}">{{ provider.id }}</a></td>
+            <td><a href="{% url 'appliances:specific_provider' provider.id %}#template-{{ template.id }}">{{ provider.id }}</a></td>
             <td>
                 {% if template.suggested_delete %}<strong>{% endif %}
                 {{ template.name }}{% if template.ga_released %}<strong> (GA)</strong>{% endif %}{% if template.parent_template and template.parent_template.exists_and_ready %} (<a href="#{{ template.parent_template.id }}">parent</a>){% endif %}
@@ -73,7 +73,7 @@ $(document).ready(function() {
     function waitForDeletionFinish(template, task_id){
         $.ajax({
             type: "POST",
-            url: "{% url 'task_result' %}",
+            url: "{% url 'appliances:task_result' %}",
             dataType: "json",
             data: JSON.stringify({task_id: task_id}),
         }).done(function(data){
@@ -108,7 +108,7 @@ $(document).ready(function() {
         $("#button-" + template).hide();        
         $.ajax({
             type: "POST",
-            url: "{% url 'delete_template_provider' %}",
+            url: "{% url 'appliances:delete_template_provider' %}",
             data: {template_id: template},
             dataType: 'html'
         }).done(function(data){
@@ -133,7 +133,7 @@ $(document).ready(function() {
                 new_ids.push(ids[i]);
             $.ajax({
                 type: "POST",
-                url: "{% url 'purge_templates' %}",
+                url: "{% url 'appliances:purge_templates' %}",
                 data: {templates_json: JSON.stringify(new_ids)},
                 dataType: 'html'
             }).done(function(data){

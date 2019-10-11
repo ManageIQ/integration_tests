@@ -3,7 +3,7 @@
 from contextlib import contextmanager
 import pickle
 
-from sprout.sprout.celery import app as celery_app
+from sprout.celery import app as celery_app
 assert celery_app
 
 from django.core.cache import cache

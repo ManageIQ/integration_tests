@@ -1,12 +1,14 @@
 Command
-Django<1.10
--e git+git://github.com/izapolsk/django-json-field.git#egg=json_field
-celery[redis]<3.2
+celery[redis]==4.3.0
+Django==2.2.5
+diaper
 django-object-actions
 django-ipware
 flower
 gunicorn
 pika
 python-memcached
-redis==2.10.6
-miq-version==0.2
+redis==3.3.8
+miq-version==0.2.0
+yaycl
+werkzeug
