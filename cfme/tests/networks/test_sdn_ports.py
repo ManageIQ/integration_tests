@@ -10,6 +10,7 @@ from cfme.exceptions import ManyEntitiesFound
 from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.provider import NetworkProviderCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [
@@ -44,6 +45,7 @@ def test_sdn_port_detail_name(provider, appliance):
             pass
 
 
+@pytest.mark.meta(blockers=[BZ(1758593)])
 def test_sdn_port_net_prov(provider, appliance):
     """ Test functionality of quadicon and detail network providers
 
