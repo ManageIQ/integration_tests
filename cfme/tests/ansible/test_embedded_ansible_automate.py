@@ -5,15 +5,18 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
+from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
-
 
 pytestmark = [
     pytest.mark.long_running,
@@ -306,3 +309,113 @@ def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, re
             timeout=60)
     except TimedOutError:
         pytest.fail("Ansible playbook method hasn't been executed.")
+
+
+@pytest.fixture(scope='module')
+def setup_ansible_repository(appliance, wait_for_ansible):
+    repositories = appliance.collections.ansible_repositories
+    # Repository name(test_playbooks_automate) is static because this is already in the datastore
+    # imported. If we used(fauxfactory.gen_alpha()) here then datastore import will fail with no
+    # ansible repository available.
+    repository = repositories.create(
+        name="test_playbooks_automate",
+        url=cfme_data.ansible_links.playbook_repositories.embedded_ansible,
+        description=fauxfactory.gen_alpha()
+    )
+    view = navigate_to(repository, "Details")
+    wait_for(
+        lambda: repository.status == "successful",
+        timeout=60,
+        fail_func=view.toolbar.refresh.click
+    )
+    yield
+    repository.delete_if_exists()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1678132, 1678135])
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize(
+    ("import_data", "instance"),
+    ([DatastoreImport("bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
+                      None), "CatalogItemInitialization_jira23"],
+     [DatastoreImport("bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
+                      None), "CatalogItemInitialization_jira24"]),
+    ids=["method_to_playbook", "playbook_to_playbook"]
+)
+def test_variable_pass(request, appliance, setup_ansible_repository, import_datastore, import_data,
+                       instance, dialog, catalog):
+    """
+    Bugzilla:
+        1678132
+        1678135
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        startsin: 5.11
+        setup:
+            1. Enable embedded ansible role
+            2. Add Ansible repo called billy -
+               https://github.com/ManageIQ/integration_tests_playbooks
+            3. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip) to downloads
+               directory(Zip file named - 'Automate domain' is attached with BZ(1678135))
+            4. Go to Automation>Automate>Import/Export and import zip file
+            5. Click on "Toggle All/None" and hit the submit button
+            6. Go to Automation>Automate>Explorer and Enable the imported domain
+            7. Make sure all the playbook methods have all the information (see if Repository,
+               Playbook and Machine credentials have values), update if needed
+            8. Import or create hello_world (simple ansible dialog with Machine credentials and
+               hosts fields)
+        testSteps:
+            1. Create a Generic service using the hello_world dialog.
+            1a. Select instance 'CatalogItemInitialization_jira23'(Note: This is the state machine
+                which executes playbooks and inline method successively) then order service
+            1b. Select instance 'CatalogItemInitialization_jira24'(Note: This is the state machine
+                which executes playbooks successively) then order service
+            2. Run "grep dump_vars2 automation.log" from log directory
+        expectedResults:
+            1. Generic service catalog item created
+            2. For 1a scenario: Variables should be passed through successive playbooks and you
+               should see logs like this(https://bugzilla.redhat.com/show_bug.cgi?id=1678132#c5)
+               For 1b scenario: Variables should be passed through successive playbooks and you
+               should see logs like this(https://bugzilla.redhat.com/show_bug.cgi?id=1678135#c13)
+    """
+    # Making provisioning entry points to select while creating generic catalog items
+    entry_point = (
+        "Datastore",
+        f"{import_datastore.name}",
+        "Service",
+        "Provisioning",
+        "StateMachines",
+        "ServiceProvision_Template",
+        f"{instance}",
+    )
+
+    # Creating generic catalog items
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+        provisioning_entry_point=entry_point,
+    )
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=[
+            ".*if Fred is married to Wilma and Barney is married to Betty and Peebles and BamBam "
+            "are the kids, then the tests work !!!.*"
+        ],
+    ).waiting(timeout=120):
+        # Ordering service catalog bundle
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        service_catalogs.order()
+        request_description = "Provisioning Service [{0}] from [{0}]".format(catalog_item.name)
+        provision_request = appliance.collections.requests.instantiate(request_description)
+        provision_request.wait_for_request(method="ui")
+        request.addfinalizer(provision_request.remove_request)

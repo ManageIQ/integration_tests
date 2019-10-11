@@ -152,6 +152,11 @@ class Repository(BaseEntity, Fillable, Taggable):
         """For use when selecting this repo in the UI forms"""
         return self.name
 
+    @property
+    def status(self):
+        view = navigate_to(self, "Details")
+        return view.entities.summary("Properties").get_text_of("Status")
+
     def update(self, updates):
         """Update the repository in the UI.
 
