@@ -88,7 +88,7 @@ def import_datastore(appliance, import_data):
         .. code-block:: python
 
         @pytest.mark.parametrize(
-        "import_data", [DatastoreImport("datastore.zip", "from_daomin_name", "to_domain_name")]
+        "import_data", [DatastoreImport("datastore.zip", "from_domain_name", "to_domain_name")]
         )
         def test_foo(import_datastore, import_data):
             pass

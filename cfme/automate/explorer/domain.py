@@ -272,11 +272,6 @@ class Domain(BaseEntity, Fillable, Updateable):
         assert not self.locked
 
     def update(self, updates):
-
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
-
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -408,10 +403,6 @@ class DomainCollection(BaseCollection):
         for domain in checked_domains:
             all_page.flash.assert_message(
                 'Automate Domain "{}": Delete successful'.format(domain.description or domain.name))
-
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
 
     def set_order(self, items):
         if not isinstance(items, (list, tuple)):
