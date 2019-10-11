@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.views import login, password_change
+from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.urls import reverse_lazy
 
-from appliances import api, views
+from . import api, views
+
+app_name = "appliances"
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
@@ -41,8 +44,10 @@ urlpatterns = [
     url(r'^appliances/dontexpire-pool/(?P<pool_id>\d+)$', views.dont_expire_pool,
         name="dont_expire_pool"),
     url(r'^shepherd$', views.shepherd, name="shepherd"),
-    url(r'^login$', login, {'template_name': 'login.html'}, name="login"),
-    url(r'^change_password$', password_change, {'template_name': 'password.html'},
+    url(r'^login$', LoginView.as_view(template_name='login.html'), name="login"),
+    url(r'^change_password$',
+        PasswordChangeView.as_view(template_name='password.html',
+                                   success_url=reverse_lazy('appliances:password_change_done')),
         name="password_change"),
     url(r'^change_password/done$', views.go_home, name='password_change_done'),
     url(r'^logout$', views.logout, name="logout"),

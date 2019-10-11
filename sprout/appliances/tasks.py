@@ -122,7 +122,7 @@ def singleton_task(*args, **kwargs):
             digest_base = "/".join(str(arg) for arg in args)
             keys = sorted(kwargs.keys())
             digest_base += "//" + "/".join("{}={}".format(key, kwargs[key]) for key in keys)
-            digest = hashlib.sha256(digest_base).hexdigest()
+            digest = hashlib.sha256(digest_base.encode('utf-8')).hexdigest()
             lock_id = '{0}-lock-{1}'.format(self.name, digest)
 
             if cache.add(lock_id, 'true', LOCK_EXPIRE):
@@ -382,14 +382,14 @@ def poke_trackerbot(self):
 
         per_group[obj["template"]["group"]["name"]].append(obj)
     # Sort them using the build date
-    for group in per_group.keys():
+    for group in list(per_group.keys()):
         per_group[group] = sorted(
             per_group[group],
             reverse=True, key=lambda o: o["template"]["datestamp"])
     objects = []
     # And interleave the the groups
     while any(per_group.values()):
-        for key in per_group.keys():
+        for key in list(per_group.keys()):
             if per_group[key]:
                 objects.append(per_group[key].pop(0))
     for template in objects:
@@ -1979,7 +1979,7 @@ def pick_templates_for_deletion(self):
     """Applies some heuristics to guess templates that might be candidates to deletion."""
     to_mail = {}
     for group in Group.objects.all():
-        for zstream, versions in group.pick_versions_to_delete().items():
+        for zstream, versions in list(group.pick_versions_to_delete().items()):
             for version in versions:
                 for template in Template.objects.filter(
                         template_group=group, version=version, exists=True, suggested_delete=False):
@@ -2104,7 +2104,7 @@ def notify_owners(self, results):
         per_user[user].append(message)
 
     # Send out the e-mails
-    for user, messages in per_user.items():
+    for user, messages in list(per_user.items()):
         appliance_list = '\n'.join(['* {}'.format(m) for m in messages])
         email_body = """\
 Hello,

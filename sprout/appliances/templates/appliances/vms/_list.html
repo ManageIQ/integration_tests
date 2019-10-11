@@ -30,7 +30,7 @@ $(document).ready(function() {
         $(selector("power", vmname)).html('<span class="spinner spinner-xs spinner-inline"></span> Retrieving ...');
         $.ajax({
             type: "POST",
-            url: "{% url 'power_state' current_provider %}",
+            url: "{% url 'appliances:power_state' current_provider %}",
             dataType: "html",
             data: {vm_name: vmname},
             error: function(j, t, e){
@@ -40,7 +40,7 @@ $(document).ready(function() {
             $(selector("power", vmname)).html(data);
             $.ajax({
                 type: "POST",
-                url: "{% url 'power_state_buttons' current_provider %}",
+                url: "{% url 'appliances:power_state_buttons' current_provider %}",
                 dataType: "html",
                 data: {vm_name: vmname, power_state: data},
                 error: function(j, t, e){
@@ -54,7 +54,7 @@ $(document).ready(function() {
                     var action = e.attr("data-action");
                     $.ajax({
                         type: "POST",
-                        url: "{% url 'vm_action' current_provider %}",
+                        url: "{% url 'appliances:vm_action' current_provider %}",
                         dataType: "html",
                         data: {vm_name: vmname, action: action},
                         error: function(j, t, e){

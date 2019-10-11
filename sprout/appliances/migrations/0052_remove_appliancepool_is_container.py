@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appliances', '0045_appliancepool_template_type'),
+        ('appliances', '0051_appliancepool_template_type'),
     ]
 
     operations = [

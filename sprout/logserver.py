@@ -37,14 +37,14 @@ signal.signal(signal.SIGTERM, translate_sigterm_to_sigint)
 def close_logs():
     global logger_cache
     with logger_cache_lock:
-        for filename, (logger, lock) in logger_cache.items():
+        for filename, (logger, lock) in list(logger_cache.items()):
             with lock:
                 for handler in logger.handlers:
                     if hasattr(handler, "close"):
                         try:
                             handler.close()
                         except Exception as e:
-                            print("Could not close handler:", type(e).__name__, str(e))
+                            print(("Could not close handler:", type(e).__name__, str(e)))
         logger_cache = {}
 
 

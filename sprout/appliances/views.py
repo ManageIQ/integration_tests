@@ -7,7 +7,7 @@ from celery import chain, group
 from celery.result import AsyncResult
 from dateutil import parser
 from django.contrib import messages
-from django.contrib.auth import views
+from django.contrib.auth import logout as logout_call
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
@@ -33,7 +33,7 @@ from wrapanapi import Openshift
 
 
 def go_home(request):
-    return redirect(index)
+    return redirect("appliances:index")
 
 
 def go_back_or_home(request):
@@ -47,7 +47,7 @@ def go_back_or_home(request):
 def only_authenticated(view):
     @wraps(view)
     def g(request, *args, **kwargs):
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             messages.error(
                 request, 'You need to be authenticated to access "{}"'.format(request.path))
             return go_home(request)
@@ -60,7 +60,7 @@ def only_authenticated(view):
 
 
 def logout(request):
-    views.logout(request)
+    logout_call(request)
     messages.info(request, 'You have been logged out')
     return go_home(request)
 
@@ -79,7 +79,7 @@ def providers(request, provider_id=None):
         try:
             provider = Provider.objects.filter(hidden=False, **user_filter).order_by("id")[0]
             return redirect(
-                "specific_provider",
+                "appliances:specific_provider",
                 provider_id=provider.id)
         except IndexError:
             # No Provider
@@ -96,10 +96,10 @@ def providers(request, provider_id=None):
                 return go_home(request)
             if provider.hidden:
                 messages.warning(request, 'Provider {} is hidden.'.format(provider_id))
-                return redirect('providers')
+                return redirect('appliances:providers')
         except ObjectDoesNotExist:
             messages.warning(request, "Provider '{}' does not exist.".format(provider_id))
-            return redirect("providers")
+            return redirect("appliances:providers")
     providers = Provider.objects.filter(hidden=False, **user_filter).order_by("id").distinct()
     return render(request, 'appliances/providers.html', locals())
 
@@ -119,7 +119,8 @@ def templates(request, group_id=None, prov_id=None):
         user_filter_2 = {'provider__user_groups__in': request.user.groups.all()}
     if group_id is None:
         try:
-            return redirect("group_templates", group_id=Group.objects.order_by("id")[0].id)
+            return redirect("appliances:group_templates",
+                            group_id=Group.objects.order_by("id")[0].id)
         except IndexError:
             # No Group
             messages.info(request, "No group present, redirected to the homepage.")
@@ -129,13 +130,13 @@ def templates(request, group_id=None, prov_id=None):
             group = Group.objects.get(id=group_id)
         except ObjectDoesNotExist:
             messages.warning(request, "Group '{}' does not exist.".format(group_id))
-            return redirect("templates")
+            return redirect("appliances:templates")
     if prov_id is not None:
         try:
             provider = Provider.objects.filter(id=prov_id, **user_filter).distinct().first()
         except ObjectDoesNotExist:
             messages.warning(request, "Provider '{}' does not exist.".format(prov_id))
-            return redirect("templates")
+            return redirect("appliances:templates")
     else:
         provider = None
     if provider is not None:
@@ -361,9 +362,9 @@ def my_appliances(request, show_user="my"):
     if not request.user.is_superuser:
         if not (show_user == "my" or show_user == request.user.username):
             messages.info(request, "You can't view others' appliances!")
-            return redirect("my_appliances")
+            return redirect("appliances:my_appliances")
         if show_user == request.user.username:
-            return redirect("my_appliances")
+            return redirect("appliances:my_appliances")
     else:
         other_users = User.objects.exclude(pk=request.user.pk).order_by("last_name", "first_name")
     if show_user == "my":
@@ -618,7 +619,7 @@ def delete_pool(request, pool_id):
 
 
 def set_pool_description(request):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         raise PermissionDenied()
     try:
         pool_id = request.POST.get("pool_id")
@@ -634,7 +635,7 @@ def set_pool_description(request):
 
 
 def delete_template_provider(request):
-    if not request.user.is_authenticated() or not request.user.is_superuser:
+    if not request.user.is_authenticated or not request.user.is_superuser:
         return HttpResponseForbidden("Only authenticated superusers can operate this action.")
     template_id = request.POST["template_id"]
     try:
@@ -730,7 +731,7 @@ def transfer_pool(request):
 
 
 def vms(request, current_provider=None):
-    if not request.user.is_authenticated() or not request.user.is_superuser:
+    if not request.user.is_authenticated or not request.user.is_superuser:
         return go_home(request)
     all_provider_keys = sorted(Provider.get_available_provider_keys())
     providers = []
@@ -748,12 +749,12 @@ def vms(request, current_provider=None):
             providers.append((provider_key, provider.is_working))
             provider_keys.append(provider_key)
     if current_provider is None and providers:
-        return redirect("vms_at_provider", current_provider=provider_keys[0])
+        return redirect("appliances:vms_at_provider", current_provider=provider_keys[0])
     return render(request, 'appliances/vms/index.html', locals())
 
 
 def vms_table(request, current_provider=None):
-    if not request.user.is_authenticated() or not request.user.is_superuser:
+    if not request.user.is_authenticated or not request.user.is_superuser:
         return go_home(request)
     try:
         manager = get_mgmt(current_provider)
@@ -764,7 +765,7 @@ def vms_table(request, current_provider=None):
 
 
 def power_state(request, current_provider):
-    if not request.user.is_authenticated() or not request.user.is_superuser:
+    if not request.user.is_authenticated or not request.user.is_superuser:
         return go_home(request)
     vm_name = request.POST["vm_name"]
     manager = get_mgmt(current_provider)
@@ -778,7 +779,7 @@ def power_state(request, current_provider):
 
 
 def power_state_buttons(request, current_provider):
-    if not request.user.is_authenticated() or not request.user.is_superuser:
+    if not request.user.is_authenticated or not request.user.is_superuser:
         return go_home(request)
     manager = get_mgmt(current_provider)
     vm_name = request.POST["vm_name"]
@@ -791,7 +792,7 @@ def power_state_buttons(request, current_provider):
 
 
 def vm_action(request, current_provider):
-    if not request.user.is_authenticated() or not request.user.is_superuser:
+    if not request.user.is_authenticated or not request.user.is_superuser:
         return HttpResponse("Not authenticated", content_type="text/plain")
     try:
         get_mgmt(current_provider)
@@ -822,7 +823,7 @@ def logger():
 
 def rename_appliance(request):
     post = json.loads(request.body)
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         raise PermissionDenied()
     try:
         appliance_id = post.get("appliance_id")
@@ -840,7 +841,7 @@ def set_appliance_description(request):
         messages.error(request, "Invalid request.")
         return go_home(request)
     post = json.loads(request.body)
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         raise PermissionDenied()
     try:
         appliance_id = post.get("appliance_id")
@@ -865,7 +866,7 @@ def task_result(request):
 
 
 def provider_enable_disable(request, provider_id, disabled=None):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return go_home(request)
     try:
         provider = Provider.objects.get(id=provider_id)
@@ -951,7 +952,7 @@ def check_pools(request):
 
 
 def view_bug_query(request, query_id):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return go_home(request)
     queries = BugQuery.visible_for_user(request.user)
     query = BugQuery.objects.get(id=query_id)
@@ -968,14 +969,14 @@ def view_bug_query(request, query_id):
 
 
 def view_bug_queries(request):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return go_home(request)
     try:
         first_query = BugQuery.visible_for_user(request.user)[0]
     except IndexError:
         first_query = None
     if first_query is not None:
-        return redirect('view_bug_query', first_query.id)
+        return redirect('appliances:view_bug_query', first_query.id)
     else:
         # No Group
         messages.info(request, "No query present, redirected to the homepage.")
@@ -983,7 +984,7 @@ def view_bug_queries(request):
 
 
 def new_bug_query(request):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return go_home(request)
     queries = BugQuery.visible_for_user(request.user)
     query = None
@@ -1005,24 +1006,24 @@ def new_bug_query(request):
     bug_query = BugQuery(name=name, url=url, owner=owner)
     bug_query.save()
     messages.info(request, "Query with name {} added.".format(name))
-    return redirect('view_bug_query', bug_query.id)
+    return redirect('appliances:view_bug_query', bug_query.id)
 
 
 def delete_bug_query(request, query_id):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return go_home(request)
     query = BugQuery.objects.get(id=query_id)
     if query.owner == request.user or request.user.is_superuser:
         query.delete()
         messages.info(request, "Query with name {} deleted.".format(query.name))
-        return redirect('view_bug_queries')
+        return redirect('appliances:view_bug_queries')
     else:
         messages.error(request, "You cannot delete query with name {}.".format(query.name))
-        return redirect('view_bug_queries')
+        return redirect('appliances:view_bug_queries')
 
 
 def check_query(request):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return go_home(request)
     if request.method != 'POST':
         return HttpResponseForbidden('Only POST allowed')

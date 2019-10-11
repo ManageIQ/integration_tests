@@ -20,7 +20,7 @@
                 <td>{{appliance.ip_address}}</td>
                 <td>
                     {% if appliance.owner %}
-                    <a href="{% url 'user_appliances' appliance.owner.username %}">{{appliance.owner.username}}</a>
+                    <a href="{% url 'appliances:user_appliances' appliance.owner.username %}">{{appliance.owner.username}}</a>
                     {% else %}
                     <em>Shepherd</em>
                     {% endif %}
@@ -47,7 +47,7 @@
                 <td>{{appliance.ip_address}}</td>
                 <td>
                     {% if appliance.owner %}
-                    <a href="{% url 'user_appliances' appliance.owner.username %}">{{appliance.owner.username}}</a>
+                    <a href="{% url 'appliances:user_appliances' appliance.owner.username %}">{{appliance.owner.username}}</a>
                     {% else %}
                     <em>Shepherd</em>
                     {% endif %}

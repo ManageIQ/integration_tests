@@ -34,6 +34,6 @@
     </tbody>
 </table>
 {% if request.user.is_superuser or query.owner == request.user %}
-<a href="{% url 'delete_bug_query' query.id %}">Delete this saved bug query</a>
+<a href="{% url 'appliances:delete_bug_query' query.id %}">Delete this saved bug query</a>
 {% endif %}
 {% endblock %}

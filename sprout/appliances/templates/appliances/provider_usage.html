@@ -19,7 +19,7 @@
             <tr>
                 <td>
                 {% if user.is_a_bot %}<strong>{% endif %}
-                {% if request.user.is_superuser %}<a href="{% url 'user_appliances' user.username %}">{{ user|user_repr }}</a>{% else %}{{ user|user_repr }}{% endif %}
+                {% if request.user.is_superuser %}<a href="{% url 'appliances:user_appliances' user.username %}">{{ user|user_repr }}</a>{% else %}{{ user|user_repr }}{% endif %}
                 {% if user.is_a_bot %}</strong>{% endif %}
                 </td>
                 <td>{{ count }}</td>

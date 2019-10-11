@@ -8,6 +8,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from datetime import timedelta
 import os
@@ -45,14 +46,14 @@ INSTALLED_APPS = (
     'django_object_actions',
 )
 
-MIDDLEWARE_CLASSES = (
+
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 )
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
@@ -115,7 +116,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# Unnecessary
+# #Unnecessary
 # STATICFILES_DIRS = (
 #     os.path.join(BASE_DIR, "static"),
 # )
@@ -128,6 +129,7 @@ BROKER_URL = 'redis://127.0.0.1:{}/{}'.format(REDIS_PORT, os.environ.get("REDIS_
 CELERY_RESULT_BACKEND = 'redis://127.0.0.1:{}/{}'.format(
     REDIS_PORT, os.environ.get("REDIS_RESULT_DB_ID", 1))
 # CELERY_ACCEPT_CONTENT = ['json']
+CELERY_ACCEPT_CONTENT = ['pickle']
 CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_RESULT_SERIALIZER = 'pickle'
 CELERY_TIMEZONE = "UTC"

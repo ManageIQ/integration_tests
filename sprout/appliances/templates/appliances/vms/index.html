@@ -9,9 +9,9 @@
         {% for provider, working in providers %}
             <li {% if current_provider == provider %}class="active"{% endif %}>
                 {% if working %}
-                    <a href="{% url 'vms_at_provider' provider %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> {{ provider }}</a>
+                    <a href="{% url 'appliances:vms_at_provider' provider %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> {{ provider }}</a>
                 {% else %}
-                    <a href="{% url 'vms_at_provider' provider %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> {{ provider }}</a>
+                    <a href="{% url 'appliances:vms_at_provider' provider %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> {{ provider }}</a>
                 {% endif %}
             </li>
         {% endfor %}
@@ -24,7 +24,7 @@
 $(document).ready(function() {
     $.ajax({
         type: "GET",
-        url: "{% url 'vms_table' current_provider %}",
+        url: "{% url 'appliances:vms_table' current_provider %}",
         dataType: "html",
         error: function(j, t, e){
             $("div#vm_list").html(e);

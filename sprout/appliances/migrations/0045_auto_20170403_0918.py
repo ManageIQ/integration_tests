@@ -58,7 +58,7 @@ def do_nothing(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appliances', '0038_auto_20170201_1218'),
+        ('appliances', '0044_auto_20170201_1218'),
     ]
 
     operations = [

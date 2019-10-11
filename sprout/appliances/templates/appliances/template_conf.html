@@ -38,7 +38,7 @@ $(document).ready(function() {
     function waitForNukeFinish(template, task_id){
         $.ajax({
             type: "POST",
-            url: "{% url 'task_result' %}",
+            url: "{% url 'appliances:task_result' %}",
             dataType: "json",
             data: JSON.stringify({task_id: task_id}),
         }).done(function(data){
@@ -75,7 +75,7 @@ $(document).ready(function() {
         $("#button-" + template).hide();
         $.ajax({
             type: "POST",
-            url: "{% url 'nuke_template' %}",
+            url: "{% url 'appliances:nuke_template' %}",
             data: {template_id: template},
             dataType: 'html'
         }).done(function(data){
