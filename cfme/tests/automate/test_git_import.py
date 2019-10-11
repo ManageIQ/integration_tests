@@ -128,7 +128,8 @@ def test_automate_git_import_multiple_domains(request, appliance):
     repo = appliance.collections.automate_import_exports.instantiate(
         import_type="git", url=url, verify_ssl=True
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError,
+                       match="Selected branch or tag contains more than one domain"):
         domain = repo.import_domain_from(branch="origin/master")
         request.addfinalizer(domain.delete_if_exists)
         assert not domain.exists
