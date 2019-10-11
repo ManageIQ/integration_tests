@@ -22,6 +22,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
+from widgetastic_manageiq import RadioGroup
 from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import WaitTab
 
@@ -541,7 +542,7 @@ class ExternalAuthenticationView(View):
     """ External Authentication View """
 
     enable_sso = Checkbox(name='sso_enabled')
-    enable_saml = Checkbox(name='saml_enabled')
+    provider_type = RadioGroup(locator=".//input[contains(@id, 'provider_type')]/../..")
     # the div label is 'Get [...] Groups' and the input name is [...]_role
     get_groups = Checkbox(name='httpd_role')
 

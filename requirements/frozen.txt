@@ -129,6 +129,7 @@ docker-pycreds==0.4.0
 docutils==0.15.2
 dogpile.cache==0.7.1
 dump2polarion==0.46.0
+ecdsa==0.13.2
 entrypoints==0.3
 fauxfactory==3.0.6
 flake8==3.7.8
@@ -264,6 +265,8 @@ python-glanceclient==2.16.0
 python-heatclient==1.17.0
 python-ironicclient==2.7.0
 python-jenkins==1.4.0
+python-jose==3.0.1
+python-keycloak==0.17.5
 python-keystoneclient==3.19.0
 python-neutronclient==6.12.0
 python-novaclient==7.1.2
