@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -31,7 +32,7 @@ pytestmark = [
 
 
 @pytest.mark.tier(3)
-def test_schedule_migration(appliance, provider, mapping_data_vm_obj_mini, soft_assert):
+def test_schedule_migration(appliance, provider, mapping_data_vm_obj_mini, soft_assert, request):
     """
     Test to validate schedule migration plan
 
@@ -67,4 +68,9 @@ def test_schedule_migration(appliance, provider, mapping_data_vm_obj_mini, soft_
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        cleanup_target(provider, migrated_vm)
+
     soft_assert(src_vm_obj.mac_address == migrated_vm.mac_address)
