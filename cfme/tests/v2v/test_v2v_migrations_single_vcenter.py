@@ -9,6 +9,7 @@ from cfme.fixtures.provider import rhel69_template
 from cfme.fixtures.provider import rhel7_minimal
 from cfme.fixtures.provider import ubuntu16_template
 from cfme.fixtures.provider import win7_template
+from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -114,10 +115,6 @@ def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert
     mapping_data = mapping_data_multiple_vm_obj_single_datastore.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
@@ -157,7 +154,7 @@ def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert
     assert migration_plan.wait_for_state("Successful")
 
 
-def test_migration_special_char_name(appliance, provider,
+def test_migration_special_char_name(appliance, provider, request,
                                      mapping_data_vm_obj_mini):
     """Tests migration where name of migration plan is comprised of special non-alphanumeric
        characters, such as '@#$(&#@('.
@@ -189,6 +186,11 @@ def test_migration_special_char_name(appliance, provider,
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_mini.vm_list[0]
     migrated_vm = get_migrated_vm(src_vm, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        cleanup_target(provider, migrated_vm)
+
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
@@ -263,10 +265,6 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
     mapping_data = infra_mapping_default_data(source_provider, provider)
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     mapping.update(mapping_data_vm_obj_single_datastore.infra_mapping_data)
     # vm_obj is a list, with only 1 VM object, hence [0]
     src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
@@ -285,6 +283,12 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
     assert migration_plan.wait_for_state("Successful")
 
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        cleanup_target(provider, migrated_vm)
+
     assert src_vm_obj.mac_address == migrated_vm.mac_address
 
 
@@ -308,10 +312,6 @@ def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_sin
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
     src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
-
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
@@ -348,4 +348,10 @@ def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_sin
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        cleanup_target(provider, migrated_vm)
+
     assert src_vm_obj.mac_address == migrated_vm.mac_address

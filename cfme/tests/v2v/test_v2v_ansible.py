@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
+from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -137,10 +138,6 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     # vm_obj is a list, with only 1 VM object, hence [0]
     src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
 
@@ -170,4 +167,10 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     view.flash.assert_no_error()
 
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        cleanup_target(provider, migrated_vm)
+
     assert src_vm_obj.mac_address == migrated_vm.mac_address

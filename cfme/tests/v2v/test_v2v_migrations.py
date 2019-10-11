@@ -14,11 +14,11 @@ from cfme.fixtures.provider import win10_template
 from cfme.fixtures.provider import win2012_template
 from cfme.fixtures.provider import win2016_template
 from cfme.fixtures.provider import win7_template
+from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.utils.blockers import BZ
 
 pytestmark = [
     test_requirements.v2v,
@@ -39,7 +39,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.meta(blockers=[BZ(1751900, forced_streams=['5.10'])])
 @pytest.mark.parametrize(
     "mapping_data_vm_obj_single_datastore",
     [
@@ -75,10 +74,6 @@ def test_single_datastore_single_vm_migration(
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     # vm_obj is a list, with only 1 VM object, hence [0]
     src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
 
@@ -96,6 +91,12 @@ def test_single_datastore_single_vm_migration(
     assert migration_plan.wait_for_state("Successful")
 
     migrated_vm = get_migrated_vm(src_vm_obj, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        cleanup_target(provider, migrated_vm)
+
     assert src_vm_obj.mac_address == migrated_vm.mac_address
 
 
@@ -127,10 +128,6 @@ def test_single_network_single_vm_migration(
     mapping_data = mapping_data_vm_obj_single_network.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
@@ -149,6 +146,12 @@ def test_single_network_single_vm_migration(
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_single_network.vm_list.pop()
     migrated_vm = get_migrated_vm(src_vm, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        cleanup_target(provider, migrated_vm)
+
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
@@ -177,6 +180,9 @@ def test_dual_datastore_dual_vm_migration(
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
+        for src_vm in src_vms_list:
+            migrated_vm = get_migrated_vm(src_vm, provider)
+            cleanup_target(provider, migrated_vm)
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
@@ -230,10 +236,6 @@ def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_d
     mapping_data = mapping_data_vm_obj_dual_nics.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
@@ -249,6 +251,12 @@ def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_d
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_dual_nics.vm_list.pop()
     migrated_vm = get_migrated_vm(src_vm, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        cleanup_target(provider, migrated_vm)
+
     assert set(src_vm.mac_address.split(", ")) == set(migrated_vm.mac_address.split(", "))
 
 
@@ -272,10 +280,6 @@ def test_dual_disk_vm_migration(
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
@@ -292,6 +296,12 @@ def test_dual_disk_vm_migration(
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_single_datastore.vm_list.pop()
     migrated_vm = get_migrated_vm(src_vm, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        cleanup_target(provider, migrated_vm)
+
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
@@ -327,6 +337,9 @@ def test_migrations_different_os_templates(
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
+        for src_vm in src_vms_list:
+            migrated_vm = get_migrated_vm(src_vm, provider)
+            cleanup_target(provider, migrated_vm)
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
