@@ -18,8 +18,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
-from cfme.utils.version import LOWEST
-from cfme.utils.version import VersionPicker
+
 
 pytestmark = [
     test_requirements.rbac
@@ -53,40 +52,45 @@ def new_role(appliance, name=None):
 
 
 @pytest.fixture(scope='module')
-def new_tenant_admin(appliance, request):
-    tenant_collection = appliance.collections.tenants
-    child_tenant = tenant_collection.create(
+def child_tenant(appliance, request):
+    child_tenant = appliance.collections.tenants.create(
         name='child_tenant{}'.format(fauxfactory.gen_alphanumeric()),
         description='tenant description',
-        parent=tenant_collection.get_root_tenant()
+        parent=appliance.collections.tenants.get_root_tenant()
     )
-    request.addfinalizer(child_tenant.delete_if_exists)
+    yield child_tenant
+    child_tenant.delete()
 
+
+@pytest.fixture(scope='module')
+def tenant_role(appliance, request):
     role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
     tenant_role = role.copy()
 
-    # Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
+    # Note: BZ 1278484 - tenant admin role has no permissions to create new roles
     with update(tenant_role):
-        tenant_role.product_features = VersionPicker({
-            "5.11": (['Everything', 'Main Configuration', 'Settings'], True),
-            LOWEST: (['Everything', 'Settings', 'Configuration'], True)
-        })
-    request.addfinalizer(tenant_role.delete_if_exists)
+        if appliance.version < '5.11':
+            tenant_role.product_features = [
+                (['Everything', 'Settings', 'Configuration', 'Settings'], True)
+            ]
+        else:
+            tenant_role.product_features = [
+                (['Everything', 'Main Configuration', 'Settings'], True)
+            ]
+    yield tenant_role
+    tenant_role.delete()
 
-    group_collection = appliance.collections.groups
-    group = group_collection.create(
+
+@pytest.fixture(scope='module')
+def new_tenant_admin(appliance, request, child_tenant, tenant_role):
+    group = appliance.collections.groups.create(
         description='tenant_grp{}'.format(fauxfactory.gen_alphanumeric()), role=tenant_role.name,
         tenant='My Company/' + child_tenant.name)
     request.addfinalizer(group.delete_if_exists)
 
-    tenant_admin = new_user(appliance, group, name='tenant_admin')
-    request.addfinalizer(tenant_admin.delete_if_exists)
-    return {
-        "tenant_admin": tenant_admin,
-        "tenant": child_tenant.name,
-        "role": tenant_role.name,
-        "group": group
-    }
+    tenant_admin = new_user(appliance, group, name='tenant_admin_user')
+    yield tenant_admin
+    tenant_admin.delete()
 
 
 @pytest.fixture(scope='function')
@@ -1505,48 +1509,7 @@ def test_superadmin_tenant_admin_crud(appliance):
 
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
-def test_tenantadmin_user_crud(new_tenant_admin, request, appliance):
-    """
-    As a Tenant Admin I want to be able to create users in my tenant
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/4h
-        startsin: 5.5
-        testSteps:
-            1. Login as super admin and create new tenant
-            2. Create new role by copying EvmRole-tenant_administrator
-            3. Create new group and choose role created in previous step and your
-            tenant
-            4. Create new tenant admin user and assign the user to the group created in
-            the previous step
-            5. Login as tenant admin
-            6. Perform user crud operations
-    """
-    tenant_admin = new_tenant_admin['tenant_admin']
-    group = new_tenant_admin['group']
-
-    with tenant_admin:
-        navigate_to(appliance.server, 'LoggedIn')
-        assert appliance.server.current_full_name() == tenant_admin.name
-
-        tenant_user = new_user(appliance, group)
-        request.addfinalizer(tenant_user.delete)
-        assert tenant_user.exists
-
-        pytest.set_trace()
-        with update(tenant_user):
-            tenant_user.name = "{}edited".format(tenant_user.name)
-
-        tenant_user.delete()
-
-
-@pytest.mark.tier(2)
-@test_requirements.multi_tenancy
-def test_tenantadmin_group_crud(new_tenant_admin, request, appliance):
+def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
     """
     Perform CRUD operations on users as Tenant administrator.
 
@@ -1558,19 +1521,17 @@ def test_tenantadmin_group_crud(new_tenant_admin, request, appliance):
         initialEstimate: 1/4h
         startsin: 5.5
         testSteps:
-            1. Create new tenant admin user and assign him into group EvmGroup-tenant_administrator
+            1. Create new tenant admin user and assign user to group EvmGroup-tenant_administrator
             2. As Tenant administrator, create new group, update group and delete group.
     """
-    tenant_admin = new_tenant_admin['tenant_admin']
-
-    with tenant_admin:
+    with new_tenant_admin:
         navigate_to(appliance.server, 'LoggedIn')
-        assert appliance.server.current_full_name() == tenant_admin.name
+        assert appliance.server.current_full_name() == new_tenant_admin.name
 
         group_collection = appliance.collections.groups
         group = group_collection.create(
             description='tenantgrp_{}'.format(fauxfactory.gen_alphanumeric()),
-            role=new_tenant_admin['role'], tenant='My Company/' + new_tenant_admin['tenant'])
+            role=tenant_role.name, tenant='My Company/' + child_tenant.name)
         request.addfinalizer(group.delete_if_exists)
         assert group.exists
 
@@ -1607,6 +1568,36 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
     view.add_button.click()
     view.flash.wait_displayed(timeout=20)
     assert view.flash.read() == [msg]
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
+def test_tenantadmin_user_crud():
+    """
+    As a Tenant Admin I want to be able to create users in my tenant
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Login as super admin and create new tenant
+            2. Create new role by copying EvmRole-tenant_administrator
+            3. Create new group and choose role created in previous step and your
+            tenant
+            4. Create new tenant admin user and assign him into group created in
+            previous step
+            5. login as tenant admin
+            6. Perform crud operations
+            Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
+            Workaround is to add modify permissions to tenant_administrator role or Roles
+            must be created by superadministrator. In 5.5.0.13 after giving additional permissions
+            to tenant_admin,able to create new roles
+    """
+    pass
 
 
 @pytest.mark.manual
