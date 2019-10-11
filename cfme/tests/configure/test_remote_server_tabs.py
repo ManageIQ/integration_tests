@@ -32,7 +32,7 @@ def test_remote_server_advanced_config(temp_appliance_preconfig, request,
         casecomponent: Configuration
     """
     appliance = temp_appliance_preconfig
-    remote_server = appliance.server.slave_servers[0]
+    remote_server = appliance.server.secondary_servers[0]
     #  Advanced tab exists for remote servers
     navigate_to(remote_server, 'Advanced')
 
