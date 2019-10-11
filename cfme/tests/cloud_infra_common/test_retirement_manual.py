@@ -27,28 +27,6 @@ def test_retire_infra_vms_folder():
     pass
 
 
-def test_retirement_date_uses_correct_time_zone():
-    """
-    Bug 1565128 - Wrong timezone when selecting retirement time
-
-    Bugzilla:
-        1565128
-
-    After saving VM retirement date/time (using both "Specific Date and
-    Time" and "Time Delay from Now" options), the displayed Retirement
-    Date has the correct date and time-zone appropriate time.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/15h
-        startsin: 5.9
-        title: Retirement date uses correct time zone
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_retire_cloud_vms_date_folder():
     """
@@ -91,26 +69,6 @@ def test_retire_infra_vms_date_folder():
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/2h
-    """
-    pass
-
-
-def test_vms_retirement_state_field_is_capitalized_correctly():
-    """
-    Bug 1518926 - Inconsistent capitalization for Retirement State field
-
-    Bugzilla:
-        1518926
-
-    When a VM is retiring or retired, the VM should show a "Retirement
-    State" field, not "Retirement state".
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/15h
-        title: VM's Retirement State field is capitalized correctly
     """
     pass
 

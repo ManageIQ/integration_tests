@@ -35,8 +35,6 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
-from cfme.utils.version import LOWEST
-from cfme.utils.version import VersionPicker
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
 
@@ -220,14 +218,10 @@ class BaseVM(
     def is_retired(self):
         """Check retirement status of vm"""
         view = navigate_to(self, "Details", use_resetter=False)
-        if view.entities.summary('Lifecycle').get_text_of('Retirement Date').lower() != 'never':
+        if view.entities.summary('Lifecycle').get_text_of('Retirement Date') != 'Never':
             try:
-                retirement_state = VersionPicker({
-                    LOWEST: 'Retirement state',
-                    '5.10': 'Retirement State'
-                })
-                status = view.entities.summary('Lifecycle').get_text_of(retirement_state).lower()
-                return status == 'retired'
+                status = view.entities.summary('Lifecycle').get_text_of('Retirement State')
+                return status == 'Retired'
             except NameError:
                 return False
         else:
@@ -618,10 +612,6 @@ class BaseVMCollection(BaseCollection):
             if not BZ(1608967, forced_streams=['5.10']).blocks:
                 wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
                         message='wait for Flash Success')
-            # This flash message is not flashed in 5.10.
-            if self.appliance.version < 5.10:
-                wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
-                         message='wait for Flash Success')
             view.flash.assert_no_error()
             if wait:
                 if request_description is None:
