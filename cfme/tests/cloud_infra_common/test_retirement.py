@@ -83,7 +83,7 @@ def verify_retirement_state(retire_vm):
     assert wait_for(
         lambda: retire_vm.is_retired, delay=5, num_sec=15 * 60,
         fail_func=view.toolbar.reload.click,
-        message="Wait for VM '{}' to enter retired state".format(retire_vm.name)
+        message=f"Wait for VM '{retire_vm.name}' to enter retired state"
     )
 
     retirement_states = ['retired']
@@ -140,6 +140,7 @@ def generate_retirement_date_now():
 
 
 @pytest.mark.rhv1
+@pytest.mark.meta(automates=[1518926, 1565128])
 def test_retirement_now(retire_vm):
     """Tests on-demand retirement of an instance/vm
 
@@ -147,9 +148,13 @@ def test_retirement_now(retire_vm):
         assignee: tpapaioa
         casecomponent: Provisioning
         initialEstimate: 1/6h
+
+    Bugzilla:
+        1518926
+        1565128
     """
-    # For 5.7 capture two times to assert the retire time is within a window.
-    # Too finicky to get it down to minute precision, nor is it really needed here
+    # Assert the Retirement Date is within a window +/- 5 minutes surrounding the actual
+    # retirement. Too finicky to get it down to minute precision, nor is it really needed here.
     retire_times = dict()
     retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
     retire_vm.retire()
