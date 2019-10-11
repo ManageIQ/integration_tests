@@ -5,8 +5,11 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
+from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.services.myservice import MyService
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -306,3 +309,91 @@ def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, re
             timeout=60)
     except TimedOutError:
         pytest.fail("Ansible playbook method hasn't been executed.")
+
+
+@pytest.fixture(scope='module')
+def set_repo(appliance, wait_for_ansible):
+    repositories = appliance.collections.ansible_repositories
+    repository = repositories.create(
+        name="test_retry_playbooks",
+        url="https://github.com/billfitzgerald0120/ansible_playbooks",
+        description=fauxfactory.gen_alpha()
+    )
+    view = navigate_to(repository, "Details")
+    wait_for(
+        lambda: view.entities.summary("Properties").get_text_of("Status") == "successful",
+        timeout=60,
+        fail_func=view.toolbar.refresh.click
+    )
+    yield repository
+    repository.delete_if_exists()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1625047])
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1625047.zip", "bz_1625047", None)],
+    ids=['retry_playbook']
+)
+def test_embed_tower_playbook_with_retry_method(request, set_repo, appliance, import_datastore,
+                                                import_data, catalog, dialog):
+    """
+    Bugzilla:
+        1625047
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/2h
+        testSteps:
+            1. Enable Embedded Ansible
+            2. Add repo - https://github.com/billfitzgerald0120/ansible_playbooks
+            3. Import Ansible_StateMachine_Set_Retry
+            4. Enable domain
+            5. Create Catalog using set_retry_4_times playbook.
+            6. Add a dummy dialog
+            7. Add a catalog
+            8. Add a new Catalog item (Generic Type)
+            9. Order service
+        expectedResults:
+            1. Check Embedded Ansible Role is started.
+            2. Check repo is added.
+            3.
+            4.
+            5. Verify in the Catalog playbook set_retry_4_times is used.
+            6.
+            7.
+            8.
+            9. Check automation.log to make sure the playbook retried 3 times and then ended OK.
+    """
+    ansible_catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        display_in_catalog=True, catalog=f"My Company/{catalog}",
+        provisioning={
+            "repository": set_repo.name,
+            "playbook": "set_retry_4_times.yml",
+            "machine_credential": "CFME Default Credential",
+            "use_exisiting": True,
+            "provisioning_dialog_id": dialog.label
+        }
+    )
+
+    ansible_service_catalog = ServiceCatalogs(appliance, catalog, ansible_catalog_item.name)
+    service_request = ansible_service_catalog.order()
+    service_request.wait_for_request(num_sec=300, delay=20)
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+
+    @request.addfinalizer
+    def _finalize():
+        service = MyService(appliance, ansible_catalog_item.name)
+        if service_request.exists():
+            service_request.wait_for_request()
+            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
+        if service.exists:
+            service.delete()
