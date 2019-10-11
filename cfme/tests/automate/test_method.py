@@ -797,3 +797,49 @@ def test_automate_user_has_groups(request, appliance, custom_instance):
                 "instance": instance.name,
             },
         )
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1592140])
+def test_copy_with_embedded_method(request, appliance, klass):
+    """
+    When copying a method within the automate model the copied method
+    does not have the Embedded Methods that are a part of the source method
+
+    Bugzilla:
+        1592140
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        initialEstimate: 1/2h
+        testSteps:
+            1. Create a method in the automate model that has one or more Embedded Methods added
+            2. Copy the method to a new domain
+    """
+    path = ("Datastore", "ManageIQ (Locked)", "System", "CommonMethods", "Utils", "log_object")
+    embedded_method_path = f"/{'/'.join(path[2:])}"
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location="inline",
+        script='$evm.log(:info, ":P")',
+        embedded_method=path,
+    )
+    request.addfinalizer(method.delete_if_exists)
+    view = navigate_to(method, "Details")
+    assert view.embedded_method_table.read()[0]["Path"] == embedded_method_path
+
+    domain = appliance.collections.domains.create(
+        name=fauxfactory.gen_alpha(), description=fauxfactory.gen_alpha(), enabled=True
+    )
+    request.addfinalizer(domain.delete_if_exists)
+    method.copy_to(domain.name)
+
+    copied_method = (
+        domain.namespaces.instantiate(klass.namespace.name)
+        .classes.instantiate(klass.name)
+        .methods.instantiate(method.name)
+    )
+    view = navigate_to(copied_method, "Details")
+    assert view.embedded_method_table.read()[0]["Path"] == embedded_method_path
