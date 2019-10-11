@@ -18,6 +18,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 
 pytestmark = [
     test_requirements.rbac
@@ -62,9 +64,13 @@ def new_tenant_admin(appliance, request):
 
     role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
     tenant_role = role.copy()
+
+    # Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
     with update(tenant_role):
-        tenant_role.product_features = [(['Everything', 'Main Configuration', 'Settings'], True),
-                                        (['Everything', 'Services', 'Catalogs Explorer'], True)]
+        tenant_role.product_features = VersionPicker({
+            "5.11": (['Everything', 'Main Configuration', 'Settings'], True),
+            LOWEST: (['Everything', 'Settings', 'Configuration'], True)
+        })
     request.addfinalizer(tenant_role.delete_if_exists)
 
     group_collection = appliance.collections.groups
@@ -1515,15 +1521,10 @@ def test_tenantadmin_user_crud(new_tenant_admin, request, appliance):
             2. Create new role by copying EvmRole-tenant_administrator
             3. Create new group and choose role created in previous step and your
             tenant
-            4. Create new tenant admin user and assign him into group created in
-            previous step
-            5. login as tenant admin
-            6. Perform crud operations
-
-            Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
-            Workaround is to add modify permissions to tenant_administrator role or Roles
-            must be created by superadministrator. In 5.5.0.13 after giving additional permissions
-            to tenant_admin,able to create new roles
+            4. Create new tenant admin user and assign the user to the group created in
+            the previous step
+            5. Login as tenant admin
+            6. Perform user crud operations
     """
     tenant_admin = new_tenant_admin['tenant_admin']
     group = new_tenant_admin['group']
@@ -1536,11 +1537,11 @@ def test_tenantadmin_user_crud(new_tenant_admin, request, appliance):
         request.addfinalizer(tenant_user.delete)
         assert tenant_user.exists
 
+        pytest.set_trace()
         with update(tenant_user):
             tenant_user.name = "{}edited".format(tenant_user.name)
 
         tenant_user.delete()
-        assert not tenant_user.exists
 
 
 @pytest.mark.tier(2)
