@@ -4,12 +4,14 @@ import socket
 
 import pytest
 from wait_for import TimedOutError
+from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import InfraProviderDetailsView
+from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -496,3 +498,32 @@ def test_add_ipmi_refresh(appliance, setup_provider):
     host.refresh()
     view = navigate_to(host, "Edit")
     assert view.ipmi_address.read() == ipmi_address
+
+@test_requirements.infra_hosts
+@pytest.mark.meta(blockers=[BZ(1634794, forced_streams=["5.10"])], automates=[1634794])
+def test_infrastructure_hosts_no_edit_no_warning(appliance, setup_provider_min_hosts, provider):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/6h
+    Bugzilla:
+            1634794
+    """
+    refresh = 2
+    my_slice = slice(0, refresh, None)
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    num_hosts = hosts_view.entities.paginator.items_amount
+    if num_hosts < refresh:
+        pytest.skip('not enough hosts in appliance UI to run test')
+    for h in hosts_view.entities.get_all(slice=my_slice):
+        h.check()
+    hosts_view.toolbar.configuration.item_select('Edit Selected items',
+                                                handle_alert=False)
+    try:
+        hosts_view.navigation.select('Compute', 'Infrastructure', 'Providers', handle_alert=False)
+        final_view = provider.create_view(InfraProvidersView)
+        assert final_view.is_displayed
+    except UnexpectedAlertPresentException:
+        pytest.fail("Abandon changes alert displayed, but no changes made.")
