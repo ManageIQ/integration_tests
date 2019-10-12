@@ -454,10 +454,11 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
 
     """
     hosts_view = navigate_to(provider.collections.hosts, "All")
-    num_hosts = len(hosts_view.entities.get_all())
+    ent_slice = slice(0,2,None)
+    num_hosts = hosts_view.entities.paginator.items_amount
     if num_hosts < 2:
         pytest.skip('not enough hosts in appliance UI to run test')
-    for h in hosts_view.entities.get_all():
+    for h in hosts_view.entities.get_all(slice=ent_slice):
         h.check()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
