@@ -41,7 +41,7 @@ SERVICE_CATALOG_VALUES = [
 CREDENTIALS = [
     ("Amazon", "", "list_ec2_instances.yml"),
     ("VMware", "vcenter_host", "gather_all_vms_from_vmware.yml"),
-    ("Red Hat Virtualization", "host", "connect_to_rhv.yml"),
+    ("Red Hat Virtualization", "host", "get_vms_facts_rhv.yaml"),
     ("Azure", "", "get_resourcegroup_facts_azure.yml"),
 ]
 
@@ -121,7 +121,7 @@ def provider_credentials(appliance, provider, credential):
     else:
         credentials["username"] = creds.principal
         credentials["password"] = creds.secret
-        credentials[hostname] = provider.hostname
+        credentials[hostname] = f"https://{provider.hostname}/ovirt-engine/api"
 
     credential = appliance.collections.ansible_credentials.create(
         "{}_credential_{}".format(cred_type, fauxfactory.gen_alpha()),
