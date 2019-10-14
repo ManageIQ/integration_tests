@@ -366,6 +366,11 @@ class IPAppliance(object):
             for k in set(self.CONFIG_MAPPING.values())
             if k in self.__dict__})
 
+    @property
+    def is_configured(self):
+        """ Check if the appliance is configured or unconfigured."""
+        return self.db.has_database and self.db.has_tables
+
     @classmethod
     def from_json(cls, json_string):
         return cls(**json.loads(json_string))
