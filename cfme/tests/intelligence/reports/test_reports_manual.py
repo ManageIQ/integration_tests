@@ -123,33 +123,6 @@ def test_vm_volume_free_space_less_than_20_percent():
 @test_requirements.report
 @pytest.mark.tier(0)
 @pytest.mark.ignore_stream("5.10")
-def test_reports_filter_content():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        initialEstimate: 1/3h
-        startsin: 5.11
-        setup:
-            1. Go to Cloud Intel -> Reports -> All Reports
-            2. Select a report and queue it, make sure it's not empty.
-        testSteps:
-            1. Add a filter.
-            2. Traverse through all the rows and check if the content is filtered.
-        expectedResults:
-            1.
-            2. Content must be filtered.
-
-    Bugzilla:
-        1678150
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(0)
-@pytest.mark.ignore_stream("5.10")
 def test_reports_sort_column():
     """
     Polarion:
@@ -254,34 +227,6 @@ def test_created_on_time_report_field():
             1. Create a report based on 'VMs and Instances' with [Created on Time, Name] field.
         expectedResults:
             1. `Created on Time` field column must not be empty for the recently created VM.
-    """
-    pass
-
-
-@test_requirements.report
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1741588])
-def test_case_insensitive_report_filtering():
-    """
-    Bugzilla:
-        1741588
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup:
-            1. Queue a report based on VMs and Instances(make sure it is not empty).
-            2. Filter the report with `VM Name` - case exactly matching the subject VM name
-                and note the result.
-            3. Filter the report with `VM Name` - case not matching the subject VM name
-                and note the result.
-        testSteps:
-            1. Compare both the results.
-        expectedResults:
-            1. Both the results must be same.
     """
     pass
 
