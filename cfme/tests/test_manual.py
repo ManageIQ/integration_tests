@@ -371,34 +371,6 @@ def test_validate_chargeback_cost_monthly_rate_memory_cost():
 
 
 @pytest.mark.manual
-@test_requirements.tower
-@pytest.mark.tier(1)
-def test_config_manager_prov_from_service_survey_ansible_tower_310():
-    """
-    1) Navigate to Configuration -> Configuration management -> Ansible
-    Tower job templates.
-    - click on job template -> Configuration -> Create service dialog from
-    this job template -> give it name
-    (Job template with preconfigured Survey must be used!!!)
-    2) Create new catalog Item
-    - Catalog Item type: AnsibleTower
-    - name your catalog item
-    - Display in catalog: checked
-    - catalog: pick your catalog
-    - Dialog: Tower_dialog
-    - Provider: Ansible Tower .....
-    3) Order service and fill in service details
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Provisioning
-        initialEstimate: 1h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_orchestration_link_mismatch():
     """
 
@@ -497,25 +469,6 @@ def test_host_tagged_crosshair_op_vsphere6():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.tower
-def test_config_manager_accordion_tree():
-    """
-    Make sure there is accordion tree, once Tower is added to the UI.
-
-    Bugzilla:
-        1560552
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: WebUI
-        caseimportance: low
-        initialEstimate: 1/4h
-        startsin: 5.8
     """
     pass
 
@@ -624,33 +577,6 @@ def test_bottleneck_provider():
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.tower
-@pytest.mark.tier(1)
-def test_config_manager_prov_from_service_limit_ansible_tower_310():
-    """
-    1) Navigate to Configuration -> Configuration management -> Ansible
-    Tower job templates.
-    - click on job template -> Configuration -> Create service dialog from
-    this job template -> give it name
-    2) Create new catalog Item
-    - Catalog Item type: AnsibleTower
-    - name your catalog item
-    - Display in catalog: checked
-    - catalog: pick your catalog
-    - Dialog: Tower_dialog
-    - Provider: Ansible Tower .....
-    3) Order service with limit
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Provisioning
-        initialEstimate: 1h
-        startsin: 5.8
     """
     pass
 
@@ -900,54 +826,6 @@ def test_bottleneck_cluster():
         caseimportance: medium
         initialEstimate: 3/4h
         testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.tower
-@pytest.mark.tier(1)
-def test_config_manager_prov_from_service_ansible_tower_310():
-    """
-    1) Navigate to Configuration -> Configuration management -> Ansible
-    Tower job templates.
-    - click on job template -> Configuration -> Create service dialog from
-    this job template -> give it name
-    2) Create new catalog Item
-    - Catalog Item type: AnsibleTower
-    - name your catalog item
-    - Display in catalog: checked
-    - catalog: pick your catalog
-    - Dialog: Tower_dialog
-    - Provider: Ansible Tower .....
-    3) Order service
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Provisioning
-        initialEstimate: 1h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.tower
-@pytest.mark.tier(1)
-def test_config_manager_remove_objects_ansible_tower_310():
-    """
-    1) Add Configuration manager
-    2) Perform refresh and wait until it is successfully refreshed
-    3) Remove provider
-    4) Click through accordion and double check that no objects (e.g.
-    tower job templates) were left in the UI
-
-    Polarion:
-        assignee: nachandr
-        caseimportance: medium
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        startsin: 5.7
     """
     pass
 
@@ -1282,27 +1160,6 @@ def test_check_all_availability_zones_for_amazon_provider():
 
 
 @pytest.mark.manual
-@test_requirements.tower
-@pytest.mark.tier(1)
-def test_config_manager_change_zone():
-    """
-    Add Ansible Tower in multi appliance, add it to appliance with UI. Try
-    to change to zone where worker is enabled.
-
-    Bugzilla:
-        1353015
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Provisioning
-        caseimportance: medium
-        initialEstimate: 1h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(2)
 def test_candu_graphs_datastore_vsphere6():
@@ -1467,77 +1324,6 @@ def test_deployment_multiple_instances():
 
 
 @pytest.mark.manual
-@test_requirements.tower
-@pytest.mark.tier(1)
-def test_config_manager_override_extra_vars_dialog_vsphere():
-    """
-    1. add tower 2.4.3 provider and perform refresh
-    2. Go to job templates
-    3. Create service dialog from third_job_template
-    - this template is bound to vsphere55 inventory
-    - simple_play_4_dockers.yaml playbook is part of this template
-    - this playbook will touch /var/tmp/touch_from_play.txt
-    - into /var/tmp/touch_from_play_dumped_vars.txt all variables
-    available during play run will be dumped
-    - this includes also variables passed from Tower or CFME
-    - this project is linked with Tower and Vsphere55 credentials
-    - Vsphere55 credentials are used when inventory is retrieved
-    - Tower credentials are the creds used to login into VM which will be
-    deployed
-    - Vsphere template used for VM deployment must have ssh key "baked" in
-    -
-    Prompt for Extra variables must be enabled.
-    4. Add Vsphere55 provider into CFME and perform refresh
-    5. Create new Catalog
-    6. Add new catalog item for Vsphere vcentre - VMWare
-    7. give it name, display in catalog, catalog,
-    8 Provisioning entry point:
-    /Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogI
-    temInitialization
-    Request info tab:
-    Name of template: template_Fedora-Cloud-Base-23-vm-tools_v4 (this
-    template has ssh key which matches with Tower creentials)
-    VM Name: test_tower_pakotvan_1234 (it must start with test_tower_ -
-    inventory script on Tower 2.4.3 was modified to look only for such VMs
-    in order to speed up provisioning)
-    Envirnment tab:
-    - select where VM will be placed and datastore
-    Hardware: Select at least 1GB ram for our template
-    Network:
-    vLAN: VM Network
-    9. Automate -> Explorer
-    10. Add new Domain
-    11. Copy instance Infrastructure->Vm->Provisioning->StateMachines->VMP
-    rovision_VM->Provision_VM
-    from Template into your domain
-    12. Edit this instance
-    13. look for PostProvision in the first field/column
-    14. Into Value column add:
-    /ConfigurationManagement/AnsibleTower/Operations/StateMachines/Job/def
-    ault?job_template_name=third_job_template
-    15. Automate -> Customization -> Service dialogs -> tower_dialog ->
-    Edit this dialog
-    Extra variables:
-    - make elements in extra variables writable (uncheck readonly).
-    - add new element add 1 extra variable - variables must start with
-    param_prefix, otherwised will be ignored!!!
-    16. Order service
-    Into limit field put exact name of your VM:  test_tower_pakotvan_1234
-    17. Login into provision VM and `cat
-    /var/tmp/touch_from_play_dumped_vars.txt` and grep for variables which
-    were passed from CFME UI.
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1d
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(2)
 def test_monitor_ansible_playbook_std_output():
@@ -1652,25 +1438,6 @@ def test_candu_collection_tab():
 
 
 @pytest.mark.manual
-@test_requirements.tower
-@pytest.mark.tier(1)
-def test_config_manager_add_multiple_times_ansible_tower_243():
-    """
-    Try to add same Tower manager twice (use the same IP/hostname). It
-    should fail and flash message should be displayed.
-
-    Polarion:
-        assignee: nachandr
-        caseimportance: medium
-        caseposneg: negative
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.c_and_u
 @pytest.mark.tier(3)
 def test_cluster_tagged_crosshair_op_vsphere65():
@@ -1723,21 +1490,5 @@ def test_cluster_tagged_crosshair_op_vsphere55():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.tower
-def test_config_manager_job_template_refresh():
-    """
-    After first Tower refresh, go to Tower UI and change name of 1 job
-    template. Go back to CFME UI, perform refresh and check if job
-    template name was changed.
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Ansible
-        initialEstimate: 1/2h
     """
     pass
