@@ -59,7 +59,7 @@ def child_tenant(appliance, request):
         parent=appliance.collections.tenants.get_root_tenant()
     )
     yield child_tenant
-    child_tenant.delete()
+    child_tenant.delete_if_exist()
 
 
 @pytest.fixture(scope='module')
@@ -78,19 +78,19 @@ def tenant_role(appliance, request):
                 (['Everything', 'Main Configuration', 'Settings'], True)
             ]
     yield tenant_role
-    tenant_role.delete()
+    tenant_role.delete_if_exists()
 
 
 @pytest.fixture(scope='module')
 def new_tenant_admin(appliance, request, child_tenant, tenant_role):
     group = appliance.collections.groups.create(
-        description='tenant_grp{}'.format(fauxfactory.gen_alphanumeric()), role=tenant_role.name,
-        tenant='My Company/' + child_tenant.name)
+        description=f'tenant_grp_{fauxfactory.gen_alphanumeric()}', role=tenant_role.name,
+        tenant=f'My Company/{child_tenant.name}')
     request.addfinalizer(group.delete_if_exists)
 
     tenant_admin = new_user(appliance, group, name='tenant_admin_user')
     yield tenant_admin
-    tenant_admin.delete()
+    tenant_admin.delete_if_exists()
 
 
 @pytest.fixture(scope='function')
@@ -1511,7 +1511,7 @@ def test_superadmin_tenant_admin_crud(appliance):
 @test_requirements.multi_tenancy
 def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
     """
-    Perform CRUD operations on users as Tenant administrator.
+    Perform CRUD operations on groups as Tenant administrator.
 
     Polarion:
         assignee: nachandr
@@ -1530,8 +1530,8 @@ def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, req
 
         group_collection = appliance.collections.groups
         group = group_collection.create(
-            description='tenantgrp_{}'.format(fauxfactory.gen_alphanumeric()),
-            role=tenant_role.name, tenant='My Company/' + child_tenant.name)
+            description=f'tenantgrp_{fauxfactory.gen_alphanumeric()}',
+            role=tenant_role.name, tenant=f'My Company/{child_tenant.name}')
         request.addfinalizer(group.delete_if_exists)
         assert group.exists
 
