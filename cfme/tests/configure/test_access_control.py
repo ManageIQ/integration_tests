@@ -19,7 +19,6 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.update import update
 
-
 pytestmark = [
     test_requirements.rbac
 ]
@@ -59,7 +58,7 @@ def child_tenant(appliance, request):
         parent=appliance.collections.tenants.get_root_tenant()
     )
     yield child_tenant
-    child_tenant.delete_if_exist()
+    child_tenant.delete_if_exists()
 
 
 @pytest.fixture(scope='module')
@@ -86,11 +85,11 @@ def new_tenant_admin(appliance, request, child_tenant, tenant_role):
     group = appliance.collections.groups.create(
         description=f'tenant_grp_{fauxfactory.gen_alphanumeric()}', role=tenant_role.name,
         tenant=f'My Company/{child_tenant.name}')
-    request.addfinalizer(group.delete_if_exists)
 
     tenant_admin = new_user(appliance, group, name='tenant_admin_user')
     yield tenant_admin
     tenant_admin.delete_if_exists()
+    group.delete_if_exists()
 
 
 @pytest.fixture(scope='function')
