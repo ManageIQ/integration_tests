@@ -16,11 +16,12 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.ec2 import EC2Endpoint
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.openstack import RHOSEndpoint
+from cfme.common.provider import prepare_endpoints
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import CloudProvidersView
 from cfme.fixtures.provider import enable_provider_regions
@@ -31,7 +32,6 @@ from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
@@ -187,6 +187,26 @@ def vm_ip(cfme_vhd, pwsh_ssh):
             timeout=20)
 
         pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=180)
+
+
+@pytest.fixture
+def ec2_provider_with_sts_creds(appliance):
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(
+        prov_class=EC2Provider, name=fauxfactory.gen_alphanumeric(5), key='ec2west'
+    )
+    assume_role_creds = prov.data.sts_assume_role.credentials
+    creds = Credential(principal=credentials[assume_role_creds]['username'],
+                       secret=credentials[assume_role_creds]['password'])
+    endpoint = EC2Endpoint(
+        assume_role_arn=prov.data.sts_assume_role.role_arn,
+        credentials=creds)
+
+    prov.endpoints = prepare_endpoints(endpoint)
+    prov.region_name = prov.data.region_name
+
+    yield prov
+    prov.delete()
 
 
 @pytest.mark.tier(3)
@@ -1302,10 +1322,12 @@ def test_add_ec2_provider_with_non_default_url_endpoint():
     pass
 
 
-def test_add_ec2_provider_with_sts_assume_role(appliance, request):
+@pytest.mark.ignore_stream("5.10")
+def test_add_ec2_provider_with_sts_assume_role(appliance, ec2_provider_with_sts_creds):
     """
     Requires:
-        1. Role which has all the required permissions to manage CMFE
+        The requirement is only on EC2 side and needs to be added manually once.
+        1. Role which has all the required permissions to manage CFME
         2. Edit Trust relationship policy for this role to:
             {
               "Version": "2012-10-17",
@@ -1345,18 +1367,5 @@ def test_add_ec2_provider_with_sts_assume_role(appliance, request):
             1.
             2. Provider should be successfully added.
     """
-    assume_role_creds = cfme_data['management_systems']['ec2west']['sts_assume_role']['credentials']
-    creds = Credential(principal=credentials[assume_role_creds]['username'],
-                       secret=credentials[assume_role_creds]['password'])
-    endpoint = EC2Endpoint(
-        assume_role_arn=cfme_data['management_systems']['ec2west']['sts_assume_role']['role_arn'],
-        credentials=creds)
-
-    collection = appliance.collections.cloud_providers
-    prov = collection.instantiate(
-        prov_class=EC2Provider, name=fauxfactory.gen_alphanumeric(5),
-        region_name=cfme_data['management_systems']['ec2west']['region_name'],
-        endpoints=endpoint)
-
-    request.addfinalizer(prov.delete_if_exists)
-    prov.create()
+    ec2_provider_with_sts_creds.create()
+    ec2_provider_with_sts_creds.validate()
