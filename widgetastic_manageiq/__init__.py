@@ -2344,16 +2344,18 @@ class ReportToolBarViewSelector(View):
     graph_button = Button(title="Graph View")
     hybrid_button = Button(title="Hybrid View")
     tabular_button = Button(title="Tabular View")
+    data_button = Button(title="Data View")
 
     @property
     def _view_buttons(self):
         yield self.graph_button
         yield self.hybrid_button
         yield self.tabular_button
+        yield self.data_button
 
     def select(self, title):
         for button in self._view_buttons:
-            if button.title == title:
+            if button.is_displayed and button.title == title:
                 return button.click()
         else:
             raise ValueError("The view with title {title} isn't present".format(title=title))
@@ -2361,7 +2363,7 @@ class ReportToolBarViewSelector(View):
     @property
     def selected(self):
         if self.is_displayed:
-            return next(btn.title for btn in self._view_buttons if btn.active)
+            return next(btn.title for btn in self._view_buttons if btn.is_displayed and btn.active)
         else:
             return None
 
@@ -2370,7 +2372,12 @@ class ReportToolBarViewSelector(View):
 
     @property
     def is_displayed(self):
-        return self.graph_button.is_displayed
+        return (
+            self.graph_button.is_displayed
+            or self.hybrid_button.is_displayed
+            or self.tabular_button.is_displayed
+            or self.data_button.is_displayed
+        )
 
 
 class AdvancedFilterSave(View):
@@ -5665,9 +5672,9 @@ class SearchBox(TextInput):
     """Overriding fill method of TextInput to send
        enter after filling """
 
-    def fill(self, value):
+    def fill(self, value, refill=False):
         current_value = self.value
-        if value == current_value:
+        if (value == current_value) and not refill:
             return False
         # Clear and type everything
         self.browser.click(self)
