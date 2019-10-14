@@ -892,3 +892,27 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
         if appliance.version < "5.11"
         else "Finished"
     )
+
+
+@pytest.mark.tier(3)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1742839], server_roles=["-ems_operations"])
+def test_ansible_service_with_operations_role_disabled(appliance, ansible_catalog_item,
+ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope):
+    """If the embedded ansible role is *not* on the same server as the ems_operations role,
+    then the run will never start.
+
+    Bugzilla:
+        1742839
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/3h
+        tags: ansible_embed
+    """
+    service_request = ansible_service_catalog.order()
+    service_request.wait_for_request(num_sec=300, delay=20)
+
+    view = navigate_to(ansible_service_funcscope, "Details")
+    assert view.provisioning.results.get_text_of("Status") == "Finished"
