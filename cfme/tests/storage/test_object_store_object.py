@@ -42,7 +42,7 @@ def storage_object(appliance, provider):
 
 
 @test_requirements.tag
-def test_storage_object_store_object_add_remove_tag_openstack(storage_object):
+def test_storage_object_store_object_add_remove_tag(storage_object):
     """
     Requires:
         OpenstackProvider

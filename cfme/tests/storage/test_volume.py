@@ -47,10 +47,27 @@ def volume(appliance, provider):
     try:
         if volume.exists:
             volume.delete(wait=True)
-    except Exception as e:
-        logger.warning("{name}:{msg} Volume deletion - skipping...".format(
-            name=type(e).__name__,
-            msg=str(e)))
+    except Exception:
+        logger.exception("Volume deletion - skipping...")
+
+
+@pytest.fixture(scope="function")
+def attached_volume(appliance, provider, instance_fixture):
+    volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
+                           vm_default_args["environment"]["availability_zone"], should_assert=True)
+    volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
+                           from_manager=from_manager)
+    wait_for(lambda: volume.instance_count == 1, delay=15, timeout=600)
+    yield volume
+
+    try:
+        if volume.exists:
+            if volume.instance_count > 0:
+                volume.detach_instance(name=instance_fixture.name, from_manager=from_manager)
+                wait_for(lambda: volume.instance_count == 0, delay=15, timeout=600)
+            volume.delete(wait=True)
+    except Exception:
+        logger.exception("Volume deletion - skipping...")
 
 
 @pytest.fixture(scope="function")
@@ -203,7 +220,8 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
 @pytest.mark.meta(blockers=[BZ(1684939, forced_streams=["5.10", "5.11"],
                                unblock=lambda provider: provider.one_of(EC2Provider))])
 @test_requirements.storage
-def test_storage_volume_attached_delete(appliance, provider, instance_fixture, from_manager):
+def test_storage_volume_attached_delete(appliance, provider, instance_fixture, request,
+                                        attached_volume, from_manager):
     """
     Requires:
         RHCF3-21779 - test_storage_volume_attach[openstack]
@@ -227,30 +245,17 @@ def test_storage_volume_attached_delete(appliance, provider, instance_fixture, f
             4. check for flash message " Cloud Volume "Volume_name" cannot be
             removed because it is attached to one or more Instances "
         """
-    volume = create_volume(appliance, provider, from_manager, az=instance_fixture.
-                           vm_default_args["environment"]["availability_zone"], should_assert=True)
-
-    # attach
-    volume.attach_instance(name=instance_fixture.name, mountpoint='/dev/sdm',
-                           from_manager=from_manager)
-    wait_for(lambda: volume.instance_count == 1, delay=15, timeout=600)
-
     try:
-        volume.delete(from_manager=from_manager)
+        attached_volume.delete(from_manager=from_manager)
         pytest.fail("Attached volume was deleted!")
     except Exception:
         if from_manager:
-            view = volume.browser.create_view(StorageManagerVolumeAllView,
-                                              additional_context={'object': volume.parent.manager})
+            view = attached_volume.browser.create_view(StorageManagerVolumeAllView,
+                additional_context={'object': attached_volume.parent.manager})
         else:
-            view = volume.create_view(VolumeDetailsView)
+            view = attached_volume.create_view(VolumeDetailsView)
         assert view.flash.assert_message('Cloud Volume "{}" cannot be removed because it is '
-                                         'attached to one or more Instances'.format(volume.name))
-    # detach
-    volume.detach_instance(name=instance_fixture.name, from_manager=from_manager)
-    wait_for(lambda: volume.instance_count == 0, delay=15, timeout=600)
-
-    volume.delete()
+            'attached to one or more Instances'.format(attached_volume.name))
 
 
 @test_requirements.tag

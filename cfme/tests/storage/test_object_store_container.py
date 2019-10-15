@@ -34,7 +34,7 @@ def container(appliance, provider):
 
 
 @test_requirements.tag
-def test_storage_object_store_container_add_remove_tag_openstack(container):
+def test_storage_object_store_container_add_remove_tag(container):
     """
     Requires:
         OpenstackProvider
