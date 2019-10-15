@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from widgetastic_patternfly import DropdownDisabled
 
 from cfme import test_requirements
 from cfme.exceptions import MenuItemNotFound
@@ -94,7 +95,7 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
     # Initiate analysis
     try:
         datastore.run_smartstate_analysis(wait_for_task_result=True)
-    except MenuItemNotFound:
+    except (MenuItemNotFound, DropdownDisabled):
         # TODO need to update to cover all detastores
         pytest.skip('Smart State analysis is disabled for {} datastore'.format(datastore.name))
     details_view = navigate_to(datastore, 'DetailsFromProvider')
