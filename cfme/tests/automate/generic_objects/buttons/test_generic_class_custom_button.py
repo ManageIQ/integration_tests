@@ -81,6 +81,18 @@ def button_without_group(appliance, generic_definition):
         button.delete_if_exists()
 
 
+@pytest.fixture
+def two_buttons(appliance, generic_definition, button_without_group):
+    with appliance.context.use(ViaUI):
+        button = generic_definition.add_button(
+            name=fauxfactory.gen_alphanumeric(start="btn", separator="-"),
+            description=fauxfactory.gen_alphanumeric(),
+            request=fauxfactory.gen_alphanumeric()
+        )
+        yield button_without_group, button
+        button.delete_if_exists()
+
+
 @pytest.mark.meta(automates=[1744478, 1753289])
 def test_custom_group_on_generic_class_crud(appliance, generic_definition):
     """ Test custom button group crud operation on generic class definition
@@ -314,9 +326,8 @@ def test_generic_object_button_delete_flash():
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], coverage=[1753281, 1753388])
-def test_generic_object_button_delete_multiple():
+@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], automates=[1753281, 1753388])
+def test_generic_object_button_delete_multiple(two_buttons):
     """
     Bugzilla:
         1753281
@@ -337,7 +348,9 @@ def test_generic_object_button_delete_multiple():
             3.
             4. The second button should be deleted, not both, no 404 error
     """
-    pass
+    button1, button2 = two_buttons
+    button2.delete()
+    assert button1.exists
 
 
 @pytest.mark.manual
