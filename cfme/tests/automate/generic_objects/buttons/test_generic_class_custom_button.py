@@ -326,7 +326,9 @@ def test_generic_object_button_delete_flash():
     pass
 
 
-@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], automates=[1753281, 1753388])
+@pytest.mark.meta(
+    blockers=[BZ(1753281), BZ(1753388, forced_streams=["5.10"])], automates=[1753281, 1753388]
+)
 def test_generic_object_button_delete_multiple(two_buttons):
     """
     Bugzilla:
