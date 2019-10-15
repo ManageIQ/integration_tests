@@ -131,6 +131,22 @@ def credentials_collection(appliance):
     return appliance.collections.ansible_credentials
 
 
+@pytest.fixture(scope="function")
+def new_zone(appliance):
+    zone_collection = appliance.collections.zones
+    zone = zone_collection.create(
+        name=fauxfactory.gen_alphanumeric(5),
+        description=fauxfactory.gen_alphanumeric(8)
+    )
+    server_settings = appliance.server.settings
+    server_settings.update_basic_information({'appliance_zone': zone.name})
+    yield zone
+
+    # Resetting appliance to 'default' zone.
+    server_settings.update_basic_information({'appliance_zone': "default"})
+    zone.delete()
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
@@ -416,3 +432,59 @@ def test_embedded_ansible_repository_playbook_link(ansible_repository):
     # Asserting 'PlaybookRepositoryView' which is navigated from Repository to Playbooks view.
     # Playbooks view is coming from Repository view which is not existing Playbooks view.
     assert view.is_displayed
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1656308])
+def test_embed_tower_repo_add_new_zone(appliance, ansible_repository, new_zone, request):
+    """
+    Test whether repository or credentials on New Zone.
+
+    Bugzilla:
+        1656308
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/2h
+        testSteps:
+            1. Configure a CFME appliance with the Embedded Ansible provider
+            2. Create a new zone
+            3. Move the appliance into the new zone
+            4. Add an embedded Ansible repository or credential
+        expectedResults:
+            1. Check Embedded Ansible Role is started.
+            2.
+            3.
+            4. Check Repository or Credentials were added.
+    """
+    # Check Ansible repository via fixture is created or not.
+    assert ansible_repository.exists
+    # Check Appliance is moved to newly created Zone.
+    assert new_zone.description == appliance.server.zone.description
+
+    # Creating new Repository after moving appliance to new zone.
+    repositories = appliance.collections.ansible_repositories
+    try:
+        playbooks_yaml = cfme_data.ansible_links.playbook_repositories
+        playbook_name = getattr(request, 'param', 'embedded_ansible')
+    except (KeyError, AttributeError):
+        message = "Missing ansible_links content in cfme_data, cannot setup repository"
+        logger.exception(message)  # log the exception for debug of the missing content
+        pytest.skip(message)
+    repository = repositories.create(
+        name=fauxfactory.gen_alpha(),
+        url=getattr(playbooks_yaml, playbook_name),
+        description=fauxfactory.gen_alpha(),
+        scm_branch="second_playbook_branch"
+    )
+
+    view = navigate_to(repository, "Details")
+    wait_for(
+        lambda: repository.status == "successful",
+        num_sec=120,
+        delay=5,
+        fail_func=view.toolbar.refresh.click
+    )
+    request.addfinalizer(repository.delete_if_exists)
+    assert repository.exists
