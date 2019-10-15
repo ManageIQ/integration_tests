@@ -291,7 +291,9 @@ def test_generic_object_button_edited_request(button_without_group):
     assert view.request.read() == button_without_group.request
 
 
-@pytest.mark.meta(blockers=[BZ(1753289), BZ(1744478)], coverage=[1753289, 1744478])
+@pytest.mark.meta(
+    blockers=[BZ(1753289, forced_streams=["5.11"]), BZ(1744478)], automates=[1753289, 1744478]
+)
 def test_generic_object_button_delete_flash(button_without_group):
     """
     Bugzilla:
