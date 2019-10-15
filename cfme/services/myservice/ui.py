@@ -371,10 +371,6 @@ class MyServiceAll(CFMENavigateStep):
 
     def resetter(self, *args, **kwargs):
         self.view.myservice.tree.click_path('Active Services')
-        if self.obj.rest_api_entity.retired:
-            self.view.myservice.tree.click_path('Retired Services')
-        else:
-            self.view.myservice.tree.click_path('Active Services')
 
 
 @navigator.register(MyService, 'Details')
@@ -384,6 +380,10 @@ class MyServiceDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
+        if self.obj.rest_api_entity.retired:
+            self.view.myservice.tree.click_path('Retired Services')
+        else:
+            self.view.myservice.tree.click_path('Active Services')
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
