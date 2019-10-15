@@ -11,7 +11,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
-from cfme.utils.net import wait_pingable
+from cfme.utils.net import find_pingable
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
@@ -195,7 +195,8 @@ def ansible_catalog_item_create_empty_file(appliance, ansible_repository):
 
 @pytest.fixture(scope="module")
 def target_machine(provider, setup_provider_modscope):
-    """Fixture to provide target machine for ansible testing"""
+    """Fixture to provide target machine for ansible testing. It will not teardown crated Machine"""
+
     try:
         target_data = provider.data.ansible_target
     except AttributeError:
@@ -215,13 +216,17 @@ def target_machine(provider, setup_provider_modscope):
 
     # wait for pingable ip address
     try:
-        wait_pingable(vm.mgmt, wait=600)
+        hostname, _ = wait_for(
+            find_pingable, func_args=[vm.mgmt], timeout="10m", delay=5, fail_condition=None
+        )
     except TimedOutError:
-        pytest.skip(f"Timed out waiting for pingable address on Target Machine: {vm.name}")
+        pytest.skip(
+            f"Timed out: waiting for pingable ip for Target Machine: {vm.name} on '{provider.name}"
+        )
 
     yield TargetMachine(
         vm=vm,
-        hostname=vm.ip_address,
+        hostname=hostname,
         username=credentials[target_data.credentials].username,
         password=credentials[target_data.credentials].password,
     )
