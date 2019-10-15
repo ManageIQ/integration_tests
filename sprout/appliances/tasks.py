@@ -1069,7 +1069,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                 if appliance.appliance_pool.override_cpu is not None:
                     kwargs['cpu'] = appliance.appliance_pool.override_cpu
             if appliance.is_openshift and appliance.template.custom_data:
-                kwargs['tags'] = appliance.template.custom_data.get('TAGS')
+                kwargs['tags'] = yaml.safe_load(appliance.template.custom_data).get('TAGS')
 
             # TODO: change after openshift wrapanapi refactor
             if appliance.is_openshift:
