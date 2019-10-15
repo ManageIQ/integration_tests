@@ -156,7 +156,7 @@ def is_pingable(ip_addr):
         return False
 
 
-def find_pingable(mgmt_vm):
+def find_pingable(mgmt_vm, allow_ipv6=True):
     """Looks for a pingable address from mgmt_vm.all_ips
 
      Assuming mgmt_vm is a wrapanapi VM entity, with all_ips and ip methods
@@ -165,17 +165,22 @@ def find_pingable(mgmt_vm):
          In priority: first pingable address, address 'selected' by wrapanapi (possibly None)
      """
     for ip in getattr(mgmt_vm, 'all_ips', []):
-        if not ip.lower().startswith('fe80::') and is_pingable(ip):
-            logger.info('Found reachable IP for VM: %s', ip)
-            return ip
-        else:
+        if ip.lower().startswith('fe80::') or (not allow_ipv6 and is_ipv6(ip)):
+            logger.debug('VMs ip is ipv6, skipping it: %s', ip)
+            continue
+        if not is_pingable(ip):
             logger.debug('Could not reach mgmt IP on VM: %s', ip)
+            continue
+
+        logger.info('Found reachable IP for VM: %s', ip)
+        return ip
+
     else:
         logger.info('No reachable IPs found for VM, just returning wrapanapi IP')
         return getattr(mgmt_vm, 'ip', None)
 
 
-def wait_pingable(mgmt_vm, wait=30):
+def wait_pingable(mgmt_vm, wait=30, allow_ipv6=True):
     """Looks for a pingable address from mgmt_vm.all_ips and waits if it isn't present
 
      Assuming mgmt_vm is a wrapanapi VM entity, with all_ips and ip methods
@@ -184,8 +189,8 @@ def wait_pingable(mgmt_vm, wait=30):
          first pingable address or exception
     """
     def is_reachable(mgmt_vm):
-        ip = find_pingable(mgmt_vm)
-        if is_pingable(ip):
+        ip = find_pingable(mgmt_vm, allow_ipv6=allow_ipv6)
+        if is_pingable(ip) and not (not allow_ipv6 and is_ipv6(ip)):
             return ip
         else:
             return None

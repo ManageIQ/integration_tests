@@ -1403,7 +1403,7 @@ def retrieve_appliance_ip(self, appliance_id):
                 )
                 self.retry(args=(appliance_id,), countdown=2, max_retries=10)
 
-            ip_address = wait_pingable(appliance.vm_mgmt)
+            ip_address = wait_pingable(appliance.vm_mgmt, allow_ipv6=False)
         self.logger.info('Updating with reachable IP %s for appliance %s',
                          ip_address, appliance_id)
 
