@@ -128,7 +128,7 @@ docker-py==1.10.6
 docker-pycreds==0.4.0
 docutils==0.15.2
 dogpile.cache==0.7.1
-dump2polarion==0.46.0
+dump2polarion==0.46.1
 ecdsa==0.13.2
 entrypoints==0.3
 fauxfactory==3.0.6
