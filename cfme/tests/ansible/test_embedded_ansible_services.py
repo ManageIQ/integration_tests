@@ -133,6 +133,34 @@ def provider_credentials(appliance, provider, credential):
     credential.delete_if_exists()
 
 
+@pytest.fixture(scope="function")
+def ansible_catalog_item_funcscope(appliance, ansible_repository):
+    collection = appliance.collections.catalog_items
+    cat_item = collection.create(
+        collection.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        display_in_catalog=True,
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+            "extra_vars": [("some_var", "some_value")]
+        },
+        retirement={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "extra_vars": [("some_var", "some_value")]
+        }
+    )
+    yield cat_item
+
+    cat_item.delete_if_exists()
+
+
 @pytest.fixture(scope="module")
 def ansible_credential(appliance):
     credential = appliance.collections.ansible_credentials.create(
@@ -277,7 +305,8 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(2)
 def test_service_ansible_playbook_provision_in_requests(
-    appliance, ansible_catalog_item, ansible_service, ansible_service_request, request
+    appliance, ansible_service_catalog, ansible_service_funcscope, request,
+    ansible_service_request_funcscope
 ):
     """Tests if ansible playbook service provisioning is shown in service requests.
 
@@ -288,24 +317,10 @@ def test_service_ansible_playbook_provision_in_requests(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service.order()
-    ansible_service_request.wait_for_request()
-    cat_item_name = ansible_catalog_item.name
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+    ansible_service_catalog.order()
+    ansible_service_request_funcscope.wait_for_request()
 
-    @request.addfinalizer
-    def _finalize():
-        service = MyService(appliance, cat_item_name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-        if service.exists:
-            service.delete()
-
-    assert service_request.exists()
+    assert ansible_service_request_funcscope.exists()
 
 
 @pytest.mark.tier(2)
@@ -654,9 +669,10 @@ def test_ansible_group_id_in_payload(
 def test_embed_tower_exec_play_against(
     appliance,
     request,
-    ansible_catalog_item,
-    ansible_service,
+    ansible_catalog_item_funcscope,
+    ansible_service_funcscope,
     ansible_service_catalog,
+    ansible_service_request_funcscope,
     credential,
     provider_credentials,
 ):
@@ -669,36 +685,21 @@ def test_embed_tower_exec_play_against(
         tags: ansible_embed
     """
     playbook = credential[2]
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item_funcscope):
+        ansible_catalog_item_funcscope.provisioning = {
             "playbook": playbook,
             "cloud_type": provider_credentials.credential_type,
             "cloud_credential": provider_credentials.name,
         }
 
-    @request.addfinalizer
-    def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {
-                "playbook": "dump_all_variables.yml",
-                "cloud_type": "<Choose>",
-            }
-
-        service = MyService(appliance, ansible_catalog_item.name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-        if service.exists:
-            service.delete()
-
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
-    view = navigate_to(ansible_service, "Details")
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    assert (
+        ansible_service_funcscope.status == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
 
 
 @pytest.mark.tier(2)
@@ -882,9 +883,8 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
 
-    view = navigate_to(ansible_service_funcscope, "Details")
     assert (
-        view.provisioning.results.get_text_of("Status") == "successful"
+        ansible_service_funcscope.status == "successful"
         if appliance.version < "5.11"
         else "Finished"
     )
@@ -925,7 +925,7 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     reason='Credential type not valid for parametrized provider'
 )
 @pytest.mark.tier(3)
-def test_ansible_service_cloud_credentials(appliance, request, ansible_catalog_item,
+def test_ansible_service_cloud_credentials(appliance, request, ansible_catalog_item_funcscope,
 ansible_service_catalog, credential, provider_credentials, ansible_service_funcscope,
 ansible_service_request_funcscope):
     """
@@ -943,19 +943,13 @@ ansible_service_request_funcscope):
         tags: ansible_embed
     """
     # TODO: Include all providers once all playbooks are in place.
-    old_playbook_value = ansible_catalog_item.provisioning
     playbook = credential[2]
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item_funcscope):
+        ansible_catalog_item_funcscope.provisioning = {
             "playbook": playbook,
             "cloud_type": provider_credentials.credential_type,
             "cloud_credential": provider_credentials.name,
         }
-
-    @request.addfinalizer
-    def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
