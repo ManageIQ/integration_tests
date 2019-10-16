@@ -466,3 +466,39 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
                                                  handle_alert=True)
     compare_hosts_view = provider.create_view(HostsCompareView)
     assert compare_hosts_view.is_displayed
+
+
+@test_requirements.infra_hosts
+#@pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], automates=[1738664])
+@pytest.mark.parametrize(
+    "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
+    ids=["txt", "csv", "pdf"]
+)
+def test_infrastructure_hosts_navigation_after_download_from_compare(
+    appliance, setup_provider_min_hosts, provider, report_format, # nav_path
+):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/3h
+    Bugzilla:
+        1738664
+
+    """
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    ent_slice = slice(0, 2, None)
+    num_hosts = hosts_view.entities.paginator.items_amount
+    if num_hosts < 2:
+        pytest.skip('not enough hosts in appliance UI to run test')
+    for h in hosts_view.entities.get_all(slice=ent_slice):
+        h.check()
+    hosts_view.toolbar.configuration.item_select('Compare Selected items',
+                                                 handle_alert=True)
+    hosts_view.toolbar.download.item_select(report_format)
+    if report_format == "Print or export as PDF":
+        handle_extra_tabs(hosts_view)
+    hosts_view.navigation.select("Compute")
+    compare_hosts_view = provider.create_view(HostsCompareView)
+    assert compare_hosts_view.is_displayed
