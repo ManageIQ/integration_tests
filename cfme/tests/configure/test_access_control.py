@@ -50,6 +50,48 @@ def new_role(appliance, name=None):
         vm_restriction='None')
 
 
+@pytest.fixture(scope='module')
+def child_tenant(appliance, request):
+    child_tenant = appliance.collections.tenants.create(
+        name='child_tenant{}'.format(fauxfactory.gen_alphanumeric()),
+        description='tenant description',
+        parent=appliance.collections.tenants.get_root_tenant()
+    )
+    yield child_tenant
+    child_tenant.delete_if_exists()
+
+
+@pytest.fixture(scope='module')
+def tenant_role(appliance, request):
+    role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
+    tenant_role = role.copy()
+
+    # Note: BZ 1278484 - tenant admin role has no permissions to create new roles
+    with update(tenant_role):
+        if appliance.version < '5.11':
+            tenant_role.product_features = [
+                (['Everything', 'Settings', 'Configuration', 'Settings'], True)
+            ]
+        else:
+            tenant_role.product_features = [
+                (['Everything', 'Main Configuration', 'Settings'], True)
+            ]
+    yield tenant_role
+    tenant_role.delete_if_exists()
+
+
+@pytest.fixture(scope='module')
+def new_tenant_admin(appliance, request, child_tenant, tenant_role):
+    group = appliance.collections.groups.create(
+        description=f'tenant_grp_{fauxfactory.gen_alphanumeric()}', role=tenant_role.name,
+        tenant=f'My Company/{child_tenant.name}')
+
+    tenant_admin = new_user(appliance, group, name='tenant_admin_user')
+    yield tenant_admin
+    tenant_admin.delete_if_exists()
+    group.delete_if_exists()
+
+
 @pytest.fixture(scope='function')
 def check_item_visibility(tag):
     def _check_item_visibility(item, user_restricted):
@@ -1464,6 +1506,41 @@ def test_superadmin_tenant_admin_crud(appliance):
     assert not user.exists
 
 
+@pytest.mark.tier(2)
+@test_requirements.multi_tenancy
+def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
+    """
+    Perform CRUD operations on groups as Tenant administrator.
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Create new tenant admin user and assign user to group EvmGroup-tenant_administrator
+            2. As Tenant administrator, create new group, update group and delete group.
+    """
+    with new_tenant_admin:
+        navigate_to(appliance.server, 'LoggedIn')
+        assert appliance.server.current_full_name() == new_tenant_admin.name
+
+        group_collection = appliance.collections.groups
+        group = group_collection.create(
+            description=f'tenantgrp_{fauxfactory.gen_alphanumeric()}',
+            role=tenant_role.name, tenant=f'My Company/{child_tenant.name}')
+        request.addfinalizer(group.delete_if_exists)
+        assert group.exists
+
+        with update(group):
+            group.description = "{}edited".format(group.description)
+
+        group.delete()
+        assert not group.exists
+
+
 @pytest.mark.tier(3)
 @test_requirements.multi_tenancy
 def test_tenant_unique_catalog(appliance, request, catalog_obj):
@@ -1490,6 +1567,36 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
     view.add_button.click()
     view.flash.wait_displayed(timeout=20)
     assert view.flash.read() == [msg]
+
+
+@pytest.mark.manual
+@pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_tenancy
+def test_tenantadmin_user_crud():
+    """
+    As a Tenant Admin I want to be able to create users in my tenant
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+        startsin: 5.5
+        testSteps:
+            1. Login as super admin and create new tenant
+            2. Create new role by copying EvmRole-tenant_administrator
+            3. Create new group and choose role created in previous step and your
+            tenant
+            4. Create new tenant admin user and assign him into group created in
+            previous step
+            5. login as tenant admin
+            6. Perform crud operations
+            Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
+            Workaround is to add modify permissions to tenant_administrator role or Roles
+            must be created by superadministrator. In 5.5.0.13 after giving additional permissions
+            to tenant_admin,able to create new roles
+    """
+    pass
 
 
 @pytest.mark.manual
@@ -1705,38 +1812,6 @@ def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
-def test_tenantadmin_user_crud():
-    """
-    As a Tenant Admin I want to be able to create users in my tenant
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/4h
-        startsin: 5.5
-        testSteps:
-            1. Login as super admin and create new tenant
-            2. Create new role by copying EvmRole-tenant_administrator
-            3. Create new group and choose role created in previous step and your
-            tenant
-            4. Create new tenant admin user and assign him into group created in
-            previous step
-            5. login as tenant admin
-            6. Perform crud operations
-
-            Note: BZ 1278484 - tenant admin role has no permissions to create new roles,
-            Workaround is to add modify permissions to tenant_administrator role or Roles
-            must be created by superadministrator. In 5.5.0.13 after giving additional permissions
-            to tenant_admin,able to create new roles
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@test_requirements.multi_tenancy
 def test_tenant_automation_domains():
     """
     Tenants can see Automation domains owned by tenant or parent tenants
@@ -1862,30 +1937,6 @@ def test_tenant_visibility_service_template_items_all_parents():
         tags: cfme_tenancy
         initialEstimate: 1/2h
         startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@test_requirements.multi_tenancy
-def test_tenantadmin_group_crud():
-    """
-    As a Tenant Admin I want to be able to create groups related to the
-    roles in my tenant and assign roles
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/4h
-        startsin: 5.5
-        testSteps:
-            1. Login as tenant admin
-            2. Navigate to Configure - Configuration - Access Control - Groups
-            3. Configuration - Add a new group
-            4. Assign Group name, role and Project/tenant and click Add
     """
     pass
 
