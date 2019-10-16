@@ -315,6 +315,12 @@ def delete(self):
     view.flash.assert_success_message('Service "{}": Delete successful'.format(self.name))
 
 
+@MiqImplementationContext.external_for(MyService.status.getter, ViaUI)
+def status(self):
+    view = navigate_to(self, 'Details')
+    return view.provisioning.results.get_text_of("Status")
+
+
 @MiqImplementationContext.external_for(MyService.set_ownership, ViaUI)
 def set_ownership(self, owner, group):
     view = navigate_to(self, 'SetOwnership')
