@@ -469,13 +469,13 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
 
 
 @test_requirements.infra_hosts
-#@pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], automates=[1738664])
+@pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"])], automates=[1747545])
 @pytest.mark.parametrize(
     "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
     ids=["txt", "csv", "pdf"]
 )
 def test_infrastructure_hosts_navigation_after_download_from_compare(
-    appliance, setup_provider_min_hosts, provider, report_format, # nav_path
+    appliance, setup_provider_min_hosts, provider, report_format, hosts_collection
 ):
     """
     Polarion:
@@ -484,10 +484,13 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         caseimportance: high
         initialEstimate: 1/3h
     Bugzilla:
-        1738664
+        1747545
 
     """
-    hosts_view = navigate_to(provider.collections.hosts, "All")
+    if hosts_collection == "provider":
+        hosts_view = navigate_to(provider.collections.hosts, "All")
+    elif hosts_collection == "appliance":
+        hosts_view = navigate_to(appliance.collections.hosts, "All")
     ent_slice = slice(0, 2, None)
     num_hosts = hosts_view.entities.paginator.items_amount
     if num_hosts < 2:
