@@ -63,6 +63,72 @@ def all_types(template=False):
     return all_types
 
 
+def do_set_retirement_date(view, when=None, offset=None, warn=None, multiple_vms=False):
+    fill_date = None
+    fill_offset = None
+
+    # explicit is/not None use here because of empty strings and dicts
+    if when is not None and offset is not None:
+        raise ValueError('set_retirement_date takes when or offset, but not both')
+    if when is not None and not isinstance(when, (datetime, date)):
+        raise ValueError('when argument must be a datetime object')
+
+    # format the date
+    # needs 4 digit year for fill
+    # displayed 2 digit year for flash message
+    changed = False
+    if offset is not None:
+        fill_offset = {k: v
+                       for k, v in offset.items()
+                       if k in ['months', 'weeks', 'days', 'hours']}
+        # timedelta can take weeks, but not months
+        # copy and pop, only used to generate message, not used for form fill
+        offset_copy = fill_offset.copy()
+        if 'months' in offset_copy:
+            new_weeks = offset_copy.get('weeks', 0) + int(offset_copy.pop('months', 0)) * 4
+            offset_copy.update({'weeks': new_weeks})
+
+        msg_date = datetime.utcnow() + timedelta(**offset_copy)
+        msg_date = msg_date.strftime('%m/%d/%y %H:%M UTC')
+        msg = (f"Retirement dates set to {msg_date}" if multiple_vms else
+               f"Retirement date set to {msg_date}")
+    elif when is not None:
+        fill_date = when.strftime('%m/%d/%Y %H:%M')
+        msg_date = when.strftime('%m/%d/%y %H:%M UTC')
+        msg = (f"Retirement dates set to {msg_date}" if multiple_vms else
+               f"Retirement date set to {msg_date}")
+    else:
+        # clearing retirement date with space in textinput,
+        # using space here as with empty string calendar input is not cleared correctly
+        fill_date = ' '
+        msg = 'Retirement date removed'
+
+    view.form.fill({
+        'retirement_mode':
+            'Time Delay from Now' if fill_offset else 'Specific Date and Time'})
+    view.flush_widget_cache()  # since retirement_date is conditional widget
+
+    if fill_date is not None:  # specific check because of empty string
+        # two part fill, widget seems to block warn selection when open
+        changed_date = view.form.fill({
+            'retirement_date': {'datetime_select': fill_date}})
+        view.title.click()  # close datetime widget
+        changed_warn = view.form.fill({'retirement_warning': warn})
+        changed = changed_date or changed_warn
+    elif fill_offset:
+        changed = view.form.fill({
+            'retirement_date': fill_offset, 'retirement_warning': warn})
+
+    if changed:
+        view.form.save.click()
+    else:
+        logger.info('No form changes for setting retirement, clicking cancel')
+        view.form.cancel.click()
+        msg = 'Set/remove retirement date was cancelled by the user'
+
+    return msg
+
+
 class _TemplateMixin(object):
     pass
 
@@ -867,8 +933,6 @@ class VM(BaseVM):
             offset: :py:class:`dict` with months, weeks, days, hours keys. other keys ignored
             warn: When to warn, fills the select in the form in case the ``when`` is specified.
 
-        Note: this should be moved up to the common VM class when infra+cloud+common are all WT
-
         If when and offset are both None, this removes retirement date
 
         Examples:
@@ -888,76 +952,7 @@ class VM(BaseVM):
         bit cleaner
         """
         view = navigate_to(self, 'SetRetirement')
-        fill_date = None
-        fill_offset = None
-
-        # explicit is/not None use here because of empty strings and dicts
-
-        if when is not None and offset is not None:
-            raise ValueError('set_retirement_date takes when or offset, but not both')
-        if when is not None and not isinstance(when, (datetime, date)):
-            raise ValueError('when argument must be a datetime object')
-
-        # due to major differences between the forms and their interaction, I'm splitting this
-        # method into two major blocks, one for each version. As a result some patterns will be
-        # repeated in both blocks
-        # This will allow for making changes to one version or the other without strange
-        # interaction in the logic
-
-        # format the date
-        # needs 4 digit year for fill
-        # displayed 2 digit year for flash message
-        # 59z/G-release retirement
-        changed = False  # just in case it isn't set in logic
-        if when is not None and offset is None:
-            # Specific datetime retire, H+M are 00:00 by default if just date passed
-            fill_date = when.strftime('%m/%d/%Y %H:%M')  # 4 digit year
-            msg_date = when.strftime('%m/%d/%y %H:%M UTC')  # two digit year and timestamp
-            msg = 'Retirement date set to {}'.format(msg_date)
-        elif when is None and offset is None:
-            # clearing retirement date with space in textinput,
-            # using space here as with empty string calendar input is not cleared correctly
-            fill_date = ' '
-            msg = 'Retirement date removed'
-        elif offset is not None:
-            # retirement by offset
-            fill_date = None
-            fill_offset = {k: v
-                           for k, v in offset.items()
-                           if k in ['months', 'weeks', 'days', 'hours']}
-            # hack together an offset
-            # timedelta can take weeks, but not months
-            # copy and pop, only used to generate message, not used for form fill
-            offset_copy = fill_offset.copy()
-            if 'months' in offset_copy:
-                new_weeks = offset_copy.get('weeks', 0) + int(offset_copy.pop('months', 0)) * 4
-                offset_copy.update({'weeks': new_weeks})
-
-            msg_date = datetime.utcnow() + timedelta(**offset_copy)
-            msg = 'Retirement date set to {}'.format(msg_date.strftime('%m/%d/%y %H:%M UTC'))
-        # TODO move into before_fill when no need to click away from datetime picker
-        view.form.fill({
-            'retirement_mode':
-                'Time Delay from Now' if fill_offset else 'Specific Date and Time'})
-        view.flush_widget_cache()  # since retirement_date is conditional widget
-        if fill_date is not None:  # specific check because of empty string
-            # two part fill, widget seems to block warn selection when open
-            changed_date = view.form.fill({
-                'retirement_date': {'datetime_select': fill_date}})
-            view.title.click()  # close datetime widget
-            changed_warn = view.form.fill({'retirement_warning': warn})
-            changed = changed_date or changed_warn
-        elif fill_offset:
-            changed = view.form.fill({
-                'retirement_date': fill_offset, 'retirement_warning': warn})
-
-        # Form save and flash messages are the same between versions
-        if changed:
-            view.form.save.click()
-        else:
-            logger.info('No form changes for setting retirement, clicking cancel')
-            view.form.cancel.click()
-            msg = 'Set/remove retirement date was cancelled by the user'
+        msg = do_set_retirement_date(view, when=when, offset=offset, warn=warn, multiple_vms=False)
         if self.DETAILS_VIEW_CLASS is not None:
             view = self.create_view(self.DETAILS_VIEW_CLASS, wait='5s')
         view.flash.assert_success_message(msg)

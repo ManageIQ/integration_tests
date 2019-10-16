@@ -1325,8 +1325,6 @@ class VmAllWithTemplates(CFMENavigateStep):
         self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
 
     def resetter(self, *args, **kwargs):
-        if self.view.pagination.is_displayed:
-            self.view.pagination.set_items_per_page(1000)
         self.view.reset_page()
 
 

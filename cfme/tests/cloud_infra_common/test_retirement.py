@@ -9,6 +9,8 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.common.vm import do_set_retirement_date
+from cfme.common.vm_views import RetirementViewWithOffset
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -18,6 +20,7 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -38,6 +41,18 @@ warnings = [
     RetirementWarning('30_day_warning', '30 Days before retirement')]
 
 
+def create_vms(template_name, provider, num_vms=1):
+    collection = provider.appliance.provider_based_collection(provider)
+    vms = []
+    for num in range(num_vms):
+        vm = collection.instantiate(random_vm_name('retire'),
+                                    provider,
+                                    template_name=template_name)
+        vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
+        vms.append(vm)
+    return vms
+
+
 @pytest.fixture(scope="function")
 def retire_vm(small_template, provider):
     """Fixture for creating a generic vm/instance
@@ -46,13 +61,23 @@ def retire_vm(small_template, provider):
         small_template: small template fixture, template on provider
         provider: provider crud object from fixture
     """
-    collection = provider.appliance.provider_based_collection(provider)
-    vm = collection.instantiate(random_vm_name('retire'),
-                                provider,
-                                template_name=small_template.name)
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
+    vm = create_vms(small_template.name, provider)[0]
     yield vm
     vm.cleanup_on_provider()
+
+
+@pytest.fixture(scope="function")
+def retire_vm_pair(small_template, provider):
+    """Fixture for creating a pair of generic vms/instances
+
+    Args:
+        small_template: small template fixture, template on provider
+        provider: provider crud object from fixture
+    """
+    vms = create_vms(small_template.name, provider, 2)
+    yield vms
+    for num in range(2):
+        vms[num].cleanup_on_provider()
 
 
 @pytest.fixture(scope="function")
@@ -62,11 +87,7 @@ def retire_ec2_s3_vm(provider):
     Args:
         provider: provider crud object from fixture
     """
-    collection = provider.appliance.provider_based_collection(provider)
-    vm = collection.instantiate(random_vm_name('retire'),
-                                provider,
-                                template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200)
+    vm = create_vms('amzn-ami-pv-2015.03.rc-1.x86_64-s3', provider)[0]
     yield vm
     vm.cleanup_on_provider()
 
@@ -123,10 +144,10 @@ def generate_retirement_date(delta=None):
     """Generate a retirement date that can be used by the VM.retire() method, adding delta
 
     Args:
-        delta: a :py:class: `int` that will be added to today's date
+        delta: a :py:class: `int` that specifies the number of days to be added to today's date
     Returns: a :py:class: `datetime.date` object including delta as an offset from today
     """
-    gen_date = date.today()
+    gen_date = datetime.now().replace(second=0)
     if delta:
         gen_date += timedelta(days=delta)
     return gen_date
@@ -137,6 +158,25 @@ def generate_retirement_date_now():
     Returns: a :py:class: `datetime.datetime` object for the current UTC date + time
     """
     return datetime.utcnow()
+
+
+def set_retirement_date_multiple(provider, retire_vm_pair, when=None, offset=None, warn=None):
+    if isinstance(provider, InfraProvider):
+        collection = provider.appliance.collections.infra_vms
+    else:
+        collection = provider.appliance.collections.cloud_instances
+
+    all_view = navigate_to(collection, 'All')
+    if all_view.pagination.is_displayed:
+        all_view.pagination.set_items_per_page(1000)
+    all_view.entities.apply(func=lambda e: e.check(),
+                            conditions=[{'name': retire_vm_pair[0].name},
+                                        {'name': retire_vm_pair[1].name}])
+    all_view.toolbar.lifecycle.item_select('Set Retirement Dates')
+    set_view = collection.appliance.browser.create_view(RetirementViewWithOffset)
+    msg = do_set_retirement_date(set_view, when=when, offset=offset, warn=warn, multiple_vms=True)
+    all_view.wait_displayed(timeout='5s')
+    all_view.flash.assert_success_message(msg)
 
 
 @pytest.mark.rhv1
@@ -161,6 +201,39 @@ def test_retirement_now(retire_vm):
     verify_retirement_state(retire_vm)
     retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
     verify_retirement_date(retire_vm, expected_date=retire_times)
+
+
+@pytest.mark.rhv1
+def test_retirement_now_multiple(retire_vm_pair, provider):
+    """Tests on-demand retirement of two instances/vms from All VMs page
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Provisioning
+        initialEstimate: 1/6h
+    """
+    retire_times = dict()
+    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
+
+    if isinstance(provider, InfraProvider):
+        collection = provider.appliance.collections.infra_vms
+    else:
+        collection = provider.appliance.collections.cloud_instances
+
+    view = navigate_to(collection, 'All')
+    view.entities.apply(func=lambda e: e.check(),
+                        conditions=[{'name': retire_vm_pair[0].name},
+                                    {'name': retire_vm_pair[1].name}])
+    view.toolbar.lifecycle.item_select('Retire selected items', handle_alert=True)
+    view.flash.assert_no_error()
+
+    verify_retirement_state(retire_vm_pair[0])
+    verify_retirement_state(retire_vm_pair[1])
+
+    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
+
+    verify_retirement_date(retire_vm_pair[0], expected_date=retire_times)
+    verify_retirement_date(retire_vm_pair[1], expected_date=retire_times)
 
 
 @pytest.mark.provider(gen_func=providers,
@@ -210,18 +283,33 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance)
 def test_set_retirement_date(retire_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
 
-    Note we cannot control the retirement time, just day, so we cannot wait for the VM to retire
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Provisioning
+        initialEstimate: 1/6h
+    """
+    num_days = 60
+    retire_date = generate_retirement_date(delta=num_days)
+    retire_vm.set_retirement_date(when=retire_date, warn=warn.string)
+    verify_retirement_date(retire_vm, expected_date=retire_date)
+
+
+@pytest.mark.rhv3
+@pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
+def test_set_retirement_date_multiple(retire_vm_pair, provider, warn):
+    """Tests setting retirement date of multiple VMs, verifies configured date is reflected in
+    individual VM Details pages.
 
     Polarion:
         assignee: tpapaioa
         casecomponent: Provisioning
         initialEstimate: 1/6h
     """
-    # TODO retirement supports datetime (no tz) in gaprindashvili/59z, update accordingly
-    num_days = 2
+    num_days = 60
     retire_date = generate_retirement_date(delta=num_days)
-    retire_vm.set_retirement_date(retire_date, warn=warn.string)
-    verify_retirement_date(retire_vm, expected_date=retire_date)
+    set_retirement_date_multiple(provider, retire_vm_pair, when=retire_date, warn=warn.string)
+    verify_retirement_date(retire_vm_pair[0], expected_date=retire_date)
+    verify_retirement_date(retire_vm_pair[1], expected_date=retire_date)
 
 
 @pytest.mark.tier(2)
@@ -236,21 +324,46 @@ def test_set_retirement_offset(retire_vm, warn):
         casecomponent: Provisioning
         initialEstimate: 1/15h
     """
-    num_hours = 3
-    num_days = 1
-    num_weeks = 2
-    num_months = 0  # leave at zero for now, TODO implement months->weeks calc for expected_dates
-    retire_offset = {'months': num_months, 'weeks': num_weeks, 'days': num_days, 'hours': num_hours}
+    retire_offset = {'months': 0, 'weeks': 2, 'days': 1, 'hours': 3}
     timedelta_offset = retire_offset.copy()
-    timedelta_offset.pop('months')  # for timedelta use
+    timedelta_offset.pop('months')  # months not supported in timedelta
+
     # pad pre-retire timestamp by 30s
     expected_dates = {'start': datetime.utcnow() + timedelta(seconds=-30, **timedelta_offset)}
+
     retire_vm.set_retirement_date(offset=retire_offset, warn=warn.string)
 
     # pad post-retire timestamp by 30s
     expected_dates['end'] = datetime.utcnow() + timedelta(seconds=30, **timedelta_offset)
-    verify_retirement_date(retire_vm,
-                           expected_date=expected_dates)
+
+    verify_retirement_date(retire_vm, expected_date=expected_dates)
+
+
+@pytest.mark.rhv3
+@pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
+def test_set_retirement_offset_multiple(retire_vm_pair, provider, warn):
+    """Tests setting retirement date of multiple VMs by offset.
+    Verifies configured date is reflected in individual VM Details pages.
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Provisioning
+        initialEstimate: 1/6h
+    """
+    retire_offset = {'months': 0, 'weeks': 2, 'days': 1, 'hours': 3}
+    timedelta_offset = retire_offset.copy()
+    timedelta_offset.pop('months')  # months not supported in timedelta
+
+    # pad pre-retire timestamp by 30s
+    expected_dates = {'start': datetime.utcnow() + timedelta(seconds=-30, **timedelta_offset)}
+
+    set_retirement_date_multiple(provider, retire_vm_pair, offset=retire_offset, warn=warn.string)
+
+    # pad post-retire timestamp by 30s
+    expected_dates['end'] = datetime.utcnow() + timedelta(seconds=30, **timedelta_offset)
+
+    verify_retirement_date(retire_vm_pair[0], expected_date=expected_dates)
+    verify_retirement_date(retire_vm_pair[1], expected_date=expected_dates)
 
 
 @pytest.mark.rhv3
@@ -264,10 +377,10 @@ def test_unset_retirement_date(retire_vm):
     """
     num_days = 3
     retire_date = generate_retirement_date(delta=num_days)
-    retire_vm.set_retirement_date(retire_date)
+    retire_vm.set_retirement_date(when=retire_date)
     verify_retirement_date(retire_vm, expected_date=retire_date)
 
-    retire_vm.set_retirement_date(None)
+    retire_vm.set_retirement_date(when=None)
     verify_retirement_date(retire_vm, expected_date='Never')
 
 
@@ -293,7 +406,7 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     verify_retirement_state(retire_vm)
 
     retire_date = None if remove_date else generate_retirement_date(delta=num_days)
-    retire_vm.set_retirement_date(retire_date)
+    retire_vm.set_retirement_date(when=retire_date)
 
     verify_retirement_date(retire_vm, expected_date=retire_date if retire_date else 'Never')
     assert retire_vm.is_retired is False
