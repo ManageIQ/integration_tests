@@ -914,5 +914,4 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
 
-    view = navigate_to(ansible_service_funcscope, "Details")
-    assert view.provisioning.results.get_text_of("Status") == "Finished"
+    assert ansible_service_funcscope.status == "Finished"
