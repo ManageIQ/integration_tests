@@ -8,6 +8,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.tests.automate.custom_button import CredsHostsDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 
 
@@ -67,6 +68,7 @@ def setup_obj(button_group, provider):
     return obj
 
 
+@pytest.mark.meta(blockers=[BZ(1685555, unblock=lambda button_group: "SWITCH" not in button_group)])
 @pytest.mark.parametrize("inventory", INVENTORY, ids=["_".join(item.split()) for item in INVENTORY])
 @pytest.mark.uncollectif(
     lambda appliance, button_group, inventory: (
