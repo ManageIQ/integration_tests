@@ -6,6 +6,7 @@ import cfme.rest.gen_data as rest_gen_data
 from cfme import test_requirements
 from cfme.generic_objects.instance.ui import MyServiceGenericObjectInstanceView
 from cfme.services.myservice import MyService
+from cfme.services.myservice.ui import MyServicesView
 from cfme.tests.automate.custom_button import TextInputDialogView
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
@@ -191,9 +192,9 @@ def test_generic_object_with_service_button(appliance, generic_object, button_wi
         pytest.fail("Could not wait for service's generic object view to displayed.")
 
 
-@pytest.mark.manual
+@pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(blockers=[BZ(1741050)], coverage=[1741050])
-def test_generic_object_on_service_breadcrumb():
+def test_generic_object_on_service_breadcrumb(appliance, generic_object):
     """
     Bugzilla:
         1741050
@@ -217,4 +218,14 @@ def test_generic_object_on_service_breadcrumb():
             5.
             6. Breadcrumb should work properly
     """
-    pass
+    # add generic object to service
+    myservice = MyService(appliance, name=generic_object.associations.get("services")[0].name)
+    with appliance.context.use(ViaREST):
+        myservice.add_resource_generic_object(generic_object)
+    # now navigate to the details of the generic_object
+    with appliance.context.use(ViaUI):
+        view = navigate_to(generic_object, "MyServiceDetails")
+        view.breadcrumb.click_location("Active Services")
+        assert not view.is_displayed
+        view = myservice.create_view(MyServicesView)
+        assert view.is_displayed
