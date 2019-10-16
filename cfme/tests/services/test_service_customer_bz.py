@@ -4,12 +4,14 @@ import pytest
 from wait_for import wait_for
 
 from cfme import test_requirements
+from cfme.automate.dialogs.service_dialogs import DetailsDialogView
 from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
 
 pytestmark = [
@@ -163,3 +165,30 @@ def test_update_dynamic_checkbox_field(appliance, import_datastore, import_data,
             "checkbox").checkbox.read() is True and not view.submit_button.disabled, timeout=60)
     except TimedOutError:
         pytest.fail("Checkbox did not checked and Submit button did not enable in time")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[BZ(1720617)])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["bz_1720617.yml"], ids=["sample_dialog"],)
+def test_edit_import_dialog(import_dialog):
+    """Tests update import dialog.
+
+    Bugzilla:
+        1720617
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        tags: service
+    """
+    sd, ele_label = import_dialog
+    description = fauxfactory.gen_alphanumeric()
+    with update(sd):
+        sd.description = description
+    view = sd.create_view(DetailsDialogView)
+    view.flash.assert_success_message(f'{sd.label} was saved')
+
+    view = navigate_to(sd.parent, "All")
+    assert view.table.row(("Label", sd.label))["description"].text == description
