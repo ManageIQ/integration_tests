@@ -5,40 +5,55 @@ import pytest
 from cfme import test_requirements
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.dialog,
     pytest.mark.tier(2)
 ]
 
+WIDGETS = {
+    "Text Box": ("input", fauxfactory.gen_alpha()),
+    "Check Box": ("checkbox", True),
+    "Text Area": ("input", fauxfactory.gen_alpha()),
+    "Radio Button": ("radiogroup", None),
+    "Dropdown": ("dropdown", "One"),
+    "Tag Control": ("dropdown", "Production Linux Team"),
+    "Timepicker": ("input", "")
+}
+
 
 @pytest.fixture(scope="function")
-def dropdown_dialog(appliance, request):
+def service_dialog(appliance, widget_name):
     service_dialog = appliance.collections.service_dialogs
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = {
         'element_information': {
-            'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
-            'choose_type': "Dropdown"
+            'ele_label': fauxfactory.gen_alphanumeric(start="label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(start="name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(start="desc_"),
+            'choose_type': widget_name
         },
         'options': {
-            'field_required': True
+            'field_required': True,
         }
     }
-    sd = service_dialog.create(label=dialog, description="my dialog")
-    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+    if widget_name == "Tag Control":
+        # Need to select category to create service dialog of tag control widget
+        element_data['options']['field_category'] = "Owner"
+    sd = service_dialog.create(label=fauxfactory.gen_alphanumeric(start="dialog_"),
+                               description="my dialog")
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start='tab_'),
                          tab_desc="my tab desc")
-    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start='box_'),
                            box_desc="my box desc")
     box.elements.create(element_data=[element_data])
-    yield sd
-    request.addfinalizer(sd.delete_if_exists)
+    yield sd, element_data
+    sd.delete_if_exists()
 
 
 @pytest.fixture(scope="function")
-def catalog_item(request, appliance, dropdown_dialog, catalog):
+def catalog_item(appliance, service_dialog, catalog):
+    sd, element_data = service_dialog
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
@@ -46,34 +61,18 @@ def catalog_item(request, appliance, dropdown_dialog, catalog):
         description="my catalog",
         display_in=True,
         catalog=catalog,
-        dialog=dropdown_dialog)
-    request.addfinalizer(catalog_item.delete)
-    return catalog_item
+        dialog=sd)
+    yield catalog_item
+    catalog_item.delete_if_exists()
 
 
-def test_dropdownlist_required_dialog_element(appliance, catalog_item):
-    """Tests service dropdownlist dialog required element.
-
-    Testing BZ 1512398.
-
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/4h
-        testtype: functional
-        casecomponent: Services
-        startsin: 5.10
-    """
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    view = navigate_to(service_catalogs, 'Order')
-    assert view.submit_button.disabled
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
-@pytest.mark.parametrize('element_type', ['text_box', 'checkbox', 'text_area', 'radiobutton',
-                                          'date_picker', 'timepicker', 'tagcontrol'])
-def test_required_dialog_elements(element_type):
-    """ Tests service text_box dialog required element
+@pytest.mark.parametrize(
+    "widget_name", list(WIDGETS.keys()),
+    ids=["_".join(w.split()).lower() for w in WIDGETS.keys()],
+)
+def test_required_dialog_elements(appliance, catalog_item, service_dialog, widget_name):
+    """
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -89,7 +88,26 @@ def test_required_dialog_elements(element_type):
             2.
             3. Submit button should be disabled
     """
-    pass
+    sd, element_data = service_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    ele_name = element_data["element_information"]["ele_name"]
+    choose_type = element_data["element_information"]["choose_type"]
+    wt, value = WIDGETS[widget_name]
+
+    if choose_type not in ["Radio Button", "Timepicker"]:
+        assert view.submit_button.disabled
+        getattr(view.fields(ele_name), wt).fill(value)
+        wait_for(lambda: not view.submit_button.disabled, delay=0.2, timeout=15)
+    elif choose_type == "Timepicker":
+        # Time is already selected in this widget. So checking submit button is getting disabled
+        # after removing value from that field.
+        assert not view.submit_button.disabled
+        getattr(view.fields(ele_name), wt).fill(value)
+        assert view.submit_button.disabled
+    else:
+        # In case of Radio Button, one option is always selected. So submit button is not disabled.
+        assert not view.submit_button.disabled
 
 
 @pytest.mark.meta(coverage=[1692736])
