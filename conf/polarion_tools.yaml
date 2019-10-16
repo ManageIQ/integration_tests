@@ -1,90 +1,116 @@
-default_fields:
-    arch: ""
-    approver-ids: "mshriver akarol smallamp jkrocil rhcf3_machine:approved"
-    status-id: "approved"
-    assignee: ""
-    automation_script: ""
-    caseautomation: automated
-    casecomponent: "-"
-    caseimportance: high
-    caselevel: component
-    caseposneg: positive
-    customerscenario: false
-    description: ""
-    endsin: ""
-    expectedResults: ""
-    initialEstimate: ""
-    legacytest: ""
-    linkedWorkItems: ""
-    multiproduct: ""
-    reqverify: ""
-    setup: ""
-    startsin: ""
-    subcomponent: ""
-    subtype1: "-"
-    subtype2: "-"
-    tags: ""
-    teardown: ""
-    testSteps: ""
-    testtier: ""
-    testtype: functional
-    title: ""
-    upstream: ""
-    work_item_id: ""
+polarion_tools:
+    default_fields:
+        arch: ""
+        approver-ids: "mshriver akarol smallamp jkrocil rhcf3_machine:approved"
+        status-id: "approved"
+        assignee: ""
+        automation_script: ""
+        caseautomation: automated
+        casecomponent: "-"
+        caseimportance: high
+        caselevel: component
+        caseposneg: positive
+        customerscenario: false
+        description: ""
+        endsin: ""
+        expectedResults: ""
+        initialEstimate: ""
+        legacytest: ""
+        linkedWorkItems: ""
+        multiproduct: ""
+        reqverify: ""
+        setup: ""
+        startsin: ""
+        subcomponent: ""
+        subtype1: "-"
+        subtype2: "-"
+        tags: ""
+        teardown: ""
+        testSteps: ""
+        testtier: ""
+        testtype: functional
+        title: ""
+        upstream: ""
+        work_item_id: ""
 
-requirements_default_fields:
-    approver-ids: "mshriver akarol smallamp jkrocil rhcf3_machine:approved"
-    status-id: "approved"
+    requirements_default_fields:
+        approver-ids: "mshriver akarol smallamp jkrocil rhcf3_machine:approved"
+        status-id: "approved"
 
-custom_fields:
-    - arch
-    - automation_script
-    - caseautomation
-    - casecomponent
-    - caseimportance
-    - caselevel
-    - caseposneg
-    - customerscenario
-    - endsin
-    - legacytest
-    - multiproduct
-    - reqverify
-    - setup
-    - startsin
-    - subcomponent
-    - subtype1
-    - subtype2
-    - tags
-    - teardown
-    - testtier
-    - testtype
-    - upstream
 
-blacklisted_tests:
-    - cfme/tests/openstack/
-    - cfme/tests/perf/
-    - cfme/tests/physical_infrastructure/
-    - cfme/tests/networks/nuage/
-    - cfme/tests/test_modules_importable
-    - hawkular
-    - \[.*rhos
-
-docstrings:
-    required_fields:
-        - assignee
-        - initialEstimate
+    custom_fields:
+        - arch
+        - automation_script
+        - caseautomation
         - casecomponent
+        - caseimportance
+        - caselevel
+        - caseposneg
+        - customerscenario
+        - endsin
+        - legacytest
+        - multiproduct
+        - reqverify
+        - setup
+        - startsin
+        - subcomponent
+        - subtype1
+        - subtype2
+        - tags
+        - teardown
+        - testtier
+        - testtype
+        - upstream
 
-    marker_fields:
-        caselevel: "@pytest.mark.tier"
-        caseautomation: "@pytest.mark.manual"
-        customerscenario: "@pytest.mark.customer_scenario"
-        # default for manual mark is 'notautomated'
-        # @pytest.mark.manual('manualonly') to set 'manualonly'
-        linkedWorkItems: "@pytest.mark.requirements"
+    blacklisted_tests:
+        - cfme/tests/openstack/
+        - cfme/tests/perf/
+        - cfme/tests/physical_infrastructure/
+        - cfme/tests/networks/nuage/
+        - cfme/tests/test_modules_importable
+        - hawkular
+        - \[.*rhos
 
-    ignored_fields:
-        description: "use test docstring instead"
+    docstrings:
+        required_fields:
+            - assignee
+            - initialEstimate
+            - casecomponent
+            - caseimportance
+            - caselevel
+            - caseposneg
+            - customerscenario
+            - endsin
+            - legacytest
+            - multiproduct
+            - reqverify
+            - setup
+            - startsin
+            - subcomponent
+            - subtype1
+            - subtype2
+            - tags
+            - teardown
+            - testtier
+            - testtype
+            - upstream
+
+        docstrings:
+            required_fields:
+                - assignee
+                - initialEstimate
+                - casecomponent
+
+            marker_fields:
+                caselevel: "@pytest.mark.tier"
+                caseautomation: "@pytest.mark.manual"
+                customerscenario: "@pytest.mark.customer_scenario"
+                # default for manual mark is 'notautomated'
+                # @pytest.mark.manual('manualonly') to set 'manualonly'
+                linkedWorkItems: "@pytest.mark.requirements"
+
+            ignored_fields:
+                description: "use test docstring instead"
 
     valid_values:
         caseimportance:

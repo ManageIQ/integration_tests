@@ -19,9 +19,8 @@ class SlaveManager(object):
         self.config = config
         self.session = None
         self.collection = None
-        self.slaveid = conf.runtime['env']['slaveid'] = slaveid
+        self.slaveid = conf['env']['slaveid'] = slaveid
         self.log = cfme.utils.log.logger
-        conf.clear()
         # Override the logger in utils.log
 
         ctx = zmq.Context.instance()
@@ -241,8 +240,8 @@ if __name__ == '__main__':
     from cfme.fixtures.pytest_store import store
     from cfme.utils import conf
 
-    conf.runtime['env']['slaveid'] = args.worker
-    conf.runtime['env']['ts'] = args.ts
+    conf['env']['slaveid'] = args.worker
+    conf['env']['ts'] = args.ts
     store.parallelizer_role = 'slave'
 
     slave_args = config.pop('args')
@@ -251,8 +250,8 @@ if __name__ == '__main__':
     appliance_data = config["appliance_data"]
     if ip_address in appliance_data:
         template_name, provider_name = appliance_data[ip_address]
-        conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
-        conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
+        conf["cfme_data"]["basic_info"]["appliance_template"] = template_name
+        conf["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
     pytest_config = _init_config(slave_options, slave_args)
     slave_manager = SlaveManager(pytest_config, args.worker, config['zmq_endpoint'])
     pytest_config.pluginmanager.register(slave_manager, 'slave_manager')

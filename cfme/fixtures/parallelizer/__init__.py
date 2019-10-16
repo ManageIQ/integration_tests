@@ -57,11 +57,11 @@ from cfme.utils.log import create_sublogger
 
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized
-conf.runtime['env']['slaveid'] = None
+conf['env']['slaveid'] = None
 
-if not conf.runtime['env'].get('ts'):
+if not conf['env'].get('ts'):
     ts = str(time())
-    conf.runtime['env']['ts'] = ts
+    conf['env']['ts'] = ts
 
 
 def pytest_addhooks(pluginmanager):
@@ -127,7 +127,7 @@ class SlaveDetail(object):
             sys.executable, remote.__file__,
             '--worker', self.id,
             '--appliance', self.appliance.as_json,
-            '--ts', conf.runtime['env']['ts'],
+            '--ts', conf['env']['ts'],
             '--config', json.dumps(self.worker_config),
 
 

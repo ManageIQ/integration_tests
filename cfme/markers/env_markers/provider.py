@@ -189,6 +189,7 @@ def all_required(miq_version, filters=None):
     try:
         data_for_stream = conf.supportability[stream]['providers']
     except KeyError:
+        logger.warning(f"A KeyError was caught while accessing supportability for {stream}")
         # there are cases when such data isn't available. For instance travis
         data_for_stream = {}
 

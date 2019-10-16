@@ -1,6 +1,7 @@
 adal==1.2.1
 aenum==2.1.2
 alabaster==0.7.12
+amqp==2.5.1
 ansible==2.8.5
 anytree==2.6.0
 apipkg==1.5
@@ -94,6 +95,7 @@ Babel==2.6.0
 backcall==0.1.0
 bambou==3.0.1
 bcrypt==3.1.6
+billiard==3.6.1.0
 bleach==3.1.0
 boto==2.49.0
 boto3==1.6.6
@@ -112,6 +114,7 @@ Click==7.0
 cliff==2.14.1
 cmd2==0.9.11
 colorama==0.4.1
+configobj==5.0.6
 cryptography==2.6.1
 cycler==0.10.0
 dateparser==0.7.2
@@ -129,6 +132,7 @@ docker-pycreds==0.4.0
 docutils==0.15.2
 dogpile.cache==0.7.1
 dump2polarion==0.46.0
+dynaconf==2.2.0
 ecdsa==0.13.2
 entrypoints==0.3
 fauxfactory==3.0.6
@@ -146,6 +150,7 @@ google-compute-engine==2.8.13
 greenlet==0.4.15
 httplib2==0.12.1
 humanfriendly==4.18
+hvac==0.9.5
 identify==1.4.7
 idna==2.8
 imagesize==1.1.0
@@ -173,6 +178,7 @@ jupyter-client==5.2.4
 jupyter-console==6.0.0
 jupyter-core==4.4.0
 keystoneauth1==3.17.1
+kombu==4.6.4
 kubernetes==3.0.0
 kwargify==2.2.0
 layered-yaml-attrdict-config==18.12.3
@@ -257,10 +263,12 @@ pyperclip==1.7.0
 pytesseract==0.3.0
 pytest==3.4.1
 pytest-polarion-collect==0.21.0
+pytest-report-parameters==0.4.0
 python-box==3.2.4
 python-bugzilla==2.3.0
 python-cinderclient==4.1.0
 python-dateutil==2.8.0
+python-dotenv==0.10.3
 python-glanceclient==2.16.0
 python-heatclient==1.17.0
 python-ironicclient==2.7.0
@@ -279,6 +287,7 @@ PyYAML==5.1
 pyzmq==18.0.1
 qtconsole==4.4.3
 redfish-client==0.1.0
+redis==3.3.10
 reg==0.11
 regex==2019.4.14
 repoze.lru==0.7
@@ -314,6 +323,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.2
 sphinxcontrib-serializinghtml==1.1.3
 SQLAlchemy==1.3.8
+sqlparse==0.3.0
 stevedore==1.30.1
 suds-jurko==0.6
 tabulate==0.8.3
@@ -326,6 +336,7 @@ traitlets==4.3.2
 tzlocal==2.0.0
 uritemplate==3.0.0
 urllib3==1.25.6
+vine==1.3.0
 virtualenv==16.4.3
 vspk==5.3.2
 wait-for==1.1.0
@@ -340,6 +351,7 @@ widgetsnbextension==3.4.2
 wrapanapi==3.4.1
 wrapt==1.11.1
 xmltodict==0.12.0
+yamlordereddictloader==0.4.0
 yaycl==0.3.0
 yaycl-crypt==0.4.0
 zipp==0.6.0
