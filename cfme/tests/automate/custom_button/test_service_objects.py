@@ -16,6 +16,7 @@ from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to as ui_nav
 from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
@@ -462,8 +463,13 @@ def test_custom_button_role_access_service(context):
     pass
 
 
-@pytest.mark.manual
-def test_custom_button_dialog_service_archived():
+@test_requirements.customer_stories
+@pytest.mark.meta(automates=[BZ(1439883)])
+@pytest.mark.provider([VMwareProvider], override=True, scope="module")
+@pytest.mark.uncollectif(lambda button_group: "GENERIC" in button_group)
+def test_custom_button_dialog_service_archived(
+    request, appliance, provider, setup_provider, service_vm, button_group, dialog
+):
     """ From Service OPS check if archive vms"s dialog invocation via custom button. ref: BZ1439883
 
     Polarion:
@@ -484,7 +490,62 @@ def test_custom_button_dialog_service_archived():
     Bugzilla:
         1439883
     """
-    pass
+    service, vm = service_vm
+    group, obj_type = button_group
+
+    with appliance.context.use(ViaUI):
+        button = group.buttons.create(
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(start="hover_"),
+            dialog=dialog,
+            system="Request",
+            request="InspectMe",
+        )
+    request.addfinalizer(button.delete_if_exists)
+
+    for with_vm in [True, False]:  # [vm, archive_vm]
+        if not with_vm:
+            # Make vm archive by deleting vm from provider side
+            vm.mgmt.delete()
+            vm.wait_for_vm_state_change(
+                desired_state="archived", timeout=720, from_details=False, from_any_provider=True
+            )
+
+        for context in [ViaUI, ViaSSUI]:  # check execution with UI and SSUI
+            with appliance.context.use(context):
+                navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+                view = navigate_to(service, "Details")
+
+                # execute button
+                custom_button_group = Dropdown(view, group.text)
+                custom_button_group.item_select(button.text)
+                _dialog_view = TextInputDialogView if context is ViaUI else TextInputDialogSSUIView
+                dialog_view = view.browser.create_view(_dialog_view, wait="10s")
+
+                # start log check
+                request_pattern = "Attributes - Begin"
+                log = LogValidator(
+                    "/var/www/miq/vmdb/log/automation.log", matched_patterns=[request_pattern]
+                )
+                log.start_monitoring()
+
+                # submit dialog
+                dialog_view.submit.click()
+
+                # SSUI not support flash messages
+                if context is ViaUI:
+                    view.flash.assert_message("Order Request was Submitted")
+
+                # Check for request in automation log
+                try:
+                    wait_for(
+                        lambda: log.matches[request_pattern] == 1,
+                        timeout=180,
+                        message="wait for expected match count",
+                        delay=5,
+                    )
+                except TimedOutError:
+                    assert False, f"Expected '1' requests; found '{log.matches[request_pattern]}'"
 
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
