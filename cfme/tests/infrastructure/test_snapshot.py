@@ -44,7 +44,7 @@ def provision_vm(provider, template):
 def small_test_vm(setup_provider, provider, small_template, request):
     vm = provision_vm(provider, small_template)
     yield vm
-    vm.cleanup_on_provider()
+    wait_for(lambda: vm.cleanup_on_provider, handle_exception=True, timeout=900)
 
 
 @pytest.fixture(scope="function")
@@ -308,6 +308,34 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
                            active_snapshot=True)
+
+
+@pytest.mark.rhv2
+@pytest.mark.provider([RHEVMProvider], override=True)
+@pytest.mark.meta(automates=[BZ(1552732)])
+def test_revert_to_active_vm(small_test_vm, provider):
+    """
+    Test that it's not possible to revert to "Active VM" on RHV.
+
+    Bugzilla:
+        1552732
+
+    Metadata:
+        test_flag: snapshot
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/4h
+        casecomponent: Infra
+    """
+    snapshot = new_snapshot(small_test_vm, has_name=False)
+    snapshot.create()
+    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
+    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
+    snapshot.revert_to()
+    view = navigate_to(small_test_vm, 'SnapshotsAll', force=True)
+    view.tree.click_path(small_test_vm.name, snapshot.description, 'Active VM (Active)')
+    assert not view.toolbar.revert.is_displayed
 
 
 @pytest.mark.rhv3
