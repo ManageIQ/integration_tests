@@ -33,6 +33,7 @@ default_fields:
     work_item_id: ""
 
 requirements_default_fields:
+    planned-in-ids: "5_10 5_11"
     approver-ids: "mshriver akarol smallamp jkrocil rhcf3_machine:approved"
     status-id: "approved"
 

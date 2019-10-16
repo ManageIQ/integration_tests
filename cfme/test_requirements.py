@@ -43,7 +43,7 @@ Supported requirement metadata fields (and example data)
             "assignee_id": "mkourim",
             "category_ids": "category_id1, category_id2",
             "due_date": "2018-09-30",
-            "planned_in_ids": "planned_id1, planned_id2",
+            "planned_in_ids": "planned_id1 planned_id2",
             "initial_estimate": "1/4h",
             "priority_id": "high",
             "severity_id": "should_have",
@@ -53,6 +53,7 @@ Supported requirement metadata fields (and example data)
 
 """
 import pytest
+
 
 ansible = pytest.mark.requirement(
     "Ansible Automation",
@@ -64,6 +65,7 @@ access = pytest.mark.requirement(
     "Access",
     description='Direct integration of SaaS offerings in MIQ/CFME',
     assignee_id='juwatts',
+    planned_in_ids="5_11",
 )
 
 alert = pytest.mark.requirement(
@@ -100,6 +102,7 @@ bottleneck = pytest.mark.requirement(
     "Optimization and Bottleneck",
     description='Optimizations and Bottleneck ID, planned deprecation',
     assignee_id='nachandr',
+    planned_in_ids="5_10",
 )
 
 c_and_u = pytest.mark.requirement(
@@ -153,7 +156,8 @@ custom_button = pytest.mark.requirement(
 customer_stories = pytest.mark.requirement(
     "Customer Stories",
     description='Integration of multiple FAs, Day 2 Operations type tests',
-    assignee_id='ndhandre',)
+    assignee_id='ndhandre',
+)
 
 dashboard = pytest.mark.requirement(
     "Dashboard",
