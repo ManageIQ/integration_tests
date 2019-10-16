@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import random
 
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.path import data_path
@@ -259,3 +261,48 @@ def test_reset_report_menus(appliance, get_custom_report, group, report_menus):
     assert not appliance.collections.reports.instantiate(
         type=folder, subtype=subfolder, menu_name=get_custom_report.menu_name
     ).exists
+
+
+@pytest.mark.parametrize("group", GROUPS)
+@pytest.mark.meta(coverage=[1762363])
+def test_custom_reports_menu_crd(
+    appliance, group, report_menus, request, get_custom_report
+):
+    """
+    Bugzilla:
+        1762363
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/12h
+        setup:
+            1. Import a custom report
+        testSteps:
+            1. Create a folder for the custom report menu
+            2. Create a subfolder under the folder
+            3. Move the custom report to this custom menu.
+            4. Instantiate the newly moved report and check if it exists.
+            5. Delete the subfolder first.
+            6. Delete the folder.
+            7. Check if the report still exists.
+    """
+    folder = fauxfactory.gen_alpha(start="folder-")
+    subfolder = fauxfactory.gen_alpha(start="subfolder-", length=13)
+
+    report_menus.add_folder(group, folder)
+    report_menus.add_subfolder(group, folder, subfolder)
+
+    report_menus.move_reports(group, folder, subfolder, get_custom_report.menu_name)
+
+    report = get_custom_report.parent.instantiate(
+        type=folder, subtype=subfolder, menu_name=get_custom_report.menu_name
+    )
+    assert report.exists
+
+    if not BZ(1762363, forced_streams=["5.10", "5.11"]).blocks:
+        report_menus.remove_subfolder(group, folder, subfolder)
+
+    report_menus.remove_folder(group, folder)
+
+    assert not report.exists
