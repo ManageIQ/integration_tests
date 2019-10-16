@@ -33,6 +33,7 @@ from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import CompareToolBarActionsView
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 
@@ -114,6 +115,7 @@ class InstanceAllView(CloudInstanceView):
     sidebar = View.nested(InstanceAccordion)
     search = View.nested(Search)
     including_entities = View.include(VMEntities, use_parent=True)
+    paginator = PaginationPane()
 
 
 class InstanceProviderAllView(CloudInstanceView):

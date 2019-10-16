@@ -235,3 +235,13 @@ def rhel7_minimal(provider):
 @pytest.fixture(scope="module")
 def rhel7_minimal_modscope(provider):
     return _get_template(provider, 'rhel7_minimal')
+
+
+@pytest.fixture(scope="function")
+def s3_template(provider):
+    return _get_template(provider, 's3_template')
+
+
+@pytest.fixture(scope="module")
+def s3_template_modscope(provider):
+    return _get_template(provider, 's3_template')

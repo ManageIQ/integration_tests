@@ -221,7 +221,7 @@ paramiko==2.6.0
 paramiko-expect==0.2.8
 parsedatetime==2.4
 parso==0.4.0
-pbr==5.4.1
+pbr==5.4.4
 pdfminer.six==20181108
 pexpect==4.7.0
 pickleshare==0.7.5
