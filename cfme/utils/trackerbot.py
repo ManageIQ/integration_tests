@@ -357,7 +357,10 @@ class Template(dict):
             self['datestamp'] = datestamp.strftime('%Y-%m-%d')
 
         if custom_data is not None:
-            self['custom_data'] = json.dumps(custom_data)
+            if isinstance(custom_data, str):
+                self['custom_data'] = json.loads(custom_data)
+            else:
+                self['custom_data'] = custom_data
 
 
 class ProviderTemplate(dict):
