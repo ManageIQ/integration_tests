@@ -59,7 +59,6 @@ ansible = pytest.mark.requirement(
     "Ansible Automation",
     description='Embedded Ansible Automation Requirement',
     assignee_id='sbulage',
-    planned_in_ids="5_11",
 )
 
 access = pytest.mark.requirement(
