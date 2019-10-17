@@ -465,7 +465,7 @@ def test_custom_button_role_access_service(context):
 
 @test_requirements.customer_stories
 @pytest.mark.meta(automates=[BZ(1439883)])
-@pytest.mark.provider([VMwareProvider], override=True, scope="module")
+@pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.uncollectif(lambda button_group: "GENERIC" in button_group)
 def test_custom_button_dialog_service_archived(
     request, appliance, provider, setup_provider, service_vm, button_group, dialog
@@ -545,7 +545,7 @@ def test_custom_button_dialog_service_archived(
                         delay=5,
                     )
                 except TimedOutError:
-                    assert False, f"Expected '1' requests; found '{log.matches[request_pattern]}'"
+                    pytest.fail(f"Expected '1' requests; found '{log.matches[request_pattern]}'")
 
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
