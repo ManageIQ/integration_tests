@@ -17,6 +17,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.update import Updateable
 from cfme.utils.wait import TimedOutError
+from widgetastic_manageiq import RadioGroup
 
 
 class ServiceCatalogs(Navigatable, Taggable, Updateable, sentaku.modeling.ElementMixin):
@@ -67,6 +68,10 @@ class BaseOrderForm(View):
             locator=ParametrizedLocator(
                 '//label[contains(text(), "{key}")]/following-sibling::div/button'
             )
+        )
+        radiogroup = RadioGroup(locator=(
+            '//div[contains(@ng-switch-when, "DialogFieldRadioButton")]/span[contains(@class, '
+            '"ng-scope")]')
         )
 
         @property
