@@ -41,7 +41,7 @@ STATUS = {
 }
 
 QUERY_PATH = data_path.join("/bugzilla-queries/")
-BZ_URL = "bugzilla.redhat.com"
+BZ_URL = conf.env.bugzilla.url
 
 
 def get_report(directory):
