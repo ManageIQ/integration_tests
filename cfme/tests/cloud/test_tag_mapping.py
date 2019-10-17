@@ -226,36 +226,6 @@ def test_mapping_tags(
     soft_assert(not '{}: {}'.format(category.name, tag_value) in entity.get_tags())
 
 
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.provider([EC2Provider], override=True, scope='function')
-def test_ec2_tags_instances(provider, testing_instance):
-    """ probably to_delete
-    Requirement: Have an ec2 provider
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-        testSteps:
-            1. Create an instance with tag test:testing
-            2. Refresh provider
-            3. Go to summary of this instance and check whether there is
-            test:testing in Labels field
-            4. Delete that instance
-    """
-    """system = provider.mgmt
-    tag_key = f"test_{fauxfactory.gen_alpha()}"
-    tag_value = f"testing_{fauxfactory.gen_alpha()}"
-    instance = system.get_vm(testing_instance.name)
-    instance.set_tag(tag_key, tag_value)
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
-    assert instance.get_tag_value(tag_key) == tag_value"""
-
-
 @pytest.mark.tier(2)
 @pytest.mark.parametrize("ec2taggable", [EC2Image, EC2Instance])
 @pytest.mark.provider([EC2Provider], override=True, scope='function')
@@ -269,29 +239,27 @@ def test_ec2_tags(provider, request, ec2taggable, testing_instance):
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
-        testSteps Image:
+        testSteps:
             1. Select an AMI in AWS console and tag it with test:testing
             2. Refresh provider
             3. Go to summary of this image  and check whether there is
             test:testing in Labels field
             4. Delete that tag
-        testSteps Instance:
+        testSteps:
             1. Create an instance with tag test:testing
             2. Refresh provider
             3. Go to summary of this instance and check whether there is
             test:testing in Labels field
             4. Delete that instance
     """
-
     system = provider.mgmt
     tag_key = f"test_{fauxfactory.gen_alpha()}"
     tag_value = f"testing_{fauxfactory.gen_alpha()}"
     if ec2taggable == EC2Image:
         taggable = system.list_templates()[0]
-        request.addfinalizer(lambda: taggable.unset_tag(tag_key,tag_value))
+        request.addfinalizer(lambda: taggable.unset_tag(tag_key, tag_value))
     else:
         taggable = system.get_vm(testing_instance.name)
-
     taggable.set_tag(tag_key, tag_value)
     provider.refresh_provider_relationships()
     wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
