@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from wrapanapi import VmState
 
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import CFMEException
 from cfme.utils import ports
 from cfme.utils.generators import random_vm_name
@@ -68,3 +70,33 @@ def full_template_vm_modscope(setup_provider_modscope, request, full_template_mo
 def full_template_vm(setup_provider, request, full_template, provider):
     vm_name = _get_vm_name(request)
     return _create_vm(request, full_template, provider, vm_name)
+
+
+def _create_instance(appliance, provider, template_name):
+    instance = appliance.collections.cloud_instances.instantiate(random_vm_name('pwr-c'),
+                                                                 provider,
+                                                                 template_name)
+    if not instance.exists_on_provider:
+        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+    elif instance.provider.one_of(EC2Provider) and instance.mgmt.state == VmState.DELETED:
+        instance.mgmt.rename('test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
+        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+    return instance
+
+
+@pytest.fixture(scope="function")
+def testing_instance(appliance, provider, small_template, setup_provider):
+    """ Fixture to provision instance on the provider
+    """
+    instance = _create_instance(appliance, provider, small_template.name)
+    yield instance
+    instance.cleanup_on_provider()
+
+
+@pytest.fixture(scope="function")
+def testing_instance2(appliance, provider, small_template, setup_provider):
+    """ Fixture to provision instance on the provider
+    """
+    instance2 = _create_instance(appliance, provider, small_template.name)
+    yield instance2
+    instance2.cleanup_on_provider()
