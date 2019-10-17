@@ -3900,7 +3900,7 @@ class FolderManager(Widget):
 
     def add(self, folder_name):
         self.add_button.click()
-        wait_for(lambda: self.browser.elements(self._new_field) is not None, num_sec=5, delay=0.1)
+        wait_for(lambda: bool(self.browser.elements(self._new_field)), num_sec=5, delay=0.1)
         self.browser.double_click(self._new_field)
         self.browser.handle_alert(prompt=folder_name)
 
