@@ -19,12 +19,25 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import AlertEmail
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import Table
+
+
+class VolatileBootstrapSelect(BootstrapSelect):
+    def fill(self, items):
+        try:
+            super(VolatileBootstrapSelect, self).fill(items)
+        except NoSuchElementException:
+            logger.warning(
+                "fill() operation was successful, but no options are left in BootstrapSelect to"
+                " display/select hence the widget has disappeared. Returning True."
+            )
+            return True
 
 
 class SchedulesAllView(CloudIntelReportsView):
@@ -86,6 +99,7 @@ class SchedulesFormCommon(CloudIntelReportsView):
         emails_send = Checkbox("send_email_cb")
         from_email = TextInput(name="from")
         to_emails = AlertEmail()
+        user_email = VolatileBootstrapSelect("user_email")
 
     @View.nested
     class email_options(View):  # noqa
