@@ -165,7 +165,7 @@ def find_pingable(mgmt_vm, allow_ipv6=True):
          In priority: first pingable address, address 'selected' by wrapanapi (possibly None)
      """
     for ip in getattr(mgmt_vm, 'all_ips', []):
-        if ip.lower().startswith('fe80::') or (not allow_ipv6 and is_ipv6(ip)):
+        if not allow_ipv6 and is_ipv6(ip):
             logger.debug('VMs ip is ipv6, skipping it: %s', ip)
             continue
         if not is_pingable(ip):
@@ -190,6 +190,8 @@ def wait_pingable(mgmt_vm, wait=30, allow_ipv6=True):
     """
     def is_reachable(mgmt_vm):
         ip = find_pingable(mgmt_vm, allow_ipv6=allow_ipv6)
+        # above method returns ip from wrapanapi if there is no suitable ip.
+        # this ip can be ipv6 one and pingable but it isn't acceptable for sprout
         if is_pingable(ip) and not (not allow_ipv6 and is_ipv6(ip)):
             return ip
         else:
