@@ -273,7 +273,8 @@ def metering_report(appliance, vm_ownership, provider):
 # usage estimated in the resource_usage fixture, therefore a small deviation is fine.
 @pytest.mark.provider(gen_func=providers,
                       filters=[cloud_and_infra, not_scvmm, not_cloud],
-                      override=True)
+                      override=True,
+                      scope='module')
 def test_validate_cpu_usage(resource_usage, metering_report):
     """Test to validate CPU usage.This metric is not collected for cloud providers.
 
@@ -297,7 +298,8 @@ def test_validate_cpu_usage(resource_usage, metering_report):
 
 @pytest.mark.provider(gen_func=providers,
                       filters=[cloud_and_infra, not_scvmm, not_ec2_gce],
-                      override=True)
+                      override=True,
+                      scope='module')
 def test_validate_memory_usage(resource_usage, metering_report):
     """Test to validate memory usage.This metric is not collected for GCE, EC2.
 
