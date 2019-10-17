@@ -3,6 +3,10 @@ import pytest
 from widgetastic.utils import partial_match
 from wrapanapi.exceptions import ImageNotFoundError
 
+from wrapanapi.systems.ec2 import EC2Image
+from wrapanapi.systems.ec2 import EC2System
+from wrapanapi.systems.ec2 import EC2Instance
+
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -221,10 +225,11 @@ def test_mapping_tags(
     provider.refresh_provider_relationships(method='ui')
     soft_assert(not '{}: {}'.format(category.name, tag_value) in entity.get_tags())
 
+from cfme.tests.cloud.test_instance_power_control import testing_instance
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_ec2_tags_instances():
+@pytest.mark.provider([EC2Provider], override=True, scope='function')
+def test_ec2_tags_instances(provider, testing_instance):
     """
     Requirement: Have an ec2 provider
 
@@ -241,12 +246,25 @@ def test_ec2_tags_instances():
             test:testing in Labels field
             4. Delete that instance
     """
-    pass
+    system = provider.mgmt
+    #images = system.list_templates()
+    #image = images[0]
+    #instance_name = f"instance_{fauxfactory.gen_alpha()}"
+    #instance = system.create_vm(image.uuid)
+    tag_key = f"test_{fauxfactory.gen_alpha()}"
+    tag_value = f"testing_{fauxfactory.gen_alpha()}"
+    instance = system.get_vm(testing_instance.name)
+    instance.set_tag(tag_key, tag_value)
+    provider.refresh_provider_relationships()
+    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+    assert instance.get_tag_value(tag_key) == tag_value
 
 
-@pytest.mark.manual
+
 @pytest.mark.tier(2)
-def test_ec2_tags_images():
+#@pytest.mark.parametrize("ec2taggable", [EC2Image, EC2Instance])
+@pytest.mark.provider([EC2Provider], override=True, scope='function')
+def test_ec2_tags_images(provider):#, ec2taggable):
     """
     Requirement: Have an ec2 provider
 
@@ -263,4 +281,15 @@ def test_ec2_tags_images():
             test:testing in Labels field
             4. Delete that tag
     """
-    pass
+
+    system = provider.mgmt
+    images = system.list_templates()
+    image = images[0]
+    tag_key = f"test_{fauxfactory.gen_alpha()}"
+    tag_value = f"testing_{fauxfactory.gen_alpha()}"
+    image.set_tag(tag_key, tag_value)
+    provider.refresh_provider_relationships()
+    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+    assert image.get_tag_value(tag_key) == tag_value
+    image.unset_tag(tag_key, tag_value)
+
