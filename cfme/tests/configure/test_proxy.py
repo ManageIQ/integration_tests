@@ -156,7 +156,9 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
 
     def last_refresh_failed():
         view.toolbar.reload.click()
-        return 'Timed out connecting to server' in (
+        refresh_failed_msg = ('execution expired' if provider.one_of(EC2Provider) else
+                              'Timed out connecting to server')
+        return refresh_failed_msg in (
             view.entities.summary('Status').get_text_of('Last Refresh'))
 
     wait_for(last_refresh_failed,
