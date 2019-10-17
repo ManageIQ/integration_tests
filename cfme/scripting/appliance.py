@@ -41,7 +41,7 @@ def main():
 def upgrade_appliance(appliance_ip, cfme_only, update_to):
     """Upgrades an appliance"""
     supported_version_repo_map = {
-        '5.9.z': 'update_url_59', '5.10.z': 'update_url_510',
+        '5.9.z': 'update_url_59', '5.10.z': 'update_url_510', '5.11.z': 'update_url_511'
     }
     assert update_to in supported_version_repo_map, "{} is not a supported version".format(
         update_to
@@ -53,8 +53,13 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
         print('Fetching appliance from env.local.yaml')
     app = get_appliance(appliance_ip)
     assert app.version > '5.7', "{} is not supported, must be 5.7 or higher".format(app.version)
-    print('Extending appliance partitions')
-    app.db.extend_partition()
+    is_major_upgrade = app.version.series() not in update_to
+    assert not("5.11" in update_to and is_major_upgrade), "Major upgrade for 5.11 Not implemented"
+
+    if is_major_upgrade:
+        print('Extending appliance partitions')
+        app.db.extend_partition()
+
     urls = cfme_data['basic_info'][update_url]
     print('Adding update repo to appliance')
     app.ssh_client.run_command(
@@ -68,9 +73,12 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     print('Running yum update')
     result = app.ssh_client.run_command('yum update {}'.format(cfme), timeout=3600)
     assert result.success, "update failed {}".format(result.output)
-    print('Running database migration')
-    app.db.migrate()
-    app.db.automate_reset()
+
+    if is_major_upgrade:
+        print('Running database migration')
+        app.db.migrate()
+        app.db.automate_reset()
+
     print('Restarting postgres service')
     app.db_service.restart()
     print('Starting EVM')
