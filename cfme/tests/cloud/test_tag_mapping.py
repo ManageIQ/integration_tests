@@ -4,7 +4,6 @@ from widgetastic.utils import partial_match
 from wrapanapi.exceptions import ImageNotFoundError
 
 from wrapanapi.systems.ec2 import EC2Image
-from wrapanapi.systems.ec2 import EC2System
 from wrapanapi.systems.ec2 import EC2Instance
 
 from cfme import test_requirements
@@ -12,6 +11,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import ItemNotFound
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.tests.cloud.test_instance_power_control import testing_instance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -225,12 +225,12 @@ def test_mapping_tags(
     provider.refresh_provider_relationships(method='ui')
     soft_assert(not '{}: {}'.format(category.name, tag_value) in entity.get_tags())
 
-from cfme.tests.cloud.test_instance_power_control import testing_instance
 
+@pytest.mark.manual
 @pytest.mark.tier(2)
 @pytest.mark.provider([EC2Provider], override=True, scope='function')
 def test_ec2_tags_instances(provider, testing_instance):
-    """
+    """ probably to_delete
     Requirement: Have an ec2 provider
 
     Polarion:
@@ -246,25 +246,20 @@ def test_ec2_tags_instances(provider, testing_instance):
             test:testing in Labels field
             4. Delete that instance
     """
-    system = provider.mgmt
-    #images = system.list_templates()
-    #image = images[0]
-    #instance_name = f"instance_{fauxfactory.gen_alpha()}"
-    #instance = system.create_vm(image.uuid)
+    """system = provider.mgmt
     tag_key = f"test_{fauxfactory.gen_alpha()}"
     tag_value = f"testing_{fauxfactory.gen_alpha()}"
     instance = system.get_vm(testing_instance.name)
     instance.set_tag(tag_key, tag_value)
     provider.refresh_provider_relationships()
     wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
-    assert instance.get_tag_value(tag_key) == tag_value
-
+    assert instance.get_tag_value(tag_key) == tag_value"""
 
 
 @pytest.mark.tier(2)
-#@pytest.mark.parametrize("ec2taggable", [EC2Image, EC2Instance])
+@pytest.mark.parametrize("ec2taggable", [EC2Image, EC2Instance])
 @pytest.mark.provider([EC2Provider], override=True, scope='function')
-def test_ec2_tags_images(provider):#, ec2taggable):
+def test_ec2_tags(provider, request, ec2taggable, testing_instance):
     """
     Requirement: Have an ec2 provider
 
@@ -274,22 +269,31 @@ def test_ec2_tags_images(provider):#, ec2taggable):
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
-        testSteps:
+        testSteps Image:
             1. Select an AMI in AWS console and tag it with test:testing
             2. Refresh provider
             3. Go to summary of this image  and check whether there is
             test:testing in Labels field
             4. Delete that tag
+        testSteps Instance:
+            1. Create an instance with tag test:testing
+            2. Refresh provider
+            3. Go to summary of this instance and check whether there is
+            test:testing in Labels field
+            4. Delete that instance
     """
 
     system = provider.mgmt
-    images = system.list_templates()
-    image = images[0]
     tag_key = f"test_{fauxfactory.gen_alpha()}"
     tag_value = f"testing_{fauxfactory.gen_alpha()}"
-    image.set_tag(tag_key, tag_value)
+    if ec2taggable == EC2Image:
+        taggable = system.list_templates()[0]
+        request.addfinalizer(lambda: taggable.unset_tag(tag_key,tag_value))
+    else:
+        taggable = system.get_vm(testing_instance.name)
+
+    taggable.set_tag(tag_key, tag_value)
     provider.refresh_provider_relationships()
     wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
-    assert image.get_tag_value(tag_key) == tag_value
-    image.unset_tag(tag_key, tag_value)
+    assert taggable.get_tag_value(tag_key) == tag_value
 
