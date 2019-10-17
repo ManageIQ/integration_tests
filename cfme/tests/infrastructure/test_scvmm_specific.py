@@ -270,25 +270,3 @@ def test_check_disk_allocation_size_scvmm(vm):
         "Snapshots"
     )
     assert usage_snapshots.split()[0] > 0
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_vm_volume_specchar1_scvmm():
-    """
-    Special Test to verify that VMs that have Volumes with no drive letter
-    assigned don"t cause systemic SCVMM provider errors.  This is a low
-    priority test.
-
-    Bugzilla:
-        1353285
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/4h
-        startsin: 5.6.1
-        upstream: no
-    """
-    pass
