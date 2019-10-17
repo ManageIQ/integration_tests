@@ -435,6 +435,7 @@ def test_infrastructure_hosts_navigation_after_download(
     elif hosts_collection == "appliance":
         assert hosts_view.is_displayed
 
+
 @pytest.fixture(params=["provider", "appliance"])
 def hosts_collection(request):
     return request.param
