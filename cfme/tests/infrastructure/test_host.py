@@ -409,7 +409,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     ids=["txt", "csv", "pdf"]
 )
 def test_infrastructure_hosts_navigation_after_download(
-    appliance, setup_provider, provider, report_format
+    appliance, setup_provider, provider, report_format, hosts_collection
 ):
     """
     Polarion:
@@ -421,10 +421,20 @@ def test_infrastructure_hosts_navigation_after_download(
         1738664
 
     """
-    hosts_view = navigate_to(provider.collections.hosts, "All")
+    if hosts_collection == "provider":
+        hosts_view = navigate_to(provider.collections.hosts, "All")
+    elif hosts_collection == "appliance":
+        hosts_view = navigate_to(appliance.collections.hosts, "All")
     hosts_view.toolbar.download.item_select(report_format)
     if report_format == "Print or export as PDF":
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
-    provider_view = provider.create_view(InfraProviderDetailsView)
-    assert provider_view.is_displayed
+    if hosts_collection == "provider":
+        provider_view = provider.create_view(InfraProviderDetailsView)
+        assert provider_view.is_displayed
+    elif hosts_collection == "appliance":
+        assert hosts_view.is_displayed
+
+@pytest.fixture(params=["provider", "appliance"])
+def hosts_collection(request):
+    return request.param
