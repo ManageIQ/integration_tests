@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
 from wrapanapi.exceptions import ImageNotFoundError
-
 from wrapanapi.systems.ec2 import EC2Image
 from wrapanapi.systems.ec2 import EC2Instance
 
@@ -11,7 +10,6 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import ItemNotFound
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.tests.cloud.test_instance_power_control import testing_instance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
