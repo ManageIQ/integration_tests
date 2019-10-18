@@ -63,6 +63,11 @@ class BaseOrderForm(View):
         param_dropdown = BootstrapSelect(locator=ParametrizedLocator(
             ".//div[contains(@class, 'bootstrap-select')]/select[@id='param_{key}']/.."))
         checkbox = Checkbox(id=Parameter("key"))
+        refresh = Text(
+            locator=ParametrizedLocator(
+                '//label[contains(text(), "{key}")]/following-sibling::div/button'
+            )
+        )
 
         @property
         def visible_widget(self):
