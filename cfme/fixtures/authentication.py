@@ -22,6 +22,14 @@ def ipa_auth_provider():
         pytest.skip('ipa auth provider not found in auth_data.auth_providers, skipping test.')
 
 
+@pytest.fixture(scope='module')
+def openldap_auth_provider():
+    try:
+        return authutil.get_auth_crud('cfme_openldap')
+    except KeyError:
+        pytest.skip('OpenLDAP auth provider not found in auth_data.auth_providers, skipping test.')
+
+
 @pytest.fixture(scope='function')
 def setup_ipa_auth_provider(temp_appliance_preconfig_long, ipa_auth_provider):
     """Add/Remove IPA auth provider"""
@@ -70,6 +78,21 @@ def setup_aws_auth_provider(temp_appliance_preconfig_long, amazon_auth_provider)
     temp_appliance_preconfig_long.server.authentication.auth_settings = original_config
     temp_appliance_preconfig_long.server.login_admin()
     temp_appliance_preconfig_long.server.authentication.configure(auth_mode='database')
+
+
+@pytest.fixture(scope='module')
+def setup_openldap_auth_provider(appliance, openldap_auth_provider):
+    """Configure OpenLDAP authentication mode"""
+    original_config = appliance.server.authentication.auth_settings
+    appliance.server.authentication.configure(auth_mode='ldap',
+                                              auth_provider=openldap_auth_provider,
+                                              user_type='uid')
+    sleep(60)  # wait for MIQ to update, no trigger to look for, but if you try too soon it fails
+    yield
+
+    appliance.server.authentication.auth_settings = original_config
+    appliance.server.login_admin()
+    appliance.server.authentication.configure(auth_mode='database')
 
 
 @pytest.fixture(scope='function')

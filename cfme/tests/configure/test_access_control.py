@@ -546,7 +546,7 @@ def test_group_crud(appliance):
     role = 'EvmRole-administrator'
     group_collection = appliance.collections.groups
     group = group_collection.create(
-        description='grp{}'.format(fauxfactory.gen_alphanumeric()), role=role)
+        description='grp{}'.format(fauxfactory.genalphanumeric()), role=role)
     with update(group):
         group.description = "{}edited".format(group.description)
     group.delete()
@@ -1961,10 +1961,10 @@ def test_tenant_visibility_vms_all_childs():
     pass
 
 
-@pytest.mark.manual
+# @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
-def test_tenant_ldap_group_switch_between_tenants():
+def test_tenant_ldap_group_switch_between_tenants(appliance, openldap_auth_provider):
     """
     User who is member of 2 or more LDAP groups can switch between tenants
 
@@ -1994,9 +1994,27 @@ def test_tenant_ldap_group_switch_between_tenants():
             to Classic UI and switch to desired group. Afterthat he is able login
             via Self Service UI to desired tenant
 
-    """
-    pass
 
+    auth_provider = get_auth_crud("cfme_openldap")
+    appliance.server.authentication.configure(auth_mode='ldap',
+                                             auth_provider=auth_provider,
+                                             user_type='uid')
+    """
+    with test_user:
+        view = navigate_to(appliance.server, 'LoggedIn')
+
+        orig_group = view.current_groupname
+
+        # Set the group list order so that we change to the original group last
+        group_test_list = [name for name in group_names if name != orig_group] + [orig_group]
+
+        for group in group_test_list:
+            view.change_group(group)
+
+            assert group == view.current_groupname, (
+                "User failed to change current group from {} to {}".format(
+                    view.current_groupname, group))
+    
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
