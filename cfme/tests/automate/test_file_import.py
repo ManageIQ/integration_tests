@@ -138,3 +138,63 @@ def test_crud_imported_domains(import_data, temp_appliance_preconfig):
             domain.description = fauxfactory.gen_alpha()
         domain.delete()
         view.flash.assert_message(f'Automate Domain "{domain.description}": Delete successful')
+
+
+@pytest.fixture
+def setup_automate_model(appliance):
+    """This fixture creates domain, namespace, klass"""
+    # names and display names of the domain, namespace, klass needs to be static to match with newly
+    # imported datastore.
+    domain = appliance.collections.domains.create(
+        name="bz_1440226",
+        description=fauxfactory.gen_alpha(),
+        enabled=True)
+
+    namespace = domain.namespaces.create(
+        name="test_name",
+        description=fauxfactory.gen_alpha()
+    )
+
+    klass = namespace.classes.create(
+        name="test_class",
+        display_name="test_class_display",
+        description=fauxfactory.gen_alpha()
+    )
+    yield domain, namespace, klass
+    klass.delete_if_exists()
+    namespace.delete_if_exists()
+    domain.delete_if_exists()
+
+
+@pytest.mark.meta(automates=[1440226])
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1440226.zip", "bz_1440226", None)],
+    ids=["datastore_update"],
+)
+def test_automate_import_attributes_updated(setup_automate_model, import_datastore, import_data):
+    """
+    Note: We are not able to export automate model using automation. Hence importing same datastore
+    which is already uploaded on FTP. So step 1 and 2 are performed manually and uploaded that
+    datastore on FTP.
+
+    Bugzilla:
+        1440226
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: low
+        initialEstimate: 1/12h
+        tags: automate
+        testSteps:
+            1. Export an Automate model
+            2. Change the description in the exported namespace, class yaml file
+            3. Import the updated datastore
+            4. Check if the description attribute gets updated
+    """
+    domain, namespace, klass = setup_automate_model
+    view = navigate_to(namespace, "Edit")
+    assert view.description.read() == "test_name_desc_updated"
+    view = navigate_to(klass, "Edit")
+    assert view.description.read() == "test_class_desc"
