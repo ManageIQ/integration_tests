@@ -2,10 +2,13 @@
 import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import rhel7_minimal
+from cfme.fixtures.v2v_fixtures import cleanup_target
+from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
 from cfme.fixtures.v2v_fixtures import set_conversion_host_api
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -566,3 +569,72 @@ def test_migration_with_no_conversion(appliance, delete_conversion_hosts, source
     view = navigate_to(migration_plan, "InProgress")
     assert not view.progress_card.is_plan_started(migration_plan.name)
     assert "no conversion host" in view.progress_card.get_error_text(migration_plan.name)
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
+@pytest.mark.parametrize("attribute", ["flavor", "security_group"])
+@pytest.mark.parametrize(
+    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True)
+def test_v2v_custom_attribute(
+        request, appliance, provider, attribute, mapping_data_vm_obj_single_datastore):
+    """
+    Test V2V with custom attributes of openstack provider projects
+    Polarion:
+        assignee: sshveta
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+        initialEstimate: 1/4h
+    """
+    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
+    mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
+
+    component = mapping_data["clusters"][0]
+    # Changing target project to other than default(admin to qe-auto)
+    component.targets = [partial_match(provider.data.clusters[1])]
+    map_cluster = component.targets[0]
+    # create mapping with 'qe-auto' project
+    mapping = infrastructure_mapping_collection.create(**mapping_data)
+    src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
+
+    # Selecting second flavor (admin-linux) and security group(admin-group1)
+    # since first(m1.mini flavor and default security group) is default
+    map_flavor = provider.data.flavors[1] if attribute == "flavor" else provider.data.flavors[0]
+    map_security_group = (provider.data.security_groups.admin[1]
+        if attribute == "security_group" else provider.data.security_groups.admin[0])
+
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    migration_plan = migration_plan_collection.create(
+        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
+        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        infra_map=mapping.name,
+        osp_security_group=map_security_group,
+        osp_flavor=map_flavor,
+        target_provider=provider,
+        vm_list=mapping_data_vm_obj_single_datastore.vm_list,
+    )
+    assert migration_plan.wait_for_state("Started")
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
+
+    migrated_vm = get_migrated_vm(src_vm_obj, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        infrastructure_mapping_collection.delete(mapping)
+        migration_plan.delete_completed_plan()
+        cleanup_target(provider, migrated_vm)
+    assert src_vm_obj.mac_address == migrated_vm.mac_address
+
+    osp_vm = provider.mgmt.get_vm(name=src_vm_obj.name)
+    # Test1: Checking map's flavor with openstack server flavor
+    assert map_flavor == osp_vm.flavor.name
+    # Test2: Checking map's security group with openstack server security group
+    assert map_security_group == osp_vm.security_groups[0]
+
+    new_view = navigate_to(src_vm_obj, "Details")
+    osp_project = new_view.entities.summary("Relationships").get_text_of("Cloud Tenants")
+    assert map_cluster == osp_project
