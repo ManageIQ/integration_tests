@@ -1211,7 +1211,6 @@ def image_file_path(file_name):
     return file_path
 
 
-@test_requirements.rest
 @pytest.mark.meta(automates=[1578076])
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(
@@ -1292,3 +1291,25 @@ def test_provider_specific_vm(
     for provider_obj in [provider, second_provider]:
         for vm in provider_obj.rest_api_entity.vms.all:
             soft_assert(vm.ems.name == provider_obj.name)
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1546108])
+def test_release_server_info(appliance):
+    """
+    Bugzilla:
+        1546108
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Check the server release info at GET /api
+    """
+    assert (
+        appliance.rest_api.server_info["release"]
+        == appliance.ssh_client.run_command("cd /var/www/miq/vmdb; cat RELEASE").output
+    )
