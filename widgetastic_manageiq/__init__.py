@@ -2372,12 +2372,7 @@ class ReportToolBarViewSelector(View):
 
     @property
     def is_displayed(self):
-        return (
-            self.graph_button.is_displayed
-            or self.hybrid_button.is_displayed
-            or self.tabular_button.is_displayed
-            or self.data_button.is_displayed
-        )
+        return any(btn.is_displayed for btn in self._view_buttons)
 
 
 class AdvancedFilterSave(View):
