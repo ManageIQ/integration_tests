@@ -3437,7 +3437,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         # get_all uses self.entity_names, which handles versioned name query
         return [e.name for e in self.get_all(surf_pages=True)]
 
-    def get_all(self, surf_pages=False, slice=slice(0,None)):
+    def get_all(self, surf_pages=False, slice=slice(0, None)):
         """ obtains all entities like QuadIcon displayed by view
         Args:
             surf_pages (bool): current page entities if False, all entities otherwise
