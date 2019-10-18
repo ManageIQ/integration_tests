@@ -35,9 +35,7 @@ from cfme.networks.views import ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.wait import wait_for
 
 HOST_RELATIONSHIPS = [
     ("Infrastructure Provider", InfraProviderDetailsView),
@@ -127,17 +125,6 @@ def get_obj(relationship, appliance, **kwargs):
 def host(appliance, provider):
     host_collection = provider.hosts
     return random.choice(host_collection.all())
-
-
-def wait_for_relationship_refresh(provider):
-    view = navigate_to(provider, 'Details')  # resetter selects summary view
-    logger.info('Waiting for relationship refresh')
-    wait_for(
-        lambda: (view.entities.summary("Status").get_text_of('Last Refresh')
-                 == 'Success - Less Than A Minute Ago'),
-        delay=15,
-        timeout=110,
-        fail_func=view.browser.refresh)
 
 
 @test_requirements.relationships
@@ -313,8 +300,7 @@ def test_provider_refresh_relationship(provider, setup_provider):
     """
     result = LogValidator("/var/www/miq/vmdb/log/evm.log", failure_patterns=[r".*ERROR.*"])
     result.start_monitoring()
-    provider.refresh_provider_relationships(method='ui')
-    wait_for_relationship_refresh(provider)
+    provider.refresh_provider_relationships(method='ui', wait=600)
     assert result.validate(wait="60s")
 
 
@@ -340,7 +326,7 @@ def test_host_refresh_relationships(provider, setup_provider):
     """
     host = provider.hosts.all()[0]
     host.refresh(cancel=True)
-    wait_for_relationship_refresh(provider)
+    provider.wait_for_relationship_refresh()
 
 
 @pytest.mark.rhv3
@@ -367,7 +353,7 @@ def test_template_refresh_relationships(appliance, provider, setup_provider):
 
     template = template_collection.instantiate(template_names[0], provider)
     template.refresh_relationships()
-    wait_for_relationship_refresh(provider)
+    provider.wait_for_relationship_refresh()
 
 
 @pytest.mark.manual

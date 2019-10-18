@@ -141,8 +141,7 @@ def test_provider_log_level(appliance, provider, log_exists):
         {'log': {'level_{}'.format(provider.log_name): 'info'}}), timeout=300)
     lv_info = LogValidator(log, matched_patterns=['.*INFO.*'], failure_patterns=['.*DEBUG.*'])
     lv_info.start_monitoring()
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    provider.refresh_provider_relationships(wait=600)
     assert lv_info.validate(wait="60s")
 
     # set log level to warn
@@ -152,8 +151,7 @@ def test_provider_log_level(appliance, provider, log_exists):
 
     def _no_info():
         lv.start_monitoring()
-        provider.refresh_provider_relationships()
-        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        provider.refresh_provider_relationships(wait=600)
         try:
             assert lv.validate()
         except FailPatternMatchError:

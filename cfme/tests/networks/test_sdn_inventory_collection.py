@@ -1,6 +1,5 @@
 import fauxfactory
 import pytest
-from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
@@ -162,8 +161,7 @@ def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
     # Navigate to network provider.
     prov_collection = appliance.collections.network_providers.filter({'provider': provider})
     network_provider = prov_collection.all()[0]
-    network_provider.refresh_provider_relationships()
-    wait_for(network_provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    network_provider.refresh_provider_relationships(wait=600)
     view = navigate_to(network_provider, 'Details')
     parent_name = view.entities.relationships.get_text_of("Parent Cloud Provider")
     assert parent_name == provider.name
