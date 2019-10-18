@@ -263,7 +263,7 @@ def retire(self):
             num_sec=10 * 60, delay=3,
             message='Service Retirement wait')
     else:
-        request_descr = "Provisioning Service [{0}] from [{0}]".format(self.name)
+        request_descr = f"Service Retire for: {self.name}"
         service_request = self.appliance.collections.requests.instantiate(
             description=request_descr)
         service_request.wait_for_request()
@@ -360,6 +360,7 @@ def download_file(self, extension):
 def reconfigure_service(self):
     # TODO refactor this method - it does nothing at the moment. Bug 1575935
     view = navigate_to(self, 'Reconfigure')
+    view.submit_button.wait_displayed('5s')
     view.submit_button.click()
     view.flash.assert_no_error()
     self.create_view(MyServiceDetailView, wait='5s')
@@ -385,6 +386,10 @@ class MyServiceDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
+        if self.obj.rest_api_entity.retired:
+            self.view.myservice.tree.click_path('Retired Services')
+        else:
+            self.view.myservice.tree.click_path('Active Services')
         self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
