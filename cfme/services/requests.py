@@ -42,6 +42,7 @@ class Request(BaseEntity):
     REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
     description = attr.ib(default=None)
+    message = attr.ib(default=None)
     partial_check = attr.ib(default=False)
     cells = attr.ib(default=None)
     row = attr.ib(default=None, init=False)
@@ -84,6 +85,7 @@ class Request(BaseEntity):
         else:
             matching_requests = self.appliance.rest_api.collections.requests.find_by(
                 description=self.cells['Description'])
+
         if len(matching_requests) > 1:
             raise RequestException(
                 'Multiple requests with matching \"{}\" '
@@ -94,7 +96,6 @@ class Request(BaseEntity):
                 'Nothing matching "{}" with partial_check={} was found'.format(
                     self.cells['Description'], self.partial_check))
         else:
-            self.description = matching_requests[0].description
             return matching_requests[0]
 
     def get_request_row_from_ui(self):
@@ -140,6 +141,7 @@ class Request(BaseEntity):
         """
         self.rest.reload()
         self.description = self.rest.description
+        self.message = self.rest.message
         self.cells = {'Description': self.description}
 
     @update.variant('ui')

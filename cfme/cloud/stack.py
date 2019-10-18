@@ -259,7 +259,9 @@ class Stack(Pretty, BaseEntity, Taggable):
         view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select('List View')
         try:
-            view.paginator.find_row_on_pages(view.table, name=self.name)
+            row = view.paginator.find_row_on_pages(view.table, name=self.name)
+            if row.status.read() == 'DELETE_COMPLETE':
+                return False
             return True
         except NoSuchElementException:
             return False
@@ -270,18 +272,9 @@ class Stack(Pretty, BaseEntity, Taggable):
         view.toolbar.configuration.item_select('Remove this Orchestration Stack from Inventory',
                                                handle_alert=True)
         view.flash.assert_success_message('The selected Orchestration Stacks was deleted')
+        self.wait_for_not_exists()
 
-        def refresh():
-            """Refresh the view"""
-            if self.provider:
-                self.provider.refresh_provider_relationships()
-            view.browser.selenium.refresh()
-            view.flush_widget_cache()
-
-        wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, num_sec=15 * 60,
-                 delay=30, message='Wait for stack to be deleted')
-
-    def wait_for_exists(self):
+    def _wait_for_state(self, exists):
         """Wait for the row to show up"""
         view = navigate_to(self.parent, 'All')
 
@@ -292,8 +285,15 @@ class Stack(Pretty, BaseEntity, Taggable):
             view.browser.refresh()
             view.flush_widget_cache()
 
-        wait_for(lambda: self.exists, fail_condition=False, fail_func=refresh, num_sec=15 * 60,
-                 delay=30, message='Wait for stack to exist')
+        wait_for(lambda: self.exists, fail_condition=(not exists),
+                fail_func=refresh, num_sec=15 * 60, delay=30,
+                message='Wait for stack to {}'.format('exist' if exists else 'disappear'))
+
+    def wait_for_exists(self):
+        self._wait_for_state(exists=True)
+
+    def wait_for_not_exists(self):
+        self._wait_for_state(exists=False)
 
     def retire_stack(self, wait=True):
         view = navigate_to(self.parent, 'All')
@@ -304,16 +304,13 @@ class Stack(Pretty, BaseEntity, Taggable):
                                            handle_alert=True)
         view.flash.assert_success_message(
             'Retirement initiated for 1 Orchestration Stack from the CFME Database')
-        if wait:
-            def refresh():
-                """Refresh the view"""
-                if self.provider:
-                    self.provider.refresh_provider_relationships()
-                view.browser.refresh()
-                view.flush_widget_cache()
 
-            wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, delay=30,
-                     num_sec=15 * 60, message='Wait for stack to be deleted')
+        request = self.appliance.collections.requests.instantiate(
+            description=self.name, partial_check=True)
+        request.approve_request("The automatic test wants this to disappear.")
+
+        if wait:
+            self.wait_for_not_exists()
 
 
 @attr.s

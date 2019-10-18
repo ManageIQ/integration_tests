@@ -20,6 +20,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ReactCodeMirror
 from widgetastic_manageiq import ReactSelect
@@ -137,8 +138,10 @@ class TemplateTypeView(ServicesCatalogView):
 
 class DialogForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
-
-    name = Input(name='dialog_name')
+    name = VersionPicker({
+        "5.11": Input(name='label'),
+        LOWEST: Input(name='dialog_name')
+    })
 
 
 class AddDialogView(DialogForm):
@@ -206,6 +209,7 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
     def create_service_dialog_from_template(self, dialog_name):
         view = navigate_to(self, 'AddDialog')
         view.fill({'name': dialog_name})
+        wait_for(lambda: view.add_button.is_enabled, num_sec=5)
         view.add_button.click()
         view.flash.assert_no_error()
         service_dialog = self.parent.parent.collections.service_dialogs.instantiate(

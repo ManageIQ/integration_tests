@@ -30,7 +30,7 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
     service_power = sentaku.ContextualMethod()
     add_resource_generic_object = sentaku.ContextualMethod()
 
-    def __init__(self, appliance, name=None, description=None, vm_name=None):
+    def __init__(self, appliance, name=None, name_base=None, description=None, vm_name=None):
         self.appliance = appliance
         self.name = name
         self.description = description
