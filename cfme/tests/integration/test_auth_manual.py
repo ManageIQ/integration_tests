@@ -6,21 +6,6 @@ pytestmark = [test_requirements.auth]
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_auth_password_plaintext():
-    """
-    Test that auth passwords are not logged in plaintext in logs
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Configuration
-        caseimportance: high
-        initialEstimate: 1/3h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_appliance_console_ipa_ntp():
     """
