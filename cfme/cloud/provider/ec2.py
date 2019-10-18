@@ -26,16 +26,20 @@ class EC2Endpoint(DefaultEndpoint):
     """
     @property
     def view_value_mapping(self):
-        return {}
+        return {'endpoint_url': getattr(self, 'endpoint_url', None),
+                'assume_role_arn': getattr(self, 'assume_role_arn', None)}
 
 
 class EC2EndpointForm(View):
     """
-     represents default Amazon endpoint form in UI (Add/Edit dialogs)
+     represents default EC2 endpoint form in UI (Add/Edit dialogs)
     """
     @View.nested
     class default(WaitTab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
+
+        endpoint_url = Input('default_url')
+        assume_role_arn = Input('default_assume_role')
 
     @View.nested
     class smartstate(WaitTab, BeforeFillMixin):  # NOQA
