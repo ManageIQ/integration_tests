@@ -464,11 +464,12 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
     assert vm not in [row.vm_name.text for row in view.table.rows()]
 
 
-@pytest.mark.tier(0)
+@pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.uncollectif(
     lambda case_sensitive: not case_sensitive
-    and BZ("1741588", forced_streams=["5.11"]).blocks
+    and BZ("1741588", forced_streams=["5.11"]).blocks,
+    reason="Case Insensitive filtering is still a WIP"
 )
 @pytest.mark.parametrize(
     "case_sensitive", [True, False], ids=["case-sensitive", "case-insensitive"]
