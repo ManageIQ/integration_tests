@@ -251,58 +251,63 @@ def test_vm_reconfig_add_remove_hw_hot(
         reconfigure_vm(full_vm, orig_config)
 
 
-@pytest.mark.manual
-@pytest.mark.tier(1)
 @pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
-def test_vm_reconfig_resize_disk_cold(disk_type, disk_mode):
-    """
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. Resize the disk while VM is not running
-            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
-            3. Go to VM reconfiguration
-            4. Click on Add Disk -> select disk_type and disk_mode , save and submit
-            5. Go to VM reconfiguration and resize the disk
-            6. Check the changes in VM reconfiguration page
-            7. Remove the disk
-    """
-    pass
+@pytest.mark.uncollectif(
+    lambda disk_mode, vm_state: disk_mode == 'independent_nonpersistent' and vm_state == 'hot',
+    reason='The disk resize operation not supported for hot-independent_nonpersistent')
+def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_mode):
+    """ Resize the disk while VM is running and not running
+     Polarion:
+         assignee: nansari
+         initialEstimate: 1/6h
+         testtype: functional
+         startsin: 5.9
+         casecomponent: Infra
+     """
+    # get initial disks for later comparison
+    initial_disks = [disk.filename for disk in full_vm.configuration.disks]
+    add_data = [
+        {
+            "disk_size_in_mb": 20,
+            "sync": True,
+            "persistent": False if disk_mode == "independent_nonpersistent" else True,
+            "thin_provisioned": True if disk_type == "thin" else False,
+            "dependent": False if "independent" in disk_mode else True,
+            "bootable": False,
+        }
+    ]
+    # disk will be added to the VM via REST
+    vm_reconfig_via_rest(appliance, "disk_add", full_vm.rest_api_entity.id, add_data)
 
+    # assert the new disk was added
+    assert wait_for(
+        lambda: full_vm.configuration.num_disks > len(initial_disks),
+        fail_func=full_vm.refresh_relationships,
+        delay=5,
+        timeout=200,
+    )
 
-@pytest.mark.manual
-@pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], override=True)
-@pytest.mark.parametrize('disk_type', ['thin', 'thick'])
-@pytest.mark.parametrize(
-    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
-def test_vm_reconfig_resize_disk_hot(disk_type, disk_mode):
-    """
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. Resize the disk while VM is running
-            2. Go to Compute -> infrastructure -> Virtual Machines -> Select Vm
-            3. Go to VM reconfiguration
-            4. Click on Add Disk -> select disk_type and disk_mode , save and submit
-            5. Go to VM reconfiguration and resize the disk
-            6. Check the changes in VM reconfiguration page
-            7. Remove the disk
-    """
-    pass
+    # there will always be 2 disks after the disk has been added
+    disks_present = [disk.filename for disk in full_vm.configuration.disks]
+    # get the newly added disk
+    disk_added = list(set(disks_present) - set(initial_disks))[0]
+
+    # resize the disk
+    disk_size = 500
+    new_config = full_vm.configuration.copy()
+    new_config.resize_disk(size_unit='MB', size=disk_size, filename=disk_added)
+    resize_disk_request = full_vm.reconfigure(new_configuration=new_config)
+
+    # Resize disk request verification
+    wait_for(resize_disk_request.is_succeeded, timeout=360, delay=45,
+             message="confirm that disk was Resize")
+
+    # assert the new disk size was added
+    view = navigate_to(full_vm, 'Reconfigure')
+    assert int(view.disks_table.row(name=disk_added)["Size"].text) == disk_size
 
 
 @pytest.mark.ignore_stream('5.10')
@@ -408,33 +413,6 @@ def test_reconfigure_vm_vmware_mem_multiple():
             4. Action should succeed
             5. Action should succeed
             6. Action should Error
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], override=True)
-def test_vm_reconfig_attach_iso_vsphere67_nested():
-    """
-
-    Bugzilla:
-        1533728
-
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.10
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. Add vmware provider
-            2. provision 1 new vms
-            3. Run a Smartstate analysis on the Datastore (to get the list of ISO files)
-            4. configure-->reconfigure vm
-            5. Select an ISO (This should allow you to select an ISO to attach to the CD drive)
-            6. check changes
     """
     pass
 
