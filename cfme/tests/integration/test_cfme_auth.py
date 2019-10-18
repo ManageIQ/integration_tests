@@ -16,6 +16,7 @@ from cfme.utils.blockers import GH
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -115,6 +116,16 @@ def user_obj(appliance, auth_user, user_type):
         user.delete()
 
 
+@pytest.fixture
+def log_monitor(user_obj):
+    """Search evm.log for any plaintext password"""
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/evm.log", failure_patterns=[f"{user_obj.credential.secret}"]
+    )
+    result.start_monitoring()
+    yield result
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')  # default groups tested elsewhere
@@ -122,7 +133,7 @@ def user_obj(appliance, auth_user, user_type):
 @pytest.mark.uncollectif(lambda auth_user: not any([True for g in auth_user.groups or []
                                                    if 'evmgroup' in g.lower()]),
                          reason='No evm group available for user')
-def test_login_evm_group(appliance, auth_user, user_obj, soft_assert):
+def test_login_evm_group(appliance, auth_user, user_obj, soft_assert, log_monitor):
     """This test checks whether a user can login while assigned a default EVM group
         Prerequisities:
             * ``auth_data.yaml`` file
@@ -150,6 +161,9 @@ def test_login_evm_group(appliance, auth_user, user_obj, soft_assert):
     # split loop to reduce number of logins
     appliance.server.login_admin()
     assert user_obj.exists, 'user record should have been created for "{}"'.format(user_obj)
+
+    # assert no pwd in logs
+    assert log_monitor.validate()
 
 
 def retrieve_group(appliance, auth_mode, username, groupname, auth_provider):
@@ -184,7 +198,7 @@ def retrieve_group(appliance, auth_mode, username, groupname, auth_provider):
                                                    if 'evmgroup' not in g.lower()]),
                          reason='Only groups available for user are evm built-in')
 def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft_assert, auth_user,
-                              user_obj):
+                              user_obj, log_monitor):
     """This test checks whether different cfme auth modes are working correctly.
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
        e.g. test_auth[ext-ipa_create-group]
@@ -216,6 +230,9 @@ def test_login_retrieve_group(appliance, request, auth_mode, auth_provider, soft
 
     appliance.server.login_admin()  # context should get us back to admin, just in case
     assert user_obj.exists, 'User record for "{}" should exist after login'.format(user_obj)
+
+    # assert no pwd in logs
+    assert log_monitor.validate()
 
     @request.addfinalizer
     def _cleanup():
@@ -301,7 +318,7 @@ def test_login_local_group(appliance, local_user, local_group, soft_assert):
                          reason='User does not have multiple groups')
 @pytest.mark.meta(blockers=[BZ(1759291)], automates=[1759291])
 def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, soft_assert, request,
-                              user_obj):
+                              user_obj, log_monitor):
     """Test switching groups on a single user, between retreived group and built-in group
 
     Bugzilla:
@@ -357,6 +374,9 @@ def test_user_group_switching(appliance, auth_user, auth_mode, auth_provider, so
 
     appliance.server.login_admin()
     assert user_obj.exists, 'User record for "{}" should exist after login'.format(auth_user)
+
+    # assert no pwd in log
+    assert log_monitor.validate()
 
     @request.addfinalizer
     def _cleanup():
