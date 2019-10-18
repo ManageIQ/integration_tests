@@ -400,7 +400,7 @@ class InfraVmReconfigureView(BaseLoggedInPage):
         column_widgets={
             "Type": BootstrapSelect(id="hdType"),
             "Mode": BootstrapSelect(id="hdMode"),
-            "Size": WInput(id="dvcSize"),
+            "Size": WInput(locator='//*[@id="dvcResize" or @id="dvcSize"]'),
             "ControllerType": BootstrapSelect(id="Controller"),
             "Unit": BootstrapSelect(id="hdUnit"),
             "Dependent": BootstrapSwitch(name="vm.cb_dependent"),
@@ -631,6 +631,19 @@ class VMConfiguration(Pretty):
         self.disks.append(disk)
         return disk
 
+    def resize_disk(self, size, filename, size_unit='GB'):
+        disk = next(d for d in self.disks if d.filename == filename)
+        target_disk = VMDisk(
+            filename=disk.filename,
+            size=size,
+            size_unit=size_unit,
+            type=disk.type,
+            mode=disk.mode
+        )
+        self.disks.remove(disk)
+        self.disks.append(target_disk)
+        return target_disk
+
     def delete_disk(self, filename=None, index=None):
         """Removes a disk of given filename or index"""
         if filename:
@@ -667,6 +680,13 @@ class VMConfiguration(Pretty):
                 changes['disks'].append({'action': 'delete', 'disk': disk, 'delete_backing': None})
             elif disk not in self.disks and disk in other_configuration.disks:
                 changes['disks'].append({'action': 'add', 'disk': disk})
+            elif disk in self.disks and disk in other_configuration.disks:
+                old_disk = next(d for d in self.disks if d == disk)
+                new_disk = next(d for d in other_configuration.disks if d == disk)
+                if old_disk.size != new_disk.size:
+                    change = {"action": "resize", "disk": new_disk}
+                    if change not in changes["disks"]:
+                        changes["disks"].append(change)
         return changes
 
 
@@ -998,7 +1018,6 @@ class InfraVm(VM):
 
         if new_configuration:
             changes = self.configuration.get_changes_to_fill(new_configuration)
-
         any_changes = any(v not in [None, []] for v in changes.values())
         if not any_changes and not cancel:
             raise ValueError("No changes specified - cannot reconfigure VM.")
@@ -1050,6 +1069,14 @@ class InfraVm(VM):
                     # for RHV there's only one action button
                     row.actions.widget.click()
                 disk_message = 'Remove Disks'
+
+            elif action == "resize":
+                row = vm_recfg.disks_table.row(name=disk.filename)
+                row.actions.widget.click()
+                row.unit.fill(disk.size_unit)
+                row.size.fill(disk.size)
+                row.actions.widget.click()
+                disk_message = "Resize Disks"
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
         message = ", ".join([_f for _f in [ram_message, cpu_message, disk_message] if _f])
