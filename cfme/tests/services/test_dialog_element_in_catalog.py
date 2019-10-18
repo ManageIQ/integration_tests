@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.fixtures.automate import DatastoreImport
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -222,12 +223,15 @@ def test_specific_dates_and_time_in_timepicker():
     pass
 
 
-@pytest.mark.meta(coverage=[1706693])
-@pytest.mark.manual
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1706693])
 @pytest.mark.tier(2)
-def test_dynamic_field_on_refresh_button():
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1706693.zip", "bz_1706693", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1706693.yaml"], ids=["refresh_dialog"])
+def test_dynamic_field_on_refresh_button(request, appliance, import_datastore, import_data,
+                                         import_dialog, file_name, catalog):
     """
-
     Bugzilla:
         1706693
 
@@ -247,7 +251,26 @@ def test_dynamic_field_on_refresh_button():
             3.
             4. dynamic field shouldn't be blank
     """
-    pass
+    sd, ele_label = import_dialog
+    # These are the labels(keys) and names(values) of widgets appeared while ordering catalog item.
+    # We can not access these values from imported dialog. Hence created dict of these static values
+    label_element_map = {'var_1 - copied': 'var_2', 'var_2 - copied': 'var_3',
+                         'merged': 'var_2_var_3'}
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd)
+    request.addfinalizer(catalog_item.delete_if_exists)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    for label, ele_name in label_element_map.items():
+        before_refresh = view.fields(ele_name).input.read()
+        view.fields(ele_name).input.fill(fauxfactory.gen_alphanumeric())
+        view.fields(label).refresh.click()
+        assert view.fields(ele_name).input.read() == before_refresh
 
 
 @pytest.mark.meta(coverage=[1702343])
