@@ -16,6 +16,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
+from widgetastic_patternfly import SelectorDropdown
 
 from cfme.intelligence.reports import CloudIntelReportsView
 from cfme.intelligence.reports import ReportsMultiBoxSelect
@@ -34,6 +35,7 @@ from cfme.utils.wait import wait_for
 from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ReportToolBarViewSelector
+from widgetastic_manageiq import SearchBox
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
@@ -228,6 +230,17 @@ class SavedReportDetailsView(CloudIntelReportsView):
     # TODO: double check and raise GH to devs
     paginator = PaginationPane()
     view_selector = View.nested(ReportToolBarViewSelector)
+
+    @View.nested
+    class data_view(View):  # noqa
+        def child_widget_accessed(self, widget):
+            if self.parent.view_selector.selected != "Data View":
+                self.parent.view_selector.select("Data View")
+
+        table = Table('//*[@id="report_list_div"]//table')
+        paginator = PaginationPane()
+        field = SelectorDropdown("id", "filterFieldTypeMenu")
+        search_text = SearchBox(locator='//input[contains(@placeholder, "search text")]')
 
     @ParametrizedView.nested
     class download(ParametrizedView):  # noqa
@@ -626,6 +639,13 @@ class SavedReport(Updateable, BaseEntity):
     @property
     def tree_path(self):
         return self.report.tree_path + [self.datetime_in_tree]
+
+    def filter_report_content(self, field, search_term):
+        view = navigate_to(self, "Details")
+        view.data_view.paginator.set_items_per_page(1000)
+        view.data_view.field.item_select(field)
+        view.data_view.search_text.fill(search_term, refill=True)
+        return view.data_view.table
 
 
 @attr.s

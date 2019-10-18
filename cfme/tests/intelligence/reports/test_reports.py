@@ -9,6 +9,7 @@ from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
@@ -72,7 +73,7 @@ def tenant_report(appliance):
     tenant_report.delete()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def get_report(appliance, request):
     def _report(file_name, menu_name):
         collection = appliance.collections.reports
@@ -461,3 +462,45 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
 
     view = navigate_to(saved_report, "Details")
     assert vm not in [row.vm_name.text for row in view.table.rows()]
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.uncollectif(
+    lambda case_sensitive: not case_sensitive
+    and BZ("1741588", forced_streams=["5.11"]).blocks,
+    reason="Case Insensitive filtering is still a WIP"
+)
+@pytest.mark.parametrize(
+    "case_sensitive", [True, False], ids=["case-sensitive", "case-insensitive"]
+)
+@pytest.mark.meta(automates=[1678150, 1741588])
+def test_reports_filter_content(
+    appliance, case_sensitive, set_and_get_tenant_quota, tenant_report
+):
+    """
+    Bugzilla:
+        1678150
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/3h
+        startsin: 5.11
+        setup:
+            1. Go to Cloud Intel -> Reports -> All Reports
+            2. Select a report and queue it, make sure it's not empty.
+        testSteps:
+            1. Add a filter.
+            2. Traverse through all the rows and check if the content is filtered.
+        expectedResults:
+            1.
+            2. Content must be filtered.
+    """
+    search_term = "in GB" if case_sensitive else "in gb"
+    table = tenant_report.filter_report_content(
+        field="Quota Name", search_term=search_term
+    )
+    expected = ["Allocated Memory in GB", "Allocated Storage in GB"]
+    got = [row["Quota Name"].text for row in table.rows()]
+    assert sorted(expected) == sorted(got)
