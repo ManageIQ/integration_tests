@@ -16,7 +16,6 @@ from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 
 
 filter_fields = [['provisioning', 'template'],
@@ -513,8 +512,7 @@ def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
     result = appliance.ssh_client.run_rails_command(command)
     assert result.success, "SSH Command result was unsuccessful: {}".format(result)
     logger.info('output of rails command: %s', result.output)
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed, func_kwargs={"refresh_delta": 120}, num_sec=300, delay=30)
+    provider.refresh_provider_relationships(wait=300, delay=30, refresh_delta=120)
     # Using appliance.rest_api as hosts.all() do not return archived hosts, I need those too
     hosts_after = len(appliance.rest_api.collections.hosts.all)
     assert hosts_before == hosts_after

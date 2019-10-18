@@ -2,7 +2,6 @@ import pytest
 from wrapanapi.utils.random import random_name
 
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 
 
 def create_basic_sandbox(nuage):
@@ -66,8 +65,7 @@ def with_nuage_sandbox_modscope(appliance, setup_provider_modscope, provider):
     sandbox = create_basic_sandbox(nuage)
     enterprise = sandbox['enterprise']
     logger.info('Performing a full refresh, so sandbox %s appears in the database', enterprise.name)
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=5), timeout=600, delay=10)
+    provider.refresh_provider_relationships(wait=600, delay=10, refresh_delta=5)
 
     # Check if tenant exists in database, if not fail test immediately
     tenants_table = appliance.db.client['cloud_tenants']

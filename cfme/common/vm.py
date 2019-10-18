@@ -406,8 +406,8 @@ class BaseVM(
             load_details: when found, should it load the vm details
         """
         def _refresh():
-            self.provider.refresh_provider_relationships()
             self.appliance.browser.widgetastic.browser.refresh()  # strange because ViaUI
+            self.provider.refresh_provider_relationships(wait=600)
 
         wait_for(
             lambda: self.exists,
@@ -581,8 +581,7 @@ class BaseVMCollection(BaseCollection):
         if check_existing and vm.exists:
             return vm
         if not provider.is_refreshed():
-            provider.refresh_provider_relationships()
-            wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+            provider.refresh_provider_relationships(wait=600)
         if not form_values:
             form_values = vm.vm_default_args
         else:
@@ -661,8 +660,7 @@ class BaseVMCollection(BaseCollection):
             return vm
         else:
             if not provider.is_refreshed():
-                provider.refresh_provider_relationships()
-                wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+                provider.refresh_provider_relationships(wait=600)
 
             if not form_values:
                 form_values = vm.vm_default_args_rest

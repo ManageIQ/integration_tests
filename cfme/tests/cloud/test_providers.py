@@ -594,8 +594,7 @@ def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
         azure.create_iothub(iothub_name)
         request.addfinalizer(lambda: azure.delete_iothub(iothub_name))
         assert azure.has_iothub()
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+    provider.refresh_provider_relationships(wait=600)
     assert result.validate(wait="60s")
 
 

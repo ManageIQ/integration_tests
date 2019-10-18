@@ -41,8 +41,7 @@ def tagged_vm(provider):
 
 @pytest.fixture(scope='function')
 def refresh_provider(provider):
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+    provider.refresh_provider_relationships(wait=600)
     return True
 
 
