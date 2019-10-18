@@ -13,12 +13,15 @@ from widgetastic.widget import Text
 from wrapanapi import VmState
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Endpoint
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.openstack import RHOSEndpoint
+from cfme.common.provider import prepare_endpoints
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import CloudProvidersView
 from cfme.fixtures.provider import enable_provider_regions
@@ -184,6 +187,26 @@ def vm_ip(cfme_vhd, pwsh_ssh):
             timeout=20)
 
         pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=180)
+
+
+@pytest.fixture
+def ec2_provider_with_sts_creds(appliance):
+    collection = appliance.collections.cloud_providers
+    prov = collection.instantiate(
+        prov_class=EC2Provider, name=fauxfactory.gen_alphanumeric(5), key='ec2west'
+    )
+    assume_role_creds = prov.data.sts_assume_role.credentials
+    creds = Credential(principal=credentials[assume_role_creds]['username'],
+                       secret=credentials[assume_role_creds]['password'])
+    endpoint = EC2Endpoint(
+        assume_role_arn=prov.data.sts_assume_role.role_arn,
+        credentials=creds)
+
+    prov.endpoints = prepare_endpoints(endpoint)
+    prov.region_name = prov.data.region_name
+
+    yield prov
+    prov.delete()
 
 
 @pytest.mark.tier(3)
@@ -1297,3 +1320,52 @@ def test_add_ec2_provider_with_non_default_url_endpoint():
             2. Refresh should complete without errors
     """
     pass
+
+
+@pytest.mark.ignore_stream("5.10")
+def test_add_ec2_provider_with_sts_assume_role(appliance, ec2_provider_with_sts_creds):
+    """
+    Requires:
+        The requirement is only on EC2 side and needs to be added manually once.
+        1. Role which has all the required permissions to manage CFME
+        2. Edit Trust relationship policy for this role to:
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": "arn:aws:iam::NNNNNNNNNNNN:root"
+                  },
+                  "Action": "sts:AssumeRole"
+                }
+              ]
+            }
+        3. Have policy with AssumeRole permission:
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": "sts:AssumeRole",
+                        "Resource": "arn:aws:iam::NNNNNNNNNNNN:role/RoleForCFME"
+                    }
+                ]
+            }
+        4. Have an user with only attached policy created in last step
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/2h
+        caseimportance: high
+        casecomponent: Cloud
+        testSteps:
+            1. Go to Compute -> Cloud -> Providers
+            2. Add EC2 Provider with these fields filled in:
+        expectedResults:
+            1.
+            2. Provider should be successfully added.
+    """
+    ec2_provider_with_sts_creds.create()
+    ec2_provider_with_sts_creds.validate()
