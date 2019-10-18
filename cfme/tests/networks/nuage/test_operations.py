@@ -17,12 +17,12 @@ def test_router_add_subnet(provider, with_nuage_sandbox):
     We navigate to router through Provider > Tenant > Network Router
     """
     sandbox = with_nuage_sandbox
-    tenant_name = sandbox['enterprise'].name
-    router_name = sandbox['domain'].name
+    tenant_name = sandbox.enterprise['name']
+    router_name = sandbox.domain['name']
     tenant = provider.collections.cloud_tenants.instantiate(name=tenant_name, provider=provider)
     router = tenant.collections.routers.instantiate(name=router_name)
     subnet_name = fauxfactory.gen_alphanumeric(length=7)
-    router.add_subnet(subnet_name, '192.168.0.0', '255.255.0.0', '192.168.0.1')
+    router.add_subnet(subnet_name, '172.16.0.0', '255.255.0.0', '172.16.0.1')
     subnet = get_subnet_from_db_with_timeout(provider.appliance, subnet_name, router_name)
 
     assert subnet is not None

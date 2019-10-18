@@ -33,19 +33,19 @@ def test_creating_entities_emits_events(register_event, with_nuage_sandbox):
     listener = register_event
     sandbox = with_nuage_sandbox
 
-    expect_event(listener, 'nuage_enterprise_create', sandbox['enterprise'].id)
-    expect_event(listener, 'nuage_domaintemplate_create', sandbox['template'].id)
-    expect_event(listener, 'nuage_domain_create', sandbox['domain'].id)
-    expect_event(listener, 'nuage_zone_create', sandbox['zone'].id)
-    expect_event(listener, 'nuage_subnet_create', sandbox['subnet'].id)
-    expect_event(listener, 'nuage_vport_create', sandbox['cont_vport'].id, comment='L3 cont')
-    expect_event(listener, 'nuage_vport_create', sandbox['vm_vport'].id, comment='L3 vm')
-    expect_event(listener, 'nuage_l2domaintemplate_create', sandbox['l2_template'].id)
-    expect_event(listener, 'nuage_l2domain_create', sandbox['l2_domain'].id)
-    expect_event(listener, 'nuage_vport_create', sandbox['l2_cont_vport'].id, comment='L2 cont')
-    expect_event(listener, 'nuage_vport_create', sandbox['l2_vm_vport'].id, comment='L2 vm')
-    expect_event(listener, 'nuage_policygroup_create', sandbox['group'].id, comment='L1')
-    expect_event(listener, 'nuage_policygroup_create', sandbox['l2_group'].id, comment='L2')
+    expect_event(listener, 'nuage_enterprise_create', sandbox.enterprise['id'])
+    expect_event(listener, 'nuage_domaintemplate_create', sandbox.template['id'])
+    expect_event(listener, 'nuage_domain_create', sandbox.domain['id'])
+    expect_event(listener, 'nuage_zone_create', sandbox.zone['id'])
+    expect_event(listener, 'nuage_subnet_create', sandbox.subnet['id'])
+    expect_event(listener, 'nuage_vport_create', sandbox.cont_vport['id'], comment='L3 cont')
+    expect_event(listener, 'nuage_vport_create', sandbox.vm_vport['id'], comment='L3 vm')
+    expect_event(listener, 'nuage_l2domaintemplate_create', sandbox.l2_template['id'])
+    expect_event(listener, 'nuage_l2domain_create', sandbox.l2_domain['id'])
+    expect_event(listener, 'nuage_vport_create', sandbox.l2_cont_vport['id'], comment='L2 cont')
+    expect_event(listener, 'nuage_vport_create', sandbox.l2_vm_vport['id'], comment='L2 vm')
+    expect_event(listener, 'nuage_policygroup_create', sandbox.group['id'], comment='L1')
+    expect_event(listener, 'nuage_policygroup_create', sandbox.l2_group['id'], comment='L2')
 
 
 def test_creating_entities_triggers_targeted_refresh(targeted_refresh, with_nuage_sandbox):
@@ -73,16 +73,16 @@ def test_creating_entities_triggers_targeted_refresh(targeted_refresh, with_nuag
     """
     sandbox = with_nuage_sandbox
     with targeted_refresh.timeout():
-        targeted_refresh.register_target(sandbox['enterprise'].id, 'Enterprise')
-        targeted_refresh.register_target(sandbox['domain'].id, 'Domain')
-        targeted_refresh.register_target(sandbox['subnet'].id, 'Subnet')
-        targeted_refresh.register_target(sandbox['cont_vport'].id, 'Container vPort (L3)')
-        targeted_refresh.register_target(sandbox['vm_vport'].id, 'VM vPort (L3)')
-        targeted_refresh.register_target(sandbox['l2_domain'].id, 'Domain (L2)')
-        targeted_refresh.register_target(sandbox['l2_cont_vport'].id, 'Container vPort (L2)')
-        targeted_refresh.register_target(sandbox['l2_vm_vport'].id, 'VM vPort (L2)')
-        targeted_refresh.register_target(sandbox['group'].id, 'Security group (L3)')
-        targeted_refresh.register_target(sandbox['l2_group'].id, 'Security group (L2)')
+        targeted_refresh.register_target(sandbox.enterprise['id'], 'Enterprise')
+        targeted_refresh.register_target(sandbox.domain['id'], 'Domain')
+        targeted_refresh.register_target(sandbox.subnet['id'], 'Subnet')
+        targeted_refresh.register_target(sandbox.cont_vport['id'], 'Container vPort (L3)')
+        targeted_refresh.register_target(sandbox.vm_vport['id'], 'VM vPort (L3)')
+        targeted_refresh.register_target(sandbox.l2_domain['id'], 'Domain (L2)')
+        targeted_refresh.register_target(sandbox.l2_cont_vport['id'], 'Container vPort (L2)')
+        targeted_refresh.register_target(sandbox.l2_vm_vport['id'], 'VM vPort (L2)')
+        targeted_refresh.register_target(sandbox.group['id'], 'Security group (L3)')
+        targeted_refresh.register_target(sandbox.l2_group['id'], 'Security group (L2)')
 
 
 def expect_event(listener, event_type, entity_id, comment=''):
