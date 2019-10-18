@@ -363,7 +363,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
         initialEstimate: 1/6h
         testSteps:
             1. Navigate to the Compute > Infrastructure > Providers view.
-            2. Click on a provider guadicon, and then the hosts link along the top row of the view.
+            2. Click on a provider quadicon, and then the hosts link along the top row of the view.
             3. Select all hosts (need at least 2 hosts) by checking the box in upper left of
                quadicons.
             4. Click "Refresh Relationships and Power States" under the Configuration
