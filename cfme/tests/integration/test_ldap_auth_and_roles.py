@@ -12,8 +12,7 @@ pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='ldap')
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
 @test_requirements.auth
 @pytest.mark.tier(2)
-def test_group_roles(
-        request, appliance, configure_ldap_auth_mode, group_name, group_data, infra_provider):
+def test_group_roles(request, temp_appliance_preconfig, group_name, group_data):
     """Basic default LDAP group role RBAC test
 
     Validates expected menu and submenu names are present for default
@@ -27,6 +26,7 @@ def test_group_roles(
         initialEstimate: 1/4h
         tags: rbac
     """
+    appliance = temp_appliance_preconfig
     request.addfinalizer(appliance.server.login_admin)
 
     # This should be removed but currently these roles are subject to a bug
