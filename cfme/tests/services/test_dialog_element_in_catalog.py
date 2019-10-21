@@ -856,26 +856,3 @@ def test_dialog_dropdown_integer_required():
             5. "<None>" should not be displayed in the list of selected options
     """
     pass
-
-
-@pytest.mark.meta(coverage=[1720617])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_edit_import_dialog():
-    """
-    Bugzilla:
-        1720617
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        startsin: 5.10
-        testSteps:
-            1. Import import the dialog
-            2. Edit the above dialog
-        expectedResults:
-            1.
-            2. Imported Dialog should be edited
-    """
-    pass

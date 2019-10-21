@@ -75,14 +75,9 @@ class Dialog(BaseEntity, Fillable):
         else:
             view.cancel_button.click()
         view = self.create_view(DetailsDialogView, override=updates)
+        view.flash.wait_displayed(timeout=20)
         assert view.is_displayed
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                '{} was saved'.format(updates.get('name', self.label)))
-        else:
-            view.flash.assert_message(
-                'Dialog editing was canceled by the user.')
 
     def delete(self):
         """ Delete dialog method"""

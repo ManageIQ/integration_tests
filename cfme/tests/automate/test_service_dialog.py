@@ -54,6 +54,7 @@ def test_crud_service_dialog(appliance):
     view.flash.assert_message(flash_message)
     with update(dialog):
         dialog.description = "my edited description"
+    view.flash.assert_message(flash_message)
     dialog.delete()
 
 
