@@ -222,7 +222,7 @@ def all_required(miq_version, filters=None):
     return dprovs
 
 
-def providers(metafunc, filters=None, selector=ALL, fixture_name='provider'):
+def providers(metafunc, filters=None, selector=ONE_PER_VERSION, fixture_name='provider'):
     """ Gets providers based on given (+ global) filters
 
     Note:
@@ -353,23 +353,34 @@ def providers(metafunc, filters=None, selector=ALL, fixture_name='provider'):
         argvalues.append(pytest.param(data_prov))
 
         # Use the provider key for idlist, helps with readable parametrized test output
-        the_id = str(data_prov.key) if metafunc.config.getoption('legacy_ids') else data_prov.the_id
+        use_legacy_ids = metafunc.config.getoption('legacy_ids')
+        legacy_key = str(data_prov.key)
+        the_id = legacy_key if use_legacy_ids else data_prov.the_id
 
         # Now we modify the id based on what selector we chose
         if metafunc.config.getoption('disable_selectors'):
-            idlist.append(the_id)
+            selected_id = the_id
         else:
             if selector == ONE:
                 if need_prov_keys:
-                    idlist.append(data_prov.type_name)
+                    selected_id = data_prov.type_name
                 else:
-                    idlist.append(data_prov.category)
+                    selected_id = data_prov.category
             elif selector == ONE_PER_CATEGORY:
-                idlist.append(data_prov.category)
+                selected_id = data_prov.category
             elif selector == ONE_PER_TYPE:
-                idlist.append(data_prov.type_name)
+                selected_id = data_prov.type_name
+            elif selector == ALL:
+                if use_legacy_ids:
+                    # if we're already using legacy there shouldn't be duplicate ids
+                    selected_id = legacy_key
+                else:
+                    # include the key to differentiate multiple providers of same type+version
+                    selected_id = f'{the_id}-{legacy_key}'
             else:
-                idlist.append(the_id)
+                selected_id = the_id
+
+        idlist.append(selected_id)
 
         # Add provider to argnames if missing
         if fixture_name in metafunc.fixturenames and fixture_name not in argnames:
@@ -381,7 +392,7 @@ def providers(metafunc, filters=None, selector=ALL, fixture_name='provider'):
 
 
 def providers_by_class(
-        metafunc, classes, required_fields=None, selector=ALL, fixture_name='provider',
+        metafunc, classes, required_fields=None, selector=ONE_PER_VERSION, fixture_name='provider',
         required_flags=None):
     """ Gets providers by their class
 
@@ -435,7 +446,7 @@ class ProviderEnvironmentMarker(EnvironmentMarker):
                 scope = kwargs.pop('scope', 'function')
                 indirect = kwargs.pop('indirect', False)
                 filter_unused = kwargs.pop('filter_unused', True)
-                selector = kwargs.pop('selector', ALL)
+                selector = kwargs.pop('selector', ONE_PER_VERSION)
                 gen_func = kwargs.pop('gen_func', providers_by_class)
 
                 # If parametrize doesn't get you what you need, steal this and modify as needed
