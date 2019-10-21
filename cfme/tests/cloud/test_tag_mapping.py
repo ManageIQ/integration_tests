@@ -259,6 +259,5 @@ def test_ec2_tags(provider, request, ec2taggable, testing_instance):
     else:
         taggable = system.get_vm(testing_instance.name)
     taggable.set_tag(tag_key, tag_value)
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed, func_kwargs={'refresh_delta': 10}, timeout=600)
+    provider.refresh_provider_relationships(wait=600)
     assert taggable.get_tag_value(tag_key) == tag_value
