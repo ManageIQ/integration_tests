@@ -3439,17 +3439,19 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         # get_all uses self.entity_names, which handles versioned name query
         return [e.name for e in self.get_all(surf_pages=True)]
 
-    def get_all(self, surf_pages=False):
+    def get_all(self, surf_pages=False, slice=slice(0, None)):
         """ obtains all entities like QuadIcon displayed by view
         Args:
             surf_pages (bool): current page entities if False, all entities otherwise
+            slice(slice object): if None, return all elements, else apply {slice} to slice the
+            elements returned.
 
-        Returns: all entities (QuadIcon/etc.) displayed by view
+        Returns: all entities (QuadIcon/etc.) displayed by view, or sliced entities if slice.
         """
         if not surf_pages:
             return [
                 self.parent.entity_class(parent=self, entity_id=el["entity_id"], name=el["name"])
-                for el in self._current_page_elements
+                for el in self._current_page_elements[slice]
             ]
         else:
             entities = []
@@ -3459,7 +3461,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                         self.parent.entity_class(
                             parent=self, entity_id=el["entity_id"], name=el["name"]
                         )
-                        for el in self._current_page_elements
+                        for el in self._current_page_elements[slice]
                     ]
                 )
             return entities
