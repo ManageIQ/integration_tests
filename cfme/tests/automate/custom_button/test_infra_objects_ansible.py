@@ -3,13 +3,15 @@ import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
-from cfme.ansible import RemoteFile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.tests.automate.custom_button import CredsHostsDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -30,6 +32,8 @@ INFRA_OBJECTS = [
 ]
 
 INVENTORY = ["Localhost", "Target Machine", "Specific Hosts"]
+
+ANSIBLE_FILE = "~/test_ansible_file"
 
 
 @pytest.fixture(
@@ -127,10 +131,10 @@ def test_custom_button_ansible_automate_infra_obj(
     request.addfinalizer(button.delete_if_exists)
 
     # For target machine inventory target entity object is created target VM
-    obj = target_machine.vm if inventory == "Target Machine" else setup_obj
+    entity = target_machine.vm if inventory == "Target Machine" else setup_obj
 
     # Navigate to entity object and execute button
-    view = navigate_to(obj, "Details")
+    view = navigate_to(entity, "Details")
     custom_button_group = Dropdown(view, group.hover)
     assert custom_button_group.has_item(button.text)
     custom_button_group.item_select(button.text)
@@ -138,9 +142,22 @@ def test_custom_button_ansible_automate_infra_obj(
     dialog_view = view.browser.create_view(CredsHostsDialogView, wait="20s")
     dialog_view.fill({"machine_credential": cred_name})
 
-    # Order playbook with custom button on host and validate file
-    ansible_test_file = RemoteFile(hostname=hostname, username=username, password=password)
+    with SSHClient(hostname=hostname, username=username, password=password) as client:
+        # Clean file if already available on host
+        client.remove_file(ANSIBLE_FILE)
 
-    with ansible_test_file.validate():
+        # execute playbook with button
         dialog_view.submit.click()
         view.flash.assert_success_message("Order Request was Submitted")
+
+        # wait for file touch by playbook
+        try:
+            wait_for(
+                client.is_file_available,
+                func_args=[ANSIBLE_FILE],
+                delay=5,
+                timeout=240,
+                message=f"Waiting for {ANSIBLE_FILE} file"
+            )
+        except TimedOutError:
+            pytest.fail(f"Waiting timeout: unable to locate {ANSIBLE_FILE} on host {hostname}")

@@ -120,7 +120,7 @@ class TextInputDialogView(View):
 class CredsHostsDialogView(View):
     """This view for custom button default ansible playbook dialog"""
 
-    machine_credential = BootstrapSelect(locator=".//select[@id='credential']/..")
+    machine_credential = BootstrapSelect(locator=".//select[@id='credential']//parent::div")
     hosts = TextInput(id="hosts")
 
     submit = Button("Submit")

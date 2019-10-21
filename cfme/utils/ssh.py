@@ -646,6 +646,27 @@ class SSHClient(paramiko.SSHClient):
             raise Exception("Unable to patch file {}: {}".format(remote_path, result.output))
         return True
 
+    def is_file_available(self, remote_path):
+        """Check file available or not on remote host
+
+        Args:
+            remote_path: Path to remote file
+
+        Returns:
+            True if file available else False
+        """
+        files = self.run_command(f"ls {os_path.dirname(remote_path)}").output
+        return os_path.basename(remote_path) in files
+
+    def remove_file(self, remote_path):
+        """Remove file from remote host
+
+        Args:
+            remote_path: Path to remote file
+        """
+        if self.is_file_available(remote_path):
+            self.run_command(f"rm -rf {remote_path}")
+
     def get_build_datetime(self):
         command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
         return parsetime.fromtimestamp(int(self.run_command(command).output.strip()))
