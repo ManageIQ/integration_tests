@@ -2,8 +2,11 @@ import pytest
 from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
+from cfme.fixtures.cli import provider_app_crud
 from cfme.utils.conf import credentials
+
 
 pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
@@ -145,9 +148,8 @@ def test_replication_delete_remote_from_global(setup_replication):
         region.replication.get_replication_status(host=remote_app.hostname)
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_remote_to_global_by_ip_pglogical():
+def test_replication_remote_to_global_by_ip_pglogical(setup_replication):
     """
     Test replication from remote region to global using any data type
     (provider,event,etc)
@@ -167,7 +169,12 @@ def test_replication_remote_to_global_by_ip_pglogical():
             2.
             3. Provider appeared in the Global.
     """
-    pass
+    remote_app, global_app = setup_replication
+    provider = provider_app_crud(OpenStackProvider, remote_app)
+    provider.setup()
+
+    # Assert the provider is replicated to global appliance
+    assert provider.name in global_app.managed_provider_names, "Provider name not found"
 
 
 @pytest.mark.manual
