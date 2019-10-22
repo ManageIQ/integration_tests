@@ -404,6 +404,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
 
 @test_requirements.infra_hosts
 @pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], automates=[1738664])
+@pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
 @pytest.mark.parametrize(
     "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
     ids=["txt", "csv", "pdf"]
@@ -434,8 +435,3 @@ def test_infrastructure_hosts_navigation_after_download(
         assert provider_view.is_displayed
     elif hosts_collection == "appliance":
         assert hosts_view.is_displayed
-
-
-@pytest.fixture(params=["provider", "appliance"])
-def hosts_collection(request):
-    return request.param
