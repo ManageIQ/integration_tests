@@ -675,9 +675,14 @@ class FTPFileWrapper(FTPFile):
     @property
     def filesize(self):
         """Return file size"""
-        # Switch to Binary mode
-        self.client.ftp.sendcmd("TYPE i")
-        size = self.client.ftp.size(self.path)
-        # switch back to ASCII
-        self.client.ftp.sendcmd("TYPE A")
-        return size
+        size = ''
+        try:
+            # Switch to Binary mode
+            self.client.ftp.sendcmd("TYPE i")
+            size = self.client.ftp.size(self.path)
+        except Exception as e:
+            logger.error(f"Failed to get the file size due to: {e}")
+        finally:
+            # switch back to ASCII
+            self.client.ftp.sendcmd("TYPE A")
+            return size

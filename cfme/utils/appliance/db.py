@@ -671,3 +671,5 @@ class ApplianceDB(AppliancePlugin):
         self.appliance.evmserverd.start()
         self.appliance.wait_for_web_ui(timeout=600)
         self.reset_user_pass()
+        # need to refresh the appliance
+        delattr(self.appliance, "rest_api")

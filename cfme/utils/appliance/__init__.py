@@ -454,12 +454,7 @@ class IPAppliance(object):
     def _rest_api_server(self):
         shref = self.appliance.rest_api.server_info['server_href']
         results = self.appliance.rest_api.collections.servers.all
-        try:
-            server, = (r for r in results if r.href == shref)
-        except ValueError:
-            for server in results:
-                if server.is_master:
-                    return server
+        server, = (r for r in results if r.href == shref)
         return server
 
     @property
