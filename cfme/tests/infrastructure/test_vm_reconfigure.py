@@ -1,12 +1,15 @@
+import fauxfactory
 import pytest
 from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
@@ -302,23 +305,25 @@ def test_vm_reconfig_resize_disk_hot(disk_type, disk_mode):
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.tier(1)
 @pytest.mark.ignore_stream('5.10')
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[BZ(1631448)])
 @pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
-def test_vm_reconfig_resize_disk_snapshot(disk_type, disk_mode, provider):
+def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, full_vm, memory=False):
     """
+
+    Bugzilla:
+        1631448
+
     Polarion:
         assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
+        initialEstimate: 1/8h
         startsin: 5.11
         casecomponent: Infra
         caseposneg: negative
-        tags: reconfigure
         setup:
             1. Have a VM running on vsphere provider
         testSteps:
@@ -329,10 +334,25 @@ def test_vm_reconfig_resize_disk_snapshot(disk_type, disk_mode, provider):
             1. VM selected
             2. Snapshot created
             3. Resize is not allowed when snapshots are attached
-    Bugzilla:
-        1631448
     """
-    pass
+
+    snapshot = InfraVm.Snapshot(
+        name=fauxfactory.gen_alphanumeric(start="snap_"),
+        description=fauxfactory.gen_alphanumeric(start="desc_"),
+        memory=memory,
+        parent_vm=full_vm
+    )
+    snapshot.create()
+    request.addfinalizer(snapshot.delete)
+
+    view = navigate_to(full_vm, 'Reconfigure')
+    row = next(r for r in view.disks_table.rows())
+
+    # Delete button should enabled
+    assert row.actions.widget.is_enabled
+
+    # Re-sized button should not displayed
+    assert not row[9].widget.is_displayed
 
 
 @pytest.mark.manual
