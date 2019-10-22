@@ -4,6 +4,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
@@ -123,6 +124,38 @@ def vis_enb_button_service(request, appliance, service_button_group):
         )
         yield service_button_group, button, request.param
         button.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def user_self_service_role(appliance):
+    with appliance.context.use(ViaUI):
+        # copy role with no restrictions
+        role = appliance.collections.roles.instantiate(name="EvmRole-user_self_service")
+        user_self_service_role = role.copy(name="user_self_service_role", restriction="None")
+
+        # Group with user self service role
+        user_self_service_gp = appliance.collections.groups.create(
+            description="user_self_service_gp", role=user_self_service_role.name
+        )
+
+        # credentials for user
+        creds = Credential(
+            principal=format(fauxfactory.gen_alphanumeric(start="usr_")),
+            secret=fauxfactory.gen_alphanumeric(),
+        )
+
+        # user with above group
+        user = appliance.collections.users.create(
+            name=fauxfactory.gen_alphanumeric(start="user_"),
+            credential=creds,
+            email=fauxfactory.gen_email(),
+            groups=user_self_service_gp,
+        )
+
+        yield user, user_self_service_role
+        user.delete_if_exists()
+        user_self_service_gp.delete_if_exists()
+        user_self_service_role.delete_if_exists()
 
 
 @pytest.mark.tier(1)
@@ -471,9 +504,10 @@ def test_custom_button_expression_service_obj(
             assert button.text in custom_button_group.items
 
 
-@pytest.mark.manual
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-def test_custom_button_role_access_service(context):
+def test_custom_button_role_access_service(
+        context, request, appliance, user_self_service_role, gen_rest_service, service_button_group
+):
     """Test custom button for role access of SSUI
 
     Polarion:
@@ -492,7 +526,45 @@ def test_custom_button_role_access_service(context):
             4. Create custom button with role
             5. Check use able to access custom button or not
     """
-    pass
+    usr, role = user_self_service_role
+    service = MyService(appliance, name=gen_rest_service.name)
+
+    # custom button on group with role
+    with appliance.context.use(ViaUI):
+        btn = service_button_group.buttons.create(
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(start="hvr_"),
+            system="Request",
+            request="InspectMe",
+            roles=[role.name],
+        )
+        request.addfinalizer(btn.delete_if_exists)
+
+    # check button with admin and other user for UI and SSUI
+    for user in [appliance.user, usr]:
+        with user:
+            with appliance.context.use(context):
+                appliance.server.login(user)
+                navigate_to = ssui_nav if context is ViaSSUI else ui_nav
+
+                view = navigate_to(service, "Details")
+                cb_group = (
+                    CustomButtonSSUIDropdwon(view, service_button_group.text)
+                    if context is ViaSSUI
+                    else Dropdown(view, service_button_group.text)
+                )
+
+                if user == usr:
+                    # for user having custom role EvmRole-user_self_service
+                    assert cb_group.is_displayed
+                    assert cb_group.has_item(btn.text)
+                else:
+                    # other user here admin
+                    assert (
+                        not cb_group.is_displayed if context is ViaUI else cb_group.is_displayed
+                    )
+                    if context is ViaSSUI:
+                        assert not cb_group.has_item(btn.text)
 
 
 @test_requirements.customer_stories
