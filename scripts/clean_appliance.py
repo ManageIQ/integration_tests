@@ -65,7 +65,8 @@ def main():
             db_connections = int(response.output.strip())
             return db_connections == 0
 
-        ssh_client.run_rake_command('evm:db:reset', disable_db_check=True)
+        ssh_client.run_rake_command('evm:db:reset',
+                                    rake_cmd_prefix='DISABLE_DATABASE_ENVIRONMENT_CHECK=1')
         ssh_client.run_command('systemctl start evmserverd')
 
         # SSHClient has the smarts to get our hostname if none was provided

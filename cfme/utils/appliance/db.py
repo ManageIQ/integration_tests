@@ -114,10 +114,11 @@ class ApplianceDB(AppliancePlugin):
         result = self.appliance.ssh_client.run_command('createdb vmdb_production', timeout=30)
         assert result.success, "Failed to create clean database: {}".format(result.output)
 
-    def migrate(self):
+    def migrate(self, env_vars=None):
         """migrates a given database and updates REGION/GUID files"""
+        env_vars = env_vars if env_vars else []
         ssh = self.ssh_client
-        result = ssh.run_rake_command("db:migrate", timeout=300)
+        result = ssh.run_rake_command("db:migrate", rake_cmd_prefix=' '.join(env_vars), timeout=300)
         assert result.success, "Failed to migrate new database: {}".format(result.output)
         result = ssh.run_rake_command(
             r'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
