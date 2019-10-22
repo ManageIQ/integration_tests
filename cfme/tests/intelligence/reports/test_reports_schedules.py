@@ -6,6 +6,7 @@ import yaml
 from cfme import test_requirements
 from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.intelligence.reports.schedules import ScheduleDetailsView
+from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.path import data_path
 from cfme.utils.wait import wait_for
@@ -90,6 +91,21 @@ def schedule(schedule_data, appliance):
     schedule = appliance.collections.schedules.create(**schedule_data)
     yield schedule
     schedule.delete_if_exists()
+
+
+@pytest.fixture
+def user(appliance, request):
+    users, user_data = _users(
+        request,
+        appliance,
+        name="Sherlock Holmes",
+        email="shholmes@redhat.com",
+        userid="shholmes",
+        password="smartvm",
+        group="EvmGroup-super_administrator",
+    )
+
+    return users[0]
 
 
 @pytest.mark.parametrize("interval", TIMER)
@@ -208,3 +224,26 @@ def test_reports_disable_enable_schedule_from_summary(appliance, schedule):
     navigate_to(schedule, "Details")
     view.configuration.item_select("Enable this Schedule")
     assert schedule.enabled
+
+
+def test_reports_schedules_user(appliance, request, user, schedule_data):
+    """
+    This test checks if a user is visible under the Emails options of schedule form
+    while creating a schedule
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/10h
+        setup:
+            1. Create a user with an email belonging to the same group as logged in user.
+        testSteps:
+            1. Create a schedule and check if the newly created user is available
+            under `User` dropdown.
+    """
+    schedule_data["email"] = {"user_email": f"{user.name} ({user.email})"}
+    schedule = appliance.collections.schedules.create(**schedule_data)
+    request.addfinalizer(schedule.delete)
+    assert schedule.exists
+    view = schedule.create_view(ScheduleDetailsView)
+    assert view.schedule_info.get_text_of("To E-mail") == f"{user.name} ({user.email})"
