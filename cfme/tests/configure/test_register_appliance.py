@@ -222,7 +222,6 @@ def test_rhsm_registration_check_repo_names(
         soft_assert(view.repo_name.read() == repo_names)
 
 
-@pytest.mark.rhel_testing
 def test_rh_updates(appliance_preupdate, appliance):
     """ Tests whether the update button in the webui functions correctly
 
