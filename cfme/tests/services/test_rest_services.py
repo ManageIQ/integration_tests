@@ -2407,10 +2407,11 @@ def test_edit_service_request_task(appliance, request_task):
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1716847])
 @pytest.mark.customer_scenario
-def test_edit_ansible_playbook_cat_item_rest(appliance, request, ansible_catalog_item):
+def test_embedded_ansible_cat_item_edit_rest(appliance, request, ansible_catalog_item):
     """
     Bugzilla:
         1716847
+        1732117
 
     Polarion:
         assignee: pvala
