@@ -1,9 +1,13 @@
+import fauxfactory
 import pytest
 from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.cli import provider_app_crud
 from cfme.utils.conf import credentials
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
@@ -35,8 +39,8 @@ def setup_replication(configured_appliance, unconfigured_appliance):
     return configured_appliance, unconfigured_appliance
 
 
-@pytest.mark.manual
-def test_replication_powertoggle():
+@pytest.mark.provider([OpenStackProvider])
+def test_replication_powertoggle(request, provider, configured_appliance, unconfigured_appliance):
     """
     power toggle from global to remote
 
@@ -56,7 +60,40 @@ def test_replication_powertoggle():
             3. VM state changes to on in the Remote and Global appliance.
 .
     """
-    pass
+    instance_name = "test_replication_{}".format(fauxfactory.gen_alphanumeric().lower())
+    remote_app = configured_appliance
+    global_app = unconfigured_appliance
+
+    provider_app_crud(OpenStackProvider, remote_app).setup()
+    setup_replication(remote_app, global_app)
+
+    wait_for(lambda: len(remote_app.rest_api.collections.providers.find_by(
+        name=provider.name)) != 0, num_sec=30, delay=2)
+    remote_instance = remote_app.collections.cloud_instances.create_rest(instance_name, provider)
+    request.addfinalizer(lambda: remote_instance.delete())
+
+    global_instance = global_app.collections.cloud_instances.instantiate(instance_name, provider)
+    remote_instance.wait_for_instance_state_change(desired_state=remote_instance.STATE_ON)
+
+    global_instance = global_app.collections.cloud_instances.instantiate(instance_name, provider)
+
+    # Power OFF instance using global appliance
+    global_instance.power_control_from_cfme(option=global_instance.STOP)
+
+    # Assert instance power off state from both remote and global appliance
+    assert global_instance.wait_for_instance_state_change(
+        desired_state=global_instance.STATE_OFF).out
+    assert remote_instance.wait_for_instance_state_change(
+        desired_state=remote_instance.STATE_OFF).out
+
+    # Power ON instance using global appliance
+    global_instance.power_control_from_cfme(option=global_instance.START)
+
+    # Assert instance power ON state from both remote and global appliance
+    assert global_instance.wait_for_instance_state_change(
+        desired_state=global_instance.STATE_ON).out
+    assert remote_instance.wait_for_instance_state_change(
+        desired_state=global_instance.STATE_ON).out
 
 
 @pytest.mark.tier(2)
