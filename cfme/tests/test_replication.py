@@ -169,9 +169,8 @@ def test_replication_re_add_deleted_remote():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_remote_to_global_by_ip_pglogical():
+def test_replication_remote_to_global_by_ip_pglogical(configured_appliance, unconfigured_appliance):
     """
     Test replication from remote region to global using any data type
     (provider,event,etc)
@@ -191,7 +190,13 @@ def test_replication_remote_to_global_by_ip_pglogical():
             2.
             3. Provider appeared in the Global.
     """
-    pass
+    remote_app = configured_appliance
+    global_app = unconfigured_appliance
+    provider_app_crud(OpenStackProvider, remote_app).setup()
+    setup_replication(remote_app, global_app)
+
+    # Assert the provider is replicated to global appliance
+    assert global_app.managed_provider_names
 
 
 @pytest.mark.manual
