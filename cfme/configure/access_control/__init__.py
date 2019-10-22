@@ -1104,8 +1104,12 @@ class Role(Updateable, Pretty, BaseEntity):
         else:
             view = self.create_view(DetailsRoleView, wait=10)  # implicit assert
 
-    def copy(self, name=None):
+    def copy(self, name=None, restriction=None):
         """ Creates copy of existing role
+
+        Args:
+            name: new name for copied role
+            restriction: Access Restriction for Services, VMs, and Templates
 
         Returns: Role object of copied role
         """
@@ -1115,7 +1119,7 @@ class Role(Updateable, Pretty, BaseEntity):
         view.toolbar.configuration.item_select('Copy this Role to a new Role')
         view = self.create_view(AddRoleView, wait=10)  # implicit assert
         new_role = self.parent.instantiate(name=name)
-        view.fill({'name_txt': new_role.name})
+        view.fill({'name_txt': new_role.name, "vm_restriction_select": restriction})
         view.add_button.click()
         view = self.create_view(AllRolesView, wait=10)  # implicit assert
         view.flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
