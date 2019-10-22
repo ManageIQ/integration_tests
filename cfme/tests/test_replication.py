@@ -1,8 +1,33 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.conf import credentials
+
 
 pytestmark = [test_requirements.replication]
+
+
+def setup_replication(remote_app, global_app):
+    """Configure global_app database with region number 99 and subscribe to remote_app."""
+    app_params = dict(
+        region=99,
+        dbhostname='localhost',
+        username=credentials["database"]["username"],
+        password=credentials["database"]["password"],
+        dbname='vmdb_production',
+        dbdisk=global_app.unpartitioned_disks[0],
+        fetch_key=remote_app.hostname,
+        sshlogin=credentials["ssh"]["username"],
+        sshpass=credentials["ssh"]["password"]
+    )
+
+    global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
+    global_app.evmserverd.wait_for_running()
+    global_app.wait_for_web_ui()
+
+    remote_app.set_pglogical_replication(replication_type=':remote')
+    global_app.set_pglogical_replication(replication_type=':global')
+    global_app.add_pglogical_replication_subscription(remote_app.hostname)
 
 
 @pytest.mark.manual
@@ -29,9 +54,9 @@ def test_replication_powertoggle():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_replication_appliance_add_single_subscription():
+def test_replication_appliance_add_single_subscription(configured_appliance,
+                                                       unconfigured_appliance):
     """
     Add one remote subscription to global region
 
@@ -48,7 +73,12 @@ def test_replication_appliance_add_single_subscription():
             1.
             2. No error. Appliance subscribed.
     """
-    pass
+    remote_app = configured_appliance
+    global_app = unconfigured_appliance
+    region = global_app.collections.regions.instantiate()
+
+    setup_replication(remote_app, global_app)
+    assert region.replication.get_replication_status(host=remote_app.hostname)
 
 
 @pytest.mark.manual
