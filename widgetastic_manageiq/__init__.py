@@ -3845,6 +3845,7 @@ class FolderManager(Widget):
 
     _fields = ".//div[@id='folder_grid']/div/div/div"
     _field = ".//div[@id='folder_grid']/div/div/div[normalize-space(.)={folder}]"
+    _new_field = ".//div[@id='folder_grid']/div/div[contains(normalize-space(.), 'New Folder')]"
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -3897,11 +3898,15 @@ class FolderManager(Widget):
         else:
             return self.selected_field_element.text.encode("utf-8").strip()
 
-    def add(self, subfolder):
-        self.add_subfolder()
-        wait_for(lambda: self.selected_field_element is not None, num_sec=5, delay=0.1)
-        self.browser.double_click(self.selected_field_element, wait_ajax=False)
-        self.browser.handle_alert(prompt=subfolder)
+    def add(self, folder_name):
+        self.add_button.click()
+        wait_for(lambda: bool(self.browser.elements(self._new_field)), num_sec=5, delay=0.1)
+        self.browser.double_click(self._new_field)
+        self.browser.handle_alert(prompt=folder_name)
+
+    def delete(self, folder_name):
+        self.select_field(folder_name)
+        self.delete_button.click()
 
     def select_field(self, field):
         """Select field by text.

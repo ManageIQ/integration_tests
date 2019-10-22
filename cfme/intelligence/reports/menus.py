@@ -101,6 +101,10 @@ class ReportMenu(BaseEntity):
         view.discard_button.click()
         return fields
 
+    def _action(self, action, manager, folder_name):
+        with manager as folder_manager:
+            getattr(folder_manager, action)(folder_name)
+
     def add_folder(self, group, folder):
         """Adds a folder under top-level.
 
@@ -108,8 +112,7 @@ class ReportMenu(BaseEntity):
             group: User group.
             folder: Name of the new folder.
         """
-        with self.manage_folder() as top_level:
-            top_level.add(folder)
+        self._action("add", self.manage_folder(group), folder)
 
     def add_subfolder(self, group, folder, subfolder):
         """Adds a subfolder under specified folder.
@@ -117,10 +120,28 @@ class ReportMenu(BaseEntity):
         Args:
             group: User group.
             folder: Name of the folder.
-            subfolder: Name of the new subdfolder.
+            subfolder: Name of the new subfolder.
         """
-        with self.manage_folder(folder) as fldr:
-            fldr.add(subfolder)
+        self._action("add", self.manage_folder(group, folder), subfolder)
+
+    def remove_folder(self, group, folder):
+        """Removes a folder under top-level.
+
+        Args:
+            group: User group.
+            folder: Name of the folder.
+        """
+        self._action("delete", self.manage_folder(group), folder)
+
+    def remove_subfolder(self, group, folder, subfolder):
+        """Removes a subfolder under specified folder.
+
+        Args:
+            group: User group.
+            folder: Name of the folder.
+            subfolder: Name of the subfolder.
+        """
+        self._action("delete", self.manage_folder(group, folder), subfolder)
 
     def reset_to_default(self, group):
         """Clicks the `Default` button.
