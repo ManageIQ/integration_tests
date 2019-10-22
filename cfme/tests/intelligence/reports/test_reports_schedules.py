@@ -245,3 +245,5 @@ def test_reports_schedules_user(appliance, request, user, schedule_data):
     schedule = appliance.collections.schedules.create(**schedule_data)
     request.addfinalizer(schedule.delete)
     assert schedule.exists
+    view = schedule.create_view(ScheduleDetailsView)
+    assert view.schedule_info.get_text_of("To E-mail") == f"{user.name} ({user.email})"
