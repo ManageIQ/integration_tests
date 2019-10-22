@@ -265,7 +265,7 @@ def test_reset_report_menus(appliance, get_custom_report, group, report_menus):
 
 @pytest.mark.parametrize("group", GROUPS)
 @pytest.mark.meta(coverage=[1762363])
-def test_custom_reports_menu_crd(
+def test_custom_reports_menu(
     appliance, group, report_menus, request, get_custom_report
 ):
     """
