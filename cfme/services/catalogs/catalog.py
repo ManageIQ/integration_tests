@@ -111,20 +111,12 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
             view.cancel_button.click()
         view = self.create_view(DetailsCatalogView, override=updates, wait='10s')
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Catalog "{}" was saved'.format(updates.get('name', self.name)))
-        else:
-            view.flash.assert_message(
-                'Edit of Catalog "{}" was cancelled by the user'.format(self.name))
 
     def delete(self):
         view = navigate_to(self, "Details")
         view.configuration.item_select('Remove Catalog', handle_alert=True)
         view = self.create_view(CatalogsView, wait='10s')
         view.flash.assert_no_error()
-        view.flash.assert_success_message(
-            'Catalog "{}": Delete successful'.format(self.description or self.name))
 
 
 @attr.s
