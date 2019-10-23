@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.fixtures.automate import DatastoreImport
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -273,12 +274,10 @@ def test_dynamic_field_on_refresh_button(request, appliance, import_datastore, i
         assert view.fields(ele_name).input.read() == before_refresh
 
 
-@pytest.mark.meta(coverage=[1702343])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1702343])
 @pytest.mark.tier(2)
-def test_clicking_created_catalog_item_in_the_list():
+def test_clicking_created_catalog_item_in_the_list(appliance, generic_catalog_item):
     """
-
     Bugzilla:
         1702343
 
@@ -298,7 +297,14 @@ def test_clicking_created_catalog_item_in_the_list():
             3.
             4. Catalog Item's summary screen should appear
     """
-    pass
+    with LogValidator("/var/www/miq/vmdb/log/evm.log", failure_patterns=[".*ERROR.*"]).waiting(
+            timeout=120):
+        view = navigate_to(appliance.collections.catalog_items, "All")
+        for cat_item in view.table:
+            if cat_item[2].text == generic_catalog_item.name:
+                cat_item[2].click()
+                break
+        assert view.title.text == f'Service Catalog Item "{generic_catalog_item.name}"'
 
 
 @pytest.mark.meta(coverage=[1698439])
