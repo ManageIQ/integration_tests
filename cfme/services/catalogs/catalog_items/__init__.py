@@ -38,6 +38,7 @@ from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
 from widgetastic_manageiq.expression_editor import ExpressionEditor
 
@@ -140,6 +141,7 @@ class ButtonForm(ServicesCatalogView):
 
 class AllCatalogItemView(ServicesCatalogView):
     title = Text('#explorer_title_text')
+    table = Table('//*[@id="miq-gtl-view"]/miq-data-table/div/table')
 
     @property
     def is_displayed(self):
