@@ -541,10 +541,10 @@ def test_custom_button_role_access_service(
         request.addfinalizer(btn.delete_if_exists)
 
     # check button with admin and other user for UI and SSUI
-    for user in [appliance.user, usr]:
+    for user in [usr, appliance.user]:
         with user:
             with appliance.context.use(context):
-                appliance.server.login(user)
+                logged_in_page = appliance.server.login(user)
                 navigate_to = ssui_nav if context is ViaSSUI else ui_nav
 
                 view = navigate_to(service, "Details")
@@ -559,12 +559,13 @@ def test_custom_button_role_access_service(
                     assert cb_group.is_displayed
                     assert cb_group.has_item(btn.text)
                 else:
-                    # other user here admin
+                    # other user
                     assert (
                         not cb_group.is_displayed if context is ViaUI else cb_group.is_displayed
                     )
                     if context is ViaSSUI:
                         assert not cb_group.has_item(btn.text)
+                logged_in_page.logout()
 
 
 @test_requirements.customer_stories
