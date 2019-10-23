@@ -13,14 +13,14 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import TagPageView
+from cfme.common.provider import BaseProvider
 from cfme.exceptions import displayed_not_implemented
 from cfme.infrastructure.config_management.config_profiles import ConfigProfile
 from cfme.infrastructure.config_management.config_profiles import ConfigProfilesCollection
 from cfme.infrastructure.config_management.config_systems import ConfigSystem
 from cfme.modeling.base import BaseCollection
-from cfme.modeling.base import BaseEntity
 from cfme.utils import conf
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -231,7 +231,7 @@ class ConfigManagementProfileView(ConfigManagementView):
 
 
 @attr.s
-class ConfigManager(BaseEntity, Updateable, Pretty):
+class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
 
@@ -246,9 +246,10 @@ class ConfigManager(BaseEntity, Updateable, Pretty):
         Use Satellite or AnsibleTower classes instead.
     """
 
-    pretty_attr = ['name', 'url']
+    pretty_attr = ['name', 'key']
     _param_name = ParamClassName('name')
     type = None
+    category = "config_manager"
     refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
     name = attr.ib(default=None)
     url = attr.ib(default=None)
@@ -496,18 +497,12 @@ class ConfigManager(BaseEntity, Updateable, Pretty):
         return self.ui_name
 
 
-class ConfigManagersCollection(BaseCollection):
+class ConfigManagerProviderCollection(BaseCollection):
 
-    ENTITY = ConfigManager
+    ENTITY = ConfigManagerProvider
 
-
-    def instantiate(self, *args, **kwargs):
-        if kwargs.get("key"):
-            # pull all yaml data if key is included
-            obj = self.ENTITY.from_collection(self, *args, **kwargs)
-            return obj.from_yaml(kwargs.get("key"))
-        else:
-            return self.ENTITY.from_collection(self, *args, **kwargs)
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
 
     def create(self, *args, **kwargs):
         """ Create/add config manager via UI """
@@ -516,7 +511,7 @@ class ConfigManagersCollection(BaseCollection):
         return config_manager
 
 
-@navigator.register(ConfigManagersCollection, 'Add')
+@navigator.register(ConfigManagerProviderCollection, 'Add')
 class MgrAdd(CFMENavigateStep):
     VIEW = ConfigManagementAddView
     prerequisite = NavigateToSibling('All')
@@ -525,7 +520,7 @@ class MgrAdd(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Provider')
 
 
-@navigator.register(ConfigManager, 'Edit')
+@navigator.register(ConfigManagerProvider, 'Edit')
 class MgrEdit(CFMENavigateStep):
     VIEW = ConfigManagementEditView
     prerequisite = NavigateToAttribute('parent', 'All')
@@ -538,7 +533,7 @@ class MgrEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
 
 
-@navigator.register(ConfigManager, 'Details')
+@navigator.register(ConfigManagerProvider, 'Details')
 class MgrDetails(CFMENavigateStep):
     VIEW = ConfigManagementDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
@@ -550,7 +545,7 @@ class MgrDetails(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(ConfigManager, 'EditFromDetails')
+@navigator.register(ConfigManagerProvider, 'EditFromDetails')
 class MgrEditFromDetails(CFMENavigateStep):
     VIEW = ConfigManagementEditView
     prerequisite = NavigateToAttribute('parent', 'All')

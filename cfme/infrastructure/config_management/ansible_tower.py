@@ -5,8 +5,7 @@ from cfme.infrastructure.config_management import ConfigManagementCollectionView
 from cfme.infrastructure.config_management import ConfigManagementEntities
 from cfme.infrastructure.config_management import ConfigManagementSideBar
 from cfme.infrastructure.config_management import ConfigManagementToolbar
-from cfme.infrastructure.config_management import ConfigManager
-from cfme.infrastructure.config_management import ConfigManagersCollection
+from cfme.infrastructure.config_management import ConfigManagerProvider
 from cfme.infrastructure.config_management.config_profiles import ConfigProfilesCollection
 from cfme.infrastructure.config_management.config_systems import ConfigSystem
 from cfme.utils import conf
@@ -43,7 +42,7 @@ class ConfigSystemAllView(AnsibleTowerProvidersAllView):
         )
 
 
-class AnsibleTowerProvider(ConfigManager):
+class AnsibleTowerProvider(ConfigManagerProvider):
     """
     Configuration manager object (Ansible Tower)
 
@@ -75,6 +74,7 @@ class AnsibleTowerProvider(ConfigManager):
             tower_cfg_mgr.delete()
     """
     type = 'Ansible Tower'
+    type_name = 'ansible_tower'
 
     _collections = {
         "config_profiles": ConfigProfilesCollection
@@ -86,9 +86,9 @@ class AnsibleTowerProvider(ConfigManager):
         return '{} Automation Manager'.format(self.name)
 
     @classmethod
-    def from_config(cls, key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns 'ConfigManager' object loaded from yamls, based on its key"""
-        data = conf.cfme_data.configuration_managers[key]
+        data = prov_config
         creds = conf.credentials[data['credentials']]
         return cls.appliance.collections.config_managers.instantiate(
             cls,
@@ -96,15 +96,11 @@ class AnsibleTowerProvider(ConfigManager):
             url=data['url'],
             credentials=cls.Credential(
                 principal=creds['username'], secret=creds['password']),
-            key=key
+            key=prov_key
         )
 
 
-class AnsibleTowerProvidersCollection(ConfigManagersCollection):
-    ENTITY = AnsibleTowerProvider
-
-
-@navigator.register(AnsibleTowerProvidersCollection, 'All')
+@navigator.register(AnsibleTowerProvider, 'All')
 class MgrAll(CFMENavigateStep):
     VIEW = AnsibleTowerProvidersAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')

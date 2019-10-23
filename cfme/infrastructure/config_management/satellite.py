@@ -6,8 +6,7 @@ from cfme.infrastructure.config_management import ConfigManagementCollectionView
 from cfme.infrastructure.config_management import ConfigManagementEntities
 from cfme.infrastructure.config_management import ConfigManagementSideBar
 from cfme.infrastructure.config_management import ConfigManagementToolbar
-from cfme.infrastructure.config_management import ConfigManager
-from cfme.infrastructure.config_management import ConfigManagersCollection
+from cfme.infrastructure.config_management import ConfigManagerProvider
 from cfme.infrastructure.config_management.config_profiles import ConfigProfilesCollection
 from cfme.infrastructure.config_management.config_systems.satellite import SatelliteSystemsCollection  # noqa
 from cfme.utils import conf
@@ -49,7 +48,7 @@ class SatelliteSystemsAllView(SatelliteProvidersAllView):
 
 
 @attr.s
-class SatelliteProvider(ConfigManager):
+class SatelliteProvider(ConfigManagerProvider):
     """
     Configuration manager object (Red Hat Satellite, Foreman)
 
@@ -84,7 +83,7 @@ class SatelliteProvider(ConfigManager):
         LOWEST: 'Red Hat Satellite',
         LATEST: 'Foreman'
     })
-
+    type_name = 'satellite'
     ssl = attr.ib(default=None)
 
     _collections = {
@@ -97,9 +96,9 @@ class SatelliteProvider(ConfigManager):
         return '{} Configuration Manager'.format(self.name)
 
     @classmethod
-    def from_config(cls, key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns 'ConfigManager' object loaded from yamls, based on its key"""
-        data = conf.cfme_data.configuration_managers[key]
+        data = prov_config
         creds = conf.credentials[data['credentials']]
         return cls.appliance.collections.config_managers.instantiate(
             cls,
@@ -108,15 +107,11 @@ class SatelliteProvider(ConfigManager):
             ssl=data['ssl'],
             credentials=cls.Credential(
                 principal=creds['username'], secret=creds['password']),
-            key=key
+            key=prov_key
         )
 
 
-class SatelliteProvidersCollection(ConfigManagersCollection):
-    ENTITY = SatelliteProvider
-
-
-@navigator.register(SatelliteProvidersCollection, 'All')
+@navigator.register(SatelliteProvider, 'All')
 class MgrAll(CFMENavigateStep):
     VIEW = SatelliteProvidersAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')

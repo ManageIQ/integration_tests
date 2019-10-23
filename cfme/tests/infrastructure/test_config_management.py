@@ -3,11 +3,14 @@ import pytest
 
 from cfme import test_requirements
 from cfme.ansible_tower.explorer import TowerCreateServiceDialogFromTemplateView
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
+from cfme.infrastructure.config_management.satellite import SatelliteProvider
 from cfme.utils.update import update
 
 
 pytestmark = [
-    pytest.mark.meta(blockers=[1491704])
+    pytest.mark.provider([AnsibleTowerProvider, SatelliteProvider], scope='module'),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
