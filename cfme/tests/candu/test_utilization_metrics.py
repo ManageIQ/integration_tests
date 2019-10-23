@@ -129,6 +129,7 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
             vm_name)
         average_rate = attrgetter('cpu_usage_rate_average')
 
+    pytest.set_trace()
     for record in query:
         if average_rate(record) is not None:
             assert average_rate(record) > 0, 'Zero VM CPU Usage'
@@ -290,7 +291,7 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     """
     Polarion:
         assignee: nachandr
-        caseimportance: medium
+        caseimportance: high
         casecomponent: CandU
         initialEstimate: 1/12h
     """
@@ -302,3 +303,42 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
         if record.disk_usage_rate_average is not None:
             assert record.disk_usage_rate_average > 0, 'Zero Host Disk IO'
             break
+
+
+def query_metric_rollup_table(appliance, provider, metric, azone_name=None):
+    metrics_tbl = appliance.db.client['metric_rollups']
+    ems = appliance.db.client['ext_management_systems']
+
+    with appliance.db.client.transaction:
+        provs = (
+            appliance.db.client.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == azone_name,
+            ems.name == provider.name)
+        )
+    return appliance.db.client.session.query(metrics_tbl).filter(
+        metrics_tbl.id.in_(provs.subquery()))
+
+
+def generic_test_azone_rollup(appliance, provider, metric, azone_name, soft_assert):
+        query = query_metric_db(appliance, provider, metric, azone_name)
+
+        for record in query:
+
+        if getattr(record, metric) is not None:
+            assert getattr(record, metric) > 0, 'Zero Host Disk IO'
+            break
+        soft_assert(lower_end <= float(resource_from_report) <= upper_end,
+                    'Estimated resource allocation and report resource allocation do not match')
+
+
+def test_azone_candu_cpu(metrics_collection, appliance, provider):
+    """
+    Polarion:
+        assignee: nachandr
+        caseimportance: high
+        casecomponent: CandU
+        initialEstimate: 1/12h
+    """
+    generic_test_azone_rollup(appliance, provider, 'cpu_usage_rate_average', azone_name,
+        soft_assert)
