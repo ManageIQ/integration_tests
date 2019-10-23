@@ -129,7 +129,7 @@ docker-pycreds==0.4.0
 docutils==0.15.2
 dogpile.cache==0.7.1
 dump2polarion==0.46.1
-ecdsa==0.13.2
+ecdsa==0.13.3
 entrypoints==0.3
 fauxfactory==3.0.6
 flake8==3.7.8
@@ -224,7 +224,7 @@ pdfminer.six==20181108
 pexpect==4.7.0
 pickleshare==0.7.5
 pika==1.1.0
-Pillow==6.0.0
+Pillow==6.2.1
 pip-module-scanner==0.6
 pluggy==0.6.0
 polarion-docstrings==0.22.0
