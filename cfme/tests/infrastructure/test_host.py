@@ -31,7 +31,7 @@ pytestmark = [
     pytest.mark.provider([InfraProvider],
                          required_fields=['hosts'],
                          scope='module',
-                         selector=ONE_PER_TYPE),
+                         selector=ONE_PER_TYPE)
 ]
 
 VIEWS = ('Grid View', 'Tile View', 'List View')
