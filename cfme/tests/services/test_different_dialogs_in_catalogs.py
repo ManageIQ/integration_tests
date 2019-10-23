@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -423,10 +426,48 @@ def test_reconfigure_existing_duplicate_orders():
     pass
 
 
-@pytest.mark.manual
+@pytest.fixture
+def new_user(appliance, permission):
+    # Tenant created
+    collection = appliance.collections.tenants
+    tenant = collection.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        parent=collection.get_root_tenant(),
+    )
+
+    # Role created
+    role = appliance.collections.roles.create(name=f'role_{fauxfactory.gen_alphanumeric()}',
+                                              vm_restriction="Only User or Group Owned",
+                                              product_features=permission)
+    # Group creates
+    group = appliance.collections.groups.create(description=fauxfactory.gen_alphanumeric(),
+                                                role=role.name, tenant=f"My Company/{tenant.name}")
+    creds = Credential(principal=fauxfactory.gen_alphanumeric(4),
+                       secret=fauxfactory.gen_alphanumeric(4))
+    # User created
+    user = appliance.collections.users.create(name=fauxfactory.gen_alphanumeric(),
+                                              credential=creds, email=fauxfactory.gen_email(),
+                                              groups=group, cost_center='Workload',
+                                              value_assign='Database')
+    yield user
+    user.delete_if_exists()
+    group.delete_if_exists()
+    role.delete_if_exists()
+    tenant.delete_if_exists()
+
+
+@pytest.mark.meta(automates=[1576129])
 @pytest.mark.tier(1)
-def test_should_be_able_to_access_services_requests_as_user():
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("permission", [[(['Everything'], True)],
+                                        [(['Everything', 'Services', 'Requests'], False)]],
+                         ids=['restricted', 'non-restricted'])
+def test_should_be_able_to_access_services_requests_as_user(appliance, new_user, permission):
     """
+    Bugzilla:
+        1576129
+
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -434,10 +475,13 @@ def test_should_be_able_to_access_services_requests_as_user():
         initialEstimate: 1/4h
         startsin: 5.9
         tags: service
-    Bugzilla:
-        1576129
     """
-    pass
+    with new_user:
+        if permission == [(['Everything'], True)]:
+            navigate_to(appliance.collections.requests, "All")
+        else:
+            with pytest.raises(NoSuchElementException):
+                navigate_to(appliance.collections.requests, "All")
 
 
 @pytest.mark.manual
