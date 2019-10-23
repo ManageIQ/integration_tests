@@ -16,6 +16,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.tests.networks.test_sdn_downloads import handle_extra_tabs
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -29,7 +30,7 @@ pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider],
                          required_fields=['hosts'], scope='module',
-                         selector=ONE_PER_VERSION),
+                         selector=ONE_PER_TYPE),
 ]
 
 VIEWS = ('Grid View', 'Tile View', 'List View')
