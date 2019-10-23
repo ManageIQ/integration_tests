@@ -35,6 +35,7 @@ from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
 from cfme.exceptions import ItemNotFound
 from cfme.intelligence.chargeback import ChargebackView
+from cfme.intelligence.optimization import OptimizationView
 from cfme.intelligence.rss import RSSView
 from cfme.intelligence.timelines import CloudIntelTimelinesView
 from cfme.utils import conf
@@ -1644,3 +1645,12 @@ class AutomateSimulation(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select(*["Automation", "Automate", "Simulation"])
+
+
+@navigator.register(Server)
+class Optimization(CFMENavigateStep):
+    VIEW = OptimizationView
+    prerequisite = NavigateToSibling("LoggedIn")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.navigation.select("Overview", "Optimization")
