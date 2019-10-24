@@ -131,7 +131,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type):
 @pytest.mark.tier(1)
 def test_config_manager_override_extra_vars_dialog_vsphere():
     """
-    1. add tower 2.4.3 provider and perform refresh
+    1. Add tower 2.4.3 provider and perform refresh
     2. Go to job templates
     3. Create service dialog from third_job_template
     - this template is bound to vsphere55 inventory
