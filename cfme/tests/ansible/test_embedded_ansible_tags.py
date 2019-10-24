@@ -96,9 +96,13 @@ def test_tag_ansible_playbook(playbook, tag_place, check_tag_place):
     check_tag_place(playbook, tag_place)
 
 
+@pytest.mark.meta(automates=[1526217])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_ansible_repository(ansible_repository, check_item_visibility, visibility):
     """ Test for cloud items tagging action from list and details pages
+
+    Bugzilla:
+        1526217
 
     Polarion:
         assignee: anikifor
@@ -108,9 +112,13 @@ def test_tagvis_ansible_repository(ansible_repository, check_item_visibility, vi
     check_item_visibility(ansible_repository, visibility)
 
 
+@pytest.mark.meta(automates=[1526219])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_ansible_credential(credential, check_item_visibility, visibility):
     """ Test for cloud items tagging action from list and details pages
+
+    Bugzilla:
+        1526219
 
     Polarion:
         assignee: anikifor
@@ -120,9 +128,13 @@ def test_tagvis_ansible_credential(credential, check_item_visibility, visibility
     check_item_visibility(credential, visibility)
 
 
+@pytest.mark.meta(automates=[1526218])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
 def test_tagvis_playbook(playbook, check_item_visibility, visibility):
     """ Test for cloud items tagging action from list and details pages
+
+    Bugzilla:
+        1526218
 
     Polarion:
         assignee: anikifor
