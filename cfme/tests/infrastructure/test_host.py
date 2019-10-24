@@ -16,6 +16,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.tests.networks.test_sdn_downloads import handle_extra_tabs
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -29,7 +30,7 @@ pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider],
                          required_fields=['hosts'], scope='module',
-                         selector=ONE_PER_VERSION),
+                         selector=ONE_PER_TYPE),
 ]
 
 VIEWS = ('Grid View', 'Tile View', 'List View')
@@ -406,12 +407,13 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
 
 @test_requirements.infra_hosts
 @pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], automates=[1738664])
+@pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
 @pytest.mark.parametrize(
     "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
     ids=["txt", "csv", "pdf"]
 )
 def test_infrastructure_hosts_navigation_after_download(
-    appliance, setup_provider, provider, report_format
+    appliance, setup_provider, provider, report_format, hosts_collection
 ):
     """
     Polarion:
@@ -423,10 +425,16 @@ def test_infrastructure_hosts_navigation_after_download(
         1738664
 
     """
-    hosts_view = navigate_to(provider.collections.hosts, "All")
+    if hosts_collection == "provider":
+        hosts_view = navigate_to(provider.collections.hosts, "All")
+    elif hosts_collection == "appliance":
+        hosts_view = navigate_to(appliance.collections.hosts, "All")
     hosts_view.toolbar.download.item_select(report_format)
     if report_format == "Print or export as PDF":
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
-    provider_view = provider.create_view(InfraProviderDetailsView)
-    assert provider_view.is_displayed
+    if hosts_collection == "provider":
+        provider_view = provider.create_view(InfraProviderDetailsView)
+        assert provider_view.is_displayed
+    elif hosts_collection == "appliance":
+        assert hosts_view.is_displayed
