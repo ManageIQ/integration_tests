@@ -37,7 +37,7 @@ def test_schedule_migration(appliance, provider, mapping_data_vm_obj_mini, soft_
     Test to validate schedule migration plan
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: medium
         caseposneg: positive

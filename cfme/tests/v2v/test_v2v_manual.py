@@ -12,7 +12,7 @@ def test_osp_flavors_can_be_selected_creating_migration_plan():
     title: OSP: Test flavors can be selected creating migration plan
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10
@@ -35,7 +35,7 @@ def test_osp_if_no_password_is_exposed_in_logs_during_migration():
     title: OSP: Test if no password is exposed in logs during migration
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10
@@ -58,7 +58,7 @@ def test_osp_retry_plan():
     title: OSP: Test retry plan
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10
@@ -81,7 +81,7 @@ def test_osp_migrations_with_multi_zonal_setup():
     title: OSP: Test migrations with multi-zonal setup
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10
@@ -107,7 +107,7 @@ def test_osp_mapping_can_be_created_with_name_including_international_chars():
     chars
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10
@@ -126,7 +126,7 @@ def test_osp_archive_completed_migration_plan():
     title: OSP: Test Archive completed migration plan
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10
@@ -152,7 +152,7 @@ def test_osp_migration_logs_from_conversion_host_can_be_retrieved_from_miq_appli
     miq appliance
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         caseimportance: critical
         initialEstimate: 1/8h
@@ -178,7 +178,7 @@ def test_osp_security_group_can_be_selected_while_creating_migration_plan():
     title: OSP: Test security group can be selected while creating migration plan
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10
@@ -202,7 +202,7 @@ def test_osp_migration_request_details_page_shows_vms_for_not_started_plans():
     plans
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         initialEstimate: 1/8h
         startsin: 5.10

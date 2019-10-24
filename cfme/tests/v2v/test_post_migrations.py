@@ -40,7 +40,7 @@ def test_migration_post_attribute(appliance, provider, mapping_data_vm_obj_mini,
     Test to validate v2v post-migrations usecases
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/4h
         caseimportance: critical
         caseposneg: positive

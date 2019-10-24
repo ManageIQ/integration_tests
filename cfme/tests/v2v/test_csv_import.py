@@ -134,7 +134,7 @@ def archived_vm(appliance, source_provider):
 def test_non_csv(appliance, infra_map):
     """Test non-csv file import
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
@@ -148,7 +148,7 @@ def test_non_csv(appliance, infra_map):
 def test_blank_csv(appliance, infra_map):
     """Test csv with blank file
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
@@ -162,7 +162,7 @@ def test_blank_csv(appliance, infra_map):
 def test_column_headers(appliance, infra_map):
     """Test csv with unsupported column header
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
@@ -177,7 +177,7 @@ def test_column_headers(appliance, infra_map):
 def test_inconsistent_columns(appliance, infra_map):
     """Test csv with extra inconsistent column value
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
@@ -192,7 +192,7 @@ def test_inconsistent_columns(appliance, infra_map):
 def test_csv_empty_vm(appliance, infra_map):
     """Test csv with empty column value
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
@@ -208,7 +208,7 @@ def test_csv_empty_vm(appliance, infra_map):
 def test_csv_invalid_vm(appliance, infra_map):
     """Test csv with invalid vm name
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: negative
         startsin: 5.10
         casecomponent: V2V
@@ -224,7 +224,7 @@ def test_csv_invalid_vm(appliance, infra_map):
 def test_csv_valid_vm(appliance, infra_map, valid_vm):
     """Test csv with valid vm name
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
@@ -240,7 +240,7 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
 def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
     """Test csv with duplicate vm name
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
@@ -256,7 +256,7 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
 def test_csv_archived_vm(appliance, infra_map, archived_vm):
     """Test csv with archived vm name
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
@@ -287,7 +287,7 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
 def test_csv_security_group_flavor(appliance, infra_map, valid_vm, provider):
     """Test csv with secondary openstack security group and flavor
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
