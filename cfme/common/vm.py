@@ -8,7 +8,9 @@ from datetime import timedelta
 import attr
 from cached_property import cached_property
 from manageiq_client.filters import Q
+from navmazing import NavigateToSibling
 from riggerlib import recursive_update
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
@@ -17,8 +19,10 @@ from cfme.common import Taggable
 from cfme.common.vm_console import ConsoleMixin
 from cfme.common.vm_views import DriftAnalysis
 from cfme.common.vm_views import DriftHistory
+from cfme.common.vm_views import RightSizeView
 from cfme.common.vm_views import VMPropertyDetailView
 from cfme.exceptions import CFMEException
+from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import OptionNotAvailable
 from cfme.exceptions import RestLookupError
@@ -26,6 +30,7 @@ from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.services.requests import RequestsView
 from cfme.utils import ParamClassName
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
@@ -1025,3 +1030,16 @@ class Template(BaseVM, _TemplateMixin):
 @attr.s
 class TemplateCollection(BaseVMCollection):
     ENTITY = Template
+
+
+@navigator.register(VM, "RightSize")
+class RightSize(CFMENavigateStep):
+    VIEW = RightSizeView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        configuration = self.prerequisite_view.toolbar.configuration
+        try:
+            configuration.item_select("Right-Size Recommendations")
+        except NoSuchElementException:
+            raise DestinationNotFound("Right Size option not available.")

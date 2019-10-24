@@ -11,7 +11,6 @@ from widgetastic_patternfly import Button
 from cfme.cloud.instance import CloudInstanceView
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance import InstanceCollection
-from cfme.common.vm_views import RightSizeView
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import displayed_not_implemented
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -288,16 +287,3 @@ class Reconfigure(CFMENavigateStep):
             configuration.item_select('Reconfigure this Instance')
         except NoSuchElementException:
             raise DestinationNotFound('Reconfigure option not available for instance')
-
-
-@navigator.register(OpenStackInstance, 'RightSize')
-class RightSize(CFMENavigateStep):
-    VIEW = RightSizeView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        configuration = self.prerequisite_view.toolbar.configuration
-        try:
-            configuration.item_select('Right-Size Recommendations')
-        except NoSuchElementException:
-            raise DestinationNotFound('Right Size option not available for instance')

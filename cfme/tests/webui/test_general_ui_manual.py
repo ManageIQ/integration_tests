@@ -166,32 +166,6 @@ def test_provider_documentation():
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1733207])
-def test_vm_right_size_recommendation_back_button():
-    """
-    Bugzilla:
-        1733207
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/18h
-        setup:
-            1. Add provider to appliance.
-        testSteps:
-            1. Navigate to a VM's details page.
-            2. From `Configuration` dropdown, select `Right Size Recommendations`.
-            3. Click on `Back` button.
-        expectedResults:
-            1.
-            2.
-            3. Back button must bring back to the details page.
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1745660])
 def test_compliance_column_header():
     """

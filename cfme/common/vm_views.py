@@ -593,11 +593,32 @@ class RightSizeView(BaseLoggedInPage):
     """
     Right Size recommendations page for vms/instances
     """
-    # TODO new table widget for right-size tables
-    # They're H3 headers with the table as following-sibling
 
-    # Only name is displayed
-    is_displayed = displayed_not_implemented
+    title = Text("#explorer_title_text")
+    nor_table = Table(
+        '//*[contains(normalize-space(.), "Normal Operating Range")]/following-sibling::table[1]'
+    )
+    aggressive_table = Table(
+        '//*[contains(normalize-space(.), "Aggressive")]/following-sibling::table[1]'
+    )
+    conservative_table = Table(
+        '//*[contains(normalize-space(.), "Conservative")]/following-sibling::table[1]'
+    )
+    moderate_table = Table(
+        '//*[contains(normalize-space(.), "Moderate")]/following-sibling::table[1]'
+    )
+    back_button = Button("Back")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text
+            == f'Right Size Recommendation for Virtual Machine "{self.context["object"].name}"'
+            and self.nor_table.is_displayed
+            and self.aggressive_table.is_displayed
+            and self.conservative_table.is_displayed
+            and self.moderate_table.is_displayed
+        )
 
 
 class DriftHistory(BaseLoggedInPage):
