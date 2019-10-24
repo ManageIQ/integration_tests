@@ -164,18 +164,17 @@ def test_dynamic_dialog_fields_ansible_tower_templates():
     pass
 
 
-@pytest.mark.meta(coverage=[1707961])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1707961])
 @pytest.mark.tier(2)
-def test_dialog_editor_modify_field():
+@pytest.mark.ignore_stream("5.10")
+def test_dialog_editor_modify_field(dialog):
     """
-
     Bugzilla:
         1707961
 
     Polarion:
         assignee: nansari
-        startsin: 5.10
+        startsin: 5.11
         casecomponent: Services
         initialEstimate: 1/16h
         testSteps:
@@ -189,7 +188,12 @@ def test_dialog_editor_modify_field():
             3.
             4. The UI should confirm that you want to exit without saving your dialog
     """
-    pass
+    view = navigate_to(dialog, "Edit")
+    view.description.fill(fauxfactory.gen_alpha())
+    view.cancel_button.click(handle_alert=True)
+    view = navigate_to(dialog, "Edit")
+    assert view.description.read() == dialog.description
+    view.cancel_button.click(handle_alert=False)
 
 
 @pytest.mark.meta(coverage=[1706848])
