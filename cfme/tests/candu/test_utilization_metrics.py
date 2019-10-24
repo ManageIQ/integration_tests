@@ -22,7 +22,7 @@ pytestmark = [
     pytest.mark.tier(1),
     test_requirements.c_and_u,
     pytest.mark.provider(
-        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider, GCEProvider],
+        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider],
         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')], scope="module")
 ]
 
@@ -57,7 +57,12 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
         test_flag: metrics_collection
     """
     metrics_tbl = appliance.db.client['metrics']
+    rollups = appliance.db.client['metric_rollups']
     mgmt_systems_tbl = appliance.db.client['ext_management_systems']
+
+    logger.info("Deleting metrics tables")
+    appliance.db.client.session.query(metrics_tbl).delete()
+    appliance.db.client.session.query(rollups).delete()
 
     logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = appliance.db.client.session.query(mgmt_systems_tbl).filter(
@@ -305,7 +310,7 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
             break
 
 
-def query_metric_rollup_table(appliance, provider, metric, azone_name=None):
+def query_metric_rollup_table(appliance, provider, metric, azone_name):
     metrics_tbl = appliance.db.client['metric_rollups']
     ems = appliance.db.client['ext_management_systems']
 
@@ -320,18 +325,19 @@ def query_metric_rollup_table(appliance, provider, metric, azone_name=None):
         metrics_tbl.id.in_(provs.subquery()))
 
 
-def generic_test_azone_rollup(appliance, provider, metric, azone_name, soft_assert):
-        query = query_metric_db(appliance, provider, metric, azone_name)
+def generic_test_azone_rollup(appliance, provider, metric, azone_name):
+    query = query_metric_rollup_table(appliance, provider, metric, azone_name)
 
-        for record in query:
-
+    for record in query:
         if getattr(record, metric) is not None:
-            assert getattr(record, metric) > 0, 'Zero Host Disk IO'
+            assert getattr(record, metric) > 0, (
+                'Zero Azone CPU usage/memory usage/Disk IO/Network IO'
+            )
             break
-        soft_assert(lower_end <= float(resource_from_report) <= upper_end,
-                    'Estimated resource allocation and report resource allocation do not match')
 
 
+@pytest.mark.uncollectif(lambda provider:
+                         provider.one_of(RHEVMProvider, VMwareProvider))
 def test_azone_candu_cpu(metrics_collection, appliance, provider):
     """
     Polarion:
@@ -340,5 +346,33 @@ def test_azone_candu_cpu(metrics_collection, appliance, provider):
         casecomponent: CandU
         initialEstimate: 1/12h
     """
-    generic_test_azone_rollup(appliance, provider, 'cpu_usage_rate_average', azone_name,
-        soft_assert)
+    azone_name = provider.data["cap_and_util"]["capandu_azone"]
+    generic_test_azone_rollup(appliance, provider, 'cpu_usage_rate_average', azone_name)
+
+
+@pytest.mark.uncollectif(lambda provider:
+                         provider.one_of(RHEVMProvider, VMwareProvider))
+def test_azone_candu_memory(metrics_collection, appliance, provider):
+    """
+    Polarion:
+        assignee: nachandr
+        caseimportance: high
+        casecomponent: CandU
+        initialEstimate: 1/12h
+    """
+    azone_name = provider.data["cap_and_util"]["capandu_azone"]
+    generic_test_azone_rollup(appliance, provider, 'mem_usage_absolute_average', azone_name)
+
+
+@pytest.mark.uncollectif(lambda provider:
+                         provider.one_of(RHEVMProvider, VMwareProvider))
+def test_azone_candu_network(metrics_collection, appliance, provider):
+    """
+    Polarion:
+        assignee: nachandr
+        caseimportance: high
+        casecomponent: CandU
+        initialEstimate: 1/12h
+    """
+    azone_name = provider.data["cap_and_util"]["capandu_azone"]
+    generic_test_azone_rollup(appliance, provider, 'net_usage_rate_average', azone_name)
