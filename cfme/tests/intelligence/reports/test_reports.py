@@ -12,6 +12,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
+from cfme.utils.ftp import FTPException
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 
@@ -142,14 +143,19 @@ def rbac_api(appliance, request):
 
 @pytest.fixture
 def restore_db(temp_appliance_preconfig, file_name):
-    db_file = FTPClientWrapper(cfme_data.ftpserver.entities.databases).get_file(file_name)
+    try:
+        db_file = FTPClientWrapper(cfme_data.ftpserver.entities.databases).get_file(file_name)
+    except FTPException:
+        pytest.skip("Failed to fetch the file from FTP server.")
+
     db_path = f"/tmp/{db_file.name}"
 
     # Download the customer db on appliance
     result = temp_appliance_preconfig.ssh_client.run_command(
         f"curl -o {db_path} ftp://{db_file.link}"
     )
-    assert result.success
+    if not result.success:
+        pytest.fail("Failed to download the file to the appliance.")
 
     def _check_file_size(file_path, expected_size):
         return temp_appliance_preconfig.ssh_client.run_command(
@@ -157,7 +163,8 @@ def restore_db(temp_appliance_preconfig, file_name):
         ).success
 
     # assert the whole database was downloaded to make sure we do not test with broken database
-    assert _check_file_size(db_path, db_file.filesize)
+    if not _check_file_size(db_path, db_file.filesize):
+        pytest.skip("File downloaded to the appliance, but it looks broken.")
 
     is_major = True if temp_appliance_preconfig.version > "5.11" else False
     temp_appliance_preconfig.db.restore_database(db_path, is_major=is_major)

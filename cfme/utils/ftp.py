@@ -680,8 +680,8 @@ class FTPFileWrapper(FTPFile):
             # Switch to Binary mode
             self.client.ftp.sendcmd("TYPE i")
             size = self.client.ftp.size(self.path)
-        except Exception as e:
-            logger.error(f"Failed to get the file size due to: {e}")
+        except Exception:
+            logger.exception("Failed to get the file size due to exception ")
         finally:
             # switch back to ASCII
             self.client.ftp.sendcmd("TYPE A")
