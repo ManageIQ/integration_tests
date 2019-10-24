@@ -300,7 +300,7 @@ def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_sin
     Test migration by restarting evmserverd in middle of the process
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1h
         caseimportance: medium
         caseposneg: positive

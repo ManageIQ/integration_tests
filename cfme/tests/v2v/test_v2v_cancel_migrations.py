@@ -103,7 +103,7 @@ def test_cancel_migration_attachments(
     """
     Test to cancel migration and check attached instance, volume and port is removed from provider
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive
