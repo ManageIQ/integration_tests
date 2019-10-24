@@ -4,7 +4,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.dialogs.service_dialogs import DialogsView
+from cfme.fixtures.automate import DatastoreImport
+from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
 pytestmark = [
@@ -417,3 +421,64 @@ def test_dialog_items_default_values_on_different_screens():
         initialEstimate: 1/3h
     """
     pass
+
+
+@pytest.mark.meta(automates=[1571000])
+@pytest.mark.tier(3)
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1571000.zip", "bz_1571000", None)],
+    ids=["domain"]
+)
+@pytest.mark.parametrize("file_name", ["bz_1571000.yml"], ids=["dialog"])
+def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed(
+    request, appliance, import_datastore, import_data, import_dialog, catalog, soft_assert
+):
+    """
+    Bugzilla:
+        1571000
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/16h
+        startsin: 5.9
+        tags: service
+    """
+    sd, ele_label = import_dialog
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd,
+    )
+    request.addfinalizer(catalog_item.delete_if_exists)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    patterns = [
+        ".*CC- dialog_instance1 value=.*",
+        ".*CC- dialog_instance2 value=.*",
+        ".*CC- dialog_instance3 value=.*",
+    ]
+
+    # Checking if automates method gets triggered by three instances for once after ordering catalog
+    # item
+    result = LogValidator(
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=patterns
+    )
+    result.start_monitoring()
+    view = navigate_to(service_catalogs, "Order")
+    for pattern in patterns:
+        soft_assert(result.matches[pattern] == 1)
+
+    with LogValidator("/var/www/miq/vmdb/log/automation.log", failure_patterns=patterns).waiting(
+        timeout=120
+    ):
+        # Values like 'label1'(value of ele_label), 'label2' and label3 are element names of three
+        # different text boxes attached with service dialog
+        for ele_name in [ele_label, "label2", "label3"]:
+            # Checking if automate method is not triggered after updating values of dialog widgets
+            view.fields(ele_name).input.fill(fauxfactory.gen_alphanumeric())
