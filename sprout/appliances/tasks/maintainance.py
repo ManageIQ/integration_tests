@@ -89,7 +89,7 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
     if not hasattr(provider_api, 'list_vms'):
         # This provider does not have VMs
         return
-    for vm in sorted(provider_api.list_vms()):
+    for vm in sorted(provider_api.list_vms(), key=lambda pvm: getattr(pvm, 'name', pvm)):
         if (
                 Appliance.objects.filter(name=getattr(vm, 'name', vm),
                                          template__provider=provider).count() != 0
@@ -137,7 +137,7 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
         # Retrieve pool data if applicable
         try:
             pool_id = vm.get_meta_value('sprout_pool_id')
-            pool_construct = {'id': pool_id}
+            pool_construct = dict(id=pool_id)
             pool_construct['total_count'] = vm.get_meta_value('sprout_pool_total_count')
             group_id = vm.get_meta_value('sprout_pool_group')
             pool_construct['group'] = Group.objects.get(id=group_id)
@@ -262,8 +262,11 @@ def check_swap_in_appliance(self, appliance_id):
     else:
         ssh_failed = False
 
-    went_up = ((appliance.swap is not None and swap_amount > appliance.swap) or
-               (appliance.swap is None and swap_amount is not None and swap_amount > 0))
+    went_up = ((appliance.swap is not None and
+                swap_amount is not None and
+                swap_amount > appliance.swap) or
+               (appliance.swap is None and
+                swap_amount is not None and swap_amount > 0))
 
     ssh_failed_changed = ssh_failed and not appliance.ssh_failed
 
@@ -421,8 +424,9 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
 def scavenge_managed_providers(self):
     chord_tasks = []
     for appliance in Appliance.objects.exclude(appliance_pool=None):
-        if ((appliance.expires_in == 'never' or appliance.expires_in > 7200)
-                and appliance.ready and appliance.ip_address):
+        if ((appliance.expires_in == 'never' or
+             (isinstance(appliance.expires_in, int, float) and appliance.expires_in > 7200)) and
+                appliance.ready and appliance.ip_address):
             chord_tasks.append(scavenge_managed_providers_from_appliance.si(appliance.id))
     chord(chord_tasks)(calculate_provider_management_usage.s())
 

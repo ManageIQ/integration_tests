@@ -66,7 +66,8 @@ def singleton_task(*args, **kwargs):
 
 
 def logged_task(*args, **kwargs):
-    kwargs["bind"] = True
+    new_kwargs = kwargs.copy()
+    new_kwargs["bind"] = True
 
     def f(task):
         @wraps(task)
@@ -81,7 +82,7 @@ def logged_task(*args, **kwargs):
                 self.logger.exception(e)
                 raise
 
-        return shared_task(*args, **kwargs)(wrapped_task)
+        return shared_task(*args, **new_kwargs)(wrapped_task)
 
     return f
 
