@@ -131,7 +131,7 @@ def user_self_service_role(appliance):
     with appliance.context.use(ViaUI):
         # copy role with no restrictions
         role = appliance.collections.roles.instantiate(name="EvmRole-user_self_service")
-        user_self_service_role = role.copy(name="user_self_service_role", restriction="None")
+        user_self_service_role = role.copy(name="user_self_service_role", vm_restriction="None")
 
         # Group with user self service role
         user_self_service_gp = appliance.collections.groups.create(
@@ -545,14 +545,16 @@ def test_custom_button_role_access_service(
         with user:
             with appliance.context.use(context):
                 logged_in_page = appliance.server.login(user)
-                navigate_to = ssui_nav if context is ViaSSUI else ui_nav
 
-                view = navigate_to(service, "Details")
-                cb_group = (
-                    CustomButtonSSUIDropdwon(view, service_button_group.text)
-                    if context is ViaSSUI
-                    else Dropdown(view, service_button_group.text)
-                )
+                if context is ViaSSUI:
+                    navigate_to = ssui_nav
+                    group_class = CustomButtonSSUIDropdwon
+                else:
+                    navigate_to = ui_nav
+                    group_class = Dropdown
+
+                view = navigate_to(service, 'Details')
+                cb_group = group_class(view, service_button_group.text)
 
                 if user == usr:
                     # for user having custom role EvmRole-user_self_service
