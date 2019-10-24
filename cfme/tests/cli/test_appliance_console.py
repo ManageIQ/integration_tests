@@ -128,6 +128,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.11")  # Removed from appliance console in 5.11, BZ 1745895
 def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console and check result
 
