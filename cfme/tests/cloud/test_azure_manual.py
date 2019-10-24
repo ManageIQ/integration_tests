@@ -26,26 +26,6 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
     pass
 
 
-@pytest.mark.tier(2)
-def test_regions_gov_azure():
-    """
-    This test verifies that Azure Government regions are not included in
-    the default region list as most users will receive errors if they try
-    to use them.
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        setup: Check the region list when adding a Azure Provider.
-        startsin: 5.7
-    Bugzilla:
-        1412363
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_regions_all_azure():
     """
