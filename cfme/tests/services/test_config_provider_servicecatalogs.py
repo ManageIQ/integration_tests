@@ -145,19 +145,18 @@ def test_config_manager_override_extra_vars_dialog_vsphere():
     - Tower credentials are the creds used to login into VM which will be
     deployed
     - Vsphere template used for VM deployment must have ssh key "baked" in
-    -
-    Prompt for Extra variables must be enabled.
+      Prompt for Extra variables must be enabled.
     4. Add Vsphere55 provider into CFME and perform refresh
     5. Create new Catalog
     6. Add new catalog item for Vsphere vcentre - VMWare
-    7. give it name, display in catalog, catalog,
-    8 Provisioning entry point:
+    7. Give it name, display in catalog, catalog,
+    8. Provisioning entry point:
     /Service/Provisioning/StateMachines/ServiceProvision_Template/CatalogI
     temInitialization
     Request info tab:
-    Name of template: template_Fedora-Cloud-Base-23-vm-tools_v4 (this
+    - Name of template: template_Fedora-Cloud-Base-23-vm-tools_v4 (this
     template has ssh key which matches with Tower creentials)
-    VM Name: test_tower_pakotvan_1234 (it must start with test_tower_ -
+    - VM Name: test_tower_pakotvan_1234 (it must start with test_tower_ -
     inventory script on Tower 2.4.3 was modified to look only for such VMs
     in order to speed up provisioning)
     Envirnment tab:
@@ -175,7 +174,7 @@ def test_config_manager_override_extra_vars_dialog_vsphere():
     14. Into Value column add:
     /ConfigurationManagement/AnsibleTower/Operations/StateMachines/Job/def
     ault?job_template_name=third_job_template
-    15. Automate -> Customization -> Service dialogs -> tower_dialog ->
+    15. Automate -> Customization -> Service dialogs -> tower_dialog
     Edit this dialog
     Extra variables:
     - make elements in extra variables writable (uncheck readonly).
@@ -183,7 +182,7 @@ def test_config_manager_override_extra_vars_dialog_vsphere():
     param_prefix, otherwised will be ignored!!!
     16. Order service
     Into limit field put exact name of your VM:  test_tower_pakotvan_1234
-    17. Login into provision VM and `cat
+    17. Login to provision VM and `cat
     /var/tmp/touch_from_play_dumped_vars.txt` and grep for variables which
     were passed from CFME UI.
 
