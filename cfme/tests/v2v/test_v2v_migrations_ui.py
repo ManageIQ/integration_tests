@@ -43,7 +43,7 @@ def test_v2v_infra_map_data(request, appliance, source_provider, provider, soft_
     Test to validate infra map data
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: critical
         caseposneg: positive
@@ -102,7 +102,7 @@ def test_v2v_infra_map_ui(appliance, source_provider, provider, soft_assert):
     Test to validate non-functional UI tests on infrastructure mappings wizard
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: critical
         caseposneg: positive
@@ -201,7 +201,7 @@ def test_v2v_plan_ui(
     Test to validate non-functional UI tests on migration plan wizard
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 2/4h
         caseimportance: critical
         caseposneg: positive
@@ -289,7 +289,7 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
     Test infra map with special characters
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: low
         caseposneg: positive
@@ -339,7 +339,7 @@ def test_v2v_rbac(appliance, new_credential):
     Test migration with role-based access control
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive
@@ -380,7 +380,7 @@ def test_v2v_infra_map_edit(request, appliance, source_provider, provider,
     Test migration by editing migration mapping fields
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive
@@ -438,7 +438,7 @@ def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert
     Test V2V UI with no source and target provider
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive

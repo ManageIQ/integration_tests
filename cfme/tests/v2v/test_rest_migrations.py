@@ -123,7 +123,7 @@ def test_rest_mapping_create(request, appliance, get_clusters, get_datastores, g
     Tests infrastructure mapping create
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         testtype: functional
         initialEstimate: 1/8h
@@ -154,7 +154,7 @@ def test_rest_mapping_bulk_delete_from_collection(
     has "success" set to false.
 
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         testtype: functional
         initialEstimate: 1/8h
@@ -196,7 +196,7 @@ def test_rest_conversion_host_crud(appliance, source_provider, provider, transfo
     """
     Tests conversion host crud via REST
     Polarion:
-        assignee: ytale
+        assignee: sshveta
         casecomponent: V2V
         testtype: functional
         initialEstimate: 1/2h
