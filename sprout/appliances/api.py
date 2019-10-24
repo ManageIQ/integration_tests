@@ -13,9 +13,10 @@ from ipware.ip import get_ip
 
 from appliances.models import (
     Appliance, AppliancePool, Provider, Group, Template, User, GroupShepherd)
-from appliances.tasks import (
-    appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename,
-    connect_direct_lun, disconnect_direct_lun, mark_appliance_ready, wait_appliance_ready)
+from appliances.tasks.provisioning import (appliance_rename, mark_appliance_ready,
+                                           wait_appliance_ready)
+from appliances.tasks.service_ops import (appliance_power_on, disconnect_direct_lun,
+                                        appliance_power_off, appliance_suspend, connect_direct_lun)
 from sprout.log import create_logger
 
 

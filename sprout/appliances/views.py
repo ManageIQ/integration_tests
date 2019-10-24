@@ -19,10 +19,14 @@ from appliances.api import json_response
 from appliances.models import (
     Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User, BugQuery,
     GroupShepherd)
-from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
-    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
-    appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot,
-    nuke_template_configuration)
+
+from appliances.tasks.provisioning import (appliance_rename, mark_appliance_ready,
+                                           wait_appliance_ready)
+from appliances.tasks.service_ops import (appliance_power_on, appliance_reboot, appliance_power_off,
+                                        appliance_suspend, anyvm_power_on, anyvm_power_off,
+                                        anyvm_suspend, anyvm_delete)
+from appliances.tasks.maintainance import (nuke_template_configuration,
+                                           delete_template_from_provider)
 
 from sprout.log import create_logger
 from cfme.utils.bz import Bugzilla

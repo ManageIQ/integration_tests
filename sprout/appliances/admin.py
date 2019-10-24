@@ -11,7 +11,8 @@ from django_object_actions import DjangoObjectActions
 from appliances.models import (
     Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask,
     MismatchVersionMailer, UserApplianceQuota, User, BugQuery, GroupShepherd)
-from appliances import tasks
+from appliances.tasks import service_ops
+from appliances.tasks import provisioning
 from sprout.log import create_logger
 
 
@@ -66,7 +67,7 @@ class ApplianceAdmin(Admin):
     @action("Power off", "Power off selected appliance")
     def power_off(self, request, appliances):
         for appliance in appliances:
-            tasks.appliance_power_off.delay(appliance.id)
+            service_ops.appliance_power_off.delay(appliance.id)
             self.message_user(request, "Initiated poweroff of {}.".format(appliance.name))
             self.logger.info(
                 "User {}/{} requested poweroff of appliance {}".format(
@@ -75,11 +76,11 @@ class ApplianceAdmin(Admin):
     @action("Power on", "Power on selected appliance")
     def power_on(self, request, appliances):
         for appliance in appliances:
-            task_list = [tasks.appliance_power_on.si(appliance.id)]
+            task_list = [service_ops.appliance_power_on.si(appliance.id)]
             if appliance.preconfigured:
-                task_list.append(tasks.wait_appliance_ready.si(appliance.id))
+                task_list.append(provisioning.wait_appliance_ready.si(appliance.id))
             else:
-                task_list.append(tasks.mark_appliance_ready.si(appliance.id))
+                task_list.append(provisioning.mark_appliance_ready.si(appliance.id))
             chain(*task_list)()
             self.message_user(request, "Initiated poweron of {}.".format(appliance.name))
             self.logger.info(
@@ -89,7 +90,7 @@ class ApplianceAdmin(Admin):
     @action("Suspend", "Suspend selected appliance")
     def suspend(self, request, appliances):
         for appliance in appliances:
-            tasks.appliance_suspend.delay(appliance.id)
+            service_ops.appliance_suspend.delay(appliance.id)
             self.message_user(request, "Initiated suspend of {}.".format(appliance.name))
             self.logger.info(
                 "User {}/{} requested suspend of appliance {}".format(
