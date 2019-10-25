@@ -1,13 +1,21 @@
+from collections import namedtuple
+
 import fauxfactory
 import pytest
 
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.net import find_pingable
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
+
+TargetMachine = namedtuple("TargetMachine", ["vm", "hostname", "username", "password"])
 
 
 @pytest.fixture(scope="module")
@@ -156,3 +164,81 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
     service = MyService(appliance, cat_item_name)
     if service.exists:
         service.delete()
+
+
+@pytest.fixture(scope="module")
+def ansible_catalog_item_create_empty_file(appliance, ansible_repository):
+    collection = appliance.collections.catalog_items
+    cat_item = collection.create(
+        collection.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(15, start="create_file_"),
+        fauxfactory.gen_alphanumeric(start="disc_"),
+        display_in_catalog=True,
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "create_empty_file.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(15, start="ansi_dialog_"),
+        },
+    )
+    catalog = appliance.collections.catalogs.create(
+        fauxfactory.gen_alphanumeric(start="cat_"),
+        description=fauxfactory.gen_alphanumeric(start="cat_dis_"),
+        items=[cat_item.name],
+    )
+
+    yield cat_item
+    catalog.delete_if_exists()
+    cat_item.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def target_machine(provider, setup_provider_modscope):
+    """Fixture to provide target machine for ansible testing. It will not teardown crated Machine"""
+
+    try:
+        target_data = provider.data.ansible_target
+    except AttributeError:
+        pytest.skip(f"Could not find 'ansible_target' tag in provider yaml: '{provider.name}'")
+
+    vm = provider.appliance.provider_based_collection(provider).instantiate(
+        target_data.name, provider, target_data.template
+    )
+
+    if not provider.mgmt.does_vm_exist(target_data.name):
+        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+
+    # For OSP provider need to assign floating ip
+    if provider.one_of(OpenStackProvider):
+        public_net = provider.data["public_network"]
+        vm.mgmt.assign_floating_ip(public_net)
+
+    # wait for pingable ip address
+    try:
+        hostname, _ = wait_for(
+            find_pingable, func_args=[vm.mgmt], timeout="10m", delay=5, fail_condition=None
+        )
+    except TimedOutError:
+        pytest.skip(
+            f"Timed out: waiting for pingable ip for Target Machine: {vm.name} on '{provider.name}"
+        )
+
+    yield TargetMachine(
+        vm=vm,
+        hostname=hostname,
+        username=credentials[target_data.credentials].username,
+        password=credentials[target_data.credentials].password,
+    )
+
+
+@pytest.fixture(scope="module")
+def target_machine_ansible_creds(appliance, target_machine):
+    creds = appliance.collections.ansible_credentials.create(
+        name=fauxfactory.gen_alpha(start="cred_"),
+        credential_type="Machine",
+        username=target_machine.username,
+        password=target_machine.password,
+    )
+    yield creds
+    creds.delete_if_exists()
