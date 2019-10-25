@@ -44,26 +44,28 @@ def cancel_migration_plan(appliance, provider, mapping_data_vm_obj_mini):
         target_provider=provider,
         vm_list=mapping_data_vm_obj_mini.vm_list
     )
-    assert migration_plan.wait_for_state("Started")
-    request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
-    vms = request_details_list.read()
-    # Random percentage to cancel migration at
-    cancel_migration_after_percent = 6
+    if migration_plan.wait_for_state("Started"):
+        request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
+        vms = request_details_list.read()
+        # Random percentage to cancel migration at
+        cancel_migration_after_percent = 6
 
-    def _get_plan_status_and_cancel():
-        migration_plan_in_progress_tracker = []
-        for vm in vms:
-            clock_reading1 = request_details_list.get_clock(vm)
-            time.sleep(1)  # wait 1 sec to see if clock is ticking
-            if request_details_list.progress_percent(vm) > cancel_migration_after_percent:
-                request_details_list.cancel_migration(vm, confirmed=True)
-            clock_reading2 = request_details_list.get_clock(vm)
-            migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm) and
+        def _get_plan_status_and_cancel():
+            migration_plan_in_progress_tracker = []
+            for vm in vms:
+                clock_reading1 = request_details_list.get_clock(vm)
+                time.sleep(1)  # wait 1 sec to see if clock is ticking
+                if request_details_list.progress_percent(vm) > cancel_migration_after_percent:
+                    request_details_list.cancel_migration(vm, confirmed=True)
+                clock_reading2 = request_details_list.get_clock(vm)
+                migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm) and
                                                       (clock_reading1 < clock_reading2))
-        return not any(migration_plan_in_progress_tracker)
+            return not any(migration_plan_in_progress_tracker)
 
-    wait_for(func=_get_plan_status_and_cancel, message="migration plan is in progress,"
+        wait_for(func=_get_plan_status_and_cancel, message="migration plan is in progress,"
                                                        "be patient please", delay=5, num_sec=3600)
+    else:
+        pytest.skip("Migration plan failed to start")
     yield migration_plan
     migration_plan.delete_completed_plan()
 
