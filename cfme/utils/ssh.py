@@ -658,14 +658,22 @@ class SSHClient(paramiko.SSHClient):
         files = self.run_command(f"ls {os_path.dirname(remote_path)}").output
         return os_path.basename(remote_path) in files
 
-    def remove_file(self, remote_path):
+    def remove_file(self, remote_path, force=True, recursive=False):
         """Remove file from remote host
 
         Args:
             remote_path: Path to remote file
+            force: add -f to rm args
+            recursive: add -r to rm args
         """
         if self.is_file_available(remote_path):
-            self.run_command(f"rm -rf {remote_path}")
+            opts = []
+            if force:
+                opts.append('-f')
+            if recursive:
+                opts.append('-r')
+            args = ' '.join(opts)
+            self.run_command(f"rm {args} {remote_path}")
 
     def get_build_datetime(self):
         command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
