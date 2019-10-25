@@ -447,9 +447,10 @@ class IPAppliance(object):
 
     @property
     def server(self):
-        sid = self._rest_api_server().id
+        sid = self._rest_api_server.id
         return self.collections.servers.instantiate(sid=sid)
 
+    @property
     def _rest_api_server(self):
         shref = self.appliance.rest_api.server_info['server_href']
         results = self.appliance.rest_api.collections.servers.all

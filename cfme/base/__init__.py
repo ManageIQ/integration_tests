@@ -45,7 +45,7 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
             None if its missing
         """
         # empty string default for string building w/o None
-        return getattr(self.appliance._rest_api_server(), 'name', '')
+        return getattr(self.appliance._rest_api_server, 'name', '')
 
     @property
     def current_string(self):
