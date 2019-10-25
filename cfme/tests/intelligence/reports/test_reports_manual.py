@@ -231,32 +231,6 @@ def test_created_on_time_report_field():
     pass
 
 
-@test_requirements.report
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1725142])
-def test_reports_service_unavailable():
-    """
-    Bugzilla:
-        1725142
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup:
-            1. Load customer database on the appliance.
-        testSteps:
-            1. Navigate to Reports.
-            2. Navigate to `Details` page of the report with >31k rows.
-        expectedResults:
-            1. Reports must be accessible, there should be no 503 service unavailable error.
-            2. Details page must be accessible.
-    """
-    pass
-
-
 @pytest.mark.ignore_stream("5.10")
 @test_requirements.report
 @pytest.mark.manual
