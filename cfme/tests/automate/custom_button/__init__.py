@@ -117,6 +117,20 @@ class TextInputDialogView(View):
         return self.submit.is_displayed and self.service_name.is_displayed
 
 
+class CredsHostsDialogView(View):
+    """This view for custom button default ansible playbook dialog"""
+
+    machine_credential = BootstrapSelect(locator=".//select[@id='credential']//parent::div")
+    hosts = TextInput(id="hosts")
+
+    submit = Button("Submit")
+    cancel = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        return self.submit.is_displayed and self.machine_credential.is_displayed
+
+
 class TextInputDialogSSUIView(TextInputDialogView):
     """ This is view comes on SSUI custom button dialog execution"""
 
