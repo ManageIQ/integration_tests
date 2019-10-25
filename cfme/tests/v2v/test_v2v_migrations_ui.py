@@ -571,7 +571,8 @@ def test_migration_with_no_conversion(appliance, delete_conversion_hosts, source
     assert "no conversion host" in view.progress_card.get_error_text(migration_plan.name)
 
 
-@pytest.mark.provider([OpenStackProvider], scope='function')
+@pytest.mark.provider([OpenStackProvider], selector=ONE_PER_VERSION,
+                      required_flags=["v2v"], override=True, scope='module')
 @pytest.mark.parametrize("attribute", ["flavor", "security_group"])
 @pytest.mark.parametrize(
     "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True)
