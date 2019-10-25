@@ -161,23 +161,6 @@ def test_embed_tower_ui_requests_notifications_negative():
 
 
 @pytest.mark.tier(3)
-def test_embed_tower_repo_tag():
-    """
-    RBAC - tag Ansible repo and allow new user see only this repo.
-
-    Bugzilla:
-        1526217
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_embed_tower_exec_play_against_openstack():
     """
     Execute playbook against Openstack provider.
@@ -315,40 +298,6 @@ def test_embed_tower_repo_url_validation():
         assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_playbooks_tag():
-    """
-    Bugzilla:
-        1526218
-
-    RBAC - tag playbooks and allow user to see just this taged playbook.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_creds_tag():
-    """
-    Bugzilla:
-        1526219
-
-    RBAC - tag credentials and allow new user see just this credential.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
         tags: ansible_embed
     """
     pass
