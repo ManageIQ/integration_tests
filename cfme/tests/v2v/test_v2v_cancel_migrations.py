@@ -226,14 +226,16 @@ def test_retry_migration_plan(cancel_migration_plan):
     # Retry Migration
     view.plans_completed_list.migrate_plan(migration_plan.name)
     assert migration_plan.wait_for_state("Started")
-    assert migration_plan.wait_for_state("In_Progress")
-    assert migration_plan.wait_for_state("Completed")
-    assert migration_plan.wait_for_state("Successful")
+
     # Automating BZ 1755632
     retry_interval_log = LogValidator(
         '/var/www/miq/vmdb/log/evm.log',
-        matched_patterns=["to Automate for delivery in [60] seconds"]
+        matched_patterns=['to Automate for delivery in \[60\] seconds*']
     )
     retry_interval_log.start_monitoring()
     # search logs and wait for validation
-    assert(retry_interval_log.validate(wait="300s"))
+    assert (retry_interval_log.validate(wait="150s"))
+
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
