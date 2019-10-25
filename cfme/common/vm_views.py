@@ -218,6 +218,7 @@ class BasicProvisionFormView(View):
         last_name = Input(name='requester__owner_last_name')
         notes = Input(name='requester__request_notes')
         manager_name = Input(name='requester__owner_manager')
+        lookup = Button("Lookup")  # button for looking up user name with ldap
 
     @View.nested
     class purpose(WaitTab):  # noqa

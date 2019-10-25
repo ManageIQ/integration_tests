@@ -183,22 +183,6 @@ def test_verify_user_validation_authentication():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_validate_lookup_button_provsioning():
-    """
-    configure ldap and validate for lookup button in provisioning form
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Configuration
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_verify_role_configuration_for_new_ldap_groups():
     """
     Retrieve ldap user groups, assign roles to the group.
