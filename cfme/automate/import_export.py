@@ -140,6 +140,7 @@ class AutomateGitRepository(BaseEntity):
             }
         )
         view.import_git.submit.click()
+        view.flash.assert_no_error()
 
         git_select_view = self.create_view(GitImportSelectorView, wait="10s")
         git_select_view.flash.assert_no_error()
