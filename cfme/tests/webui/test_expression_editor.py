@@ -12,11 +12,10 @@ filter_option = "Cloud Volume : Name"
 
 @pytest.mark.meta(automates=[BZ(1720216)])
 @pytest.mark.parametrize("operator", ["not", "and", "or"])
-# remove NOT is 5.11 feature, see BZ(1720216)
-@pytest.mark.uncollectif(lambda operator, appliance:
-                         operator == "not" and appliance.version < "5.11")
 def test_exp_editor_delete_operator(appliance, operator):
     """
+    Bugzilla:
+        1720216
     Polarion:
         assignee: anikifor
         casecomponent: WebUI
