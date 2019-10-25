@@ -302,6 +302,18 @@ class HostsEditView(HostEditView):
         return self.in_compute_infrastructure_hosts and self.title.text == 'Credentials/Settings'
 
 
+class HostsCompareView(ComputeInfrastructureHostsView):
+    """Compare Host / Node page."""
+
+    @property
+    def is_displayed(self):
+        title = "Compare Host / Node"
+        return (self.logged_in_as_current_user and
+                self.title.text == title and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts']
+                )
+
+
 class ProviderAllHostsView(HostsView):
     """
     This view is used in Provider and HostCollection contexts
