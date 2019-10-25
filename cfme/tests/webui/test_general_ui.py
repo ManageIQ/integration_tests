@@ -8,6 +8,7 @@ from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -337,6 +338,32 @@ def test_tls_openssl_verify_mode(temp_appliance_preconfig, request):
     appliance.server.settings.update_smtp_server({"start_tls": old_tls})
     assert view.smtp_server.start_tls.read() == old_tls
     assert appliance.advanced_settings["smtp"]["openssl_verify_mode"] == "none"
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1733207])
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
+def test_vm_right_size_recommendation_back_button(appliance, setup_provider, full_template_vm):
+    """
+    Bugzilla:
+        1733207
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/18h
+        setup:
+            1. Add provider to appliance.
+        testSteps:
+            1. Navigate to a VM's details page.
+            2. From `Configuration` dropdown, select `Right Size Recommendations`.
+            3. Click on `Back` button and check if you're brought to Details Page.
+    """
+    view = navigate_to(full_template_vm, "RightSize")
+    view.back_button.click()
+    view = full_template_vm.create_view(InfraVmDetailsView)
+    assert view.is_displayed
 
 
 @pytest.mark.ignore_stream('5.10')
