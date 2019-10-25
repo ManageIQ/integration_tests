@@ -3,6 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.login import BaseLoggedInPage
+from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionAllView
 from cfme.generic_objects.definition.definition_views import GenericObjectDefinitionDetailsView
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -290,9 +291,10 @@ def test_generic_object_button_edited_request(button_without_group):
     assert view.request.read() == button_without_group.request
 
 
-@pytest.mark.manual
-@pytest.mark.meta(blockers=[BZ(1753289), BZ(1744478)], coverage=[1753289, 1744478])
-def test_generic_object_button_delete_flash():
+@pytest.mark.meta(
+    blockers=[BZ(1753289, forced_streams=["5.11"]), BZ(1744478)], automates=[1753289, 1744478]
+)
+def test_generic_object_button_delete_flash(button_without_group):
     """
     Bugzilla:
         1744478
@@ -311,7 +313,14 @@ def test_generic_object_button_delete_flash():
             2.
             3. Assert that the button name is in the flash message
     """
-    pass
+    view = navigate_to(button_without_group, "Details")
+    view.configuration.item_select('Remove this Button from Inventory', handle_alert=True)
+    view = button_without_group.create_view(GenericObjectDefinitionAllView)
+    assert view.is_displayed
+    # TODO: update flash if it turns out to be different after BZ's are fixed
+    view.flash.assert_success_message(
+        f'Button:"{button_without_group.name}" was successfully deleted'
+    )
 
 
 @pytest.mark.manual
