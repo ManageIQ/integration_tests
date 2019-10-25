@@ -23,6 +23,16 @@ def ipa_auth_provider():
 
 
 @pytest.fixture(scope='function')
+def ldap_auth_provider():
+    try:
+        return authutil.get_auth_crud('ad_bos')
+    except KeyError:
+        pytest.skip(
+            'ldap auth provider ad_bos not found in auth_data.auth_providers, skipping test'
+        )
+
+
+@pytest.fixture(scope='function')
 def setup_ipa_auth_provider(appliance, ipa_auth_provider):
     """Add/Remove IPA auth provider"""
     original_config = appliance.server.authentication.auth_settings
@@ -30,6 +40,19 @@ def setup_ipa_auth_provider(appliance, ipa_auth_provider):
                                               auth_provider=ipa_auth_provider)
     yield
 
+    appliance.server.authentication.auth_settings = original_config
+    appliance.server.login_admin()
+    appliance.server.authentication.configure(auth_mode='database')
+
+
+@pytest.fixture(scope='function')
+def setup_ldap_auth_provider(appliance, ldap_auth_provider):
+    """ Add/remove ldap auth provider"""
+    original_config = appliance.server.authentication.auth_settings
+    appliance.server.authentication.configure(auth_mode='ldap',
+                                              auth_provider=ldap_auth_provider,
+                                              user_type='upn')
+    yield ldap_auth_provider
     appliance.server.authentication.auth_settings = original_config
     appliance.server.login_admin()
     appliance.server.authentication.configure(auth_mode='database')
