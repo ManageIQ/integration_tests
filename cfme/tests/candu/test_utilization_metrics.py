@@ -3,6 +3,7 @@ import random
 from operator import attrgetter
 
 import pytest
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
@@ -59,6 +60,14 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
     metrics_tbl = appliance.db.client['metrics']
     rollups = appliance.db.client['metric_rollups']
     mgmt_systems_tbl = appliance.db.client['ext_management_systems']
+
+    vm_name = provider.data['cap_and_util']['capandu_vm']
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider)
+
+    if not vm.exists_on_provider:
+        pytest.skip("Skipping test, cu-24x7 VM does not exist")
+    vm.mgmt.ensure_state(VmState.RUNNING)
 
     logger.info("Deleting metrics tables")
     appliance.db.client.session.query(metrics_tbl).delete()
@@ -134,7 +143,6 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
             vm_name)
         average_rate = attrgetter('cpu_usage_rate_average')
 
-    pytest.set_trace()
     for record in query:
         if average_rate(record) is not None:
             assert average_rate(record) > 0, 'Zero VM CPU Usage'
@@ -325,20 +333,28 @@ def query_metric_rollup_table(appliance, provider, metric, azone_name):
         metrics_tbl.id.in_(provs.subquery()))
 
 
-def generic_test_azone_rollup(appliance, provider, metric, azone_name):
+def generic_test_azone_rollup(appliance, provider, metric):
+    azone_name = provider.data["cap_and_util"]["capandu_azone"]
     query = query_metric_rollup_table(appliance, provider, metric, azone_name)
 
     for record in query:
-        if getattr(record, metric) is not None:
+        if hasattr(record, metric):
             assert getattr(record, metric) > 0, (
                 'Zero Azone CPU usage/memory usage/Disk IO/Network IO'
             )
             break
 
 
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(RHEVMProvider, VMwareProvider))
-def test_azone_candu_cpu(metrics_collection, appliance, provider):
+@pytest.mark.provider(
+    [EC2Provider, AzureProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True, scope="module"
+)
+@pytest.mark.meta(
+    blockers=[BZ(1744845, forced_streams=['5.10'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
+)
+def test_azone_cpu_usage(metrics_collection, appliance, provider):
     """
     Polarion:
         assignee: nachandr
@@ -346,13 +362,19 @@ def test_azone_candu_cpu(metrics_collection, appliance, provider):
         casecomponent: CandU
         initialEstimate: 1/12h
     """
-    azone_name = provider.data["cap_and_util"]["capandu_azone"]
-    generic_test_azone_rollup(appliance, provider, 'cpu_usage_rate_average', azone_name)
+    generic_test_azone_rollup(appliance, provider, 'cpu_usage_rate_average')
 
 
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(RHEVMProvider, VMwareProvider))
-def test_azone_candu_memory(metrics_collection, appliance, provider):
+@pytest.mark.provider(
+    [EC2Provider, AzureProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True, scope="module"
+)
+@pytest.mark.meta(
+    blockers=[BZ(1744845, forced_streams=['5.10'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
+)
+def test_azone_memory_usage(metrics_collection, appliance, provider):
     """
     Polarion:
         assignee: nachandr
@@ -360,13 +382,19 @@ def test_azone_candu_memory(metrics_collection, appliance, provider):
         casecomponent: CandU
         initialEstimate: 1/12h
     """
-    azone_name = provider.data["cap_and_util"]["capandu_azone"]
-    generic_test_azone_rollup(appliance, provider, 'mem_usage_absolute_average', azone_name)
+    generic_test_azone_rollup(appliance, provider, 'mem_usage_absolute_average')
 
 
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(RHEVMProvider, VMwareProvider))
-def test_azone_candu_network(metrics_collection, appliance, provider):
+@pytest.mark.provider(
+    [EC2Provider, AzureProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    override=True, scope="module"
+)
+@pytest.mark.meta(
+    blockers=[BZ(1744845, forced_streams=['5.10'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
+)
+def test_azone_network_io(metrics_collection, appliance, provider):
     """
     Polarion:
         assignee: nachandr
@@ -374,5 +402,4 @@ def test_azone_candu_network(metrics_collection, appliance, provider):
         casecomponent: CandU
         initialEstimate: 1/12h
     """
-    azone_name = provider.data["cap_and_util"]["capandu_azone"]
-    generic_test_azone_rollup(appliance, provider, 'net_usage_rate_average', azone_name)
+    generic_test_azone_rollup(appliance, provider, 'net_usage_rate_average')
