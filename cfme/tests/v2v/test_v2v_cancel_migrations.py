@@ -58,12 +58,12 @@ def cancel_migration_plan(appliance, provider, mapping_data_vm_obj_mini):
                 if request_details_list.progress_percent(vm) > cancel_migration_after_percent:
                     request_details_list.cancel_migration(vm, confirmed=True)
                 clock_reading2 = request_details_list.get_clock(vm)
-                migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm) and
-                                                      (clock_reading1 < clock_reading2))
+                migration_plan_in_progress_tracker.append(request_details_list.is_in_progress(vm)
+                                                          and (clock_reading1 < clock_reading2))
             return not any(migration_plan_in_progress_tracker)
 
         wait_for(func=_get_plan_status_and_cancel, message="migration plan is in progress,"
-                                                       "be patient please", delay=5, num_sec=3600)
+                 "be patient please", delay=5, num_sec=3600)
     else:
         pytest.skip("Migration plan failed to start")
     yield migration_plan
@@ -205,8 +205,7 @@ def test_cancel_migration_attachments(
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(automates=[BZ(1755632)])
-@pytest.mark.meta(blockers=[BZ(1746592)])
+@pytest.mark.meta(blockers=[BZ(1746592)], automates=[1755632])
 def test_retry_migration_plan(cancel_migration_plan):
     """
     Test to cancel migration and then retry migration
