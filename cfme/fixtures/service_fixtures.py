@@ -249,8 +249,8 @@ def import_dialog(appliance, file_name):
         # It returns list of dicts
         ele_label = dialog[0]['dialog_tabs'][0]['dialog_groups'][0]['dialog_fields'][0]['name']
 
-    # File name contains 'yml' , replacing it
-    sd = appliance.collections.service_dialogs.instantiate(label=file_name.replace(".yml", ""))
+    # File name contains '.yml' or '.yaml', Hence replacing it.
+    sd = appliance.collections.service_dialogs.instantiate(label=file_name.split(".")[0])
     yield sd, ele_label
     sd.delete_if_exists()
 
