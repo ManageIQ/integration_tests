@@ -2402,3 +2402,36 @@ def test_edit_service_request_task(appliance, request_task):
     request_task.reload()
     assert request_task.options["request_param_a"] == "value_a"
     assert request_task.options["request_param_b"] == "value_b"
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1716847])
+@pytest.mark.customer_scenario
+def test_embedded_ansible_cat_item_edit_rest(appliance, request, ansible_catalog_item):
+    """
+    Bugzilla:
+        1716847
+        1732117
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Create an Ansible Playbook Catalog Item
+        testSteps:
+            1. Edit the Catalog Item via REST and check if it is updated.
+    """
+    service_template = appliance.rest_api.collections.service_templates.get(
+        name=ansible_catalog_item.name
+    )
+    new_data = {
+        "name": fauxfactory.gen_alphanumeric(),
+        "description": fauxfactory.gen_alphanumeric(),
+    }
+    service_template.action.edit(**new_data)
+    assert_response(appliance)
+
+    service_template.reload()
+    assert service_template.name == new_data["name"]
+    assert service_template.description == new_data["description"]
