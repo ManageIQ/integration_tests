@@ -26,6 +26,7 @@ from cfme.utils.conf import credentials
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
+
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider],
