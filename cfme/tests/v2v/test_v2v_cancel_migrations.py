@@ -230,7 +230,7 @@ def test_retry_migration_plan(cancel_migration_plan):
     # Automating BZ 1755632
     retry_interval_log = LogValidator(
         '/var/www/miq/vmdb/log/evm.log',
-        matched_patterns=['to Automate for delivery in \[60\] seconds*']
+        matched_patterns=[r'.*to Automate for delivery in \[60\] seconds.*']
     )
     retry_interval_log.start_monitoring()
     # search logs and wait for validation
