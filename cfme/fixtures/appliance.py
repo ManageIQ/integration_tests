@@ -112,6 +112,15 @@ def temp_appliance_preconfig_funcscope_upgrade(appliance, pytestconfig):
         yield appliances[0]
 
 
+@pytest.fixture(scope="module")
+def temp_appliance_preconfig_long(appliance, pytestconfig):
+    """ temp appliance with 24h lease for auth tests """
+    with sprout_appliances(
+            appliance, config=pytestconfig, preconfigured=True, lease_time=1440
+    ) as appliances:
+        yield appliances[0]
+
+
 # Single appliance, unconfigured
 @pytest.fixture(scope="module")
 def temp_appliance_unconfig(temp_appliance_unconfig_modscope):

@@ -42,8 +42,8 @@ def pytest_generate_tests(metafunc):
                          reason="Is a rails server")
 @pytest.mark.meta(automates=[BZ(1530683)])
 @test_requirements.auth
-def test_group_roles(temp_appliance_preconfig, setup_aws_auth_provider, group_name, role_access,
-                     context, soft_assert):
+def test_group_roles(temp_appliance_preconfig_long, setup_aws_auth_provider, group_name,
+                     role_access, context, soft_assert):
     """Basic default AWS_IAM group role auth + RBAC test
 
     Validates expected menu and submenu names are present for default
@@ -68,16 +68,16 @@ def test_group_roles(temp_appliance_preconfig, setup_aws_auth_provider, group_na
     except KeyError:
         pytest.fail('No match in credentials file for group "{}"'.format(iam_group_name))
 
-    with temp_appliance_preconfig.context.use(context):
+    with temp_appliance_preconfig_long.context.use(context):
         # fullname overrides user.name attribute, but doesn't impact login with username credential
-        user = temp_appliance_preconfig.collections.users.simple_user(
+        user = temp_appliance_preconfig_long.collections.users.simple_user(
             username, password, fullname=fullname
         )
         with user:
-            view = navigate_to(temp_appliance_preconfig.server, 'LoggedIn')
-            assert temp_appliance_preconfig.server.current_full_name() == user.name
+            view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
+            assert temp_appliance_preconfig_long.server.current_full_name() == user.name
             assert group_name.lower() in [
-                name.lower() for name in temp_appliance_preconfig.server.group_names()
+                name.lower() for name in temp_appliance_preconfig_long.server.group_names()
             ]
             nav_visible = view.navigation.nav_item_tree()
 
@@ -91,5 +91,5 @@ def test_group_roles(temp_appliance_preconfig, setup_aws_auth_provider, group_na
                 soft_assert(diff == {}, '{g} RBAC mismatch (expected first) for {a}: {d}'
                                         .format(g=group_name, a=area, d=diff))
 
-        temp_appliance_preconfig.server.login_admin()
+        temp_appliance_preconfig_long.server.login_admin()
         assert user.exists
