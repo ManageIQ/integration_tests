@@ -25,8 +25,8 @@ class KubeVirtProvider(InfraProvider):
         return self.parent_provider.create(**kwargs)
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
-
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance if appliance is not None else cls.appliance
         endpoints = {}
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
         for endp in prov_config['endpoints']:
@@ -40,7 +40,7 @@ class KubeVirtProvider(InfraProvider):
         # passing virtualization of KubeVirt provider explicitly to ocp provider
         parent_provider.virt_type = prov_config['virt_type']
 
-        return cls.appliance.collections.infra_providers.instantiate(
+        return appliance.collections.infra_providers.instantiate(
             prov_class=cls,
             name=prov_config.get('name'),
             key=prov_key,

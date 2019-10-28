@@ -105,6 +105,7 @@ class EC2Provider(CloudProvider):
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns the EC" object from configuration"""
+        appliance = appliance if appliance is not None else cls.appliance
         endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (EC2Endpoint, SmartStateDockerEndpoint):
@@ -113,10 +114,10 @@ class EC2Provider(CloudProvider):
 
         region_name = prov_config["region_name"]
         # Note: for Version 5.10 "Northern" replace with "N." like US West (N. California)
-        if cls.appliance.version >= "5.10":
+        if appliance.version >= "5.10":
             region_name = region_name.replace("Northern", "N.")
 
-        return cls.appliance.collections.cloud_providers.instantiate(
+        return appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             region=prov_config['region'],

@@ -43,9 +43,10 @@ class LenovoProvider(PhysicalProvider):
         return get_mgmt(mgmt_data)
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance if appliance is not None else cls.appliance
         endpoint = LenovoEndpoint(**prov_config['endpoints']['default'])
-        return cls.appliance.collections.physical_providers.instantiate(
+        return appliance.collections.physical_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             endpoints={endpoint.name: endpoint},

@@ -404,13 +404,14 @@ def calculate_provider_management_usage(self, appliance_ids):
         provider.appliances_manage_this_provider = results.get(provider.id, [])
 
 
-@singleton_task(soft_time_limit=20, time_limit=30)
+@singleton_task(soft_time_limit=60, time_limit=80)
 def scavenge_managed_providers_from_appliance(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
         return None
     try:
+        appliance.ipapp.rest_api.version  # checking that sprout has access to appliance
         managed_providers = appliance.ipapp.managed_known_providers
         appliance.managed_providers = [prov.key for prov in managed_providers]
     except Exception as e:

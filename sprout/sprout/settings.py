@@ -292,11 +292,6 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(hours=12),
     },
 
-    'sync-provider-hw': {
-        'task': 'appliances.tasks.maintainance.sync_provider_hw',
-        'schedule': timedelta(minutes=61),
-    },
-
     'read-docker-images-from-url': {
         'task': 'appliances.tasks.provisioning.read_docker_images_from_url',
         'schedule': timedelta(hours=12),

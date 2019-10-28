@@ -95,7 +95,7 @@ class NuageProvider(NetworkProvider):
         return get_mgmt(d)
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         """
         Returns the NuageProvider object based on cfme_data.yaml and credentials.eyaml.
 
@@ -105,13 +105,14 @@ class NuageProvider(NetworkProvider):
 
         Returns: NuageProvider object filled with all the data
         """
+        appliance = appliance if appliance is not None else cls.appliance
         endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (NuageEndpoint, EventsEndpoint):
                 if expected_endpoint.name == endp:
                     endpoints[endp] = expected_endpoint(**prov_config['endpoints'][endp])
 
-        return cls.appliance.collections.network_providers.instantiate(
+        return appliance.collections.network_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             endpoints=endpoints,

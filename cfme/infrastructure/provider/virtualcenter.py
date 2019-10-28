@@ -67,7 +67,8 @@ class VMwareProvider(InfraProvider):
         return deploy_args
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance if appliance is not None else cls.appliance
         endpoint = VirtualCenterEndpoint(**prov_config['endpoints']['default'])
 
         if prov_config.get('discovery_range'):
@@ -75,7 +76,7 @@ class VMwareProvider(InfraProvider):
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
-        return cls.appliance.collections.infra_providers.instantiate(
+        return appliance.collections.infra_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             endpoints={endpoint.name: endpoint},

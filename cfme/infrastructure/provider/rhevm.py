@@ -100,7 +100,8 @@ class RHEVMProvider(InfraProvider):
         return {}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance if appliance is not None else cls.appliance
         endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (RHEVMEndpoint, CANDUEndpoint):
@@ -112,7 +113,7 @@ class RHEVMProvider(InfraProvider):
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
-        return cls.appliance.collections.infra_providers.instantiate(
+        return appliance.collections.infra_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             endpoints=endpoints,

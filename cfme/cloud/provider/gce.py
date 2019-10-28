@@ -60,9 +60,10 @@ class GCEProvider(CloudProvider):
         return endpoints
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance if appliance is not None else cls.appliance
         endpoint = GCEEndpoint(**prov_config['endpoints']['default'])
-        return cls.appliance.collections.cloud_providers.instantiate(
+        return appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             project=prov_config['project'],
