@@ -62,20 +62,6 @@ def test_embed_tower_failover():
     pass
 
 
-@pytest.mark.tier(1)
-def test_embed_tower_add_scm_credentials():
-    """
-    Add SCM credentials for private GIT repo.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_embed_ansible_next_gen():
     """
@@ -177,20 +163,6 @@ def test_embed_tower_ui_requests_notifications():
         assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_add_network_credentials():
-    """
-    Add Network credentials.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
         tags: ansible_embed
     """
     pass
