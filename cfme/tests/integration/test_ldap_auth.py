@@ -79,6 +79,9 @@ def test_verify_database_user_login_fails_with_external_auth_configured(
     Login with user registered to cfme internal database.
     Authentication expected to fail
 
+    Bugzilla:
+        1632718
+
     Polarion:
         assignee: jdupuy
         casecomponent: Configuration
