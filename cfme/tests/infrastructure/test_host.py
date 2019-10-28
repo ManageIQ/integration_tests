@@ -350,12 +350,18 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
     assert host_count == navigate_to(appliance.collections.hosts, "All").paginator.items_amount
 
 
-@pytest.fixture(params= [1, 2, 5])
+@pytest.fixture(params= [1, 2, 'all'])
 def setup_provider_min_hosts(request, provider):
-    min_hosts = request.param
-    num_hosts = len(provider.data.get('hosts', {}))
-    if num_hosts < min_hosts:
-        pytest.skip(f'Not enough hosts({num_hosts}) to run test. Need at least {min_hosts}')
+    if request.param == "all":
+        min_hosts = len(provider.data.get('hosts', {}))
+        if min_hosts <= 2:
+            pytest.skip(f'"All" hosts case is covered by previous test for {min_hosts} Hosts.')
+        request.param = min_hosts
+    else:
+        min_hosts = request.param
+        num_hosts = len(provider.data.get('hosts', {}))
+        if num_hosts < min_hosts:
+            pytest.skip(f'Not enough hosts({num_hosts}) to run test. Need at least {min_hosts}')
     # Function-scoped fixture to set up a provider
     request_store = request
     setup_or_skip(request, provider)
