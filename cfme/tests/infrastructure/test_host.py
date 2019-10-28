@@ -350,18 +350,22 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
     assert host_count == navigate_to(appliance.collections.hosts, "All").paginator.items_amount
 
 
-@pytest.fixture
-def setup_provider_min_hosts(request, provider, min_hosts=2):
+@pytest.fixture(params= [1, 2, 5])
+def setup_provider_min_hosts(request, provider):
+    min_hosts = request.param
     num_hosts = len(provider.data.get('hosts', {}))
     if num_hosts < min_hosts:
         pytest.skip(f'Not enough hosts({num_hosts}) to run test. Need at least {min_hosts}')
     # Function-scoped fixture to set up a provider
-    return setup_or_skip(request, provider)
+    request_store = request
+    setup_or_skip(request, provider)
+    return request_store
 
 
 @test_requirements.infra_hosts
 def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts, provider):
     """
+    # ***********parameterize to use provider and appliance collections.
     Polarion:
         assignee: prichard
         casecomponent: Infra
@@ -382,7 +386,8 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
                banner where "X" is the number of selected hosts. Properties for each host are
                refreshed. Making changes to test pre-commithooks
     """
-    num_refresh = 2
+    num_refresh = setup_provider_min_hosts.param
+    plural_char = '' if num_refresh == 1 else 's'
     my_slice = slice(0, num_refresh, None)
     hosts_view = navigate_to(provider.collections.hosts, "All")
     num_hosts = hosts_view.entities.paginator.items_amount
@@ -390,7 +395,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
         pytest.skip('not enough hosts in appliance UI to run test')
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[f"'Refresh Provider' successfully initiated for "
-                                              f"{num_refresh} Hosts"],
+                                              f"{num_refresh} Host{plural_char}"],
                             hostname=appliance.hostname)
     evm_tail.start_monitoring()
     for h in hosts_view.entities.get_all(slice=my_slice):
@@ -398,7 +403,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     hosts_view.toolbar.configuration.item_select('Refresh Relationships and Power States',
                                                  handle_alert=True)
     hosts_view.flash.assert_success_message(
-        f'Refresh initiated for {num_refresh} Hosts from the CFME Database'
+        f'Refresh initiated for {num_refresh} Host{plural_char} from the CFME Database'
     )
     try:
         wait_for(provider.is_refreshed, func_kwargs={'force_refresh': False}, num_sec=300,
