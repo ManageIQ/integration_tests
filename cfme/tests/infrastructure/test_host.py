@@ -363,10 +363,12 @@ def setup_provider_min_hosts(request, provider):
         if num_hosts < min_hosts:
             pytest.skip(f'Not enough hosts({num_hosts}) to run test. Need at least {min_hosts}')
     # Function-scoped fixture to set up a provider
-    request_store = request
     setup_or_skip(request, provider)
-    return request_store
-
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    num_hosts_ui = hosts_view.entities.paginator.items_amount
+    if num_hosts_ui < min_hosts:
+        pytest.skip('Not enough hosts in UI to run test')
+    return request
 
 @test_requirements.infra_hosts
 def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts, provider):
@@ -395,10 +397,8 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     num_refresh = setup_provider_min_hosts.param
     plural_char = '' if num_refresh == 1 else 's'
     my_slice = slice(0, num_refresh, None)
+    #?? Would a create below be better?
     hosts_view = navigate_to(provider.collections.hosts, "All")
-    num_hosts = hosts_view.entities.paginator.items_amount
-    if num_hosts < num_refresh:
-        pytest.skip('not enough hosts in appliance UI to run test')
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[f"'Refresh Provider' successfully initiated for "
                                               f"{num_refresh} Host{plural_char}"],
