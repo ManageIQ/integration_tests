@@ -22,11 +22,10 @@ from widgetastic_manageiq import WaitTab
 class RHEVMEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
-        return {'hostname': self.hostname,
+        return {'hostname': getattr(self, 'hostname', None),
                 'api_port': getattr(self, 'api_port', None),
                 'verify_tls': getattr(self, 'verify_tls', None),
-                'ca_certs': getattr(self, 'ca_certs', None)
-                }
+                'ca_certs': getattr(self, 'ca_certs', None)}
 
 
 class RHEVMEndpointForm(View):
