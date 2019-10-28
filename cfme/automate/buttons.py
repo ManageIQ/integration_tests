@@ -19,12 +19,16 @@ from widgetastic_patternfly import Input
 
 from cfme.automate import AutomateCustomizationView
 from cfme.base.ui import AutomateSimulationView
+from cfme.exceptions import CFMEException
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.log import logger
 from cfme.utils.update import Updateable
+from cfme.utils.wait import TimedOutError
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import MultiBoxOrderedSelect
@@ -530,6 +534,15 @@ class ButtonCollection(BaseCollection):
         else:
             view.advanced.role_show.fill("<To All>")
 
+        try:
+            # add button slow to enable?
+            wait_for(lambda: not view.add_button.disabled,
+                     timeout=5,
+                     handle_exception=True)
+        except TimedOutError:
+            logger.exception('Timed out waiting for add button on button group form')
+            raise CFMEException('Custom button group add form button did not activate')
+
         view.add_button.click()
         view = self.create_view(ButtonGroupDetailView, self.group, wait="15s")
         view.flash.assert_no_error()
@@ -850,7 +863,7 @@ class ButtonGroupCollection(BaseCollection):
         self.type = type
 
         view = navigate_to(self, "Add")
-        view.fill(
+        changed = view.fill(
             {
                 "text": text,
                 "hover": hover,
@@ -860,11 +873,23 @@ class ButtonGroupCollection(BaseCollection):
                 "assign_buttons": assign_buttons,
             }
         )
+        if not changed:
+            # the form wasn't filled with anything
+            # no button group to instantiate, nothing was created
+            return None
+        try:
+            # add button slow to enable?
+            wait_for(lambda: not view.add_button.disabled,
+                     timeout=5,
+                     handle_exception=True)
+        except TimedOutError:
+            logger.exception('Timed out waiting for add button on button group form')
+            raise CFMEException('Custom button group add form button did not activate')
         view.add_button.click()
         view = self.create_view(ButtonGroupObjectTypeView)
 
         view.flash.assert_no_error()
-        view.flash.assert_message('Button Group "{}" was added'.format(hover))
+        view.flash.assert_success_message('Button Group "{}" was added'.format(hover))
         return self.instantiate(
             text=text,
             hover=hover,
