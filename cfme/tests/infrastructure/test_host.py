@@ -29,7 +29,8 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([InfraProvider],
-                         required_fields=['hosts'], scope='module',
+                         required_fields=['hosts'],
+                         scope='module',
                          selector=ONE_PER_TYPE),
 ]
 
@@ -96,6 +97,7 @@ def navigate_and_select_quads(provider):
 @pytest.mark.provider([VMwareProvider],
                       required_fields=['hosts'],
                       selector=ONE_PER_VERSION,
+                      scope='module',
                       override=True)
 def test_discover_host(request, provider, appliance, host_ips):
     """Tests hosts discovery.
