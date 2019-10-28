@@ -1221,7 +1221,7 @@ class DefaultEndpoint(object):
 
     @property
     def view_value_mapping(self):
-        return {'hostname': self.hostname}
+        return {'hostname': getattr(self, 'hostname', None)}
 
 
 class CANDUEndpoint(DefaultEndpoint):
@@ -1230,9 +1230,9 @@ class CANDUEndpoint(DefaultEndpoint):
 
     @property
     def view_value_mapping(self):
-        return {'hostname': self.hostname,
+        return {'hostname': getattr(self, 'hostname', None),
                 'api_port': getattr(self, 'api_port', None),
-                'database_name': self.database}
+                'database_name': getattr(self, 'database', None)}
 
 
 class SmartStateDockerEndpoint(DefaultEndpoint):
@@ -1250,11 +1250,10 @@ class EventsEndpoint(DefaultEndpoint):
 
     @property
     def view_value_mapping(self):
-        return {'event_stream': self.event_stream,
+        return {'event_stream': getattr(self, 'event_stream', None),
                 'security_protocol': getattr(self, 'security_protocol', None),
-                'hostname': self.hostname,
-                'api_port': getattr(self, 'api_port', None),
-                }
+                'hostname': getattr(self, 'hostname', None),
+                'api_port': getattr(self, 'api_port', None)}
 
 
 class SSHEndpoint(DefaultEndpoint):

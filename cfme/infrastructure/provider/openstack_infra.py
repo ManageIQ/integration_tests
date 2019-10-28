@@ -29,10 +29,9 @@ from widgetastic_manageiq import WaitTab
 class RHOSEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
-        return {'security_protocol': self.security_protocol,
-                'hostname': self.hostname,
-                'api_port': getattr(self, 'api_port', None)
-                }
+        return {'security_protocol': getattr(self, 'security_protocol', None),
+                'hostname': getattr(self, 'hostname', None),
+                'api_port': getattr(self, 'api_port', None)}
 
 
 class OpenStackInfraEndpointForm(View):
