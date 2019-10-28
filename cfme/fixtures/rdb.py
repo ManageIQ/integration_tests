@@ -103,6 +103,7 @@ class Rdb(Pdb):
         """Create a cached socket and bind it to random port"""
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('0.0.0.0', 0))
+        return s
 
     def do_continue(self, arg):
         sys.stdout = self._stdout
