@@ -4,10 +4,10 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 # Tests concerning database authentication
-
 pytestmark = [test_requirements.auth]
 
 
@@ -20,7 +20,7 @@ TEST_PASSWORDS = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def user(appliance):
     name = f"test-user-{fauxfactory.gen_alpha()}"
     creds = Credential(principal=name, secret=fauxfactory.gen_alpha())
@@ -32,6 +32,19 @@ def user(appliance):
     )
     yield user
     user.delete_if_exists()
+
+
+@pytest.fixture
+def nonexistent_user(appliance):
+    name = f"test-user-{fauxfactory.gen_alpha()}"
+    creds = Credential(principal=name, secret=fauxfactory.gen_alpha())
+    user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
+    user = appliance.collections.users.instantiate(
+        name=name,
+        credential=creds,
+        groups=user_group,
+    )
+    yield user
 
 
 @pytest.mark.parametrize(
@@ -69,3 +82,26 @@ def test_db_user_pwd(appliance, user, pwd, soft_assert):
         })
         assert view.save_button.disabled
         view.cancel_button.click()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1632718)])
+def test_login_invalid_user(appliance, nonexistent_user):
+    """
+    Login with invalid user
+    Authentication expected to fail
+
+    Bugzilla:
+        1632718
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/30h
+    """
+    with nonexistent_user:
+        # we expect the user to be unable to login
+        with pytest.raises(AssertionError):
+            navigate_to(appliance.server, "LoggedIn")
