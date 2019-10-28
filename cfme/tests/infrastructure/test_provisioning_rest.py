@@ -71,7 +71,7 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
     return result
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='module')
 def provision_data(appliance, provider, small_template_modscope):
     return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
 
@@ -120,7 +120,8 @@ def test_provision(request, appliance, provider, provision_data):
 
 
 @pytest.mark.rhv2
-@pytest.mark.provider([RHEVMProvider], override=True)  # These profile names are RHV specific
+# These profile names are RHV specific
+@pytest.mark.provider([RHEVMProvider], override=True, scope='module')
 @pytest.mark.parametrize('vnic_profile', ['empty_vnic_profile', 'specific_vnic_profile'])
 def test_provision_vlan(request, appliance, provision_data, vnic_profile, provider):
     """Tests provision via REST API for vlan Empty/Specific vNic profile.
