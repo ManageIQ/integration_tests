@@ -688,20 +688,3 @@ def test_session_timeout():
         title: Verify session timeout works fine for external auth.
     """
     pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_login_invalid_user():
-    """
-    Login with invalid user
-    Authentication expected to fail, check audit.log and evm.log for
-    correct log messages.
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Auth
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/4h
-    """
-    pass
