@@ -27,6 +27,9 @@ class Blocker(object):
         self.forced_streams = kwargs.pop("forced_streams", [])
         self.__dict__["kwargs"] = kwargs
 
+    def __repr__(self):
+        return f'{self.__module__}{self.__class__.__name__}::{self.bug_id}'
+
     @property
     def url(self):
         raise NotImplementedError('You need to implement .url')
@@ -115,6 +118,12 @@ class GH(Blocker):
         else:
             raise ValueError("GH issue specified wrong")
 
+    def __repr__(self):
+        return f'{self.__module__}.{self.__class__.__name__}::{self.repo}::{self.issue}'
+
+    def __str__(self):
+        return f'GitHub Issue https://github.com/{self.repo}/issues/{self.issue}'
+
     @property
     def data(self):
         identifier = "{}:{}".format(self.repo, self.issue)
@@ -147,9 +156,6 @@ class GH(Blocker):
     def repo(self):
         return self._repo or self.DEFAULT_REPOSITORY
 
-    def __str__(self):
-        return "GitHub Issue https://github.com/{}/issues/{}".format(self.repo, self.issue)
-
     @property
     def url(self):
         return "https://github.com/{}/issues/{}".format(self.repo, self.issue)
@@ -169,6 +175,12 @@ class BZ(Blocker):
         self.ignore_bugs = kwargs.pop("ignore_bugs", [])
         super(BZ, self).__init__(**kwargs)
         self.bug_id = int(bug_id)
+
+    def __repr__(self):
+        return f'{self.__module__}.{self.__class__.__name__}::{self.bug_id}'
+
+    def __str__(self):
+        return f'Bugzilla bug {self.get_bug_url()} (or one of its copies)'
 
     @property
     def data(self):
@@ -253,9 +265,6 @@ class BZ(Blocker):
     def url(self):
         return self.get_bug_url()
 
-    def __str__(self):
-        return "Bugzilla bug {} (or one of its copies)".format(self.get_bug_url())
-
 
 class JIRA(Blocker):
     @classproperty
@@ -271,6 +280,12 @@ class JIRA(Blocker):
     def __init__(self, jira_id, **kwargs):
         super(JIRA, self).__init__(**kwargs)
         self.jira_id = jira_id
+
+    def __repr__(self):
+        return f'{self.__module__}.{self.__class__.__name__}::{self.jira_id}'
+
+    def __str__(self):
+        return f'Jira card {self.url}'
 
     @property
     def url(self):
@@ -288,6 +303,3 @@ class JIRA(Blocker):
             return False
         issue = jira.issue(self.jira_id, fields='status')
         return issue.fields.status.name.lower() != 'done'
-
-    def __str__(self):
-        return 'Jira card {}'.format(self.url)

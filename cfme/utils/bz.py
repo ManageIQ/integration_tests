@@ -121,7 +121,9 @@ class Bugzilla(object):
     def get_bug(self, id):
         id = int(id)
         if id not in self.__bug_cache:
-            self.__bug_cache[id] = BugWrapper(self, self.bugzilla.getbug(id))
+            from requests import HTTPError
+            raise HTTPError
+            # self.__bug_cache[id] = BugWrapper(self, self.bugzilla.getbug(id))
         return self.__bug_cache[id]
 
     def get_bug_variants(self, id):
