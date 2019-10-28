@@ -105,7 +105,7 @@ class NuageProvider(NetworkProvider):
 
         Returns: NuageProvider object filled with all the data
         """
-        appliance = appliance if appliance is not None else cls.appliance
+        appliance = appliance or cls.appliance
         endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (NuageEndpoint, EventsEndpoint):

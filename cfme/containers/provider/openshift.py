@@ -182,7 +182,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        appliance = appliance if appliance is not None else cls.appliance
+        appliance = appliance or cls.appliance
         endpoints = {}
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
 

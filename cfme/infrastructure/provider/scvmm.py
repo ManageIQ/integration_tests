@@ -61,7 +61,7 @@ class SCVMMProvider(InfraProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        appliance = appliance if appliance is not None else cls.appliance
+        appliance = appliance or cls.appliance
         endpoint = SCVMMEndpoint(**prov_config['endpoints']['default'])
 
         if prov_config.get('discovery_range'):

@@ -86,7 +86,7 @@ class OpenStackProvider(CloudProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        appliance = appliance if appliance is not None else cls.appliance
+        appliance = appliance or cls.appliance
         endpoints = {
             RHOSEndpoint.name: RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
         }

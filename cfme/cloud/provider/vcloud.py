@@ -76,7 +76,7 @@ class VmwareCloudProvider(CloudProvider):
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
         """Returns the vcloud object from configuration"""
-        appliance = appliance if appliance is not None else cls.appliance
+        appliance = appliance or cls.appliance
         endpoint = VmwareCloudEndpoint(**prov_config['endpoints']['default'])
         return appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
