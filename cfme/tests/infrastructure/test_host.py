@@ -353,16 +353,22 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
 
 
 @pytest.fixture
-def setup_provider_min_hosts(request, provider, min_hosts=2):
-    num_hosts = len(provider.data.get('hosts', {}))
-    if num_hosts < min_hosts:
-        pytest.skip(f'Not enough hosts({num_hosts}) to run test. Need at least {min_hosts}')
+def setup_provider_min_hosts(request, appliance, provider, num_hosts):
+    hosts_yaml = len(provider.data.get('hosts', {}))
+    if hosts_yaml < num_hosts:
+        pytest.skip(f'Number of hosts defined in yaml for {provider.name} does not meet minimum '
+                    f'for test parameter {num_hosts}, skipping and not setting up provider')
+    if len(provider.mgmt.list_host()) < num_hosts:
+        pytest.skip(f'Number of hosts on {provider.name} does not meet minimum '
+                    f'for test parameter {num_hosts}, skipping and not setting up provider')
     # Function-scoped fixture to set up a provider
-    return setup_or_skip(request, provider)
+    setup_or_skip(request, provider)
 
 
 @test_requirements.infra_hosts
-def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts, provider):
+@pytest.mark.parametrize("num_hosts", [1, 2, 4])
+def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts, provider,
+                                            num_hosts):
     """
     Polarion:
         assignee: prichard
@@ -384,15 +390,12 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
                banner where "X" is the number of selected hosts. Properties for each host are
                refreshed. Making changes to test pre-commithooks
     """
-    num_refresh = 2
-    my_slice = slice(0, num_refresh, None)
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    num_hosts = hosts_view.entities.paginator.items_amount
-    if num_hosts < num_refresh:
-        pytest.skip('not enough hosts in appliance UI to run test')
+    plural_char = '' if num_hosts == 1 else 's'
+    my_slice = slice(0, num_hosts, None)
+    hosts_view = navigate_to(provider.collections.hosts, "All", force=True)
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[f"'Refresh Provider' successfully initiated for "
-                                              f"{num_refresh} Hosts"],
+                                              f"{num_hosts} Host{plural_char}"],
                             hostname=appliance.hostname)
     evm_tail.start_monitoring()
     for h in hosts_view.entities.get_all(slice=my_slice):
@@ -400,7 +403,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     hosts_view.toolbar.configuration.item_select('Refresh Relationships and Power States',
                                                  handle_alert=True)
     hosts_view.flash.assert_success_message(
-        f'Refresh initiated for {num_refresh} Hosts from the CFME Database'
+        f'Refresh initiated for {num_hosts} Host{plural_char} from the CFME Database'
     )
     try:
         wait_for(provider.is_refreshed, func_kwargs={'force_refresh': False}, num_sec=300,
@@ -428,7 +431,6 @@ def test_infrastructure_hosts_navigation_after_download(
         initialEstimate: 1/3h
     Bugzilla:
         1738664
-
     """
     if hosts_collection == "provider":
         hosts_view = navigate_to(provider.collections.hosts, "All")
@@ -446,8 +448,10 @@ def test_infrastructure_hosts_navigation_after_download(
 
 
 @test_requirements.infra_hosts
+@pytest.mark.parametrize("num_hosts", [2, 4])
 @pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
-def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider):
+def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider,
+                                              num_hosts):
     """
     Polarion:
         assignee: prichard
@@ -458,11 +462,8 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
         1746214
 
     """
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    ent_slice = slice(0, 2, None)
-    num_hosts = hosts_view.entities.paginator.items_amount
-    if num_hosts < 2:
-        pytest.skip('not enough hosts in appliance UI to run test')
+    ent_slice = slice(0, num_hosts, None)
+    hosts_view = navigate_to(provider.collections.hosts, "All", force=True)
     for h in hosts_view.entities.get_all(slice=ent_slice):
         h.check()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
@@ -499,9 +500,11 @@ def test_add_ipmi_refresh(appliance, setup_provider):
     view = navigate_to(host, "Edit")
     assert view.ipmi_address.read() == ipmi_address
 
+
 @test_requirements.infra_hosts
+@pytest.mark.parametrize("num_hosts", [1, 2, 4])
 @pytest.mark.meta(blockers=[BZ(1634794, forced_streams=["5.10"])], automates=[1634794])
-def test_infrastructure_hosts_no_edit_no_warning(appliance, setup_provider_min_hosts, provider):
+def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider, num_hosts):
     """
     Polarion:
         assignee: prichard
@@ -509,14 +512,10 @@ def test_infrastructure_hosts_no_edit_no_warning(appliance, setup_provider_min_h
         caseimportance: low
         initialEstimate: 1/6h
     Bugzilla:
-            1634794
+        1634794
     """
-    refresh = 2
-    my_slice = slice(0, refresh, None)
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    num_hosts = hosts_view.entities.paginator.items_amount
-    if num_hosts < refresh:
-        pytest.skip('not enough hosts in appliance UI to run test')
+    my_slice = slice(0, num_hosts, None)
+    hosts_view = navigate_to(provider.collections.hosts, "All", force=True)
     for h in hosts_view.entities.get_all(slice=my_slice):
         h.check()
     hosts_view.toolbar.configuration.item_select('Edit Selected items',
@@ -527,3 +526,4 @@ def test_infrastructure_hosts_no_edit_no_warning(appliance, setup_provider_min_h
         assert final_view.is_displayed
     except UnexpectedAlertPresentException:
         pytest.fail("Abandon changes alert displayed, but no changes made.")
+    # Todo add additional crud functionality.

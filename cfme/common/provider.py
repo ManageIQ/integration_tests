@@ -119,9 +119,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     def __eq__(self, other):
         return type(self) is type(other) and self.key == other.key
 
-    def __str__(self):
-        return self.name
-
     @property
     def data(self):
         """ Returns yaml data for this provider.
