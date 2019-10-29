@@ -350,7 +350,7 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
     assert host_count == navigate_to(appliance.collections.hosts, "All").paginator.items_amount
 
 
-@pytest.fixture(params= [1, 2, 'all'])
+@pytest.fixture(params=[1, 2, 'all'])
 def setup_provider_min_hosts(request, provider):
     if request.param == 1 and "compare" in request._pyfuncitem.name:
         pytest.skip(f'Compare tests need at least 2 hosts.')
@@ -372,10 +372,10 @@ def setup_provider_min_hosts(request, provider):
         pytest.skip('Not enough hosts in UI to run test')
     return request
 
+
 @test_requirements.infra_hosts
 def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts, provider):
     """
-    # ***********parameterize to use provider and appliance collections.
     Polarion:
         assignee: prichard
         casecomponent: Infra
@@ -456,7 +456,7 @@ def test_infrastructure_hosts_navigation_after_download(
 
 
 @test_requirements.infra_hosts
-#@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
+@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
 def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider):
     """
     Polarion:
