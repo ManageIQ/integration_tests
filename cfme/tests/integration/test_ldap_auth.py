@@ -23,7 +23,7 @@ def test_validate_lookup_button_provisioning(
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
     """
