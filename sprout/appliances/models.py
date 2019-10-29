@@ -437,9 +437,13 @@ class Group(MetadataMixin):
         if self.template_obsolete_days is None:
             return None
         # Preconfigured because we presume that if the preconfigured works, so does unconfigured one
-        latest_working_template_date = Template.objects.filter(
-            exists=True, usable=True, ready=True, preconfigured=True,
-            template_group=self).order_by("-date")[0].date
+        try:
+            latest_working_template_date = Template.objects.filter(
+                exists=True, usable=True, ready=True, preconfigured=True,
+                template_group=self).order_by("-date")[0].date
+        except IndexError:
+            return None
+
         latest_working_template_ids = [
             tpl.id
             for tpl

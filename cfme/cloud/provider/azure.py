@@ -73,11 +73,12 @@ class AzureProvider(CloudProvider):
         return self.data['provisioning']
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance or cls.appliance
         endpoint = AzureEndpoint(**prov_config['endpoints']['default'])
         # HACK: stray domain entry in credentials, so ensure it is not there
         endpoint.credentials.domain = None
-        return cls.appliance.collections.cloud_providers.instantiate(
+        return appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             region=prov_config.get('region'),

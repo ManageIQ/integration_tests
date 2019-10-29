@@ -65,9 +65,10 @@ class RedfishProvider(PhysicalProvider):
         return get_mgmt(d)
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance or cls.appliance
         endpoint = RedfishEndpoint(**prov_config['endpoints']['default'])
-        return cls.appliance.collections.physical_providers.instantiate(
+        return appliance.collections.physical_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             endpoints={endpoint.name: endpoint},
