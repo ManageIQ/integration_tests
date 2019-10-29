@@ -13,7 +13,7 @@ def test_appliance_console_ipa_ntp():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
         caseposneg: negative
@@ -40,7 +40,7 @@ def test_appliance_console_ipa():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/6h
@@ -61,7 +61,7 @@ def test_update_ldap_updates_login():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
     """
@@ -74,7 +74,7 @@ def test_saml_verify_user_login():
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -100,7 +100,7 @@ def test_saml_get_user_groups_from_ext_auth_httpd():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         initialEstimate: 1/2h
         title: saml: Verify “Get User Groups from External Authentication (httpd)” option.
     """
@@ -116,7 +116,7 @@ def test_verify_ui_reflects_ext_auth(mode):
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
         testSteps:
@@ -137,7 +137,7 @@ def test_ldap_group_lookup_error_message():
     Polarion:
         assignee: jdupuy
         caseimportance: low
-        casecomponent: Configuration
+        casecomponent: Auth
         caseposneg: negative
         initialEstimate: 1/4h
         title: verify ldap group lookup fails with correct error message
@@ -160,7 +160,7 @@ def test_verify_user_validation_authentication():
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
         title: verify user validation works fine but authentication fails
@@ -192,7 +192,7 @@ def test_verify_role_configuration_for_new_ldap_groups():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1h
         title: verify role configuration work as expected for new ldap groups
@@ -206,7 +206,7 @@ def test_disable_local_login():
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
         title: Verify disable local login option works fine. Verify enable/disable option
@@ -247,7 +247,7 @@ def test_ldap_auth_without_groups():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/4h
         title: verify LDAP authentication works without groups from LDAP by
@@ -262,7 +262,7 @@ def test_saml_login_fails_after_password_change():
     """
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/4h
@@ -289,7 +289,7 @@ def test_two_factor_auth_with_user_password_and_otp():
     Polarion:
         assignee: jdupuy
         initialEstimate: 1/3h
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         title: verify two factor authentication works with user password and otp.
     testSteps:
@@ -312,7 +312,7 @@ def test_auth_mode_new_trusted_forest_table_entry():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
         title: verify the authentication mode is displayed correctly for
@@ -330,7 +330,7 @@ def test_ldap_invalid_user_login():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/4h
@@ -355,7 +355,7 @@ def test_remove_display_name_for_user_in_ldap_and_verify_auth():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
@@ -384,7 +384,7 @@ def test_change_search_base():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
         title: Change the search base for user and groups lookup at domain component .
@@ -407,7 +407,7 @@ def test_change_domain_sequence_sssd_group_retrieval():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
         title: Change the domain sequence in sssd, and verify user groups retrieval.
@@ -445,7 +445,7 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
         title: verify user groups can be retrieved from "trusted forest"
@@ -463,7 +463,7 @@ def test_verify_the_trusted_forest_settings_table_display_in_auth_page():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
         title: verify the trusted forest settings table display in authentication page.
@@ -480,7 +480,7 @@ def test_authentication_user_not_in_ldap_but_in_db():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         caseposneg: negative
         initialEstimate: 1/4h
@@ -498,7 +498,7 @@ def test_verify_database_user_login_fails_with_external_auth_configured():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
         title: Verify DataBase user login fails with External auth configured.
@@ -519,7 +519,7 @@ def test_external_auth_openldap_proxy_to_3_domains():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
         title: verify external authentication with OpenLDAP proxy to 3 different domains
@@ -535,7 +535,7 @@ def test_appliance_console_ext_auth_options_skip():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/6h
         setup: -ssh to appliance
@@ -583,7 +583,7 @@ def test_multi_domain_configuration_for_external_auth_ldaps():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
         title: verify multi domain configuration for external auth ldaps
@@ -605,7 +605,7 @@ def test_external_auth_config_for_ldap_appliance_console():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/3h
         title: Verify external auth configuration for ldap can be un
@@ -623,7 +623,7 @@ def test_cfme_features_with_ldap():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1h
         testSteps:
@@ -647,7 +647,7 @@ def test_ldaps_customized_port():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
         title: Configure  ldaps for customized port e.g 10636, 10389 and validate CFME auth
@@ -664,7 +664,7 @@ def test_saml_multiple_appliances_same_realm():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/2h
         title: saml: Verify multiple appliances can be added to the same REALM.
@@ -682,7 +682,7 @@ def test_session_timeout():
 
     Polarion:
         assignee: jdupuy
-        casecomponent: Configuration
+        casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
         title: Verify session timeout works fine for external auth.
