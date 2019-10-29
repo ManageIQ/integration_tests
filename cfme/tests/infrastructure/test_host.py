@@ -352,7 +352,9 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
 
 @pytest.fixture(params= [1, 2, 'all'])
 def setup_provider_min_hosts(request, provider):
-    if request.param == "all":
+    if request.param == 1 and "compare" in request._pyfuncitem.name:
+        pytest.skip(f'Compare tests need at least 2 hosts.')
+    elif request.param == "all":
         min_hosts = len(provider.data.get('hosts', {}))
         if min_hosts <= 2:
             pytest.skip(f'"All" hosts case is covered by previous test for {min_hosts} Hosts.')
@@ -397,7 +399,6 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     num_refresh = setup_provider_min_hosts.param
     plural_char = '' if num_refresh == 1 else 's'
     my_slice = slice(0, num_refresh, None)
-    #?? Would a create below be better?
     hosts_view = navigate_to(provider.collections.hosts, "All")
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[f"'Refresh Provider' successfully initiated for "
@@ -455,7 +456,7 @@ def test_infrastructure_hosts_navigation_after_download(
 
 
 @test_requirements.infra_hosts
-@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
+#@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
 def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider):
     """
     Polarion:
@@ -467,11 +468,9 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
         1746214
 
     """
+    num_refresh = setup_provider_min_hosts.param
+    ent_slice = slice(0, num_refresh, None)
     hosts_view = navigate_to(provider.collections.hosts, "All")
-    ent_slice = slice(0, 2, None)
-    num_hosts = hosts_view.entities.paginator.items_amount
-    if num_hosts < 2:
-        pytest.skip('not enough hosts in appliance UI to run test')
     for h in hosts_view.entities.get_all(slice=ent_slice):
         h.check()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
