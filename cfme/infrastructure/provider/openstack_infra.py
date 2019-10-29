@@ -101,7 +101,8 @@ class OpenstackInfraProvider(InfraProvider):
         return bool(self.nodes.all())
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance or cls.appliance
         endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (RHOSEndpoint, EventsEndpoint, SSHEndpoint):
@@ -113,7 +114,7 @@ class OpenstackInfraProvider(InfraProvider):
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
-        return cls.appliance.collections.infra_providers.instantiate(
+        return appliance.collections.infra_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             endpoints=endpoints,

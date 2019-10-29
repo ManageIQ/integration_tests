@@ -242,7 +242,7 @@ The Sprout™
         send_mail(
             "[Sprout] Appliance swap report",
             email_body,
-            "sprout-appliance-swap@example.com",
+            "sprout-appliance-swap@redhat.com",
             [user.email],
         )
 
@@ -331,7 +331,7 @@ Sprout.
         send_mail(
             "Possible candidates for template deletion",
             email_body,
-            "sprout-template-deletion-suggest@example.com",
+            "sprout-template-deletion-suggest@redhat.com",
             user_mails,
         )
 
@@ -378,7 +378,7 @@ Sprout template version mismatch spammer™
         result = send_mail(
             "Template version mismatches detected",
             email_body,
-            "sprout-template-version-mismatch@example.com",
+            "sprout-template-version-mismatch@redhat.com",
             ['cfme-qe-infra@redhat.com'],
         )
         if result > 0:
@@ -404,13 +404,14 @@ def calculate_provider_management_usage(self, appliance_ids):
         provider.appliances_manage_this_provider = results.get(provider.id, [])
 
 
-@singleton_task(soft_time_limit=20, time_limit=30)
+@singleton_task(soft_time_limit=60, time_limit=80)
 def scavenge_managed_providers_from_appliance(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
         return None
     try:
+        appliance.ipapp.rest_api.version  # checking that sprout has access to appliance
         managed_providers = appliance.ipapp.managed_known_providers
         appliance.managed_providers = [prov.key for prov in managed_providers]
     except Exception as e:

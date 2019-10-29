@@ -181,8 +181,8 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
         return int(view.entities.summary("Relationships").get_text_of("Container Templates"))
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
-
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance or cls.appliance
         endpoints = {}
         token_creds = cls.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
 
@@ -214,7 +214,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
              'image_repo', 'image_reg', 'image_tag', 'cve_loc')
         ]
 
-        return cls.appliance.collections.containers_providers.instantiate(
+        return appliance.collections.containers_providers.instantiate(
             prov_class=cls,
             name=prov_config.get('name'),
             key=prov_key,

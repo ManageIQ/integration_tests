@@ -85,7 +85,8 @@ class OpenStackProvider(CloudProvider):
         return {}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        appliance = appliance or cls.appliance
         endpoints = {
             RHOSEndpoint.name: RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
         }
@@ -102,7 +103,7 @@ class OpenStackProvider(CloudProvider):
         infra_prov_key = prov_config.get('infra_provider_key')
         infra_provider = get_crud(infra_prov_key) if infra_prov_key else None
 
-        return cls.appliance.collections.cloud_providers.instantiate(
+        return appliance.collections.cloud_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             api_port=prov_config['port'],
