@@ -2451,6 +2451,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """Switch UI back to database authentication, and run --uninstall-ipa on appliance"""
         self.appliance_console_cli.uninstall_ipa_client()
         self.server.authentication.configure(auth_mode='database')
+        # reset ntp servers
+        self.server.settings.update_ntp_servers({'ntp_server_1': 'clock.corp.redhat.com'})
         self.wait_for_web_ui()  # httpd restart in uninstall-ipa
 
     @logger_wrap('Configuring SAML external auth provider')
