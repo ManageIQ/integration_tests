@@ -598,6 +598,35 @@ def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
     assert result.validate(wait="60s")
 
 
+@test_requirements.azure
+@pytest.mark.meta(automates=[1412363])
+@pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
+@pytest.mark.tier(2)
+def test_regions_gov_azure(provider):
+    """
+    This test verifies that Azure Government regions are not included in
+    the default region list as most users will receive errors if they try
+    to use them.
+    Bugzilla:
+        1412363
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/8h
+        setup: Check the region list when adding a Azure Provider.
+        startsin: 5.7
+    """
+    view = navigate_to(AzureProvider, "Add")
+    # prefill the provider type to enable regions dropdown
+    view.fill({'prov_type': provider.type.capitalize()})
+    available_regions = [opt.text for opt in view.region.all_options]
+    # no government regions should be available by default
+    assert not any(reg for reg in available_regions if 'gov' in reg.lower())
+
+
 @test_requirements.general_ui
 @pytest.mark.tier(3)
 def test_openstack_provider_has_api_version(appliance):
