@@ -230,6 +230,26 @@ def ec2_provider_with_sts_creds(appliance):
     prov.delete()
 
 
+@pytest.fixture
+def ec2_instance_without_name(provider, appliance):
+    template_id = provider.mgmt.get_template(
+        provider.data.templates.get('small_template').name).uuid
+    instance = appliance.collections.cloud_instances.instantiate(name='',
+                                                                 provider=provider,
+                                                                 template_name=template_id)
+    instance = instance.mgmt.create_vm()
+    wait_for(lambda: instance.mgmt.state == VmState.RUNNING, delay=15, timeout=900)
+
+    yield instance
+    instance.cleanup_on_provider()
+
+def set_public_images_and_refresh(appliance, provider, enable):
+    appliance.set_public_images(enable, provider)
+    provider.refresh_provider_relationships(wait=7200, delay=120)
+    view = provider.load_details()
+    return int(view.entities.summary("Relationships").get_text_of("Images"))
+
+
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_add_cancelled_validation_cloud(request, appliance):
@@ -1054,30 +1074,6 @@ def test_provider_flavors_azure():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.azure
-@pytest.mark.tier(1)
-def test_market_place_images_azure():
-    """
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/6h
-        testSteps:
-            1.Enable market place images
-            2.Add Azure provider
-            3.Refresh the provider
-        expectedResults:
-            1.
-            2.
-            3. Refresh is done fast (faster than 15 minutes)
-    Bugzilla:
-        1491330
-    """
-    pass
-
-
 @pytest.mark.ignore_stream('5.11')
 @test_requirements.azure
 @pytest.mark.tier(1)
@@ -1216,51 +1212,48 @@ def test_refresh_with_stack_without_parameters(provider, request, stack_without_
 
 
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_public_images():
+@pytest.mark.long_running
+@pytest.mark.provider([AzureProvider, EC2Provider], scope="function", override=True)
+def test_public_images_enable_disable(setup_provider, appliance, provider):
     """
+    Bugzilla:
+        1612086
+        1491330
+
+    The easiest way to simulate AWS API Limit for > 200 items is to enable
+    and disable public images.
+    So test for testing public images and for testing AWS API Limit is combined in this test.
+
     Polarion:
         assignee: mmojzis
         caseimportance: critical
-        initialEstimate: 2/3h
+        initialEstimate: 1 1/2h
         casecomponent: Cloud
         testSteps:
             1. Enable public images for ec2
             2. Add ec2 provider
             3. Wait for its refresh(It can take more than 30 minutes)
+            4. Disable public images for ec2
+            5. Wait for its refresh(It can take more than 30 minutes)
         expectedResults:
             1.
             2.
-            3. Refresh should be successful and images collected
+            3. Refresh should be successful and public images collected
+            4.
+            5. Refresh should be successful and public images uncollected
     """
-    pass
-
-
-@test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_api_filter_limit():
-    """
-    Bugzilla:
-        1612086
-
-    The easiest way to simulate AWS API Limit for > 200 items is to enable
-    and disable public images:
-    Requirement: Have an ec2 provider
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1 1/3h
-        startsin: 5.9
-        caseimportance: critical
-        testSteps:
-            1. Enable public images for ec2 in Advanced Settings
-            2. Disable public images for ec2 in Advanced Settings
-        expectedResults:
-            1. Wait for public images to be refreshed
-            2. Wait for public images to be refreshed (cleared)
-    """
-    pass
+    # enable
+    provider_images = 20000 if provider.one_of(AzureProvider) else 40000
+    print(provider)
+    images = set_public_images_and_refresh(appliance, provider, enable=True)
+    if images < provider_images:
+        pytest.fail("There are not enough images after enabling public images and refresh!")
+    print(images)
+    # disable
+    images = set_public_images_and_refresh(appliance, provider, enable=False)
+    print(images)
+    if images > 5000:
+        pytest.fail("There are too many images after disabling public images and refresh!")
 
 
 @test_requirements.ec2
@@ -1322,7 +1315,6 @@ def test_add_delete_add_provider(setup_provider, provider, request):
     provider.validate_stats(ui=True)
 
 
-@test_requirements.ec2
 @pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
 def test_deploy_instance_with_ssh_addition_template(setup_provider,
                                                     instance_with_ssh_addition_template):
@@ -1349,9 +1341,9 @@ def test_deploy_instance_with_ssh_addition_template(setup_provider,
         pytest.fail('Instance with ssh addition template was not created successfully!')
 
 
+@pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
 @test_requirements.ec2
-@pytest.mark.manual
-def test_add_ec2_provider_with_instance_without_name():
+def test_add_provider_with_instance_without_name(provider, ec2_instance_without_name):
     """
     Polarion:
         assignee: mmojzis
@@ -1365,7 +1357,8 @@ def test_add_ec2_provider_with_instance_without_name():
             1.
             2. Refresh should complete without errors
     """
-    pass
+    provider.create()
+    provider.validate_stats(ui=True)
 
 
 @pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
