@@ -3,7 +3,8 @@ import pytest
 from widgetastic.utils import partial_match
 from wrapanapi.exceptions import ImageNotFoundError
 from wrapanapi.systems.ec2 import EC2Image
-from wrapanapi.systems.ec2 import EC2Instance
+#from wrapanapi.systems.ec2 import EC2Instance
+from cfme.cloud.instance.ec2 import EC2Instance
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
@@ -225,9 +226,9 @@ def test_mapping_tags(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.parametrize("ec2taggable", [EC2Image, EC2Instance])
+@pytest.mark.parametrize("collection_type", ["vms", "templates"])
 @pytest.mark.provider([EC2Provider], override=True, scope='function')
-def test_ec2_tags(provider, request, ec2taggable, testing_instance):
+def test_ec2_tags(provider, request, collection_type, testing_instance):
     """
     Requirement: Have an ec2 provider
 
@@ -253,11 +254,14 @@ def test_ec2_tags(provider, request, ec2taggable, testing_instance):
     system = provider.mgmt
     tag_key = f"test_{fauxfactory.gen_alpha()}"
     tag_value = f"testing_{fauxfactory.gen_alpha()}"
-    if ec2taggable == EC2Image:
+    if collection_type == "templates":
         taggable = system.list_templates()[0]
         request.addfinalizer(lambda: taggable.unset_tag(tag_key, tag_value))
     else:
         taggable = system.get_vm(testing_instance.name)
     taggable.set_tag(tag_key, tag_value)
     provider.refresh_provider_relationships(wait=600)
-    assert taggable.get_tag_value(tag_key) == tag_value
+    collection = provider.appliance.provider_based_collection(provider, coll_type=collection_type)
+    taggable_in_cfme = collection.instantiate(taggable.name, provider)
+    view = navigate_to(taggable_in_cfme, 'Details')
+    assert view.entities.summary("Labels").get_text_of(tag_key) == tag_value
