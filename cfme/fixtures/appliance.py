@@ -116,7 +116,8 @@ def temp_appliance_preconfig_funcscope_upgrade(appliance, pytestconfig):
 def temp_appliance_preconfig_long(appliance, pytestconfig):
     """ temp appliance with 24h lease for auth tests """
     with sprout_appliances(
-            appliance, config=pytestconfig, preconfigured=True, lease_time=1440
+            appliance, config=pytestconfig, preconfigured=True, lease_time=1440,
+            provider_type='rhevm'
     ) as appliances:
         yield appliances[0]
 
