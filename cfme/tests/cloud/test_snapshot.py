@@ -133,6 +133,7 @@ def test_notification_for_snapshot_delete_failure_ec2():
 @pytest.mark.manual
 @pytest.mark.provider([OpenStackProvider])
 @test_requirements.snapshot
+@pytest.mark.meta(coverage=[1685300, 1703074, 1704340])
 @pytest.mark.tier(2)
 def test_snapshot_cloud_tenant():
     """

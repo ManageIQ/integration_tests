@@ -310,9 +310,8 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
     assert int(view.disks_table.row(name=disk_added)["Size"].text) == disk_size
 
 
-@pytest.mark.ignore_stream('5.10')
 @pytest.mark.customer_scenario
-@pytest.mark.meta(automates=[BZ(1631448)])
+@pytest.mark.meta(automates=[1631448, 1696841])
 @pytest.mark.provider([VMwareProvider], override=True)
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(

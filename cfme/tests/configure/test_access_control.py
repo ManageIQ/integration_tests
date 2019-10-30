@@ -2018,8 +2018,8 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
 
 
 @pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
 @test_requirements.rbac
+@pytest.mark.meta(coverage=[1684472, 1693720])
 @pytest.mark.tier(2)
 def test_tags_manual_features():
     """
@@ -2054,6 +2054,7 @@ def test_tags_manual_features():
 @pytest.mark.manual
 @pytest.mark.provider([OpenshiftProvider])
 @test_requirements.rbac
+@pytest.mark.meta(coverage=[1631694, 1702076])
 @pytest.mark.tier(2)
 def test_host_clusters_pod_filter(setup_provider):
     """
