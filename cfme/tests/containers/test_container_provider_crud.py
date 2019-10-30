@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.common.provider_views import ContainerProvidersView
 from cfme.containers.provider import ContainersProvider
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 
@@ -16,12 +15,10 @@ pytestmark = [
         [ContainersProvider],
         scope='function',
         selector=ONE_PER_VERSION),
-    pytest.mark.meta(
-        blockers=[BZ(1713504, forced_streams=['5.11'])]
-    ),
 ]
 
 
+@pytest.mark.meta(automates=[1763857])
 def test_container_provider_crud(request, appliance, has_no_providers, provider):
 
     """
@@ -30,6 +27,9 @@ def test_container_provider_crud(request, appliance, has_no_providers, provider)
         caseimportance: critical
         casecomponent: Containers
         initialEstimate: 1/6h
+
+    Bugzilla:
+        1763857
     """
 
     provider.create()
