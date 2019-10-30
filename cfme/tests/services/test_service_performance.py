@@ -22,6 +22,7 @@ def appliance_with_performance_db(temp_appliance_extended_db):
 
 
 @test_requirements.service
+@pytest.mark.meta(automates=[1688937, 1686433])
 def test_services_performance(appliance_with_performance_db):
     """
     Polarion:
@@ -31,6 +32,7 @@ def test_services_performance(appliance_with_performance_db):
 
     Bugzilla:
         1688937
+        1686433
     """
 
     app = appliance_with_performance_db
