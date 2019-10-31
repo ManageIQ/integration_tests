@@ -236,7 +236,7 @@ class BasicProvisionFormView(View):
         vm_filter = BootstrapSelect('service__vm_filter')
         num_vms = BootstrapSelect('service__number_of_vms')
         provision_type = BootstrapSelect('service__provision_type')
-        linked_clone = Input(name='service__linked_clone')
+        linked_clone = Checkbox(name='service__linked_clone')
         pxe_server = BootstrapSelect('service__pxe_server_id')
         pxe_image = SelectTable('//div[@id="prov_pxe_img_div"]/table')
         iso_file = SelectTable('//div[@id="prov_iso_img_div"]/table')

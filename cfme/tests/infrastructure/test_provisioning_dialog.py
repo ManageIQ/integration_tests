@@ -465,3 +465,50 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
     )
     assert 'Datacenter' == provider.mgmt.get_vm(vm_name).raw.parent.parent.name, (
         'The new vm is not placed in the Datacenter root directory!')
+
+
+@pytest.mark.rhv2
+@pytest.mark.provider([RHEVMProvider], override=True,
+                      required_fields=[['cap_and_util', 'capandu_vm']])
+@pytest.mark.meta(automates=[1726590], blockers=[BZ(1726590, forced_streams=["5.10"])])
+def test_linked_clone_default(provisioner, provisioning, provider, prov_data, vm_name):
+    """ Tests provision VM from a template with the selected "Linked Clone" option.
+    The template must have preallocated disks (at least one) for this test.
+
+    Required_fields is set to [['cap_and_util', 'capandu_vm']] because template for this VM has
+    a preallocated disk for sure.
+
+    Bugzilla:
+        1726590
+
+    Metadata:
+        test_flag: provision
+
+    Polarion:
+        assignee: anikifor
+        caseimportance: high
+        casecomponent: Provisioning
+        initialEstimate: 1/4h
+    """
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['catalog']['linked_clone'] = True
+    # should be automatic but due to limited storage on rhv sometimes it may fail because of that
+    prov_data['environment'] = {'automatic_placement': True}
+    rhv = provider.mgmt
+
+    def _get_template_with_preallocated_disk():
+        all_preallocated_disks = rhv.list_disks(disk_id=True, sparse=False)
+        templates = rhv.list_templates()
+        for t in templates:
+            if t.name == "azure_pwsh":
+                continue  # this is a very big template and it will take a lot of time to provision
+            disks = t.list_disks(disk_id=True)
+            for disk_id in disks:
+                if disk_id in all_preallocated_disks:
+                    return t.name
+
+    template_name = _get_template_with_preallocated_disk()
+    if template_name is None:
+        pytest.skip("no template was found with preallocated disks")
+
+    provisioner(template_name, prov_data)
