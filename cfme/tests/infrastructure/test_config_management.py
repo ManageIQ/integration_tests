@@ -189,3 +189,99 @@ def test_ansible_tower_service_dialog_creation_from_template(request, config_man
     assert dialog.exists
 
     dialog.delete_if_exists()
+
+
+@pytest.mark.manual
+@test_requirements.tower
+@pytest.mark.tier(1)
+def test_config_manager_add_multiple_times_ansible_tower_243():
+    """
+    Try to add same Tower manager twice (use the same IP/hostname). It
+    should fail and flash message should be displayed.
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        caseposneg: negative
+        casecomponent: Ansible
+        initialEstimate: 1/4h
+        startsin: 5.7
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tower
+def test_config_manager_job_template_refresh():
+    """
+    After first Tower refresh, go to Tower UI and change name of 1 job
+    template. Go back to CFME UI, perform refresh and check if job
+    template name was changed.
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Ansible
+        initialEstimate: 1/2h
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tower
+def test_config_manager_accordion_tree():
+    """
+    Make sure there is accordion tree, once Tower is added to the UI.
+
+    Bugzilla:
+        1560552
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: WebUI
+        caseimportance: low
+        initialEstimate: 1/4h
+        startsin: 5.8
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tower
+@pytest.mark.tier(1)
+def test_config_manager_remove_objects_ansible_tower_310():
+    """
+    1) Add Configuration manager
+    2) Perform refresh and wait until it is successfully refreshed
+    3) Remove provider
+    4) Click through accordion and double check that no objects (e.g.
+    tower job templates) were left in the UI
+
+    Polarion:
+        assignee: nachandr
+        caseimportance: medium
+        casecomponent: Ansible
+        initialEstimate: 1/4h
+        startsin: 5.7
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.tower
+@pytest.mark.tier(1)
+def test_config_manager_change_zone():
+    """
+    Add Ansible Tower in multi appliance, add it to appliance with UI. Try
+    to change to zone where worker is enabled.
+
+    Bugzilla:
+        1353015
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Provisioning
+        caseimportance: medium
+        initialEstimate: 1h
+        startsin: 5.8
+    """
+    pass
