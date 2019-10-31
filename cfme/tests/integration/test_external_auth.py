@@ -3,6 +3,7 @@ from gevent.timeout import Timeout
 
 from cfme import test_requirements
 from cfme.utils.auth import get_auth_crud
+from cfme.utils.blockers import BZ
 
 pytestmark = [test_requirements.auth]
 
@@ -23,9 +24,13 @@ def freeipa_provider():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1767082, forced_streams=['5.10'])], automates=[1767082])
 def test_appliance_console_ipa_ntp(request, appliance, freeipa_provider):
     """
     Try to setup IPA on appliance when NTP daemon is stopped on server.
+
+    Bugzilla:
+        1767082
 
     Polarion:
         assignee: jdupuy
