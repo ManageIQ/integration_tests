@@ -505,6 +505,7 @@ def test_custom_button_order_sort(appliance, request, provider, setup_provider, 
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1703588, 1710497])
 def test_custom_button_role_selection(appliance, request):
     """Test custom button role selection
 

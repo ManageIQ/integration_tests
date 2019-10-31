@@ -110,7 +110,7 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(automates=[BZ(1671580)])
+@pytest.mark.meta(automates=[1671580, 1722937])
 # Tests to check that specific metrics are being collected
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     """
@@ -136,7 +136,7 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(automates=[BZ(1671580)])
+@pytest.mark.meta(automates=[1671580, 1722937])
 @pytest.mark.meta(
     blockers=[BZ(1724415, forced_streams=['5.10', '5.11'],
         unblock=lambda provider: not provider.one_of(AzureProvider))]
@@ -167,7 +167,7 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(automates=[BZ(1671580)])
+@pytest.mark.meta(automates=[1671580, 1722937])
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     """
     Polarion:
@@ -192,7 +192,7 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     scope='module',
     override=True
 )
-@pytest.mark.meta(automates=[BZ(1671580)])
+@pytest.mark.meta(automates=[1671580, 1722937])
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     """
     Polarion:
