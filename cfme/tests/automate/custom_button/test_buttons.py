@@ -6,6 +6,9 @@ import pytest
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
+from cfme.automate.buttons import ButtonDetailView
+from cfme.automate.buttons import ButtonGroupDetailView
+from cfme.automate.buttons import ButtonGroupObjectTypeView
 from cfme.automate.simulation import simulate
 from cfme.base.ui import AutomateSimulationView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -24,14 +27,15 @@ pytestmark = [test_requirements.custom_button, pytest.mark.usefixtures("uses_inf
 
 
 @pytest.fixture(scope="module")
-def buttongroup(appliance):
+def buttongroup(request, appliance):
     def _buttongroup(object_type):
         collection = appliance.collections.button_groups
         button_gp = collection.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="grp_"),
+            hover=fauxfactory.gen_alphanumeric(start="hvr_"),
             type=getattr(collection, object_type),
         )
+        request.addfinalizer(button_gp.delete_if_exists)
         return button_gp
 
     return _buttongroup
@@ -77,39 +81,53 @@ def test_button_group_crud(request, appliance, obj_type):
             5. Delete the button group
             6. Assert that the button group no longer exists.
     """
-    # 1) Create it
     collection = appliance.collections.button_groups
+
+    # Create button group
     buttongroup = collection.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(start="hov_"),
+        icon_color="#ff0000",
         type=getattr(collection, obj_type, None),
     )
-
-    # Ensure it gets deleted after the test
     request.addfinalizer(buttongroup.delete_if_exists)
-    # 2) Verify it exists
+    view = buttongroup.create_view(ButtonGroupObjectTypeView, wait="10s")
+    view.flash.assert_success_message(f'Button Group "{buttongroup.hover}" was added')
     assert buttongroup.exists
-    # 3) Now the new part, go to the details page
+    # Verify that the values in there indeed correspond to the values specified
     view = navigate_to(buttongroup, "Details")
-    # 4) and verify that the values in there indeed correspond to the values specified
     assert view.text.text == buttongroup.text
     assert view.hover.text == buttongroup.hover
-    # 5) generate a random string for update test
-    updated_hover = "edit_desc_{}".format(fauxfactory.gen_alphanumeric())
-    # 6) Update it (this might go over multiple fields in the object)
-    with update(buttongroup):
-        buttongroup.hover = updated_hover
-    # 7) Assert it still exists
+
+    # Cancel edit
+    view = navigate_to(buttongroup, "Edit")
+    view.cancel_button.click()
+    view.flash.assert_success_message(
+        f'Edit of Button Group "{buttongroup.text}" was cancelled by the user'
+    )
     assert buttongroup.exists
-    # 8) Go to the details page again
+
+    # Update it (this might go over multiple fields in the object)
+    updated_text = fauxfactory.gen_alphanumeric(15, start="edited_grp_")
+    updated_hover = fauxfactory.gen_alphanumeric(15, start="edited_hvr_")
+    with update(buttongroup):
+        buttongroup.text = updated_text
+        buttongroup.hover = updated_hover
+    buttongroup.create_view(ButtonGroupDetailView, wait="10s")
+    view.flash.assert_success_message(f'Button Group "{updated_hover}" was saved')
+    assert buttongroup.exists
+    # Verify that the values updated reflect on details page
     view = navigate_to(buttongroup, "Details")
-    # 9) Verify it indeed equals to what it was set to before
+    assert view.text.text == updated_text
     assert view.hover.text == updated_hover
-    # 10) Delete it - first cancel and then real
+
+    # Delete it - first cancel and then real
     buttongroup.delete(cancel=True)
+    assert view.is_displayed
     assert buttongroup.exists
     buttongroup.delete()
-    # 11) Verify it is deleted
+    view = buttongroup.create_view(ButtonGroupObjectTypeView, wait="10s")
+    view.flash.assert_success_message(f'Button Group "{buttongroup.hover}": Delete successful')
     assert not buttongroup.exists
 
 
@@ -145,27 +163,59 @@ def test_button_crud(appliance, dialog, request, buttongroup, obj_type):
         1205235
     """
     button_gp = buttongroup(obj_type)
+
+    # Create button under button group
     button = button_gp.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(start="hvr_"),
+        icon_color="#ff0000",
         dialog=dialog,
         system="Request",
         request="InspectMe",
     )
     request.addfinalizer(button.delete_if_exists)
+    view = button_gp.create_view(ButtonGroupDetailView, wait="10s")
+    view.flash.assert_message(f'Custom Button "{button.hover}" was added')
     assert button.exists
+    # check value on detail page
     view = navigate_to(button, "Details")
     assert view.text.text == button.text
     assert view.hover.text == button.hover
-    edited_hover = "edited {}".format(fauxfactory.gen_alphanumeric())
+    assert view.dialog.text == dialog.label
+    assert view.request.text == button.request
+
+    # Cancel edit
+    view = navigate_to(button, "Edit")
+    view.cancel_button.click()
+    view.flash.assert_success_message(
+        f'Edit of Custom Button "{button.text}" was cancelled by the user'
+    )
+
+    # update button
+    edited_text = fauxfactory.gen_alphanumeric(15, start="edit_btn_")
+    edited_hover = fauxfactory.gen_alphanumeric(15, start="edit_hvr_")
+    edited_request = fauxfactory.gen_alphanumeric(15, start="edit_req_")
     with update(button):
+        button.text = edited_text
         button.hover = edited_hover
+        button.system = "Automation"
+        button.request = edited_request
+    view = button.create_view(ButtonDetailView, wait="10s")
+    view.flash.assert_success_message(f'Custom Button "{button.hover}" was saved')
     assert button.exists
     view = navigate_to(button, "Details")
+    assert view.text.text == edited_text
     assert view.hover.text == edited_hover
+    assert view.system.text == "Automation"
+    assert view.request.text == edited_request
+
+    # Delete it - first cancel and then real
     button.delete(cancel=True)
+    assert view.is_displayed
     assert button.exists
     button.delete()
+    view = button_gp.create_view(ButtonGroupDetailView, wait="10s")
+    view.flash.assert_message(f'Button "{button.hover}": Delete successful')
     assert not button.exists
 
 

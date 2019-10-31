@@ -244,26 +244,11 @@ class BaseButton(BaseEntity, Updateable):
             view.cancel_button.click()
         view = self.create_view(ButtonDetailView, override=updates, wait="10s")
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Custom Button "{}" was saved'.format(updates.get("hover", self.hover))
-            )
-        else:
-            view.flash.assert_message(
-                'Edit of Custom Button "{}" was cancelled by the user'.format(self.text)
-            )
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
         view.configuration.item_select("Remove this Button", handle_alert=not cancel)
-
-        if cancel:
-            assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
-            view = self.create_view(ButtonGroupDetailView, self.group, wait="10s")
-            view.flash.assert_no_error()
-            view.flash.assert_message('Button "{}": Delete successful'.format(self.hover))
+        view.flash.assert_no_error()
 
     def simulate(
         self,
@@ -330,6 +315,7 @@ class DefaultButton(BaseButton):
         image: Icon of button.
         dialog: Dialog object attached to button.
         display: Button name display on Button.
+        icon_color: The color of button icon.
         system: Button pointing to System/Process
         request: Button pointing to request method
         open_url: Open url with button
@@ -345,6 +331,7 @@ class DefaultButton(BaseButton):
     image = attr.ib()
     dialog = attr.ib()
     display = attr.ib(default=None)
+    icon_color = attr.ib(default=None)
     system = attr.ib(default=None)
     request = attr.ib(default=None)
     open_url = attr.ib(default=None)
@@ -365,6 +352,7 @@ class AnsiblePlaybookButton(BaseButton):
         image: Icon of button.
         playbook_cat_item: Playbook catalog item.
         display: Button name display on Button.
+        icon_color: The color of button icon.
         inventory: Pointing to host
         hosts: Specific host
         system: Button pointing to System/Process
@@ -382,6 +370,7 @@ class AnsiblePlaybookButton(BaseButton):
     image = attr.ib()
     playbook_cat_item = attr.ib()
     inventory = attr.ib()
+    icon_color = attr.ib(default=None)
     display = attr.ib(default=None)
     hosts = attr.ib(default=None)
     system = attr.ib(default=None)
@@ -406,6 +395,7 @@ class ButtonCollection(BaseCollection):
         image="fa-user",
         type="Default",
         display=None,
+        icon_color=None,
         dialog=None,
         display_for=None,
         submit=None,
@@ -422,6 +412,7 @@ class ButtonCollection(BaseCollection):
     ):
         kwargs = {
             "display": display,
+            "icon_color": icon_color,
             "open_url": open_url,
             "system": system,
             "request": request,
@@ -445,6 +436,7 @@ class ButtonCollection(BaseCollection):
         hover,
         type="Default",
         image="fa-user",
+        icon_color=None,
         display=None,
         group=None,
         dialog=None,
@@ -472,6 +464,7 @@ class ButtonCollection(BaseCollection):
                     "display": display,
                     "hover": hover,
                     "image": image,
+                    "icon_color": icon_color,
                     "open_url": open_url,
                     "display_for": display_for,
                     "submit": submit,
@@ -544,9 +537,7 @@ class ButtonCollection(BaseCollection):
             raise CFMEException('Custom button group add form button did not activate')
 
         view.add_button.click()
-        view = self.create_view(ButtonGroupDetailView, self.group, wait="15s")
         view.flash.assert_no_error()
-        view.flash.assert_message('Custom Button "{}" was added'.format(hover))
 
         return self.instantiate(
             self.group,
@@ -561,6 +552,7 @@ class ButtonCollection(BaseCollection):
             inventory=inventory,
             hosts=hosts,
             image=image,
+            icon_color=icon_color,
             open_url=open_url,
             system=system,
             request=request,
@@ -789,33 +781,13 @@ class ButtonGroup(BaseEntity, Updateable):
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(ButtonGroupDetailView, override=updates, wait="10s")
+        view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Button Group "{}" was saved'.format(updates.get("hover", self.hover))
-            )
-        else:
-            view.flash.assert_message(
-                'Edit of Buttons Group "{}" was cancelled by the user'.format(self.text)
-            )
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
         view.configuration.item_select("Remove this Button Group", handle_alert=not cancel)
-
-        if cancel:
-            assert view.is_displayed
-            view.flash.assert_no_error()
-        else:
-            view = self.create_view(ButtonGroupObjectTypeView, wait="10s")
-            view.flash.assert_no_error()
-            view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
+        view.flash.assert_no_error()
 
 
 @attr.s
@@ -886,10 +858,8 @@ class ButtonGroupCollection(BaseCollection):
             logger.exception('Timed out waiting for add button on button group form')
             raise CFMEException('Custom button group add form button did not activate')
         view.add_button.click()
-        view = self.create_view(ButtonGroupObjectTypeView)
-
         view.flash.assert_no_error()
-        view.flash.assert_success_message('Button Group "{}" was added'.format(hover))
+
         return self.instantiate(
             text=text,
             hover=hover,
