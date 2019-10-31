@@ -425,9 +425,12 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
 def scavenge_managed_providers(self):
     chord_tasks = []
     for appliance in Appliance.objects.exclude(appliance_pool=None):
-        if ((appliance.expires_in == 'never' or
-             (isinstance(appliance.expires_in, (int, float)) and appliance.expires_in > 7200)) and
-                appliance.ready and appliance.ip_address):
+        if appliance.leased_until is None:
+            expires_in = 8000  # leased_until = None -> never expires
+        else:
+            expires_in = (appliance.leased_until - timezone.now()).total_seconds()
+
+        if expires_in > 7200 and appliance.ready and appliance.ip_address:
             chord_tasks.append(scavenge_managed_providers_from_appliance.si(appliance.id))
     chord(chord_tasks)(calculate_provider_management_usage.s())
 
