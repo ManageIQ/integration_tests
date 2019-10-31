@@ -266,7 +266,7 @@ def test_retire_multiple_services():
     pass
 
 
-@pytest.mark.meta(coverage=[1718102])
+@pytest.mark.meta(coverage=[1718102, 1718898, 1741327])
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_load_multiple_services():

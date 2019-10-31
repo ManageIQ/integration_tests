@@ -379,6 +379,7 @@ def test_vm_name_automate_method():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1717501, 1715396])
 def test_dialog_element_values_passed_to_button():
     """
     Polarion:
@@ -515,7 +516,7 @@ def test_simulation_copy_button():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1713072])
+@pytest.mark.meta(coverage=[1713072, 1745197])
 def test_automate_task_schedule():
     """
     Polarion:

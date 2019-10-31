@@ -6,7 +6,6 @@ from cfme.rest import gen_data
 from cfme.tests.automate.custom_button import CLASS_MAP
 from cfme.tests.automate.custom_button import OBJ_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -178,7 +177,7 @@ class TestCustomButtonRESTAPI(object):
             assert condition.description == edited[index].description == record[0].description
 
 
-@pytest.mark.meta(blockers=[BZ(1745198)], automates=[1737449])
+@pytest.mark.meta(automates=[1737449, 1745198])
 def test_associate_unassigned_buttons_rest(appliance, group_rest, buttons_rest):
     """Test associate unassigned button with group
 
