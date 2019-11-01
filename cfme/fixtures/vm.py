@@ -3,8 +3,7 @@ import fauxfactory
 import re
 
 import pytest
-from polarion_collect import get_nodeid_full_path
-from polarion_docstrings import parser as docparser
+from pytest_polarion_collect.utils import process_json_data, get_nodeid_full_path
 from wrapanapi import VmState
 
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -19,40 +18,46 @@ DOCSTRING_CACHE = {}
 TEST_PARAMS = re.compile(r"\[.*\]")
 
 
-def get_parsed_docstring(request, nodeid, docstrings_cache):
-    """Gets parsed docstring from cache."""
-    if nodeid not in docstrings_cache:
-        docstrings = docparser.get_docstrings_in_file(str(request.node.fspath.strpath))
-        merged_docstrings = docparser.merge_docstrings(docstrings)
-        docstrings_cache.update(merged_docstrings)
-    return docstrings_cache[nodeid]
+def pytest_addoption(parser):
+    parser.addoption(
+        '--no-assignee-vm-name',
+        action='store_true',
+        default=False,
+        help=(
+            'If passed no-assignee-vm-name, vm names will not contain test_case assignee names.'
+        )
+    )
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(session, config, items):
+    if not config.getoption('--no-assignee-vm-name'):
+        process_json_data(session, items)
 
 
 def _create_vm(request, template, provider, vm_name):
-    if isinstance(request.node, pytest.Function):
-        nodeid = TEST_PARAMS.sub("", get_nodeid_full_path(request.node))
-        assignee = get_parsed_docstring(request, nodeid, DOCSTRING_CACHE).get('assignee', '')
-    else:
-        # Fetch list of tests in the module object
-        test_list = [
-            item
-            for item in dir(request.module)
-            if ('test_' in item[:5]) and not ('test_requirements' == item)
-        ]
-        # Find out assignee for each test in test_list
-        assignee_list = list()
-        for test in test_list:
-            nodeid = f"{request.node.fspath.strpath}::{test}"
-            try:
-                assignee_list.append(get_parsed_docstring(request, nodeid, DOCSTRING_CACHE)
-                    .get('assignee', ''))
-            except KeyError:
-                continue
-        # If all tests have same assignee, set length will be 1, else set assignee='module'
-        assignee = assignee_list[0] if len(set(assignee_list)) == 1 else 'module'
-
-    vm_name = f"{vm_name}-{assignee}"
-
+    if not pytest.config.getoption('--no-assignee-vm-name'):
+        if isinstance(request.node, pytest.Function):
+            nodeid = TEST_PARAMS.sub('', get_nodeid_full_path(request.node))
+            assignee = request.session._docstrings_cache[nodeid].get('assignee', '')
+        else:
+            # Fetch list of tests in the module object
+            test_list = [
+                item
+                for item in dir(request.module)
+                if ('test_' in item[:5]) and not ('test_requirements' == item)
+            ]
+            # Find out assignee for each test in test_list
+            assignee_list = list()
+            for test in test_list:
+                nodeid = f'{request.node.fspath.strpath}::{test}'
+                try:
+                    assignee_list.append(request.session._docstrings_cache[nodeid]['assignee'])
+                except KeyError:
+                    continue
+            # If all tests have same assignee, set length will be 1, else set assignee='module'
+            assignee = assignee_list[0] if len(set(assignee_list)) == 1 else 'module'
+        vm_name = f'{vm_name}-{assignee}'
     collection = provider.appliance.provider_based_collection(provider)
     try:
         vm_obj = collection.instantiate(
@@ -61,7 +66,7 @@ def _create_vm(request, template, provider, vm_name):
         )
     except (KeyError, AttributeError):
         pytest.skip('No appropriate template was passed to the fixture.')
-    vm_obj.create_on_provider(allow_skip="default")
+    vm_obj.create_on_provider(allow_skip='default')
 
     @request.addfinalizer
     def _cleanup():
