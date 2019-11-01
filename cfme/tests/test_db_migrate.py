@@ -63,9 +63,9 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     return temp_appliance_preconfig_funcscope_upgrade
 
 
-def download_and_migrate_db(app, db_url, db_desc):
+def download_and_migrate_db(app, db_url):
     # Download the database
-    logger.info("Downloading database: {}".format(db_desc))
+    logger.info("Downloading database: {}".format(db_url))
     url_basename = os_path.basename(db_url)
     loc = "/tmp/"
     result = app.ssh_client.run_command(
@@ -105,6 +105,18 @@ def download_and_migrate_db(app, db_url, db_desc):
     app.db.reset_user_pass()
     wait_for(navigate_to, (app.server, 'LoginScreen'), handle_exception=True, timeout='5m')
     app.server.login(app.user)
+
+
+@pytest.mark.ignore_stream('upstream')
+@pytest.mark.tier(2)
+def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
+    """
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    download_and_migrate_db(temp_appliance_extended_db, db_url)
 
 
 @pytest.mark.parametrize('dbversion',
