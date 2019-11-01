@@ -243,11 +243,10 @@ def test_ec2_tags(provider, request, collection_type, testing_instance):
             test:testing in Labels field
             5. Delete that instance/untag image
     """
-    system = provider.mgmt
     tag_key = f"test_{fauxfactory.gen_alpha()}"
     tag_value = f"testing_{fauxfactory.gen_alpha()}"
     if collection_type == "templates":
-        taggable = system.list_templates()[0]
+        taggable = provider.mgmt.list_templates()[0]
         request.addfinalizer(lambda: taggable.unset_tag(tag_key, tag_value))
     else:
         taggable = testing_instance.mgmt

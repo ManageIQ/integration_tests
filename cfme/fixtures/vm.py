@@ -91,12 +91,3 @@ def testing_instance(appliance, provider, small_template, setup_provider):
     instance = _create_instance(appliance, provider, small_template.name)
     yield instance
     instance.cleanup_on_provider()
-
-
-@pytest.fixture(scope="function")
-def testing_instance2(appliance, provider, small_template, setup_provider):
-    """ Fixture to provision instance on the provider
-    """
-    instance2 = _create_instance(appliance, provider, small_template.name)
-    yield instance2
-    instance2.cleanup_on_provider()
