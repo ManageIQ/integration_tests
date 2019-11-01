@@ -24,6 +24,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -466,3 +467,32 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
                                                  handle_alert=True)
     compare_hosts_view = provider.create_view(HostsCompareView)
     assert compare_hosts_view.is_displayed
+
+
+@test_requirements.rhev
+@pytest.mark.rhv3
+@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], override=True, selector=ONE)
+@pytest.mark.meta(automates=[1669011])
+def test_add_ipmi_refresh(appliance, setup_provider):
+    """
+    Tests IPMI IP address is not blank after running refresh relationships on the host.
+
+    Bugzilla:
+        1669011
+
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/20h
+        caseimportance: medium
+        casecomponent: Infra
+    """
+    host = appliance.collections.hosts.all()[0]
+    # dummy credentials and ipmi address are sufficient for this test case
+    cred = host.Credential(principal="111", secret="222", ipmi=True)
+    ipmi_address = "10.10.10.10"
+    with update(host):
+        host.ipmi_credentials = cred
+        host.ipmi_address = ipmi_address
+    host.refresh()
+    view = navigate_to(host, "Edit")
+    assert view.ipmi_address.read() == ipmi_address
