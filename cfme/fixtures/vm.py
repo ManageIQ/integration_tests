@@ -3,7 +3,8 @@ import fauxfactory
 import re
 
 import pytest
-from pytest_polarion_collect.utils import process_json_data, get_nodeid_full_path
+from pytest_polarion_collect.utils import get_nodeid_full_path
+from pytest_polarion_collect.utils import process_json_data
 from wrapanapi import VmState
 
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -12,10 +13,6 @@ from cfme.utils import ports
 from cfme.utils.generators import random_vm_name
 from cfme.utils.net import net_check
 from cfme.utils.wait import wait_for
-
-
-DOCSTRING_CACHE = {}
-TEST_PARAMS = re.compile(r"\[.*\]")
 
 
 def pytest_addoption(parser):
@@ -32,13 +29,13 @@ def pytest_addoption(parser):
 @pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(session, config, items):
     if not config.getoption('--no-assignee-vm-name'):
-        process_json_data(session, items)
+        process_json_data(session, items, all_items=True)
 
 
 def _create_vm(request, template, provider, vm_name):
-    if not pytest.config.getoption('--no-assignee-vm-name'):
+    if not request.config.getoption('--no-assignee-vm-name'):
         if isinstance(request.node, pytest.Function):
-            nodeid = TEST_PARAMS.sub('', get_nodeid_full_path(request.node))
+            nodeid = (re.compile(r"\[.*\]")).sub('', get_nodeid_full_path(request.node))
             assignee = request.session._docstrings_cache[nodeid].get('assignee', '')
         else:
             # Fetch list of tests in the module object
