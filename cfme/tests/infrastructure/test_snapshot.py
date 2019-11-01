@@ -108,7 +108,7 @@ def test_snapshot_crud(small_test_vm, provider):
         test_flag: snapshot, provision
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/6h
     """
@@ -187,7 +187,7 @@ def test_delete_all_snapshots(small_test_vm, provider):
         test_flag: snapshot, provision
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -300,7 +300,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
         test_flag: snapshot, provision
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
@@ -387,7 +387,7 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
      - powered off
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
@@ -409,7 +409,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
         test_flag: snapshot, provision
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/2h
     """
@@ -448,7 +448,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
 def test_operations_powered_off_vm(small_test_vm):
     """
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/2h
     """
@@ -482,7 +482,7 @@ def test_snapshot_history_btn(small_test_vm, provider):
         test_flag: snapshot
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
@@ -514,7 +514,7 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
         * Wait until snapshot with such name appears.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
