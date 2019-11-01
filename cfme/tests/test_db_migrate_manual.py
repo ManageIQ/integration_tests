@@ -362,6 +362,9 @@ def test_upgrade_multi_replication_inplace():
     """
     test_upgrade_multi_replication_inplace
 
+    Bugzilla:
+        1722540
+
     Polarion:
         assignee: jhenner
         casecomponent: Configuration
