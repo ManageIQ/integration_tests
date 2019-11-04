@@ -27,34 +27,6 @@ def test_create_rhev_provider_with_metric():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.rest
-def test_automation_request_task():
-    """
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        testSteps:
-            1. Create an automation request.
-            2. Edit the automation request task:
-                POST /api/automation_requests/:id/request_tasks/:request_task_id
-                {
-                "action" : "edit",
-                "resource" : {
-                    "options" : {
-                    "request_param_a" : "value_a",
-                    "request_param_b" : "value_b"
-                    }
-                }
-        expectedResults:
-            1.
-            2. Task must be edited successfully.
-    """
-    pass
-
-
 @test_requirements.rest
 @pytest.mark.manual()
 @pytest.mark.tier(1)
@@ -94,3 +66,4 @@ def test_notification_url_parallel_requests():
         1700378
     """
     pass
+
