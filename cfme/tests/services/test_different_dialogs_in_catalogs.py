@@ -22,13 +22,13 @@ pytestmark = [
 ]
 
 WIDGETS = {
-    "Text Box": ("input", fauxfactory.gen_alpha()),
-    "Check Box": ("checkbox", True),
-    "Text Area": ("input", fauxfactory.gen_alpha()),
-    "Radio Button": ("radiogroup", "One"),
-    "Dropdown": ("dropdown", "Three"),
-    "Tag Control": ("dropdown", "Service Level"),
-    "Timepicker": ("input", date.today().strftime("%m/%d/%Y"))
+    "Text Box": ("input", fauxfactory.gen_alpha(), "default_text_box"),
+    "Check Box": ("checkbox", True, "default_value"),
+    "Text Area": ("input", fauxfactory.gen_alpha(), "default_text_box"),
+    "Radio Button": ("radiogroup", "One", "default_value_dropdown"),
+    "Dropdown": ("dropdown", "Three", "default_value_dropdown"),
+    "Tag Control": ("dropdown", "Service Level", "field_category"),
+    "Timepicker": ("input", date.today().strftime("%m/%d/%Y"), None)
 }
 
 
@@ -46,15 +46,9 @@ def service_dialog(appliance, widget_name):
             'field_required': True
         }
     }
-    wt, value = WIDGETS[widget_name]
-    if widget_name in ["Text Box", "Text Area"]:
-        element_data['options']['default_text_box'] = value
-    if widget_name in ["Dropdown", "Radio Button"]:
-        element_data['options']['default_value_dropdown'] = value
-    if widget_name == "Check Box":
-        element_data['options']['default_value'] = value
-    if widget_name == "Tag Control":
-        element_data['options']['field_category'] = value
+    wt, value, field = WIDGETS[widget_name]
+    if widget_name != "Timepicker":
+        element_data['options'][field] = value
 
     sd = service_dialog.create(label=fauxfactory.gen_alphanumeric(start="dialog_"),
                                description="my dialog")
@@ -570,21 +564,19 @@ def test_dialog_elements_should_display_default_value(appliance, generic_catalog
     )
     view = navigate_to(service_catalogs, "Order")
     ele_name = element_data["element_information"]["ele_name"]
-    wt, value = WIDGETS[widget_name]
-
+    wt, value, field = WIDGETS[widget_name]
+    get_attr = getattr(view.fields(ele_name), wt)
     if widget_name in ["Text Box", "Text Area", "Dropdown", "Timepicker", "Check Box"]:
         value = (date.today().strftime("%Y-%m-%d")
                  if widget_name == "Timepicker" and appliance.version < "5.11"
                  else value)
-        assert getattr(view.fields(ele_name), wt).read() == value
+        assert get_attr.read() == value
     elif widget_name == "Tag Control":
         # In case of tag control, we do not have default value feature. But need to select category
         # to check whether it fetches respective values or not
-        all_options = ["", "<Choose>", "Gold", "Platinum", "Silver"]
-        if appliance.version < "5.11":
-            all_options.remove("")
+        all_options = ["<Choose>", "Gold", "Platinum", "Silver"]
 
-        for i in range(len(getattr(view.fields(ele_name), wt).all_options)):
-            assert getattr(view.fields(ele_name), wt).all_options[i].text in all_options
+        for option in get_attr.all_options:
+            assert option.text in all_options
     else:
-        assert getattr(view.fields(ele_name), wt).selected == value
+        assert get_attr.selected == value
