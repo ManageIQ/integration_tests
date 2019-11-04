@@ -29,6 +29,7 @@ infra_test_items = [
     ('datastores', 'All')
 ]
 cloud_test_items = [
+    ('cloud_host_aggregates', 'All'),
     ('cloud_provider', 'All'),  # no param_class needed, provider returned directly
     ('cloud_instances', 'AllForProvider'),
     ('cloud_flavors', 'All'),
@@ -414,27 +415,6 @@ def test_tagvis_ldap_group_host():
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_tagvis_cloud_host_aggregates():
-    """
-    Polarion:
-        assignee: anikifor
-        casecomponent: Tagging
-        caseimportance: medium
-        initialEstimate: 1/8h
-        testSteps:
-            1. Create group with tag, use this group for user creation
-            2. Add tag(used in group) for cloud host aggregate via detail page
-            3. Remove tag for cloud host aggregate via detail page
-            4. Add tag for cloud host aggregate via list
-            5. Check cloud host aggregate is visible for restricted user
-            6. Remove tag for cloud host aggregate via list
-            7 . Check cloud host aggregate isn"t visible for restricted user
     """
     pass
 
