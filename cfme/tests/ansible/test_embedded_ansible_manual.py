@@ -1,6 +1,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
 
 pytestmark = [
     pytest.mark.manual,
@@ -93,10 +94,12 @@ def test_embed_ansible_next_gen():
 
 
 @pytest.mark.tier(3)
-def test_embed_tower_exec_play_against_rhos():
+@pytest.mark.meta(coverage=[1511017])
+@pytest.mark.provider([OpenStackProvider])
+def test_embed_tower_exec_play_with_creds(appliance, provider):
     """
-    User/Admin is able to execute playbook without creating Job Temaplate
-    and can execute it against RHOS with RHOS credentials.
+    User/Admin is able to execute playbook without creating Job Template
+    and can execute it against provider type with provider type credentials.
 
     Polarion:
         assignee: sbulage
@@ -160,25 +163,6 @@ def test_embed_tower_ui_requests_notifications_negative():
     pass
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_exec_play_against_openstack():
-    """
-    Execute playbook against Openstack provider.
-    Workaround must be applied:
-
-    Bugzilla:
-        1511017
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_ui_requests_notifications():
     """
@@ -193,23 +177,6 @@ def test_embed_tower_ui_requests_notifications():
         assignee: sbulage
         casecomponent: Ansible
         initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_embed_tower_exec_play_against_gce():
-    """
-    User/Admin is able to execute playbook without creating Job Temaplate
-    and can execute it against Google Compute Engine Cloud with GCE
-    credentials.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
         tags: ansible_embed
     """
     pass
