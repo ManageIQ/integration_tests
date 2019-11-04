@@ -469,7 +469,7 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
 
 @pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider], override=True,
-                      required_fields=[['cap_and_util', 'capandu_vm']])
+                      required_fields=[['provisioning', 'template_false_sparse']])
 @pytest.mark.meta(automates=[1726590], blockers=[BZ(1726590, forced_streams=["5.10"])])
 def test_linked_clone_default(provisioner, provisioning, provider, prov_data, vm_name):
     """ Tests provision VM from a template with the selected "Linked Clone" option.
@@ -490,25 +490,10 @@ def test_linked_clone_default(provisioner, provisioning, provider, prov_data, vm
         casecomponent: Provisioning
         initialEstimate: 1/4h
     """
+    template_name = provider.data['provisioning']['template_false_sparse']
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['catalog']['linked_clone'] = True
-    # should be automatic but due to limited storage on rhv sometimes it may fail because of that
+    # should be automatic but due to limited storage on rhv sometimes it may fail
     prov_data['environment'] = {'automatic_placement': True}
-    rhv = provider.mgmt
-
-    def _get_template_with_preallocated_disk():
-        all_preallocated_disks = rhv.list_disks(disk_id=True, sparse=False)
-        templates = rhv.list_templates()
-        for t in templates:
-            if t.name == "azure_pwsh":
-                continue  # this is a very big template and it will take a lot of time to provision
-            disks = t.list_disks(disk_id=True)
-            for disk_id in disks:
-                if disk_id in all_preallocated_disks:
-                    return t.name
-
-    template_name = _get_template_with_preallocated_disk()
-    if template_name is None:
-        pytest.skip("no template was found with preallocated disks")
 
     provisioner(template_name, prov_data)
