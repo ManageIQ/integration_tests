@@ -423,6 +423,7 @@ def temp_ssa_pod_appliance(request, temp_pod_appliance, new_ssa_image):
     return appliance
 
 
+@pytest.mark.ignore_stream('5.11')
 def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
     """
     deploys pod appliance
@@ -445,29 +446,7 @@ def test_crud_pod_appliance(temp_pod_appliance, provider, setup_provider):
     assert navigate_to(proj, 'Dashboard')
 
 
-@pytest.mark.ignore_stream('5.10')
-def test_crud_pod_appliance_ansible_deployment(
-    temp_pod_ansible_appliance, provider, setup_provider
-):
-    """
-    deploys pod appliance
-    checks that it is alive
-    deletes pod appliance
-     Metadata
-       test_flag: podtesting
-     Polarion:
-        assignee: izapolsk
-        casecomponent: Containers
-        caseimportance: high
-        initialEstimate: 1/2h
-        endsin: 5.9
-    """
-    appliance = temp_pod_ansible_appliance
-    collection = appliance.collections.container_projects
-    proj = collection.instantiate(name=appliance.project, provider=provider)
-    assert navigate_to(proj, 'Dashboard')
-
-
+@pytest.mark.ignore_stream('5.11')
 def test_crud_pod_appliance_ext_db(temp_extdb_pod_appliance, provider, setup_provider):
     """
     deploys pod appliance
@@ -488,6 +467,7 @@ def test_crud_pod_appliance_ext_db(temp_extdb_pod_appliance, provider, setup_pro
 
 
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.11')
 def test_crud_pod_appliance_custom_config():
     """
     overriding default values in template and deploys pod appliance
@@ -506,6 +486,7 @@ def test_crud_pod_appliance_custom_config():
 
 
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.11')
 def test_pod_appliance_config_upgrade():
     """
     appliance config update should cause appliance re-deployment
@@ -521,6 +502,7 @@ def test_pod_appliance_config_upgrade():
 
 
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.11')
 def test_pod_appliance_image_upgrade():
     """
     one of appliance images has been changed. it should cause pod re-deployment
@@ -536,6 +518,7 @@ def test_pod_appliance_image_upgrade():
 
 
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.11')
 def test_pod_appliance_db_upgrade():
     """
     db scheme/version has been changed
@@ -550,6 +533,7 @@ def test_pod_appliance_db_upgrade():
     pass
 
 
+@pytest.mark.ignore_stream('5.11')
 def test_pod_appliance_start_stop(temp_pod_appliance, provider, setup_provider):
     """
     appliance should stop/start w/o issues
@@ -573,6 +557,7 @@ def test_pod_appliance_start_stop(temp_pod_appliance, provider, setup_provider):
 
 
 @pytest.mark.manual
+@pytest.mark.ignore_stream('5.11')
 def test_pod_appliance_scale():
     """
     appliance should work correctly after scale up/down
@@ -630,6 +615,7 @@ def test_aws_smartstate_pod(temp_ssa_pod_appliance, ssa_vm, provider, aws_provid
     assert c_lastanalyzed != 'Never', "Last Analyzed is set to Never"
 
 
+@pytest.mark.ignore_stream('5.11')
 def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_provider,
                                          template_folder):
     """
@@ -714,6 +700,7 @@ def test_pod_appliance_db_backup_restore(temp_pod_appliance, provider, setup_pro
     assert navigate_to(proj, 'Dashboard', wait_for_view=120)
 
 
+@pytest.mark.ignore_stream('5.11')
 def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provider,
                                       template_folder, ipa_auth_provider, setup_ipa_auth_provider,
                                       ipa_user):

@@ -18,7 +18,6 @@ def test_validate_landing_pages_for_rbac():
         casecomponent: Settings
         caseimportance: medium
         initialEstimate: 1/5h
-        title: test validate landing pages for rbac
         setup:
             1. Create a new role by selecting a few product features.
             2. Create a group with the new role.

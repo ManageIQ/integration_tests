@@ -78,7 +78,6 @@ def test_saml_verify_user_login():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
-        title: saml: verify user login with and without correct groups added to SAML server.
         testSteps:
             1. Configure CFME for SAML with RHSSO server (cf. appliance.configure_saml)
             2. Try to login with SAML user
@@ -102,7 +101,6 @@ def test_saml_get_user_groups_from_ext_auth_httpd():
         assignee: jdupuy
         casecomponent: Auth
         initialEstimate: 1/2h
-        title: saml: Verify “Get User Groups from External Authentication (httpd)” option.
     """
     pass
 
@@ -140,8 +138,6 @@ def test_ldap_group_lookup_error_message():
         casecomponent: Auth
         caseposneg: negative
         initialEstimate: 1/4h
-        title: verify ldap group lookup fails with correct error message
-               for invalid user details
         testSteps:
             1. Configure appliance with LDAP server that has no memberOf overlay
             2. Perform user group lookup
@@ -163,8 +159,6 @@ def test_verify_user_validation_authentication():
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
-        title: verify user validation works fine but authentication fails
-               if no group is assigned for user.
         testSteps:
             1. Create user in ldap domain server.
             2. Do not assign any group to the user.
@@ -195,7 +189,6 @@ def test_verify_role_configuration_for_new_ldap_groups():
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1h
-        title: verify role configuration work as expected for new ldap groups
     """
     pass
 
@@ -209,8 +202,6 @@ def test_disable_local_login():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
-        title: Verify disable local login option works fine. Verify enable/disable option
-
         testSteps:
             1. Configure CFME for external auth
             2. Enable "Disable local login"
@@ -250,8 +241,6 @@ def test_ldap_auth_without_groups():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/4h
-        title: verify LDAP authentication works without groups from LDAP by
-               uncheck the "Get User Groups from LDAP"
     """
     pass
 
@@ -266,8 +255,6 @@ def test_saml_login_fails_after_password_change():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/4h
-        title: Verify login fails for user in CFME after changing the
-               Password in SAML for the user.
         setup:
             1. configure appliance with saml server
         testSteps:
@@ -291,7 +278,6 @@ def test_two_factor_auth_with_user_password_and_otp():
         initialEstimate: 1/3h
         casecomponent: Auth
         caseimportance: medium
-        title: verify two factor authentication works with user password and otp.
     testSteps:
         1. configure CFME for external auth (IPA, SAML etc..)
         2. configure user for OTP in authentication server.
@@ -315,8 +301,6 @@ def test_auth_mode_new_trusted_forest_table_entry():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
-        title: verify the authentication mode is displayed correctly for
-               new trusted forest table entry.
     """
     pass
 
@@ -359,7 +343,6 @@ def test_remove_display_name_for_user_in_ldap_and_verify_auth():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/2h
-        title: Remove display name for user in ldap and verify auth.
     """
     pass
 
@@ -387,7 +370,6 @@ def test_change_search_base():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
-        title: Change the search base for user and groups lookup at domain component .
     """
     pass
 
@@ -410,7 +392,6 @@ def test_change_domain_sequence_sssd_group_retrieval():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
-        title: Change the domain sequence in sssd, and verify user groups retrieval.
     """
     pass
 
@@ -448,7 +429,6 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
-        title: verify user groups can be retrieved from "trusted forest"
     """
     pass
 
@@ -466,7 +446,6 @@ def test_verify_the_trusted_forest_settings_table_display_in_auth_page():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
-        title: verify the trusted forest settings table display in authentication page.
     """
     pass
 
@@ -501,7 +480,6 @@ def test_verify_database_user_login_fails_with_external_auth_configured():
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Verify DataBase user login fails with External auth configured.
     """
     pass
 
@@ -522,7 +500,6 @@ def test_external_auth_openldap_proxy_to_3_domains():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
-        title: verify external authentication with OpenLDAP proxy to 3 different domains
     """
     pass
 
@@ -586,7 +563,6 @@ def test_multi_domain_configuration_for_external_auth_ldaps():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
-        title: verify multi domain configuration for external auth ldaps
     """
     pass
 
@@ -608,8 +584,6 @@ def test_external_auth_config_for_ldap_appliance_console():
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/3h
-        title: Verify external auth configuration for ldap can be un
-               configured using appliance_console
     """
     pass
 
@@ -650,7 +624,6 @@ def test_ldaps_customized_port():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
-        title: Configure  ldaps for customized port e.g 10636, 10389 and validate CFME auth
     """
     pass
 
@@ -667,7 +640,6 @@ def test_saml_multiple_appliances_same_realm():
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/2h
-        title: saml: Verify multiple appliances can be added to the same REALM.
     """
     pass
 
@@ -685,6 +657,5 @@ def test_session_timeout():
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
-        title: Verify session timeout works fine for external auth.
     """
     pass

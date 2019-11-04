@@ -8,6 +8,7 @@ pytestmark = [test_requirements.quota, pytest.mark.manual]
 
 @pytest.mark.tier(3)
 @pytest.mark.manual('manualonly')
+@pytest.mark.meta(coverage=[1456819])
 def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     """
     This test case is to test quota for simultaneous service catalog request with different users.
@@ -21,7 +22,6 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
         startsin: 5.8
         casecomponent: Provisioning
         tags: quota
-        title: Test quota for simultaneous service catalog request with different users
         testSteps:
             1. Create a service catalog with vm_name, instance_type &
                number_of_vms as fields.
@@ -41,6 +41,7 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(coverage=[1363901])
 def test_quota_for_ansible_service():
     """
     This test case is to test quota for ansible service
@@ -54,7 +55,6 @@ def test_quota_for_ansible_service():
         startsin: 5.5
         casecomponent: Configuration
         tags: quota
-        title: test quota for ansible service
         testSteps:
             1. create a service bundle including an Ansible Tower service type
             2. make sure CloudForms quotas are enabled
@@ -72,6 +72,7 @@ def test_quota_for_ansible_service():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1492158])
 def test_quota_calculation_using_service_dialog_overrides():
     """
     This test case is to check Quota calculation using service dialog overrides.
@@ -85,7 +86,6 @@ def test_quota_calculation_using_service_dialog_overrides():
         startsin: 5.8
         casecomponent: Infra
         tags: quota
-        title: Test Quota calculation using service dialog overrides.
         testSteps:
             1. create a new domain quota_test
             2. Using the Automate Explorer, copy the
@@ -112,6 +112,7 @@ def test_quota_calculation_using_service_dialog_overrides():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(coverage=[1455844])
 def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dialog():
     """
     This test case is to test service template provisioning quota for number of vm's using custom
@@ -126,7 +127,6 @@ def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dial
         startsin: 5.8
         casecomponent: Provisioning
         tags: quota
-        title: test service template provisioning quota for number of vm's using custom dialog
         testSteps:
             1. Create a service catalog with vm_name, instance_type &
                number_of_vms as fields.
@@ -144,6 +144,7 @@ def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dial
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(coverage=[1455844])
 def test_quota_enforcement_for_cloud_volumes():
     """
     This test case is to test quota enforcement for cloud volumes
@@ -157,7 +158,6 @@ def test_quota_enforcement_for_cloud_volumes():
         startsin: 5.8
         casecomponent: Provisioning
         tags: quota
-        title: test quota enforcement for cloud volumes
         testSteps:
             1. Add openstack provider
             2. Set quota for storage
@@ -178,6 +178,7 @@ def test_quota_enforcement_for_cloud_volumes():
 
 @pytest.mark.tier(2)
 @pytest.mark.manual('manualonly')
+@pytest.mark.meta(coverage=[1531914, 1534589])
 def test_quota_with_invalid_service_request():
     """
     This test case is to test quotas with various regions and invalid service requests
@@ -193,7 +194,6 @@ def test_quota_with_invalid_service_request():
         startsin: 5.9
         casecomponent: Control
         tags: quota
-        title: Test multiple tenant quotas simultaneously
         testSteps:
             1. Setup multiple zones.(You can use a single appliance and just add a "test" zone)
             2. Add VMWare provider and configure it to the "test" zone.
@@ -225,6 +225,7 @@ def test_quota_with_invalid_service_request():
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1456819, 1401251])
 def test_simultaneous_tenant_quota():
     """
     Test multiple tenant quotas simultaneously
@@ -238,7 +239,6 @@ def test_simultaneous_tenant_quota():
         startsin: 5.8
         casecomponent: Provisioning
         tags: quota
-        title: Test multiple tenant quotas simultaneously
         testSteps:
             1. Create tenant1 and tenant2.
             2. Create a project under tenant1 or tenant2
@@ -277,7 +277,6 @@ def test_notification_show_notification_when_quota_is_exceed():
         startsin: 5.8
         casecomponent: Services
         tags: quota
-        title: Notification - Show notification when quota is exceeded
         testSteps:
             1. Add provider
             2. Set quota
@@ -291,6 +290,7 @@ def test_notification_show_notification_when_quota_is_exceed():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1644351])
 def test_quota_not_fails_after_vm_reconfigure_disk_remove():
     """
     Polarion:
@@ -319,6 +319,7 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove():
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1515979])
 def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
     """Test that used Quota gets recounted and reduced, when a VM is
        orphaned/archived.
@@ -328,7 +329,6 @@ def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
-        title: Test orphaned/archived VMs get excluded from used quota counts
         testSteps:
             1. Setup Quota limits for tenant(My Company or create new tenant)
             2. Provision a VM and check quota denied message for used counts.
@@ -348,6 +348,7 @@ def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1533263])
 def test_quota_with_reconfigure_resize_disks():
     """Test that Quota gets checked against the resize of the disk of VMs.
 

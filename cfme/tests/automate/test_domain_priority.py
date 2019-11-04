@@ -212,7 +212,6 @@ def test_automate_disabled_domains_in_domain_priority(request, klass):
         startsin: 5.7
         casecomponent: Automate
         tags: automate
-        title: Test automate disabled domains in domain priority
         testSteps:
             1. create two domains
             2. attach the same automate code to both domains.

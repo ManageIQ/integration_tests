@@ -53,7 +53,6 @@ def test_rhos_notification_for_snapshot_failures():
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/4h
-        title: RHOS: test notification for snapshot create/delete failure
         setup:
             1. Add RHOS provider
             2. Create a test VM on RHOS provider
@@ -86,7 +85,6 @@ def test_notification_for_snapshot_actions_on_openstack():
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/3h
-        title: Test notification for snapshot actions on OpenStack
         setup:
             1. Add RHOS provider
             2. Create a test VM on RHOS provider
@@ -115,7 +113,6 @@ def test_notification_for_snapshot_delete_failure_ec2():
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/4h
-        title: test notification for snapshot delete failure
         setup:
             1. Add ec2 provider
         testSteps:

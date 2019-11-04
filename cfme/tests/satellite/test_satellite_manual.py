@@ -28,7 +28,6 @@ def test_no_rbac_warnings_in_logs_when_viewing_satellite_provider():
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/15h
-        title: No RBAC warnings in logs when viewing Satellite provider
     """
     pass
 
@@ -47,7 +46,6 @@ def test_satellite_host_groups_show_up_as_configuration_profiles_satellite_62():
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/15h
-        title: Satellite host groups show up as Configuration Profiles [satellite_62]
     """
     pass
 
@@ -71,6 +69,5 @@ def test_satellite_credential_validation_times_out_with_error_message():
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/6h
-        title: Satellite credential validation times out with error message
     """
     pass

@@ -157,7 +157,6 @@ def test_vmware_reconfigure_vm_controller_type(appliance, provider):
         caseimportance: medium
         initialEstimate: 1/4h
         testtype: functional
-        title: Test Controller type is listed in "Reconfigure VM Disk" Controller Type Column
         testSteps:
             1.Integrate VMware provider in CFME
             2.Navigate to Compute->Infrastructure->Virtual Machines

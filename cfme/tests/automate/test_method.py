@@ -142,7 +142,6 @@ def test_automate_simulate_retry(klass, domain, namespace, original_class):
         startsin: 5.6
         casecomponent: Automate
         tags: automate
-        title: Test automate simulate retry
         setup:
             1. Create a state machine that contains a couple of states
         testSteps:

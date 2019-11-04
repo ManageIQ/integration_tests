@@ -385,7 +385,6 @@ def test_consistent_capitalization_of_cpu_when_creating_compute_chargeback_rate(
         casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/15h
-        title: Consistent capitalization of 'CPU' when creating compute chargeback rate
     """
     pass
 

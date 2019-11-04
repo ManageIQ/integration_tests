@@ -68,6 +68,5 @@ def test_can_only_select_this_regions_zones_when_changing_server_zone():
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Can only select this region's zones when changing server zone
     """
     pass
