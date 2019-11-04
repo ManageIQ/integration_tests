@@ -433,7 +433,7 @@ def test_datastore_relationships():
 @pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1732370])
-def test_cluster_relationships():
+def test_ssa_cluster_relationships():
     """
     Polarion:
         assignee: ghubale

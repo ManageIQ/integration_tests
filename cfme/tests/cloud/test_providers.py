@@ -1120,7 +1120,6 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
         startsin: 5.6
         teardown: When you"re done, delete everything.  Make sure at a minimum that the
                   VM is completely Stopped in Azure.
-        title: Create Azure VM from Azure image
     """
     app = appliance.IPAppliance.from_url(vm_ip)
 

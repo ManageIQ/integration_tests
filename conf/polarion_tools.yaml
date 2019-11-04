@@ -86,6 +86,8 @@ docstrings:
 
     ignored_fields:
         description: "use test docstring instead"
+        # test case title is set by function name, don't allow re-titling via meta
+        title: "test case function name is used"
 
     valid_values:
         caseimportance:

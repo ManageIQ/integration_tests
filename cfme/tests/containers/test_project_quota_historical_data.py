@@ -19,7 +19,6 @@ def test_cmqe_add_new_resource_quota():
         caseimportance: medium
         casecomponent: Containers
         initialEstimate: 1h
-        title: CMQE - Add New Resource Quota
         testSteps:
             1. On the Openshift provider, create different namespaces and
                assign them Resource Quotas. Assign different fractional
@@ -53,7 +52,6 @@ def test_cmqe_modify_existing_resource_quota():
         caseimportance: medium
         casecomponent: Containers
         initialEstimate: 1h
-        title: CMQE - Modify Existing Resource Quota
         testSteps:
             1. Modify the existing Resource Quota that was added;
             2. Refresh the CFME appliance
@@ -91,7 +89,6 @@ def test_cmqe_delete_existing_resource_quota():
         caseimportance: medium
         casecomponent: Containers
         initialEstimate: 1h
-        title: CMQE - Delete Existing Resource Quota
         testSteps:
             1. Delete the existing Resource Quota that was added;
             2. Refresh the CFME appliance

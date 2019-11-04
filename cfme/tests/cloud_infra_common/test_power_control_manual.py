@@ -28,7 +28,6 @@ def test_shutdown_guest_scvmm():
         startsin: 5.4
         casecomponent: Infra
         tags: power
-        title: test shutdown guest scvmm
         testSteps:
             1. Add provider scvmm
             2. From collections page, select the VM
@@ -56,7 +55,6 @@ def test_vm_relationship_datastore_fileshare_scvmm():
         startsin: 5.7
         casecomponent: Infra
         tags: power
-        title: test vm relationship datastore fileshare scvmm
         setup:
             1. SCVMM provider should have Host which have Fileshare storage
         testSteps:
@@ -85,7 +83,6 @@ def test_suspend_scvmm2016_from_collection():
         startsin: 5.7
         casecomponent: Infra
         tags: power
-        title: test suspend scvmm2016 from collection
         testSteps:
             1. Add provider scvmm2016
             2. From collections page, select the VM
@@ -116,7 +113,6 @@ def test_restart_guest_scvmm2016():
         startsin: 5.7
         casecomponent: Infra
         tags: power
-        title: test restart guest scvmm2016
         testSteps:
             1. Add provider scvmm2016
             2. Provision VM
@@ -149,7 +145,6 @@ def test_restart_guest_scvmm():
         startsin: 5.4
         casecomponent: Infra
         tags: power
-        title: test restart guest scvmm
         testSteps:
             1. Add provider scvmm
             2. Provision VM
@@ -179,7 +174,6 @@ def test_power_controls_on_archived_vm():
         startsin: 5.7
         casecomponent: Cloud
         tags: power
-        title: test power controls on archived vm
         testSteps:
             1. Add any Cloud provider
             2. Provision VM
@@ -210,7 +204,6 @@ def test_power_controls_on_vm_in_stack_cloud():
         startsin: 5.6
         casecomponent: Cloud
         tags: power
-        title: test power controls on vm in stack cloud
         testSteps:
             1. Provision a VM via Service (Orchestration template - azure/ec2/rhos)
             2. Navigate to cloud-> stacks-> select a stack

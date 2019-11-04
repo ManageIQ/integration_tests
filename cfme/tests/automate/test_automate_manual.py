@@ -18,7 +18,6 @@ def test_customize_request_security_group():
         startsin: 5.6
         casecomponent: Automate
         tags: automate
-        title: Test customize request security group
         testSteps:
             1. Copy the "customize request" method to a writable domain and modify the mapping
                setting from mapping = 0 to mapping = 1.
@@ -50,7 +49,6 @@ def test_automate_engine_database_connection():
         startsin: 5.7
         casecomponent: Automate
         tags: automate
-        title: Test automate engine database connection
         testSteps:
             1. Create a 'visibility' tag category, containing a single tag
             2. Run the attached script via the RESTful API to duplicate the tags in the category

@@ -415,6 +415,5 @@ def test_dialog_items_default_values_on_different_screens():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
-        title: Test dialog items default values on different screens
     """
     pass

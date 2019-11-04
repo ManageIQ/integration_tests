@@ -49,7 +49,6 @@ def test_date_should_be_change_in_editing_reports_scheduled():
         caseimportance: medium
         initialEstimate: 1/16h
         startsin: 5.3
-        title: Date should be change In editing reports scheduled
         setup:
             1. Create a report schedule which runs once.
             2. Select the schedule and edit it.

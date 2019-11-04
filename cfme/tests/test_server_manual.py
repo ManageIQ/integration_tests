@@ -23,7 +23,6 @@ def test_appliance_terminates_unresponsive_worker_process():
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
-        title: Appliance terminates unresponsive worker process
     """
     pass
 
@@ -54,7 +53,6 @@ def test_session_purging_occurs_only_when_session_store_is_sql():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/10h
-        title: Session purging occurs only when session_store is sql
     """
     pass
 
@@ -93,7 +91,6 @@ def test_pg_stat_activity_view_in_postgres_should_show_worker_information():
         caseimportance: medium
         initialEstimate: 1/10h
         startsin: 5.7
-        title: pg_stat_activity view in postgres should show worker information
     """
     pass
 
@@ -153,7 +150,6 @@ def test_verify_purging_of_old_records():
         casecomponent: Appliance
         initialEstimate: 1/4h
         startsin: 5.8
-        title: Verify purging of old records
     """
     pass
 
@@ -180,7 +176,6 @@ def test_verify_that_errored_out_queue_messages_are_removed():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/15h
-        title: Verify that errored-out queue messages are removed
     """
     pass
 
@@ -216,7 +211,6 @@ def test_active_tasks_get_timed_out_when_they_run_too_long():
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.7
-        title: active tasks get timed out when they run too long
     """
     pass
 
@@ -252,6 +246,5 @@ def test_verify_benchmark_timings_are_correct():
         caseimportance: medium
         initialEstimate: 1/6h
         startsin: 5.8
-        title: Verify benchmark timings are correct
     """
     pass
