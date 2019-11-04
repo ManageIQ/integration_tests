@@ -100,6 +100,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 @pytest.mark.rhv1
 @pytest.mark.rhv3
 @test_requirements.rhev
+@test_requirements.snapshot
 @pytest.mark.meta(automates=[1571291, 1608475])
 def test_snapshot_crud(small_test_vm, provider):
     """Tests snapshot crud
@@ -130,6 +131,7 @@ def test_snapshot_crud(small_test_vm, provider):
 
 @pytest.mark.rhv3
 @test_requirements.rhev
+@test_requirements.snapshot
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1443411)])
 def test_delete_active_vm_snapshot(small_test_vm):
@@ -153,6 +155,7 @@ def test_delete_active_vm_snapshot(small_test_vm):
 
 @pytest.mark.rhv3
 @test_requirements.rhev
+@test_requirements.snapshot
 @pytest.mark.provider([RHEVMProvider])
 def test_create_without_description(small_test_vm):
     """
@@ -179,6 +182,7 @@ def test_create_without_description(small_test_vm):
         view.flash.assert_message('Description is required')
 
 
+@test_requirements.snapshot
 @pytest.mark.provider([VMwareProvider])
 def test_delete_all_snapshots(small_test_vm, provider):
     """Tests snapshot removal
@@ -272,6 +276,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     ssh_client.close()
 
 
+@test_requirements.snapshot
 @pytest.mark.rhv1
 def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
@@ -285,13 +290,14 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
         1561618
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/4h
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
 
 
+@test_requirements.snapshot
 @pytest.mark.provider([VMwareProvider])
 def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_event, request):
     """Tests revert active snapshot
@@ -309,6 +315,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
                            active_snapshot=True)
 
 
+@test_requirements.snapshot
 @pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider], override=True)
 @pytest.mark.meta(automates=[BZ(1552732)])
@@ -372,6 +379,7 @@ def setup_snapshot_env(test_vm, memory):
              message="Waiting for the first snapshot to become active")
 
 
+@test_requirements.snapshot
 @pytest.mark.parametrize("parent_vm", ["on_with_memory", "on_without_memory", "off"])
 @pytest.mark.provider([VMwareProvider])
 def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
@@ -401,6 +409,7 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
     assert bool(small_test_vm.mgmt.is_running) == memory
 
 
+@test_requirements.snapshot
 @pytest.mark.provider([VMwareProvider])
 def test_operations_suspended_vm(small_test_vm, soft_assert):
     """Tests snapshot operations on suspended vm
@@ -444,6 +453,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     snapshot2.delete()
 
 
+@test_requirements.snapshot
 @pytest.mark.provider([VMwareProvider])
 def test_operations_powered_off_vm(small_test_vm):
     """
@@ -475,6 +485,7 @@ def test_operations_powered_off_vm(small_test_vm):
     snapshot2.delete()
 
 
+@test_requirements.snapshot
 @pytest.mark.rhv3
 def test_snapshot_history_btn(small_test_vm, provider):
     """Tests snapshot history button
@@ -496,6 +507,7 @@ def test_snapshot_history_btn(small_test_vm, provider):
     assert snapshot_view.is_displayed
 
 
+@test_requirements.snapshot
 @pytest.mark.provider([VMwareProvider])
 def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
     """This test checks whether the vm.create_snapshot works in AE.
@@ -568,7 +580,7 @@ def test_sui_create_snapshot():
     Check all pages and the snapshot count displayed on vm details page.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
@@ -608,7 +620,7 @@ def test_snapshot_timeline_group_actions():
     snapshots in a rapid succession, check how it looks in the timeline.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: low
         initialEstimate: 1/3h
@@ -633,6 +645,7 @@ def test_snapshot_timeline_group_actions():
 
 @pytest.mark.manual
 @test_requirements.ssui
+@test_requirements.snapshot
 @pytest.mark.tier(2)
 def test_snapshot_timeline_new_vm():
     """
@@ -640,7 +653,7 @@ def test_snapshot_timeline_new_vm():
     See if there"s no timeline when there"s no snapshot.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: low
         initialEstimate: 1/6h
@@ -668,7 +681,7 @@ def test_ssui_snapshot_memory_checkbox():
     Test "snapshot vm memory" checkbox when creating snapshot for powered off vm.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
@@ -698,7 +711,7 @@ def test_snapshot_tree_view_functionality():
     snapshots and check if the tree is correct.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -736,7 +749,7 @@ def test_snapshot_link_after_deleting_snapshot():
     link, it should work.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
@@ -772,7 +785,7 @@ def test_sui_snapshot_timeline_time_of_creation():
     Timeline should display snapshots at the time of creation
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
@@ -807,7 +820,7 @@ def test_sui_test_snapshot_count():
     Also click on the snapshot link should navigate to snapshot page .
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/6h
@@ -842,7 +855,7 @@ def test_snapshot_timeline_crud():
     snapshot and see if the timeline reflects this correctly
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: low
         initialEstimate: 1/2h
@@ -876,7 +889,7 @@ def test_creating_second_snapshot_on_suspended_vm():
     Test creating second snapshot on suspended vm.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
@@ -907,7 +920,7 @@ def test_snapshot_timeline_verify_data():
     See if data on the popup correspond to data shown below the timeline.
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/3h
