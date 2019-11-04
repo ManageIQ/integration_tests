@@ -19,7 +19,6 @@ def test_red_hat_cloud_services_overview():
         caseimportance: high
         casecomponent: CloudIntegration
         initialEstimate: 1h
-        title: Cfme/Insights - Services Page Overview
         testSteps:
             1. On a CloudForms appliance, navigate to Red Hat Cloud->Services
             2. Examine the header
@@ -48,7 +47,6 @@ def test_red_hat_cloud_providers_overview():
         caseimportance: high
         casecomponent: CloudIntegration
         initialEstimate: 1h
-        title: Cfme/Insights - Providers Page Overview
         setup:
             1. Register the CloudForms appliance to RHSM and Insights
             2. Add any of the supported providers (OSP, vSphere, RHEV)
@@ -91,7 +89,6 @@ def test_cloud_insights_sync():
         caseimportance: high
         casecomponent: CloudIntegration
         initialEstimate: 1h
-        title: Cfme/Insights - Synchronize CloudForms data
         setup:
             1. Register the CloudForms appliance to RHSM and Insights
             2. Add any of the supported providers (OSP, vSphere, RHEV)

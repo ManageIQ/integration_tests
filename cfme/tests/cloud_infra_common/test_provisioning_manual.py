@@ -362,7 +362,6 @@ def test_create_provisioning_dialog_without_dialog_type():
         caseposneg: negative
         initialEstimate: 1/4h
         startsin: 5.5
-        title: create provisioning dialog without dialog type
     """
     pass
 
@@ -413,6 +412,5 @@ def test_add_multiple_iso_datastore():
         casecomponent: Services
         initialEstimate: 1/8h
         startsin: 5.5
-        title: Add multiple ISO datastore
     """
     pass

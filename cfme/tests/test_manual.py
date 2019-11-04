@@ -123,7 +123,6 @@ def test_sui_stack_service_vm_detail_page_should_show_correct_data():
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
-        title: SUI : Stack Service VM detail page should show correct data
     """
     pass
 
@@ -382,7 +381,6 @@ def test_orchestration_link_mismatch():
         casecomponent: Stack
         caseimportance: medium
         initialEstimate: 1/4h
-        title: orchestration link mismatch
     """
     pass
 
@@ -649,7 +647,6 @@ def test_delete_orchestration_template_in_use():
         setup: Create a orchestration template and provision a stack from it .
                Delete the template
         startsin: 5.5
-        title: Delete orchestration template in use
     """
     pass
 
@@ -714,7 +711,6 @@ def test_playbook_with_already_existing_dialogs_name():
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Test Playbook with already existing dialog's name
     """
     pass
 
@@ -750,7 +746,6 @@ def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
-        title: Heat stacks in non-admin tenants shall also be  collected
     """
     pass
 
@@ -1057,7 +1052,6 @@ def test_show_tag_info_for_playbook_services():
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Show tag info for playbook services
     """
     pass
 
@@ -1118,7 +1112,6 @@ def test_retire_ansible_stack():
                9. Select first_job_template stack -> Lifecycle -> Retire selected
                stacks
         startsin: 5.5
-        title: Retire Ansible stack
     """
     pass
 
@@ -1154,7 +1147,6 @@ def test_check_all_availability_zones_for_amazon_provider():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
-        title: Check all availability zones for amazon provider
     """
     pass
 
@@ -1188,7 +1180,6 @@ def test_multiple_stack_deployment():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
-        title: Multiple Stack deployment
     """
     pass
 
@@ -1207,8 +1198,6 @@ def test_button_groups_created_on_orchestration_type_heat_service_catalog_items_
         casecomponent: Services
         caseimportance: low
         initialEstimate: 1/4h
-        title: Button groups created on orchestration type (heat) service
-               catalog items are not seen on services
     """
     pass
 
@@ -1336,7 +1325,6 @@ def test_monitor_ansible_playbook_std_output():
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Monitor Ansible playbook std output
     """
     pass
 
@@ -1412,7 +1400,6 @@ def test_monitor_ansible_playbook_logging_output():
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.8
-        title: Monitor Ansible playbook Logging output
     """
     pass
 

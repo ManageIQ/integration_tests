@@ -573,8 +573,6 @@ def test_sui_create_snapshot():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
-        title: SUI: Create snapshot from vm details page, snapshot page
-               and service details page
         setup:
             1. Add an infra provider
             2. Create and order a service catalog which provisions a VM
@@ -664,6 +662,7 @@ def test_snapshot_timeline_new_vm():
 @test_requirements.snapshot
 @test_requirements.ssui
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1600043])
 def test_ssui_snapshot_memory_checkbox():
     """
     Test "snapshot vm memory" checkbox when creating snapshot for powered off vm.
@@ -673,8 +672,6 @@ def test_ssui_snapshot_memory_checkbox():
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
-        title: [SSUI] Test "snapshot vm memory" checkbox when creating
-               snapshot for powered off vm.
         setup:
             1. Add infra provider
             2. Create and order a service catalog which provisions a VM
@@ -692,6 +689,7 @@ def test_ssui_snapshot_memory_checkbox():
 @pytest.mark.manual
 @test_requirements.snapshot
 @pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1398239])
 def test_snapshot_tree_view_functionality():
     """
     Just test the snapshot tree view. Create a bunch of snapshots and see
@@ -704,7 +702,6 @@ def test_snapshot_tree_view_functionality():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Test snapshot tree view functionality
         setup:
             1. Add infra provider
             2. Create testing VM
@@ -729,6 +726,7 @@ def test_snapshot_tree_view_functionality():
 @pytest.mark.provider([VMwareProvider], override=True)
 @test_requirements.snapshot
 @pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1395116])
 def test_snapshot_link_after_deleting_snapshot():
     """
     test snapshot link in vm summary page after deleting snapshot
@@ -742,7 +740,6 @@ def test_snapshot_link_after_deleting_snapshot():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
-        title: test snapshot link in vm summary page after deleting snapshot
         setup:
             1. Add vmware provider
             2. Create testing VM
@@ -769,6 +766,7 @@ def test_snapshot_link_after_deleting_snapshot():
 @test_requirements.snapshot
 @test_requirements.ssui
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1490510])
 def test_sui_snapshot_timeline_time_of_creation():
     """
     Timeline should display snapshots at the time of creation
@@ -779,7 +777,6 @@ def test_sui_snapshot_timeline_time_of_creation():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
-        title: SUI : Timeline should display snapshots at the time of creation
         setup:
             1. Add vmware provider
             2. Create testing VM
@@ -873,6 +870,7 @@ def test_snapshot_timeline_crud():
 @pytest.mark.manual
 @pytest.mark.provider([VMwareProvider], override=True)
 @test_requirements.snapshot
+@pytest.mark.meta(coverage=[1419872])
 def test_creating_second_snapshot_on_suspended_vm():
     """
     Test creating second snapshot on suspended vm.
@@ -882,7 +880,6 @@ def test_creating_second_snapshot_on_suspended_vm():
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
-        title: test creating second snapshot on suspended vm
         setup:
             1. Add vmware provider
             2. Create testing vm; suspend it

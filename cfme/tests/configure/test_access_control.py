@@ -2311,7 +2311,6 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
                see that the dashboard is updated appropriately.
         startsin: 5.9
         tags: rbac
-        title: Verify that changing groups in the webui updates dashboard items
         testSteps:
             1. Login to the OPS webui
             2. Switch to another group

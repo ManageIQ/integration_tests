@@ -145,6 +145,7 @@ def secgroup_with_rule(provider):
 
 
 @pytest.mark.provider([AzureProvider], override=True, scope='function')
+@pytest.mark.meta(automates=[1520196])
 def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
     """ Pulls the list of firewall ports from Provider API and from appliance. Compare the 2
     results. If same, then test is successful.
@@ -170,13 +171,7 @@ def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
     secgroup = [i for i in secgrp_collection.all() if i.name == secgroup_with_rule][0]
     view = navigate_to(secgroup, 'Details')
 
-    if appliance.version < '5.10':
-        # The table has one header row. The first non-header row has column
-        # names.
-        assert 'Port' == view.entities.firewall_rules[1][3].text
-        assert '22' == view.entities.firewall_rules[2][3].text
-    else:
-        # The table has two header rows. We cannot access the second one with
-        # widgetastic. So let's hope the column of index 3 is the Port Range
-        # column.
-        assert '22' == view.entities.firewall_rules[1][3].text
+    # The table has two header rows. We cannot access the second one with
+    # widgetastic. So let's hope the column of index 3 is the Port Range
+    # column.
+    assert '22' == view.entities.firewall_rules[1][3].text

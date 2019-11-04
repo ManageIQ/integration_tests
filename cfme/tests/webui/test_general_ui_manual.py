@@ -32,7 +32,6 @@ def test_notification_window_events_show_in_timestamp_order():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.9
-        title: Notification window events show in timestamp order
     """
     pass
 
@@ -55,7 +54,6 @@ def test_notification_window_can_be_closed_by_clicking_x():
         caseimportance: medium
         initialEstimate: 1/15h
         startsin: 5.9
-        title: Notification window can be closed by clicking 'x'
     """
     pass
 

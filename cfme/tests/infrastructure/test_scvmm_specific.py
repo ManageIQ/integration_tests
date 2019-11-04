@@ -202,7 +202,6 @@ def test_create_appliance_on_scvmm_using_the_vhd_image(scvmm_appliance):
         casecomponent: Appliance
         initialEstimate: 1/4h
         subtype1: usability
-        title: Create Appliance on SCVMM using the VHD image.
         upstream: yes
         testSteps:
             1. Download VHD image
@@ -235,7 +234,6 @@ def test_check_disk_allocation_size_scvmm(vm):
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/2h
-        title: Check disk allocation size [SCVMM]
         testSteps:
             1. Provision VM and check it's "Total Datastore Used Space"
             2. go to VMM and create Vm's Checkpoint

@@ -114,7 +114,6 @@ def test_automate_git_import_multiple_domains(request, appliance):
         startsin: 5.10
         casecomponent: Automate
         tags: automate
-        title: Test automate git import multiple domains
         testSteps:
             1. Enable server role: git Repositories Owner
             2. Navigate to Automation > Automate > Import/Export
@@ -182,7 +181,6 @@ def test_domain_import_git(
         startsin: 5.7
         casecomponent: Automate
         tags: automate
-        title: Test automate git domain import top level directory
         testSteps:
             1. Enable server role: git Repositories Owner
             2. Navigate to Automation > Automate > Import/Export

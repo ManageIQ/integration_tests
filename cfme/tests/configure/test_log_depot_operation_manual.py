@@ -132,6 +132,5 @@ def test_log_collection_via_ftp_over_ipv6():
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Log collection via FTP over IPv6
     """
     pass

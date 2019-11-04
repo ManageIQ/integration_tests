@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.wait import TimedOutError
 
@@ -72,38 +73,11 @@ def test_security_group_create_cancel(appliance, provider):
     assert not sec_group.exists
 
 
-@pytest.mark.manual
-@test_requirements.azure
-@pytest.mark.tier(1)
-def test_sdn_nsg_firewall_rules_azure():
-    """
-    Bugzilla:
-        1520196
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/12h
-        testSteps:
-            1. Add Network Security group on Azure with coma separated port ranges
-            `1023,1025` rule inbound/outbound ( ATM this feature is not allowed in
-            East US region of Azure - try West/Central)
-            2. Add such Azure Region into CFME
-            3. Refresh provider
-            4. Open such NSG in CFME
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Check that ports from 1) do present in the UI as Firewall rules
-    """
-    pass
-
-
 @test_requirements.ec2
 @pytest.mark.manual
-def test_security_group_record_values_ec2():
+@pytest.mark.provider([EC2Provider], override=True)
+@pytest.mark.meta(coverage=[1540283])
+def test_security_group_record_values_ec2(provider):
     """
     Bugzilla:
         1540283

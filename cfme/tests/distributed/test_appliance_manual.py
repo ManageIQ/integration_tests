@@ -65,7 +65,6 @@ def test_verify_httpd_only_running_when_roles_require_it():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/4h
-        title: Verify httpd only running when roles require it
     """
     pass
 

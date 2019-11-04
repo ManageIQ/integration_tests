@@ -131,7 +131,6 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
         startsin: 5.9
         casecomponent: Automate
         tags: automate
-        title: Test automate relationship trailing spaces
         testSteps:
             1. Create a class and its instance, also create second one,
                that has a relationship field.
