@@ -330,8 +330,8 @@ class DefaultButton(BaseButton):
     hover = attr.ib()
     image = attr.ib()
     dialog = attr.ib()
-    display = attr.ib(default=None)
-    icon_color = attr.ib(default=None)
+    display = attr.ib(default=True)
+    icon_color = attr.ib(default="#000000")
     system = attr.ib(default=None)
     request = attr.ib(default=None)
     open_url = attr.ib(default=None)
@@ -370,8 +370,8 @@ class AnsiblePlaybookButton(BaseButton):
     image = attr.ib()
     playbook_cat_item = attr.ib()
     inventory = attr.ib()
-    icon_color = attr.ib(default=None)
-    display = attr.ib(default=None)
+    icon_color = attr.ib(default="#000000")
+    display = attr.ib(default=True)
     hosts = attr.ib(default=None)
     system = attr.ib(default=None)
     request = attr.ib(default=None)
@@ -394,8 +394,8 @@ class ButtonCollection(BaseCollection):
         hover,
         image="fa-user",
         type="Default",
-        display=None,
-        icon_color=None,
+        display=True,
+        icon_color="#000000",
         dialog=None,
         display_for=None,
         submit=None,
@@ -436,8 +436,8 @@ class ButtonCollection(BaseCollection):
         hover,
         type="Default",
         image="fa-user",
-        icon_color=None,
-        display=None,
+        icon_color="#000000",
+        display=True,
         group=None,
         dialog=None,
         display_for=None,
@@ -744,8 +744,8 @@ class ButtonGroup(BaseEntity, Updateable):
     hover = attr.ib()
     type = attr.ib()
     image = attr.ib(default="fa-user")
-    display = attr.ib(default=None)
-    icon_color = attr.ib(default=None)
+    display = attr.ib(default=True)
+    icon_color = attr.ib(default="#000000")
     assign_buttons = attr.ib(default=None)
 
     _collections = {"buttons": ButtonCollection}
@@ -828,8 +828,8 @@ class ButtonGroupCollection(BaseCollection):
         hover,
         type,
         image="fa-user",
-        display=None,
-        icon_color=None,
+        display=True,
+        icon_color="#000000",
         assign_buttons=None,
     ):
         self.type = type
