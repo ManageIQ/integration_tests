@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 from widgetastic_patternfly import DropdownItemNotFound
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
@@ -49,6 +50,7 @@ def create_vm(appliance, provider, request):
 
 @pytest.mark.provider([VMwareProvider], override=True, **filter_fields)
 @pytest.mark.meta(blockers=[BZ(1685201)])
+@test_requirements.provision
 def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     """
     Polarion:
@@ -70,6 +72,7 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
 @pytest.mark.provider(gen_func=providers,
                       filters=[infra_filter, not_vmware],
                       override=True)
+@test_requirements.provision
 def test_vm_clone_neg(provider, clone_vm_name, create_vm):
     """Tests that we can't clone non-VMware VM
 

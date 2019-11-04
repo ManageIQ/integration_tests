@@ -3,13 +3,17 @@ from os import path as os_path
 import pytest
 from wait_for import wait_for
 
+from cfme import test_requirements
 from cfme.base.ui import navigate_to
 from cfme.utils.appliance import ApplianceException
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 
-pytestmark = [pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")]
+pytestmark = [
+    test_requirements.db_migration,
+    pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")
+]
 
 
 def pytest_generate_tests(metafunc):

@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -9,6 +10,11 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
+
+
+pytestmark = [
+    test_requirements.appliance
+]
 
 REG_METHODS = ('rhsm', 'sat6')
 

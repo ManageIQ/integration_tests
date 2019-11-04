@@ -4,6 +4,7 @@ import pytz
 from dateutil import parser
 from dateutil import relativedelta
 
+from cfme import test_requirements
 from cfme.base.ui import BaseLoggedInPage
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
@@ -13,7 +14,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider([VMwareProvider], required_fields=['hosts'], selector=ONE, scope='module'),
-    pytest.mark.usefixtures("setup_provider")
+    pytest.mark.usefixtures("setup_provider"),
+    test_requirements.scheduled_ops
 ]
 
 run_types = (

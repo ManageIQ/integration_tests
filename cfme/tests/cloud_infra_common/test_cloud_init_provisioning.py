@@ -3,6 +3,7 @@
 # in selenium (the group is selected then immediately reset)
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -58,6 +59,7 @@ def vm_name():
 
 @pytest.mark.rhv2
 @pytest.mark.tier(3)
+@test_requirements.provision
 def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
                         setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
@@ -119,6 +121,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
 @pytest.mark.rhv3
 @pytest.mark.provider([RHEVMProvider], override=True)
+@test_requirements.provision
 def test_provision_cloud_init_payload(appliance, request, setup_provider, provider, provisioning,
                                       vm_name):
     """

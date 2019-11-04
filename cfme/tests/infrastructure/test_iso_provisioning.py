@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
 
+from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.infrastructure.pxe import ISODatastore
@@ -79,6 +80,7 @@ def vm_name():
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
+@test_requirements.provision
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init, request):
     """Tests ISO provisioning
 

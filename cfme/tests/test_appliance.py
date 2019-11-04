@@ -24,6 +24,7 @@ pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
     'rhn-check',
     'rhnlib',
 ])
+@test_requirements.appliance
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations
@@ -40,6 +41,7 @@ def test_rpms_present(appliance, package):
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@test_requirements.appliance
 def test_selinux_enabled(appliance):
     """Verifies selinux is enabled
 
@@ -54,6 +56,7 @@ def test_selinux_enabled(appliance):
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@test_requirements.appliance
 def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance
 
@@ -66,6 +69,7 @@ def test_firewalld_running(appliance):
 
 
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@test_requirements.appliance
 def test_evm_running(appliance):
     """Verifies overall evm service is running on the appliance
 
@@ -88,6 +92,7 @@ def test_evm_running(appliance):
 ])
 @pytest.mark.uncollectif(
     lambda appliance: appliance.is_pod)
+@test_requirements.appliance
 def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up
 
@@ -103,6 +108,7 @@ def test_service_enabled(appliance, service):
 
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@test_requirements.appliance
 def test_firewalld_services_are_active(appliance):
     """Verifies key firewalld services are in place
 
@@ -127,6 +133,7 @@ def test_firewalld_services_are_active(appliance):
 @pytest.mark.meta(blockers=[BZ(1712944)])
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@test_requirements.appliance
 def test_firewalld_active_zone_after_restart(appliance):
     """Verifies key firewalld active zone survives firewalld restart
 
@@ -154,6 +161,7 @@ def test_firewalld_active_zone_after_restart(appliance):
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
+@test_requirements.appliance
 def test_memory_total(appliance):
     """Verifies that the total memory on the box is >= 6GB
 
@@ -168,6 +176,7 @@ def test_memory_total(appliance):
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
+@test_requirements.appliance
 def test_cpu_total(appliance):
     """Verifies that the total number of cpus is >= 4
 
@@ -183,6 +192,7 @@ def test_cpu_total(appliance):
 
 @pytest.mark.meta(blockers=[BZ(1712929, forced_streams=['5.10', '5.11'])])  # against RHEL
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.appliance
 def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present.
 
@@ -242,6 +252,7 @@ def test_html5_ssl_files_present(appliance, soft_assert):
 
 
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.appliance
 def test_db_connection(appliance):
     """Test that the pgsql db is listening externally
 
@@ -258,6 +269,7 @@ def test_db_connection(appliance):
     assert len(databases) > 0
 
 
+@test_requirements.appliance
 def test_asset_precompiled(appliance):
     """
     Polarion:
@@ -271,6 +283,7 @@ def test_asset_precompiled(appliance):
 
 
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.appliance
 def test_keys_included(appliance, soft_assert):
     """
     Polarion:
@@ -287,6 +300,7 @@ def test_keys_included(appliance, soft_assert):
             "{} was not included in the build".format(k))
 
 
+@test_requirements.appliance
 def test_appliance_console_packages(appliance):
     """Test that we have no scl packages installed.
 
@@ -302,6 +316,7 @@ def test_appliance_console_packages(appliance):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@test_requirements.appliance
 def test_appliance_chrony_conf():
     """
     check that iburst exists within /etc/chrony.conf.
@@ -321,6 +336,7 @@ def test_appliance_chrony_conf():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@test_requirements.appliance
 def test_appliance_executing_script():
     """
     check that a script from /var/www/miq/vmdb/tools/ runs correctly as
@@ -338,6 +354,7 @@ def test_appliance_executing_script():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@test_requirements.appliance
 def test_appliance_log_crond():
     """
     check that CROND service does not get stopped after appliance has been
@@ -355,6 +372,7 @@ def test_appliance_log_crond():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
+@test_requirements.appliance
 def test_appliance_exec_scripts():
     """
     check that scripts in /var/www/miq/vmdb/tools have the executable
@@ -375,6 +393,7 @@ def test_appliance_exec_scripts():
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1678130])
+@test_requirements.appliance
 def test_appliance_contains_ansible_modules(appliance):
     """
     check that there are ansible modules included in the appliance.
@@ -395,6 +414,7 @@ def test_appliance_contains_ansible_modules(appliance):
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
+@test_requirements.appliance
 def test_appliance_log_error():
     """
     check logs for errors such as
@@ -412,6 +432,7 @@ def test_appliance_log_error():
     pass
 
 
+@test_requirements.appliance
 def test_codename_in_log(appliance):
     """
     check whether logs contains a mention of appliance codename
@@ -431,6 +452,7 @@ def test_codename_in_log(appliance):
     appliance.wait_for_web_ui()
 
 
+@test_requirements.appliance
 def test_codename_in_stdout(appliance):
     """
     check whether stdout contains a mention of appliance codename

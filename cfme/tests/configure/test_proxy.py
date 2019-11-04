@@ -18,7 +18,8 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([AzureProvider, GCEProvider], scope='module'),
-    pytest.mark.usefixtures('setup_provider_modscope')
+    pytest.mark.usefixtures('setup_provider_modscope'),
+    test_requirements.appliance
 ]
 
 
