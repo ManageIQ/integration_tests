@@ -119,7 +119,6 @@ def do_yum_update(appliance):
     appliance.wait_for_web_ui()
 
 
-@pytest.mark.rhel_testing
 def test_update_yum(appliance_preupdate, appliance):
     """Tests appliance update between versions
 
