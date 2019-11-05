@@ -33,6 +33,7 @@ cloud_av_zones = cfme.cloud.availability_zone:AvailabilityZoneCollection
 cloud_flavors = cfme.cloud.flavor:FlavorCollection
 cloud_host_aggregates = cfme.cloud.host_aggregates:HostAggregatesCollection
 cloud_images = cfme.cloud.instance.image:ImageCollection
+cloud_insights_providers = cfme.cloud_insights.providers:CloudInsightsProvidersCollection
 cloud_instances = cfme.cloud.instance:InstanceCollection
 cloud_keypairs = cfme.cloud.keypairs:KeyPairCollection
 cloud_networks = cfme.networks.cloud_network:CloudNetworkCollection
