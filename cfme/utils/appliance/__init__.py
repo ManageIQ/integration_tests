@@ -3179,6 +3179,8 @@ class DummyAppliance(object):
     build = 'dummyappliance'
     managed_known_providers = []
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
+    url = 'http://dummies.r.us'
+    is_dummy = attr.ib(default=True)
 
     @property
     def is_downstream(self):
@@ -3188,6 +3190,23 @@ class DummyAppliance(object):
     def from_config(cls, pytest_config):
         version = pytest_config.getoption('--dummy-appliance-version')
         return cls(version=(version or attr.NOTHING))
+
+    @classmethod
+    def from_json(cls, json_string):
+        return cls(**json.loads(json_string))
+
+    @property
+    def as_json(self):
+        """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
+        def _version_tostr(x):
+            if isinstance(x, Version):
+                return str(x)
+            else:
+                return x
+
+        return json.dumps({
+            k: _version_tostr(getattr(self, k))
+            for k in self.__dict__ if k != "collections"})
 
     def set_session_timeout(self, *k):
         pass
