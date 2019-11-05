@@ -24,7 +24,7 @@ def pytest_generate_tests(metafunc):
                              test_upgrade_single_sidebyside}:
         return
 
-    argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc', 'db_format'], [], []
+    argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
     db_backups = cfme_data.get('db_backups', {})
     if not db_backups:
         pytest.skip('No db backup information available!')
@@ -33,7 +33,7 @@ def pytest_generate_tests(metafunc):
         # if data.version >= appliance.version or \
         #         get_stream(data.version) == get_stream(appliance.version):
         #     continue
-        argvalues.append((data.url, data.version, data.desc, data.format))
+        argvalues.append((data.url, data.version, data.desc))
         idlist.append(key)
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
 
@@ -71,7 +71,16 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     return temp_appliance_preconfig_funcscope_upgrade
 
 
-def download_and_migrate_db(app, db_url, db_format):
+def guess_the_db_format(basename):
+    if basename.endswith('dumpall'):
+        return 'pg_dumpall'
+    elif basename.endswith('backup') or basename.endswith('dump'):
+        return 'pg_dump'
+    else:
+        raise Exception("Couldn't guess the db format")
+
+
+def download_and_migrate_db(app, db_url):
     def fetch(src, dst):
         result = app.ssh_client.run_command(
             f'curl  --fail -S -o "{dst}" "{src}"', timeout=15)
@@ -83,6 +92,7 @@ def download_and_migrate_db(app, db_url, db_format):
     loc = "/tmp/"
     v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
     database_yml_url = os_path.join(os_path.dirname(db_url), "database.yml")
+    db_format = guess_the_db_format(url_basename)
 
     fetch(db_url, f'{loc}{url_basename}')
 
@@ -146,7 +156,7 @@ def download_and_migrate_db(app, db_url, db_format):
 @pytest.mark.uncollectif(
     lambda appliance, db_version: appliance.version >= '5.11' and Version(db_version) < '5.6',
     reason='upgrade from CFME<5.6 to >=5.11 not supported: BZ#1765549')
-def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc, db_format):
+def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     """
     Polarion:
         assignee: jhenner
@@ -155,7 +165,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc, db_
     Bugzilla:
         1734076
     """
-    download_and_migrate_db(temp_appliance_extended_db, db_url, db_format)
+    download_and_migrate_db(temp_appliance_extended_db, db_url)
 
 
 @pytest.mark.parametrize('dbversion',

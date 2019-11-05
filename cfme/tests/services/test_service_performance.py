@@ -17,7 +17,7 @@ def appliance_with_performance_db(temp_appliance_extended_db):
         performance_db = db_backups['performance_510']
     except KeyError as e:
         pytest.skip(f"Couldn't find the performance DB in the cfme_data: {e}")
-    download_and_migrate_db(app, performance_db.url, db_format='pg_dump')
+    download_and_migrate_db(app, performance_db.url)
     yield app
 
 
