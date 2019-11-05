@@ -75,7 +75,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
         test_flag: power_control
 
     Polarion:
-        assignee: apagac
+        assignee: prichard
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/3h
