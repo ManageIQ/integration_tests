@@ -15,15 +15,16 @@ pytest_generate_tests = generate(
     # config_managers generates list of managers from cfme_data
     gen_func=config_managers,
     # Filter the config manager types for Tower
-    managers_type='Ansible Tower',
+    managers_type='ansible',
     scope='module'
 )
 pytestmark = [test_requirements.rest]
 
 
 @pytest.fixture(scope='module')
-def config_manager(config_manager_obj):
+def config_manager(config_manager_obj, appliance):
     """Fixture that provides a random config manager and sets it up."""
+    config_manager_obj.appliance = appliance
     if config_manager_obj.type != 'Ansible Tower':
         pytest.skip('A non "Ansible Tower" configuration manager provider was selected for test,'
                     'Please verify cfme_data.yaml content.')

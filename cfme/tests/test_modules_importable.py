@@ -14,14 +14,6 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
     'cfme/utils/ports.py',  # module object
     'cfme/utils/dockerbot/check_prs.py',  # unprotected script
     'cfme/utils/conf.py',  # config object that replaces the module
-    'cfme/intelligence/rss.py',  # import loops
-    'cfme/intelligence/timelines.py',
-    'cfme/intelligence/chargeback/rates.py',
-    'cfme/intelligence/chargeback/assignments.py',
-    'cfme/intelligence/chargeback/__init__.py',
-    'cfme/fixtures/widgets.py',
-    'cfme/dashboard.py',
-    'cfme/configure/tasks.py',
 ])
 
 
@@ -34,8 +26,11 @@ def test_import_own_module(module_path):
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
+
     if module_path in KNOWN_FAILURES:
-        pytest.skip("{} is a known failed path".format(ROOT.dirpath().bestrelpath(module_path)))
+        pytest.skip(f"{ROOT.dirpath().bestrelpath(module_path)} is a known failed path")
     subprocess.check_call(
         [sys.executable, '-c',
-        'import sys, py;py.path.local(sys.argv[1]).pyimport()', str(module_path)], timeout=60)
+         'import sys, py;py.path.local(sys.argv[1]).pyimport()',
+         str(module_path)]
+    )

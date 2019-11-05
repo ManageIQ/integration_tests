@@ -68,7 +68,7 @@ def pytest_addoption(parser):
                     help='Comma-separated list of metaplugins to disable')
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     # Put the meta mark on objects as soon as pytest begins to collect them
     if isinstance(obj, FunctionType) and not hasattr(obj, 'meta'):
@@ -76,7 +76,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     yield
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_collection_modifyitems(session, config, items):
     from cfme.utils.log import logger
     for item in items:
@@ -88,10 +88,9 @@ def pytest_collection_modifyitems(session, config, items):
             )
             item._metadata = AttrDict()
 
-        meta = item.get_marker("meta")
-        if meta is None:
-            continue
-        metas = reversed([x.kwargs for x in meta])  # Extract the kwargs, reverse the order
+        # Extract the kwargs, reverse the order
+        metas = reversed([mark.kwargs
+                          for _, mark in item.iter_markers_with_node('meta') or []])
         for meta in metas:
             item._metadata.update(meta)
     yield
@@ -173,7 +172,7 @@ def pytest_runtest_teardown(item):
     run_plugins(item, plugin.TEARDOWN)
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
     run_plugins(item, plugin.BEFORE_RUN)
     try:

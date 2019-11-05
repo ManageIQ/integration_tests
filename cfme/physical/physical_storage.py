@@ -10,7 +10,7 @@ from widgetastic_patternfly import Accordion
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.exceptions import ItemNotFound

@@ -15,7 +15,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base import BaseCollection
 from cfme.base import BaseEntity
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.exceptions import displayed_not_implemented
 from cfme.utils import conf
 from cfme.utils import ParamClassName

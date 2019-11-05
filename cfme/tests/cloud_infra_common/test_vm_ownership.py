@@ -237,7 +237,7 @@ def test_group_ownership_on_user_or_group_role(
         assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
 
 
-@pytest.mark.provider([VMwareProvider], override=True, scope="module")
+@pytest.mark.provider([VMwareProvider], scope="module")
 @pytest.mark.meta(blockers=[BZ(1622952, forced_streams=['5.10'])])
 def test_template_set_ownership(appliance, request, provider, setup_provider, vm_crud):
     """ Sets ownership to an infra template.

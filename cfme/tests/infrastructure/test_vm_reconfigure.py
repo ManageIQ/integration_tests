@@ -251,13 +251,14 @@ def test_vm_reconfig_add_remove_hw_hot(
         reconfigure_vm(full_vm, orig_config)
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
-@pytest.mark.parametrize(
-    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
-@pytest.mark.uncollectif(
-    lambda disk_mode, vm_state: disk_mode == 'independent_nonpersistent' and vm_state == 'hot',
-    reason='The disk resize operation not supported for hot-independent_nonpersistent')
+@pytest.mark.parametrize('disk_mode', ['persistent',
+                                       'independent_persistent',
+                                       'independent_nonpersistent'])
+@pytest.mark.uncollectif(lambda disk_mode, vm_state:
+                         disk_mode == 'independent_nonpersistent' and vm_state == 'hot',
+                         reason='Disk resize not supported for hot vm independent_nonpersistent')
 def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_mode):
     """ Resize the disk while VM is running and not running
      Polarion:
@@ -273,9 +274,9 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
         {
             "disk_size_in_mb": 20,
             "sync": True,
-            "persistent": False if disk_mode == "independent_nonpersistent" else True,
-            "thin_provisioned": True if disk_type == "thin" else False,
-            "dependent": False if "independent" in disk_mode else True,
+            "persistent": disk_mode != "independent_nonpersistent",
+            "thin_provisioned": disk_type == "thin",
+            "dependent": not "independent"in disk_mode,
             "bootable": False,
         }
     ]
@@ -293,7 +294,10 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
     # there will always be 2 disks after the disk has been added
     disks_present = [disk.filename for disk in full_vm.configuration.disks]
     # get the newly added disk
-    disk_added = list(set(disks_present) - set(initial_disks))[0]
+    try:
+        disk_added = list(set(disks_present) - set(initial_disks))[0]
+    except IndexError:
+        pytest.fail('Added disk not found in diff between initial and present disks')
 
     # resize the disk
     disk_size = 500
@@ -312,10 +316,11 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
 
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1631448, 1696841])
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
-@pytest.mark.parametrize(
-    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
+@pytest.mark.parametrize('disk_mode', ['persistent',
+                                       'independent_persistent',
+                                       'independent_nonpersistent'])
 def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, full_vm, memory=False):
     """
 
@@ -361,7 +366,7 @@ def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, full_vm
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 @pytest.mark.parametrize(
     'adapters_type', ['DPortGroup', 'VmNetwork', 'MgmtNetwork', 'VmKernel'])
 def test_vm_reconfig_add_remove_network_adapters(adapters_type):
@@ -385,7 +390,7 @@ def test_vm_reconfig_add_remove_network_adapters(adapters_type):
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_reconfigure_vm_vmware_mem_multiple():
     """
     Polarion:
@@ -418,7 +423,7 @@ def test_reconfigure_vm_vmware_mem_multiple():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_reconfigure_vm_vmware_sockets_multiple():
     """ Test changing the cpu sockets of multiple vms at the same time.
 
@@ -443,7 +448,7 @@ def test_reconfigure_vm_vmware_sockets_multiple():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_reconfigure_vm_vmware_cores_multiple():
     """ Test changing the cpu cores of multiple vms at the same time.
 
@@ -477,7 +482,7 @@ def test_reconfigure_vm_vmware_cores_multiple():
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_reconfigure_add_disk_cold():
     """ Test adding 16th disk to test how a new scsi controller is handled.
 
@@ -502,7 +507,7 @@ def test_reconfigure_add_disk_cold():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_reconfigure_add_disk_cold_controller_sas():
     """
 
@@ -623,7 +628,7 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.provider([VMwareProvider, RHEVMProvider],
-                      required_fields=['templates'], selector=ONE_PER_TYPE, override=True)
+                      required_fields=['templates'], selector=ONE_PER_TYPE)
 @test_requirements.multi_region
 @test_requirements.reconfigure
 def test_vm_reconfigure_from_global_region(context):

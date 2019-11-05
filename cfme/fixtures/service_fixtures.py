@@ -10,7 +10,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.provider import console_template
+from cfme.fixtures.templates import _get_template
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import service_catalog_obj as _catalog
@@ -82,7 +82,7 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
     provision_type, template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
     if console_test:
-        template = console_template(provider).name
+        template = _get_template(provider, 'console_template').name
         logger.info("Console template name : {}".format(template))
     item_name = dialog.label
     if provider.one_of(InfraProvider):

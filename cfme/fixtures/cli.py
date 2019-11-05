@@ -245,26 +245,26 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
 
 
 @pytest.fixture
-def appliance_preupdate(appliance, old_version):
+def appliance_preupdate(appliance, old_version, request):
     """Requests single appliance from sprout."""
     with get_apps(appliance, old_version, count=1, preconfigured=True,
-                  pytest_config=pytest.config) as apps:
+                  pytest_config=request.config) as apps:
         yield apps[0]
 
 
 @pytest.fixture
-def multiple_preupdate_appliances(appliance, old_version):
+def multiple_preupdate_appliances(appliance, old_version, request):
     """Requests multiple appliances from sprout."""
     with get_apps(appliance, old_version, count=2, preconfigured=False,
-                  pytest_config=pytest.config) as apps:
+                  pytest_config=request.config) as apps:
         yield apps
 
 
 @pytest.fixture
-def ha_multiple_preupdate_appliances(appliance, old_version):
+def ha_multiple_preupdate_appliances(appliance, old_version, request):
     """Requests multiple appliances from sprout."""
     with get_apps(appliance, old_version, count=3, preconfigured=False,
-                  pytest_config=pytest.config) as apps:
+                  pytest_config=request.config) as apps:
         yield apps
 
 

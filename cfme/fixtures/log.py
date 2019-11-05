@@ -3,6 +3,7 @@ import collections
 import attr
 import pytest
 
+from cfme.fixtures.pytest_store import store
 from cfme.utils import log
 from cfme.utils.appliance import find_appliance
 
@@ -20,19 +21,19 @@ def pytest_configure(config):
     config.pluginmanager.register(LogExtraData(config))
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_setup(item):
     path, lineno, domaininfo = item.location
-    logger().info(log.format_marker(_format_nodeid(item.nodeid), mark="-"),
+    log.logger.info(log.format_marker(_format_nodeid(item.nodeid), mark="-"),
         extra={'source_file': path, 'source_lineno': lineno})
     yield
 
 
 def pytest_collection_modifyitems(session, config, items):
-    logger().info(log.format_marker('Starting new test run', mark="="))
+    log.logger.info(log.format_marker('Starting new test run', mark="="))
     expression = config.getvalue('keyword') or False
     expr_string = ', will filter with "{}"'.format(expression) if expression else ''
-    logger().info('Collected {} items{}'.format(len(items), expr_string))
+    log.logger.info('Collected {} items{}'.format(len(items), expr_string))
 
 
 @attr.s(frozen=True)
@@ -44,32 +45,32 @@ class LogExtraData(object):
         appliance = find_appliance(self.config)
         return [prov.key for prov in appliance.managed_known_providers]
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logreport(self, report):
         # e.g. test_tracking['test_name']['setup'] = 'passed'
         #      test_tracking['test_name']['call'] = 'skipped'
         #      test_tracking['test_name']['teardown'] = 'failed'
         yield
         test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
-        if report.when == 'teardown' and pytest.store.parallel_session is None:
+        if report.when == 'teardown' and store.parallel_session is None:
             path, lineno, domaininfo = report.location
             test_status = _test_status(_format_nodeid(report.nodeid, False))
             if test_status == "failed":
                 try:
-                    logger().info(
+                    log.logger.info(
                         "Managed providers: {}".format(
                             ", ".join(self.managed_known_providers))
                     )
                 except KeyError as ex:
                     if 'ext_management_systems' in ex.msg:
-                        logger().warning("Unable to query ext_management_systems table; DB issue")
+                        log.logger.warning("Unable to query ext_management_systems table; DB issue")
                     else:
                         raise
-            logger().info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
+            log.logger.info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
                     test_status)),
                 extra={'source_file': path, 'source_lineno': lineno})
         if report.outcome == "skipped":
-            logger().info(log.format_marker(report.longreprtext))
+            log.logger.info(log.format_marker(report.longreprtext))
 
 
 def pytest_exception_interact(node, call, report):
@@ -79,7 +80,7 @@ def pytest_exception_interact(node, call, report):
     # This is the same code that powers py.test's output, so we gain py.test's magical ability
     # to get useful AssertionError output by doing it this way, which makes the voodoo worth it.
     entry = call.excinfo.traceback.getcrashentry()
-    logger().error(call.excinfo.getrepr(),
+    log.logger.error(call.excinfo.getrepr(),
         extra={'source_file': entry.path, 'source_lineno': entry.lineno + 1})
 
 
@@ -92,8 +93,8 @@ def pytest_sessionfinish(session, exitstatus):
         '{}: {}'.format(k, v) for k, v in c.items()]
     # Then join it with commas
     summary = ', '.join(results)
-    logger().info(log.format_marker('Finished test run', mark='='))
-    logger().info(log.format_marker(str(summary), mark='='))
+    log.logger.info(log.format_marker('Finished test run', mark='='))
+    log.logger.info(log.format_marker(str(summary), mark='='))
 
 
 def _test_status(test_name):

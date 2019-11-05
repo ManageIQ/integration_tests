@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_patternfly import Accordion
 
-from cfme.base import Server
-from cfme.base.login import BaseLoggedInPage
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep
-from cfme.utils.appliance.implementations.ui import navigator
+from cfme.common import BaseLoggedInPage
 from widgetastic_manageiq import ManageIQTree
 
 
@@ -35,14 +31,3 @@ class ChargebackView(BaseLoggedInPage):
     @View.nested
     class assignments(Accordion):  # noqa
         tree = ManageIQTree()
-
-
-@navigator.register(Server)
-class IntelChargeback(CFMENavigateStep):
-    VIEW = ChargebackView
-    prerequisite = NavigateToSibling("LoggedIn")
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select(
-            self.obj.intel_name, "Chargeback"
-        )

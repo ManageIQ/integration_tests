@@ -6,7 +6,7 @@ from widgetastic_patternfly import Accordion
 from widgetastic_patternfly import BootstrapNav
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

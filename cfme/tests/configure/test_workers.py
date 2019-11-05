@@ -26,7 +26,6 @@ DROPDOWNS = [
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@pytest.mark.nondestructive
 def test_restart_workers(appliance):
     """
     Polarion:

@@ -149,7 +149,7 @@ the cache somehow. You need to call an appropriate method on the appliance objec
 pytest store
 ------------
 
-The pytest store provides access to common pytest data structures and instances that may not be readily available elsewhere. It can be found in :py:mod:`fixtures.pytest_store`, and during a test run is exposed on the pytest module in the store namespace as ``pytest.store``.
+The pytest store provides access to common pytest data structures and instances that may not be readily available elsewhere. It can be found in :py:mod:`fixtures.pytest_store`, and has to be used directly via :py:mod:`fixtures.pytest_store.store` singleton instance.
 
 Test generation (testgen)
 -------------------------

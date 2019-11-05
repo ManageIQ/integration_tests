@@ -8,7 +8,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.fixtures.pytest_store import store
+
 
 def pytest_addoption(parser):
     group = parser.getgroup('Upstream testing')
@@ -17,17 +19,17 @@ def pytest_addoption(parser):
 
 
 def pytest_sessionstart(session):
-    if pytest.store.parallelizer_role == 'master':
+    if store.parallelizer_role == 'master':
         return
     if session.config.getoption("dev_repo") is None:
         return
-    if pytest.store.current_appliance.is_downstream:
-        pytest.store.write_line("Cannot git update downstream appliances ...")
+    if store.current_appliance.is_downstream:
+        store.write_line("Cannot git update downstream appliances ...")
         pytest.exit('Failed to git update this appliance, because it is downstream')
     dev_repo = session.config.getoption("dev_repo")
     dev_branch = session.config.getoption("dev_branch")
-    pytest.store.write_line(
+    store.write_line(
         "Changing the upstream appliance {} to {}#{} ...".format(
-            pytest.store.current_appliance.hostname, dev_repo, dev_branch))
-    pytest.store.current_appliance.use_dev_branch(dev_repo, dev_branch)
-    pytest.store.write_line("Appliance change finished ...")
+            store.current_appliance.hostname, dev_repo, dev_branch))
+    store.current_appliance.use_dev_branch(dev_repo, dev_branch)
+    store.write_line("Appliance change finished ...")

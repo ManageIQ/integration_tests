@@ -35,7 +35,7 @@ def load_available_requirements():
 
 def check_tier(item):
     strings = []
-    tier = item.get_marker('tier')
+    tier = item.get_closest_marker('tier')
     if tier is None:
         strings.append('[TCV-E] MISSING TIER: {}'.format(item.nodeid))
     else:
@@ -51,7 +51,7 @@ def check_tier(item):
 
 def check_requirement(item, available_requirements):
     strings = []
-    requirement = item.get_marker('requirement')
+    requirement = item.get_closest_marker('requirement')
     if requirement is None:
         strings.append('[TCV-E] MISSING REQUIREMENT: {}'.format(item.nodeid))
     else:

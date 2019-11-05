@@ -32,7 +32,7 @@ def browser_implementation_quits(item):
         logger.debug('Browser isolation specified, but no appliance browsers available to quit on')
 
 
-@pytest.mark.hookwrapper(trylast=True)
+@pytest.hookimpl(hookwrapper=True, trylast=True)
 def pytest_runtest_teardown(item, nextitem):
     yield
     if item.config.getoption("browser_isolation"):

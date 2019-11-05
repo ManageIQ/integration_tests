@@ -9,7 +9,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import TextInput
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common.provider_views import ProviderAddView
 from cfme.common.provider_views import ProviderEditView
 from cfme.exceptions import displayed_not_implemented

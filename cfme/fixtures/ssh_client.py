@@ -6,7 +6,7 @@ from cfme.utils import ssh
 from cfme.utils.log import logger
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_sessionfinish(session, exitstatus):
     """Loop through the appliance stack and close ssh connections"""
 

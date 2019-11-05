@@ -328,7 +328,7 @@ def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_q
 
 
 @pytest.mark.long_running
-@pytest.mark.provider([VMwareProvider], override=True, scope="module",
+@pytest.mark.provider([VMwareProvider], scope="module",
                       required_fields=[['templates', 'small_template']], selector=ONE_PER_TYPE)
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data'],

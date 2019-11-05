@@ -215,7 +215,7 @@ def test_multiple_host_bad_creds(setup_provider, provider):
 
 
 @test_requirements.tag
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_host_after_provider_delete(provider, appliance, setup_provider, request):
     """Test if host can be tagged after delete
 

@@ -17,6 +17,7 @@ def pytest_configure(config):
         'tier: mark a test case with a tier',
         'requirement: mark a test case with a requirement',
         'customer_scenario: mark a test case as a customer story',
+        'rfe: mark a test case as an RFE'
     ]
     for marker in markers_to_add:
         config.addinivalue_line('markers', marker)
@@ -53,15 +54,14 @@ def pytest_collection_modifyitems(session, config, items):
         # for each filter, check if its active and that the item has the marker
         # Then check if the marker content matches the passed filter
         # Discard items without the matching value
-        if (tiers and
-                not getattr(item.get_marker('tier'), 'args', [False])[0] in tiers):
+        if not getattr(item.get_closest_marker('tier'), 'args', [False])[0] in (tiers or []):
             discard_tier.append(item)
             continue
-        if (requirements and
-                not getattr(item.get_marker('requirement'), 'args', [False])[0] in requirements):
+        if (not getattr(item.get_closest_marker('requirement'), 'args', [False])[0]
+                in (requirements or [])):
             discard_requirement.append(item)
             continue
-        if customer and item.get_marker('customer_scenario') is None:
+        if customer and item.get_closest_marker('customer_scenario') is None:
             discard_customer.append(item)
             continue
         keep.append(item)

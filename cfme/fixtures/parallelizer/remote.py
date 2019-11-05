@@ -1,6 +1,7 @@
 import json
 import signal
 
+import pytest
 import zmq
 from py.path import local
 
@@ -27,7 +28,7 @@ class SlaveManager(object):
         ctx = zmq.Context.instance()
         self.sock = ctx.socket(zmq.REQ)
         self.sock.set_hwm(1)
-        self.sock.setsockopt_string(zmq.IDENTITY, '{}'.format(self.slaveid))
+        self.sock.setsockopt_string(zmq.IDENTITY, f'{self.slaveid}')
         self.sock.connect(zmq_endpoint)
 
         self.messages = {}
@@ -36,14 +37,14 @@ class SlaveManager(object):
 
     def send_event(self, name, **kwargs):
         kwargs['_event_name'] = name
-        self.log.debug("sending {} {!r}".format(name, kwargs))
+        self.log.debug(f"sending {name} {kwargs!r}")
         self.sock.send_json(kwargs)
         recv = self.sock.recv_json()
         if recv == 'die':
             self.log.info('Slave instructed to die by master; shutting down')
             raise SystemExit()
         else:
-            self.log.debug('received "{!r}" from master'.format(recv))
+            self.log.debug(f'received "{recv!r}" from master')
             if recv != 'ack':
                 return recv
 
@@ -51,6 +52,7 @@ class SlaveManager(object):
         """Send a message to the master, which should get printed to the console"""
         self.send_event('message', message=message, markup=kwargs)  # message!
 
+    @pytest.hookimpl
     def pytest_collection_finish(self, session):
         """pytest collection hook
 
@@ -63,6 +65,7 @@ class SlaveManager(object):
         terminalreporter.disable()
         self.send_event("collectionfinish", node_ids=list(self.collection.keys()))
 
+    @pytest.hookimpl(trylast=True)
     def pytest_runtest_logstart(self, nodeid, location):
         """pytest runtest logstart hook
 
@@ -71,6 +74,7 @@ class SlaveManager(object):
         """
         self.send_event("runtest_logstart", nodeid=nodeid, location=location)
 
+    @pytest.hookimpl(trylast=True)
     def pytest_runtest_logreport(self, report):
         """pytest runtest logreport hook
 
@@ -84,23 +88,23 @@ class SlaveManager(object):
             if test_status == "failed":
                 appliance = find_appliance(self)
                 try:
-                    self.log.info(
-                        "Managed providers: {}".format(
-                            ", ".join([
-                                prov.key for prov in
-                                appliance.managed_known_providers]))
-                    )
+                    managed_providers = ", ".join([prov.key for prov in
+                                                   appliance.managed_known_providers])
+                    self.log.info(f"Managed providers: {managed_providers}")
                 except KeyError as ex:
                     if 'ext_management_systems' in ex.msg:
                         self.log.warning("Unable to query ext_management_systems table; DB issue")
                     else:
                         raise
-            self.log.info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
-                                                                   test_status)),
-                          extra={'source_file': path, 'source_lineno': lineno})
+            self.log.info(
+                log.format_marker(f'{_format_nodeid(report.nodeid)} result: {test_status}'),
+                extra={'source_file': path, 'source_lineno': lineno}
+            )
+
         if report.outcome == "skipped":
             self.log.info(log.format_marker(report.longreprtext))
 
+    @pytest.hookimpl(tryfirst=True)
     def pytest_internalerror(self, excrepr):
         """pytest internal error hook
 
@@ -108,12 +112,13 @@ class SlaveManager(object):
         - reports short traceback to the py.test console
 
         """
-        msg = 'INTERNALERROR> {}'.format(str(excrepr))
+        msg = f'INTERNALERROR> {excrepr}'
         self.log.error(msg)
         # Only send the last line (exc type/message) to keep the pytest log clean
-        short_tb = 'INTERNALERROR> {}'.format(msg.strip().splitlines()[-1])
+        short_tb = f'INTERNALERROR> {msg.strip().splitlines()[-1]}'
         self.send_event("internalerror", message=short_tb)
 
+    @pytest.hookimpl
     def pytest_runtestloop(self, session):
         """pytest runtest loop
 
@@ -124,7 +129,7 @@ class SlaveManager(object):
 
         for item, nextitem in self._test_generator():
             if self.config.option.collectonly:
-                self.message('{}'.format(item.nodeid))
+                self.message(f'{item.nodeid}')
                 pass
             else:
                 self.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
@@ -132,6 +137,7 @@ class SlaveManager(object):
                 break
         return True
 
+    @pytest.hookimpl(trylast=True)
     def pytest_sessionfinish(self):
         self.shutdown()
 
@@ -142,6 +148,7 @@ class SlaveManager(object):
     def shutdown(self):
         self.message('shutting down')
         self.send_event('shutdown')
+        self.sock.close()
         self.quit_signaled = True
 
     def _test_generator(self):
@@ -191,9 +198,13 @@ def _init_config(slave_options, slave_args):
     import pytest  # NOQA
     from _pytest.config import get_config
     config = get_config()
+
     config.args = slave_args
+
     config._preparse(config.args, addopts=False)
+
     config.option.__dict__.update(slave_options)
+
     # The master handles the result log, slaves shouldn't also write to it
     config.option.resultlog = None
     # Unset appliances to prevent the slaves from starting distributes tests :)
@@ -209,9 +220,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--worker', help='The worker id of this process')
     parser.add_argument('--appliance', help='The json data about the used appliance')
-    parser.add_argument('--ts', help='The timestap to use for collections')
+    parser.add_argument('--ts', help='The timestamp to use for collections')
 
-    parser.add_argument('--config', help='The timestap to use for collections')
+    parser.add_argument('--config', help='The config options for pytest, in json')
     args = parser.parse_args()
 
     # TODO: clean the logic up here
@@ -247,6 +258,7 @@ if __name__ == '__main__':
 
     slave_args = config.pop('args')
     slave_options = config.pop('options')
+
     ip_address = appliance.hostname
     appliance_data = config["appliance_data"]
     if ip_address in appliance_data:

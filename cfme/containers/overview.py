@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToAttribute
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator

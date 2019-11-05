@@ -6,11 +6,11 @@ import docker
 import fauxfactory
 import pytest
 import yaml
-from pytest import config
 from wrapanapi.systems.container.rhopenshift import ApiException
 
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.fixtures.appliance import sprout_appliances
+from cfme.fixtures.pytest_store import store
 from cfme.test_framework.appliance import PLUGIN_KEY
 from cfme.utils import conf
 from cfme.utils import ssh
@@ -199,7 +199,7 @@ def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
             stack.push(appliance)
             # framework will try work with default appliance if browser restarts w/o this
             # workaround
-            holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
+            holder = store.config.pluginmanager.get_plugin(PLUGIN_KEY)
             holder.held_appliance = appliance
             yield appliance
             stack.pop()
@@ -235,7 +235,7 @@ def temp_extdb_pod_appliance(appliance, provider, extdb_template, template_tags,
             # workaround
             appliance.is_pod = True
             stack.push(appliance)
-            holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
+            holder = store.config.pluginmanager.get_plugin(PLUGIN_KEY)
             holder.held_appliance = appliance
             # workaround, appliance looks ready but api may return errors
             wait_for(is_api_available, func_args=[appliance], num_sec=30)
@@ -303,7 +303,7 @@ def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
             with IPAppliance(**params) as appliance:
                 # framework will try work with default appliance if browser restarts w/o this
                 # workaround
-                holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
+                holder = store.config.pluginmanager.get_plugin(PLUGIN_KEY)
                 holder.held_appliance = appliance
                 yield appliance
     finally:

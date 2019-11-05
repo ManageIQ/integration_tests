@@ -1,17 +1,1 @@
-pytest_plugins = [
-    "cfme.markers.composite",
-    "cfme.markers.crud",
-    "cfme.markers.fixtureconf",
-    "cfme.markers.meta",
-    "cfme.markers.polarion",
-    "cfme.markers.requires",
-    "cfme.markers.rhv",
-    "cfme.markers.sauce",
-    "cfme.markers.skipper",
-    "cfme.markers.smoke",
-    "cfme.markers.stream_excluder",
-    "cfme.markers.marker_filters",
-    "cfme.markers.uses",
-    "cfme.markers.uncollect",
-    "cfme.markers.isolation",
-]
+# look at conftest for plugin loading via entrypoints

@@ -11,8 +11,8 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import TextInput
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import ConfigurationView
+from cfme.common import BaseLoggedInPage
 from cfme.exceptions import OptionNotAvailable
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity

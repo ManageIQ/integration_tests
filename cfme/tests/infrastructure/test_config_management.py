@@ -9,7 +9,6 @@ from cfme.utils.update import update
 
 
 pytest_generate_tests = generate(gen_func=config_managers)
-pytestmark = [pytest.mark.meta(blockers=[1491704])]
 
 TEMPLATE_TYPE = {
     "job": "Job Template (Ansible Tower)",
@@ -18,8 +17,9 @@ TEMPLATE_TYPE = {
 
 
 @pytest.fixture
-def config_manager(config_manager_obj):
+def config_manager(config_manager_obj, appliance):
     """ Fixture that provides a random config manager and sets it up"""
+    config_manager_obj.appliance = appliance
     config_manager_obj.create()
     yield config_manager_obj
     config_manager_obj.delete()

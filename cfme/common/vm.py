@@ -12,7 +12,7 @@ from navmazing import NavigateToSibling
 from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable

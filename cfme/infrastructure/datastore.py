@@ -9,7 +9,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Accordion
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common.candu_views import DatastoreInfraUtilizationView

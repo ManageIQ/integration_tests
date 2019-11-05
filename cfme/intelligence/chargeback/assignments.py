@@ -120,7 +120,7 @@ class StorageAssign(Assign):
 
 @navigator.register(Assign, 'All')
 class AssignAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
+    prerequisite = NavigateToAttribute('appliance.server', 'Chargeback')
     VIEW = AssignmentsAllView
 
     def step(self, *args, **kwargs):

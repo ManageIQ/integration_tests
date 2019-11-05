@@ -9,7 +9,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import TimelinesView
 from cfme.common.vm import VM
 from cfme.common.vm import VMCollection

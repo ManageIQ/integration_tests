@@ -26,7 +26,7 @@ from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input as WInput
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import TimelinesView
 from cfme.common.vm import Template
 from cfme.common.vm import TemplateCollection

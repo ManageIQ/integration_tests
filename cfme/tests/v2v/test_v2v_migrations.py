@@ -4,16 +4,16 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.provider import dportgroup_template
-from cfme.fixtures.provider import dual_disk_template
-from cfme.fixtures.provider import dual_network_template
-from cfme.fixtures.provider import rhel69_template
-from cfme.fixtures.provider import rhel7_minimal
-from cfme.fixtures.provider import ubuntu16_template
-from cfme.fixtures.provider import win10_template
-from cfme.fixtures.provider import win2012_template
-from cfme.fixtures.provider import win2016_template
-from cfme.fixtures.provider import win7_template
+from cfme.fixtures.templates import dportgroup_template
+from cfme.fixtures.templates import dual_disk_template
+from cfme.fixtures.templates import dual_network_template
+from cfme.fixtures.templates import rhel69_template
+from cfme.fixtures.templates import rhel7_minimal
+from cfme.fixtures.templates import ubuntu16_template
+from cfme.fixtures.templates import win10_template
+from cfme.fixtures.templates import win2012_template
+from cfme.fixtures.templates import win2016_template
+from cfme.fixtures.templates import win7_template
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider

@@ -339,7 +339,7 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
 @pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.meta(automates=[1691109, 1731237])
-@pytest.mark.provider([RHEVMProvider], selector=ONE_PER_VERSION, override=True, scope="function")
+@pytest.mark.provider([RHEVMProvider], selector=ONE_PER_VERSION, scope="function")
 def test_rhv_guest_devices_count(appliance, setup_provider, provider):
     """
     Polarion:

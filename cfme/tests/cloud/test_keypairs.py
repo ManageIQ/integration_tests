@@ -155,7 +155,7 @@ def test_keypair_create_invalid_key_validation(provider, appliance):
 
 
 @test_requirements.tag
-@pytest.mark.provider([OpenStackProvider], override=True, scope="module", selector=ONE_PER_TYPE)
+@pytest.mark.provider([OpenStackProvider], scope="module", selector=ONE_PER_TYPE)
 def test_keypair_add_and_remove_tag(keypair):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.

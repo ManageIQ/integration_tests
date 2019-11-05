@@ -3,8 +3,7 @@ import pytest
 
 from cfme.utils.appliance import DummyAppliance
 pytestmark = [
-    pytest.mark.nondestructive,
-    pytest.mark.skip_selenium,
+    pytest.mark.non_destructive,
 ]
 
 

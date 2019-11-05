@@ -14,8 +14,7 @@ def _values(val):
 @pytest.mark.parametrize('structure', [
     pytest.param(pytest.param(1, 2), id='param'),
     pytest.param([1, 2], id='list'),
-    pytest.param([1, 2], id='tuple'),
-    pytest.param(pytest.mark.skip(reason="fun")((1, 2)), id='legacy_mark')
+    pytest.param((1, 2), id='tuple'),
 ])
 def test_fixture_filter(structure):
     argnames, argvalues = fixture_filter(FakeMetaFunc(), ['a', 'b'], [structure])

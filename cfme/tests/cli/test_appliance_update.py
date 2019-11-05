@@ -72,7 +72,7 @@ def old_version(request):
 
 
 @pytest.fixture(scope="function", )
-def appliance_preupdate(old_version, appliance):
+def appliance_preupdate(old_version, appliance, request):
 
     series = appliance.version.series()
     update_url = "update_url_{}".format(series.replace('.', ''))
@@ -81,17 +81,19 @@ def appliance_preupdate(old_version, appliance):
     repo file for update"""
 
     usable = []
-    sp = SproutClient.from_config(sprout_user_key=pytest.config.option.sprout_user_key or None)
-    available_versions = set(sp.call_method('available_cfme_versions'))
+    sprout = SproutClient.from_config(
+        sprout_user_key=request.config.getoption('sprout_user_key', default=None) or None
+    )
+    available_versions = set(sprout.call_method('available_cfme_versions'))
     for a in available_versions:
         if a.startswith(old_version):
             usable.append(Version(a))
     usable.sort(reverse=True)
     try:
-        apps, pool_id = sp.provision_appliances(count=1,
-                                                preconfigured=True,
-                                                lease_time=180,
-                                                version=str(usable[0]))
+        apps, pool_id = sprout.provision_appliances(count=1,
+                                                    preconfigured=True,
+                                                    lease_time=180,
+                                                    version=str(usable[0]))
     except AuthException:
         msg = ('Sprout credentials key or yaml maps missing or invalid,'
                'unable to provision appliance version %s for preupdate'.format(str(usable[0])))
@@ -107,7 +109,7 @@ def appliance_preupdate(old_version, appliance):
                 apps[0].ssh_client.run_command('cat /etc/yum.repos.d/update.repo').output)
     yield apps[0]
     apps[0].ssh_client.close()
-    sp.destroy_pool(pool_id)
+    sprout.destroy_pool(pool_id)
 
 
 def do_yum_update(appliance):

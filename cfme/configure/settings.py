@@ -13,7 +13,7 @@ from widgetastic_patternfly import Input
 
 from cfme.base import BaseCollection
 from cfme.base import BaseEntity
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to

@@ -10,7 +10,7 @@ from widgetastic.utils import partial_match
 from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
 from cfme import test_requirements
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -432,7 +432,7 @@ def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name)
     assert len(nics) == 2, 'The VM should have 2 NICs attached.'
 
 
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_vmware_default_placement(provisioner, prov_data, provider, setup_provider, vm_name):
     """ Tests whether vm placed in Datacenter root after the provisioning.
 

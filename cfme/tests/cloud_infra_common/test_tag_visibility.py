@@ -138,7 +138,7 @@ def check_vm_visibility(user_restricted, appliance):
     return _check_vm_visibility
 
 
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_expression_and_condition(
     request, vms_for_tagging, location_tag,
     service_level_tag, group_with_tag_expression, check_vm_visibility
@@ -169,7 +169,7 @@ def test_tag_expression_and_condition(
     check_vm_visibility(group, first_vm, True)
 
 
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_expression_or_condition(
     request, vms_for_tagging, location_tag,
     service_level_tag, group_with_tag_expression, check_vm_visibility
@@ -200,7 +200,7 @@ def test_tag_expression_or_condition(
     check_vm_visibility(group, second_vm, True)
 
 
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_expression_not_condition(
     request, vms_for_tagging, location_tag,
     group_with_tag_expression, check_vm_visibility
@@ -227,7 +227,7 @@ def test_tag_expression_not_condition(
     check_vm_visibility(group, second_vm, True)
 
 
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_expression_not_and_condition(
         request, vms_for_tagging, location_tag,
         service_level_tag, group_with_tag_expression,
@@ -265,7 +265,7 @@ def test_tag_expression_not_and_condition(
     check_vm_visibility(group, second_vm, True)
 
 
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_expression_not_or_condition(
     request, vms_for_tagging, location_tag, service_level_tag, group_with_tag_expression,
     check_vm_visibility
@@ -298,7 +298,7 @@ def test_tag_expression_not_or_condition(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_expression_and_with_or_with_not(
         request, vms_for_tagging, location_tag, service_level_tag, third_tag,
         group_with_tag_expression, check_vm_visibility
@@ -339,7 +339,7 @@ def test_tag_expression_and_with_or_with_not(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.provider([InfraProvider], override=True, selector=ONE, scope='module')
+@pytest.mark.provider([InfraProvider], selector=ONE, scope='module')
 def test_tag_expression_and_with_or(
         request, vms_for_tagging, location_tag, service_level_tag, third_tag,
         group_with_tag_expression, check_vm_visibility

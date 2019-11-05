@@ -351,7 +351,7 @@ def test_open_url_availability(appliance):
     view.cancel_button.click()
 
 
-@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider], scope="function", selector=ONE_PER_TYPE)
 def test_custom_button_quotes(appliance, provider, setup_provider, dialog, request):
     """ Test custom button and group allows quotes or not
 
@@ -407,7 +407,7 @@ def test_custom_button_quotes(appliance, provider, setup_provider, dialog, reque
 @pytest.mark.meta(
     blockers=[BZ(1535215, forced_streams=["5.10"], unblock=lambda button_tag: button_tag != "Evm")]
 )
-@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider], scope="function", selector=ONE_PER_TYPE)
 @pytest.mark.parametrize("button_tag", ["Evm", "Build"])
 def test_custom_button_simulation(request, appliance, provider, setup_provider, button_tag):
     """ Test whether custom button works with simulation option
@@ -466,7 +466,7 @@ def test_custom_button_simulation(request, appliance, provider, setup_provider, 
 
 
 @pytest.mark.parametrize("button_tag", ["Evm", "Build"])
-@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 def test_custom_button_order_sort(appliance, request, provider, setup_provider, button_tag):
     """ Test custom button order reflection on destination
     # ToDo: Now, we are testing this against single object per group tag. If need extends for all.
@@ -614,7 +614,7 @@ def test_custom_button_language():
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1651099])
-@pytest.mark.provider([VMwareProvider], override=True, selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
 @pytest.mark.parametrize("obj_type", ["PROVIDER"], ids=["Provider"], scope="module")
 def test_attribute_override(appliance, request, provider, setup_provider, obj_type, button_group):
     """ Test custom button attribute override
@@ -677,7 +677,7 @@ def test_attribute_override(appliance, request, provider, setup_provider, obj_ty
 
 @pytest.mark.meta(blockers=[BZ(1719282, unblock=lambda button_type: button_type != "User")])
 @pytest.mark.parametrize("button_type", ["User", "Provider"])
-@pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE_PER_TYPE)
+@pytest.mark.provider([VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 def test_simulated_object_copy_on_button(appliance, provider, setup_provider, button_type):
     """ Test copy of simulated object over custom button
 

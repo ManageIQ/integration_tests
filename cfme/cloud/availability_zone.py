@@ -9,7 +9,7 @@ from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common import TimelinesView

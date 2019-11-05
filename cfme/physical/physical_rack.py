@@ -8,7 +8,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Accordion
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
+from cfme.common import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.exceptions import ProviderHasNoProperty
 from cfme.exceptions import RackStatsDoesNotContain

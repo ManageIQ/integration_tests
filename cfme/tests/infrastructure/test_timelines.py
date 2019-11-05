@@ -446,7 +446,7 @@ def test_infra_timeline_diagnostic(new_vm, soft_assert, mark_vm_as_appliance):
 
 
 @pytest.mark.meta(blockers=[BZ(1622952)])
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider])
 def test_infra_timeline_clone_event(new_vm, soft_assert):
     """Test that the event clone is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.
@@ -494,7 +494,7 @@ def test_infra_timeline_migrate_event(new_vm, soft_assert):
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.provider([VMwareProvider], override=True, scope='function')
+@pytest.mark.provider([VMwareProvider], scope='function')
 def test_infra_timeline_rename_event(new_vm, soft_assert):
     """Test that the event rename is visible on the  management event timeline of the Vm,
     Vm's cluster,  VM's host, VM's provider.

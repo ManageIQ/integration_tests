@@ -18,8 +18,8 @@ from widgetastic_patternfly import SelectorDropdown
 from widgetastic_patternfly import Text
 from widgetastic_patternfly import TextInput
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.common import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
