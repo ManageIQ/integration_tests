@@ -77,6 +77,7 @@ def checks(obj_type_conf):
             assert custom_button_group.has_item(button.text)
 
 
+@pytest.mark.post_upgrade
 def test_custom_button_import_export(appliance, setup_groups_buttons):
     """ Test custom button display on a targeted page
 

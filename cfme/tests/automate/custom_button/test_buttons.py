@@ -116,6 +116,7 @@ def test_button_group_crud(request, appliance, obj_type):
     assert not buttongroup.exists
 
 
+@pytest.mark.post_upgrade
 @pytest.mark.sauce
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(
