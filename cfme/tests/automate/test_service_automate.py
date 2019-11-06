@@ -381,7 +381,7 @@ def test_service_retire_automate():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(automates=[1740796])
+@pytest.mark.meta(automates=[1740796], blockers=[BZ(1740796, forced_streams=["5.10"])])
 def test_import_dialog_file_without_selecting_file(appliance, dialog):
     """
     Bugzilla:
@@ -404,5 +404,4 @@ def test_import_dialog_file_without_selecting_file(appliance, dialog):
     view = navigate_to(import_export, "DialogImportExport")
     view.export.click()
     view.flash.assert_message("At least 1 item must be selected for export")
-    if not BZ(1740796, forced_streams=['5.10']).blocks:
-        dialog.update({'label': fauxfactory.gen_alphanumeric()})
+    dialog.update({'label': fauxfactory.gen_alphanumeric()})
