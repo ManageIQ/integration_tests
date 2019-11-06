@@ -146,6 +146,7 @@ class ParallelSession(object):
         self.session_finished = False
         self.countfailures = 0
         self.collection = []
+        self.serial_collection = []  # tests that must run on a single appliance
         self.sent_tests = 0
         self.log = create_sublogger('master')
         self.maxfail = config.getvalue("maxfail")
@@ -355,7 +356,7 @@ class ParallelSession(object):
             tests = self.get(slave)
         self.send(slave, tests)
         slave.tests.update(tests)
-        collect_len = len(self.collection)
+        collect_len = len(self.collection) + len(self.serial_collection)
         tests_len = len(tests)
         self.sent_tests += tests_len
         if tests:
@@ -398,7 +399,21 @@ class ParallelSession(object):
 
         """
         # Build master collection for slave diffing and distribution
-        self.collection = [item.nodeid for item in self.session.items]
+        for item in self.session.items:
+            is_serial = False
+            # check module
+            if hasattr(item.module, "pytestmark"):
+                for mark_dec in item.module.pytestmark:
+                    if mark_dec.mark.name == "serial":
+                        is_serial = True
+            # check test func
+            for mark in item.own_markers:
+                if mark.name == "serial":
+                    is_serial = True
+            if is_serial:
+                self.serial_collection.append(item.nodeid)
+            else:
+                self.collection.append(item.nodeid)
 
         # Fire up the workers after master collection is complete
         # master and the first slave share an appliance, this is a workaround to prevent a slave
@@ -439,7 +454,7 @@ class ParallelSession(object):
                     # compare slave collection to the master, all test ids must be the same
                     self.log.debug(f'diffing {slave.id} collection')
                     diff_err = report_collection_diff(
-                        slave.id, self.collection, slave_collection)
+                        slave.id, self.collection + self.serial_collection, slave_collection)
                     if diff_err:
                         self.print_message(
                             'collection differs, respawning', slave.id,
@@ -498,8 +513,27 @@ class ParallelSession(object):
         self.zmq_ctx.destroy()
 
     def _test_item_generator(self):
-        for tests in self._modscope_item_generator():
-            yield tests
+        if self.serial_collection:
+            for tests in self._serial_item_generator():
+                yield tests
+        if self.collection:
+            for tests in self._modscope_item_generator():
+                yield tests
+
+    def _serial_item_generator(self):
+        # yields list of tests that will run on a single collection
+        # breaks them out by module
+        sent_tests = 0
+        collection_len = len(self.serial_collection)
+
+        def get_fspart(nodeid):
+            return nodeid.split('::')[0]
+
+        for fspath, tests in groupby(self.serial_collection, key=get_fspart):
+            # no sorting by ID here they should all run on the same slave
+            sent_tests += len(list(tests))
+            self.log.info(f'{(collection_len - sent_tests)} serial tests remaining to send')
+            yield list(tests)
 
     def _modscope_item_generator(self):
         # breaks out tests by module, can work just about any way we want

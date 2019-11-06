@@ -17,6 +17,7 @@ pytest_plugins = [
     "cfme.markers.rhel_tests",
     "cfme.markers.rhv",
     "cfme.markers.sauce",
+    "cfme.markers.serial",
     "cfme.markers.skipper",
     "cfme.markers.smoke",
     "cfme.markers.stream_excluder",
