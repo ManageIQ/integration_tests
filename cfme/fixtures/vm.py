@@ -1,18 +1,13 @@
 import fauxfactory
 # -*- coding: utf-8 -*-
-import re
-
 import pytest
-from pytest_polarion_collect.utils import get_nodeid_full_path
+from pytest_polarion_collect.utils import get_parsed_docstring
 from pytest_polarion_collect.utils import process_json_data
 from wrapanapi import VmState
 
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import CFMEException
-from cfme.utils import ports
 from cfme.utils.generators import random_vm_name
-from cfme.utils.net import net_check
-from cfme.utils.wait import wait_for
 
 
 def pytest_addoption(parser):
@@ -27,22 +22,24 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_collection_modifyitems(session, config, items):
-    if not config.getoption('--no-assignee-vm-name'):
-        process_json_data(session, items, all_items=True)
+def pytest_collection_finish(session):
+    """This hook will call the process_json_data and cause _docstrings_cache
+    to be populated so that we can access required information in the _create_vm."""
+    if not session.config.getoption('--no-assignee-vm-name'):
+        process_json_data(session, session.items, all_items=True)
 
 
 def _create_vm(request, template, provider, vm_name):
     if not request.config.getoption('--no-assignee-vm-name'):
         if isinstance(request.node, pytest.Function):
-            nodeid = (re.compile(r"\[.*\]")).sub('', get_nodeid_full_path(request.node))
-            assignee = request.session._docstrings_cache[nodeid].get('assignee', '')
+            assignee = get_parsed_docstring(request.node,
+                request.session._docstrings_cache).get('assignee', '')
         else:
             # Fetch list of tests in the module object
             test_list = [
                 item
                 for item in dir(request.module)
-                if ('test_' in item[:5]) and not ('test_requirements' == item)
+                if item.startswith('test_') and not ('test_requirements' == item)
             ]
             # Find out assignee for each test in test_list
             assignee_list = list()
@@ -72,21 +69,6 @@ def _create_vm(request, template, provider, vm_name):
 
     vm_obj.mgmt.ensure_state(VmState.RUNNING)
 
-    # In order to have seamless SSH connection
-    vm_ip, _ = wait_for(
-        lambda: vm_obj.ip_address,
-        num_sec=300,
-        delay=5,
-        fail_condition=None,
-        message="wait for testing VM pingable IP address."
-    )
-    wait_for(
-        net_check,
-        func_args=[ports.SSH, vm_ip],
-        func_kwargs={"force": True},
-        num_sec=300,
-        delay=5,
-        message="testing VM's SSH available")
     if not vm_obj.exists:
         provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
