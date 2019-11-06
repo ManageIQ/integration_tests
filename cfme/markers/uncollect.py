@@ -53,11 +53,7 @@ Note:
 """
 import inspect
 
-import pytest
-
 from cfme.utils.log import logger
-
-MARKDECORATOR_TYPE = type(pytest.mark.skip)
 
 
 def pytest_configure(config):
@@ -69,14 +65,6 @@ def pytest_configure(config):
         'markers',
         'uncollect: Uncollect a test with a direct call'
     )
-
-
-# work around https://github.com/pytest-dev/pytest/issues/2400
-def get_uncollect_function(marker_or_markdecorator):
-    if isinstance(marker_or_markdecorator, MARKDECORATOR_TYPE):
-        return marker_or_markdecorator.args[0]
-    else:
-        return list(marker_or_markdecorator)[0].args[0]
 
 
 def uncollectif(item):
@@ -93,8 +81,9 @@ def uncollectif(item):
             item.name,
             mark.kwargs.get('reason', 'No reason given'))
         logger.debug(log_msg)
+
         try:
-            arg_names = inspect.getargspec(get_uncollect_function(mark)).args
+            arg_names = inspect.getfullargspec(mark.args[0]).args
         except TypeError:
             logger.debug(log_msg)
             return not bool(mark.args[0]), mark.kwargs.get('reason', 'No reason given')
