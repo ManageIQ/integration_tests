@@ -17,7 +17,10 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import MultiBoxSelect
+from widgetastic_manageiq import ReactTextInput
 
 
 class CatalogsMultiBoxSelect(MultiBoxSelect):
@@ -34,8 +37,14 @@ class CatalogsMultiBoxSelect(MultiBoxSelect):
 class CatalogForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
-    name = Input(name='name')
-    description = Input(name="description")
+    name = VersionPicker({
+        "5.11": ReactTextInput(name='name'),
+        LOWEST: Input(name='name')
+    })
+    description = VersionPicker({
+        "5.11": ReactTextInput(name="description"),
+        LOWEST: Input(name='description')
+    })
     assign_catalog_items = CatalogsMultiBoxSelect(
         move_into="Move Selected buttons right",
         move_from="Move Selected buttons left",
@@ -111,20 +120,12 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
             view.cancel_button.click()
         view = self.create_view(DetailsCatalogView, override=updates, wait='10s')
         view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Catalog "{}" was saved'.format(updates.get('name', self.name)))
-        else:
-            view.flash.assert_message(
-                'Edit of Catalog "{}" was cancelled by the user'.format(self.name))
 
     def delete(self):
         view = navigate_to(self, "Details")
         view.configuration.item_select('Remove Catalog', handle_alert=True)
         view = self.create_view(CatalogsView, wait='10s')
         view.flash.assert_no_error()
-        view.flash.assert_success_message(
-            'Catalog "{}": Delete successful'.format(self.description or self.name))
 
 
 @attr.s
