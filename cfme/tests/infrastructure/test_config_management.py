@@ -3,6 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.ansible_tower.explorer import TowerCreateServiceDialogFromTemplateView
+from cfme.infrastructure.config_management import AnsibleTower
 from cfme.utils.testgen import config_managers
 from cfme.utils.testgen import generate
 from cfme.utils.update import update
@@ -121,10 +122,12 @@ def test_config_manager_remove(config_manager):
 
 
 # Disable this test for Tower, no Configuration profiles can be retrieved from Tower side yet
+# this is all real hackish because configmanager isn't a proper provider.
 @pytest.mark.tier(3)
 @test_requirements.tag
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-def test_config_system_tag(request, config_system, tag, appliance):
+@pytest.mark.uncollectif(lambda config_manager_obj:
+                         isinstance(config_manager_obj, AnsibleTower))
+def test_config_system_tag(config_system, tag, appliance, config_manager, config_manager_obj):
     """
     Polarion:
         assignee: anikifor
@@ -137,8 +140,9 @@ def test_config_system_tag(request, config_system, tag, appliance):
 
 @pytest.mark.tier(3)
 @test_requirements.tag
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != "Ansible Tower")
-def test_ansible_tower_job_templates_tag(request, config_manager, tag):
+@pytest.mark.uncollectif(lambda config_manager_obj:
+                         not isinstance(config_manager_obj, AnsibleTower))
+def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_manager_obj):
     """
     Polarion:
         assignee: anikifor
@@ -164,10 +168,11 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type != "Ansible Tower")
+@pytest.mark.uncollectif(lambda config_manager_obj:
+                         not isinstance(config_manager_obj, AnsibleTower))
 @pytest.mark.parametrize('template_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
-def test_ansible_tower_service_dialog_creation_from_template(request, config_manager, appliance,
-        template_type):
+def test_ansible_tower_service_dialog_creation_from_template(config_manager, appliance,
+        template_type, config_manager_obj):
     """
     Polarion:
         assignee: nachandr
