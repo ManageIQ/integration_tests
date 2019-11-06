@@ -508,6 +508,7 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
     compare_hosts_view = provider.create_view(HostsCompareView)
     assert compare_hosts_view.is_displayed
 
+
 @test_requirements.rhev
 @pytest.mark.rhv3
 @pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
