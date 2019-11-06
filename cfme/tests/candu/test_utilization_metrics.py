@@ -3,6 +3,7 @@ import random
 from operator import attrgetter
 
 import pytest
+from wrapanapi import VmState
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
@@ -22,7 +23,7 @@ pytestmark = [
     pytest.mark.tier(1),
     test_requirements.c_and_u,
     pytest.mark.provider(
-        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider, GCEProvider],
+        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider],
         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')], scope="module")
 ]
 
@@ -57,7 +58,20 @@ def metrics_collection(appliance, clean_setup_provider, provider, enable_candu):
         test_flag: metrics_collection
     """
     metrics_tbl = appliance.db.client['metrics']
+    rollups = appliance.db.client['metric_rollups']
     mgmt_systems_tbl = appliance.db.client['ext_management_systems']
+
+    vm_name = provider.data['cap_and_util']['capandu_vm']
+    collection = provider.appliance.provider_based_collection(provider)
+    vm = collection.instantiate(vm_name, provider)
+
+    if not vm.exists_on_provider:
+        pytest.skip("Skipping test, cu-24x7 VM does not exist")
+    vm.mgmt.ensure_state(VmState.RUNNING)
+
+    logger.info("Deleting metrics tables")
+    appliance.db.client.session.query(metrics_tbl).delete()
+    appliance.db.client.session.query(rollups).delete()
 
     logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = appliance.db.client.session.query(mgmt_systems_tbl).filter(
@@ -295,7 +309,7 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     """
     Polarion:
         assignee: nachandr
-        caseimportance: medium
+        caseimportance: high
         casecomponent: CandU
         initialEstimate: 1/12h
     """
@@ -307,3 +321,86 @@ def test_raw_metric_host_disk(metrics_collection, appliance, provider):
         if record.disk_usage_rate_average is not None:
             assert record.disk_usage_rate_average > 0, 'Zero Host Disk IO'
             break
+
+
+def query_metric_rollup_table(appliance, provider, metric, azone_name):
+    """
+    These queries return all records pertaining to a specific Availability zone
+    specified by $azone_name from the metric_rollups table.
+    """
+    metrics_tbl = appliance.db.client['metric_rollups']
+    ems = appliance.db.client['ext_management_systems']
+
+    with appliance.db.client.transaction:
+        provs = (
+            appliance.db.client.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == azone_name,
+            ems.name == provider.name)
+        )
+    return appliance.db.client.session.query(metrics_tbl).filter(
+        metrics_tbl.id.in_(provs.subquery()))
+
+
+def generic_test_azone_rollup(appliance, provider, metric):
+    """
+    The test_azone* tests require that the metrics_collection fixture be run.
+    The first metric collection is scheduled through this fixture. The first
+    metric collection itself takes at least 15 minutes(sometimes longer).
+    The three tests that are run per provider take at least 20 minutes each
+    for completion(considering provider add, provider refresh etc.). But, without
+    parametrization, the three tests could be run in under 20 minutes.So, the tests
+    haven't been parametrized.
+
+    In an effort to reduce DRY code, I've written this generic function that
+    checks if any of the table records have a metric with a non-zero value.
+    """
+    azone_name = provider.data["cap_and_util"]["capandu_azone"]
+    query = query_metric_rollup_table(appliance, provider, metric, azone_name)
+
+    for record in query:
+        if int(getattr(record, metric, 0)):
+            return True
+        else:
+            raise ValueError('The record had a zero in it!')
+
+
+@pytest.mark.provider(
+    [EC2Provider, AzureProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
+    scope="module"
+)
+@pytest.mark.meta(
+    blockers=[BZ(1744845, forced_streams=['5.10'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
+)
+class TestAzone:
+    def test_azone_cpu_usage(metrics_collection, appliance, provider):
+        """
+        Polarion:
+            assignee: nachandr
+            caseimportance: high
+            casecomponent: CandU
+            initialEstimate: 1/12h
+        """
+        generic_test_azone_rollup(appliance, provider, 'cpu_usage_rate_average')
+
+    def test_azone_memory_usage(metrics_collection, appliance, provider):
+        """
+        Polarion:
+            assignee: nachandr
+            caseimportance: high
+            casecomponent: CandU
+            initialEstimate: 1/12h
+        """
+        generic_test_azone_rollup(appliance, provider, 'mem_usage_absolute_average')
+
+    def test_azone_network_io(metrics_collection, appliance, provider):
+        """
+        Polarion:
+            assignee: nachandr
+            caseimportance: high
+            casecomponent: CandU
+            initialEstimate: 1/12h
+        """
+        generic_test_azone_rollup(appliance, provider, 'net_usage_rate_average')
