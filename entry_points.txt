@@ -52,6 +52,7 @@ container_replicators = cfme.containers.replicator:ReplicatorCollection
 container_routes = cfme.containers.route:RouteCollection
 container_services = cfme.containers.service:ServiceCollection
 container_templates = cfme.containers.template:TemplateCollection
+container_topologies = cfme.containers.topology:TopologyCollection
 container_volumes = cfme.containers.volume:VolumeCollection
 containers = cfme.containers.container:ContainerCollection
 containers_providers = cfme.containers.provider:ContainersProviderCollection
