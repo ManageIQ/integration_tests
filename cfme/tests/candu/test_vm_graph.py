@@ -38,7 +38,7 @@ INTERVAL = ['Hourly', 'Daily']
     lambda provider, graph_type:
         (provider.one_of(RHEVMProvider, AzureProvider) and graph_type == "vm_cpu_state") or
         (provider.one_of(EC2Provider) and graph_type in ["vm_cpu_state", "vm_memory", "vm_disk"]),
-    reason='Invalid graph_type and provider type combination'
+    reason='Invalid combination of graph_type and provider type'
 )
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)
 def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
@@ -101,7 +101,7 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
         (provider.one_of(RHEVMProvider, AzureProvider) and graph_type == "vm_cpu_state") or
         (provider.one_of(EC2Provider) and graph_type in ["vm_cpu_state", "vm_memory", "vm_disk"]) or
         (provider.one_of(CloudProvider, RHEVMProvider) and interval == 'Daily'),
-    reason='Invalid combintation of graph_type or interval and provider type'
+    reason='Invalid combination of graph_type or interval and provider type'
 )
 @pytest.mark.parametrize('interval', INTERVAL)
 @pytest.mark.parametrize('graph_type', VM_GRAPHS)

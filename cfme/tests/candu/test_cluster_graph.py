@@ -52,10 +52,10 @@ def host(appliance, provider):
         return collection.instantiate(name=test_host.name, provider=provider)
 
 
-@pytest.mark.uncollectif(
-    lambda provider, interval: provider.one_of(RHEVMProvider) and interval == "Daily",
-    reason="RHEVM not supporting historical data collection, Need to wait for one day at least"
-)
+@pytest.mark.uncollectif(lambda provider, interval:
+                         provider.one_of(RHEVMProvider) and interval == "Daily",
+                         reason="RHEVM not supporting historical data collection, "
+                                "Need to wait for one day at least")
 @pytest.mark.parametrize("interval", INTERVAL)
 @pytest.mark.parametrize("graph_type", GRAPHS)
 def test_cluster_graph_screen(provider, cluster, host, graph_type, interval, enable_candu):

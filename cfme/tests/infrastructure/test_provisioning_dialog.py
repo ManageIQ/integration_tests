@@ -15,12 +15,20 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
+
+not_scvmm = ProviderFilter(classes=[SCVMMProvider], inverted=True)
+all_infra = ProviderFilter(classes=[InfraProvider],
+                           required_fields=[['provisioning', 'template'],
+                                            ['provisioning', 'host'],
+                                            ['provisioning', 'datastore']])
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -28,11 +36,7 @@ pytestmark = [
     pytest.mark.long_running,
     test_requirements.provision,
     pytest.mark.tier(3),
-    pytest.mark.provider([InfraProvider],
-                         required_fields=[['provisioning', 'template'],
-                                          ['provisioning', 'host'],
-                                          ['provisioning', 'datastore']],
-                         scope="module"),
+    pytest.mark.provider(gen_func=providers, filters=[all_infra], scope="module"),
 ]
 
 
@@ -166,22 +170,28 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 @pytest.mark.rhv3
 # Special parametrization in testgen above
 @pytest.mark.meta(blockers=[1209847, 1380782], automates=[1633867])
+@pytest.mark.provider(gen_func=providers,
+                      filters=[all_infra, not_scvmm],
+                      scope="module")
 @pytest.mark.parametrize("disk_format", ["Thin", "Thick", "Preallocated",
     "Thick - Lazy Zero", "Thick - Eager Zero"],
     ids=["thin", "thick", "preallocated", "thick_lazy", "thick_eager"])
-@pytest.mark.uncollectif(
-    lambda provider, disk_format, appliance:
-    (provider.one_of(RHEVMProvider) and disk_format in ["Thick", "Thick - Lazy Zero",
-        "Thick - Eager Zero"]) or
-    (provider.one_of(VMwareProvider) and disk_format == "Thick" and appliance.version > '5.11') or
-    (provider.one_of(VMwareProvider) and disk_format in ["Thick - Lazy Zero",
-        "Thick - Eager Zero"] and appliance.version < '5.11') or
-    (not provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
-    # Temporarily, our storage domain cannot handle Preallocated disks
-    (provider.one_of(RHEVMProvider) and disk_format == "Preallocated") or
-    (provider.one_of(SCVMMProvider)),
-    reason='Invalid combination of disk format and provider type or appliance version (or both!)'
-)
+@pytest.mark.uncollectif(lambda provider, disk_format, appliance:
+                         (provider.one_of(RHEVMProvider) and
+                          disk_format in ["Thick", "Thick - Lazy Zero", "Thick - Eager Zero"]) or
+                         (provider.one_of(VMwareProvider) and
+                          disk_format == "Thick" and
+                          appliance.version > '5.11') or
+                         (provider.one_of(VMwareProvider) and
+                          disk_format in ["Thick - Lazy Zero", "Thick - Eager Zero"] and
+                          appliance.version < '5.11') or
+                         (not provider.one_of(RHEVMProvider) and
+                          disk_format == "Preallocated") or
+                         # Temporarily, our storage domain cannot handle Preallocated disks
+                         (provider.one_of(RHEVMProvider) and
+                          disk_format == "Preallocated"),
+                         reason='Invalid combination of disk format and provider type '
+                                'or appliance version (or both!)')
 def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_name):
     """ Tests disk format selection in provisioning dialog.
 

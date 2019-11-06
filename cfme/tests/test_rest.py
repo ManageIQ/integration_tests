@@ -170,6 +170,8 @@ COLLECTIONS_IN_UPSTREAM = COLLECTIONS_IN_510
 # non-typical collections without "id" and "resources", or additional parameters are required
 COLLECTIONS_OMITTED = {"automate_workspaces", "metric_rollups", "settings"}
 
+UNCOLLECT_REASON = 'Collection type not valid for appliance version'
+
 
 def _collection_not_in_this_version(appliance, collection_name):
     return (
@@ -183,11 +185,10 @@ def _collection_not_in_this_version(appliance, collection_name):
 @pytest.mark.rhel_testing
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
-@pytest.mark.uncollectif(
-    lambda appliance, collection_name:
-        collection_name == "metric_rollups" or
-        _collection_not_in_this_version(appliance, collection_name)
-)
+@pytest.mark.uncollectif(lambda appliance, collection_name:
+                         collection_name == "metric_rollups" or
+                         _collection_not_in_this_version(appliance, collection_name),
+                         reason=UNCOLLECT_REASON)
 def test_query_simple_collections(appliance, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
@@ -220,11 +221,10 @@ def test_query_simple_collections(appliance, collection_name):
 @pytest.mark.meta(automates=[1392595], coverage=[1754972])
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('collection_name', COLLECTIONS_ALL)
-@pytest.mark.uncollectif(
-    lambda appliance, collection_name:
-        collection_name in COLLECTIONS_OMITTED or
-        _collection_not_in_this_version(appliance, collection_name)
-)
+@pytest.mark.uncollectif(lambda appliance, collection_name:
+                         collection_name in COLLECTIONS_OMITTED or
+                         _collection_not_in_this_version(appliance, collection_name),
+                         reason=UNCOLLECT_REASON)
 def test_collections_actions(appliance, collection_name, soft_assert):
     """Tests that there are only actions with POST methods in collections.
 
@@ -259,11 +259,10 @@ def test_collections_actions(appliance, collection_name, soft_assert):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
-@pytest.mark.uncollectif(
-    lambda appliance, collection_name:
-        collection_name in COLLECTIONS_OMITTED or
-        _collection_not_in_this_version(appliance, collection_name)
-)
+@pytest.mark.uncollectif(lambda appliance, collection_name:
+                         collection_name in COLLECTIONS_OMITTED or
+                         _collection_not_in_this_version(appliance, collection_name),
+                         reason=UNCOLLECT_REASON)
 def test_query_with_api_version(api_version, collection_name):
     """Loads each of the listed collections using /api/<version>/<collection>.
 
@@ -286,11 +285,10 @@ def test_query_with_api_version(api_version, collection_name):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
-@pytest.mark.uncollectif(
-    lambda appliance, collection_name:
-        collection_name == 'metric_rollups' or  # needs additional parameters
-        _collection_not_in_this_version(appliance, collection_name)
-)
+@pytest.mark.uncollectif(lambda appliance, collection_name:
+                         collection_name == 'metric_rollups' or  # needs additional parameters
+                         _collection_not_in_this_version(appliance, collection_name),
+                         reason=UNCOLLECT_REASON)
 # testing GH#ManageIQ/manageiq:15754
 def test_select_attributes(appliance, collection_name):
     """Tests that it's possible to limit returned attributes.
@@ -616,8 +614,7 @@ PAGING_DATA = [
 ]
 
 
-@pytest.mark.parametrize(
-    'paging', PAGING_DATA, ids=['{},{}'.format(d[0], d[1]) for d in PAGING_DATA])
+@pytest.mark.parametrize('paging', PAGING_DATA, ids=[f'{d[0]},{d[1]}' for d in PAGING_DATA])
 def test_rest_paging(appliance, paging):
     """Tests paging when offset and limit are specified.
 
@@ -668,12 +665,11 @@ def test_rest_paging(appliance, paging):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
-@pytest.mark.uncollectif(
-    lambda appliance, collection_name:
-        collection_name == 'automate' or  # doesn't have 'href'
-        collection_name == 'metric_rollups' or  # needs additional parameters
-        _collection_not_in_this_version(appliance, collection_name)
-)
+@pytest.mark.uncollectif(lambda appliance, collection_name:
+                         collection_name == 'automate' or  # doesn't have 'href'
+                         collection_name == 'metric_rollups' or  # needs additional parameters
+                         _collection_not_in_this_version(appliance, collection_name),
+                         reason=UNCOLLECT_REASON)
 def test_attributes_present(appliance, collection_name):
     """Tests that the expected attributes are present in all collections.
 
@@ -1005,9 +1001,7 @@ class TestNotificationsRESTAPI(object):
         collection.reload()
         query_resource_attributes(collection[-1], soft_assert=soft_assert)
 
-    @pytest.mark.parametrize(
-        'from_detail', [True, False],
-        ids=['from_detail', 'from_collection'])
+    @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_mark_notifications(self, appliance, generate_notifications, from_detail):
         """Tests marking notifications as seen.
 
@@ -1213,9 +1207,9 @@ def image_file_path(file_name):
 
 @pytest.mark.meta(automates=[1578076])
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(
-    lambda appliance, image_type: image_type == "favicon" and appliance.version < 5.11
-)
+@pytest.mark.uncollectif(lambda appliance, image_type:
+                         image_type == "favicon" and appliance.version < 5.11,
+                         reason='Favicon image type is not valid for appliances before 5.11')
 @pytest.mark.parametrize("image_type", ["logo", "brand", "login_logo", "favicon"])
 def test_custom_logos_via_api(appliance, image_type, request):
     """

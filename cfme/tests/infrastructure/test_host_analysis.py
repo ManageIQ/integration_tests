@@ -60,9 +60,9 @@ def host_with_credentials(provider, host_name):
 
 
 @pytest.mark.rhv1
-@pytest.mark.uncollectif(
-    lambda provider, appliance: not appliance.is_downstream and provider.one_of(RHEVMProvider)
-)
+@pytest.mark.uncollectif(lambda provider, appliance:
+                         provider.one_of(RHEVMProvider) and not appliance.is_downstream,
+                         reason='RHEVM host analysis not valid on upstream')
 @pytest.mark.meta(blockers=[BZ(1650179,
                                forced_streams=['5.10'],
                                unblock=lambda provider: not provider.one_of(RHEVMProvider))])

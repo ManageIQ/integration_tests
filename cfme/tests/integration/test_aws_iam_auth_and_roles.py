@@ -39,7 +39,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda appliance: appliance.is_dev,
-                         reason="Is a rails server")
+                         reason="Test not valid for dev server")
 @pytest.mark.meta(automates=[BZ(1530683)])
 @test_requirements.auth
 def test_group_roles(temp_appliance_preconfig_long, setup_aws_auth_provider, group_name,

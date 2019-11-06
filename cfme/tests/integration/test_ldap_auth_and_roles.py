@@ -9,7 +9,7 @@ from cfme.utils.testgen import generate
 pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='ldap')
 
 
-@pytest.mark.uncollect('Needs to be fixed after menu removed')
+@pytest.mark.uncollect(reason='Needs to be fixed after menu removed')
 @test_requirements.auth
 @pytest.mark.tier(2)
 def test_group_roles(request, temp_appliance_preconfig_long, group_name, group_data):

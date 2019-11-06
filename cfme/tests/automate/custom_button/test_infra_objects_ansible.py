@@ -74,12 +74,10 @@ def setup_obj(button_group, provider):
 
 @pytest.mark.meta(blockers=[BZ(1685555, unblock=lambda button_group: "SWITCH" not in button_group)])
 @pytest.mark.parametrize("inventory", INVENTORY, ids=["_".join(item.split()) for item in INVENTORY])
-@pytest.mark.uncollectif(
-    lambda appliance, button_group, inventory: (
-        "VM_INSTANCE" not in button_group and inventory == "Target Machine"
-    )
-    or (appliance.version < "5.11" and inventory == "Localhost")
-)
+@pytest.mark.uncollectif(lambda appliance, button_group, inventory:
+                         ("VM_INSTANCE" not in button_group and inventory == "Target Machine") or
+                         appliance.version < "5.11" and inventory == "Localhost",
+                         reason='Invalid combo of button group, inventory, and appliance version')
 def test_custom_button_ansible_automate_infra_obj(
     request, appliance, inventory, setup_obj, button_group, ansible_catalog_item_create_empty_file,
     target_machine, target_machine_ansible_creds,

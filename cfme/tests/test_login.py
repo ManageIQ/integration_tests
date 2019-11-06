@@ -24,8 +24,9 @@ pytestmark = pytest.mark.usefixtures('browser')
                                              (ViaUI, '_js_auth_fn'),
                                              (ViaSSUI, 'click_on_login'),
                                              (ViaSSUI, 'press_enter_after_password')])
-@pytest.mark.uncollectif(lambda context, appliance: context == ViaSSUI and
-                         appliance.version == UPSTREAM)
+@pytest.mark.uncollectif(lambda context, appliance:
+                         context == ViaSSUI and appliance.version == UPSTREAM,
+                         reason='SSUI context not valid for upstream testing')
 def test_login(context, method, appliance):
     """ Tests that the appliance can be logged into and shows dashboard page.
 

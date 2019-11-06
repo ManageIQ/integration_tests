@@ -121,9 +121,13 @@ def _uncollect(provider, collection_name):
     )
 
 
+GENERIC_UNCOLLECT = 'Invalid combination of collection_name and provider type'
+
+
 class TestCustomAttributesRESTAPI(object):
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.rhv2
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_add(self, request, collection_name, get_resource):
@@ -146,7 +150,8 @@ class TestCustomAttributesRESTAPI(object):
             assert record.value == attr.value
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_post(self, request, collection_name, get_resource):
         """Test deleting custom attributes from detail using POST method.
@@ -164,7 +169,8 @@ class TestCustomAttributesRESTAPI(object):
         delete_resources_from_detail(attributes, method='POST')
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_detail_delete(self, request, collection_name, get_resource):
         """Test deleting custom attributes from detail using DELETE method.
@@ -182,7 +188,8 @@ class TestCustomAttributesRESTAPI(object):
         delete_resources_from_detail(attributes, method='DELETE')
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_from_collection(self, request, collection_name, get_resource):
         """Test deleting custom attributes from collection using REST API.
@@ -202,7 +209,8 @@ class TestCustomAttributesRESTAPI(object):
         delete_resources_from_collection(attributes, collection=collection, not_found=True)
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_delete_single_from_collection(self, request, collection_name, get_resource):
         """Test deleting single custom attribute from collection using REST API.
@@ -223,7 +231,8 @@ class TestCustomAttributesRESTAPI(object):
         delete_resources_from_collection([attribute], collection=collection, not_found=True)
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_edit(self, request, from_detail, collection_name, appliance, get_resource):
@@ -267,7 +276,8 @@ class TestCustomAttributesRESTAPI(object):
             assert edited[i].section == body[i]['section'] == attributes[i].section
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_bad_section_edit(self, request, from_detail, collection_name, appliance, get_resource):
@@ -301,7 +311,8 @@ class TestCustomAttributesRESTAPI(object):
             assert_response(appliance, http_status=400)
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize("collection_name", COLLECTIONS)
     def test_bad_section_add(self, request, collection_name, appliance, get_resource):
         """Test adding custom attributes with invalid section to resource using REST API.
@@ -328,7 +339,8 @@ class TestCustomAttributesRESTAPI(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.uncollectif(lambda provider, collection_name:
-                             _uncollect(provider, collection_name))
+                             _uncollect(provider, collection_name),
+                             reason=GENERIC_UNCOLLECT)
     @pytest.mark.parametrize('collection_name', COLLECTIONS)
     def test_add_duplicate(self, request, collection_name, get_resource):
         """Tests that adding duplicate custom attribute updates the existing one.

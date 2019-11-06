@@ -60,9 +60,9 @@ for name in ProvisioningDialogsCollection.ALLOWED_TYPES:
 @test_requirements.general_ui
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(("name", "by", "order"), sort_by_params)
-@pytest.mark.uncollectif(
-    lambda appliance, name: appliance.version >= "5.10" and name == "Host Provision",
-    reason='Host Provisioning was deprecated and doesnt exist in 5.10')
+@pytest.mark.uncollectif(lambda appliance, name:
+                         appliance.version >= "5.10" and name == "Host Provision",
+                         reason='Host Provisioning was deprecated and doesnt exist in 5.10')
 def test_provisioning_dialogs_sorting(appliance, name, by, order):
     """
     Polarion:

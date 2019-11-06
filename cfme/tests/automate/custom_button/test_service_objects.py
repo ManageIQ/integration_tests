@@ -24,6 +24,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.tier(2), test_requirements.custom_button]
 
+GENERIC_SSUI_UNCOLLECT = "Generic object custom button not supported by SSUI"
+
 OBJECTS = ["SERVICE", "GENERIC"]
 
 DISPLAY_NAV = {
@@ -165,10 +167,9 @@ def user_self_service_role(appliance):
     list(DISPLAY_NAV.keys()),
     ids=[item.replace(" ", "_") for item in DISPLAY_NAV.keys()]
 )
-@pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
-    reason="Generic object custom button not supported by SSUI",
-)
+@pytest.mark.uncollectif(lambda context, button_group:
+                         context == ViaSSUI and "GENERIC" in button_group,
+                         reason=GENERIC_SSUI_UNCOLLECT)
 @pytest.mark.meta(
     automates=[1650066],
     blockers=[
@@ -233,10 +234,9 @@ def test_custom_button_display_service_obj(
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
 @pytest.mark.parametrize("submit", SUBMIT, ids=[item.replace(" ", "_") for item in SUBMIT])
-@pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
-    reason="Generic object custom button not supported by SSUI",
-)
+@pytest.mark.uncollectif(lambda context, button_group:
+                         context == ViaSSUI and "GENERIC" in button_group,
+                         reason=GENERIC_SSUI_UNCOLLECT)
 def test_custom_button_automate_service_obj(
     request, appliance, context, submit, objects, button_group
 ):
@@ -421,10 +421,9 @@ def vis_enb_button(request, appliance, button_group):
 
 @pytest.mark.tier(0)
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-@pytest.mark.uncollectif(
-    lambda context, button_group: "GENERIC" in button_group,
-    reason="Generic object custom button not supported by SSUI",
-)
+@pytest.mark.uncollectif(lambda button_group:
+                         "GENERIC" in button_group,
+                         reason='Generic button group type not valid for test')
 def test_custom_button_expression_service_obj(
     appliance, context, objects, button_group, vis_enb_button
 ):
@@ -573,7 +572,9 @@ def test_custom_button_role_access_service(
 @test_requirements.customer_stories
 @pytest.mark.meta(automates=[BZ(1439883)])
 @pytest.mark.provider([VMwareProvider], override=True)
-@pytest.mark.uncollectif(lambda button_group: "GENERIC" in button_group)
+@pytest.mark.uncollectif(lambda button_group:
+                         "GENERIC" in button_group,
+                         reason='Generic button group type not valid for test')
 def test_custom_button_dialog_service_archived(
     request, appliance, provider, setup_provider, service_vm, button_group, dialog
 ):
@@ -656,10 +657,9 @@ def test_custom_button_dialog_service_archived(
 
 
 @pytest.mark.parametrize("context", [ViaUI, ViaSSUI])
-@pytest.mark.uncollectif(
-    lambda context, button_group: context == ViaSSUI and "GENERIC" in button_group,
-    reason="Generic object custom button not supported by SSUI",
-)
+@pytest.mark.uncollectif(lambda context, button_group:
+                         context == ViaSSUI and "GENERIC" in button_group,
+                         reason=GENERIC_SSUI_UNCOLLECT)
 def test_custom_button_dialog_service_obj(
     appliance, dialog, request, context, objects, button_group
 ):

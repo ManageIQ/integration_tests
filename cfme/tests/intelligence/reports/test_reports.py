@@ -496,14 +496,12 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.uncollectif(
-    lambda case_sensitive: not case_sensitive
-    and BZ("1741588", forced_streams=["5.11"]).blocks,
-    reason="Case Insensitive filtering is still a WIP"
-)
-@pytest.mark.parametrize(
-    "case_sensitive", [True, False], ids=["case-sensitive", "case-insensitive"]
-)
+@pytest.mark.uncollectif(lambda case_sensitive:
+                         not case_sensitive and BZ("1741588", forced_streams=["5.11"]).blocks,
+                         reason="Case Insensitive filtering is still a WIP")
+@pytest.mark.parametrize("case_sensitive",
+                         [True, False],
+                         ids=["case-sensitive", "case-insensitive"])
 @pytest.mark.meta(automates=[1678150, 1741588])
 def test_reports_filter_content(
     appliance, case_sensitive, set_and_get_tenant_quota, tenant_report

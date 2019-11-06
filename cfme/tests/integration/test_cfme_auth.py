@@ -20,8 +20,9 @@ from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda temp_appliance_preconfig_long: temp_appliance_preconfig_long.is_pod),
+    pytest.mark.uncollectif(lambda temp_appliance_preconfig_long:
+                            temp_appliance_preconfig_long.is_pod,
+                            reason='Tests not valid for podified'),
     pytest.mark.meta(blockers=[
         GH('ManageIQ/integration_tests:6465',
            # need SSL openldap server
@@ -79,7 +80,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize(argnames, [
             pytest.param(
                 None, None, None, None,
-                marks=pytest.mark.uncollect("auth providers data missing"))])
+                marks=pytest.mark.uncollect(reason="auth providers data missing"))])
         return
     # Holy nested loops, batman
     # go through each mode, then each auth type, and find auth providers matching that type
@@ -131,11 +132,12 @@ def log_monitor(user_obj, temp_appliance_preconfig_long):
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')  # default groups tested elsewhere
+@pytest.mark.uncollectif(lambda auth_mode, auth_user:
+                         auth_mode == 'amazon' or
+                         not any([True for g in auth_user.groups or [] if 'evmgroup' in g.lower()]),
+                         reason='Amazon auth mode with default groups tested elsewhere,'
+                                'or the auth user does not have an evm built-in group')
 # this test only runs against users that have an evm built-in group
-@pytest.mark.uncollectif(lambda auth_user: not any([True for g in auth_user.groups or []
-                                                   if 'evmgroup' in g.lower()]),
-                         reason='No evm group available for user')
 def test_login_evm_group(
         temp_appliance_preconfig_long, auth_user, user_obj, soft_assert, log_monitor
 ):
@@ -198,10 +200,11 @@ def retrieve_group(temp_appliance_preconfig_long, auth_mode, username, groupname
 
 
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon')
-@pytest.mark.uncollectif(lambda auth_user: not any([True for g in auth_user.groups or []
-                                                   if 'evmgroup' not in g.lower()]),
-                         reason='Only groups available for user are evm built-in')
+@pytest.mark.uncollectif(lambda auth_mode, auth_user:
+                         auth_mode == 'amazon' or
+                         not any([True for g in auth_user.groups or [] if 'evmgroup' in g.lower()]),
+                         reason='Amazon auth mode with default groups tested elsewhere,'
+                                'or the auth user does not have an evm built-in group')
 def test_login_retrieve_group(
         temp_appliance_preconfig_long, request, log_monitor,
         auth_mode, auth_provider, soft_assert, auth_user, user_obj
@@ -296,7 +299,7 @@ def local_user(temp_appliance_preconfig_long, auth_user, user_type, auth_provide
 
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
-                         'Amazon auth_data needed for local group testing')
+                         reason='Amazon auth_data needed for local group testing')
 def test_login_local_group(temp_appliance_preconfig_long, local_user, local_group, soft_assert):
     """
     Test remote authentication with a locally created group.
@@ -325,10 +328,11 @@ def test_login_local_group(temp_appliance_preconfig_long, local_user, local_grou
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream('5.8')
-@pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
-                         'Amazon auth_data needed for group switch testing')
-@pytest.mark.uncollectif(lambda auth_user: len(auth_user.groups or []) < 2,
-                         reason='User does not have multiple groups')
+@pytest.mark.uncollectif(lambda auth_mode, auth_user:
+                         auth_mode == 'amazon' or
+                         len(auth_user.groups or []) < 2,
+                         reason='Amazon auth_data needed for group switch testing or'
+                         'user does not have multiple groups')
 @pytest.mark.meta(blockers=[BZ(1759291)], automates=[1759291])
 def test_user_group_switching(
         temp_appliance_preconfig_long, auth_user, auth_mode, auth_provider,
