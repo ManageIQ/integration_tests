@@ -43,10 +43,13 @@ def test_domain_import_file(import_datastore, import_data):
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1720611])
-@pytest.mark.parametrize("upload_file", ["datastore_blank.zip", "dialog_blank.yml"],
+@pytest.mark.parametrize("upload_file",
+                         ["datastore_blank.zip", "dialog_blank.yml"],
                          ids=["datastore", "dialog"])
-@pytest.mark.uncollectif(lambda upload_file: upload_file == "dialog_blank.yml" and
-                         BZ(1720611, forced_streams=['5.10']).blocks)
+@pytest.mark.uncollectif(lambda upload_file:
+                         upload_file == "dialog_blank.yml" and BZ(1720611,
+                                                                  forced_streams=['5.10']).blocks,
+                         reason='Blank dialog import blocked by BZ 1720611')
 def test_upload_blank_file(appliance, upload_file):
     """
     Bugzilla:

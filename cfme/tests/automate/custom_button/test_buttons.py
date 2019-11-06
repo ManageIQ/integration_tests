@@ -41,10 +41,9 @@ def button_group(appliance, obj_type):
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
 @pytest.mark.sauce
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(
-    lambda appliance, obj_type: appliance.version >= "5.11" and obj_type == "LOAD_BALANCER",
-    reason="Load Balancer not supported from version 5.11",
-)
+@pytest.mark.uncollectif(lambda appliance, obj_type:
+                         appliance.version >= "5.11" and obj_type == "LOAD_BALANCER",
+                         reason="Load Balancer not supported from version 5.11")
 @pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE])
 def test_button_group_crud(request, appliance, obj_type):
     """Test crud operation for Button Group
@@ -118,13 +117,11 @@ def test_button_group_crud(request, appliance, obj_type):
 
 @pytest.mark.sauce
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(
-    lambda appliance, obj_type: appliance.version >= "5.11" and obj_type == "LOAD_BALANCER",
-    reason="Load Balancer not supported from version 5.11",
-)
-@pytest.mark.parametrize(
-    "obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE], scope="module"
-)
+@pytest.mark.uncollectif(lambda appliance, obj_type:
+                         appliance.version >= "5.11" and obj_type == "LOAD_BALANCER",
+                         reason="Load Balancer not supported from version 5.11")
+@pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE],
+                         scope="module")
 def test_button_crud(appliance, dialog, request, button_group, obj_type):
     """Test crud operation for Custom Button
 
@@ -750,10 +747,9 @@ def test_simulated_object_copy_on_button(appliance, provider, setup_provider, bu
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1755229)], automates=[1755229])
-@pytest.mark.uncollectif(
-    lambda appliance, obj_type: appliance.version >= "5.11" and "LOAD_BALANCER" == obj_type,
-    reason="Load Balancer not supported from version 5.11",
-)
+@pytest.mark.uncollectif(lambda appliance, obj_type:
+                         appliance.version >= "5.11" and "LOAD_BALANCER" == obj_type,
+                         reason="Load Balancer not supported from version 5.11")
 @pytest.mark.parametrize(
     "obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE], scope="module"
 )

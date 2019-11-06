@@ -64,7 +64,9 @@ def pytest_itemcollected(item):
                     else:
                         add_mark = False
             if add_mark:
-                item.add_marker(pytest.mark.uncollect)
+                item.add_marker(pytest.mark.uncollect(
+                    reason='Appliance stream excluded via ignore_stream')
+                )
 
 
 def pytest_sessionstart(session):

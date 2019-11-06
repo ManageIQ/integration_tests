@@ -12,7 +12,8 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.db_migration,
-    pytest.mark.uncollectif(lambda appliance: appliance.is_dev, reason="rails server")
+    pytest.mark.uncollectif(lambda appliance: appliance.is_dev,
+                            reason="DB migrate tests not valid for dev server")
 ]
 
 

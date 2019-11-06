@@ -45,7 +45,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize(argnames, [
             pytest.param(
                 None, None, None, None,
-                marks=pytest.mark.uncollect("Could not find rhsm data for stream in yaml"))])
+                marks=pytest.mark.skip("Could not find rhsm data for stream in yaml"))])
         return
 
     if 'reg_method' in metafunc.fixturenames:

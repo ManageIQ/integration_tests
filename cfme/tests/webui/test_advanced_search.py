@@ -22,14 +22,12 @@ SearchParam = namedtuple("SearchParam",
                          ["collection", "destination", "entity", "filter", "my_filters"])
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda param, appliance: (
-            (param.collection in (ConfigManager, 'ansible_tower_providers') or
-            param.filter == 'Job Template (Ansible Tower) : Name') or
-            (appliance.version >= '5.11' and param.entity == 'network_load_balancers')
-            # load balancers are no longer supported in 5.11 -> BZ 1672949
-        )
-    ), pytest.mark.meta(automates=[BZ(1402392)])  # should be only on test_filter_crud
+    pytest.mark.uncollectif(lambda param, appliance:
+        (param.collection in [ConfigManager, 'ansible_tower_providers'] or
+         param.filter == 'Job Template (Ansible Tower) : Name') or
+        (appliance.version >= '5.11' and param.entity == 'network_load_balancers'),
+        reason='load balancers are no longer supported in 5.11 -> BZ 1672949'),
+    pytest.mark.meta(automates=[BZ(1402392)])  # should be only on test_filter_crud
 ]
 
 

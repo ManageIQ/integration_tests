@@ -92,10 +92,9 @@ def test_default_view_infra_reset(appliance):
 
 @pytest.mark.parametrize('group_name', list(GTL_PARAMS.keys()), scope="module")
 @pytest.mark.parametrize('view', ['List View', 'Tile View', 'Grid View'])
-@pytest.mark.uncollectif(
-    lambda view, group_name: view == "Grid View" and group_name == "Service Catalogs",
-    reason='Incompatible combination of grid view and service catalogs'
-)
+@pytest.mark.uncollectif(lambda view, group_name:
+                         view == "Grid View" and group_name == "Service Catalogs",
+                         reason='Invalid combination of grid view and service catalogs')
 def test_infra_default_view(appliance, group_name, view):
     """This test case changes the default view of an infra related page and asserts the change.
 

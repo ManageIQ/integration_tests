@@ -272,7 +272,10 @@ def abstract_test_chargeback_cost(
 #
 #
 # Workaround:
-@pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
+# TODO: fix this parametrization, its janky and can be restructured.
+@pytest.mark.uncollectif(lambda rate_type:
+                         rate_type == 'variable',
+                         reason='Variable rate type not valid for fixed test')
 def test_chargeback_rate_fixed_1(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     """
@@ -286,7 +289,9 @@ def test_chargeback_rate_fixed_1(
         'Fixed1', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
 
-@pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
+@pytest.mark.uncollectif(lambda rate_type:
+                         rate_type == 'variable',
+                         reason='Variable rate type not valid for fixed test')
 def test_chargeback_rate_fixed_2(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     """
@@ -328,7 +333,9 @@ def test_chargeback_rate_memory_used(
 
 # Network variable rate tests are skipped until this bug is solved:
 #     https://github.com/ManageIQ/integration_tests/issues/5027
-@pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
+@pytest.mark.uncollectif(lambda rate_type:
+                         rate_type == 'variable',
+                         reason='Variable rate type not valid for network chargeback test')
 def test_chargeback_rate_network_io(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     """
