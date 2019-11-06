@@ -1543,6 +1543,52 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         return result
 
+    def upgrade(self, upgrade_to, cfme_only=True, reboot=False):
+        """ Upgrade an appliance
+        Args:
+            upgrade_to (str): Stream for appliance upgrade. supported (5.9.z, 5.10.z, 5.11.z)
+            cfme_only (bool): Update cfme packages only or all available updates.
+            reboot (bool): Reboot appliance after upgrade.
+        Note: Appliance always upgrades to latest available version.
+        In supported stream `.z`indicate latest available.
+        """
+
+        logger.info("Appliance upgrade process started")
+
+        if self.version.series() not in upgrade_to:
+            # TODO: Add support of major upgrade
+            raise NotImplementedError("Major upgrade not supported")
+
+        supported_stream_repo_map = {
+            "5.9.z": "update_url_59",
+            "5.10.z": "update_url_510",
+            "5.11.z": "update_url_511",
+        }
+        update_url = conf.cfme_data["basic_info"][supported_stream_repo_map[upgrade_to]]
+
+        logger.debug("Adding update repo to appliance")
+        result = self.ssh_client.run_command(f"curl {update_url} -o /etc/yum.repos.d/update.repo")
+        logger.debug(result.output)
+
+        self.evmserverd.stop()
+
+        logger.info("Running yum update")
+        cmd = "cfme -y " if cfme_only else "-y"
+        try:
+            result = self.ssh_client.run_command(f"yum update {cmd}", timeout=3600)
+        except socket.timeout:
+            logger.error(f"SSH timed out while updating appliance: {result.output}")
+
+        self.db_service.restart()
+        self.evmserverd.start()
+
+        # May be chance to update kernal with all update.
+        if cmd == "-y" or reboot:
+            self.reboot()
+
+        self.wait_for_web_ui()
+        logger.info("Appliance upgrade completed")
+
     def utc_time(self):
         """Get UTC time of appliance"""
         if self.is_dev:

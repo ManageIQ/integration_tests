@@ -20,6 +20,7 @@ pytest_plugins = [
     "cfme.markers.skipper",
     "cfme.markers.smoke",
     "cfme.markers.stream_excluder",
+    "cfme.markers.upgrade",
     "cfme.markers.uses",
     "cfme.markers.uncollect",
     # Meta
