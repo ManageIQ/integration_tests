@@ -17,7 +17,7 @@ pytestmark = [
 
 @pytest.fixture
 def db_user(appliance):
-    name = f"test-user-{fauxfactory.gen_alpha()}"
+    name = fauxfactory.gen_alpha(15, start="test-user-")
     creds = Credential(principal=name, secret=fauxfactory.gen_alpha())
     user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
     user = appliance.collections.users.create(
@@ -71,7 +71,7 @@ def test_validate_lookup_button_provisioning(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1632718)])
+@pytest.mark.meta(blockers=[BZ(1632718)], automates=[1632718])
 def test_verify_database_user_login_fails_with_external_auth_configured(
         appliance, setup_ldap_auth_provider, db_user
 ):
