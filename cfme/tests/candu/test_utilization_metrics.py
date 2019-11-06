@@ -354,7 +354,7 @@ def generic_test_azone_rollup(appliance, provider, metric):
     query = query_metric_rollup_table(appliance, provider, metric, azone_name)
 
     for record in query:
-        if hasattr(record, metric) and int(getattr(record, metric, 0)):
+        if int(getattr(record, metric, 0)):
             return True
         else:
             raise ValueError('The record had a zero in it!')
@@ -363,7 +363,7 @@ def generic_test_azone_rollup(appliance, provider, metric):
 @pytest.mark.provider(
     [EC2Provider, AzureProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
-    override=True, scope="module"
+    scope="module"
 )
 @pytest.mark.meta(
     blockers=[BZ(1744845, forced_streams=['5.10'],
