@@ -37,7 +37,6 @@ def clean_setup_provider(request, provider):
 
 
 def vm_count(appliance, metrics_tbl, mgmt_system_id):
-    pytest.set_trace()
     return bool(appliance.db.client.session.query(metrics_tbl).filter(
         metrics_tbl.parent_ems_id == mgmt_system_id).filter(
         metrics_tbl.resource_type == "VmOrTemplate").count()
