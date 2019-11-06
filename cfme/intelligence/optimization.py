@@ -7,6 +7,8 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import SelectorDropdown
 
 from cfme.common import BaseLoggedInPage
+from cfme.intelligence.reports.reports import ReportsCollection
+from cfme.intelligence.reports.saved import SavedReportsCollection
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -73,7 +75,11 @@ class OptimizationReport(BaseEntity):
     runs = attr.ib(default=None)
 
     def __attrs_post_init__(self):
-        self._collections = {"optimization_saved_reports": OptimizationSavedReportsCollection}
+        self._collections = {
+            "optimization_saved_reports": OptimizationSavedReportsCollection,
+            "saved_reports": SavedReportsCollection,
+            "reports": ReportsCollection,
+        }
 
     def queue(self):
         view = navigate_to(self.parent, "All")
