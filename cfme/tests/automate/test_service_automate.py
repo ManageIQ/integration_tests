@@ -404,6 +404,5 @@ def test_import_dialog_file_without_selecting_file(appliance, dialog):
     view = navigate_to(import_export, "DialogImportExport")
     view.export.click()
     view.flash.assert_message("At least 1 item must be selected for export")
-    if BZ(1740796).blocks:
-        with pytest.raises(AssertionError, match="At least 1 item must be selected for export"):
-            dialog.update({'label': fauxfactory.gen_alphanumeric()})
+    if not BZ(1740796, forced_streams=['5.10']).blocks:
+        dialog.update({'label': fauxfactory.gen_alphanumeric()})
