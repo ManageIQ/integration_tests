@@ -4547,6 +4547,32 @@ class LineChart(Widget, ClickableMixin):
         return tooltip_data
 
 
+class ReactTextInput(TextInput):
+
+    # The clear method from the WebElement class in the Selenium package was not clearing the react
+    # text field. arguments[0] is the widget name
+    clear_text_field = """\
+        (function(elem){
+            var elem_name = document.getElementsByName(elem);
+            var elem_id = elem_name[0].id;
+            document.getElementById(elem_id).value = "";
+        }(arguments[0]));
+    """
+
+    def clear(self):
+        self.browser.execute_script(self.clear_text_field, self.name)
+
+    def fill(self, value):
+        current_value = self.value
+        if value == current_value:
+            return False
+        # Clear and type everything
+        self.browser.click(self)
+        self.clear()
+        self.browser.send_keys(value, self)
+        return True
+
+
 # Widget and its form views for Infra Planning Wizard
 
 
