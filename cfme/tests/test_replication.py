@@ -1,12 +1,39 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.cli import provider_app_crud
+from cfme.utils.conf import credentials
+
 
 pytestmark = [test_requirements.replication]
 
 
-@pytest.mark.manual
-def test_replication_powertoggle():
+def setup_replication(remote_app, global_app):
+    """Configure global_app database with region number 99 and subscribe to remote_app."""
+    app_creds = {
+        "username": credentials["database"]["username"],
+        "password": credentials["database"]["password"],
+        "sshlogin": credentials["ssh"]["username"],
+        "sshpass": credentials["ssh"]["password"],
+    }
+    app_params = dict(region=99, dbhostname='localhost', username=app_creds['username'],
+                      password=app_creds['password'], dbname='vmdb_production',
+                      dbdisk=global_app.unpartitioned_disks[0], fetch_key=remote_app.hostname,
+                      sshlogin=app_creds['sshlogin'], sshpass=app_creds['sshpass'])
+
+    global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
+    global_app.evmserverd.wait_for_running()
+    global_app.wait_for_web_ui()
+
+    remote_app.set_pglogical_replication(replication_type=':remote')
+    global_app.set_pglogical_replication(replication_type=':global')
+    global_app.add_pglogical_replication_subscription(remote_app.hostname)
+
+
+@pytest.mark.provider([OpenStackProvider])
+def test_replication_powertoggle(request, provider, configured_appliance, unconfigured_appliance):
     """
     power toggle from global to remote
 
@@ -26,12 +53,43 @@ def test_replication_powertoggle():
             3. VM state changes to on in the Remote and Global appliance.
 .
     """
-    pass
+    instance_name = "test_replication_{}".format(fauxfactory.gen_alphanumeric().lower())
+    remote_app = configured_appliance
+    global_app = unconfigured_appliance
+
+    provider_app_crud(OpenStackProvider, remote_app).setup()
+    setup_replication(remote_app, global_app)
+
+    remote_instance = remote_app.collections.cloud_instances.create_rest(instance_name, provider)
+    request.addfinalizer(lambda: remote_instance.delete())
+
+    global_instance = global_app.collections.cloud_instances.instantiate(instance_name, provider)
+    remote_instance.wait_for_instance_state_change(desired_state=remote_instance.STATE_ON)
+
+    global_instance = global_app.collections.cloud_instances.instantiate(instance_name, provider)
+
+    # Power OFF instance using global appliance
+    global_instance.power_control_from_cfme(option=global_instance.STOP)
+
+    # Assert instance power off state from both remote and global appliance
+    assert global_instance.wait_for_instance_state_change(
+        desired_state=global_instance.STATE_OFF).out
+    assert remote_instance.wait_for_instance_state_change(
+        desired_state=remote_instance.STATE_OFF).out
+
+    # Power ON instance using global appliance
+    global_instance.power_control_from_cfme(option=global_instance.START)
+
+    # Assert instance power ON state from both remote and global appliance
+    assert global_instance.wait_for_instance_state_change(
+        desired_state=global_instance.STATE_ON).out
+    assert remote_instance.wait_for_instance_state_change(
+        desired_state=global_instance.STATE_ON).out
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_replication_appliance_add_single_subscription():
+def test_replication_appliance_add_single_subscription(configured_appliance,
+                                                       unconfigured_appliance):
     """
     Add one remote subscription to global region
 
@@ -48,7 +106,12 @@ def test_replication_appliance_add_single_subscription():
             1.
             2. No error. Appliance subscribed.
     """
-    pass
+    remote_app = configured_appliance
+    global_app = unconfigured_appliance
+    region = global_app.collections.regions.instantiate()
+
+    setup_replication(remote_app, global_app)
+    assert region.replication.get_replication_status(host=remote_app.hostname)
 
 
 @pytest.mark.manual
@@ -106,9 +169,8 @@ def test_replication_re_add_deleted_remote():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_remote_to_global_by_ip_pglogical():
+def test_replication_remote_to_global_by_ip_pglogical(configured_appliance, unconfigured_appliance):
     """
     Test replication from remote region to global using any data type
     (provider,event,etc)
@@ -128,7 +190,13 @@ def test_replication_remote_to_global_by_ip_pglogical():
             2.
             3. Provider appeared in the Global.
     """
-    pass
+    remote_app = configured_appliance
+    global_app = unconfigured_appliance
+    provider_app_crud(OpenStackProvider, remote_app).setup()
+    setup_replication(remote_app, global_app)
+
+    # Assert the provider is replicated to global appliance
+    assert global_app.managed_provider_names
 
 
 @pytest.mark.manual
