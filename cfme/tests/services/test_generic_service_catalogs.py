@@ -22,7 +22,7 @@ pytestmark = [
 
 @pytest.fixture(scope="function")
 def catalog_item(appliance, dialog, catalog):
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
         name=item_name,
@@ -40,7 +40,7 @@ def test_delete_catalog_deletes_service(appliance, dialog, catalog):
         initialEstimate: 1/8h
         tags: service
     """
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
         name=item_name,
@@ -77,12 +77,12 @@ def test_service_circular_reference(appliance, catalog_item):
         initialEstimate: 1/8h
         tags: service
     """
-    bundle_name = "first_" + fauxfactory.gen_alphanumeric()
+    bundle_name = fauxfactory.gen_alphanumeric(start="first_")
     catalog_bundle = appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
         catalog_items=[catalog_item.name])
-    sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
+    sec_bundle_name = fauxfactory.gen_alphanumeric(start="sec_")
     sec_catalog_bundle = appliance.collections.catalog_bundles.create(
         sec_bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog,
@@ -102,7 +102,7 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
         initialEstimate: 1/8h
         tags: service
     """
-    bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
+    bundle_name = fauxfactory.gen_alphanumeric(12, start="generic_")
     appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
@@ -128,17 +128,17 @@ def test_bundles_in_bundle(appliance, catalog_item):
         initialEstimate: 1/8h
         tags: service
     """
-    bundle_name = "first_" + fauxfactory.gen_alphanumeric()
+    bundle_name = fauxfactory.gen_alphanumeric(start="first_")
     appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
         catalog_items=[catalog_item.name])
-    sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
+    sec_bundle_name = fauxfactory.gen_alphanumeric(start="sec_")
     appliance.collections.catalog_bundles.create(
         sec_bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
         catalog_items=[bundle_name])
-    third_bundle_name = "third_" + fauxfactory.gen_alphanumeric()
+    third_bundle_name = fauxfactory.gen_alphanumeric(start="third_")
     third_catalog_bundle = appliance.collections.catalog_bundles.create(
         third_bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,

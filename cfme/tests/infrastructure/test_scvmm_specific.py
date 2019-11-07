@@ -38,7 +38,7 @@ def get_vhd_name(url, pattern="hyperv"):
 
 @pytest.fixture
 def vm(provider, small_template):
-    vm_name = "test-scvmm-{}".format(fauxfactory.gen_alpha())
+    vm_name = fauxfactory.gen_alpha(18, start="test-scvmm-")
     vm = provider.appliance.collections.infra_vms.instantiate(
         vm_name, provider, small_template.name
     )

@@ -209,7 +209,7 @@ def temp_pod_appliance(appliance, provider, appliance_data, pytestconfig):
 def temp_extdb_pod_appliance(appliance, provider, extdb_template, template_tags,
                              create_external_database, appliance_data):
     db_host, db_name = create_external_database
-    project = 'test-pod-extdb-{t}'.format(t=fauxfactory.gen_alphanumeric().lower())
+    project = fauxfactory.gen_alphanumeric(20, start="test-pod-extdb-").lower()
     provision_data = {
         'template': extdb_template['name'],
         'tags': template_tags,
@@ -250,7 +250,7 @@ def temp_extdb_pod_appliance(appliance, provider, extdb_template, template_tags,
 def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
     tags = template_tags
     params = appliance_data.copy()
-    project = 'test-pod-ansible-{t}'.format(t=fauxfactory.gen_alphanumeric().lower())
+    project = fauxfactory.gen_alphanumeric(22, start="test-pod-ansible-").lower()
     try:
         with ssh.SSHClient(hostname=params['openshift_creds']['hostname'],
                            username=params['openshift_creds']['ssh']['username'],

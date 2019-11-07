@@ -24,14 +24,14 @@ pytestmark = [test_requirements.automate]
 def new_users(appliance):
     """This fixture creates new users"""
     users = [appliance.collections.users.create(
-        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
                               secret=fauxfactory.gen_alphanumeric(4)),
         email=fauxfactory.gen_email(),
         groups=appliance.collections.groups.instantiate(description="EvmGroup-super_administrator"),
         cost_center="Workload",
         value_assign="Database",
-    ) for i in range(2)]
+    ) for _ in range(2)]
 
     yield users
     for user in users:
@@ -160,9 +160,9 @@ def setup_dynamic_dialog(appliance, custom_instance):
     # Create dynamic dialog
     element_data = {
         "element_information": {
-            "ele_label": fauxfactory.gen_alphanumeric(start="ele_"),
-            "ele_name": fauxfactory.gen_alphanumeric(start="ele_"),
-            "ele_desc": fauxfactory.gen_alphanumeric(),
+            "ele_label": fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            "ele_name": fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            "ele_desc": fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             "dynamic_chkbox": True,
             "choose_type": "Text Box",
         },

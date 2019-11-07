@@ -870,7 +870,7 @@ class TestServiceDialogsRESTAPI(object):
         if from_detail:
             edited = []
             for dialog in service_dialogs:
-                new_description = 'Test Dialog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_description = fauxfactory.gen_alphanumeric(18, start="Test Dialog ").lower()
                 new_descriptions.append(new_description)
                 edited.append(dialog.action.edit(description=new_description))
                 assert_response(appliance)
@@ -878,7 +878,7 @@ class TestServiceDialogsRESTAPI(object):
         else:
             catalog_edited = []
             for dialog in service_dialogs:
-                new_description = 'Test Dialog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_description = fauxfactory.gen_alphanumeric(18, start="Test Dialog ").lower()
                 new_descriptions.append(new_description)
                 dialog.reload()
                 catalog_edited.append({
@@ -1146,14 +1146,14 @@ class TestServiceCatalogsRESTAPI(object):
         if from_detail:
             edited = []
             for catalog in service_catalogs:
-                new_description = 'Test Catalog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_description = fauxfactory.gen_alphanumeric(18, start="Test Catalog ").lower()
                 new_descriptions.append(new_description)
                 edited.append(catalog.action.edit(description=new_description))
                 assert_response(appliance)
         else:
             catalog_edited = []
             for catalog in service_catalogs:
-                new_description = 'Test Catalog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_description = fauxfactory.gen_alphanumeric(18, start="Test Catalog ").lower()
                 new_descriptions.append(new_description)
                 catalog.reload()
                 catalog_edited.append({
@@ -1374,7 +1374,7 @@ class TestPendingRequestsRESTAPI(object):
     def new_domain(self, request, appliance):
         """Creates new domain and copy instance from ManageIQ to this domain."""
         dc = appliance.collections.domains
-        domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+        domain = dc.create(name=fauxfactory.gen_alphanumeric(12, start="domain_"), enabled=True)
         request.addfinalizer(domain.delete_if_exists)
         miq_domain = dc.instantiate(name='ManageIQ')
         instance = self._get_instance(miq_domain)
@@ -1563,8 +1563,8 @@ class TestServiceRequests(object):
     def user_auth(self, request, appliance, new_group):
         password = fauxfactory.gen_alphanumeric()
         data = [{
-            "userid": "rest_{}".format(fauxfactory.gen_alphanumeric(3).lower()),
-            "name": "REST User {}".format(fauxfactory.gen_alphanumeric()),
+            "userid": fauxfactory.gen_alphanumeric(start="rest_").lower(),
+            "name": fauxfactory.gen_alphanumeric(15, start="REST User "),
             "password": password,
             "group": {"id": new_group.id}
         }]
@@ -1729,7 +1729,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
         """
         response_len = len(orchestration_templates)
         new = [{
-            'description': 'Updated Test Template {}'.format(fauxfactory.gen_alphanumeric(5))
+            'description': fauxfactory.gen_alphanumeric(26, start="Updated Test Template ")
         } for _ in range(response_len)]
         if from_detail:
             edited = []
@@ -1817,7 +1817,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
         new = []
         for _ in range(num_orch_templates):
             new.append({
-                "name": "test_copied_{}".format(fauxfactory.gen_alphanumeric(5))
+                "name": fauxfactory.gen_alphanumeric(18, start="test_copied_")
             })
         if from_detail:
             for i in range(num_orch_templates):
@@ -2198,8 +2198,8 @@ def automate_env_setup(klass):
     dialog_field["values"] = {1 => "one", 2 => "two", 10 => "ten", 7 => "seven", 50 => "fifty"}
     """
     method = klass.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="meth_"),
+        display_name=fauxfactory.gen_alphanumeric(start="meth_"),
         location="inline",
         script=script,
     )
@@ -2207,8 +2207,8 @@ def automate_env_setup(klass):
     klass.schema.add_fields({"name": "meth", "type": "Method", "data_type": "Integer"})
 
     instance = klass.instances.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="inst_"),
+        display_name=fauxfactory.gen_alphanumeric(start="inst_"),
         description=fauxfactory.gen_alphanumeric(),
         fields={"meth": {"value": method.name}},
     )
@@ -2223,7 +2223,7 @@ def get_service_template(appliance, request, automate_env_setup):
     instance = automate_env_setup
     data = {
         "buttons": "submit, cancel",
-        "label": "dialog_{}".format(fauxfactory.gen_alpha()),
+        "label": fauxfactory.gen_alpha(12, start="dialog_"),
         "dialog_tabs": [
             {
                 "display": "edit",

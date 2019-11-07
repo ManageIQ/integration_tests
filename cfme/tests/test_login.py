@@ -143,7 +143,7 @@ def test_update_password(context, request, appliance):
     """
 
     # First, create a temporary new user
-    username = 'user_temp_{}'.format(fauxfactory.gen_alphanumeric(4).lower())
+    username = fauxfactory.gen_alphanumeric(15, start="user_temp_").lower()
     new_creds = Credential(principal=username, secret='redhat')
     user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
     user = appliance.collections.users.create(

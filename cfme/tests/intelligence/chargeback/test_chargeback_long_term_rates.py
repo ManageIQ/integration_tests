@@ -61,7 +61,7 @@ def vm_ownership(enable_candu, provider, appliance):
     # No vm creation or cleanup
     user = appliance.collections.users.create(
         name='{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
-        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
             secret='secret'),
         email='abc@example.com',
         groups=cb_group,
@@ -359,7 +359,7 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, interv
 @pytest.fixture(scope="module")
 def new_compute_rate(appliance, interval):
     """Create a new Compute Chargeback rate"""
-    desc = 'custom_{}_{}'.format(interval, fauxfactory.gen_alphanumeric())
+    desc = fauxfactory.gen_alphanumeric(20, start=f"custom_{interval}")
     try:
         compute = appliance.collections.compute_rates.create(
             description=desc,

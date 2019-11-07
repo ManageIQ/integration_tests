@@ -193,7 +193,7 @@ class TestRatesViaREST(object):
         if multiple:
             rates_data_edited = []
             for rate in rates:
-                new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
+                new_description = fauxfactory.gen_alphanumeric(15, start="test_rate_").lower()
                 new_descriptions.append(new_description)
                 rate.reload()
                 rates_data_edited.append({
@@ -205,7 +205,7 @@ class TestRatesViaREST(object):
         else:
             edited = []
             for rate in rates:
-                new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
+                new_description = fauxfactory.gen_alphanumeric(15, start="test_rate_").lower()
                 new_descriptions.append(new_description)
                 edited.append(rate.action.edit(description=new_description))
                 assert_response(appliance)

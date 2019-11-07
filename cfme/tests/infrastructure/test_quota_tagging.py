@@ -65,10 +65,11 @@ def prov_data(provider, vm_name, template_name):
 
 @pytest.fixture(scope='module')
 def domain(appliance):
-    domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
-                                                  'description_{}'.format(
-                                                      fauxfactory.gen_alphanumeric()),
-                                                  enabled=True)
+    domain = appliance.collections.domains.create(
+        fauxfactory.gen_alphanumeric(15, start="domain_"),
+        fauxfactory.gen_alphanumeric(15, start="domain_desc_"),
+        enabled=True
+    )
     yield domain
     if domain.exists:
         domain.delete()
@@ -79,7 +80,7 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
 
     collection = appliance.collections.catalog_items
     catalog_item = collection.create(provider.catalog_item_type,
-                                     name='test_{}'.format(fauxfactory.gen_alphanumeric()),
+                                     name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
                                      description='test catalog',
                                      display_in=True,
                                      catalog=catalog,
@@ -93,7 +94,7 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data):
 @pytest.fixture
 def catalog_bundle(appliance, dialog, catalog, catalog_item):
     collection = appliance.collections.catalog_bundles
-    catalog_bundle = collection.create(name='test_{}'.format(fauxfactory.gen_alphanumeric()),
+    catalog_bundle = collection.create(name=fauxfactory.gen_alphanumeric(15, start="cat_bundle_"),
                                        catalog_items=[catalog_item.name],
                                        description='test catalog bundle',
                                        display_in=True,

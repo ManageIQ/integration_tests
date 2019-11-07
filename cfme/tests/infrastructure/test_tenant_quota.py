@@ -67,11 +67,11 @@ def roottenant(appliance):
 def tenants_setup(appliance):
     tenants = appliance.collections.tenants
     my_company = tenants.get_root_tenant()
-    test_parent = tenants.create(name='test_parent{}'.format(fauxfactory.gen_alphanumeric()),
-                                 description='test_parent{}'.format(fauxfactory.gen_alphanumeric()),
+    test_parent = tenants.create(name=fauxfactory.gen_alphanumeric(18, start="test_parent_"),
+                                 description=fauxfactory.gen_alphanumeric(18, start="parent_desc_"),
                                  parent=my_company)
-    test_child = tenants.create(name='test_child{}'.format(fauxfactory.gen_alphanumeric()),
-                                description='test_child{}'.format(fauxfactory.gen_alphanumeric()),
+    test_child = tenants.create(name=fauxfactory.gen_alphanumeric(18, start="test_child_"),
+                                description=fauxfactory.gen_alphanumeric(18, start="child_desc_"),
                                 parent=test_parent)
     yield test_parent, test_child
     test_child.delete()
@@ -110,7 +110,7 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data, set_default):
     collection = appliance.collections.catalog_items
     catalog_item = collection.create(
         provider.catalog_item_type,
-        name='test_{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
         description='test catalog',
         display_in=True,
         catalog=catalog,

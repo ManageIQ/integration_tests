@@ -490,10 +490,10 @@ def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider, requ
             1. Plan with duplicate name shows error message
     """
     migration_plan_collection = appliance.collections.v2v_migration_plans
-    name = "plan_{}".format(fauxfactory.gen_alphanumeric())
+    name = fauxfactory.gen_alphanumeric(start="plan_")
     migration_plan = migration_plan_collection.create(
         name=name,
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         target_provider=provider,
         vm_list=mapping_data_vm_obj_mini.vm_list,
@@ -554,8 +554,8 @@ def test_migration_with_no_conversion(appliance, delete_conversion_hosts, source
     """
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         target_provider=provider,
         vm_list=mapping_data_vm_obj_mini.vm_list,
@@ -608,8 +608,8 @@ def test_v2v_custom_attribute(
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         osp_security_group=map_security_group,
         osp_flavor=map_flavor,

@@ -66,7 +66,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     cb_group = group_collection.instantiate(description='EvmGroup-user')
     user = appliance.collections.users.create(
         name=fauxfactory.gen_alphanumeric(),
-        credential=Credential(principal='uid' + '{}'.format(fauxfactory.gen_alphanumeric()),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
             secret='secret'),
         email='abc@example.com',
         groups=cb_group,

@@ -16,13 +16,13 @@ pytestmark = [
 @pytest.fixture(scope="function")
 def dialog_cat_item(appliance, catalog):
     service_dialog = appliance.collections.service_dialogs
-    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
-    ele_name = fauxfactory.gen_alphanumeric()
+    dialog = fauxfactory.gen_alphanumeric(12, start="dialog_")
+    ele_name = fauxfactory.gen_alphanumeric(start="ele_")
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
             'ele_name': ele_name,
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Text Box"
         },
         'options': {
@@ -33,15 +33,15 @@ def dialog_cat_item(appliance, catalog):
     if appliance.version < '5.10':
         element_data["options"].pop("validation_switch", None)
     sd = service_dialog.create(label=dialog, description="my dialog")
-    tab = sd.tabs.create(tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
                          tab_desc="my tab desc")
-    box = tab.boxes.create(box_label="box_{}".format(fauxfactory.gen_alphanumeric()),
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
                            box_desc="my box desc")
     box.elements.create(element_data=[element_data])
 
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
         description="my catalog",
         display_in=True,
         catalog=catalog,

@@ -220,7 +220,7 @@ def compliance_condition(appliance, virtualcenter_provider):
     ).format(vm_name, fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric())
     condition = appliance.collections.conditions.create(
         conditions.VMCondition,
-        "vm-name-{}".format(fauxfactory.gen_alphanumeric()),
+        fauxfactory.gen_alphanumeric(12, start="vm-name-"),
         expression=expression
     )
     yield condition
@@ -230,11 +230,11 @@ def compliance_condition(appliance, virtualcenter_provider):
 @pytest.fixture
 def vm_compliance_policy_profile(appliance, compliance_condition):
     policy = appliance.collections.policies.create(
-        VMCompliancePolicy, "vm-compliance-{}".format(fauxfactory.gen_alphanumeric())
+        VMCompliancePolicy, fauxfactory.gen_alphanumeric(20, start="vm-compliance-")
     )
     policy.assign_conditions(compliance_condition)
     profile = appliance.collections.policy_profiles.create(
-        "VM Compliance Profile {}".format(fauxfactory.gen_alphanumeric()),
+        fauxfactory.gen_alphanumeric(26, start="VM Compliance Profile "),
         [policy],
     )
     yield profile
@@ -343,7 +343,7 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, ap
     """
     policy = appliance.collections.policies.create(
         VMCompliancePolicy,
-        "Check compliance history policy {}".format(fauxfactory.gen_alpha()),
+        fauxfactory.gen_alpha(36, start="Check compliance history policy "),
         active=True,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
     )
@@ -439,7 +439,7 @@ def test_vmware_alarm_selection_does_not_fail(request, appliance):
     """
     try:
         alert = appliance.collections.alerts.create(
-            "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
+            fauxfactory.gen_alpha(length=20, start="Trigger by CPU "),
             active=True,
             based_on="VM and Instance",
             evaluate=("VMware Alarm", {}),

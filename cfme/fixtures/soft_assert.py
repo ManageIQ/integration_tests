@@ -133,7 +133,7 @@ def handle_assert_artifacts(request, fail_message=None):
         ss_error = base64_from_text(ss_error)
 
     # A simple id to match the artifacts together
-    sa_id = "softassert-{}".format(fauxfactory.gen_alpha(length=3).upper())
+    sa_id = fauxfactory.gen_alpha(length=14, start="softassert-").upper()
     from cfme.fixtures.pytest_store import store
     node = request.node
 

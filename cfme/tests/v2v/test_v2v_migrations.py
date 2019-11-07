@@ -79,8 +79,8 @@ def test_single_datastore_single_vm_migration(
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,
@@ -130,8 +130,8 @@ def test_single_network_single_vm_migration(
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_vm_obj_single_network.vm_list,
@@ -186,8 +186,8 @@ def test_dual_datastore_dual_vm_migration(
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_dual_vm_obj_dual_datastore.vm_list,
@@ -238,8 +238,8 @@ def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_d
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_vm_obj_dual_nics.vm_list,
@@ -282,8 +282,8 @@ def test_dual_disk_vm_migration(
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,
@@ -343,8 +343,8 @@ def test_migrations_different_os_templates(
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,

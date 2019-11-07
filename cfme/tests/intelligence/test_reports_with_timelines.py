@@ -102,8 +102,7 @@ def setup_for_reports(request, appliance, provider, path, updates, vm_crud, regi
 @pytest.fixture
 def vm_crud(provider, small_template):
     template = small_template
-    base_name = "test_events_{}"
-    vm_name = base_name.format(fauxfactory.gen_alpha(length=8).lower())
+    vm_name = fauxfactory.gen_alpha(length=18, start="test_events_").lower()
 
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(vm_name, provider, template_name=template.name)

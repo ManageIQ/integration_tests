@@ -11,7 +11,7 @@ from cfme.utils.appliance.implementations.ssui import navigate_to
 @pytest.fixture(scope="function")
 def tagcontrol_dialog(appliance):
     service_dialog = appliance.collections.service_dialogs
-    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
+    dialog = fauxfactory.gen_alphanumeric(12, start="dialog_")
     element_data = {
         'element_information': {
             'ele_label': "Service Level",
@@ -25,9 +25,9 @@ def tagcontrol_dialog(appliance):
         }
     }
     sd = service_dialog.create(label=dialog, description="my dialog")
-    tab = sd.tabs.create(tab_label='tab_{}'.format(fauxfactory.gen_alphanumeric()),
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
                          tab_desc="my tab desc")
-    box = tab.boxes.create(box_label='box_{}'.format(fauxfactory.gen_alphanumeric()),
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
                            box_desc="my box desc")
     box.elements.create(element_data=[element_data])
     yield sd
@@ -36,7 +36,7 @@ def tagcontrol_dialog(appliance):
 
 @pytest.fixture(scope="function")
 def catalog(appliance):
-    catalog = "cat_{}".format(fauxfactory.gen_alphanumeric())
+    catalog = fauxfactory.gen_alphanumeric(start="cat_")
     cat = appliance.collections.catalogs.create(name=catalog, description="my catalog")
     yield cat
     if cat.exists:
@@ -47,7 +47,7 @@ def catalog(appliance):
 def catalog_item(appliance, tagcontrol_dialog, catalog):
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
         description="my catalog", display_in=True, catalog=catalog,
         dialog=tagcontrol_dialog)
     yield catalog_item

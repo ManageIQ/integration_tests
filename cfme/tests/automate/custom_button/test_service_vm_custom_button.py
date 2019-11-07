@@ -32,8 +32,8 @@ pytestmark = [
 def button_group(appliance):
     collection = appliance.collections.button_groups
     button_gp = collection.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=getattr(collection, "VM_INSTANCE"),
     )
     yield button_gp
@@ -56,14 +56,14 @@ def setup_dynamic_dialog(appliance, custom_instance):
 
     # Create dynamic dialog
     service_dialog = appliance.collections.service_dialogs
-    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
-    ele_name = "ele_{}".format(fauxfactory.gen_alphanumeric())
+    dialog = fauxfactory.gen_alphanumeric(12, start="dialog_")
+    ele_name = fauxfactory.gen_alphanumeric(start="ele_")
 
     element_data = {
         "element_information": {
-            "ele_label": "ele_{}".format(fauxfactory.gen_alphanumeric()),
+            "ele_label": fauxfactory.gen_alphanumeric(15, start="ele_label_"),
             "ele_name": ele_name,
-            "ele_desc": fauxfactory.gen_alphanumeric(),
+            "ele_desc": fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             "dynamic_chkbox": True,
             "choose_type": "Dropdown",
         },
@@ -71,10 +71,10 @@ def setup_dynamic_dialog(appliance, custom_instance):
     }
     sd = service_dialog.create(label=dialog, description="my dialog")
     tab = sd.tabs.create(
-        tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()), tab_desc="my tab desc"
+        tab_label=fauxfactory.gen_alphanumeric(start="tab_"), tab_desc="my tab desc"
     )
     box = tab.boxes.create(
-        box_label="box_{}".format(fauxfactory.gen_alphanumeric()), box_desc="my box desc"
+        box_label=fauxfactory.gen_alphanumeric(start="box_"), box_desc="my box desc"
     )
     box.elements.create(element_data=[element_data])
 
@@ -113,8 +113,8 @@ def test_custom_button_display_service_vm(request, appliance, service_vm, button
     service, _ = service_vm
     with appliance.context.use(ViaUI):
         button = button_group.buttons.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             system="Request",
             request="InspectMe",
         )
@@ -183,16 +183,16 @@ def test_custom_button_with_dynamic_dialog_vm(
     # Create button group
     collection = appliance.collections.button_groups
     button_gp = collection.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=getattr(collection, "VM_INSTANCE"),
     )
     request.addfinalizer(button_gp.delete_if_exists)
 
     # Create custom button under group
     button = button_gp.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         dialog=dialog.label,
         system="Request",
         request="InspectMe",
@@ -254,8 +254,8 @@ def test_custom_button_automate_service_vm(request, appliance, service_vm, butto
     service, _ = service_vm
     with appliance.context.use(ViaUI):
         button = button_group.buttons.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             system="Request",
             request="InspectMe",
         )

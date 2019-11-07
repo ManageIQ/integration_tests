@@ -22,7 +22,7 @@ VOLUME_SIZE = 1
 def volume(appliance, provider):
     collection = appliance.collections.volumes
     storage_manager = '{} Cinder Manager'.format(provider.name)
-    volume = collection.create(name=fauxfactory.gen_alpha(),
+    volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
                                size=VOLUME_SIZE,
@@ -39,7 +39,7 @@ def volume(appliance, provider):
 @pytest.mark.regression
 @pytest.fixture(scope='function')
 def volume_with_type(appliance, provider):
-    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha())
+    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha(start="type_"))
     volume_type = appliance.collections.volume_types.instantiate(vol_type.name, provider)
 
     @wait_for_decorator(delay=10, timeout=300,
@@ -50,7 +50,7 @@ def volume_with_type(appliance, provider):
 
     collection = appliance.collections.volumes
     storage_manager = '{} Cinder Manager'.format(provider.name)
-    volume = collection.create(name=fauxfactory.gen_alpha(),
+    volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
                                volume_type=volume_type.name,
@@ -67,7 +67,7 @@ def volume_with_type(appliance, provider):
 
 @pytest.fixture(scope='function')
 def new_instance(provider):
-    instance_name = fauxfactory.gen_alpha()
+    instance_name = fauxfactory.gen_alpha(15, start="test_vol_")
     collection = provider.appliance.provider_based_collection(provider)
     instance = collection.create_rest(instance_name, provider)
     yield instance
@@ -96,7 +96,7 @@ def test_edit_volume(volume, appliance):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    new_name = fauxfactory.gen_alpha()
+    new_name = fauxfactory.gen_alpha(15, start="edited_")
     with update(volume):
         volume.name = new_name
     view = navigate_to(appliance.collections.volumes, 'All')
@@ -136,7 +136,7 @@ def test_edit_volume_with_type(volume_with_type, appliance):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    new_name = fauxfactory.gen_alpha()
+    new_name = fauxfactory.gen_alpha(15, start="edited_")
     with update(volume_with_type):
         volume_with_type.name = new_name
     view = navigate_to(appliance.collections.volumes, 'All')

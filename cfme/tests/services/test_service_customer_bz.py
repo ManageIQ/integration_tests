@@ -59,7 +59,7 @@ def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
         lambda: appliance.collections.infra_vms.instantiate(
             "{}0001".format(vm_name), provider).cleanup_on_provider()
     )
-    bundle_name = fauxfactory.gen_alphanumeric()
+    bundle_name = fauxfactory.gen_alphanumeric(12, start="bundle_")
     catalog_bundle = appliance.collections.catalog_bundles.create(
         bundle_name,
         catalog_items=[catalog_item.name],

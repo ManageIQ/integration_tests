@@ -21,11 +21,11 @@ pytestmark = [
 def create_dialog(appliance, element_data, label=None):
     service_dialog = appliance.collections.service_dialogs
     if not label:
-        label = "label_{}".format(fauxfactory.gen_alphanumeric())
+        label = fauxfactory.gen_alphanumeric(15, start="label_")
     sd = service_dialog.create(label=label, description="my dialog")
-    tab = sd.tabs.create(tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
                          tab_desc="my tab desc")
-    box = tab.boxes.create(box_label="box_{}".format(fauxfactory.gen_alphanumeric()),
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
                            box_desc="my box desc")
     element = box.elements.create(element_data=[element_data])
     return sd, element
@@ -42,9 +42,9 @@ def test_crud_service_dialog(appliance):
     """
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Text Box"
         },
         'options': {
@@ -73,16 +73,16 @@ def test_service_dialog_duplicate_name(appliance, request):
     """
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Text Box"
         },
         'options': {
             'default_text_box': "Default text"
         }
     }
-    label = "duplicate_{}".format(fauxfactory.gen_alphanumeric())
+    label = fauxfactory.gen_alphanumeric(15, start="duplicate_")
     dialog, element = create_dialog(appliance, element_data, label=label)
     request.addfinalizer(dialog.delete_if_exists)
     region_number = appliance.server.zone.region.number
@@ -109,9 +109,9 @@ def test_checkbox_dialog_element(appliance, request):
     """
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Check Box"
         },
         'options': {
@@ -135,9 +135,9 @@ def test_datecontrol_dialog_element(appliance, request):
 
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Datepicker"
         },
         'options': {
@@ -159,9 +159,9 @@ def test_tagcontrol_dialog_element(appliance, request):
     """
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Tag Control"
         },
         'options': {
@@ -185,9 +185,9 @@ def test_textareabox_dialog_element(appliance, request):
 
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Text Area",
         },
         'options': {
@@ -208,27 +208,27 @@ def test_reorder_elements(appliance, request):
     """
     element_1_data = {
         'element_information': {
-            'ele_label': "ele_label_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Text Box",
         }
     }
     element_2_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Check Box",
 
         }
     }
     service_dialog = appliance.collections.service_dialogs
-    sd = service_dialog.create(label="label_{}".format(fauxfactory.gen_alphanumeric()),
+    sd = service_dialog.create(label=fauxfactory.gen_alphanumeric(start="label_"),
                                description="my dialog")
-    tab = sd.tabs.create(tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
         tab_desc="my tab desc")
-    box = tab.boxes.create(box_label="box_{}".format(fauxfactory.gen_alphanumeric()),
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
         box_desc="my box desc")
     element = box.elements.create(element_data=[element_1_data, element_2_data])
     request.addfinalizer(sd.delete_if_exists)
@@ -247,27 +247,27 @@ def test_reorder_unsaved_elements(appliance, request):
         initialEstimate: 1/16h
         tags: service
     """
-    box_label = "box_{}".format(fauxfactory.gen_alphanumeric())
+    box_label = fauxfactory.gen_alphanumeric(start="box_")
     element_1_data = {
         'element_information': {
-            'ele_label': "ele_label_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele1_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele1_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele1_desc_"),
             'choose_type': "Text Box",
         }
     }
     element_2_data = {
         'element_information': {
             'ele_label': box_label,
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele2_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele2_desc_"),
             'choose_type': "Check Box"
         }
     }
     service_dialog = appliance.collections.service_dialogs
-    sd = service_dialog.create(label="label_{}".format(fauxfactory.gen_alphanumeric()),
+    sd = service_dialog.create(label=fauxfactory.gen_alphanumeric(start="label_"),
                                description="my dialog")
-    tab = sd.tabs.create(tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
         tab_desc="my tab desc")
     box = tab.boxes.create(box_label=box_label,
         box_desc="my box desc")
@@ -288,9 +288,9 @@ def test_dropdownlist_dialog_element(appliance, request):
 
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Dropdown"
         }
     }
@@ -309,9 +309,9 @@ def test_radiobutton_dialog_element(appliance, request):
     """
     element_data = {
         'element_information': {
-            'ele_label': "ele_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Radio Button"
         }
     }
@@ -334,20 +334,20 @@ def test_mandatory_entry_point_with_dynamic_element(appliance):
     """
     element_1_data = {
         'element_information': {
-            'ele_label': "ele_label_{}".format(fauxfactory.gen_alphanumeric()),
-            'ele_name': fauxfactory.gen_alphanumeric(),
-            'ele_desc': fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'dynamic_chkbox': True,
             'choose_type': "Text Box",
         }
     }
     service_dialog = appliance.collections.service_dialogs
-    sd = service_dialog.create(label='label_{}'.format(fauxfactory.gen_alphanumeric(),
-                               description="my dialog"))
-    tab = sd.tabs.create(tab_label='tab_{}'.format(fauxfactory.gen_alphanumeric(),
-                         tab_desc="my tab desc"))
-    box = tab.boxes.create(box_label='box_{}'.format(fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc"))
+    sd = service_dialog.create(label=fauxfactory.gen_alphanumeric(start="label_"),
+                               description="my dialog")
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
+                         tab_desc="my tab desc")
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
+                           box_desc="my box desc")
     assert box.elements.create(element_data=[element_1_data]) is False
     view_cls = navigator.get_class(sd.parent, 'Add').VIEW
     view = appliance.browser.create_view(view_cls)

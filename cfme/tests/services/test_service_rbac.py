@@ -14,19 +14,19 @@ pytestmark = [
 # todo: turn all below methods into fixtures with teardown steps
 def new_role(appliance, product_features):
     collection = appliance.collections.roles
-    return collection.create(name='role_{}'.format(fauxfactory.gen_alphanumeric()),
+    return collection.create(name=fauxfactory.gen_alphanumeric(start="role_"),
                              vm_restriction=None, product_features=product_features)
 
 
 def new_group(appliance, role):
     collection = appliance.collections.groups
-    return collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
+    return collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
                              role=role, tenant="My Company")
 
 
 def new_user(appliance, group, credential):
     collection = appliance.collections.users
-    return collection.create(name='user_{}'.format(fauxfactory.gen_alphanumeric()),
+    return collection.create(name=fauxfactory.gen_alphanumeric(start="user_"),
                              credential=credential,
                              email='xyz@redhat.com',
                              groups=group,
@@ -149,7 +149,7 @@ def test_service_rbac_orchestration(appliance, role_user_group):
         appliance.server.login(user)
         collection = appliance.collections.orchestration_templates
         template = collection.create(
-            template_name=fauxfactory.gen_alphanumeric(),
+            template_name=fauxfactory.gen_alphanumeric(start="temp_"),
             template_type='Amazon CloudFormation',
             template_group='CloudFormation Templates',
             description='template description',

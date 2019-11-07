@@ -48,7 +48,7 @@ def enable_candu(appliance):
 @pytest.fixture(scope="module")
 def new_compute_rate(appliance, enable_candu):
     # Create a new Compute Chargeback rate
-    desc = '{}custom_'.format(fauxfactory.gen_alphanumeric())
+    desc = fauxfactory.gen_alphanumeric(12, start="custom_")
     try:
         compute = appliance.collections.compute_rates.create(
             description=desc,

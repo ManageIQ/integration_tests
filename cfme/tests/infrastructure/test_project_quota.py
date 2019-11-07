@@ -53,8 +53,8 @@ def set_project_quota(request, appliance, new_project):
 @pytest.fixture(scope='module')
 def new_project(appliance):
     collection = appliance.collections.projects
-    project = collection.create(name='project{}'.format(fauxfactory.gen_alphanumeric()),
-                                description='project_des{}'.format(fauxfactory.gen_alphanumeric()),
+    project = collection.create(name=fauxfactory.gen_alphanumeric(15, start="project_"),
+                                description=fauxfactory.gen_alphanumeric(15, start="project_desc_"),
                                 parent=collection.get_root_tenant())
     yield project
     project.delete()
@@ -63,7 +63,7 @@ def new_project(appliance):
 @pytest.fixture(scope='module')
 def new_role(appliance):
     collection = appliance.collections.roles
-    role = collection.create(name='role_{}'.format(fauxfactory.gen_alphanumeric()),
+    role = collection.create(name=fauxfactory.gen_alphanumeric(start="role_"),
                              vm_restriction=None,
                              product_features=[(['Everything'], True)])
     yield role
@@ -73,7 +73,7 @@ def new_role(appliance):
 @pytest.fixture(scope='module')
 def new_group(appliance, new_project, new_role):
     collection = appliance.collections.groups
-    group = collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
+    group = collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
                               role=new_role.name,
                               tenant='My Company/{}'.format(new_project.name))
     yield group
@@ -84,7 +84,7 @@ def new_group(appliance, new_project, new_role):
 def new_user(appliance, new_group, new_credential):
     collection = appliance.collections.users
     user = collection.create(
-        name='user_{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="user_"),
         credential=new_credential,
         email=fauxfactory.gen_email(),
         groups=new_group,

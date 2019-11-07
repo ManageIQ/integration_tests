@@ -23,7 +23,7 @@ def depot_machine_ip(request, appliance):
         data = cfme_data.log_db_operations
         vm = deploy_template(
             data.log_db_depot_template.provider,
-            "long-test-depot-{}".format(fauxfactory.gen_alphanumeric()),
+            fauxfactory.gen_alphanumeric(26, start="long-test-depot-"),
             template_name=data.log_db_depot_template.template_name
         )
         vm.ensure_state(VmState.RUNNING)

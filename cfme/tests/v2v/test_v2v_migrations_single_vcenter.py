@@ -70,8 +70,8 @@ def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         vm_list=mapping_data_vm_obj_mini.vm_list,
         target_provider=provider
@@ -117,8 +117,8 @@ def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
         target_provider=provider
@@ -171,8 +171,8 @@ def test_migration_special_char_name(appliance, provider, request,
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(start="plan_desc_"),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         vm_list=mapping_data_vm_obj_mini.vm_list,
         target_provider=provider
@@ -231,8 +231,8 @@ def test_migration_long_name(request, appliance, provider, source_provider):
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="long_name_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_long_name{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(20, start="long_name_"),
+        description=fauxfactory.gen_alphanumeric(25, start="desc_long_name_"),
         infra_map=mapping.name,
         vm_list=[vm_obj],
         target_provider=provider
@@ -271,8 +271,8 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,
         target_provider=provider)
@@ -315,8 +315,8 @@ def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_sin
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,

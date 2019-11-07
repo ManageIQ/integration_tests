@@ -25,7 +25,7 @@ def test_catalog_crud(request, appliance):
         tags: service
     """
     # Create Catalog
-    catalog_name = fauxfactory.gen_alphanumeric()
+    catalog_name = fauxfactory.gen_alphanumeric(start="cat_")
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
     request.addfinalizer(cat.delete_if_exists)
 
@@ -79,8 +79,10 @@ def test_permissions_catalog_add(appliance, request):
     """
 
     def _create_catalog(appliance):
-        cat = appliance.collections.catalogs.create(name=fauxfactory.gen_alphanumeric(),
-                                                    description="my catalog")
+        cat = appliance.collections.catalogs.create(
+            name=fauxfactory.gen_alphanumeric(start="cat_"),
+            description="my catalog"
+        )
         request.addfinalizer(lambda: cat.delete())
 
     test_product_features = [['Everything', 'Services', 'Catalogs Explorer', 'Catalogs']]

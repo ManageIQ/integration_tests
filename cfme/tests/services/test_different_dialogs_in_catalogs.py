@@ -82,7 +82,7 @@ def catalog_item(appliance, provider, provisioning, service_dialog, catalog):
 
     catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type,
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
         description="my catalog",
         display_in=True,
         catalog=catalog,
@@ -95,7 +95,7 @@ def catalog_item(appliance, provider, provisioning, service_dialog, catalog):
 @pytest.fixture(scope="function")
 def generic_catalog_item(appliance, service_dialog, catalog):
     sd, element_data = service_dialog
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
         name=item_name,
@@ -443,22 +443,25 @@ def new_user(appliance, permission):
     # Tenant created
     collection = appliance.collections.tenants
     tenant = collection.create(
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="tenant_"),
         description=fauxfactory.gen_alphanumeric(),
         parent=collection.get_root_tenant(),
     )
 
     # Role created
-    role = appliance.collections.roles.create(name=f'role_{fauxfactory.gen_alphanumeric()}',
+    role = appliance.collections.roles.create(name=fauxfactory.gen_alphanumeric(start="role_"),
                                               vm_restriction="Only User or Group Owned",
                                               product_features=permission)
     # Group creates
-    group = appliance.collections.groups.create(description=fauxfactory.gen_alphanumeric(),
-                                                role=role.name, tenant=f"My Company/{tenant.name}")
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(start="grp_"),
+        role=role.name,
+        tenant=f"My Company/{tenant.name}"
+    )
     creds = Credential(principal=fauxfactory.gen_alphanumeric(4),
                        secret=fauxfactory.gen_alphanumeric(4))
     # User created
-    user = appliance.collections.users.create(name=fauxfactory.gen_alphanumeric(),
+    user = appliance.collections.users.create(name=fauxfactory.gen_alphanumeric(start="user_"),
                                               credential=creds, email=fauxfactory.gen_email(),
                                               groups=group, cost_center='Workload',
                                               value_assign='Database')

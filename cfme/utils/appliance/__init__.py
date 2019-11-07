@@ -522,7 +522,7 @@ class IPAppliance(object):
             short_tb = "{}: {}".format(exc_type.__name__, str(exc_val))
             full_tb = "{}\n{}".format(full_tb, short_tb)
 
-            g_id = "appliance-cm-screenshot-{}".format(fauxfactory.gen_alpha(length=6))
+            g_id = fauxfactory.gen_alpha(length=30, start="appliance-cm-screenshot-")
 
             fire_art_hook(
                 config, 'filedump',

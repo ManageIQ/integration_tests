@@ -61,7 +61,7 @@ def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
         ntp_servers_keys, [ntp_server for ntp_server in cfme_data['clock_servers']]))))
     # Set from random values
     appliance.server.settings.update_ntp_servers(dict(list(zip(
-        ntp_servers_keys, [fauxfactory.gen_alphanumeric() for _ in range(3)]))))
+        ntp_servers_keys, [fauxfactory.gen_alphanumeric(start="key_") for _ in range(3)]))))
     # Deleting the ntp values
     appliance.server.settings.update_ntp_servers(empty_ntp_dict)
 
@@ -79,7 +79,7 @@ def test_ntp_server_max_character(request, appliance, ntp_servers_keys, empty_nt
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf").output
     appliance.server.settings.update_ntp_servers(dict(list(zip(
-        ntp_servers_keys, [fauxfactory.gen_alphanumeric() for _ in range(3)]))))
+        ntp_servers_keys, [fauxfactory.gen_alphanumeric(start="key_") for _ in range(3)]))))
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf").output, num_sec=60, delay=10)
 

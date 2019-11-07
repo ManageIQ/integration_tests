@@ -163,7 +163,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
 @pytest.fixture(scope='module')
 def compute_rate(appliance, rate_type, interval):
     variable_rate = 1 if rate_type == 'variable' else 0
-    description = 'custom_rate_' + fauxfactory.gen_alphanumeric()
+    description = fauxfactory.gen_alphanumeric(20, start="custom_rate_")
     data = {
         'Used CPU Cores': {'per_time': interval,
                            'fixed_rate': 1,

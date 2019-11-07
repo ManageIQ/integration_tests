@@ -50,12 +50,10 @@ def vm_name():
 def prov_data(provisioning, provider):
     data = {
         'request': {
-            'email': "{}@{}.test".format(fauxfactory.gen_alphanumeric(),
-                                         fauxfactory.gen_alphanumeric()),
+            'email': fauxfactory.gen_email(),
             'first_name': fauxfactory.gen_alphanumeric(),
             'last_name': fauxfactory.gen_alphanumeric(),
-            'manager_name': '{} {}'.format(fauxfactory.gen_alphanumeric(),
-                                           fauxfactory.gen_alphanumeric())},
+            'manager_name': fauxfactory.gen_alphanumeric(20, start="manager ")},
         'network': {'vlan': partial_match(provisioning.get('vlan'))},
         'environment': {'datastore_name': {'name': provisioning['datastore']},
                         'host_name': {'name': provisioning['host']}},

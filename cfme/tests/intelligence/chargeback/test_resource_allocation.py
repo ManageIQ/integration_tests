@@ -74,8 +74,8 @@ def vm_ownership(enable_candu, provider, appliance):
     group_collection = appliance.collections.groups
     cb_group = group_collection.instantiate(description='EvmGroup-user')
     user = appliance.collections.users.create(
-        name="{}_{}".format(provider.name, fauxfactory.gen_alphanumeric()),
-        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(25, start=provider.name),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
                               secret='secret'),
         email='abc@example.com',
         groups=cb_group,
@@ -362,7 +362,7 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
 @pytest.yield_fixture(scope="module")
 def new_chargeback_rate(appliance):
     """Create a new chargeback rate"""
-    desc = 'custom_{}'.format(fauxfactory.gen_alphanumeric())
+    desc = fauxfactory.gen_alphanumeric(15, start="custom_")
     try:
         compute = appliance.collections.compute_rates.create(
             description=desc,

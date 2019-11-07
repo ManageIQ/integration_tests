@@ -31,7 +31,7 @@ def create_domain(request, appliance):
     """Create new domain and copy instance from ManageIQ to this domain"""
 
     dc = DomainCollection(appliance)
-    new_domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    new_domain = dc.create(name=fauxfactory.gen_alphanumeric(12, start="domain_"), enabled=True)
     request.addfinalizer(new_domain.delete_if_exists)
     instance = (dc.instantiate(name='ManageIQ')
         .namespaces.instantiate(name='Service')

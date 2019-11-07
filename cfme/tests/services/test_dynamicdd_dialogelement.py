@@ -13,7 +13,7 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate")
 ]
 
-item_name = fauxfactory.gen_alphanumeric()
+item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
 
 METHOD_TORSO = """
 # Method for logging
@@ -38,15 +38,15 @@ log(:info, "===========================================") if @debug
 @pytest.fixture(scope="function")
 def dialog(appliance, copy_instance, create_method):
     service_dialogs = appliance.collections.service_dialogs
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
+    dialog = fauxfactory.gen_alphanumeric(12, start="dialog_")
     sd = service_dialogs.create(label=dialog, description="my dialog")
-    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
         tab_desc="my tab desc")
-    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
         box_desc="my box desc")
     element_data = {
         'element_information': {
-            'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
+            'ele_label': fauxfactory.gen_alphanumeric(start="ele_"),
             'ele_name': fauxfactory.gen_alphanumeric(),
             'ele_desc': fauxfactory.gen_alphanumeric(),
             'choose_type': "Dropdown"
@@ -61,7 +61,7 @@ def dialog(appliance, copy_instance, create_method):
 
 @pytest.fixture(scope="function")
 def catalog(appliance):
-    cat_name = "cat_" + fauxfactory.gen_alphanumeric()
+    cat_name = fauxfactory.gen_alphanumeric(start="cat_")
     catalog = appliance.collections.catalogs.create(name=cat_name, description="my catalog")
     yield catalog
 
@@ -107,7 +107,7 @@ def test_dynamicdropdown_dialog(appliance, dialog, catalog):
         initialEstimate: 1/8h
         tags: service
     """
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC, name=item_name,
         description="my catalog", display_in=True, catalog=catalog,

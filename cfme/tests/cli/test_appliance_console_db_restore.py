@@ -38,7 +38,7 @@ def provider_app_crud(provider_class, appliance):
 
 def provision_vm(request, provider):
     """Function to provision appliance to the provider being tested"""
-    vm_name = "test_rest_db_{}".format(fauxfactory.gen_alphanumeric())
+    vm_name = fauxfactory.gen_alphanumeric(16, start="test_rest_db_")
     coll = provider.appliance.provider_based_collection(provider, coll_type='vms')
     vm = coll.instantiate(vm_name, provider)
     request.addfinalizer(vm.cleanup_on_provider)

@@ -44,7 +44,7 @@ def test_domain_crud(request, enabled, appliance):
         assert 'Disabled' not in view.title.text
     else:
         assert 'Disabled' in view.title.text
-    updated_description = "editdescription{}".format(fauxfactory.gen_alpha())
+    updated_description = fauxfactory.gen_alpha(20, start="editdescription_")
     with update(domain):
         domain.description = updated_description
     view = navigate_to(domain, 'Edit')

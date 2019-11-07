@@ -590,7 +590,7 @@ def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
     result.start_monitoring()
     azure = provider.mgmt
     if not azure.has_iothub():
-        iothub_name = f"potatoiothub_{fauxfactory.gen_alpha()}"
+        iothub_name = fauxfactory.gen_alpha(18, start="potatoiothub_")
         azure.create_iothub(iothub_name)
         request.addfinalizer(lambda: azure.delete_iothub(iothub_name))
         assert azure.has_iothub()

@@ -32,7 +32,7 @@ def service_catalogs(request, appliance, num=5):
     scls_data = []
     for _ in range(num):
         scls_data.append({
-            'name': 'cat_{}'.format(fauxfactory.gen_alphanumeric()),
+            'name': fauxfactory.gen_alphanumeric(start="cat_"),
             'description': 'my catalog',
             'service_templates': []
         })
@@ -185,7 +185,7 @@ def rates(request, appliance, num=3):
     chargeback = appliance.rest_api.collections.chargebacks.get(rate_type='Compute')
     data = []
     for _ in range(num):
-        req = {'description': 'test_rate_{}'.format(fauxfactory.gen_alphanumeric()),
+        req = {'description': fauxfactory.gen_alphanumeric(15, start="test_rate_"),
                'source': 'allocated',
                'group': 'cpu',
                'per_time': 'daily',
@@ -201,7 +201,7 @@ def vm(request, provider, appliance):
     provider_rest = appliance.rest_api.collections.providers.get(name=provider.name)
     vm = deploy_template(
         provider.key,
-        'test_rest_vm_{}'.format(fauxfactory.gen_alphanumeric(length=4))
+        fauxfactory.gen_alphanumeric(length=18, start="test_rest_vm_")
     )
     vm_name = vm.name
 
@@ -238,7 +238,7 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
                 provider.data.get('provisioning').get,
                 ('template', 'host', 'datastore', 'vlan')))
 
-            vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
+            vm_name = fauxfactory.gen_alphanumeric(15, start="test_rest_")
 
             provisioning_data = {
                 'catalog': {'catalog_name': {'name': template},
@@ -256,7 +256,7 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
                 provisioning_data['catalog']['provision_type'] = 'VMware'
                 provisioning_data['network']['vlan'] = partial_match(vlan)
 
-        new_name = 'item_{}'.format(fauxfactory.gen_alphanumeric())
+        new_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
         new_names.append(new_name)
         cat_items_col.create(
             catalog_item_type,
@@ -379,7 +379,7 @@ def groups(request, appliance, role, num=1, **kwargs):
             {
                 "description": kwargs.get(
                     "description",
-                    "group_description_{}".format(fauxfactory.gen_alphanumeric()),
+                    fauxfactory.gen_alphanumeric(25, start="group_description_"),
                 ),
                 "role": {"href": role.href},
                 "tenant": {"href": tenant.href},
@@ -401,7 +401,7 @@ def roles(request, appliance, num=1, **kwargs):
         data.append(
             {
                 "name": kwargs.get(
-                    "name", "role_name_{}".format(fauxfactory.gen_alphanumeric())
+                    "name", fauxfactory.gen_alphanumeric(15, start="role_name_")
                 ),
                 "features": kwargs.get(
                     "features",
@@ -431,7 +431,7 @@ def copy_role(appliance, orig_name, new_name=None):
     if not orig_features:
         raise NotImplementedError('Role copy is not implemented for this version.')
     new_role = appliance.rest_api.collections.roles.action.create(
-        name=new_name or 'EvmRole-{}'.format(fauxfactory.gen_alphanumeric()),
+        name=new_name or fauxfactory.gen_alphanumeric(12, start="EvmRole-"),
         features=orig_features,
         settings=orig_settings
     )
@@ -544,7 +544,7 @@ def arbitration_profiles(request, appliance, provider, num=2):
     providers = [{'id': r_provider.id}, {'href': r_provider.href}]
     for index in range(num):
         data.append({
-            'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),
+            'name': fauxfactory.gen_alphanumeric(20, start="test_settings_"),
             'provider': providers[index % 2]
         })
 
@@ -614,8 +614,8 @@ def custom_button_sets(request, appliance, button_type, icon="fa-user", color="#
     data = []
     for _ in range(num):
         data_dict = {
-            "name": "gp_{}".format(fauxfactory.gen_alphanumeric(3)),
-            "description": "disc_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "name": fauxfactory.gen_alphanumeric(start="grp_"),
+            "description": fauxfactory.gen_alphanumeric(15, start="grp_desc_"),
             "set_data": {
                 "button_icon": "ff {}".format(icon),
                 "button_color": color,
@@ -635,8 +635,8 @@ def custom_buttons(
     for _ in range(num):
         data_dict = {
             "applies_to_class": button_type,
-            "description": "btn_{}".format(fauxfactory.gen_alphanumeric(3)),
-            "name": "disc_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "description": fauxfactory.gen_alphanumeric(start="btn_"),
+            "name": fauxfactory.gen_alphanumeric(12, start="btn_desc_"),
             "options": {
                 "button_color": color,
                 "button_icon": "ff {}".format(icon),

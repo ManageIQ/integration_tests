@@ -96,7 +96,7 @@ def test_edit_vm(request, vm, appliance, from_detail):
         initialEstimate: 1/4h
     """
     request.addfinalizer(vm.action.delete)
-    new_description = 'Test REST VM {}'.format(fauxfactory.gen_alphanumeric(5))
+    new_description = fauxfactory.gen_alphanumeric(18, start="Test REST VM ")
     payload = {'description': new_description}
     if from_detail:
         edited = vm.action.edit(**payload)

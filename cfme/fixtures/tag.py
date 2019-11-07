@@ -46,7 +46,7 @@ def role(appliance):
         Returns role object used in test module
     """
     role = appliance.collections.roles.create(
-        name='role{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="role_"),
         vm_restriction='None')
     yield role
     appliance.server.login_admin()
@@ -59,7 +59,7 @@ def group_with_tag(appliance, role, tag):
         Returns group object with set up tag filter used in test module
     """
     group = appliance.collections.groups.create(
-        description='grp{}'.format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(start="group_"),
         role=role.name,
         tag=([tag.category.display_name, tag.display_name], True)
     )
@@ -75,7 +75,7 @@ def user_restricted(appliance, group_with_tag, new_credential):
         to group with tag filter used in test module
     """
     user = appliance.collections.users.create(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="user_"),
         credential=new_credential,
         email='xyz@redhat.com',
         groups=[group_with_tag],
@@ -92,7 +92,7 @@ def new_credential():
         Returns credentials object used for new user in test module
     """
     return Credential(
-        principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
+        principal=fauxfactory.gen_alphanumeric(start="uid"), secret='redhat')
 
 
 @pytest.fixture(scope='function')

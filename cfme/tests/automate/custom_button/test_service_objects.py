@@ -63,8 +63,8 @@ def button_group(appliance, request):
     with appliance.context.use(ViaUI):
         collection = appliance.collections.button_groups
         button_gp = collection.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="grp_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
             type=getattr(collection, request.param),
         )
         yield button_gp, request.param
@@ -77,15 +77,15 @@ def serv_button_group(appliance, request):
     with appliance.context.use(ViaUI):
         collection = appliance.collections.button_groups
         button_gp = collection.create(
-            text="group_{}".format(fauxfactory.gen_numeric_string(3)),
-            hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            text=fauxfactory.gen_numeric_string(start="grp_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
             display=TEXT_DISPLAY[request.param]["group_display"],
             type=getattr(collection, "SERVICE"),
         )
 
         button = button_gp.buttons.create(
-            text="btn_{}".format(fauxfactory.gen_numeric_string(3)),
-            hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            text=fauxfactory.gen_numeric_string(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             display=TEXT_DISPLAY[request.param]["btn_display"],
             display_for="Single and list",
             system="Request",
@@ -142,7 +142,7 @@ def user_self_service_role(appliance):
 
         # credentials for user
         creds = Credential(
-            principal=format(fauxfactory.gen_alphanumeric(start="usr_")),
+            principal=fauxfactory.gen_alphanumeric(start="usr_"),
             secret=fauxfactory.gen_alphanumeric(),
         )
 
@@ -213,8 +213,8 @@ def test_custom_button_display_service_obj(
 
     with appliance.context.use(ViaUI):
         button = group.buttons.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(start="btn_hvr_"),
             display_for=display,
             system="Request",
             request="InspectMe",
@@ -269,8 +269,8 @@ def test_custom_button_automate_service_obj(
     group, obj_type = button_group
     with appliance.context.use(ViaUI):
         button = group.buttons.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             display_for="Single and list",
             submit=submit,
             system="Request",
@@ -408,8 +408,8 @@ def vis_enb_button(request, appliance, button_group):
 
     with appliance.context.use(ViaUI):
         button = group.buttons.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             display_for="Single entity",
             system="Request",
             request="InspectMe",
@@ -689,8 +689,8 @@ def test_custom_button_dialog_service_obj(
     group, obj_type = button_group
     with appliance.context.use(ViaUI):
         button = group.buttons.create(
-            text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
-            hover="btn_hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             dialog=dialog,
             system="Request",
             request="InspectMe",
@@ -815,8 +815,8 @@ def test_custom_button_unassigned_behavior_objs(
 
     with appliance.context.use(ViaUI):
         button = gp.buttons.create(
-            text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
-            hover="btn_hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             system="Request",
             request="InspectMe",
         )

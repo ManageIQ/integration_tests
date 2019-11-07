@@ -118,7 +118,7 @@ class TestAuthenticationsRESTAPI(object):
         new_names = []
         responses = []
         for auth in authentications:
-            new_name = 'test_edited_{}'.format(fauxfactory.gen_alphanumeric().lower())
+            new_name = fauxfactory.gen_alphanumeric(20, start="test_edited_").lower()
             new_names.append(new_name)
             responses.append(auth.action.edit(name=new_name))
             assert_response(appliance)
@@ -140,7 +140,7 @@ class TestAuthenticationsRESTAPI(object):
         new_names = []
         auths_data_edited = []
         for auth in authentications:
-            new_name = 'test_edited_{}'.format(fauxfactory.gen_alphanumeric().lower())
+            new_name = fauxfactory.gen_alphanumeric(20, start="test_edited_").lower()
             new_names.append(new_name)
             auth.reload()
             auths_data_edited.append({

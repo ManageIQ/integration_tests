@@ -31,7 +31,7 @@ def ansible(appliance):
 def repository(appliance, ansible):
     collection = appliance.rest_api.collections.configuration_script_sources
     uniq = fauxfactory.gen_alphanumeric(5)
-    repo_name = "test_repo_{}".format(uniq)
+    repo_name = f"test_repo_{uniq}"
     data = {
         "name": repo_name,
         "description": "Test Repo {}".format(uniq),
@@ -74,7 +74,7 @@ class TestReposRESTAPI(object):
             initialEstimate: 1/4h
             endsin: 5.10
         """
-        new_description = "Test Repository {}".format(fauxfactory.gen_alphanumeric(5))
+        new_description = fauxfactory.gen_alphanumeric(21, start="Test Repository ")
 
         if from_collection:
             repository.reload()

@@ -23,8 +23,8 @@ def test_provisioning_dialog_crud(appliance):
     # CREATE
     collection = appliance.collections.provisioning_dialogs
     dialog = collection.create(
-        name='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
-        description='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
+        name=fauxfactory.gen_alphanumeric(start="dialog_"),
+        description=fauxfactory.gen_alphanumeric(15, start="dialog_desc_"),
         diag_type=collection.VM_PROVISION)
     assert dialog.exists
 

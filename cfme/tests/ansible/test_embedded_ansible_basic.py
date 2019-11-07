@@ -50,72 +50,78 @@ CREDENTIALS = [
     (
         "Machine",
         {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
+            "username": fauxfactory.gen_alpha(start="usr_"),
+            "password": fauxfactory.gen_alpha(start="pwd_"),
             "privilage_escalation": "sudo",
-            "privilage_escalation_username": fauxfactory.gen_alpha(),
-            "privilage_escalation_password": fauxfactory.gen_alpha(),
+            "privilage_escalation_username": fauxfactory.gen_alpha(start="usr_"),
+            "privilage_escalation_password": fauxfactory.gen_alpha(start="pwd_"),
         },
     ),
-    ("Scm", {"username": fauxfactory.gen_alpha(), "password": fauxfactory.gen_alpha()}),
+    (
+        "Scm",
+        {
+            "username": fauxfactory.gen_alpha(start="usr_"),
+            "password": fauxfactory.gen_alpha(start="pwd_")
+        }
+    ),
     (
         "Amazon",
         {
-            "access_key": fauxfactory.gen_alpha(),
-            "secret_key": fauxfactory.gen_alpha(),
-            "sts_token": fauxfactory.gen_alpha(),
+            "access_key": fauxfactory.gen_alpha(15, start="acc_key_"),
+            "secret_key": fauxfactory.gen_alpha(15, start="sec_key_"),
+            "sts_token": fauxfactory.gen_alpha(15, start="token_"),
         },
     ),
     (
         "VMware",
         {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
-            "vcenter_host": fauxfactory.gen_alpha(),
+            "username": fauxfactory.gen_alpha(start="usr_"),
+            "password": fauxfactory.gen_alpha(start="pwd_"),
+            "vcenter_host": fauxfactory.gen_alpha(start="host_"),
         },
     ),
     (
         "OpenStack",
         {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
-            "authentication_url": fauxfactory.gen_alpha(),
-            "project": fauxfactory.gen_alpha(),
-            "domain": fauxfactory.gen_alpha(),
+            "username": fauxfactory.gen_alpha(start="usr_"),
+            "password": fauxfactory.gen_alpha(start="pwd_"),
+            "authentication_url": fauxfactory.gen_alpha(start="url_"),
+            "project": fauxfactory.gen_alpha(15, start="project_"),
+            "domain": fauxfactory.gen_alpha(15, start="domain_"),
         },
     ),
     (
         "Red Hat Virtualization",
         {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
-            "host": fauxfactory.gen_alpha(),
+            "username": fauxfactory.gen_alpha(start="usr_"),
+            "password": fauxfactory.gen_alpha(start="pwd_"),
+            "host": fauxfactory.gen_alpha(start="host_"),
         },
     ),
     (
         "Google Compute Engine",
         {
-            "service_account": fauxfactory.gen_alpha(),
+            "service_account": fauxfactory.gen_alpha(start="acc_"),
             "priv_key": private_key,
-            "project": fauxfactory.gen_alpha(),
+            "project": fauxfactory.gen_alpha(15, start="project_"),
         },
     ),
     (
         "Network",
         {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
+            "username": fauxfactory.gen_alpha(start="usr_"),
+            "password": fauxfactory.gen_alpha(start="pwd_"),
         },
     ),
     (
         "Azure",
         {
-            "username": fauxfactory.gen_alpha(),
-            "password": fauxfactory.gen_alpha(),
-            "subscription_id": fauxfactory.gen_alpha(),
-            "tenant_id": fauxfactory.gen_alpha(),
-            "client_secret": fauxfactory.gen_alpha(),
-            "client_id": fauxfactory.gen_alpha(),
+            "username": fauxfactory.gen_alpha(start="usr_"),
+            "password": fauxfactory.gen_alpha(start="pwd_"),
+            "subscription_id": fauxfactory.gen_alpha(15, start="sub_id_"),
+            "tenant_id": fauxfactory.gen_alpha(15, start="tenant_id_"),
+            "client_secret": fauxfactory.gen_alpha(15, start="secret_"),
+            "client_id": fauxfactory.gen_alpha(15, start="client_id_"),
         },
     ),
 ]
@@ -142,7 +148,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
         initialEstimate: 1/12h
         tags: ansible_embed
     """
-    updated_description = "edited_{}".format(fauxfactory.gen_alpha())
+    updated_description = fauxfactory.gen_alpha(15, start="edited_")
     with update(ansible_repository):
         ansible_repository.description = updated_description
     view = navigate_to(ansible_repository, "Edit")
@@ -168,9 +174,9 @@ def test_embedded_ansible_repository_branch_crud(appliance, request, wait_for_an
         playbooks_yaml = cfme_data.ansible_links.playbook_repositories
         playbook_name = getattr(request, 'param', 'embedded_ansible')
         repository = repositories.create(
-            name=fauxfactory.gen_alpha(),
+            name=fauxfactory.gen_alpha(start="repo"),
             url=getattr(playbooks_yaml, playbook_name),
-            description=fauxfactory.gen_alpha(),
+            description=fauxfactory.gen_alpha(15, start="repo_desc_"),
             scm_branch="second_playbook_branch"
         )
     except (KeyError, AttributeError):
@@ -201,9 +207,9 @@ def test_embedded_ansible_repository_invalid_url_crud(request, appliance, wait_f
     """
     repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
+        name=fauxfactory.gen_alpha(start="repo_"),
         url='https://github.com/sbulage/invalid_repo_url.git',
-        description=fauxfactory.gen_alpha())
+        description=fauxfactory.gen_alpha(15, start="repo_desc_"))
     view = navigate_to(repository, "Details")
     assert (
         view.entities.summary("Properties").get_text_of("Status") == "failed"
@@ -233,7 +239,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
         credential_type,
         **credentials
     )
-    updated_value = "edited_{}".format(fauxfactory.gen_alpha())
+    updated_value = fauxfactory.gen_alpha(15, start="edited_")
     with update(credential):
         if credential.credential_type == "Google Compute Engine":
             credential.service_account = updated_value
@@ -280,9 +286,9 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     repositories_collection = appliance.collections.ansible_repositories
     for repo_url in REPOSITORIES:
         repository = repositories_collection.create(
-            fauxfactory.gen_alpha(),
+            fauxfactory.gen_alpha(start="repo_"),
             repo_url,
-            description=fauxfactory.gen_alpha()
+            description=fauxfactory.gen_alpha(15, start="repo_desc_")
         )
         playbooks.append(set(playbook.name for playbook in repository.playbooks.all()))
         repository.delete()
@@ -300,7 +306,7 @@ def test_control_crud_ansible_playbook_action(
         initialEstimate: 1/12h
     """
     action = action_collection.create(
-        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(15, start="action_"),
         action_type="Run Ansible Playbook",
         action_values={
             "run_ansible_playbook": {
@@ -319,7 +325,7 @@ def test_control_crud_ansible_playbook_action(
 
     with update(action):
         ipaddr = fauxfactory.gen_ipaddr()
-        new_descr = "edited_{}".format(fauxfactory.gen_alphanumeric())
+        new_descr = fauxfactory.gen_alphanumeric(15, start="edited_")
         action.description = new_descr
         action.run_ansible_playbook = {
             "inventory": {
@@ -345,7 +351,7 @@ def test_control_add_ansible_playbook_action_invalid_address(
         initialEstimate: 1/12h
     """
     action = action_collection.create(
-        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(15, start="action_"),
         action_type="Run Ansible Playbook",
         action_values={
             "run_ansible_playbook": {
@@ -390,10 +396,10 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
         tags: ansible_embed
     """
     credential = credentials_collection.create(
-        fauxfactory.gen_alpha(),
+        fauxfactory.gen_alpha(start="cred_"),
         "Machine",
-        username=fauxfactory.gen_alpha(),
-        password=fauxfactory.gen_alpha(),
+        username=fauxfactory.gen_alpha(start="usr_"),
+        password=fauxfactory.gen_alpha(start="pwd_"),
         private_key=private_key,
     )
     request.addfinalizer(credential.delete)

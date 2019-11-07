@@ -35,8 +35,8 @@ def test_custom_group_on_catalog_item_crud(generic_catalog_item):
     """
 
     btn_data = {
-        "text": "button_{}".format(gen_numeric_string(3)),
-        "hover": "hover_{}".format(gen_numeric_string(3)),
+        "text": gen_numeric_string(start="btn_"),
+        "hover": gen_numeric_string(15, start="btn_hvr_"),
         "image": "fa-user",
     }
 
@@ -70,8 +70,8 @@ def test_custom_button_on_catalog_item_crud(generic_catalog_item):
         1687289
     """
     btn_data = {
-        "text": "button_{}".format(gen_numeric_string(3)),
-        "hover": "hover_{}".format(gen_numeric_string(3)),
+        "text": gen_numeric_string(start="btn_"),
+        "hover": gen_numeric_string(15, start="btn_hvr_"),
         "image": "fa-user",
     }
 
@@ -108,8 +108,8 @@ def test_custom_button_unassigned_behavior_catalog_level(appliance, generic_serv
     service, catalog_item = generic_service
 
     btn_data = {
-        "text": "button_{}".format(gen_numeric_string(3)),
-        "hover": "hover_{}".format(gen_numeric_string(3)),
+        "text": gen_numeric_string(start="btn_"),
+        "hover": gen_numeric_string(15, start="btn_hvr_"),
         "image": "fa-user",
     }
 

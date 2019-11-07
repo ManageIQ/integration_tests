@@ -58,7 +58,7 @@ def service_dialog(appliance, widget_name):
 @pytest.fixture(scope="function")
 def catalog_item(appliance, service_dialog, catalog):
     sd, element_data = service_dialog
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
         name=item_name,
@@ -261,8 +261,8 @@ def test_dynamic_field_on_refresh_button(request, appliance, import_datastore, i
                          'merged': 'var_2_var_3'}
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
+        name=fauxfactory.gen_alpha(15, start="cat_item_"),
+        description=fauxfactory.gen_alpha(18, start="cat_item_desc_"),
         display_in=True,
         catalog=catalog,
         dialog=sd)

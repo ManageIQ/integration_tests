@@ -38,8 +38,8 @@ pytestmark = [
 def cancel_migration_plan(appliance, provider, mapping_data_vm_obj_mini):
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         target_provider=provider,
         vm_list=mapping_data_vm_obj_mini.vm_list
@@ -102,8 +102,8 @@ def test_dual_vm_cancel_migration(request, appliance, soft_assert, provider,
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
@@ -161,8 +161,8 @@ def test_cancel_migration_attachments(
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
         vm_list=[vm_obj])

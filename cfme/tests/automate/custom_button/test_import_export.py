@@ -23,14 +23,14 @@ def setup_groups_buttons(appliance, provider):
 
     for obj_type in ["PROVIDER", "VM_INSTANCE"]:
         gp = collection.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="grp_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
             type=getattr(collection, obj_type, None),
         )
 
         button = gp.buttons.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
             display_for="Single and list",
             system="Request",
             request="InspectMe",

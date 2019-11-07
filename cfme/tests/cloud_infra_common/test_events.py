@@ -29,7 +29,7 @@ pytestmark = [
 def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     template = small_template_modscope
     base_name = 'test-events-' if provider.one_of(GCEProvider) else 'test_events_'
-    vm_name = base_name + fauxfactory.gen_alpha(length=8).lower()
+    vm_name = fauxfactory.gen_alpha(20, start=base_name).lower()
 
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(vm_name, provider, template_name=template.name)

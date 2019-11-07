@@ -59,8 +59,8 @@ def test_migration_post_attribute(appliance, provider, mapping_data_vm_obj_mini,
     source_cpu, source_socket, source_core, source_memory = re.findall(r"\d+", summary)
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
-        name="plan_{}".format(fauxfactory.gen_alphanumeric()),
-        description="desc_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         target_provider=provider,
         vm_list=mapping_data_vm_obj_mini.vm_list

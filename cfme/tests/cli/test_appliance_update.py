@@ -211,8 +211,8 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
 
     with enabled_embedded_appliance:
         repositories = enabled_embedded_appliance.collections.ansible_repositories
-        name = "example_{}".format(fauxfactory.gen_alpha())
-        description = "edited_{}".format(fauxfactory.gen_alpha())
+        name = fauxfactory.gen_alpha(15, start="example_")
+        description = fauxfactory.gen_alpha(15, start="edited_")
         try:
             repository = repositories.create(
                 name=name,

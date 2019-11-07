@@ -30,14 +30,14 @@ pytestmark = [
 
 @pytest.fixture(scope="function")
 def clone_vm_name():
-    clone_vm_name = 'test_cloning_{}'.format(fauxfactory.gen_alphanumeric())
+    clone_vm_name = fauxfactory.gen_alphanumeric(18, start="test_cloning_")
     return clone_vm_name
 
 
 @pytest.fixture
 def create_vm(appliance, provider, request):
     """Fixture to provision vm to the provider being tested"""
-    vm_name = 'test_clone_{}'.format(fauxfactory.gen_alphanumeric())
+    vm_name = fauxfactory.gen_alphanumeric(15, start="test_clone_")
     vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
     logger.info("provider_key: %s", provider.key)
 

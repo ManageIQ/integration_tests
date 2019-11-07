@@ -28,12 +28,12 @@ pytestmark = [
 
 
 def new_credential():
-    return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
+    return Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
                       secret='redhat')
 
 
 def new_user(appliance, groups, name=None, credential=None):
-    name = name or 'user{}'.format(fauxfactory.gen_alphanumeric())
+    name = name or fauxfactory.gen_alphanumeric(start="user_")
     credential = credential or new_credential()
 
     user = appliance.collections.users.create(
@@ -47,7 +47,7 @@ def new_user(appliance, groups, name=None, credential=None):
 
 
 def new_role(appliance, name=None):
-    name = name or 'rol{}'.format(fauxfactory.gen_alphanumeric())
+    name = name or fauxfactory.gen_alphanumeric(start="role_")
     return appliance.collections.roles.create(
         name=name,
         vm_restriction='None')
@@ -108,7 +108,7 @@ def setup_openldap_user_group(appliance, two_child_tenants, openldap_auth_provid
 @pytest.fixture(scope='module')
 def child_tenant(appliance):
     child_tenant = appliance.collections.tenants.create(
-        name='child_tenant{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(15, start="child_tenant_"),
         description='tenant description',
         parent=appliance.collections.tenants.get_root_tenant()
     )
@@ -138,7 +138,7 @@ def tenant_role(appliance, request):
 @pytest.fixture(scope='module')
 def new_tenant_admin(appliance, request, child_tenant, tenant_role):
     group = appliance.collections.groups.create(
-        description=f'tenant_grp_{fauxfactory.gen_alphanumeric()}', role=tenant_role.name,
+        description=fauxfactory.gen_alphanumeric(15, start="tenant_grp_"), role=tenant_role.name,
         tenant=f'My Company/{child_tenant.name}')
 
     tenant_admin = new_user(appliance, group, name='tenant_admin_user')
@@ -175,7 +175,7 @@ def tag_value(appliance, category, tag, request):
 
 @pytest.fixture(scope='module')
 def catalog_obj(appliance):
-    catalog_name = fauxfactory.gen_alphanumeric()
+    catalog_name = fauxfactory.gen_alphanumeric(start="cat_")
     catalog_desc = "My Catalog"
 
     cat = appliance.collections.catalogs.create(name=catalog_name, description=catalog_desc)
@@ -349,7 +349,7 @@ def test_user_allow_duplicate_name(appliance):
     group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
-    name = 'user{}'.format(fauxfactory.gen_alphanumeric())
+    name = fauxfactory.gen_alphanumeric(start="user_")
 
     # Create first user
     new_user(appliance, [group], name=name)
@@ -396,7 +396,7 @@ def test_userid_required_error_validation(appliance):
 
     with pytest.raises(Exception, match="Userid can't be blank"):
         appliance.collections.users.create(
-            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(start="user_"),
             credential=Credential(principal='', secret='redhat'),
             email='xyz@redhat.com',
             groups=[group]
@@ -423,9 +423,9 @@ def test_user_password_required_error_validation(appliance):
 
     with pytest.raises(Exception, match=check):
         appliance.collections.users.create(
-            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(start="user_"),
             credential=Credential(
-                principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
+                principal=fauxfactory.gen_alphanumeric(start="uid"), secret=None),
             email='xyz@redhat.com',
             groups=[group])
     # Navigating away from this page will create an "Abandon Changes" alert
@@ -444,7 +444,7 @@ def test_user_group_error_validation(appliance):
     """
     with pytest.raises(Exception, match="A User must be assigned to a Group"):
         appliance.collections.users.create(
-            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(start="user_"),
             credential=new_credential(),
             email='xyz@redhat.com',
             groups=[''])
@@ -464,7 +464,7 @@ def test_user_email_error_validation(appliance):
 
     with pytest.raises(Exception, match="Email must be a valid email address"):
         appliance.collections.users.create(
-            name='user{}'.format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(start="user_"),
             credential=new_credential(),
             email='xyzdhat.com',
             groups=group)
@@ -601,7 +601,7 @@ def test_group_crud(appliance):
     role = 'EvmRole-administrator'
     group_collection = appliance.collections.groups
     group = group_collection.create(
-        description='grp{}'.format(fauxfactory.gen_alphanumeric()), role=role)
+        description=fauxfactory.gen_alphanumeric(start="grp_"), role=role)
     with update(group):
         group.description = "{}edited".format(group.description)
     group.delete()
@@ -632,7 +632,7 @@ def test_group_crud_with_tag(appliance, provider, setup_provider, tag_value):
 
     group_collection = appliance.collections.groups
     group = group_collection.create(
-        description='grp{}'.format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(start="grp_"),
         role='EvmRole-approver',
         tag=tag_for_create,
         host_cluster=([provider.data['name']], True),
@@ -658,7 +658,7 @@ def test_group_duplicate_name(appliance):
         casecomponent: Configuration
     """
     role = 'EvmRole-approver'
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
@@ -681,7 +681,7 @@ def test_group_edit_tag(appliance):
         casecomponent: Tagging
     """
     role = 'EvmRole-approver'
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
@@ -704,7 +704,7 @@ def test_group_remove_tag(appliance):
         casecomponent: Tagging
     """
     role = 'EvmRole-approver'
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
@@ -771,7 +771,7 @@ def test_delete_group_with_assigned_user(appliance):
         tags: rbac
     """
     role = 'EvmRole-approver'
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
     new_user(appliance, [group])
@@ -818,7 +818,7 @@ def test_edit_sequence_usergroups(appliance, request):
         tags: rbac
     """
     role_name = 'EvmRole-approver'
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role_name)
     request.addfinalizer(group.delete)
@@ -899,7 +899,7 @@ def test_rolename_duplicate_validation(appliance):
         initialEstimate: 1/8h
         tags: rbac
     """
-    name = 'rol{}'.format(fauxfactory.gen_alphanumeric())
+    name = fauxfactory.gen_alphanumeric(start="role_")
     role = appliance.collections.roles.create(name=name)
     assert role.exists
     view = navigate_to(appliance.collections.roles, 'Add')
@@ -947,7 +947,7 @@ def test_edit_default_roles(appliance):
         tags: rbac
     """
     role = appliance.collections.roles.instantiate(name='EvmRole-auditor')
-    newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
+    newrole_name = fauxfactory.gen_alphanumeric(20, start=role.name)
     role_updates = {'name': newrole_name}
 
     with pytest.raises(RBACOperationBlocked):
@@ -964,7 +964,7 @@ def test_delete_roles_with_assigned_group(appliance):
         tags: rbac
     """
     role = new_role(appliance)
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group_collection.create(description=group_description, role=role.name)
 
@@ -983,7 +983,7 @@ def test_assign_user_to_new_group(appliance):
     """
     role = new_role(appliance)  # call function to get role
 
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role.name)
 
@@ -1036,12 +1036,12 @@ def test_permission_edit(appliance, request, product_features):
         initialEstimate: 1h
         tags: rbac
     """
-    role_name = fauxfactory.gen_alphanumeric()
+    role_name = fauxfactory.gen_alphanumeric(start="role_")
     role = appliance.collections.roles.create(name=role_name,
                 vm_restriction=None,
                 product_features=[(['Everything'], False)] +  # role_features
                                  [(k, True) for k in product_features])
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role.name)
     user = new_user(appliance, [group])
@@ -1068,7 +1068,7 @@ def _mk_role(appliance, name=None, vm_restriction=None, product_features=None):
        testing.  name=None will generate a random name
 
     """
-    name = name or fauxfactory.gen_alphanumeric()
+    name = name or fauxfactory.gen_alphanumeric(start="role_")
     return appliance.collections.roles.create(
         name=name,
         vm_restriction=vm_restriction,
@@ -1148,7 +1148,7 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
     """
     # create a user and role
     role = _mk_role(appliance, product_features=product_features)
-    group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
+    group_description = fauxfactory.gen_alphanumeric(start="grp_")
     group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role.name)
     user = new_user(appliance, [group])
@@ -1374,7 +1374,7 @@ def test_superadmin_tenant_crud(request, appliance):
     """
     tenant_collection = appliance.collections.tenants
     tenant = tenant_collection.create(
-        name='tenant1{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="tenant1"),
         description='tenant1 description',
         parent=tenant_collection.get_root_tenant()
     )
@@ -1416,12 +1416,12 @@ def test_superadmin_tenant_project_crud(request, appliance):
     tenant_collection = appliance.collections.tenants
     project_collection = appliance.collections.projects
     tenant = tenant_collection.create(
-        name='tenant1{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="tenant1"),
         description='tenant1 description',
         parent=tenant_collection.get_root_tenant())
 
     project = project_collection.create(
-        name='project1{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(12, start="project1"),
         description='project1 description',
         parent=project_collection.get_root_tenant())
 
@@ -1473,7 +1473,7 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
     tenant = tenant_collection.get_root_tenant()
     for i in range(1, number_of_childrens + 1):
         new_tenant = tenant_collection.create(
-            name="tenant{}_{}".format(i, fauxfactory.gen_alpha(4)),
+            name=fauxfactory.gen_alpha(15, start=f"tenant_{i}_"),
             description=fauxfactory.gen_alphanumeric(16),
             parent=tenant)
         tenant_list.append(new_tenant)
@@ -1508,7 +1508,7 @@ def test_unique_name_on_parent_level(request, appliance, collection_name):
             4. Delete created objects
     """
     object_collection = getattr(appliance.collections, collection_name)
-    name_of_tenant = fauxfactory.gen_alphanumeric()
+    name_of_tenant = fauxfactory.gen_alphanumeric(15, start="tenant_")
     tenant_description = 'description'
 
     tenant = object_collection.create(
@@ -1584,7 +1584,7 @@ def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, req
 
         group_collection = appliance.collections.groups
         group = group_collection.create(
-            description=f'tenantgrp_{fauxfactory.gen_alphanumeric()}',
+            description=fauxfactory.gen_alphanumeric(15, "tenantgrp_"),
             role=tenant_role.name, tenant=f'My Company/{child_tenant.name}')
         request.addfinalizer(group.delete_if_exists)
         assert group.exists
@@ -1844,7 +1844,7 @@ def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request
         initialEstimate: 1/2h
         startsin: 5.5
     """
-    domain_name = fauxfactory.gen_alphanumeric()
+    domain_name = fauxfactory.gen_alphanumeric(15, start="domain_")
     domain1 = appliance.collections.domains.create(name=domain_name, enabled=True)
     msg = "Name has already been taken"
 
@@ -1929,15 +1929,15 @@ def test_superadmin_child_tenant_delete_parent_catalog(appliance, request):
     """
     tenant_collection = appliance.collections.tenants
     root_tenant = tenant_collection.get_root_tenant()
-    catalog_name = fauxfactory.gen_alphanumeric()
+    catalog_name = fauxfactory.gen_alphanumeric(start="cat_")
     cat = appliance.collections.catalogs.create(name=catalog_name, description='my catalog')
     new_tenant = tenant_collection.create(
-        name="tenant{}".format(fauxfactory.gen_alpha(4)),
+        name=fauxfactory.gen_alpha(15, start="tenant_"),
         description=fauxfactory.gen_alphanumeric(16),
         parent=root_tenant)
 
     group_collection = appliance.collections.groups
-    group = group_collection.create(description='grp{}'.format(fauxfactory.gen_alphanumeric()),
+    group = group_collection.create(description=fauxfactory.gen_alphanumeric(start="grp_"),
                                     role="EvmRole-super_administrator",
                                     tenant="{}/{}".format(root_tenant.name, new_tenant.name))
     user = new_user(appliance, [group])

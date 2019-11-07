@@ -22,7 +22,7 @@ pytestmark = [
 @pytest.fixture(scope='function')
 def new_vm(appliance, provider, setup_provider, small_template_modscope):
     """Fixture to provision and delete vm on the provider"""
-    vm_name = 'test_service_{}'.format(fauxfactory.gen_alphanumeric())
+    vm_name = fauxfactory.gen_alphanumeric(18, start="test_service_")
     collection = appliance.provider_based_collection(provider)
 
     vm = collection.instantiate(vm_name, provider, small_template_modscope.name)
@@ -35,7 +35,7 @@ def new_vm(appliance, provider, setup_provider, small_template_modscope):
 @pytest.fixture(scope="function")
 def copy_domain(request, appliance):
     dc = DomainCollection(appliance)
-    domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    domain = dc.create(name=fauxfactory.gen_alphanumeric(12, start="domain_"), enabled=True)
     request.addfinalizer(domain.delete_if_exists)
     dc.instantiate(name='ManageIQ')\
         .namespaces.instantiate(name='System')\

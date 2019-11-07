@@ -25,7 +25,7 @@ def test_time_profile_crud(appliance):
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(
-        description='time_profile {}'.format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(15, start="time_profile"),
         scope='Current User',
         days=True, hours=True,
         timezone='(GMT-10:00) Hawaii')
@@ -136,7 +136,7 @@ def test_time_profile_copy(appliance):
     """
     collection = appliance.collections.time_profiles
     time_profile = collection.create(
-        description='time_profile {}'.format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(20, start="time_profile_"),
         scope='Current User',
         days=True,
         hours=True,

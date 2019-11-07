@@ -38,7 +38,7 @@ def test_namespace_crud(parent_namespace):
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha())
     assert ns.exists
-    updated_description = "editdescription{}".format(fauxfactory.gen_alpha())
+    updated_description = fauxfactory.gen_alpha(20, start="editdescription_")
     with update(ns):
         ns.description = updated_description
     assert ns.exists

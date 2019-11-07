@@ -17,10 +17,12 @@ pytestmark = [
 def sec_group(appliance, provider):
     collection = appliance.collections.security_groups
     try:
-        sec_group = collection.create(name=fauxfactory.gen_alphanumeric(),
-                                      description=fauxfactory.gen_alphanumeric(),
-                                      provider=provider,
-                                      wait=True)
+        sec_group = collection.create(
+            name=fauxfactory.gen_alphanumeric(15, start="sec_grp_"),
+            description=fauxfactory.gen_alphanumeric(18, start="sec_grp_desc_"),
+            provider=provider,
+            wait=True
+        )
     except TimedOutError:
         pytest.fail('Timed out creating Security Groups')
     yield sec_group
@@ -66,10 +68,12 @@ def test_security_group_create_cancel(appliance, provider):
         casecomponent: Cloud
     """
     security_group = appliance.collections.security_groups
-    sec_group = security_group.create(name=fauxfactory.gen_alphanumeric(),
-                                      description=fauxfactory.gen_alphanumeric(),
-                                      provider=provider,
-                                      cancel=True)
+    sec_group = security_group.create(
+        name=fauxfactory.gen_alphanumeric(15, start="sec_grp_"),
+        description=fauxfactory.gen_alphanumeric(18, start="sec_grp_desc_"),
+        provider=provider,
+        cancel=True
+    )
     assert not sec_group.exists
 
 

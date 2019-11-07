@@ -56,10 +56,11 @@ def prov_data(vm_name):
 
 @pytest.fixture(scope='module')
 def domain(appliance):
-    domain = appliance.collections.domains.create('test_{}'.format(fauxfactory.gen_alphanumeric()),
-                                                  'description_{}'.format(
-                                                      fauxfactory.gen_alphanumeric()),
-                                                  enabled=True)
+    domain = appliance.collections.domains.create(
+        fauxfactory.gen_alphanumeric(15, start="domain_"),
+        fauxfactory.gen_alphanumeric(15, start="domain_desc_"),
+        enabled=True
+    )
     yield domain
     if domain.exists:
         domain.delete()
@@ -111,10 +112,11 @@ def new_tenant(appliance):
     tenant_list = []
     for i in range(0, NUM_TENANTS):
         collection = appliance.collections.tenants
-        tenant = collection.create(name='tenant{}'.format(fauxfactory.gen_alphanumeric()),
-                                   description='tenant_des{}'.
-                                   format(fauxfactory.gen_alphanumeric()),
-                                   parent=collection.get_root_tenant())
+        tenant = collection.create(
+            name=fauxfactory.gen_alphanumeric(15, start="tenant_"),
+            description=fauxfactory.gen_alphanumeric(15, start="tenant_desc_"),
+            parent=collection.get_root_tenant()
+        )
         tenant_list.append(tenant)
     yield tenant_list
     for tnt in tenant_list:
@@ -147,7 +149,7 @@ def new_group_list(appliance, new_tenant):
     group_list = []
     collection = appliance.collections.groups
     for i in range(0, NUM_GROUPS):
-        group = collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
+        group = collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
                                   role='EvmRole-super_administrator',
                                   tenant='My Company/{}'.format(new_tenant[i].name))
         group_list.append(group)
@@ -163,7 +165,7 @@ def new_user(appliance, new_group_list, new_credential):
     """
     collection = appliance.collections.users
     user = collection.create(
-        name='user_{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="user_"),
         credential=new_credential,
         email=fauxfactory.gen_email(),
         groups=new_group_list,

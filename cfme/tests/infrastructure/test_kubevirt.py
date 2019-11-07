@@ -48,7 +48,7 @@ def test_k6t_provider_crud(provider):
         casecomponent: Infra
     """
     with update(provider):
-        provider.name = fauxfactory.gen_alphanumeric() + '_updated'
+        provider.name = fauxfactory.gen_alphanumeric(start="edited_")
 
     provider.delete()
     provider.wait_for_delete()

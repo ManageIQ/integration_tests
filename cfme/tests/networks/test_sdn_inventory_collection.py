@@ -133,7 +133,7 @@ def test_sdn_api_inventory_loadbalancers(provider, appliance):
 @pytest.fixture
 def secgroup_with_rule(provider):
     res_group = provider.data['provisioning']['resource_group']
-    secgroup_name = 'secgroup_with_rule_{}'.format(fauxfactory.gen_alpha(8).lower())
+    secgroup_name = fauxfactory.gen_alpha(25, start="secgroup_with_rule_").lower()
     provider.mgmt.create_netsec_group(secgroup_name, res_group)
     provider.mgmt.create_netsec_group_port_allow(secgroup_name,
         'Tcp', '*', '*', 'Allow', 'Inbound', description='Allow port 22',

@@ -190,7 +190,7 @@ def set_hosts_credentials(appliance, request, provider):
 def set_agent_creds(appliance, request, provider):
     version = appliance.version.vstring
     docker_image_name = "simaishi/amazon-ssa:{}".format(version)
-    unique_agent = 'test_ssa_agent-{}'.format(fauxfactory.gen_alpha(length=5))
+    unique_agent = fauxfactory.gen_alpha(length=20, start="test_ssa_agent-")
     agent_data = {
         "ems": {
             "ems_amazon": {
@@ -250,7 +250,7 @@ def enable_smartproxy_affinity(request, appliance, provider):
 def ssa_compliance_policy(appliance):
     policy = appliance.collections.policies.create(
         VMControlPolicy,
-        'ssa_policy_{}'.format(fauxfactory.gen_alpha())
+        fauxfactory.gen_alpha(15, start="ssa_policy_")
     )
     policy.assign_events("VM Provision Complete")
     policy.assign_actions_to_event("VM Provision Complete", ["Initiate SmartState Analysis for VM"])
@@ -262,7 +262,9 @@ def ssa_compliance_policy(appliance):
 @pytest.fixture(scope="module")
 def ssa_compliance_profile(appliance, provider, ssa_compliance_policy):
     profile = appliance.collections.policy_profiles.create(
-        'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_compliance_policy])
+        fauxfactory.gen_alpha(25, start="ssa_policy_profile_"),
+        policies=[ssa_compliance_policy]
+    )
 
     provider.assign_policy_profiles(profile.description)
     yield
@@ -377,7 +379,9 @@ def assign_profile_to_vm(appliance, ssa_policy, request):
     """ Assign policy profile to vm"""
     def _assign_profile_to_vm(vm):
         profile = appliance.collections.policy_profiles.create(
-            'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[ssa_policy])
+            fauxfactory.gen_alpha(25, start="ssa_policy_profile_"),
+            policies=[ssa_policy]
+        )
         vm.assign_policy_profiles(profile.description)
         request.addfinalizer(profile.delete)
     return _assign_profile_to_vm
@@ -410,7 +414,7 @@ def ssa_analysis_profile(appliance):
 @pytest.fixture(scope="module")
 def ssa_action(appliance, ssa_analysis_profile):
     action = appliance.collections.actions.create(
-        'ssa_action_{}'.format(fauxfactory.gen_alpha()),
+        fauxfactory.gen_alpha(15, start="ssa_action_"),
         "Assign Profile to Analysis Task",
         dict(analysis_profile=ssa_analysis_profile.name))
     yield action
@@ -421,7 +425,7 @@ def ssa_action(appliance, ssa_analysis_profile):
 def ssa_policy(appliance, ssa_action):
     policy = appliance.collections.policies.create(
         VMControlPolicy,
-        'ssa_policy_{}'.format(fauxfactory.gen_alpha())
+        fauxfactory.gen_alpha(15, start="ssa_policy_")
     )
     policy.assign_events("VM Analysis Start")
     policy.assign_actions_to_event("VM Analysis Start", ssa_action)
@@ -457,7 +461,7 @@ def schedule_ssa(appliance, ssa_vm, wait_for_task_result=True):
     hour = dt.strftime('%-H')
     minute = dt.strftime('%-M')
     schedule_args = {
-        'name': 'test_ssa_schedule{}'.format(fauxfactory.gen_alpha()),
+        'name': fauxfactory.gen_alpha(25, start="test_ssa_schedule_"),
         'description': 'Testing SSA via Schedule',
         'active': True,
         'filter_level1': 'A single VM',

@@ -325,7 +325,7 @@ def test_import_report_rest(appliance, request):
         caseimportance: medium
         initialEstimate: 1/16h
     """
-    menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
+    menu_name = fauxfactory.gen_alphanumeric(18, start="test_report_")
     data = {
         'report': {
             'menu_name': menu_name,

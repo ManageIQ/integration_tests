@@ -225,8 +225,8 @@ def test_button_avp_displayed(appliance, dialog, request):
     """
     # This is optional, our nav tree does not have unassigned button
     buttongroup = appliance.collections.button_groups.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=appliance.collections.button_groups.VM_INSTANCE,
     )
     request.addfinalizer(buttongroup.delete_if_exists)
@@ -434,8 +434,8 @@ def test_custom_button_simulation(request, appliance, provider, setup_provider, 
     )
 
     button = gp.buttons.create(
-        text="Btn_{}".format(fauxfactory.gen_alphanumeric(2)),
-        hover="Hover_{}".format(fauxfactory.gen_alphanumeric(2)),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         system="Request",
         request="InspectMe",
     )
@@ -501,8 +501,8 @@ def test_custom_button_order_sort(appliance, request, provider, setup_provider, 
     buttons = []
     for ind in range(0, 4):
         button = unassigned_gp.buttons.create(
-            text="button_{n}_{f}".format(n=str(ind), f=fauxfactory.gen_alphanumeric(2)),
-            hover="hover_{n}_{f}".format(n=str(ind), f=fauxfactory.gen_alphanumeric(2)),
+            text=fauxfactory.gen_alphanumeric(start=f"btn_{ind}_"),
+            hover=fauxfactory.gen_alphanumeric(15, start=f"btn_hvr_{ind}_"),
             system="Request",
             request="InspectMe",
         )
@@ -516,8 +516,8 @@ def test_custom_button_order_sort(appliance, request, provider, setup_provider, 
     unassigned_buttons = [btn.text for btn in buttons]
 
     group = appliance.collections.button_groups.create(
-        text="group_{}".format(fauxfactory.gen_alphanumeric(3)),
-        hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=btn_type,
         assign_buttons=unassigned_buttons,
     )
@@ -562,8 +562,8 @@ def test_custom_button_role_selection(appliance, request):
         text="[Unassigned Buttons]", hover="Unassigned Buttons", type="Provider"
     )
     btn = unassigned_gp.buttons.create(
-        text="group_{}".format(fauxfactory.gen_alphanumeric(3)),
-        hover="hover_{}".format(fauxfactory.gen_alphanumeric(3)),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         system="Request",
         request="InspectMe",
         roles=test_roles,
@@ -648,7 +648,7 @@ def test_attribute_override(appliance, request, provider, setup_provider, obj_ty
     ]
 
     button = button_group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(start="btn"),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
         hover=fauxfactory.gen_alphanumeric(start="hvr_"),
         system="Request",
         request=req,

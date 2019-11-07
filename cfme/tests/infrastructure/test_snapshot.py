@@ -538,7 +538,7 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
     request.addfinalizer(instance.delete)
 
     # SIMULATE
-    snap_name = fauxfactory.gen_alpha()
+    snap_name = fauxfactory.gen_alpha(start="snap_")
     snapshot = InfraVm.Snapshot(name=snap_name, parent_vm=small_test_vm)
     simulate(
         appliance=appliance,
