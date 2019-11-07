@@ -9,49 +9,6 @@ pytestmark = [pytest.mark.ignore_stream('5.10', '5.11', 'upstream')]
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_cluster_vsphere6():
-    """
-    test_crosshair_op_cluster[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_cluster_vsphere65():
-    """
-    Requires:
-    C&U enabled Vsphere-65 appliance.
-    Steps:
-    1. Navigate to Clusters [Compute > infrastructure>Clusters]
-    2. Select any available cluster
-    3. Go for utilization graphs [Monitoring > Utilization]
-    4. Check data point on graphs ["CPU", "VM CPU state", "Memory", "Disk
-    I/O", "N/w I/O", "Host", "VMs"] using drilling operation on the data
-    points.
-    5.  check "chart", "timeline" and "display" options working properly
-    or not.
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_proxy_remove_ec2():
     """
@@ -134,7 +91,7 @@ def test_validate_chargeback_cost_weekly_rate_network_cost():
     assigning weekly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -149,7 +106,7 @@ def test_validate_chargeback_cost_monthly_rate_disk_cost():
     monthly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -164,7 +121,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_network_cost():
     Validate network I/O used cost in a monthly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -179,7 +136,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_disk_cost():
     Validate disk I/O used cost in a weekly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -194,7 +151,7 @@ def test_validate_chargeback_cost_monthly_rate_network_cost():
     assigning monthly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -209,7 +166,7 @@ def test_validate_chargeback_cost_weekly_rate_disk_cost():
     weekly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -225,7 +182,7 @@ def test_validate_chargeback_cost_weekly_rate_cpu_cost():
     weekly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -240,7 +197,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_disk_cost():
     Validate disk I/O used cost in a monthly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -255,7 +212,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_cpu_cost():
     Validate CPU usage cost in a weekly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -270,7 +227,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_memory_cost():
     Validate memory usage cost in a monthly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -285,7 +242,7 @@ def test_validate_chargeback_cost_monthly_rate_cpu_cost():
     monthly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -301,7 +258,7 @@ def test_validate_chargeback_cost_weekly_rate_memory_cost():
     weekly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -316,7 +273,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_memory_cost():
     Validate memory usage cost in a weekly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -331,7 +288,7 @@ def test_validate_chargeback_cost_weeklyreport_hourly_rate_network_cost():
     Validate network I/O used cost in a weekly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -346,7 +303,7 @@ def test_validate_chargeback_cost_monthlyreport_hourly_rate_cpu_cost():
     Validate CPU usage cost in a monthly Chargeback report
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -361,7 +318,7 @@ def test_validate_chargeback_cost_monthly_rate_memory_cost():
     monthly rate
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -401,77 +358,6 @@ def test_service_chargeback_multiple_vms():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_crosshair_op_azone_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_crosshair_op_azone_ec2():
-    """
-    test_crosshair_op_azone[ec2]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_host_tagged_crosshair_op_vsphere65():
-    """
-    Required C&U enabled application:1. Navigate to host C&U graphs
-    2. select Group by option with suitable VM tag
-    3. try to drill graph for VM
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_host_tagged_crosshair_op_vsphere6():
-    """
-    Required C&U enabled application:1. Navigate to host C&U graphs
-    2. select Group by option with suitable VM tag
-    3. try to drill graph for VM
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 def test_service_chargeback_bundled_service():
     """
@@ -482,23 +368,6 @@ def test_service_chargeback_bundled_service():
         casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.bottleneck
-@pytest.mark.tier(2)
-def test_bottleneck_datastore():
-    """
-    Verify bottleneck events from host
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        caseimportance: medium
-        initialEstimate: 3/4h
-        testtype: functional
     """
     pass
 
@@ -526,108 +395,6 @@ def test_group_quota_via_ssui():
         assignee: sshveta
         initialEstimate: 1/4h
         casecomponent: SelfServiceUI
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_cluster_graph_by_vm_tag_vsphere65():
-    """
-    test_cluster_graph_by_vm_tag[vsphere65]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_cluster_graph_by_vm_tag_vsphere6():
-    """
-    test_cluster_graph_by_vm_tag[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.bottleneck
-@pytest.mark.tier(2)
-def test_bottleneck_provider():
-    """
-    Verify bottleneck events from providers
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        caseimportance: medium
-        initialEstimate: 3/4h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_candu_graphs_vm_compare_host_vsphere6():
-    """
-    test_candu_graphs_vm_compare_host[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_candu_graphs_vm_compare_host_vsphere65():
-    """
-    test_candu_graphs_vm_compare_host[vsphere65]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(1)
-def test_utilization_utilization_graphs():
-    """
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        initialEstimate: 1/4h
-        testSteps:
-            1. Enable C&U
-            2. Wait until data will be collected
-            3. Go to Optimize/Utilization
-        expectedResults:
-            1.
-            2.
-            3. Verify that all graphs shows correctly
     """
     pass
 
@@ -667,23 +434,6 @@ def test_service_chargeback_retired_service():
 
 
 @pytest.mark.manual
-@test_requirements.bottleneck
-@pytest.mark.tier(2)
-def test_bottleneck_host():
-    """
-    Verify bottleneck events from host
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        caseimportance: medium
-        initialEstimate: 3/4h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_rhn_mirror_role_packages():
     """
     Test the RHN mirror role by adding a repo and checking if the contents
@@ -716,23 +466,6 @@ def test_playbook_with_already_existing_dialogs_name():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_utilization_provider():
-    """
-    Verify гutilication data from providers
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        caseimportance: medium
-        initialEstimate: 1/8h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(2)
 def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
@@ -751,152 +484,6 @@ def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_vm_vsphere65():
-    """
-    Requires:
-    C&U enabled Vsphere-65 appliance.
-    Steps:
-    1. Navigate to Datastores [Compute > infrastructure>VMs]
-    2. Select any available VM (cu24x7)
-    3. Go for utilization graphs [Monitoring > Utilization]
-    4. Check data point on graphs ["CPU", "VM CPU state", "Memory", "Disk
-    I/O", "N/w I/O"] using drilling operation on the data points.
-    5.  check "chart" and "timeline" options working properly or not.
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_vm_vsphere6():
-    """
-    test_crosshair_op_vm[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_utilization_cluster():
-    """
-    Verify гutilication data from cluster
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        caseimportance: medium
-        initialEstimate: 1/8h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.bottleneck
-@pytest.mark.tier(2)
-def test_bottleneck_cluster():
-    """
-    Verify bottleneck events from cluster
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        caseimportance: medium
-        initialEstimate: 3/4h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_candu_graphs_vm_compare_cluster_vsphere6():
-    """
-    test_candu_graphs_vm_compare_cluster[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_candu_graphs_vm_compare_cluster_vsphere65():
-    """
-    test_candu_graphs_vm_compare_cluster[vsphere65]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_crosshair_op_instance_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_crosshair_op_instance_ec2():
-    """
-    Verify that the following cross-hair operations can be performed on
-    each of the C&U graphs for an instance:
-    1.Chart
-    1.1 Hourly for this day and then back to daily
-    2.Timeline
-    2.1 Daily events on this VM
-    2.2 Hourly events for this VM
-
-    Polarion:
-        assignee: mshriver
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 @pytest.mark.tier(2)
 def test_chargeback_resource_allocation_cpu_allocated():
@@ -905,7 +492,7 @@ def test_chargeback_resource_allocation_cpu_allocated():
     allocation. C&U data is not considered for these reports.
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -922,7 +509,7 @@ def test_chargeback_resource_allocation_memory_allocated():
     allocation.C&U data is not considered for these reports.
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
@@ -939,34 +526,10 @@ def test_chargeback_resource_allocation_storage_allocated():
     allocation. C&U data is not considered for these reports.
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/10h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_datastore_vsphere65():
-    """
-    Requires:
-    C&U enabled Vsphere-65 appliance.
-    Steps:
-    1. Navigate to Datastores [Compute > infrastructure>Datastores]
-    2. Select any available datastore
-    3. Go for utilization graphs [Monitoring > Utilization]
-    4. Check data point on graphs ["Used Disk Space", "Hosts", "VMs"]
-    using drilling operation on the data points.
-    5.  check "chart" and "display" option working properly or not.
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
     """
     pass
 
@@ -984,39 +547,6 @@ def test_bundle_stack_deployment():
         caseimportance: medium
         initialEstimate: 1/4h
         startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_utilization_host():
-    """
-    Verify utilication data from host
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        caseimportance: medium
-        initialEstimate: 1/8h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_group_by_tag_azone_azure():
-    """
-    Utilization Test
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
@@ -1117,23 +647,6 @@ def test_retire_ansible_stack():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_azone_group_by_tag_ec2():
-    """
-    test_azone_group_by_tag[ec2]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-        testtype: functional
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(3)
 def test_check_all_availability_zones_for_amazon_provider():
@@ -1147,22 +660,6 @@ def test_check_all_availability_zones_for_amazon_provider():
         caseimportance: medium
         initialEstimate: 1/8h
         startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(2)
-def test_candu_graphs_datastore_vsphere6():
-    """
-    test_candu_graphs_datastore[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
     """
     pass
 
@@ -1203,25 +700,6 @@ def test_button_groups_created_on_orchestration_type_heat_service_catalog_items_
 
 
 @pytest.mark.manual
-@test_requirements.bottleneck
-@pytest.mark.tier(1)
-def test_bottleneck_summary_graph():
-    """
-    test_bottleneck_summary_graph
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Optimize
-        initialEstimate: 1/4h
-        testSteps:
-            1. setup c&u for provider and wait for bottleneck events
-        expectedResults:
-            1. summary graph is present and clickeble
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.chargeback
 @pytest.mark.tier(3)
 def test_saved_chargeback_report_show_full_screen():
@@ -1229,52 +707,10 @@ def test_saved_chargeback_report_show_full_screen():
     Verify that saved chargeback reports can be viewed
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_host_vsphere65():
-    """
-    Requires:
-    C&U enabled Vsphere-65 appliance.
-    Steps:
-    1. Navigate to Hosts [Compute > infrastructure>Hosts]
-    2. Select any available host
-    3. Go for utilization graphs [Monitoring > Utilization]
-    4. Check data point on graphs ["CPU", "VM CPU state", "Memory", "Disk
-    I/O", "N/w I/O", VMs] using drilling operation on the data points.
-    5.  check "chart", "timeline" and "display" option working properly or
-    not.
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_host_vsphere6():
-    """
-    test_crosshair_op_host[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-        testtype: functional
     """
     pass
 
@@ -1330,61 +766,6 @@ def test_monitor_ansible_playbook_std_output():
 
 
 @pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_crosshair_op_datastore_vsphere6():
-    """
-    Requires:
-    C&U enabled Vsphere-6 appliance.
-    Steps:
-    1. Navigate to Datastores [Compute > infrastructure>Datastores]
-    2. Select any available datastore
-    3. Go for utilization graphs [Monitoring > Utilization]
-    4. Check data point on graphs ["Used Disk Space", "Hosts", "VMs"]
-    using drilling operation on the data points
-    5.  check "chart" and "display" options working properly or not
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_cluster_graph_by_host_tag_vsphere6():
-    """
-    test_cluster_graph_by_host_tag[vsphere6]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: low
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_cluster_graph_by_host_tag_vsphere65():
-    """
-    test_cluster_graph_by_host_tag[vsphere65]
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.ansible
 @pytest.mark.tier(2)
 def test_monitor_ansible_playbook_logging_output():
@@ -1400,82 +781,5 @@ def test_monitor_ansible_playbook_logging_output():
         caseimportance: medium
         initialEstimate: 2/3h
         startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_candu_collection_tab():
-    """
-    Test case to cover -
-    Bugzilla:
-        1393675
-
-    from BZ comments:
-    "for QE testing you can only replicate that in the UI by running a
-    refresh and immediately destroying the provider and hope that it runs
-    into this race conditions."
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_cluster_tagged_crosshair_op_vsphere65():
-    """
-    Required C&U enabled application:1. Navigate to cluster C&U graphs
-    2. select Group by option with suitable VM/Host tag
-    3. try to drill graph for VM/Host
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_cluster_tagged_crosshair_op_vsphere6():
-    """
-    Required C&U enabled application:1. Navigate to cluster C&U graphs
-    2. select Group by option with suitable VM/Host tag
-    3. try to drill graph for VM/Host
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.c_and_u
-@pytest.mark.tier(3)
-def test_cluster_tagged_crosshair_op_vsphere55():
-    """
-    Required C&U enabled application:1. Navigate to cluster C&U graphs
-    2. select Group by option with suitable VM/Host tag
-    3. try to drill graph for VM/Host
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: CandU
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.7
     """
     pass
