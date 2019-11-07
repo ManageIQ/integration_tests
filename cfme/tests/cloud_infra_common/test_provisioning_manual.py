@@ -88,25 +88,6 @@ def test_public_ip_reuse_azure():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_template_list_of_provider():
-    """
-    test case to cover BZ 1427477 - check list of templates available
-    during provision from particular provider view
-    expected result: only provider specific templates should be available
-    Bug 1427477 - [RFE] In UI, VM provision, in scope of specific
-    provider, should not suggest all the providers templates.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Provisioning
-        caseimportance: low
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_vmware_default_placement_vmware():
     """
     Test host autoplacement provisioning on VMware. now we are able to get
