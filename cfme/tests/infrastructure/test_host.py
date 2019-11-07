@@ -471,13 +471,14 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
 
 @test_requirements.infra_hosts
 @pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"])], automates=[1747545])
+@pytest.mark.parametrize("num_hosts", [2, 4])
 @pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
 @pytest.mark.parametrize(
     "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
     ids=["txt", "csv", "pdf"]
 )
 def test_infrastructure_hosts_navigation_after_download_from_compare(
-    appliance, setup_provider_min_hosts, provider, report_format, hosts_collection
+        appliance, setup_provider_min_hosts, provider, report_format, hosts_collection, num_hosts
 ):
     """
     Polarion:
@@ -489,14 +490,11 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         1747545
 
     """
+    ent_slice = slice(0, num_hosts, None)
     if hosts_collection == "provider":
-        hosts_view = navigate_to(provider.collections.hosts, "All")
+        hosts_view = navigate_to(provider.collections.hosts, "All", force=True)
     elif hosts_collection == "appliance":
-        hosts_view = navigate_to(appliance.collections.hosts, "All")
-    ent_slice = slice(0, 2, None)
-    num_hosts = hosts_view.entities.paginator.items_amount
-    if num_hosts < 2:
-        pytest.skip('not enough hosts in appliance UI to run test')
+        hosts_view = navigate_to(appliance.collections.hosts, "All", force=True)
     for h in hosts_view.entities.get_all(slice=ent_slice):
         h.check()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
