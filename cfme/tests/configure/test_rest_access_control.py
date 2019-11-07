@@ -199,7 +199,7 @@ class TestRolesViaREST(object):
         roles_len = len(roles)
         new = []
         for _ in range(roles_len):
-            new.append({"name": "test_role_{}".format(fauxfactory.gen_alphanumeric())})
+            new.append({"name": fauxfactory.gen_alphanumeric(15, start="test_role_")})
         if multiple:
             for index in range(roles_len):
                 new[index].update(roles[index]._ref_repr())
@@ -265,7 +265,7 @@ class TestRolesViaREST(object):
             caseimportance: low
             initialEstimate: 1/3h
         """
-        role_data = {"name": "role_name_{}".format(fauxfactory.gen_alphanumeric())}
+        role_data = {"name": fauxfactory.gen_alphanumeric(15, start="role_name_")}
         role = appliance.rest_api.collections.roles.action.add(role_data)[0]
         assert_response(appliance)
         assert role.name == role_data["name"]
@@ -567,7 +567,7 @@ class TestUsersViaREST(object):
         users_len = len(users)
         new = []
         for _ in range(users_len):
-            new.append({"name": "user_name_{}".format(fauxfactory.gen_alphanumeric())})
+            new.append({"name": fauxfactory.gen_alphanumeric(15, "user_name_")})
         if multiple:
             for index in range(users_len):
                 new[index].update(users[index]._ref_repr())

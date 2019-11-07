@@ -184,7 +184,7 @@ def test_automate_can_edit_copied_method(appliance, request):
     """
 
     domain = appliance.collections.domains.create(
-        name=fauxfactory.gen_alpha(),
+        name=fauxfactory.gen_alpha(12, start="domain_"),
         description=fauxfactory.gen_alpha(),
         enabled=False)
     request.addfinalizer(domain.delete_if_exists)

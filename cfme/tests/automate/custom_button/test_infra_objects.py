@@ -45,7 +45,7 @@ SUBMIT = ["Submit all", "One by one"]
 @pytest.fixture(scope="module")
 def cls(appliance):
     domain = appliance.collections.domains.create(
-        name="domain_{}".format(fauxfactory.gen_alphanumeric(4)), enabled=True
+        name=fauxfactory.gen_alphanumeric(12, start="domain_"), enabled=True
     )
     original_class = (
         domain.parent.instantiate(name="ManageIQ")
@@ -61,7 +61,7 @@ def cls(appliance):
 @pytest.fixture(scope="module")
 def method(cls):
     meth = cls.methods.create(
-        name="meth_{}".format(fauxfactory.gen_alphanumeric(4)),
+        name=fauxfactory.gen_alphanumeric(start="meth_"),
         script=dedent(
             """
             # add google url to open
@@ -73,7 +73,7 @@ def method(cls):
     )
 
     instance = cls.instances.create(
-        name="inst_{}".format(fauxfactory.gen_alphanumeric(4)),
+        name=fauxfactory.gen_alphanumeric(start="inst_"),
         fields={"meth1": {"value": meth.name}},
     )
     yield instance
@@ -87,8 +87,8 @@ def method(cls):
 def button_group(appliance, request):
     collection = appliance.collections.button_groups
     button_gp = collection.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=getattr(collection, request.param),
     )
     yield button_gp, request.param
@@ -145,8 +145,8 @@ def test_custom_button_display_infra_obj(request, display, setup_obj, button_gro
 
     group, obj_type = button_group
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         display_for=display,
         system="Request",
         request="InspectMe",
@@ -200,8 +200,8 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
 
     group, obj_type = button_group
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         display_for="Single and list",
         submit=submit,
         system="Request",
@@ -305,8 +305,8 @@ def test_custom_button_dialog_infra_obj(appliance, dialog, request, setup_obj, b
 
     # Note: No need to set display_for dialog only work with Single entity
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         dialog=dialog,
         system="Request",
         request="InspectMe",
@@ -378,8 +378,8 @@ def test_custom_button_expression_infra_obj(
     exp = {expression: {"tag": "My Company Tags : Department", "value": "Engineering"}}
     disabled_txt = "Tag - My Company Tags : Department : Engineering"
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         display_for="Single entity",
         system="Request",
         request="InspectMe",
@@ -449,8 +449,8 @@ def test_custom_button_open_url_infra_obj(request, setup_obj, button_group, meth
 
     group, obj_type = button_group
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         open_url=True,
         display_for="Single entity",
         system="Request",
@@ -521,8 +521,8 @@ def test_custom_button_events_infra_obj(request, dialog, setup_obj, button_group
     dialog_ = dialog if btn_dialog else None
 
     button = group.buttons.create(
-        text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
-        hover="btn_hover{}".format(fauxfactory.gen_alphanumeric(3)),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         dialog=dialog_,
         system="Request",
         request="InspectMe",

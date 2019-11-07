@@ -90,14 +90,14 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
                 .format(set_date, retirement_date.strftime(vm_retire_date_fmt)))
 
     # Create the vm_retire_extend button and click on it
-    grp_name = "grp_{}".format(fauxfactory.gen_alphanumeric())
+    grp_name = fauxfactory.gen_alphanumeric(start="grp_")
     grp = appliance.collections.button_groups.create(
         text=grp_name,
         hover=grp_name,
         type=appliance.collections.button_groups.VM_INSTANCE
     )
     request.addfinalizer(lambda: grp.delete_if_exists())
-    btn_name = "btn_{}".format(fauxfactory.gen_alphanumeric())
+    btn_name = fauxfactory.gen_alphanumeric(start="btn_")
     button = grp.buttons.create(
         text=btn_name,
         hover=btn_name,

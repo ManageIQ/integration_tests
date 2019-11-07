@@ -67,8 +67,10 @@ def tag_mapping_items(request, appliance, provider):
 
 def tag_components():
     # Return tuple with random tag_label and tag_value
-    return ('tag_label_{}'.format(fauxfactory.gen_alphanumeric()),
-            'tag_value_{}'.format(fauxfactory.gen_alphanumeric()))
+    return (
+        fauxfactory.gen_alphanumeric(15, start="tag_label_"),
+        fauxfactory.gen_alphanumeric(15, start="tag_value_")
+    )
 
 
 @pytest.mark.provider([AzureProvider], selector=ONE_PER_TYPE, scope='function')

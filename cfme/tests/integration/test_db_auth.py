@@ -22,7 +22,7 @@ TEST_PASSWORDS = [
 
 @pytest.fixture
 def user(appliance):
-    name = f"test-user-{fauxfactory.gen_alpha()}"
+    name = fauxfactory.gen_alpha(15, start="test-user-")
     creds = Credential(principal=name, secret=fauxfactory.gen_alpha())
     user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
     user = appliance.collections.users.create(
@@ -36,7 +36,7 @@ def user(appliance):
 
 @pytest.fixture
 def nonexistent_user(appliance):
-    name = f"test-user-{fauxfactory.gen_alpha()}"
+    name = fauxfactory.gen_alpha(15, start="test-user-")
     creds = Credential(principal=name, secret=fauxfactory.gen_alpha())
     user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
     user = appliance.collections.users.instantiate(

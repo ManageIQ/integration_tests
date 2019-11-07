@@ -23,7 +23,7 @@ pytestmark = [
 def ansible_action(appliance, ansible_catalog_item):
     action_collection = appliance.collections.actions
     action = action_collection.create(
-        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(15, start="action_"),
         action_type="Run Ansible Playbook",
         action_values={
             "run_ansible_playbook": {
@@ -41,12 +41,12 @@ def policy_for_testing(appliance, full_template_vm_modscope, provider, ansible_a
     vm = full_template_vm_modscope
     policy = appliance.collections.policies.create(
         VMControlPolicy,
-        fauxfactory.gen_alpha(),
+        fauxfactory.gen_alpha(15, start="policy_"),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
     )
     policy.assign_actions_to_event("Tag Complete", [ansible_action.description])
     policy_profile = appliance.collections.policy_profiles.create(
-        fauxfactory.gen_alpha(), policies=[policy])
+        fauxfactory.gen_alpha(15, start="profile_"), policies=[policy])
     provider.assign_policy_profiles(policy_profile.description)
     yield
 
@@ -60,7 +60,7 @@ def policy_for_testing(appliance, full_template_vm_modscope, provider, ansible_a
 @pytest.fixture(scope="module")
 def ansible_credential(wait_for_ansible, appliance, full_template_modscope):
     credential = appliance.collections.ansible_credentials.create(
-        fauxfactory.gen_alpha(),
+        fauxfactory.gen_alpha(start="cred_"),
         "Machine",
         username=credentials[full_template_modscope.creds]["username"],
         password=credentials[full_template_modscope.creds]["password"]

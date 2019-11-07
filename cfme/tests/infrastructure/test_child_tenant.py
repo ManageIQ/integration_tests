@@ -54,8 +54,8 @@ def set_child_tenant_quota(request, appliance, new_child):
 @pytest.fixture(scope='module')
 def new_tenant(appliance):
     collection = appliance.collections.tenants
-    tenant = collection.create(name='tenant{}'.format(fauxfactory.gen_alphanumeric()),
-                               description='tenant_des{}'.format(fauxfactory.gen_alphanumeric()),
+    tenant = collection.create(name=fauxfactory.gen_alphanumeric(15, start="tenant_"),
+                               description=fauxfactory.gen_alphanumeric(15, start="tenant_desc_"),
                                parent=collection.get_root_tenant())
     yield tenant
     if tenant.exists:
@@ -65,10 +65,11 @@ def new_tenant(appliance):
 @pytest.fixture(scope='module')
 def new_child(appliance, new_tenant):
     collection = appliance.collections.tenants
-    child_tenant = collection.create(name='tenant{}'.format(fauxfactory.gen_alphanumeric()),
-                                     description='tenant_des{}'.format(
-                                         fauxfactory.gen_alphanumeric()),
-                                     parent=new_tenant)
+    child_tenant = collection.create(
+        name=fauxfactory.gen_alphanumeric(15, start="tenant_"),
+        description=fauxfactory.gen_alphanumeric(15, start="tenant_desc_"),
+        parent=new_tenant
+    )
     yield child_tenant
     if child_tenant.exists:
         child_tenant.delete()
@@ -77,7 +78,7 @@ def new_child(appliance, new_tenant):
 @pytest.fixture(scope='module')
 def new_group(appliance, new_child, new_tenant):
     collection = appliance.collections.groups
-    group = collection.create(description='group_{}'.format(fauxfactory.gen_alphanumeric()),
+    group = collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
                               role='EvmRole-super_administrator',
                               tenant='My Company/{}/{}'.format(new_tenant.name, new_child.name))
     yield group
@@ -89,7 +90,7 @@ def new_group(appliance, new_child, new_tenant):
 def new_user(appliance, new_group, new_credential):
     collection = appliance.collections.users
     user = collection.create(
-        name='user_{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(start="user_"),
         credential=new_credential,
         email=fauxfactory.gen_email(),
         groups=new_group,

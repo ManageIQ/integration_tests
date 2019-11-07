@@ -44,7 +44,7 @@ def vm_crud(provider):
 def role_only_user_owned(appliance):
     appliance.server.login_admin()
     role = appliance.collections.roles.create(
-        name='role_only_user_owned_' + fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(25, start="role_only_user_owned_"),
         vm_restriction='Only User Owned'
     )
     yield role
@@ -56,7 +56,7 @@ def role_only_user_owned(appliance):
 def group_only_user_owned(appliance, role_only_user_owned):
     group_collection = appliance.collections.groups
     group = group_collection.create(
-        description='group_only_user_owned_{}'.format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(25, start="group_only_user_owned_"),
         role=role_only_user_owned.name)
     yield group
     appliance.server.login_admin()
@@ -67,7 +67,7 @@ def group_only_user_owned(appliance, role_only_user_owned):
 def role_user_or_group_owned(appliance):
     appliance.server.login_admin()
     role = appliance.collections.roles.create(
-        name='role_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(30, start="role_user_or_group_owned_"),
         vm_restriction='Only User or Group Owned'
     )
     yield role
@@ -79,7 +79,7 @@ def role_user_or_group_owned(appliance):
 def group_user_or_group_owned(appliance, role_user_or_group_owned):
     group_collection = appliance.collections.groups
     group = group_collection.create(
-        description='group_user_or_group_owned_{}'.format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(30, start="group_user_or_group_owned_"),
         role=role_user_or_group_owned.name)
     yield group
     appliance.server.login_admin()
@@ -89,9 +89,12 @@ def group_user_or_group_owned(appliance, role_user_or_group_owned):
 def new_credential():
     # BZ1487199 - CFME allows usernames with uppercase chars which blocks logins
     if BZ.bugzilla.get_bug(1487199).is_opened:
-        return Credential(principal='uid' + fauxfactory.gen_alphanumeric().lower(), secret='redhat')
+        return Credential(
+            principal=fauxfactory.gen_alphanumeric(start="uid").lower(),
+            secret='redhat'
+        )
     else:
-        return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
+        return Credential(principal=fauxfactory.gen_alphanumeric(start="uid"), secret='redhat')
 
 
 @pytest.fixture(scope="module")
@@ -120,9 +123,9 @@ def user3(appliance, group_user_or_group_owned):
 
 def new_user(appliance, group_only_user_owned):
     user = appliance.collections.users.create(
-        name='user_' + fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="user_"),
         credential=new_credential(),
-        email='abc@redhat.com',
+        email=fauxfactory.gen_email(),
         groups=[group_only_user_owned],
         cost_center='Workload',
         value_assign='Database'

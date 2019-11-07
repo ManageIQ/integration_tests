@@ -25,20 +25,20 @@ def backup(appliance, provider):
     backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
     # create new volume
     if appliance.version >= "5.11":   # has mandatory availability zone
-        volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+        volume = volume_collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                           tenant=provider.data['provisioning']['cloud_tenant'],
                                           volume_size=STORAGE_SIZE,
                                           az=provider.data['provisioning']['availability_zone'],
                                           provider=provider)
     else:
-        volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+        volume = volume_collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                           tenant=provider.data['provisioning']['cloud_tenant'],
                                           volume_size=STORAGE_SIZE,
                                           provider=provider)
 
     # create new backup for crated volume
     if volume.status == 'available':
-        backup_name = fauxfactory.gen_alpha()
+        backup_name = fauxfactory.gen_alpha(start="bkup_")
         volume.create_backup(backup_name)
         backup = backup_collection.instantiate(backup_name, provider)
         yield backup

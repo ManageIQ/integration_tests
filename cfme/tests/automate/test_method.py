@@ -359,7 +359,7 @@ def generic_object_definition(appliance):
     # Creating generic object using REST
     with appliance.context.use(ViaREST):
         definition = appliance.collections.generic_object_definitions.create(
-            name="LoadBalancer_{}".format(fauxfactory.gen_numeric_string(3)),
+            name=fauxfactory.gen_numeric_string(18, start="LoadBalancer_"),
             description="LoadBalancer",
             attributes={"location": "string"},
             associations={"vms": "Vm", "services": "Service"}

@@ -24,7 +24,7 @@ pytestmark = [
 @pytest.fixture(scope='function')
 def network(provider, appliance):
     """Adding cloud network in ui."""
-    test_name = 'test_network_{}'.format(fauxfactory.gen_alphanumeric(6))
+    test_name = fauxfactory.gen_alphanumeric(18, start="test_network_")
     net_manager = '{} Network Manager'.format(provider.name)
 
     collection = appliance.collections.network_providers

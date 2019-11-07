@@ -76,12 +76,12 @@ def vm_big(request, provider, setup_provider_modscope, big_template_modscope):
 
 @pytest.fixture(scope="module")
 def policy_name():
-    return "action_testing: policy {}".format(fauxfactory.gen_alphanumeric())
+    return fauxfactory.gen_alphanumeric(28, start="action_testing: policy ")
 
 
 @pytest.fixture(scope="module")
 def policy_profile_name():
-    return "action_testing: policy profile {}".format(fauxfactory.gen_alphanumeric())
+    return fauxfactory.gen_alphanumeric(35, start="action_testing: policy profile ")
 
 
 @pytest.fixture(scope="module")
@@ -149,11 +149,11 @@ def host(provider, setup_provider_modscope):
 def host_policy(appliance, host):
     control_policy = appliance.collections.policies.create(
         policies.HostControlPolicy,
-        "action_testing: host policy {}".format(fauxfactory.gen_alphanumeric()),
+        fauxfactory.gen_alphanumeric(35, start="action_testing: host policy "),
     )
     policy_profile_collection = appliance.collections.policy_profiles
     policy_profile = policy_profile_collection.create(
-        "action_testing: host policy profile {}".format(fauxfactory.gen_alphanumeric()),
+        fauxfactory.gen_alphanumeric(40, start="action_testing: host policy profile "),
         policies=[control_policy],
     )
     host.assign_policy_profiles(policy_profile.description)
@@ -558,7 +558,7 @@ def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, p
         casecomponent: Control
     """
     # Set up the policy and prepare finalizer
-    snapshot_name = fauxfactory.gen_alphanumeric()
+    snapshot_name = fauxfactory.gen_alphanumeric(start="snap_")
     snapshot_create_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
@@ -618,7 +618,7 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, 
         casecomponent: Control
     """
     # Set up the policy and prepare finalizer
-    snapshot_name = fauxfactory.gen_alphanumeric()
+    snapshot_name = fauxfactory.gen_alphanumeric(start="snap_")
     snapshot_create_action = appliance.collections.actions.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",

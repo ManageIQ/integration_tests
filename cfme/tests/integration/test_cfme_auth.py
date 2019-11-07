@@ -274,7 +274,7 @@ def format_user_principal(username, user_type, auth_provider):
 @pytest.fixture(scope='function')
 def local_group(temp_appliance_preconfig_long):
     """Helper method to check for existance of a group and delete if need be"""
-    group_name = 'test-group-{}'.format(gen_alphanumeric(length=5))
+    group_name = gen_alphanumeric(length=15, start="test-group-")
     group = temp_appliance_preconfig_long.collections.groups.create(
         description=group_name, role='EvmRole-desktop'
     )

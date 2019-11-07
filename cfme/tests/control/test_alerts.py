@@ -227,7 +227,7 @@ def test_alert_rtp(request, appliance, full_template_vm, smtp_test, provider,
     """
     email = fauxfactory.gen_email()
     alert = appliance.collections.alerts.create(
-        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
+        fauxfactory.gen_alpha(length=20, start="Trigger by CPU "),
         active=True,
         based_on="VM and Instance",
         evaluate=(
@@ -264,7 +264,7 @@ def test_alert_timeline_cpu(request, appliance, full_template_vm,
         initialEstimate: 1/6h
     """
     alert = appliance.collections.alerts.create(
-        "TL event by CPU {}".format(fauxfactory.gen_alpha(length=4)),
+        fauxfactory.gen_alpha(length=20, start="TL event by CPU "),
         active=True,
         based_on="VM and Instance",
         evaluate=(
@@ -315,7 +315,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
     """
     match_string = fauxfactory.gen_alpha(length=8)
     alert = appliance.collections.alerts.create(
-        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
+        fauxfactory.gen_alpha(length=20, start="Trigger by CPU "),
         active=True,
         based_on="VM and Instance",
         evaluate=(
@@ -384,7 +384,7 @@ def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smt
     service_request_desc = ("VM Reconfigure for: {0} - Processor Sockets: {1}, "
         "Processor Cores Per Socket: 1, Total Processors: {1}")
     alert = appliance.collections.alerts.create(
-        "Trigger by hardware reconfigured {}".format(fauxfactory.gen_alpha(length=4)),
+        fauxfactory.gen_alpha(length=36, start="Trigger by hardware reconfigured "),
         active=True,
         based_on="VM and Instance",
         evaluate=(

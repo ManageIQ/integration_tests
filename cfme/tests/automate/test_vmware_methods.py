@@ -90,7 +90,7 @@ def test_vmware_vimapi_hotadd_disk(
         1311221
     """
     meth = cls.methods.create(
-        name='load_value_{}'.format(fauxfactory.gen_alpha()),
+        name=fauxfactory.gen_alpha(15, start="load_value_"),
         script=dedent('''\
             # Sets the capacity of the new disk.
 
@@ -102,7 +102,7 @@ def test_vmware_vimapi_hotadd_disk(
 
     # Instance that calls the method and is accessible from the button
     instance = cls.instances.create(
-        name="VMware_HotAdd_Disk_{}".format(fauxfactory.gen_alpha()),
+        name=fauxfactory.gen_alpha(23, start="VMware_HotAdd_Disk_"),
         fields={
             "meth4": {'value': meth.name},  # To get the value
             "rel5": {'value': "/Integration/VMware/VimApi/VMware_HotAdd_Disk"},

@@ -23,12 +23,12 @@ def storage_object(appliance, provider):
         # Note: Like to avoid creation with api client multiple time.
         # Maintaining at least one object as creation not possible with CFME UI for OSP.
 
-        cont_key = "cont_{}".format(fauxfactory.gen_alpha(3))
+        cont_key = fauxfactory.gen_alpha(start="cont_")
         provider.mgmt.create_container(cont_key)
 
         temp_file = tempfile.NamedTemporaryFile(suffix=".pdf")
         obj = collection.instantiate(
-            key="obj_{}".format(fauxfactory.gen_alpha(3)), provider=provider
+            key=fauxfactory.gen_alpha(start="obj_"), provider=provider
         )
         provider.mgmt.create_object(
             container_name=cont_key, path=temp_file.name, object_name=obj.key

@@ -376,8 +376,8 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         return self.__class__(**item_args)
 
     def add_button_group(self, **kwargs):
-        button_name = kwargs.get("text", "gp_{}".format(fauxfactory.gen_alpha()))
-        hover_name = kwargs.get("hover", "hover_{}".format(fauxfactory.gen_alpha()))
+        button_name = kwargs.get("text", fauxfactory.gen_alpha(start="grp_"))
+        hover_name = kwargs.get("hover", fauxfactory.gen_alpha(15, start="grp_hvr_"))
 
         view = navigate_to(self, "AddButtonGroup")
         view.fill(
@@ -422,8 +422,8 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
             view.browser.refresh()
 
     def add_button(self, **kwargs):
-        text = kwargs.get("text", "btn_{}".format(fauxfactory.gen_alpha()))
-        hover = kwargs.get("hover", "hover_{}".format(fauxfactory.gen_alpha()))
+        text = kwargs.get("text", fauxfactory.gen_alpha(start="btn_"))
+        hover = kwargs.get("hover", fauxfactory.gen_alpha(15, start="btn_hvr_"))
 
         view = navigate_to(self, "AddButton")
         view.fill(

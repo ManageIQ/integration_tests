@@ -263,7 +263,7 @@ class TestTagsViaREST(object):
         for tag in tags:
             tags_data_edited.append({
                 "href": tag.href,
-                "name": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower()),
+                "name": fauxfactory.gen_alphanumeric(15, start="test_tag_").lower(),
             })
         edited = collection.action.edit(*tags_data_edited)
         assert_response(appliance, results_num=tags_len)
@@ -291,7 +291,7 @@ class TestTagsViaREST(object):
         edited = []
         new_names = []
         for tag in tags:
-            new_name = 'test_tag_{}'.format(fauxfactory.gen_alphanumeric())
+            new_name = fauxfactory.gen_alphanumeric(15, start="test_tag_")
             new_names.append(new_name)
             edited.append(tag.action.edit(name=new_name))
             assert_response(appliance)
@@ -348,8 +348,8 @@ class TestTagsViaREST(object):
             initialEstimate: 1/30h
         """
         data = {
-            "name": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower()),
-            "description": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower())
+            "name": fauxfactory.gen_alphanumeric(15, start="test_tag_").lower(),
+            "description": fauxfactory.gen_alphanumeric(20, start="test_tag_desc_").lower()
         }
         msg = "BadRequestError: Category id, href or name needs to be specified"
         with pytest.raises(Exception, match=msg):

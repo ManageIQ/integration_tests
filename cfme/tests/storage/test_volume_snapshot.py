@@ -29,7 +29,7 @@ STORAGE_SIZE = 1
 def volume(appliance, provider):
     # create new volume
     volume_collection = appliance.collections.volumes
-    name = fauxfactory.gen_alpha()
+    name = fauxfactory.gen_alpha(start="vol_")
     volume_kwargs = {
         'name': name,
         'volume_size': STORAGE_SIZE,
@@ -63,7 +63,7 @@ def volume(appliance, provider):
 @pytest.fixture(scope='function')
 def snapshot(volume):
     # create new snapshot for crated volume
-    snapshot_name = fauxfactory.gen_alpha()
+    snapshot_name = fauxfactory.gen_alpha(start="snap_")
     snapshot = volume.create_snapshot(snapshot_name)
 
     try:
@@ -103,7 +103,7 @@ def test_storage_snapshot_create_cancelled_validation(volume, snapshot_create_fr
         casecomponent: Cloud
     """
 
-    snapshot_name = fauxfactory.gen_alpha()
+    snapshot_name = fauxfactory.gen_alpha(start="snap_")
     volume.create_snapshot(snapshot_name, cancel=True, from_manager=snapshot_create_from)
     if snapshot_create_from:
         view = volume.browser.create_view(StorageManagerVolumeAllView, additional_context={
@@ -134,7 +134,7 @@ def test_storage_snapshot_create_reset_validation(volume, snapshot_create_from):
         casecomponent: Cloud
     """
 
-    snapshot_name = fauxfactory.gen_alpha()
+    snapshot_name = fauxfactory.gen_alpha(start="snap_")
     volume.create_snapshot(snapshot_name, reset=True, from_manager=snapshot_create_from)
     view = volume.create_view(VolumeSnapshotView)
     view.flash.assert_message('All changes have been reset')
@@ -160,7 +160,7 @@ def test_storage_volume_snapshot_crud(volume, provider, snapshot_create_from):
 
     # create new snapshot
     initial_snapshot_count = volume.snapshots_count
-    snapshot_name = fauxfactory.gen_alpha()
+    snapshot_name = fauxfactory.gen_alpha(start="snap_")
     snapshot = volume.create_snapshot(snapshot_name, from_manager=snapshot_create_from)
     view = volume.create_view(VolumeDetailsView, wait='10s')
     view.flash.assert_success_message(

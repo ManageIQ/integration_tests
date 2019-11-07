@@ -508,7 +508,7 @@ class SSHClient(paramiko.SSHClient):
             self.run_command('mv {} {}'.format(tempfilename, remote_file))
             return scp
         elif self.is_pod and not ensure_host:
-            tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
+            tmp_folder_name = fauxfactory.gen_alpha(15, start="automation-").lower()
             logger.info('For this purpose, temporary folder name is /tmp/%s', tmp_folder_name)
             # Clean up container's temporary folder
             self.run_command('rm -rf /tmp/{0}'.format(tmp_folder_name))
@@ -516,7 +516,7 @@ class SSHClient(paramiko.SSHClient):
             self.run_command(
                 'rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name), ensure_host=True)
             # Now upload the file to the openshift host
-            tmp_file_name = 'file-{}'.format(fauxfactory.gen_alpha().lower())
+            tmp_file_name = fauxfactory.gen_alpha(start="file-").lower()
             tmp_full_name = '/tmp/{}/{}'.format(tmp_folder_name, tmp_file_name)
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tmp_full_name, **kwargs)
@@ -546,7 +546,7 @@ class SSHClient(paramiko.SSHClient):
         logger.info("Transferring remote file %r to local %r", remote_file, local_path)
         base_name = os_path.basename(remote_file)
         if self.is_container:
-            tmp_file_name = 'temp_{}'.format(fauxfactory.gen_alpha())
+            tmp_file_name = fauxfactory.gen_alpha(start="temp_")
             tempfilename = '/share/{}'.format(tmp_file_name)
             logger.info('For this purpose, temporary file name is %r', tempfilename)
             self.run_command('cp {} {}'.format(remote_file, tempfilename))
@@ -559,8 +559,8 @@ class SSHClient(paramiko.SSHClient):
                 os_path.join(local_path, base_name)])
             return scp
         elif self.is_pod:
-            tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
-            tmp_file_name = 'file-{}'.format(fauxfactory.gen_alpha().lower())
+            tmp_folder_name = fauxfactory.gen_alpha(start="automation-").lower()
+            tmp_file_name = fauxfactory.gen_alpha(start="file-").lower()
             tmp_full_name = '/tmp/{}/{}'.format(tmp_folder_name, tmp_file_name)
             logger.info('For this purpose, temporary file name is %r', tmp_full_name)
             # Clean up container's temporary folder

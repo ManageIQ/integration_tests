@@ -24,7 +24,7 @@ def volume_backup(appliance, provider):
     backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
 
     # create new volume
-    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+    volume = volume_collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                       storage_manager=storage_manager,
                                       tenant=provider.data['provisioning']['cloud_tenant'],
                                       size=VOLUME_SIZE,
@@ -32,7 +32,7 @@ def volume_backup(appliance, provider):
 
     # create new backup for crated volume
     if volume.status == 'available':
-        backup_name = fauxfactory.gen_alpha()
+        backup_name = fauxfactory.gen_alpha(start="bkup_")
         volume.create_backup(backup_name)
         volume_backup = backup_collection.instantiate(backup_name, provider)
         yield volume_backup
@@ -50,7 +50,7 @@ def volume_backup(appliance, provider):
 
 @pytest.fixture(scope='function')
 def volume_backup_with_type(appliance, provider):
-    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha())
+    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha(start="type_"))
     volume_type = appliance.collections.volume_types.instantiate(vol_type.name, provider)
 
     @wait_for_decorator(delay=10, timeout=300,
@@ -64,7 +64,7 @@ def volume_backup_with_type(appliance, provider):
     backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
 
     # create new volume
-    volume = volume_collection.create(name=fauxfactory.gen_alpha(),
+    volume = volume_collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                       storage_manager=storage_manager,
                                       tenant=provider.data['provisioning']['cloud_tenant'],
                                       volume_type=volume_type.name,
@@ -73,7 +73,7 @@ def volume_backup_with_type(appliance, provider):
 
     # create new backup for crated volume
     if volume.status == 'available':
-        backup_name = fauxfactory.gen_alpha()
+        backup_name = fauxfactory.gen_alpha(start="bkup_")
         volume.create_backup(backup_name)
         volume_backup = backup_collection.instantiate(backup_name, provider)
         yield volume_backup
@@ -97,7 +97,7 @@ def incremental_backup(volume_backup, provider):
 
     # create incremental backup for a volume with existing backup
     if volume.status == 'available':
-        backup_name = fauxfactory.gen_alpha()
+        backup_name = fauxfactory.gen_alpha(start="bkup_")
         volume.create_backup(backup_name, incremental=True)
         incremental_backup = backup_collection.instantiate(backup_name, provider)
         yield incremental_backup
@@ -113,7 +113,7 @@ def incremental_backup(volume_backup, provider):
 
 @pytest.fixture(scope='function')
 def new_instance(provider):
-    instance_name = fauxfactory.gen_alpha()
+    instance_name = fauxfactory.gen_alpha(15, start="test_vol_")
     collection = provider.appliance.provider_based_collection(provider)
     instance = collection.create_rest(instance_name, provider)
     yield instance
@@ -176,7 +176,7 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    backup_name = fauxfactory.gen_alpha()
+    backup_name = fauxfactory.gen_alpha(start="bkup_")
     collection = appliance.collections.volume_backups.filter({'provider': provider})
     attached_volume.create_backup(backup_name, incremental=True, force=True)
     incr_backup_of_attached_volume = collection.instantiate(backup_name, provider)

@@ -34,8 +34,8 @@ def button_with_dialog(appliance, generic_object, dialog):
     generic_definition = generic_object.definition
     with appliance.context.use(ViaUI):
         button = generic_definition.collections.generic_object_buttons.create(
-            name=fauxfactory.gen_alpha(),
-            description=fauxfactory.gen_alpha(),
+            name=fauxfactory.gen_alpha(start="btn_"),
+            description=fauxfactory.gen_alpha(15, start="btn_desc_"),
             request="call_instance",
             image="ff ff-network-interface",
             dialog=dialog.label
@@ -58,7 +58,7 @@ def test_generic_objects_crud(appliance, context, request):
     """
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
-            name='rest_generic_class{}'.format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(25, start="rest_generic_class_"),
             description='Generic Object Definition',
             attributes={'addr01': 'string'},
             associations={'services': 'Service'}
@@ -69,7 +69,7 @@ def test_generic_objects_crud(appliance, context, request):
     with appliance.context.use(ViaREST):
         myservices = []
         for _ in range(2):
-            service_name = 'rest_service_{}'.format(fauxfactory.gen_alphanumeric())
+            service_name = fauxfactory.gen_alphanumeric(15, start="rest_serv_")
             rest_service = appliance.rest_api.collections.services.action.create(
                 name=service_name,
                 display=True
@@ -78,7 +78,7 @@ def test_generic_objects_crud(appliance, context, request):
             request.addfinalizer(rest_service.action.delete)
             myservices.append(MyService(appliance, name=service_name))
         instance = appliance.collections.generic_objects.create(
-            name='rest_generic_instance{}'.format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(26, start="rest_generic_instance_"),
             definition=definition,
             attributes={'addr01': 'Test Address'},
             associations={'services': [myservices[0]]}

@@ -92,14 +92,14 @@ def stack_data(appliance, provider, provisioning, request):
 
 @pytest.fixture
 def dialog_name():
-    return 'dialog_{}'.format(fauxfactory.gen_alphanumeric())
+    return fauxfactory.gen_alphanumeric(12, start="dialog_")
 
 
 @pytest.fixture
 def template(appliance, provider, provisioning, dialog_name):
     template_group = provisioning['stack_provisioning']['template_type']
     template_type = provisioning['stack_provisioning']['template_type_dd']
-    template_name = fauxfactory.gen_alphanumeric()
+    template_name = fauxfactory.gen_alphanumeric(start="temp_")
     file = provisioning['stack_provisioning']['data_file']
     data_file = load_data_file(str(orchestration_path.join(file)))
     content = data_file.read().replace('CFMETemplateName', template_name)
@@ -115,7 +115,7 @@ def template(appliance, provider, provisioning, dialog_name):
 
 @pytest.fixture
 def catalog(appliance):
-    cat_name = "cat_{}".format(fauxfactory.gen_alphanumeric())
+    cat_name = fauxfactory.gen_alphanumeric(start="cat_")
     catalog = appliance.collections.catalogs.create(name=cat_name, description="my catalog")
     yield catalog
     if catalog.exists:
@@ -124,7 +124,7 @@ def catalog(appliance):
 
 @pytest.fixture
 def catalog_item(appliance, dialog, catalog, template, provider, dialog_name):
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ORCHESTRATION,
         name=item_name,

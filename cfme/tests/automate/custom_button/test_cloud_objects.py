@@ -50,8 +50,8 @@ SUBMIT = ["Submit all", "One by one"]
 def button_group(appliance, request):
     collection = appliance.collections.button_groups
     button_gp = collection.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=getattr(collection, request.param),
     )
     yield button_gp, request.param
@@ -128,8 +128,8 @@ def test_custom_button_display_cloud_obj(appliance, request, display, setup_objs
 
     group, obj_type = button_group
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         display_for=display,
         system="Request",
         request="InspectMe",
@@ -181,8 +181,8 @@ def test_custom_button_dialog_cloud_obj(appliance, dialog, request, setup_objs, 
 
     # Note: No need to set display_for dialog only work with Single entity
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         dialog=dialog,
         system="Request",
         request="InspectMe",
@@ -254,8 +254,8 @@ def test_custom_button_automate_cloud_obj(appliance, request, submit, setup_objs
 
     group, obj_type = button_group
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         display_for="Single and list",
         submit=submit,
         system="Request",
@@ -346,8 +346,8 @@ def test_custom_button_expression_cloud_obj(
     exp = {expression: {"tag": "My Company Tags : Department", "value": "Engineering"}}
     disabled_txt = "Tag - My Company Tags : Department : Engineering"
     button = group.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         display_for="Single entity",
         system="Request",
         request="InspectMe",
@@ -418,8 +418,8 @@ def test_custom_button_events_cloud_obj(request, dialog, setup_objs, button_grou
     dialog_ = dialog if btn_dialog else None
 
     button = group.buttons.create(
-        text="btn_{}".format(fauxfactory.gen_alphanumeric(3)),
-        hover="btn_hover{}".format(fauxfactory.gen_alphanumeric(3)),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         dialog=dialog_,
         system="Request",
         request="InspectMe",

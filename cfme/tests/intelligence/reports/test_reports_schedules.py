@@ -53,7 +53,7 @@ TIMER = {
 }
 
 INVALID_EMAILS = {
-    "string": "{name}".format(name=fauxfactory.gen_alpha()),
+    "string": fauxfactory.gen_alpha(),
     "multiple-dots": "{name}..{name}@example..com".format(
         name=fauxfactory.gen_alpha(5)
     ),

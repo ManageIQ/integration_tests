@@ -83,7 +83,7 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning):
         'network': {'vlan': partial_match(vlan)},
     }
 
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     return appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.RHV,
         name=item_name,

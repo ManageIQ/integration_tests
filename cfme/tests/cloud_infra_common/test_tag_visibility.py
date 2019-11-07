@@ -99,7 +99,7 @@ def group_with_tag_expression(appliance, user_restricted, request):
     def _group_with_tag_expression(expression):
         """Updates group with provided expression, also assign user to group"""
         group = appliance.collections.groups.create(
-            description='grp{}'.format(fauxfactory.gen_alphanumeric()),
+            description=fauxfactory.gen_alphanumeric(start="grp_"),
             role='EvmRole-approver',
             tag=expression
         )

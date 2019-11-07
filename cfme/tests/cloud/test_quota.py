@@ -66,8 +66,8 @@ def new_tenant(appliance):
     """This fixture creates new tenant under root tenant(My Company)"""
     collection = appliance.collections.tenants
     tenant = collection.create(
-        name="tenant_{}".format(fauxfactory.gen_alphanumeric()),
-        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(12, start="tenant_"),
+        description=fauxfactory.gen_alphanumeric(15, start="tenant_des_"),
         parent=collection.get_root_tenant(),
     )
     yield tenant
@@ -79,8 +79,8 @@ def new_tenant(appliance):
 def new_child(appliance, new_tenant):
     """The fixture creates new child tenant"""
     child_tenant = appliance.collections.tenants.create(
-        name="tenant_{}".format(fauxfactory.gen_alphanumeric()),
-        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(12, start="tenant_"),
+        description=fauxfactory.gen_alphanumeric(15, start="tenant_des_"),
         parent=new_tenant,
     )
     yield child_tenant
@@ -92,7 +92,7 @@ def new_child(appliance, new_tenant):
 def new_group_child(appliance, new_child, new_tenant):
     """This fixture creates new group assigned by new child tenant"""
     group = appliance.collections.groups.create(
-        description="group_{}".format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(start="group_"),
         role="EvmRole-super_administrator",
         tenant="My Company/{parent}/{child}".format(parent=new_tenant.name, child=new_child.name),
     )
@@ -105,9 +105,9 @@ def new_group_child(appliance, new_child, new_tenant):
 def new_user_child(appliance, new_group_child):
     """This fixture creates new user which assigned to new child tenant"""
     user = appliance.collections.users.create(
-        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
-                              secret='{password}'.format(password=fauxfactory.gen_alphanumeric(4))),
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                              secret=fauxfactory.gen_alphanumeric(start="pwd_")),
         email=fauxfactory.gen_email(),
         groups=new_group_child,
         cost_center="Workload",
@@ -123,8 +123,8 @@ def new_project(appliance):
     """This fixture creates new project"""
     collection = appliance.collections.projects
     project = collection.create(
-        name="project_{}".format(fauxfactory.gen_alphanumeric()),
-        description="project_des{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(12, start="project_"),
+        description=fauxfactory.gen_alphanumeric(15, start="project_desc"),
         parent=collection.get_root_tenant(),
     )
     yield project
@@ -136,7 +136,7 @@ def new_project(appliance):
 def new_group_project(appliance, new_project):
     """This fixture creates new group and assigned by new project"""
     group = appliance.collections.groups.create(
-        description="group_{}".format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(start="group_"),
         role="EvmRole-super_administrator",
         tenant="My Company/{project}".format(project=new_project.name),
     )
@@ -149,9 +149,9 @@ def new_group_project(appliance, new_project):
 def new_user_project(appliance, new_group_project):
     """This fixture creates new user which is assigned to new group and project"""
     user = appliance.collections.users.create(
-        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
-                              secret='{password}'.format(password=fauxfactory.gen_alphanumeric(4))),
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                              secret=fauxfactory.gen_alphanumeric(start="pwd")),
         email=fauxfactory.gen_email(),
         groups=new_group_project,
         cost_center="Workload",
@@ -210,9 +210,9 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
             {
                 "request": {
                     "email": fauxfactory.gen_email(),
-                    "first_name": fauxfactory.gen_alphanumeric(),
-                    "last_name": fauxfactory.gen_alphanumeric(),
-                    "manager_name": "{name}".format(name=fauxfactory.gen_alphanumeric()),
+                    "first_name": fauxfactory.gen_alphanumeric(start="first_"),
+                    "last_name": fauxfactory.gen_alphanumeric(start="last_"),
+                    "manager_name": fauxfactory.gen_alphanumeric(start="manager_"),
                 }
             },
         )
@@ -282,9 +282,9 @@ def test_project_quota_enforce_via_lifecycle_cloud(
             {
                 "request": {
                     "email": fauxfactory.gen_email(),
-                    "first_name": fauxfactory.gen_alphanumeric(),
-                    "last_name": fauxfactory.gen_alphanumeric(),
-                    "manager_name": "{name}".format(name=fauxfactory.gen_alphanumeric()),
+                    "first_name": fauxfactory.gen_alphanumeric(start="first_"),
+                    "last_name": fauxfactory.gen_alphanumeric(start="last_"),
+                    "manager_name": fauxfactory.gen_alphanumeric(start="manager_"),
                 }
             },
         )
@@ -379,7 +379,7 @@ def dialog(appliance, automate_flavor_method):
     """This fixture is used to create dynamic service dialog"""
     data = {
         "buttons": "submit,cancel",
-        "label": "flavour_dialog_{}".format(fauxfactory.gen_alphanumeric()),
+        "label": fauxfactory.gen_alphanumeric(20, start="flavour_dialog_"),
         "dialog_tabs": [
             {
                 "display": 'edit',

@@ -68,7 +68,7 @@ def new_instance(provider):
 def volume(appliance, provider):
     collection = appliance.collections.volumes
     storage_manager = '{} Cinder Manager'.format(provider.name)
-    volume = collection.create(name=fauxfactory.gen_alpha(),
+    volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
                                size=VOLUME_SIZE,
@@ -81,7 +81,7 @@ def volume(appliance, provider):
 
 @pytest.fixture(scope='function')
 def volume_with_type(appliance, provider):
-    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha())
+    vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha(start="type_"))
     volume_type = appliance.collections.volume_types.instantiate(vol_type.name, provider)
 
     @wait_for_decorator(delay=10, timeout=300,
@@ -92,7 +92,7 @@ def volume_with_type(appliance, provider):
 
     collection = appliance.collections.volumes
     storage_manager = '{} Cinder Manager'.format(provider.name)
-    volume = collection.create(name=fauxfactory.gen_alpha(),
+    volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
                                volume_type=volume_type.name,

@@ -45,7 +45,7 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
         },
         "vm_fields": {
             "number_of_cpus": 1,
-            "vm_name": "test_rest_prov_{}".format(fauxfactory.gen_alphanumeric()),
+            "vm_name": fauxfactory.gen_alphanumeric(20, start="test_rest_prov_"),
             "vm_memory": "2048",
             "vlan": provider.data["provisioning"]["vlan"],
         },
