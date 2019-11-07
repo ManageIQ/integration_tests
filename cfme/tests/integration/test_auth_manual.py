@@ -7,33 +7,6 @@ pytestmark = [test_requirements.auth]
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_ipa_ntp():
-    """
-    Try to setup IPA on appliance when NTP daemon is stopped on server.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Auth
-        caseimportance: medium
-        initialEstimate: 1/4h
-        caseposneg: negative
-        setup:
-            1. Have IPA server configured and running
-                - https://mojo.redhat.com/docs/DOC-1058778
-        testSteps:
-            1. ssh into IPA server stop NTP daemon
-            2. ssh to appliance and try to setup IPA
-                - appliance_console_cli --ipaserver <IPA_URL> --ipaprincipal <LOGIN>
-                    --ipapassword <PASS> --ipadomain <DOMAIN> --iparealm <REALM>
-        expectedResults:
-            1. NTP daemon stopped
-            2. Command should fail; setting up IPA unsuccessful
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
 def test_appliance_console_ipa():
     """
     Test setting up IPA authentication with invalid host settings
