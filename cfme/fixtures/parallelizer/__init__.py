@@ -35,6 +35,7 @@ from collections import defaultdict
 from collections import deque
 from collections import namedtuple
 from datetime import datetime
+from itertools import chain
 from itertools import count
 from itertools import groupby
 from threading import Thread
@@ -400,16 +401,7 @@ class ParallelSession(object):
         """
         # Build master collection for slave diffing and distribution
         for item in self.session.items:
-            is_serial = False
-            # check module
-            if hasattr(item.module, "pytestmark"):
-                for mark_dec in item.module.pytestmark:
-                    if mark_dec.mark.name == "serial":
-                        is_serial = True
-            # check test func
-            for mark in item.own_markers:
-                if mark.name == "serial":
-                    is_serial = True
+            is_serial = bool(item.get_closest_marker("serial"))
             if is_serial:
                 self.serial_collection.append(item.nodeid)
             else:
@@ -513,12 +505,8 @@ class ParallelSession(object):
         self.zmq_ctx.destroy()
 
     def _test_item_generator(self):
-        if self.serial_collection:
-            for tests in self._serial_item_generator():
-                yield tests
-        if self.collection:
-            for tests in self._modscope_item_generator():
-                yield tests
+        for tests in chain(self._serial_item_generator(), self._modscope_item_generator()):
+            yield tests
 
     def _serial_item_generator(self):
         # yields list of tests that will run on a single collection
@@ -531,7 +519,7 @@ class ParallelSession(object):
 
         for fspath, tests in groupby(self.serial_collection, key=get_fspart):
             # no sorting by ID here they should all run on the same slave
-            sent_tests += len(list(tests))
+            # sent_tests += len(list(tests))
             self.log.info(f'{(collection_len - sent_tests)} serial tests remaining to send')
             yield list(tests)
 
