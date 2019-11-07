@@ -13,6 +13,7 @@ from cfme.exceptions import UnknownProviderType
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.ssh import SSHClient
 
 auth_prov_data = auth_data.get("auth_providers", {})  # setup on module import
 
@@ -269,6 +270,15 @@ class FreeIPAAuthProvider(MIQAuthProvider):
                 external.update({att: getattr(self, att)})
 
         return external
+
+    @property
+    def ssh_client(self):
+        ssh_kwargs = dict(
+            hostname=self.host1,
+            username="root",
+            password=self.bind_password,
+        )
+        return SSHClient(**ssh_kwargs)
 
 
 @attr.s
