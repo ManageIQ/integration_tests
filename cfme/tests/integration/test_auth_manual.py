@@ -451,40 +451,6 @@ def test_verify_the_trusted_forest_settings_table_display_in_auth_page():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_authentication_user_not_in_ldap_but_in_db():
-    """
-    User is not able to authenticate if he has account in CFME DB but not
-    in LDAP.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Auth
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_verify_database_user_login_fails_with_external_auth_configured():
-    """
-    Login with user registered to cfme internal database.
-    Authentication expected to fail, check audit.log and evm.log for
-    correct log messages.
-
-    Polarion:
-        assignee: jdupuy
-        casecomponent: Auth
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_external_auth_openldap_proxy_to_3_domains():
     """

@@ -1,20 +1,37 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 # Specific tests concerning ldap authentication
 pytestmark = [
     test_requirements.auth,
-    pytest.mark.provider([VMwareProvider], override=True, scope="module", selector=ONE),
-    pytest.mark.usefixtures('setup_provider')
 ]
 
 
+@pytest.fixture
+def db_user(appliance):
+    name = fauxfactory.gen_alpha(15, start="test-user-")
+    creds = Credential(principal=name, secret=fauxfactory.gen_alpha())
+    user_group = appliance.collections.groups.instantiate(description="EvmGroup-vm_user")
+    user = appliance.collections.users.create(
+        name=name,
+        credential=creds,
+        groups=user_group,
+    )
+    yield user
+    user.delete_if_exists()
+
+
 @pytest.mark.tier(2)
+@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE)
+@pytest.mark.usefixtures('setup_provider')
 def test_validate_lookup_button_provisioning(
         appliance, provider, small_template, setup_ldap_auth_provider
 ):
@@ -51,3 +68,28 @@ def test_validate_lookup_button_provisioning(
     # now get the first and last name
     assert view.form.request.first_name.read() == user.fullname.split(" ")[0].lower()
     assert view.form.request.last_name.read() == user.fullname.split(" ")[1].lower()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1632718)], automates=[1632718])
+def test_verify_database_user_login_fails_with_external_auth_configured(
+        appliance, setup_ldap_auth_provider, db_user
+):
+    """
+    Login with user registered to cfme internal database.
+    Authentication expected to fail
+
+    Bugzilla:
+        1632718
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Configuration
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/4h
+    """
+    with db_user:
+        # we expect authentication to fail and to raise an AssertionError
+        with pytest.raises(AssertionError):
+            navigate_to(appliance.server, "LoggedIn")
