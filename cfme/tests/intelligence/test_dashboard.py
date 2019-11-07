@@ -203,23 +203,6 @@ def test_dashboard_widgets_fullscreen():
 @pytest.mark.manual
 @test_requirements.dashboard
 @pytest.mark.tier(3)
-def test_identical_dashboard_widgets():
-    """
-    test_identical_dashboard_widgets
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Reporting
-        caseimportance: low
-        caseposneg: negative
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.dashboard
-@pytest.mark.tier(3)
 def test_dashboard_chart_widgets_size_in_modal():
     """
     Test whether dashboard chart widgets have correct size in modal
