@@ -4,6 +4,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.fixtures.automate import DatastoreImport
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
@@ -793,12 +795,19 @@ def test_service_service_vms_retires_archived():
     pass
 
 
-@pytest.mark.meta(coverage=[1558926])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1558926])
 @pytest.mark.tier(2)
-def test_service_dialog_expression_method():
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1558926.zip", "bz_1558926", None)],
+    ids=["domain"],
+)
+@pytest.mark.parametrize("file_name", ["bz_1558926.yml"], ids=["dialog"])
+@pytest.mark.provider([RHEVMProvider], scope='function', override=True, selector=ONE)
+def test_service_dialog_expression_method(request, appliance, setup_provider, full_template_vm,
+                                          import_datastore, import_data, import_dialog, file_name,
+                                          catalog):
     """
-
     Bugzilla:
         1558926
 
@@ -820,7 +829,23 @@ def test_service_dialog_expression_method():
             4.
             5. Expression method should work
     """
-    pass
+    sd, ele_label = import_dialog
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd,
+    )
+    request.addfinalizer(catalog_item.delete_if_exists)
+    service_catalogs = ServiceCatalogs(
+        appliance, catalog=catalog_item.catalog, name=catalog_item.name
+    )
+    view = navigate_to(service_catalogs, "Order")
+    assert full_template_vm.name in [
+        opt.text for opt in view.fields("dropdown_list_1").dropdown.all_options
+    ]
 
 
 @pytest.mark.meta(coverage=[1729379, 1749650])
