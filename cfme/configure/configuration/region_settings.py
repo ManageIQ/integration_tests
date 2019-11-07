@@ -941,7 +941,7 @@ class ReplicationView(RegionView):
     def in_region(self):
         return (
             self.accordions.settings.tree.currently_selected == [
-                self.obj.appliance.server.zone.region.settings_string]
+                self.context["object"].appliance.server.zone.region.settings_string]
         )
 
     @property
@@ -1044,7 +1044,7 @@ class Replication(NavigatableMixin):
         """
         view = navigate_to(self, 'Global')
         if host:
-            return view.subscription_table.row(host='host')
+            return view.subscription_table.row(host=host)
         else:
             return view.subscription_table.row[0]
 
