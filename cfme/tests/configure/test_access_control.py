@@ -1987,11 +1987,41 @@ def test_tenant_visibility_vms_all_childs():
     pass
 
 
+@pytest.fixture
+def setup_openldap_user_group(appliance):
+    auth_provider = authutil.get_auth_crud('cfme_openldap')
+    ldap_user = authutil.auth_user_data('cfme_openldap', 'uid')[0]
+    retrieved_groups = []
+    for group in ldap_user.groups:
+        if 'evmgroup' not in group.lower():
+            # create group in CFME via retrieve_group which looks it up on auth_provider
+            logger.info(u'Retrieving a user group that is non evm built-in: {}'.format(group))
+            retrieved_groups.append(retrieve_group(appliance,
+                                                   'ldap',
+                                                   ldap_user.username,
+                                                   group,
+                                                   auth_provider))
+        else:
+            logger.info('All user groups for group switching are evm built-in: {}'
+                    .format(ldap_user.groups))
+
+    user = appliance.collections.users.simple_user(
+        ldap_user.username,
+        credentials[ldap_user.password].password,
+        fullname=ldap_user.fullname or ldap_user.username
+    )
+    yield user, retrieved_groups
+
+    user.delete_if_exists()
+    for group in retrieved_groups:
+        group.delete_if_exists()
+
+
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
 @pytest.mark.meta(blockers=[BZ(1759291)])
 def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, child_tenant2,
-        setup_openldap_auth_provider, soft_assert, request):
+        setup_openldap_auth_provider, setup_openldap_user_group, soft_assert):
     """
     User who is member of 2 or more LDAP groups can switch between tenants
 
@@ -2020,6 +2050,9 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, chil
                the active group. After switching to desired group,user is able login
                via Self Service UI to the desired tenant.
     """
+    user = setup_openldap_user_group
+    retrieved_groups = setup_openldap_user_group
+    """
     auth_provider = authutil.get_auth_crud('cfme_openldap')
     ldap_user = authutil.auth_user_data('cfme_openldap', 'uid')[0]
     retrieved_groups = []
@@ -2041,6 +2074,7 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, chil
         credentials[ldap_user.password].password,
         fullname=ldap_user.fullname or ldap_user.username
     )
+    """
     with user:
         view = navigate_to(appliance.server, 'LoggedIn')
         # Verify that multiple groups are displayed
@@ -2049,7 +2083,7 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, chil
         # Verify that user name is displayed
         soft_assert(view.current_fullname == user.name,
                     'user full name "{}" did not match UI display name "{}"'
-                    .format(ldap_user, view.current_fullname))
+                    .format(user.name, view.current_fullname))
         # Not checking current group, determined by group priority
         # Verify retrieved groups are displayed in the groups list in the UI.
         for group in retrieved_groups:
@@ -2059,11 +2093,11 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, chil
 
         # change to the other groups
         for other_group in display_other_groups:
-            soft_assert(other_group in ldap_user.groups, u'Group {} in UI not expected for user {}'
-                                                         .format(other_group, ldap_user.username))
+            soft_assert(other_group in user.groups, u'Group {} in UI not expected for user {}'
+                .format(other_group, user.username))
             view.change_group(other_group)
             assert view.is_displayed, (u'Not logged in after switching to group {} for {}'
-                                       .format(other_group, ldap_user.username))
+                                       .format(other_group, user.username))
             # assert selected group has changed
             soft_assert(other_group == view.current_groupname,
                         u'After switching to group {}, its not displayed as active'
@@ -2071,13 +2105,6 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, chil
 
     appliance.server.login_admin()
     assert user.exists, 'User record for "{}" should exist after login'.format(user.username)
-
-    @request.addfinalizer
-    def _cleanup():
-        user.delete()
-        for group in retrieved_groups:
-            if group.exists:
-                group.delete()
 
 
 @pytest.mark.manual
