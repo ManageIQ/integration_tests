@@ -356,33 +356,6 @@ def test_rh_registration_proxy_crud():
 
 @pytest.mark.manual
 @test_requirements.update
-@pytest.mark.tier(2)
-def test_rh_unregistration_ui():
-    """
-    Check that you can unregister an appliance from subscriptions through
-    the ui.
-
-    Bugzilla:
-        1464387
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
-        caseimportance: medium
-        initialEstimate: 1/12h
-        setup: Provision appliance
-               navigate to Configuration-settings-region-redhat updates
-               Click edit subscription
-               Setup subscription
-               validate and save
-               Register appliance
-               Try to unregister
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.update
 @test_requirements.db_migration
 @pytest.mark.tier(2)
 def test_upgrade_multi_replication_inplace():
