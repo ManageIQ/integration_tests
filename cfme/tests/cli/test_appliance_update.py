@@ -45,22 +45,22 @@ def pytest_generate_tests(metafunc):
             z_version = int(split_ver[2])
         except (IndexError, ValueError) as e:
             logger.exception("Couldn't parse version: %s, skipping", e)
-            versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.uncollect(
-                reason='Could not parse z_version from: {}'.format(version)
-            )))
+            versions.append(
+                pytest.param(
+                    f"bad:{version}",
+                    marks=pytest.mark.uncollect(reason=f'Could not parse z_version from: {version}')
+                )
+            )
         else:
             z_version = z_version - 1
             if z_version < 0:
-                reason_str = ('No previous z-stream version to update from: {}'
-                    .format(version))
+                reason_str = (f'No previous z-stream version to update from: {version}')
                 logger.debug(reason_str)
-                versions.append(pytest.param(
-                    "bad:{!r}".format(version),
-                    marks=pytest.mark.uncollect(reason=reason_str)
-                ))
+                versions.append(
+                    pytest.param(f"bad:{version}", marks=pytest.mark.uncollect(reason=reason_str))
+                )
             else:
-                versions.append("{split_ver[0]}.{split_ver[1]}.{z_version}".format(
-                    split_ver=split_ver, z_version=z_version))
+                versions.append(f"{split_ver[0]}.{split_ver[1]}.{z_version}")
     else:
         versions.append(old_version_pytest_arg)
     metafunc.parametrize('old_version', versions, indirect=True)

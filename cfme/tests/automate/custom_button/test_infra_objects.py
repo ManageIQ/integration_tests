@@ -417,7 +417,8 @@ def test_custom_button_expression_infra_obj(
             assert button.text in custom_button_group.items
 
 
-@pytest.mark.uncollectif(lambda button_group: "VM_INSTANCE" not in button_group)
+@pytest.mark.uncollectif(lambda button_group: "VM_INSTANCE" not in button_group,
+                         reason='Test only valid for VM_INSTANCE button group type')
 def test_custom_button_open_url_infra_obj(request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 

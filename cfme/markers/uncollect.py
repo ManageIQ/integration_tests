@@ -56,6 +56,9 @@ import inspect
 from cfme.utils.log import logger
 
 
+REASON_REQUIRED = 'A reason is required when using uncollect(if): {}'
+
+
 def pytest_configure(config):
     config.addinivalue_line(
         'markers',
@@ -77,15 +80,16 @@ def uncollectif(item):
 
     from cfme.utils.pytest_shortcuts import extract_fixtures_values
     for _, mark in item.iter_markers_with_node('uncollectif') or []:
-        log_msg = 'Trying uncollecting {}: {}'.format(
-            item.name,
-            mark.kwargs.get('reason', 'No reason given'))
+        reason = mark.kwargs.get('reason')
+        if reason is None:
+            raise ValueError(REASON_REQUIRED.format(item.name))
+        log_msg = f'Trying uncollectif {item.name}: {reason}'
         logger.debug(log_msg)
         try:
             arg_names = inspect.signature(mark.args[0]).parameters.keys()  # odict_keys
         except TypeError:
-            logger.debug(log_msg)
-            return not bool(mark.args[0]), mark.kwargs.get('reason', 'No reason given')
+            logger.exception(log_msg)
+            return not bool(mark.args[0]), reason
 
         app = find_appliance(item, require=False)
         if app:
@@ -105,15 +109,15 @@ def uncollectif(item):
             missing_argnames = list(set(arg_names) - set(item._request.fixturenames))
             func_name = item.name
             if missing_argnames:
-                raise Exception("You asked for a fixture which wasn't in the function {} "
-                                "prototype {}".format(func_name, missing_argnames))
+                raise Exception(f'uncollectif lambda requesting fixture {missing_argnames} '
+                                f'which is not in the test function {func_name} signature')
             else:
-                raise Exception("Failed to uncollect {}, best guess a fixture wasn't "
-                                "ready".format(func_name))
+                raise Exception(f'uncollectif {func_name} hit KeyError, '
+                                'best guess a fixture was not ready')
         retval = mark.args[0](*args)
         if retval:
             # shortcut
-            return retval, mark.kwargs.get('reason', "No reason given")
+            return retval, reason
         else:
             return False, None
     else:
@@ -133,12 +137,14 @@ def pytest_collection_modifyitems(session, config, items):
             # First filter out all items who have the uncollect mark
             uncollect_marker = item.get_closest_marker('uncollect')
             if uncollect_marker:
-                uncollect_reason = uncollect_marker.kwargs.get('reason', "No reason given")
-                f.write("{} - {}\n".format(item.name, uncollect_reason))
+                reason = uncollect_marker.kwargs.get('reason')
+                if reason is None:
+                    raise ValueError(REASON_REQUIRED.format(item.name))
+                f.write(f'{item.name} - {reason}\n')
             else:
-                uncollectif_result, uncollectif_reason = uncollectif(item)
-                if uncollectif_result:
-                    f.write("{} - {}\n".format(item.name, uncollectif_reason))
+                result, reason = uncollectif(item)
+                if result:
+                    f.write(f'{item.name} - {reason}\n')
                 else:
                     new_items.append(item)
 

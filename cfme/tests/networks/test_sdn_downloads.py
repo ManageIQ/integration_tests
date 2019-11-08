@@ -56,10 +56,9 @@ def handle_extra_tabs(view):
 
 @pytest.mark.parametrize("filetype", list(extensions_mapping.keys()))
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
-@pytest.mark.uncollectif(
-    lambda collection_type, appliance:
-    "balancers" in collection_type and appliance.version > "5.11",
-    reason="Cloud Load Balancers are removed in 5.11, see BZ 1672949")
+@pytest.mark.uncollectif(lambda collection_type, appliance:
+                         "balancers" in collection_type and appliance.version >= "5.11",
+                         reason="Cloud Load Balancers are removed in 5.11, see BZ 1672949")
 def test_download_lists_base(filetype, collection_type, appliance):
     """ Download the items from base lists.
 
@@ -76,10 +75,9 @@ def test_download_lists_base(filetype, collection_type, appliance):
     download(collection, filetype)
 
 
-@pytest.mark.uncollectif(
-    lambda collection_type, appliance:
-    "balancers" in collection_type and appliance.version > "5.11",
-    reason="Cloud Load Balancers are removed in 5.11, see BZ 1672949")
+@pytest.mark.uncollectif(lambda collection_type, appliance:
+                         "balancers" in collection_type and appliance.version >= "5.11",
+                         reason="Cloud Load Balancers are removed in 5.11, see BZ 1672949")
 @pytest.mark.parametrize("collection_type", OBJECTCOLLECTIONS)
 def test_download_pdf_summary(appliance, collection_type, provider):
     """ Download the summary details of specific object

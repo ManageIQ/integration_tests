@@ -169,13 +169,10 @@ def set_landing_page(appliance, my_settings, start_page):
 
 
 @pytest.mark.parametrize("start_page", ALL_LANDING_PAGES, scope="module")
-@pytest.mark.uncollectif(
-    lambda start_page, appliance: (
-        (appliance.version < "5.11" and start_page in PAGES_NOT_IN_510)
-        or (appliance.version > "5.11" and start_page in PAGES_NOT_IN_511)
-    ),
-    reason='Start page not available on the appliance version under test'
-)
+@pytest.mark.uncollectif(lambda start_page, appliance:
+                         (appliance.version < "5.11" and start_page in PAGES_NOT_IN_510) or
+                         (appliance.version > "5.11" and start_page in PAGES_NOT_IN_511),
+                         reason='Start page not available on the appliance version under test')
 @test_requirements.settings
 def test_landing_page_admin(
     appliance, request, set_default_page, set_landing_page, start_page

@@ -137,11 +137,9 @@ def test_discover_host(request, provider, appliance, host_ips):
 @pytest.mark.rhv2
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
-@pytest.mark.uncollectif(
-    lambda provider, creds:
-        creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
-    reason="cred type not relevant for RHEVM Provider."
-)
+@pytest.mark.uncollectif(lambda provider, creds:
+                         creds != 'default' and provider.one_of(RHEVMProvider),
+                         reason="cred type not relevant for RHEVM Provider.")
 def test_multiple_host_good_creds(setup_provider, provider, creds):
     """
 

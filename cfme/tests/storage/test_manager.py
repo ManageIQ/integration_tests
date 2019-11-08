@@ -13,10 +13,9 @@ pytestmark = [
     test_requirements.storage,
     pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module"),
-    pytest.mark.uncollectif(
-        lambda manager, provider: provider.one_of(EC2Provider) and "object_managers" in manager,
-        reason="Object Storage not supported by EC2Provider",
-    ),
+    pytest.mark.uncollectif(lambda manager, provider:
+                            provider.one_of(EC2Provider) and "object_managers" in manager,
+                            reason="Object Storage not supported by EC2Provider"),
 ]
 
 

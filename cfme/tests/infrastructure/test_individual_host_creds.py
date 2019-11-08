@@ -48,11 +48,9 @@ def get_host_data_by_name(provider_key, host_name):
 @pytest.mark.rhv1
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
-@pytest.mark.uncollectif(
-    lambda provider, creds:
-    creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
-    reason="Cred type not relevant for RHEVM Provider."
-)
+@pytest.mark.uncollectif(lambda provider, creds:
+                         creds != 'default' and provider.one_of(RHEVMProvider),
+                         reason="Cred type not relevant for RHEVM Provider.")
 def test_host_good_creds(appliance, request, setup_provider, provider, creds):
     """
     Tests host credentialing  with good credentials
@@ -110,11 +108,9 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
 @pytest.mark.rhv3
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
-@pytest.mark.uncollectif(
-    lambda provider, creds:
-        creds in ['remote_login', 'web_services'] and provider.one_of(RHEVMProvider),
-    reason="Cred type not relevant for RHEVM Provider."
-)
+@pytest.mark.uncollectif(lambda provider, creds:
+                         creds != 'default' and provider.one_of(RHEVMProvider),
+                         reason="Cred type not relevant for RHEVM Provider.")
 def test_host_bad_creds(appliance, request, setup_provider, provider, creds):
     """
     Tests host credentialing  with bad credentials

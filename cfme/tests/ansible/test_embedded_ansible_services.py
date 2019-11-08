@@ -393,9 +393,9 @@ def test_service_ansible_retirement_remove_resources(
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(
-    lambda host_type, action: host_type == "blank" and action == "retirement"
-)
+@pytest.mark.uncollectif(lambda host_type, action:
+                         host_type == "blank" and action == "retirement",
+                         reason='Blank host type not valid for retirement action')
 @pytest.mark.parametrize(
     "host_type,order_value,result",
     SERVICE_CATALOG_VALUES,
@@ -639,21 +639,17 @@ def test_ansible_group_id_in_payload(
     assert "group" in result_dict["manageiq"]
 
 
-@pytest.mark.parametrize(
-    "credential", CREDENTIALS, ids=[cred[0] for cred in CREDENTIALS]
-)
-@pytest.mark.provider(
-    [RHEVMProvider, EC2Provider, VMwareProvider, AzureProvider], selector=ONE_PER_TYPE
-)
+@pytest.mark.parametrize("credential", CREDENTIALS, ids=[cred[0] for cred in CREDENTIALS])
+@pytest.mark.provider([RHEVMProvider, EC2Provider, VMwareProvider, AzureProvider],
+                      selector=ONE_PER_TYPE)
 @pytest.mark.uncollectif(
     lambda credential, provider: not (
         (credential[0] == "Amazon" and provider.one_of(EC2Provider))
         or (credential[0] == "VMware" and provider.one_of(VMwareProvider))
-        or (
-            credential[0] == "Red Hat Virtualization" and provider.one_of(RHEVMProvider)
-        )
+        or (credential[0] == "Red Hat Virtualization" and provider.one_of(RHEVMProvider))
         or (credential[0] == "Azure" and provider.one_of(AzureProvider))
-    )
+    ),
+    reason='Credential type not valid for parametrized provider'
 )
 def test_embed_tower_exec_play_against(
     appliance,
@@ -916,21 +912,17 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
 
 
 @pytest.mark.meta(automates=[1444092, 1515561])
-@pytest.mark.parametrize(
-    "credential", CREDENTIALS, ids=[cred[0] for cred in CREDENTIALS]
-)
-@pytest.mark.provider(
-    [RHEVMProvider, EC2Provider, VMwareProvider, AzureProvider], selector=ONE_PER_TYPE
-)
+@pytest.mark.parametrize("credential", CREDENTIALS, ids=[cred[0] for cred in CREDENTIALS])
+@pytest.mark.provider([RHEVMProvider, EC2Provider, VMwareProvider, AzureProvider],
+                      selector=ONE_PER_TYPE)
 @pytest.mark.uncollectif(
     lambda credential, provider: not (
         (credential[0] == "Amazon" and provider.one_of(EC2Provider))
         or (credential[0] == "VMware" and provider.one_of(VMwareProvider))
-        or (
-            credential[0] == "Red Hat Virtualization" and provider.one_of(RHEVMProvider)
-        )
+        or (credential[0] == "Red Hat Virtualization" and provider.one_of(RHEVMProvider))
         or (credential[0] == "Azure" and provider.one_of(AzureProvider))
-    )
+    ),
+    reason='Credential type not valid for parametrized provider'
 )
 @pytest.mark.tier(3)
 def test_ansible_service_cloud_credentials(appliance, request, ansible_catalog_item,

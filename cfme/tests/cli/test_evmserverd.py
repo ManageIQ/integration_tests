@@ -15,7 +15,8 @@ def start_evmserverd_after_module(appliance):
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda appliance: appliance.is_pod),
+    pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                            reason='CLI tests not valid on podified'),
     pytest.mark.usefixtures("start_evmserverd_after_module")
 ]
 

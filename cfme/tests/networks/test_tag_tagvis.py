@@ -59,9 +59,9 @@ def child_visibility(appliance, network_provider, relationship, view):
 
 @pytest.mark.parametrize("relationship,view", network_test_items,
                          ids=[rel[0] for rel in network_test_items])
-@pytest.mark.uncollectif(
-    lambda relationship, appliance: "Load Balancers" in relationship and appliance.version > "5.11",
-    reason="Cloud Load Balancers are removed in 5.11, see BZ 1672949")
+@pytest.mark.uncollectif(lambda relationship, appliance:
+                         "Load Balancers" in relationship and appliance.version >= "5.11",
+                         reason="Cloud Load Balancers are removed in 5.11, see BZ 1672949")
 def test_tagvis_network_provider_children(provider, appliance, request, relationship, view,
                                           tag, user_restricted):
     """

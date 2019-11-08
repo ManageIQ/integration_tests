@@ -49,7 +49,6 @@ ext_auth_options = [
 
 
 @pytest.mark.rhel_testing
-@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
 @pytest.mark.smoke
 @pytest.mark.tier(2)
 def test_appliance_console(appliance):

@@ -126,7 +126,8 @@ def test_config_manager_remove(config_manager):
 @pytest.mark.tier(3)
 @test_requirements.tag
 @pytest.mark.uncollectif(lambda config_manager_obj:
-                         isinstance(config_manager_obj, AnsibleTower))
+                         isinstance(config_manager_obj, AnsibleTower),
+                         reason='Ansible tower not valid for this test')
 def test_config_system_tag(config_system, tag, appliance, config_manager, config_manager_obj):
     """
     Polarion:
@@ -141,7 +142,8 @@ def test_config_system_tag(config_system, tag, appliance, config_manager, config
 @pytest.mark.tier(3)
 @test_requirements.tag
 @pytest.mark.uncollectif(lambda config_manager_obj:
-                         not isinstance(config_manager_obj, AnsibleTower))
+                         not isinstance(config_manager_obj, AnsibleTower),
+                         reason='Only Ansible tower is valid for this test')
 def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_manager_obj):
     """
     Polarion:
@@ -169,7 +171,8 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_ma
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj:
-                         not isinstance(config_manager_obj, AnsibleTower))
+                         not isinstance(config_manager_obj, AnsibleTower),
+                         reason='Only Ansible tower is valid for this test')
 @pytest.mark.parametrize('template_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
 def test_ansible_tower_service_dialog_creation_from_template(config_manager, appliance,
         template_type, config_manager_obj):

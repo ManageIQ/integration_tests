@@ -363,12 +363,10 @@ class TestTagsViaREST(object):
     )
     @pytest.mark.parametrize("collection_name", INFRA_COLLECTION + CLOUD_COLLECTION)
     @pytest.mark.uncollectif(
-        lambda appliance, collection_name, provider: (
-            provider.one_of(CloudProvider) and collection_name in INFRA_COLLECTION
-        )
-        or (
-            provider.one_of(InfraProvider) and collection_name in CLOUD_COLLECTION
-        )
+        lambda appliance, collection_name, provider:
+            (provider.one_of(CloudProvider) and collection_name in INFRA_COLLECTION) or
+            (provider.one_of(InfraProvider) and collection_name in CLOUD_COLLECTION),
+        reason='Invalid combination of provider type and collection name'
     )
     def test_assign_and_unassign_tag(self, appliance, tags_mod, provider, services_mod,
             service_templates, tenants, vm, collection_name, users):

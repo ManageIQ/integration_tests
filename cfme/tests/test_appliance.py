@@ -10,6 +10,9 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for_decorator
 
+POD_REASON = 'Test not valid for podified appliances'
+
+
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1), test_requirements.appliance]
 
 
@@ -24,7 +27,8 @@ pytestmark = [pytest.mark.smoke, pytest.mark.tier(1), test_requirements.applianc
     'rhn-check',
     'rhnlib',
 ])
-@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason=POD_REASON)
 def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations
 
@@ -39,7 +43,8 @@ def test_rpms_present(appliance, package):
     assert result.success
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason=POD_REASON)
 def test_selinux_enabled(appliance):
     """Verifies selinux is enabled
 
@@ -53,7 +58,8 @@ def test_selinux_enabled(appliance):
     assert 'Enforcing' in result
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason=POD_REASON)
 def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance
 
@@ -65,7 +71,8 @@ def test_firewalld_running(appliance):
     assert appliance.firewalld.is_active
 
 
-@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason=POD_REASON)
 def test_evm_running(appliance):
     """Verifies overall evm service is running on the appliance
 
@@ -86,8 +93,8 @@ def test_evm_running(appliance):
     'sshd',
     'db_service',
 ])
-@pytest.mark.uncollectif(
-    lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason=POD_REASON)
 def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up
 
@@ -102,7 +109,8 @@ def test_service_enabled(appliance, service):
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason=POD_REASON)
 def test_firewalld_services_are_active(appliance):
     """Verifies key firewalld services are in place
 
@@ -126,7 +134,8 @@ def test_firewalld_services_are_active(appliance):
 
 @pytest.mark.meta(blockers=[BZ(1712944)])
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(lambda appliance: appliance.is_pod)
+@pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
+                         reason=POD_REASON)
 def test_firewalld_active_zone_after_restart(appliance):
     """Verifies key firewalld active zone survives firewalld restart
 
