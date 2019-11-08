@@ -121,7 +121,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
 
     def __str__(self):
         return self.name
-    
+
     @property
     def data(self):
         """ Returns yaml data for this provider.
