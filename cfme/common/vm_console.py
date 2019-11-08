@@ -131,6 +131,8 @@ class VMConsole(Pretty):
 
         # Now run some java script to get the contents of the canvas element
         # base 64 encoded.
+        from IPython import embed
+        embed()
         image_base64_url = self.selenium.execute_script(
             "return arguments[0].toDataURL('image/jpeg',1);",
             canvas

@@ -4,7 +4,7 @@ from cfme import test_requirements
 
 
 @test_requirements.vmrc
-@pytest.mark.manual
+@pytest.mark.manual("manualonly")
 def test_vmrc_console_matrix():
     """
     This testcase is here to reflect testing matrix for vmrc consoles. Combinations listed
@@ -165,7 +165,7 @@ def test_vmrc_console_addremovevmwarecreds():
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.manual("manualonly")
 @test_requirements.vmrc
 @pytest.mark.tier(2)
 def test_vmrc_console_usecredwithlimitedvmrcaccess():

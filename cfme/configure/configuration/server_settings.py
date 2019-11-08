@@ -358,11 +358,11 @@ class ServerInformation(Updateable, Pretty):
 
                     self.appliance.ssh_client.run_command('unzip -o ~/WebMKS_SDK.zip -d {}'.format(
                         conf.cfme_data.vm_console.webmks_console.webmks_sdk_extract_location))
-
-        view = navigate_to(self.appliance.server, 'Server')
-        view.browser.refresh()
-        updated = view.vmware_console.fill(updates)
-        self._save_action(view, updated, reset)
+        if self.appliance.version < '5.11':
+            view = navigate_to(self.appliance.server, 'Server')
+            view.browser.refresh()
+            updated = view.vmware_console.fill(updates)
+            self._save_action(view, updated, reset)
 
     @property
     def vmware_console_values(self):

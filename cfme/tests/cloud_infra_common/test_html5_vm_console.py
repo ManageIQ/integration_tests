@@ -192,6 +192,7 @@ def test_html5_console_disabled():
     """
     For all versions of CFME 5.7 onward, VNC console should be Disabled
     for vsphere65 in OPSUI and SSUI
+    ONLY APPLICABLE TO VMware VNC CONSOLE 6.5/6.7
 
     Polarion:
         assignee: apagac
@@ -215,7 +216,7 @@ def test_html5_console_disabled():
 @pytest.mark.manual
 @test_requirements.html5
 @pytest.mark.tier(2)
-def test_html5_console_ports():
+def test_html5_negative_console_ports():
     """
     Negative port number should fail to open console
 
@@ -224,24 +225,6 @@ def test_html5_console_ports():
         casecomponent: Infra
         caseimportance: medium
         caseposneg: negative
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.html5
-@pytest.mark.tier(2)
-def test_html5_console_vncstartport5955_endportblank():
-    """
-    Should open connections for VNC port starting 5955 and keep opening
-    until ports exhausted.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.8
     """
@@ -262,116 +245,6 @@ def test_html5_console_ports_present():
         assignee: apagac
         casecomponent: Appliance
         initialEstimate: 1/4h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.html5
-@pytest.mark.tier(2)
-def test_html5_console_vncstartportblank_endport5901():
-    """
-    Should open connections for VNC port starting 5900 and end at 5901
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.html5
-@pytest.mark.tier(2)
-def test_html5_console_vncstartport5900_endport5902():
-    """
-    HTML5 tests have Host VNC start and End port settings now in Add
-    VMware provider section, specifying the port range limits number of
-    Consoles that can be opened simultaneously.We need to check that
-    End port - Start Port + 1 = Number of Connections(console) that can be
-    opened
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.html5
-@pytest.mark.tier(2)
-def test_html5_console_rhv():
-    """
-    Bugzilla:
-        1573739
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.html5
-@pytest.mark.tier(2)
-def test_html5_console_vncstartport5955_endport5956():
-    """
-    HTML5 tests have Host VNC start and End port settings now in Add
-    VMware provider section, specifying the port range limits number of
-    Consoles that can be opened simultaneously.We need to check that
-    End port - Start Port + 1 = Number of Connections(console) that can be
-    opened
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.html5
-@pytest.mark.tier(2)
-def test_html5_console_vncstartportblank_endportblank():
-    """
-    Both Start and End ports are blank. So Console will start opening with
-    port 5900 and you can open consoles until ports are exhausted.
-    UPDATE: I think console is going to be opened on
-    port_that_was_last_used + 1. This means it won"t always be 5900.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        initialEstimate: 1/2h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_html5_console_check_consistency_of_behavior():
-    """
-    Bugzilla:
-        1525692
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Appliance
-        initialEstimate: 3/4h
         startsin: 5.8
     """
     pass
