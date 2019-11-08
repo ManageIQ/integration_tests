@@ -4,6 +4,7 @@ from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic.xpath import quote
+from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
@@ -54,7 +55,10 @@ class ElementForm(AddBoxView):
         )
         field_required = DialogBootstrapSwitch(label='Required')
         default_value = DialogBootstrapSwitch(label='Default value')
-        field_required = DialogBootstrapSwitch(label='Required')
+        default_value_dropdown = BootstrapSelect(
+            locator='//label[contains(normalize-space(.), '
+                    '"Default value")]/following-sibling::div/span/div'
+        )
         field_past_dates = DialogBootstrapSwitch(label='Show Past Dates')
         field_category = Select(
             locator='.//select[../../../../label[normalize-space(text())="Category"]]')

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import date
+
 import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
@@ -7,67 +9,64 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate",
-                     blockers=[BZ(1633540, forced_streams=['5.10'],
-                        unblock=lambda provider: not provider.one_of(RHEVMProvider))]),
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
     test_requirements.dialog,
     pytest.mark.long_running,
-    pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE,
-                         required_fields=[['provisioning', 'template'],
-                                          ['provisioning', 'host'],
-                                          ['provisioning', 'datastore']],
-                         scope="module")
 ]
+
+WIDGETS = {
+    "Text Box": ("input", fauxfactory.gen_alpha(), "default_text_box"),
+    "Check Box": ("checkbox", True, "default_value"),
+    "Text Area": ("input", fauxfactory.gen_alpha(), "default_text_box"),
+    "Radio Button": ("radiogroup", "One", "default_value_dropdown"),
+    "Dropdown": ("dropdown", "Three", "default_value_dropdown"),
+    "Tag Control": ("dropdown", "Service Level", "field_category"),
+    "Timepicker": ("input", date.today().strftime("%m/%d/%Y"), None)
+}
 
 
 @pytest.fixture(scope="function")
-def tagcontrol_dialog(appliance):
+def service_dialog(appliance, widget_name):
     service_dialog = appliance.collections.service_dialogs
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = {
         'element_information': {
-            'ele_label': "Service Level",
-            'ele_name': "service_level",
-            'ele_desc': "service_level_desc",
-            'choose_type': "Tag Control",
+            'ele_label': fauxfactory.gen_alphanumeric(start="label_"),
+            'ele_name': fauxfactory.gen_alphanumeric(start="name_"),
+            'ele_desc': fauxfactory.gen_alphanumeric(start="desc_"),
+            'choose_type': widget_name,
         },
         'options': {
-            'field_category': "Service Level",
             'field_required': True
         }
     }
-    sd = service_dialog.create(label=dialog, description="my dialog")
-    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
-        tab_desc="my tab desc")
-    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
-        box_desc="my box desc")
+    wt, value, field = WIDGETS[widget_name]
+    if widget_name != "Timepicker":
+        element_data['options'][field] = value
+
+    sd = service_dialog.create(label=fauxfactory.gen_alphanumeric(start="dialog_"),
+                               description="my dialog")
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
+                         tab_desc="my tab desc")
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
+                           box_desc="my box desc")
     box.elements.create(element_data=[element_data])
-    yield sd
+    yield sd, element_data
+    sd.delete_if_exists()
 
 
 @pytest.fixture(scope="function")
-def catalog(appliance):
-    catalog = "cat_" + fauxfactory.gen_alphanumeric()
-    cat = appliance.collections.catalogs.create(name=catalog, description="my catalog")
-    yield cat
-
-
-@pytest.fixture(scope="function")
-def catalog_item(appliance, provider, provisioning, tagcontrol_dialog, catalog):
-    template, host, datastore, iso_file, vlan = list(map(provisioning.get,
-        ('template', 'host', 'datastore', 'iso_file', 'vlan')))
-
+def catalog_item(appliance, provider, provisioning, service_dialog, catalog):
+    sd, element_data = service_dialog
+    template, host, datastore, iso_file, vlan = list(map(
+        provisioning.get, ('template', 'host', 'datastore', 'iso_file', 'vlan'))
+    )
     provisioning_data = {
         'catalog': {'catalog_name': {'name': template, 'provider': provider.name},
                     'vm_name': random_vm_name('service')},
@@ -80,23 +79,54 @@ def catalog_item(appliance, provider, provisioning, tagcontrol_dialog, catalog):
         provisioning_data['catalog']['provision_type'] = 'Native Clone'
     elif provider.type == 'virtualcenter':
         provisioning_data['catalog']['provision_type'] = 'VMware'
-    item_name = fauxfactory.gen_alphanumeric()
+
     catalog_item = appliance.collections.catalog_items.create(
         provider.catalog_item_type,
-        name=item_name,
+        name=fauxfactory.gen_alphanumeric(),
         description="my catalog",
         display_in=True,
         catalog=catalog,
-        dialog=tagcontrol_dialog,
+        dialog=sd,
         prov_data=provisioning_data)
-    return catalog_item
+    yield catalog_item
+    catalog_item.delete_if_exists()
+
+
+@pytest.fixture(scope="function")
+def generic_catalog_item(appliance, service_dialog, catalog):
+    sd, element_data = service_dialog
+    item_name = fauxfactory.gen_alphanumeric()
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=item_name,
+        description=fauxfactory.gen_alphanumeric(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd)
+    yield catalog_item
+    catalog_item.delete_if_exists()
 
 
 @pytest.mark.rhv2
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
-def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
+@pytest.mark.provider(
+    [InfraProvider],
+    selector=ONE_PER_TYPE,
+    required_fields=[
+        ["provisioning", "template"],
+        ["provisioning", "host"],
+        ["provisioning", "datastore"],
+    ],
+    scope="module",
+)
+@pytest.mark.parametrize("widget_name", ["Tag Control"], ids=["tag_control"])
+def test_tagdialog_catalog_item(appliance, setup_provider, provider, catalog_item, request,
+                                service_dialog, widget_name):
     """Tests tag dialog catalog item
+
+    Bugzilla:
+        1633540
+
     Metadata:
         test_flag: provision
 
@@ -106,22 +136,21 @@ def test_tagdialog_catalog_item(appliance, provider, catalog_item, request):
         casecomponent: Services
         tags: service
     """
+    sd, element_data = service_dialog
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).cleanup_on_provider()
+            f"{vm_name}0001", provider).cleanup_on_provider()
     )
-    dialog_values = {'service_level': "Gold"}
+    dialog_values = {element_data['element_information']['ele_name']: 'Gold'}
     service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
-                                       name=catalog_item.name,
-                                       dialog_values=dialog_values)
+                                       name=catalog_item.name, dialog_values=dialog_values)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
-    request_description = catalog_item.name
-    provision_request = appliance.collections.requests.instantiate(request_description,
+    logger.info(f'Waiting for cfme provision request for service {catalog_item.name}')
+    provision_request = appliance.collections.requests.instantiate(catalog_item.name,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    msg = "Request failed with the message {}".format(provision_request.rest.message)
+    msg = f"Request failed with the message {provision_request.rest.message}"
     assert provision_request.is_succeeded(), msg
 
 
@@ -501,12 +530,19 @@ def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mod
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-@pytest.mark.parametrize('element_type', ['dropdown', 'text_box', 'checkbox', 'text_area',
-                                          'radiobutton', 'date_picker', 'timepicker', 'tagcontrol'])
-def test_dialog_elements_should_display_default_value(element_type):
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1385898])
+@pytest.mark.parametrize(
+    "widget_name", list(WIDGETS.keys()),
+    ids=["_".join(w.split()).lower() for w in WIDGETS.keys()],
+)
+def test_dialog_elements_should_display_default_value(appliance, generic_catalog_item,
+                                                      service_dialog, widget_name):
     """
+    Bugzilla:
+        1385898
+
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -521,7 +557,26 @@ def test_dialog_elements_should_display_default_value(element_type):
             1.
             2.
             3. Default values should be shown
-    Bugzilla:
-        1385898
     """
-    pass
+    sd, element_data = service_dialog
+    service_catalogs = ServiceCatalogs(
+        appliance, generic_catalog_item.catalog, generic_catalog_item.name
+    )
+    view = navigate_to(service_catalogs, "Order")
+    ele_name = element_data["element_information"]["ele_name"]
+    wt, value, field = WIDGETS[widget_name]
+    get_attr = getattr(view.fields(ele_name), wt)
+    if widget_name in ["Text Box", "Text Area", "Dropdown", "Timepicker", "Check Box"]:
+        value = (date.today().strftime("%Y-%m-%d")
+                 if widget_name == "Timepicker" and appliance.version < "5.11"
+                 else value)
+        assert get_attr.read() == value
+    elif widget_name == "Tag Control":
+        # In case of tag control, we do not have default value feature. But need to select category
+        # to check whether it fetches respective values or not
+        all_options = ["<Choose>", "Gold", "Platinum", "Silver"]
+
+        for option in get_attr.all_options:
+            assert option.text in all_options
+    else:
+        assert get_attr.selected == value
