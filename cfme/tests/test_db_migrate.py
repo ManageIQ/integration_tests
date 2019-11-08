@@ -121,22 +121,16 @@ def download_and_migrate_db(app, db_url):
         logger.info("Failed to download the v2_key or database_yml. "
                     "Will have to use the fix_auth tool.")
 
-    if app.version < '5.11':
-        app.db.migrate()
-        if not v2_key_available:
-            app.db.fix_auth_key()
-            app.db.fix_auth_dbyml()
+    if not v2_key_available:
+        app.db.fix_auth_key()
+        app.db.fix_auth_dbyml()
+        # To migrate the keys to CFME 5.11 the migration
+        # needs to reencrypt them. This won't work when the fix_auth was
+        # used before as it resets the credentials needed to decrypt the
+        # ansible keys. See BZ 1755553.
+        app.db.migrate(env_vars=["HARDCODE_ANSIBLE_PASSWORD=bogus"])
     else:
-        if not v2_key_available:
-            app.db.fix_auth_key()
-            app.db.fix_auth_dbyml()
-            # To migrate the keys to CFME 5.11 the migration
-            # needs to reencrypt them. This won't work when the fix_auth was
-            # used before as it resets the credentials needed to decrypt the
-            # ansible keys. See BZ 1755553.
-            app.db.migrate(env_vars=["HARDCODE_ANSIBLE_PASSWORD=bogus"])
-        else:
-            app.db.migrate()
+        app.db.migrate()
 
     # start evmserverd, wait for web UI to start and try to log in
     try:
@@ -154,8 +148,8 @@ def download_and_migrate_db(app, db_url):
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1734076])
 @pytest.mark.uncollectif(
-    lambda appliance, db_version: appliance.version >= '5.11' and Version(db_version) < '5.6',
-    reason='upgrade from CFME<5.6 to >=5.11 not supported: BZ#1765549')
+    lambda appliance, db_version: appliance.version >= '5.10' and Version(db_version) < '5.6',
+    reason='upgrade from CFME<5.6 to >=5.10 not supported: BZ#1765549')
 def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     """
     Polarion:
