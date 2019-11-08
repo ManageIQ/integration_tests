@@ -356,10 +356,10 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
 def setup_provider_min_hosts(request, appliance, provider, num_hosts):
     hosts_yaml = len(provider.data.get('hosts', {}))
     if hosts_yaml < num_hosts:
-        pytest.skip(f'Number of hosts defined in yaml for {provider.name} does not meet minimum '
+        pytest.skip(f'Number of hosts defined in yaml for {provider} does not meet minimum '
                     f'for test parameter {num_hosts}, skipping and not setting up provider')
     if len(provider.mgmt.list_host()) < num_hosts:
-        pytest.skip(f'Number of hosts on {provider.name} does not meet minimum '
+        pytest.skip(f'Number of hosts on {provider} does not meet minimum '
                     f'for test parameter {num_hosts}, skipping and not setting up provider')
     # Function-scoped fixture to set up a provider
     setup_or_skip(request, provider)
