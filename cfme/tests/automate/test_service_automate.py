@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.automate.dialog_import_export import DialogImportExport
 from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -405,3 +406,53 @@ def test_import_dialog_file_without_selecting_file(appliance, dialog):
     view.export.click()
     view.flash.assert_message("At least 1 item must be selected for export")
     dialog.update({'label': fauxfactory.gen_alphanumeric()})
+
+
+@pytest.fixture(scope="module")
+def new_user(appliance):
+    """This fixture creates new user which has permissions to perform operation on Vm"""
+    user = appliance.collections.users.create(
+        name=f"user_{fauxfactory.gen_alphanumeric().lower()}",
+        credential=Credential(principal=f'uid{fauxfactory.gen_alphanumeric(4)}',
+                              secret=fauxfactory.gen_alphanumeric(4)),
+        email=fauxfactory.gen_email(),
+        groups=appliance.collections.groups.instantiate(description="EvmGroup-vm_user"),
+        cost_center="Workload",
+        value_assign="Database",
+    )
+    yield user
+    user = appliance.rest_api.collections.users.get(name=user.name)
+    user.action.delete()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1747159])
+@pytest.mark.provider([VMwareProvider], scope='function', selector=ONE)
+def test_retire_vm_now(setup_provider, full_template_vm, new_user):
+    """
+    Bugzilla:
+        1747159
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup:
+            1. Add infrastructure provider
+            2. Provision VM
+            3. Create new user with group EvmGroup-vm_user
+        testSteps:
+            1. Select 'Retire this vm' from the UI to retire the VM
+            2. Check evm.logs
+        expectedResults:
+            1. VM should be retired
+            2. No errors in evm logs
+    """
+    with new_user:
+        with LogValidator("/var/www/miq/vmdb/log/evm.log",
+                          failure_patterns=[".*ERROR.*"]).waiting(timeout=720):
+            full_template_vm.retire()
+            assert full_template_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
+                                                             from_details=True)
