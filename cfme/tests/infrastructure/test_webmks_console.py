@@ -106,8 +106,8 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
         logger.info("Output of who --count is {} before login".format(result_before_login))
         # Enter Username:
         vm_console.send_keys(console_vm_username)
-
-        assert vm_console.wait_for_text(text_to_find="Password", timeout=200),\
+        # find only "Pass" as sometime tessaract reads "w" as "u" and fails
+        assert vm_console.wait_for_text(text_to_find="Pass", timeout=200),\
             "VM Console didn't prompt for Password"
         # Enter Password:
         vm_console.send_keys("{}\n".format(console_vm_password))
@@ -125,7 +125,8 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
                                             ensure_user=True)
                 logger.info("Output of 'who --count' is {} after login"
                 .format(result_after_login))
-                return result_before_login < result_after_login
+                return (result_before_login.output.split('=')[1][0] <
+                 result_after_login.output.split('=')[1][0])
             except socket.error as e:
                 if e.errno == socket.errno.ECONNRESET:
                     logger.exception("Socket Error Occured: [104] Connection Reset by peer.")
