@@ -14,6 +14,16 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
     'cfme/utils/ports.py',  # module object
     'cfme/utils/dockerbot/check_prs.py',  # unprotected script
     'cfme/utils/conf.py',  # config object that replaces the module
+    'cfme/intelligence/rss.py',  # import loops
+    'cfme/intelligence/timelines.py',
+    'cfme/intelligence/chargeback/rates.py',
+    'cfme/intelligence/chargeback/assignments.py',
+    'cfme/intelligence/chargeback/__init__.py',
+    'cfme/fixtures/widgets.py',
+    'cfme/dashboard.py',
+    'cfme/configure/tasks.py',
+    'cfme/scripting/bz.py',
+    'cfme/scripting/miq.py',
 ])
 
 
