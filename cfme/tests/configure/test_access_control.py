@@ -17,7 +17,6 @@ from cfme.services.myservice import MyService
 from cfme.tests.integration.test_cfme_auth import retrieve_group
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
-from cfme.utils.auth import get_auth_crud
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
@@ -73,9 +72,9 @@ def two_child_tenants(appliance):
 
 
 @pytest.fixture
-def setup_openldap_user_group(appliance, two_child_tenants):
-    auth_provider = get_auth_crud('cfme_openldap')
-    ldap_user = auth_user_data('cfme_openldap', 'uid')[0]
+def setup_openldap_user_group(appliance, two_child_tenants, openldap_auth_provider):
+    auth_provider = openldap_auth_provider
+    ldap_user = auth_user_data(auth_provider.key, 'uid')[0]
     retrieved_groups = []
 
     for group in ldap_user.groups:
@@ -2046,7 +2045,7 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth
                 - mike -> is member of both groups
             5. Login as 'mike' who is a member of 2 different tenants
             6. User should be able switch between groups after logging into classis UI.
-               Switching is done in a way that the current group is writtent into DB as
+               Switching is done in a way that the current group is written into DB as
                the active group. After switching to desired group,user is able login
                via Self Service UI to the desired tenant.
     """
@@ -2059,26 +2058,23 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth
         display_other_groups = [g for g in view.group_names if g != view.current_groupname]
         # Verify that user name is displayed
         soft_assert(view.current_fullname == user.name,
-                    'user full name "{}" did not match UI display name "{}"'
-                    .format(user.name, view.current_fullname))
+            f"user full name {user.name} did not match UI display name {view.current_fullname}")
         # Not checking current group, determined by group priority
         # Verify retrieved groups are displayed in the groups list in the UI.
         for group in retrieved_groups:
             soft_assert(group.description in view.group_names,
-                        u'user group "{}" not displayed in UI groups list "{}"'
-                        .format(group, view.group_names))
+                    f"user group {group} not displayed in UI groups list {view.group_names}")
 
         # change to the other groups
         for other_group in display_other_groups:
-            soft_assert(other_group in user.groups, u'Group {} in UI not expected for user {}'
-                .format(other_group, user.name))
+            soft_assert(other_group in user.groups,
+                f"Group {other_group} in UI not expected for user {user.name}")
             view.change_group(other_group)
             assert view.is_displayed, (u'Not logged in after switching to group {} for {}'
-                                       .format(other_group, user.name))
+                .format(other_group, user.name))
             # assert selected group has changed
             soft_assert(other_group == view.current_groupname,
-                        u'After switching to group {}, its not displayed as active'
-                        .format(other_group))
+                        f"After switching to group {other_group}, its not displayed as active")
 
     appliance.server.login_admin()
     assert user.exists, 'User record for "{}" should exist after login'.format(user.name)
