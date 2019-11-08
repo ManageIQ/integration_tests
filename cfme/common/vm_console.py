@@ -132,7 +132,8 @@ class VMConsole(Pretty):
         # Now run some java script to get the contents of the canvas element
         # base 64 encoded.
         image_base64_url = self.selenium.execute_script(
-            "return document.getElementById('mainCanvas').toDataURL('image/jpeg',1);",
+            "return (document.getElementById('mainCanvas') ||"
+            "document.getElementsByTagName('canvas')[0]).toDataURL('image/jpeg',1);",
             canvas
         )
 
@@ -186,6 +187,7 @@ class VMConsole(Pretty):
         """Send text to the console."""
         self.switch_to_console()
         canvas = self.provider.get_remote_console_canvas()
+        canvas.click()
         logger.info("Sending following Keys to Console {}".format(text))
         for character in text:
             canvas.send_keys(character)
