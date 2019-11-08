@@ -83,7 +83,7 @@ def pytest_collection_modifyitems(session, config, items):
         try:
             item._metadata = AttrDict(item.function.meta.kwargs)
         except AttributeError:
-            logger.warning('AttributeError getting metadata from item: {}'.format(
+            logger.debug('AttributeError getting metadata from item: {}'.format(
                 str(item.nodeid))
             )
             item._metadata = AttrDict()
