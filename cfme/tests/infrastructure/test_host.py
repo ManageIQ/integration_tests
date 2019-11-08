@@ -526,4 +526,4 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
         assert final_view.is_displayed
     except UnexpectedAlertPresentException:
         pytest.fail("Abandon changes alert displayed, but no changes made.")
-    # Todo add additional crud functionality.
+    # TODO add additional crud functionality.
