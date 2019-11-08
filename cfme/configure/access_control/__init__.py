@@ -308,10 +308,10 @@ class UserCollection(BaseCollection):
 
     ENTITY = User
 
-    def simple_user(self, userid, password, fullname=None):
+    def simple_user(self, userid, password, groups=None, fullname=None):
         """If a fullname is not supplied, userid is used for credential principal and user name"""
         creds = Credential(principal=userid, secret=password)
-        return self.instantiate(name=fullname or userid, credential=creds)
+        return self.instantiate(name=fullname or userid, credential=creds, groups=groups)
 
     def create(self, name=None, credential=None, email=None, groups=None, cost_center=None,
                value_assign=None, cancel=False):

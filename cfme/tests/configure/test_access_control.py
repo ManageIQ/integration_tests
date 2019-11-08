@@ -4,7 +4,6 @@ import traceback
 import fauxfactory
 import pytest
 
-import cfme.utils.auth as authutil
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.provider import base_types
@@ -17,6 +16,8 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
 from cfme.tests.integration.test_cfme_auth import retrieve_group
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.auth.authutil import auth_user_data
+from cfme.utils.auth.authutil import get_auth_crud
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
@@ -53,31 +54,60 @@ def new_role(appliance, name=None):
         vm_restriction='None')
 
 
-def _tenant(appliance, request, name=None):
-    child_tenant = appliance.collections.tenants.create(
-        name=name or fauxfactory.gen_alphanumeric(start='child_tenant'),
-        description=name or fauxfactory.gen_alphanumeric(start='child_tenant'),
+@pytest.fixture(scope='module')
+def two_child_tenants(appliance):
+    child_tenant1 = appliance.collections.tenants.create(
+        name='marketing',
+        description='marketing',
         parent=appliance.collections.tenants.get_root_tenant()
     )
-    return child_tenant
+    child_tenant2 = appliance.collections.tenants.create(
+        name='finance',
+        description='finance',
+        parent=appliance.collections.tenants.get_root_tenant()
+    )
+
+    yield child_tenant1, child_tenant2
+    child_tenant1.delete_if_exists()
+    child_tenant2.delete_if_exists()
+
+
+@pytest.fixture
+def setup_openldap_user_group(appliance, two_child_tenants):
+    auth_provider = get_auth_crud('cfme_openldap')
+    ldap_user = auth_user_data('cfme_openldap', 'uid')[0]
+    retrieved_groups = []
+
+    for group in ldap_user.groups:
+        if 'evmgroup' not in group.lower():
+            # create group in CFME via retrieve_group which looks it up on auth_provider
+            logger.info('Retrieving a user group that is non evm built-in: {}'.format(group))
+            tenant = 'My Company/marketing' if group == 'marketing' else 'My Company/finance'
+            retrieved_groups.append(retrieve_group(appliance,
+                                                   'ldap',
+                                                   ldap_user.username,
+                                                   group,
+                                                   auth_provider,
+                                                   tenant=tenant))
+        else:
+            logger.info('All user groups for group switching are evm built-in: {}'
+                    .format(ldap_user.groups))
+
+    user = appliance.collections.users.simple_user(
+        ldap_user.username,
+        credentials[ldap_user.password].password,
+        groups=ldap_user.groups,
+        fullname=ldap_user.fullname or ldap_user.username
+    )
+    yield user, retrieved_groups
+
+    user.delete_if_exists()
+    for group in retrieved_groups:
+        group.delete_if_exists()
 
 
 @pytest.fixture(scope='module')
-def child_tenant1(appliance, request):
-    child_tenant = _tenant(appliance, request, 'marketing')
-    yield child_tenant
-    child_tenant.delete_if_exists()
-
-
-@pytest.fixture(scope='module')
-def child_tenant2(appliance, request):
-    child_tenant = _tenant(appliance, request, 'finance')
-    yield child_tenant
-    child_tenant.delete_if_exists()
-
-
-@pytest.fixture(scope='module')
-def child_tenant(appliance, request):
+def child_tenant(appliance):
     child_tenant = appliance.collections.tenants.create(
         name='child_tenant{}'.format(fauxfactory.gen_alphanumeric()),
         description='tenant description',
@@ -1987,41 +2017,11 @@ def test_tenant_visibility_vms_all_childs():
     pass
 
 
-@pytest.fixture
-def setup_openldap_user_group(appliance):
-    auth_provider = authutil.get_auth_crud('cfme_openldap')
-    ldap_user = authutil.auth_user_data('cfme_openldap', 'uid')[0]
-    retrieved_groups = []
-    for group in ldap_user.groups:
-        if 'evmgroup' not in group.lower():
-            # create group in CFME via retrieve_group which looks it up on auth_provider
-            logger.info(u'Retrieving a user group that is non evm built-in: {}'.format(group))
-            retrieved_groups.append(retrieve_group(appliance,
-                                                   'ldap',
-                                                   ldap_user.username,
-                                                   group,
-                                                   auth_provider))
-        else:
-            logger.info('All user groups for group switching are evm built-in: {}'
-                    .format(ldap_user.groups))
-
-    user = appliance.collections.users.simple_user(
-        ldap_user.username,
-        credentials[ldap_user.password].password,
-        fullname=ldap_user.fullname or ldap_user.username
-    )
-    yield user, retrieved_groups
-
-    user.delete_if_exists()
-    for group in retrieved_groups:
-        group.delete_if_exists()
-
-
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
 @pytest.mark.meta(blockers=[BZ(1759291)])
-def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, child_tenant2,
-        setup_openldap_auth_provider, setup_openldap_user_group, soft_assert):
+def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth_provider,
+        setup_openldap_user_group, soft_assert):
     """
     User who is member of 2 or more LDAP groups can switch between tenants
 
@@ -2050,31 +2050,8 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, chil
                the active group. After switching to desired group,user is able login
                via Self Service UI to the desired tenant.
     """
-    user = setup_openldap_user_group
-    retrieved_groups = setup_openldap_user_group
-    """
-    auth_provider = authutil.get_auth_crud('cfme_openldap')
-    ldap_user = authutil.auth_user_data('cfme_openldap', 'uid')[0]
-    retrieved_groups = []
-    for group in ldap_user.groups:
-        if 'evmgroup' not in group.lower():
-            # create group in CFME via retrieve_group which looks it up on auth_provider
-            logger.info(u'Retrieving a user group that is non evm built-in: {}'.format(group))
-            retrieved_groups.append(retrieve_group(appliance,
-                                                   'ldap',
-                                                   ldap_user.username,
-                                                   group,
-                                                   auth_provider))
-        else:
-            logger.info('All user groups for group switching are evm built-in: {}'
-                    .format(ldap_user.groups))
+    user, retrieved_groups = setup_openldap_user_group
 
-    user = appliance.collections.users.simple_user(
-        ldap_user.username,
-        credentials[ldap_user.password].password,
-        fullname=ldap_user.fullname or ldap_user.username
-    )
-    """
     with user:
         view = navigate_to(appliance.server, 'LoggedIn')
         # Verify that multiple groups are displayed
@@ -2094,17 +2071,17 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, child_tenant1, chil
         # change to the other groups
         for other_group in display_other_groups:
             soft_assert(other_group in user.groups, u'Group {} in UI not expected for user {}'
-                .format(other_group, user.username))
+                .format(other_group, user.name))
             view.change_group(other_group)
             assert view.is_displayed, (u'Not logged in after switching to group {} for {}'
-                                       .format(other_group, user.username))
+                                       .format(other_group, user.name))
             # assert selected group has changed
             soft_assert(other_group == view.current_groupname,
                         u'After switching to group {}, its not displayed as active'
                         .format(other_group))
 
     appliance.server.login_admin()
-    assert user.exists, 'User record for "{}" should exist after login'.format(user.username)
+    assert user.exists, 'User record for "{}" should exist after login'.format(user.name)
 
 
 @pytest.mark.manual
