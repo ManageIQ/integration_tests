@@ -570,3 +570,44 @@ def test_reports_service_unavailable(temp_appliance_preconfig, file_name, restor
         menu_name="Host vLANs and vSwitches",
     ).saved_reports.instantiate("06/17/19 11:46:59 UTC", "06/17/19 11:44:57 UTC", False)
     assert saved_report.exists
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1678150])
+def test_reports_sort_column(set_and_get_tenant_quota, tenant_report):
+    """
+    Bugzilla:
+        1678150
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/3h
+        startsin: 5.11
+        testSteps:
+            1. Go to Cloud Intel -> Reports -> All Reports
+            2. Select a report and queue it, make sure it's not empty.
+            3. Note the order of content of a targeted column.
+            4. Sort the targetted column on the basis of some property.
+            5. Traverse through all the rows, note the order of content of the targeted column.
+            6. Sort the first order and compare it with the second order.
+        expectedResults:
+            1.
+            2.
+            3. Both the orders must be same.
+    """
+
+    column_name = "Quota Name"
+    view = navigate_to(tenant_report, "Details")
+
+    # sort in ascending order and note the order
+    tenant_report.sort_column(field=column_name, order="asc")
+    asc_list = [row[column_name].text for row in view.data_view.table.rows()]
+
+    # sort in the descending order and note the order
+    tenant_report.sort_column(field=column_name, order="desc")
+    desc_list = [row[column_name].text for row in view.data_view.table.rows()]
+
+    # assert the ascending list is reverse of descending list
+    assert desc_list == asc_list[::-1]

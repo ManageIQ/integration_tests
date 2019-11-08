@@ -5,6 +5,7 @@ from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import attributize_string
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Checkbox
 from widgetastic.widget import FileInput
@@ -233,14 +234,14 @@ class SavedReportDetailsView(CloudIntelReportsView):
 
     @View.nested
     class data_view(View):  # noqa
+        table = Table('//*[@id="report_list_div"]//table')
+        field = SelectorDropdown("id", "filterFieldTypeMenu")
+        search_text = SearchBox(locator='//input[contains(@placeholder, "search text")]')
+
+        # TODO: Write a separate paginator for data view
         def child_widget_accessed(self, widget):
             if self.parent.view_selector.selected != "Data View":
                 self.parent.view_selector.select("Data View")
-
-        table = Table('//*[@id="report_list_div"]//table')
-        paginator = PaginationPane()
-        field = SelectorDropdown("id", "filterFieldTypeMenu")
-        search_text = SearchBox(locator='//input[contains(@placeholder, "search text")]')
 
     @ParametrizedView.nested
     class download(ParametrizedView):  # noqa
@@ -642,10 +643,18 @@ class SavedReport(Updateable, BaseEntity):
 
     def filter_report_content(self, field, search_term):
         view = navigate_to(self, "Details")
-        view.data_view.paginator.set_items_per_page(1000)
+        # TODO: Add a working paginator for the data view
+        # view.data_view.paginator.set_items_per_page(1000)
         view.data_view.field.item_select(field)
         view.data_view.search_text.fill(search_term, refill=True)
         return view.data_view.table
+
+    def sort_column(self, field, order="asc"):
+        field = attributize_string(field)
+        view = navigate_to(self, "Details")
+        view.data_view.table.sort_by(field, order=order)
+        assert view.data_view.table.sorted_by == field
+        assert view.data_view.table.sort_order == order
 
 
 @attr.s
