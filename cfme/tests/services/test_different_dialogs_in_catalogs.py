@@ -424,23 +424,6 @@ def test_entries_shouldnt_be_mislabeled_for_dropdown_element_in_dialog_editor():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/16h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1571000
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_reconfigure_existing_duplicate_orders():
     """
