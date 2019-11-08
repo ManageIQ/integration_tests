@@ -222,9 +222,10 @@ def test_mapping_tags(
     soft_assert(not '{}: {}'.format(category.name, tag_value) in entity.get_tags())
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_ec2_tags_instances():
+@pytest.mark.parametrize("collection_type", ["vms", "templates"])
+@pytest.mark.provider([EC2Provider], override=True, scope='function')
+def test_ec2_tags(provider, request, collection_type, testing_instance):
     """
     Requirement: Have an ec2 provider
 
@@ -235,32 +236,23 @@ def test_ec2_tags_instances():
         initialEstimate: 1/6h
         startsin: 5.8
         testSteps:
-            1. Create an instance with tag test:testing
-            2. Refresh provider
-            3. Go to summary of this instance and check whether there is
+            1. Create an instance/choose image
+            2. tag it with test:testing on EC side
+            3. Refresh provider
+            4. Go to summary of this instance/image and check whether there is
             test:testing in Labels field
-            4. Delete that instance
+            5. Delete that instance/untag image
     """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_ec2_tags_images():
-    """
-    Requirement: Have an ec2 provider
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-        testSteps:
-            1. Select an AMI in AWS console and tag it with test:testing
-            2. Refresh provider
-            3. Go to summary of this image  and check whether there is
-            test:testing in Labels field
-            4. Delete that tag
-    """
-    pass
+    tag_key = f"test_{fauxfactory.gen_alpha()}"
+    tag_value = f"testing_{fauxfactory.gen_alpha()}"
+    if collection_type == "templates":
+        taggable = provider.mgmt.list_templates()[0]
+        request.addfinalizer(lambda: taggable.unset_tag(tag_key, tag_value))
+    else:
+        taggable = testing_instance.mgmt
+    taggable.set_tag(tag_key, tag_value)
+    provider.refresh_provider_relationships(wait=600)
+    collection = provider.appliance.provider_based_collection(provider, coll_type=collection_type)
+    taggable_in_cfme = collection.instantiate(taggable.name, provider)
+    view = navigate_to(taggable_in_cfme, 'Details')
+    assert view.entities.summary("Labels").get_text_of(tag_key) == tag_value
