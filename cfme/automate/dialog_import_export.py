@@ -19,6 +19,7 @@ class DialogImportExportView(BaseLoggedInPage):
     title = Text("#explorer_title_text")
     upload_file = FileInput(id="upload_file")
     upload = Button(id="upload_service_dialog_import")
+    export = Text('//button[text()="Export" and @name="button"]')
 
     def in_import_export(self):
         return (

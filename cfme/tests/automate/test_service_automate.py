@@ -5,10 +5,13 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.dialog_import_export import DialogImportExport
 from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 
@@ -378,8 +381,8 @@ def test_service_retire_automate():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1740796])
-def test_import_dialog_file_without_selecting_file():
+@pytest.mark.meta(automates=[1740796], blockers=[BZ(1740796, forced_streams=["5.10"])])
+def test_import_dialog_file_without_selecting_file(appliance, dialog):
     """
     Bugzilla:
         1740796
@@ -397,4 +400,8 @@ def test_import_dialog_file_without_selecting_file():
             1. Flash message: "At least 1 item must be selected for export"
             2. Error flash message should not appear
     """
-    pass
+    import_export = DialogImportExport(appliance)
+    view = navigate_to(import_export, "DialogImportExport")
+    view.export.click()
+    view.flash.assert_message("At least 1 item must be selected for export")
+    dialog.update({'label': fauxfactory.gen_alphanumeric()})
