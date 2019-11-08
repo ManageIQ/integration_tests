@@ -10,6 +10,7 @@ from wait_for import wait_for
 from cfme import test_requirements
 from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.utils import os
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
@@ -524,6 +525,7 @@ def test_appliance_console_external_auth_all(configured_appliance):
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1769901)])
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """ Commands:
     1. 'ap' launches appliance_console,
