@@ -398,7 +398,7 @@ smartstate = pytest.mark.requirement(
 snapshot = pytest.mark.requirement(
     "VM/Instance Snapshots",
     description='Snapshot support and management',
-    assignee_id='apagac',
+    assignee_id='prichard',
 )
 
 ssui = pytest.mark.requirement(
