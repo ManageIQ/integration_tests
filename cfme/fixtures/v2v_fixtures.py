@@ -40,10 +40,10 @@ def set_skip_event_history_flag(appliance):
         appliance.wait_for_web_ui()
 
 
-def _start_event_workers_for_osp(appliance, provider):
+def _start_event_workers_for_osp(appliance, target_provider):
     """This is a workaround to start event catchers until BZ 1753364 is fixed"""
-    provider_edit_view = navigate_to(provider, 'Edit')
-    endpoint_view = provider.endpoints_form(parent=provider_edit_view)
+    provider_edit_view = navigate_to(target_provider, 'Edit')
+    endpoint_view = target_provider.endpoints_form(parent=provider_edit_view)
     endpoint_view.events.event_stream.select("AMQP")
     endpoint_view.events.event_stream.select("Ceilometer")
     provider_edit_view.save.click()
@@ -57,10 +57,10 @@ def _start_event_workers_for_osp(appliance, provider):
 
 
 @pytest.fixture(scope="module")
-def v2v_provider_setup(request, appliance, source_provider, provider):
+def v2v_provider_setup(request, appliance, provider, target_provider):
     """ Fixture to setup providers """
     vmware_provider, rhv_provider, osp_provider = None, None, None
-    for v2v_provider in [source_provider, provider]:
+    for v2v_provider in [target_provider, provider]:
         if v2v_provider.one_of(VMwareProvider):
             vmware_provider = v2v_provider
             setup_or_skip(request, vmware_provider)
@@ -240,7 +240,7 @@ def __conversion_data(target_provider):  # noqa
 
 
 def set_conversion_host_api(
-        appliance, transformation_method, source_provider, target_provider):
+        appliance, transformation_method, provider, target_provider):
     """Setting conversion host for RHV and OSP provider via REST"""
     vmware_ssh_private_key = None
     vmware_vddk_package_url = None
@@ -254,7 +254,7 @@ def set_conversion_host_api(
     conversion_data = __conversion_data(target_provider)
     if transformation_method == "SSH":
         vmware_key = conf.credentials[
-            source_provider.data["private-keys"]["vmware-ssh-key"]["credentials"]]
+            provider.data["private-keys"]["vmware-ssh-key"]["credentials"]]
         vmware_ssh_private_key = vmware_key.password
     else:
         vmware_vddk_package_url = __vddk_url()
@@ -310,13 +310,13 @@ def __configure_conversion_host_ui(appliance, target_provider, hostname, default
         pytest.skip("Failed to set conversion host/instance: {}".format(hostname))
 
 
-def __set_conversion_instance_for_rhev_ui(appliance, source_provider,  # noqa
+def __set_conversion_instance_for_rhev_ui(appliance, provider,  # noqa
                                           rhv_provider, rhev_hosts,
                                           transformation_method):
     """
     Args:
         appliance:
-        source_provider: Vmware
+        provider: Vmware
         target_provider : RHEV
         transformation_method : vddk or ssh as per test requirement
         rhev_hosts: hosts in rhev to configure for conversion
@@ -329,7 +329,7 @@ def __set_conversion_instance_for_rhev_ui(appliance, source_provider,  # noqa
     # Fetch Vmware Key
     vmware_ssh_key = None
     if transformation_method == "SSH":
-        ssh_key_name = source_provider.data['private-keys']['vmware-ssh-key']['credentials']
+        ssh_key_name = provider.data['private-keys']['vmware-ssh-key']['credentials']
         vmware_ssh_key = conf.credentials[ssh_key_name]['password']
 
     # Configuration in UI
@@ -345,12 +345,12 @@ def __set_conversion_instance_for_rhev_ui(appliance, source_provider,  # noqa
                                        vmware_ssh_key)
 
 
-def __set_conversion_instance_for_osp_ui(appliance, source_provider,  # noqa
+def __set_conversion_instance_for_osp_ui(appliance, provider,  # noqa
                                          osp_provider, transformation_method):
     """
     Args:
         appliance:
-        source_provider: Vmware
+        provider: Vmware
         osp_provider: OSP
         transformation_method: vddk or ssh
     """
@@ -367,7 +367,7 @@ def __set_conversion_instance_for_osp_ui(appliance, source_provider,  # noqa
 
     vmware_ssh_key = None
     if transformation_method == "SSH":
-        ssh_key_name = source_provider.data['private-keys']['vmware-ssh-key']['credentials']
+        ssh_key_name = provider.data['private-keys']['vmware-ssh-key']['credentials']
         vmware_ssh_key = conf.credentials[ssh_key_name]['password']
 
     # Configuration in UI
@@ -387,37 +387,37 @@ def __set_conversion_instance_for_osp_ui(appliance, source_provider,  # noqa
                                        osp_ca_cert=tls_cert_key)
 
 
-def cleanup_target(provider, migrated_vm):
+def cleanup_target(target_provider, migrated_vm):
     """Helper function to cleanup instances and associated volumes from openstack"""
-    if provider.one_of(OpenStackProvider):
+    if target_provider.one_of(OpenStackProvider):
         volumes = []
-        vm = provider.mgmt.get_vm(migrated_vm.name)
+        vm = target_provider.mgmt.get_vm(migrated_vm.name)
         for vol in vm.raw._info['os-extended-volumes:volumes_attached']:
             volumes.append(vol['id'])
         migrated_vm.cleanup_on_provider()
-        provider.mgmt.delete_volume(*volumes)
+        target_provider.mgmt.delete_volume(*volumes)
 
 
-def get_vm(request, appliance, source_provider, template, datastore='nfs'):
+def get_vm(request, appliance, provider, template, datastore='nfs'):
     """ Helper method that takes template , source provider and datastore
         and creates VM on source provider to migrate .
 
     Args:
         request
         appliance:
-        source_provider: Provider on which vm is created
+        provider: Provider on which vm is created
         template: Template used for creating VM
         datastore: datastore in which VM is created. If no datastore
                    is provided then by default VM is created on nfs datastore
 
         returns: Vm object
     """
-    source_datastores_list = source_provider.data.get("datastores", [])
+    source_datastores_list = provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == datastore][0]
-    collection = source_provider.appliance.provider_based_collection(source_provider)
+    collection = provider.appliance.provider_based_collection(provider)
     vm_name = random_vm_name("v2v-auto")
     vm_obj = collection.instantiate(
-        vm_name, source_provider, template_name=template["name"]
+        vm_name, provider, template_name=template["name"]
     )
     power_on_vm = True
     if 'win10' in template.name:
@@ -453,41 +453,42 @@ def get_migrated_vm(src_vm_obj, target_provider):
     return migrated_vm
 
 
-def infra_mapping_default_data(source_provider, provider):
+def infra_mapping_default_data(provider, target_provider):
     """
     Default data for infrastructure mapping form.
     It is used in other methods to recursive update the data according
     to parameters in tests.
 
     Args:
-        source_provider: Vmware provider
-        provider: Target rhev/OSP provider
+        provider: Vmware provider
+        target_provider: Target rhev/OSP provider
     """
-    plan_type = VersionPicker({Version.lowest(): None,
-                               "5.10": "rhv" if provider.one_of(RHEVMProvider) else "osp"}).pick()
+    plan_type = VersionPicker(
+        {Version.lowest(): None,
+         "5.10": "rhv" if target_provider.one_of(RHEVMProvider) else "osp"}).pick()
     infra_mapping_data = {
         "name": "infra_map_{}".format(fauxfactory.gen_alphanumeric()),
         "description": "migration with vmware to {}".format(plan_type),
         "plan_type": plan_type,
-        "clusters": [component_generator("clusters", source_provider, provider)],
+        "clusters": [component_generator("clusters", provider, target_provider)],
         "datastores": [component_generator(
-            "datastores", source_provider, provider,
-            get_data(source_provider, "datastores", "nfs").type,
-            get_data(provider, "datastores", "nfs").type)],
+            "datastores", provider, target_provider,
+            get_data(provider, "datastores", "nfs").type,
+            get_data(target_provider, "datastores", "nfs").type)],
         "networks": [
-            component_generator("vlans", source_provider, provider,
-                                get_data(source_provider, "vlans", "VM Network"),
-                                get_data(provider, "vlans", "ovirtmgmt"))
+            component_generator("vlans", provider, target_provider,
+                                get_data(provider, "vlans", "VM Network"),
+                                get_data(target_provider, "vlans", "ovirtmgmt"))
         ],
     }
     return infra_mapping_data
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_mini(request, appliance, source_provider, provider, rhel7_minimal):
+def mapping_data_vm_obj_mini(request, appliance, provider, target_provider, rhel7_minimal):
     """Fixture to return minimal mapping data and vm object for migration plan"""
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
-    vm_obj = get_vm(request, appliance, source_provider, template=rhel7_minimal)
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
+    vm_obj = get_vm(request, appliance, provider, template=rhel7_minimal)
 
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping = infrastructure_mapping_collection.create(**infra_mapping_data)
@@ -501,13 +502,13 @@ def mapping_data_vm_obj_mini(request, appliance, source_provider, provider, rhel
 
 
 @pytest.fixture(scope="function")
-def mapping_data_multiple_vm_obj_single_datastore(request, appliance, source_provider, provider):
+def mapping_data_multiple_vm_obj_single_datastore(request, appliance, provider, target_provider):
     # this fixture will take list of N VM templates via request and call get_vm for each
     cluster = provider.data.get("clusters", [False])[0]
     if not cluster:
         pytest.skip("No data for cluster available on provider.")
 
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
     recursive_update(
         infra_mapping_data,
         {
@@ -518,13 +519,13 @@ def mapping_data_multiple_vm_obj_single_datastore(request, appliance, source_pro
     )
     vm_list = []
     for template_name in request.param[2]:
-        vm_list.append(get_vm(request, appliance, source_provider, template_name))
+        vm_list.append(get_vm(request, appliance, provider, template_name))
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=vm_list)
 
 
 @pytest.fixture(scope="function")
-def mapping_data_single_datastore(request, source_provider, provider):
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+def mapping_data_single_datastore(request, provider, target_provider):
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
     recursive_update(
         infra_mapping_data,
         {
@@ -533,7 +534,7 @@ def mapping_data_single_datastore(request, source_provider, provider):
             ),
             "datastores": [
                 component_generator(
-                    "datastores", source_provider, provider, request.param[0], request.param[1]
+                    "datastores", provider, target_provider, request.param[0], request.param[1]
                 )
             ],
         },
@@ -542,8 +543,8 @@ def mapping_data_single_datastore(request, source_provider, provider):
 
 
 @pytest.fixture(scope="function")
-def mapping_data_single_network(request, source_provider, provider):
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+def mapping_data_single_network(request, provider, target_provider):
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
     recursive_update(
         infra_mapping_data,
         {
@@ -552,7 +553,7 @@ def mapping_data_single_network(request, source_provider, provider):
             ),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, request.param[0], request.param[1]
+                    "vlans", provider, target_provider, request.param[0], request.param[1]
                 )
             ],
         }
@@ -561,14 +562,14 @@ def mapping_data_single_network(request, source_provider, provider):
 
 
 @pytest.fixture(scope="function")
-def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, provider):
-    vmware_nw = source_provider.data.get("vlans", [None])[0]
-    rhvm_nw = provider.data.get("vlans", [None])[0]
-    cluster = provider.data.get("clusters", [False])[0]
+def mapping_data_dual_vm_obj_dual_datastore(request, appliance, provider, target_provider):
+    vmware_nw = provider.data.get("vlans", [None])[0]
+    rhvm_nw = target_provider.data.get("vlans", [None])[0]
+    cluster = target_provider.data.get("clusters", [False])[0]
     if not vmware_nw or not rhvm_nw or not cluster:
         pytest.skip("No data for source or target network in providers.")
 
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
     recursive_update(
         infra_mapping_data,
         {
@@ -580,15 +581,15 @@ def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider,
             "datastores": [
                 component_generator(
                     "datastores",
-                    source_provider,
                     provider,
+                    target_provider,
                     request.param[0][0],
                     request.param[0][1],
                 ),
                 component_generator(
                     "datastores",
-                    source_provider,
                     provider,
+                    target_provider,
                     request.param[1][0],
                     request.param[1][1],
                 ),
@@ -596,29 +597,29 @@ def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider,
             "networks": [
                 component_generator(
                     "vlans",
-                    source_provider,
                     provider,
-                    source_provider.data.get("vlans")[0],
+                    target_provider,
                     provider.data.get("vlans")[0],
+                    target_provider.data.get("vlans")[0],
                 )
             ],
         },
     )
     # creating 2 VMs on two different datastores and returning its object list
-    vm_obj1 = get_vm(request, appliance, source_provider, request.param[0][2], request.param[0][0])
-    vm_obj2 = get_vm(request, appliance, source_provider, request.param[1][2], request.param[1][0])
+    vm_obj1 = get_vm(request, appliance, provider, request.param[0][2], request.param[0][0])
+    vm_obj2 = get_vm(request, appliance, provider, request.param[1][2], request.param[1][0])
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj1, vm_obj2])
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
-    vmware_nw = source_provider.data.get("vlans", [None])[0]
-    rhvm_nw = provider.data.get("vlans", [None])[0]
-    cluster = provider.data.get("clusters", [False])[0]
+def mapping_data_vm_obj_dual_nics(request, appliance, provider, target_provider):
+    vmware_nw = provider.data.get("vlans", [None])[0]
+    rhvm_nw = target_provider.data.get("vlans", [None])[0]
+    cluster = target_provider.data.get("clusters", [False])[0]
     if not vmware_nw or not rhvm_nw or not cluster:
         pytest.skip("No data for source or target network in providers.")
 
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
     recursive_update(
         infra_mapping_data,
         {
@@ -626,18 +627,18 @@ def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider)
                 network1=request.param[0], network2=request.param[1]),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, request.param[0], request.param[1])
+                    "vlans", provider, target_provider, request.param[0], request.param[1])
             ]
         }
     )
-    vm_obj = get_vm(request, appliance, source_provider, request.param[2])
+    vm_obj = get_vm(request, appliance, provider, request.param[2])
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_single_datastore(request, appliance, source_provider, provider):
+def mapping_data_vm_obj_single_datastore(request, appliance, provider, target_provider):
     """Return Infra Mapping form data and vm object"""
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
     recursive_update(
         infra_mapping_data,
         {
@@ -646,18 +647,18 @@ def mapping_data_vm_obj_single_datastore(request, appliance, source_provider, pr
             ),
             "datastores": [
                 component_generator(
-                    "datastores", source_provider, provider, request.param[0], request.param[1]
+                    "datastores", provider, target_provider, request.param[0], request.param[1]
                 )
             ],
         },
     )
-    vm_obj = get_vm(request, appliance, source_provider, request.param[2], request.param[0])
+    vm_obj = get_vm(request, appliance, provider, request.param[2], request.param[0])
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_single_network(request, appliance, source_provider, provider):
-    infra_mapping_data = infra_mapping_default_data(source_provider, provider)
+def mapping_data_vm_obj_single_network(request, appliance, provider, target_provider):
+    infra_mapping_data = infra_mapping_default_data(provider, target_provider)
     recursive_update(
         infra_mapping_data,
         {
@@ -666,16 +667,16 @@ def mapping_data_vm_obj_single_network(request, appliance, source_provider, prov
             ),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, request.param[0], request.param[1]
+                    "vlans", provider, target_provider, request.param[0], request.param[1]
                 )
             ],
         },
     )
-    vm_obj = get_vm(request, appliance, source_provider, request.param[2])
+    vm_obj = get_vm(request, appliance, provider, request.param[2])
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 
-def component_generator(selector, source_provider, provider, source_type=None, target_type=None):
+def component_generator(selector, provider, target_provider, source_type=None, target_type=None):
     """
     Component generator method to generate a dict of source and target
     components(clusters/datastores/networks).
@@ -686,8 +687,8 @@ def component_generator(selector, source_provider, provider, source_type=None, t
 
     Args:
         selector: can be clusters/datastores/vlans
-        source_provider: vmware provider to migrate from
-        provider:  rhev or osp provider or target provider to migrate to
+        provider: vmware provider to migrate from
+        target_provider:  rhev or osp provider or target provider to migrate to
         source_type: string source datastores/networks on vmware provider to migrate from.
                      Ex: if source_type is "iscsi". Provider data is checked for datastore with type
                      iscsi and that datastores name is used.
@@ -699,8 +700,8 @@ def component_generator(selector, source_provider, provider, source_type=None, t
     if selector not in ['clusters', 'datastores', 'vlans']:
         raise ValueError("Please specify cluster, datastore or network(vlans) selector!")
 
-    source_data = source_provider.data.get(selector, [])
-    target_data = provider.data.get(selector, [])
+    source_data = provider.data.get(selector, [])
+    target_data = target_provider.data.get(selector, [])
 
     if not (source_data and target_data):
         pytest.skip("No source and target data")
@@ -713,7 +714,7 @@ def component_generator(selector, source_provider, provider, source_type=None, t
         )
     elif selector == "datastores":
         # Ignoring target_type for osp and setting new value
-        if provider.one_of(OpenStackProvider):
+        if target_provider.one_of(OpenStackProvider):
             target_type = "volume"
 
         sources = [d.name for d in source_data if d.type == source_type]

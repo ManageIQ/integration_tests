@@ -28,13 +28,13 @@ pytestmark = [
         classes=[RHEVMProvider, OpenStackProvider],
         selector=ONE_PER_VERSION,
         required_flags=["v2v"],
+        fixture_name="target_provider",
         scope="module",
     ),
     pytest.mark.provider(
         classes=[VMwareProvider],
         selector=ONE_PER_TYPE,
         required_flags=["v2v"],
-        fixture_name="source_provider",
         scope="module",
     ),
     pytest.mark.usefixtures("v2v_provider_setup")
@@ -42,7 +42,7 @@ pytestmark = [
 
 
 @pytest.mark.parametrize('power_state', ['RUNNING', 'STOPPED'])
-def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
+def test_single_vm_migration_power_state_tags_retirement(appliance, target_provider,
                                                          mapping_data_vm_obj_mini,
                                                          power_state):
     """
@@ -74,7 +74,7 @@ def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         vm_list=mapping_data_vm_obj_mini.vm_list,
-        target_provider=provider
+        target_provider=target_provider
     )
 
     assert migration_plan.wait_for_state("Started")
@@ -83,7 +83,7 @@ def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
     assert migration_plan.wait_for_state("Successful")
 
     # check power state on migrated VM
-    rhv_prov = provider
+    rhv_prov = target_provider
     migrated_vm = rhv_prov.mgmt.get_vm(src_vm.name)
     assert power_state in migrated_vm.state
     # check tags
@@ -99,7 +99,7 @@ def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
 
 @pytest.mark.parametrize('mapping_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
         [rhel7_minimal, ubuntu16_template, rhel69_template, win7_template]]], indirect=True)
-def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert,
+def test_multi_host_multi_vm_migration(request, appliance, target_provider, soft_assert,
                                        mapping_data_multiple_vm_obj_single_datastore):
     """
     Polarion:
@@ -121,7 +121,7 @@ def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
         vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
-        target_provider=provider
+        target_provider=target_provider
     )
 
     assert migration_plan.wait_for_state("Started")
@@ -138,7 +138,7 @@ def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert
 
     wait_for(func=_is_migration_started, message="migration is not started for all VMs, "
              "be patient please", delay=5, num_sec=5400)
-    host_creds = provider.hosts.all()
+    host_creds = target_provider.hosts.all()
     hosts_dict = {key.name: [] for key in host_creds}
     for vm in vms:
         popup_text = request_details_list.read_additional_info_popup(vm)
@@ -154,7 +154,7 @@ def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert
     assert migration_plan.wait_for_state("Successful")
 
 
-def test_migration_special_char_name(appliance, provider, request,
+def test_migration_special_char_name(appliance, target_provider, request,
                                      mapping_data_vm_obj_mini):
     """Tests migration where name of migration plan is comprised of special non-alphanumeric
        characters, such as '@#$(&#@('.
@@ -175,7 +175,7 @@ def test_migration_special_char_name(appliance, provider, request,
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
         vm_list=mapping_data_vm_obj_mini.vm_list,
-        target_provider=provider
+        target_provider=target_provider
     )
 
     assert migration_plan.wait_for_state("Started")
@@ -185,16 +185,16 @@ def test_migration_special_char_name(appliance, provider, request,
 
     # validate MAC address matches between source and target VMs
     src_vm = mapping_data_vm_obj_mini.vm_list[0]
-    migrated_vm = get_migrated_vm(src_vm, provider)
+    migrated_vm = get_migrated_vm(src_vm, target_provider)
 
     @request.addfinalizer
     def _cleanup():
-        cleanup_target(provider, migrated_vm)
+        cleanup_target(target_provider, migrated_vm)
 
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
-def test_migration_long_name(request, appliance, provider, source_provider):
+def test_migration_long_name(request, appliance, provider, target_provider, rhel7_minimal):
     """Test to check VM name with 64 character should work
 
     Polarion:
@@ -202,17 +202,17 @@ def test_migration_long_name(request, appliance, provider, source_provider):
         initialEstimate: 1/2h
         casecomponent: V2V
     """
-    source_datastores_list = source_provider.data.get("datastores", [])
+    source_datastores_list = provider.data.get("datastores", [])
     source_datastore = [d.name for d in source_datastores_list if d.type == "nfs"][0]
-    collection = appliance.provider_based_collection(source_provider)
+    collection = appliance.provider_based_collection(provider)
 
     # Following code will create vm name with 64 characters
     vm_name = "{vm_name}{extra_words}".format(vm_name=random_vm_name(context="v2v"),
                                               extra_words=fauxfactory.gen_alpha(51))
     vm_obj = collection.instantiate(
         name=vm_name,
-        provider=source_provider,
-        template_name=rhel7_minimal(source_provider)["name"],
+        provider=provider,
+        template_name=rhel7_minimal["name"],
     )
     vm_obj.create_on_provider(
         timeout=2400,
@@ -220,7 +220,7 @@ def test_migration_long_name(request, appliance, provider, source_provider):
         allow_skip="default",
         datastore=source_datastore)
     request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
-    mapping_data = infra_mapping_default_data(source_provider, provider)
+    mapping_data = infra_mapping_default_data(provider, target_provider)
 
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping = infrastructure_mapping_collection.create(**mapping_data)
@@ -235,20 +235,20 @@ def test_migration_long_name(request, appliance, provider, source_provider):
         description="desc_long_name{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
         vm_list=[vm_obj],
-        target_provider=provider
+        target_provider=target_provider
     )
     assert migration_plan.wait_for_state("Started")
     assert migration_plan.wait_for_state("In_Progress")
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
 
-    migrated_vm = get_migrated_vm(vm_obj, provider)
+    migrated_vm = get_migrated_vm(vm_obj, target_provider)
     assert vm_obj.mac_address == migrated_vm.mac_address
 
 
 @pytest.mark.parametrize('mapping_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]],
  indirect=True)
-def test_migration_with_edited_mapping(request, appliance, source_provider, provider,
+def test_migration_with_edited_mapping(request, appliance, target_provider, provider,
                                        mapping_data_vm_obj_single_datastore):
     """
         Test migration with edited infrastructure mapping.
@@ -262,7 +262,7 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
             initialEstimate: 1h
         """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
-    mapping_data = infra_mapping_default_data(source_provider, provider)
+    mapping_data = infra_mapping_default_data(provider, target_provider)
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
     mapping.update(mapping_data_vm_obj_single_datastore.infra_mapping_data)
@@ -275,19 +275,19 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,
-        target_provider=provider)
+        target_provider=target_provider)
 
     assert migration_plan.wait_for_state("Started")
     assert migration_plan.wait_for_state("In_Progress")
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
 
-    migrated_vm = get_migrated_vm(src_vm_obj, provider)
+    migrated_vm = get_migrated_vm(src_vm_obj, target_provider)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
-        cleanup_target(provider, migrated_vm)
+        cleanup_target(target_provider, migrated_vm)
 
     assert src_vm_obj.mac_address == migrated_vm.mac_address
 
@@ -295,7 +295,7 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", ubuntu16_template]], indirect=True)
-def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_single_datastore):
+def test_migration_restart(request, appliance, target_provider, mapping_data_vm_obj_single_datastore):
     """
     Test migration by restarting evmserverd in middle of the process
 
@@ -318,7 +318,7 @@ def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_sin
         name="plan_{}".format(fauxfactory.gen_alphanumeric()),
         description="desc_{}".format(fauxfactory.gen_alphanumeric()),
         infra_map=mapping.name,
-        target_provider=provider,
+        target_provider=target_provider,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,
     )
     view = navigate_to(migration_plan, "InProgress")
@@ -347,11 +347,11 @@ def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_sin
         pass
     assert migration_plan.wait_for_state("Completed")
     assert migration_plan.wait_for_state("Successful")
-    migrated_vm = get_migrated_vm(src_vm_obj, provider)
+    migrated_vm = get_migrated_vm(src_vm_obj, target_provider)
 
     @request.addfinalizer
     def _cleanup():
         infrastructure_mapping_collection.delete(mapping)
-        cleanup_target(provider, migrated_vm)
+        cleanup_target(target_provider, migrated_vm)
 
     assert src_vm_obj.mac_address == migrated_vm.mac_address
