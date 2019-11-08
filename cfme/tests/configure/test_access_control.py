@@ -16,8 +16,8 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
 from cfme.tests.integration.test_cfme_auth import retrieve_group
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.auth.authutil import auth_user_data
-from cfme.utils.auth.authutil import get_auth_crud
+from cfme.utils.auth import auth_user_data
+from cfme.utils.auth import get_auth_crud
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
