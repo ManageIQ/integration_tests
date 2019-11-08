@@ -577,96 +577,6 @@ def test_redhat_domain_sync_after_upgrade():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1678135])
-def test_variable_pass_successive_playbook():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        setup:
-            1. Enable embedded ansible role
-        testSteps:
-            1. Add Ansible repo called billy -
-               https://github.com/ManageIQ/integration_tests_playbooks
-            2. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip ) to downloads
-               directory(Zip file with description - 'Automate domain' is attached with BZ(1678135)
-            3. Go to Automation/Automate Import/Export and import zip file
-            4. Click on "Toggle All/None" and hit the submit button
-            5. Go to Automation/Automate/Explorer and Enable the imported domain
-            6. Make sure all the playbook methods have all the information (see if Repository,
-               Playbook and Machine credentials have values), update if needed
-            7. Import or create hello_world (simple ansible dialog with Machine credentials and
-               hosts fields)
-            8. Create a Generic service using the hello_world dialog and select instance
-               'CatalogItemInitialization_jira24'(Note: This is the state machine which executes
-               playbooks successively) then order service
-            9. Run "grep dump_vars2 automation.log" from log directory
-        expectedResults:
-            1. Ansible repository added
-            2.
-            3.
-            4. Domain imported
-            5. Domain enabled
-            6. Playbook method updated(if needed as mentioned in step)
-            7. Ansible dialog created
-            8. Generic service catalog item created
-            9. Variables should be passed through successive playbooks and you should see logs like
-               this(https://bugzilla.redhat.com/show_bug.cgi?id=1678135#c13)
-
-    Bugzilla:
-        1678135
-    """
-    pass
-
-
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1678132])
-def test_variable_pass_method_playbook():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        setup:
-            1. Enable embedded ansible role
-        testSteps:
-            1. Add Ansible repo called billy -
-               https://github.com/ManageIQ/integration_tests_playbooks
-            2. Copy Export zip (Ansible_State_Machine_for_Ansible_stats3.zip ) to downloads
-               directory(Zip file with description - 'Automate domain' is attached with BZ(1678135)
-            3. Go to Automation/Automate Import/Export and import zip file
-            4. Click on "Toggle All/None" and hit the submit button
-            5. Go to Automation/Automate/Explorer and Enable the imported domain
-            6. Make sure all the playbook methods have all the information (see if Repository,
-               Playbook and Machine credentials have values), update if needed
-            7. Import or create hello_world (simple ansible dialog with Machine credentials and
-               hosts fields)
-            8. Create a Generic service using the hello_world dialog and select instance
-               'CatalogItemInitialization_jira23'(Note: This is the state machine which executes
-               playbooks and inline method successively) then order service
-            9. Run "grep dump_vars2 automation.log" from log directory
-        expectedResults:
-            1. Ansible repository added
-            2.
-            3.
-            4. Domain imported
-            5. Domain enabled
-            6. Playbook method updated(if needed as mentioned in step)
-            7. Ansible dialog created
-            8. Generic service catalog item created
-            9. Variables should be passed through successive playbooks and you should see logs like
-               this(https://bugzilla.redhat.com/show_bug.cgi?id=1678132#c5)
-
-    Bugzilla:
-        1678132
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1753860])
 def test_overwrite_import_domain():
     """
@@ -818,33 +728,6 @@ def test_copy_automate_method_without_edit():
             1.
             2.
             3. You should be able to copy the highlighted text
-    """
-    pass
-
-
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1747159])
-def test_retire_vm_automate():
-    """
-    Bugzilla:
-        1747159
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        setup:
-            1. Add infrastructure provider
-            2. Provision VM
-        testSteps:
-            1. Create custom domain, namespace, class, instance pointing to automate method
-            2. Add vm retire ruby code to automate method
-            3. Execute this method via simulation
-        expectedResults:
-            1.
-            2.
-            3. VM should retire
     """
     pass
 
