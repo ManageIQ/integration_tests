@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.rest import query_resource_attributes
@@ -10,32 +11,17 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.rest,
-    pytest.mark.usefixtures('config_manager_obj_module_scope'),
-    pytest.mark.uncollectif(
-        lambda config_manager_obj_module_scope: "ansible" not in config_manager_obj_module_scope
-    )
+    pytest.mark.provider([AnsibleTowerProvider], scope='module'),
+    pytest.mark.usefixtures('setup_provider')
 ]
 
 
-@pytest.fixture(scope='class')
-def config_manager(config_manager_obj_class_scope):
-    """Fixture that provides a random config manager and sets it up."""
-    if config_manager_obj_class_scope.type != 'Ansible Tower':
-        pytest.skip('A non "Ansible Tower" configuration manager provider was selected for test,'
-                    'Please verify cfme_data.yaml content.')
-
-    config_manager_obj_class_scope.create(validate=True)  # actually add it to CFME
-    yield config_manager_obj_class_scope
-
-    config_manager_obj_class_scope.delete()
-
-
 @pytest.fixture
-def authentications(appliance, config_manager):
+def authentications(appliance, provider):
     """Creates and returns authentication resources under /api/authentications."""
     auth_num = 2
     collection = appliance.rest_api.collections.authentications
-    prov = appliance.rest_api.collections.providers.get(name='{} %'.format(config_manager.name))
+    prov = appliance.rest_api.collections.providers.get(name='{} %'.format(provider.name))
     data = []
     cred_names = []
     for __ in range(auth_num):
@@ -212,7 +198,7 @@ class TestAuthenticationsRESTAPI(object):
         appliance.rest_api.collections.authentications.action.delete.POST(*authentications)
         assert_response(appliance, success=False)
 
-    def test_authentications_options(self, appliance, config_manager):
+    def test_authentications_options(self, appliance):
         """Tests that credential types can be listed through OPTIONS HTTP method.
 
         Metadata:
@@ -230,11 +216,15 @@ class TestAuthenticationsRESTAPI(object):
 
 
 @pytest.fixture
-def config_manager_rest(config_manager_obj):
+def config_manager_rest(provider):
     """Creates provider using REST API."""
-    config_manager_obj.create_rest()
-    assert_response(config_manager_obj.appliance)
-    rest_entity = config_manager_obj.rest_api_entity
+    # first remove the provider
+    provider.delete()
+    assert not provider.exists
+    # now create the provider via rest
+    provider.create_rest()
+    assert_response(provider.appliance)
+    rest_entity = provider.rest_api_entity
     rest_entity.reload()
 
     yield rest_entity

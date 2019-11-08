@@ -12,9 +12,6 @@ from cfme.infrastructure.config_management.config_systems.satellite import Satel
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.version import LATEST
-from cfme.utils.version import LOWEST
-from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Search
 
 
@@ -47,7 +44,7 @@ class SatelliteSystemsAllView(SatelliteProvidersAllView):
         )
 
 
-@attr.s
+@attr.s(cmp=False)
 class SatelliteProvider(ConfigManagerProvider):
     """
     Configuration manager object (Red Hat Satellite, Foreman)
@@ -79,12 +76,9 @@ class SatelliteProvider(ConfigManagerProvider):
 
             satellite_cfg_mgr.delete()
     """
-    type = VersionPicker({
-        LOWEST: 'Red Hat Satellite',
-        LATEST: 'Foreman'
-    })
     type_name = 'satellite'
     ssl = attr.ib(default=None)
+    ui_type = 'Red Hat Satellite'
 
     _collections = {
         "config_profiles": ConfigProfilesCollection
@@ -111,7 +105,7 @@ class SatelliteProvider(ConfigManagerProvider):
         )
 
 
-@navigator.register(SatelliteProvider, 'All')
+@navigator.register(SatelliteProvider, 'AllOfType')
 class MgrAll(CFMENavigateStep):
     VIEW = SatelliteProvidersAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -119,6 +113,10 @@ class MgrAll(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Configuration', 'Management')
         self.view.sidebar.providers.tree.click_path('All Configuration Manager Providers')
+
+    def resetter(self, *args, **kwargs):
+        # Reset view and selection
+        self.view.toolbar.view_selector.select("List View")
 
 
 @navigator.register(SatelliteSystemsCollection, 'All')

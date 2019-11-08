@@ -27,7 +27,7 @@ class ConfigProfile(BaseEntity, Pretty):
     @property
     def type(self):
         kind = "Configuration Profile"
-        if self.manager.type == "Ansible Tower":
+        if self.manager.type == "ansible_tower":
             kind = "Inventory Group"
         return kind
 
@@ -45,14 +45,11 @@ class ConfigProfilesCollection(BaseCollection):
     def all(self):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
         view = navigate_to(self.parent, "Details")
-        # TODO - remove it later.Workaround for BZ 1452425
-        view.toolbar.view_selector.select('List View')
-        view.toolbar.refresh.click()
         wait_for(lambda: view.entities.elements.is_displayed, fail_func=view.toolbar.refresh.click,
                  handle_exception=True, num_sec=60, delay=5)
         config_profiles = []
         for row in view.entities.elements:
-            if self.parent.type == 'Ansible Tower':
+            if self.parent.ui_type == 'Ansible Tower':
                 name = row.name.text
             else:
                 name = row.description.text

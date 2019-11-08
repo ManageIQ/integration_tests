@@ -60,7 +60,8 @@ from cfme.utils.wait import wait_for
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
 RECOGNIZED_BY_IP = [
-    "InfraManager", "ContainerManager", "Openstack::CloudManager"
+    "InfraManager", "ContainerManager", "Openstack::CloudManager", "ConfigurationManager",
+    "AutomationManager"
 ]
 RECOGNIZED_BY_CREDS = ["CloudManager", "Nuage::NetworkManager"]
 
@@ -610,6 +611,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             for prov in prov_cruds:
                 # Name check is authoritative and the only proper way to recognize a known provider
                 if ems_name == prov.name:
+                    found_cruds.add(prov)
+                    break
+                elif prov.name in ems_name:  # config managers append e.g. 'Automation Manager'
                     found_cruds.add(prov)
                     break
             else:

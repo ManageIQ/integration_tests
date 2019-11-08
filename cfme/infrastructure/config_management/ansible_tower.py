@@ -1,3 +1,4 @@
+import attr
 from navmazing import NavigateToAttribute
 from widgetastic.widget import View
 
@@ -42,6 +43,7 @@ class ConfigSystemAllView(AnsibleTowerProvidersAllView):
         )
 
 
+@attr.s(cmp=False)
 class AnsibleTowerProvider(ConfigManagerProvider):
     """
     Configuration manager object (Ansible Tower)
@@ -73,8 +75,8 @@ class AnsibleTowerProvider(ConfigManagerProvider):
 
             tower_cfg_mgr.delete()
     """
-    type = 'Ansible Tower'
     type_name = 'ansible_tower'
+    ui_type = 'Ansible Tower'
 
     _collections = {
         "config_profiles": ConfigProfilesCollection
@@ -100,7 +102,7 @@ class AnsibleTowerProvider(ConfigManagerProvider):
         )
 
 
-@navigator.register(AnsibleTowerProvider, 'All')
+@navigator.register(AnsibleTowerProvider, 'AllOfType')
 class MgrAll(CFMENavigateStep):
     VIEW = AnsibleTowerProvidersAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -108,6 +110,10 @@ class MgrAll(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
         self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
+
+    def resetter(self, *args, **kwargs):
+        # Reset view and selection
+        self.view.toolbar.view_selector.select("List View")
 
 
 @navigator.register(ConfigSystem, 'All')

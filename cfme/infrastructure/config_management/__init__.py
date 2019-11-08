@@ -1,5 +1,3 @@
-from copy import copy
-
 import attr
 from manageiq_client.api import APIException
 from manageiq_client.api import Entity as RestEntity
@@ -21,7 +19,6 @@ from cfme.infrastructure.config_management.config_profiles import ConfigProfile
 from cfme.infrastructure.config_management.config_profiles import ConfigProfilesCollection
 from cfme.infrastructure.config_management.config_systems import ConfigSystem
 from cfme.modeling.base import BaseCollection
-from cfme.utils import conf
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -36,6 +33,7 @@ from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import Button
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
@@ -136,8 +134,8 @@ class ConfigManagementCollectionView(BaseLoggedInPage):
     @property
     def in_config(self):
         """Determine if we're in the config section"""
-        object_type = getattr(self.context['object'].ENTITY, 'type', None)
-        if object_type == 'Ansible Tower':
+        object_type = getattr(self.context['object'], 'type', None)
+        if object_type == 'ansible_tower':
             nav_chain = ['Automation', 'Ansible Tower', 'Explorer']
         else:
             nav_chain = ['Configuration', 'Management']
@@ -154,7 +152,7 @@ class ConfigManagementView(BaseLoggedInPage):
     def in_config(self):
         """Determine if we're in the config section"""
         object_type = getattr(self.context['object'], 'type', None)
-        if object_type == 'Ansible Tower':
+        if object_type == 'ansible_tower':
             nav_chain = ['Automation', 'Ansible Tower', 'Explorer']
         else:
             nav_chain = ['Configuration', 'Management']
@@ -216,6 +214,23 @@ class ConfigManagementProfileEntities(BaseEntitiesView):
         elements = Table('//div[@id="main_div"]//div[@id="list_grid" or @id="gtl_div"]//table')
 
 
+class ConfigManagerProvidersAllView(ConfigManagementCollectionView):
+    """The main list view"""
+    toolbar = View.nested(ConfigManagementToolbar)
+    sidebar = View.nested(ConfigManagementSideBar)
+    search = View.nested(Search)
+    including_entities = View.include(ConfigManagementEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed?"""
+        title_text = 'All Configuration Management Providers'
+        return (
+            self.in_config and
+            self.entities.title.text == title_text
+        )
+
+
 class ConfigManagementProfileView(ConfigManagementView):
     """The profile page"""
     toolbar = View.nested(ConfigManagementDetailsToolbar)
@@ -230,7 +245,7 @@ class ConfigManagementProfileView(ConfigManagementView):
         return self.entities.title.text == title
 
 
-@attr.s
+@attr.s(cmp=False)
 class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
@@ -238,7 +253,6 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
     Args:
         name: Name of the config. manager
         url: URL, hostname or IP of the config. manager
-        ssl: Boolean value; `True` if SSL certificate validity should be checked, `False` otherwise
         credentials: Credentials to access the config. manager
         key: Key to access the cfme_data yaml data (same as `name` if not specified)
 
@@ -248,18 +262,29 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
 
     pretty_attr = ['name', 'key']
     _param_name = ParamClassName('name')
-    type = None
     category = "config_manager"
     refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
     name = attr.ib(default=None)
     url = attr.ib(default=None)
     credentials = attr.ib(default=None)
     key = attr.ib(default=None)
+    ui_type = None
 
     _collections = {"config_profiles": ConfigProfilesCollection}
 
     class Credential(BaseCredential, Updateable):
         pass
+
+    @property
+    def exists(self):
+        """ Returns ``True`` if a provider of the same name exists on the appliance
+            This overwrite of BaseProvider exists is necessary because MIQ appends
+            Configuration Manager to the provider name
+        """
+        for name in self.appliance.managed_provider_names:
+            if self.name in name:
+                return True
+        return False
 
     def create(self, cancel=False, validate_credentials=True, validate=True, force=False, **kwargs):
         """Creates the manager through UI
@@ -280,11 +305,11 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
             config_profiles_names = [prof.name for prof in self.config_profiles]
             logger.info(
                 "UI: %s\nYAML: %s",
-                set(config_profiles_names), set(self.yaml_data['config_profiles'])
+                set(config_profiles_names), set(self.data['config_profiles'])
             )
             # Just validate any profiles from yaml are in UI - not all are displayed
             return any(
-                [cp in config_profiles_names for cp in self.yaml_data['config_profiles']])
+                [cp in config_profiles_names for cp in self.data['config_profiles']])
 
         if not force and self.exists:
             return
@@ -292,7 +317,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         form_dict = self.__dict__
         form_dict.update(self.credentials.view_value_mapping)
 
-        view = navigate_to(self.parent, 'Add')
+        view = navigate_to(self, 'Add')
         view.entities.form.fill(form_dict)
         if validate_credentials:
             view.entities.form.validate.click()
@@ -303,12 +328,12 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         else:
             view.entities.add.wait_displayed('2s')
             view.entities.add.click()
-            success_message = '{} Provider "{}" was added'.format(self.type, self.name)
+            success_message = f'{self.ui_type} Provider "{self.name}" was added'
             view.flash.assert_success_message(success_message)
             view.flash.assert_success_message(self.refresh_flash_msg)
             if validate:
                 try:
-                    self.yaml_data['config_profiles']
+                    self.data['config_profiles']
                 except KeyError as e:
                     logger.exception(e)
                     raise
@@ -344,7 +369,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         else:
             view.entities.save.click()
             view.flash.assert_success_message(
-                '{} Provider "{}" was updated'.format(self.type, updates['name'] or self.name))
+                '{} Provider "{}" was updated'.format(self.ui_type, updates['name'] or self.name))
             self.__dict__.update(**updates)
 
     def delete(self, cancel=False, wait_deleted=True, force=False):
@@ -360,8 +385,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         """
         if not force and not self.exists:
             return
-        view = navigate_to(self.parent, 'All')
-        view.toolbar.view_selector.select('List View')
+        view = navigate_to(self, 'AllOfType')
         provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)
         provider_entity[0].check()
         remove_item = 'Remove selected items from Inventory'
@@ -398,9 +422,9 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
     def create_rest(self):
         """Create the config manager in CFME using REST"""
         include_ssl = False
-        if "ansible_tower" in self.key:
+        if self.type == "ansible_tower":
             config_type = "AnsibleTower"
-        elif "satellite" in self.key:
+        else:
             config_type = "Foreman"
             include_ssl = True
 
@@ -451,7 +475,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
 
     def refresh_relationships(self, cancel=False):
         """Refreshes relationships and power states of this manager"""
-        view = navigate_to(self.parent, 'All')
+        view = navigate_to(self, 'AllOfType')
         view.toolbar.view_selector.select('List View')
         provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)[0]
         provider_entity.check()
@@ -473,26 +497,6 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         return [item for sublist in systems_per_prof for item in sublist]
 
     @property
-    def yaml_data(self):
-        """Returns yaml data for this manager"""
-        return conf.cfme_data.configuration_managers[self.key]
-
-    def from_yaml(self, key):
-        """ Given key, returns an object with yaml properties filled in"""
-        new_obj = copy(self)
-        new_obj.key = key
-        new_obj.name = new_obj.yaml_data.get("name")
-        new_obj.url = new_obj.yaml_data.get("url")
-        if hasattr(new_obj, "ssl"):
-            new_obj.ssl = new_obj.yaml_data.get("ssl")
-        creds = conf.credentials.get(new_obj.yaml_data.get("credentials"))
-        new_obj.credentials = self.Credential(
-            principal=creds["username"],
-            secret=creds["password"]
-        )
-        return new_obj
-
-    @property
     def quad_name(self):
         return self.ui_name
 
@@ -511,10 +515,10 @@ class ConfigManagerProviderCollection(BaseCollection):
         return config_manager
 
 
-@navigator.register(ConfigManagerProviderCollection, 'Add')
+@navigator.register(ConfigManagerProvider, 'Add')
 class MgrAdd(CFMENavigateStep):
     VIEW = ConfigManagementAddView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Provider')
@@ -523,7 +527,7 @@ class MgrAdd(CFMENavigateStep):
 @navigator.register(ConfigManagerProvider, 'Edit')
 class MgrEdit(CFMENavigateStep):
     VIEW = ConfigManagementEditView
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
@@ -536,7 +540,7 @@ class MgrEdit(CFMENavigateStep):
 @navigator.register(ConfigManagerProvider, 'Details')
 class MgrDetails(CFMENavigateStep):
     VIEW = ConfigManagementDetailsView
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
@@ -548,7 +552,7 @@ class MgrDetails(CFMENavigateStep):
 @navigator.register(ConfigManagerProvider, 'EditFromDetails')
 class MgrEditFromDetails(CFMENavigateStep):
     VIEW = ConfigManagementEditView
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
@@ -584,3 +588,13 @@ class Details(CFMENavigateStep):
             )
 
         row.click()
+
+
+@navigator.register(ConfigManagerProviderCollection, "All")
+class ConfigManagerAllPage(CFMENavigateStep):
+
+    def step(self, *args, **kwargs):
+        raise NotImplementedError(
+            "There is no page in MIQ that displays all config managers."
+            " Use 'AllOfType' on a config manager provider instance."
+        )
