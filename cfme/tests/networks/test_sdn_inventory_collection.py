@@ -171,14 +171,8 @@ def test_sdn_nsg_firewall_rules(provider, appliance, secgroup_with_rule):
     secgroup = [i for i in secgrp_collection.all() if i.name == secgroup_with_rule][0]
     view = navigate_to(secgroup, 'Details')
 
-    if appliance.version > '5.11':
-        # Table has no extra rows.
-        assert 'TCP' == view.entities.firewall_rules[0][1].text
-        assert 'Inbound' == view.entities.firewall_rules[0][2].text
-        assert '22' == view.entities.firewall_rules[0][3].text
-        assert '*' == view.entities.firewall_rules[0][4].text
-    else:
-        # The table has two header rows. We cannot access the second one with
-        # widgetastic. So let's hope the column of index 3 is the Port Range
-        # column.
-        assert '22' == view.entities.firewall_rules[1][3].text
+    # Table has no extra rows.
+    assert 'TCP' == view.entities.firewall_rules[0][1].text
+    assert 'Inbound' == view.entities.firewall_rules[0][2].text
+    assert '22' == view.entities.firewall_rules[0][3].text
+    assert '*' == view.entities.firewall_rules[0][4].text
