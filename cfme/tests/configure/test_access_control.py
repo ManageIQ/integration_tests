@@ -14,8 +14,11 @@ from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
+from cfme.tests.integration.test_cfme_auth import retrieve_group
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.auth import auth_user_data
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.update import update
 
@@ -51,7 +54,59 @@ def new_role(appliance, name=None):
 
 
 @pytest.fixture(scope='module')
-def child_tenant(appliance, request):
+def two_child_tenants(appliance):
+    child_tenant1 = appliance.collections.tenants.create(
+        name='marketing',
+        description='marketing',
+        parent=appliance.collections.tenants.get_root_tenant()
+    )
+    child_tenant2 = appliance.collections.tenants.create(
+        name='finance',
+        description='finance',
+        parent=appliance.collections.tenants.get_root_tenant()
+    )
+
+    yield child_tenant1, child_tenant2
+    child_tenant1.delete_if_exists()
+    child_tenant2.delete_if_exists()
+
+
+@pytest.fixture
+def setup_openldap_user_group(appliance, two_child_tenants, openldap_auth_provider):
+    auth_provider = openldap_auth_provider
+    ldap_user = auth_user_data(auth_provider.key, 'uid')[0]
+    retrieved_groups = []
+
+    for group in ldap_user.groups:
+        if 'evmgroup' not in group.lower():
+            # create group in CFME via retrieve_group which looks it up on auth_provider
+            logger.info('Retrieving a user group that is non evm built-in: {}'.format(group))
+            tenant = 'My Company/marketing' if group == 'marketing' else 'My Company/finance'
+            retrieved_groups.append(retrieve_group(appliance,
+                                                   'ldap',
+                                                   ldap_user.username,
+                                                   group,
+                                                   auth_provider,
+                                                   tenant=tenant))
+        else:
+            logger.info('All user groups for group switching are evm built-in: {}'
+                    .format(ldap_user.groups))
+
+    user = appliance.collections.users.simple_user(
+        ldap_user.username,
+        credentials[ldap_user.password].password,
+        groups=ldap_user.groups,
+        fullname=ldap_user.fullname or ldap_user.username
+    )
+    yield user, retrieved_groups
+
+    user.delete_if_exists()
+    for group in retrieved_groups:
+        group.delete_if_exists()
+
+
+@pytest.fixture(scope='module')
+def child_tenant(appliance):
     child_tenant = appliance.collections.tenants.create(
         name='child_tenant{}'.format(fauxfactory.gen_alphanumeric()),
         description='tenant description',
@@ -1961,10 +2016,11 @@ def test_tenant_visibility_vms_all_childs():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
-def test_tenant_ldap_group_switch_between_tenants():
+@pytest.mark.meta(blockers=[BZ(1759291)])
+def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth_provider,
+        setup_openldap_user_group, soft_assert):
     """
     User who is member of 2 or more LDAP groups can switch between tenants
 
@@ -1977,25 +2033,51 @@ def test_tenant_ldap_group_switch_between_tenants():
         startsin: 5.5
         testSteps:
             1. Configure LDAP authentication on CFME
-            2. Create 2 different parent parent-tenants
+            2. Create 2 different parent-tenants
                 - marketing
                 - finance
-            3. Create groups marketing and finance (these are defined in LDAP) and
-            group names in LDAP and CFME must match, assign these groups to corresponding
-            tenants and assign them EvmRole-SuperAdministrator roles
+            3. Retrieve the following LDAP groups: marketing and finance
+               Assign these groups to the corresponding tenants created in the previous step .
+               Additionally, assign the EvmRole-SuperAdministrator role to the groups.
             4. In LDAP we have 3 users:
                 - bill -> member of marketing group
                 - jim -> member of finance group
                 - mike -> is member of both groups
-            5. Login as mike user who is member of 2 different tenants
-            6. User is able switch between groups - switching is done in a way
-            that current current group which is chosen is writtent into DB as
-            active group. Therefore user who is assigned to more groups must login
-            to Classic UI and switch to desired group. Afterthat he is able login
-            via Self Service UI to desired tenant
-
+            5. Login as 'mike' who is a member of 2 different tenants
+            6. User should be able switch between groups after logging into classis UI.
+               Switching is done in a way that the current group is written into DB as
+               the active group. After switching to desired group,user is able login
+               via Self Service UI to the desired tenant.
     """
-    pass
+    user, retrieved_groups = setup_openldap_user_group
+
+    with user:
+        view = navigate_to(appliance.server, 'LoggedIn')
+        # Verify that multiple groups are displayed
+        assert len(view.group_names) > 1, 'Only a single group is displayed for the user'
+        display_other_groups = [g for g in view.group_names if g != view.current_groupname]
+        # Verify that user name is displayed
+        soft_assert(view.current_fullname == user.name,
+            f"user full name {user.name} did not match UI display name {view.current_fullname}")
+        # Not checking current group, determined by group priority
+        # Verify retrieved groups are displayed in the groups list in the UI.
+        for group in retrieved_groups:
+            soft_assert(group.description in view.group_names,
+                    f"user group {group} not displayed in UI groups list {view.group_names}")
+
+        # change to the other groups
+        for other_group in display_other_groups:
+            soft_assert(other_group in user.groups,
+                f"Group {other_group} in UI not expected for user {user.name}")
+            view.change_group(other_group)
+            assert view.is_displayed, (u'Not logged in after switching to group {} for {}'
+                .format(other_group, user.name))
+            # assert selected group has changed
+            soft_assert(other_group == view.current_groupname,
+                        f"After switching to group {other_group}, its not displayed as active")
+
+    appliance.server.login_admin()
+    assert user.exists, 'User record for "{}" should exist after login'.format(user.name)
 
 
 @pytest.mark.manual
