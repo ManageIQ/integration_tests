@@ -588,14 +588,16 @@ def test_reports_sort_column(set_and_get_tenant_quota, tenant_report):
         testSteps:
             1. Go to Cloud Intel -> Reports -> All Reports
             2. Select a report and queue it, make sure it's not empty.
-            3. Note the order of content of a targeted column.
-            4. Sort the targetted column on the basis of some property.
-            5. Traverse through all the rows, note the order of content of the targeted column.
-            6. Sort the first order and compare it with the second order.
+            4. Sort the targetted column in ascending order and note the order of the content.
+            5. Sort the targetted column in descending order and note the order of the content.
+            6. Compare the ascending order with the reverse of descending order.
         expectedResults:
             1.
             2.
-            3. Both the orders must be same.
+            3.
+            4.
+            5.
+            6. The orders must be same.
     """
 
     column_name = "Quota Name"
