@@ -173,7 +173,8 @@ def test_login_evm_group(
     assert log_monitor.validate()
 
 
-def retrieve_group(temp_appliance_preconfig_long, auth_mode, username, groupname, auth_provider):
+def retrieve_group(temp_appliance_preconfig_long, auth_mode, username, groupname, auth_provider,
+        tenant=None):
     """Retrieve group from ext/ldap auth provider through UI
 
     Args:
@@ -185,6 +186,7 @@ def retrieve_group(temp_appliance_preconfig_long, auth_mode, username, groupname
     group = temp_appliance_preconfig_long.collections.groups.instantiate(
         description=groupname,
         role='EvmRole-user',
+        tenant=tenant,
         user_to_lookup=username,
         ldap_credentials=Credential(principal=auth_provider.bind_dn,
                                     secret=auth_provider.bind_password))
