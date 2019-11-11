@@ -329,31 +329,31 @@ def configure_appliances_ha(appliances, pwd):
 
         wait_for(lambda: apps0.db.is_dedicated_active, num_sec=4 * 60)
 
-        # Configure EVM webui appliance with create region in dedicated database
-        with SSHExpect(apps2) as interaction:
-            interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
-            interaction.answer('Choose the advanced setting: ',
-                               '5' if apps2.version < '5.10' else '7')  # Configure Database
-            interaction.answer(resc('Choose the encryption key: |1| '), '2')
-            interaction.send(app0_ip)
-            interaction.answer(resc('Enter the appliance SSH login: |root| '), '')
-            interaction.answer('Enter the appliance SSH password: ', pwd)
-            interaction.answer(
-                resc('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key| '),
-                '')
-            interaction.answer('Choose the database operation: ', '2', timeout=30)
-            interaction.answer('Enter the database region number: ', '0')
-            # WARNING: Creating a database region will destroy any existing data and
-            # cannot be undone.
-            interaction.answer(resc('Are you sure you want to continue? (Y/N):'), 'y')
-            interaction.answer('Enter the database hostname or IP address: ', app0_ip)
-            interaction.answer(resc('Enter the port number: |5432| '), '')
-            interaction.answer(r'Enter the name of the database on .*: \|vmdb_production\| ', '')
-            interaction.answer(resc('Enter the username: |root| '), '')
-            interaction.answer('Enter the database password on .*: ', pwd)
-            # Configuration activated successfully.
-            interaction.answer('Press any key to continue.', '', timeout=360)
+    # Configure EVM webui appliance with create region in dedicated database
+    with SSHExpect(apps2) as interaction:
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=20)
+        interaction.answer('Choose the advanced setting: ',
+                           '5' if apps2.version < '5.10' else '7')  # Configure Database
+        interaction.answer(resc('Choose the encryption key: |1| '), '2')
+        interaction.send(app0_ip)
+        interaction.answer(resc('Enter the appliance SSH login: |root| '), '')
+        interaction.answer('Enter the appliance SSH password: ', pwd)
+        interaction.answer(
+            resc('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key| '),
+            '')
+        interaction.answer('Choose the database operation: ', '2', timeout=30)
+        interaction.answer('Enter the database region number: ', '0')
+        # WARNING: Creating a database region will destroy any existing data and
+        # cannot be undone.
+        interaction.answer(resc('Are you sure you want to continue? (Y/N):'), 'y')
+        interaction.answer('Enter the database hostname or IP address: ', app0_ip)
+        interaction.answer(resc('Enter the port number: |5432| '), '')
+        interaction.answer(r'Enter the name of the database on .*: \|vmdb_production\| ', '')
+        interaction.answer(resc('Enter the username: |root| '), '')
+        interaction.answer('Enter the database password on .*: ', pwd)
+        # Configuration activated successfully.
+        interaction.answer('Press any key to continue.', '', timeout=360)
 
     apps2.evmserverd.wait_for_running()
     apps2.wait_for_web_ui()
