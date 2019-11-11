@@ -122,7 +122,7 @@ def report(directory):
     "--version",
     "-v",
     "version",
-    default=current_version().vstring,
+    default=lambda: current_version().vstring,
     help="Version for which to get BZs (e.g. 5.10.11.0)",
     show_default=True
 )
