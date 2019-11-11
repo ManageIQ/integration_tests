@@ -38,64 +38,6 @@ def test_reports_generate_custom_conditional_filter_report():
 @pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
-def test_date_should_be_change_in_editing_reports_scheduled():
-    """
-    Bugzilla:
-        1446052
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.3
-        setup:
-            1. Create a report schedule which runs once.
-            2. Select the schedule and edit it.
-        testSteps:
-            1. Under "Timer" Select "monthly"  every "month"
-            2. Try to change "Starting Date"
-        expectedResults:
-            1. "Timer" must change accordingly.
-            2. "Starting Date" must change accordingly.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(2)
-@pytest.mark.parametrize(
-    "report_type", ["hosts", "vm_operation", "policy_events", "custom"]
-)
-def test_custom_reports_with_timelines(report_type):
-    """
-    Cloud Intel->Reports allows to copy existing reports with timelines or
-    create new ones from scratch.
-    Such custom reports appear in Cloud Intel -> Timelines after creation.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: low
-        initialEstimate: 1/3h
-        setup:
-            1. Navigate to Cloud Intel > Reports > All Reports.
-            2. In the `All Reports` accordion, trace the report based on report_type.
-                and copy the report or create a new report if the report_type is `custom`.
-            3. Navigate to Cloud Intel > Timelines.
-        testSteps:
-            1. Check the Timelines tree.
-        expectedResults:
-            1. The copied/new report must appear under in the tree.
-                under [My Company (All Groups), Custom].
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
-@pytest.mark.tier(1)
 def test_vm_volume_free_space_less_than_20_percent():
     """
     Polarion:
