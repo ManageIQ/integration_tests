@@ -369,6 +369,18 @@ def configure_appliances_ha(appliances, pwd):
     return appliances
 
 
+def answer_cluster_related_questions(interaction, node_uid, db_name,
+        db_username, db_password):
+    # It seems like sometimes, the word "Enter " ... dosen't fit to the paramiko-expect buffer.
+    # This seems to happen when (re)configuring the standby replication node.
+    interaction.answer('.* the number uniquely identifying '
+                       'this node in the replication cluster: ', node_uid)
+    interaction.answer(resc('Enter the cluster database name: |vmdb_production| '), db_name)
+    interaction.answer(resc('Enter the cluster database username: |root| '), db_username)
+    interaction.answer('Enter the cluster database password: ', db_password)
+    interaction.answer('Enter the cluster database password: ', db_password)
+
+
 def configure_primary_replication_node(appl, pwd):
     # Configure primary replication node
     with SSHExpect(appl) as interaction:
@@ -378,14 +390,10 @@ def configure_primary_replication_node(appl, pwd):
         interaction.answer('Choose the advanced setting: ',
                            '6' if appl.version < '5.10' else '8')
         interaction.answer('Choose the database replication operation: ', '1')
-        interaction.answer('Enter the number uniquely identifying '
-                           'this node in the replication cluster: ', '1')
-        interaction.answer(resc('Enter the cluster database name: |vmdb_production| '), '')
-        interaction.answer(resc('Enter the cluster database username: |root| '), '')
-        interaction.answer('Enter the cluster database password: ', pwd)
-        interaction.answer('Enter the cluster database password: ', pwd)
+        answer_cluster_related_questions(interaction, node_uid='1',
+            db_name='', db_username='', db_password=pwd)
         interaction.answer(r'Enter the primary database hostname or IP address: \|.*\| ',
-                           appl.hostname)
+                        appl.hostname)
         interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
         interaction.answer('Press any key to continue.', '')
 
@@ -400,12 +408,8 @@ def reconfigure_primary_replication_node(appl, pwd):
         # 6/8 for Configure Database Replication
 
         interaction.answer('Choose the database replication operation: ', '1')
-        interaction.answer('Enter the number uniquely identifying '
-                           'this node in the replication cluster: ', '1')
-        interaction.answer(resc('Enter the cluster database name: |vmdb_production| '), '')
-        interaction.answer(resc('Enter the cluster database username: |root| '), '')
-        interaction.answer('Enter the cluster database password: ', pwd)
-        interaction.answer('Enter the cluster database password: ', pwd)
+        answer_cluster_related_questions(interaction, node_uid='1',
+            db_name='', db_username='', db_password=pwd)
         interaction.answer(r'Enter the primary database hostname or IP address: \|.*\| ',
                            appl.hostname)
         # Warning: File /etc/repmgr.conf exists. Replication is already configured
@@ -433,14 +437,8 @@ def configure_standby_replication_node(appl, pwd, primary_ip):
                                 '|/var/www/miq/vmdb/certs/v2_key| '), '')
         interaction.answer(resc('Choose the standby database disk: '),
                            '1' if appl.version < '5.10' else '2')
-        # "Enter " ... is on line above.
-        interaction.answer(
-            '.*the number uniquely identifying this '
-            'node in the replication cluster: ', '2')
-        interaction.answer(resc('Enter the cluster database name: |vmdb_production| '), '')
-        interaction.answer(resc('Enter the cluster database username: |root| '), '')
-        interaction.answer('Enter the cluster database password: ', pwd)
-        interaction.answer('Enter the cluster database password: ', pwd)
+        answer_cluster_related_questions(interaction, node_uid='2',
+            db_name='', db_username='', db_password=pwd)
         interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
         interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ',
                            appl.hostname)
@@ -472,13 +470,8 @@ def reconfigure_standby_replication_node(appl, pwd, primary_ip, repmgr_reconfigu
         interaction.answer(resc(
             "Are you sure you don't want to partition the Standby "
             "database disk? (Y/N): "), 'y')
-        interaction.answer(
-            '.*the number uniquely identifying this '
-            'node in the replication cluster: ', '2')
-        interaction.answer(resc('Enter the cluster database name: |vmdb_production| '), '')
-        interaction.answer(resc('Enter the cluster database username: |root| '), '')
-        interaction.answer('Enter the cluster database password: ', pwd)
-        interaction.answer('Enter the cluster database password: ', pwd)
+        answer_cluster_related_questions(interaction, node_uid='2',
+            db_name='', db_username='', db_password=pwd)
         interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
         interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ', '')
         interaction.answer(resc(
