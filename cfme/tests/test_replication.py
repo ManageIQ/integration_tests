@@ -1,4 +1,5 @@
 import pytest
+from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
@@ -137,20 +138,8 @@ def test_replication_delete_remote_from_global(setup_replication):
 
     # Remove the Remote subscription from Global
     region.replication.remove_global_appliance(host=remote_app.hostname)
-    assert not region.replication.get_replication_status(host=remote_app.hostname)
-
-
-@pytest.mark.manual
-def test_replication_low_bandwidth():
-    """
-    ~5MB/s up/down
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Replication
-        initialEstimate: 1/4h
-    """
-    pass
+    with pytest.raises(RowNotFound):
+        region.replication.get_replication_status(host=remote_app.hostname)
 
 
 @pytest.mark.manual
@@ -198,6 +187,7 @@ def test_replication_appliance_set_type_global_ui(setup_replication):
             1.
             2. No error, appliance subscribed.
     """
+    pass
 
 
 @pytest.mark.manual
