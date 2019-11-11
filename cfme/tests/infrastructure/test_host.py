@@ -390,14 +390,14 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
     """
     plural_char = '' if num_hosts == 1 else 's'
     my_slice = slice(0, num_hosts, None)
-    hosts_view = navigate_to(provider.collections.hosts, "All", force=True)
+    hosts_view = navigate_to(provider.collections.hosts, "All")
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=[f"'Refresh Provider' successfully initiated for "
                                               f"{num_hosts} Host{plural_char}"],
                             hostname=appliance.hostname)
     evm_tail.start_monitoring()
     for h in hosts_view.entities.get_all(slice=my_slice):
-        h.check()
+        h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Refresh Relationships and Power States',
                                                  handle_alert=True)
     hosts_view.flash.assert_success_message(
