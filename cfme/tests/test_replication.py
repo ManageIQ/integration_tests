@@ -31,6 +31,8 @@ def setup_replication(configured_appliance, unconfigured_appliance):
     global_app.set_pglogical_replication(replication_type=":global")
     global_app.add_pglogical_replication_subscription(remote_app.hostname)
 
+    return configured_appliance, unconfigured_appliance
+
 
 @pytest.mark.manual
 def test_replication_powertoggle():
@@ -113,9 +115,8 @@ def test_replication_re_add_deleted_remote(setup_replication):
     assert region.replication.get_replication_status(host=remote_app.hostname)
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
-def test_replication_delete_remote_from_global():
+def test_replication_delete_remote_from_global(setup_replication):
     """
     Delete remote subscription from global region
 
@@ -131,7 +132,12 @@ def test_replication_delete_remote_from_global():
             1.
             2. No error. Appliance unsubscribed.
     """
-    pass
+    remote_app, global_app = setup_replication
+    region = global_app.collections.regions.instantiate()
+
+    # Remove the Remote subscription from Global
+    region.replication.remove_global_appliance(host=remote_app.hostname)
+    assert not region.replication.get_replication_status(host=remote_app.hostname)
 
 
 @pytest.mark.manual
@@ -172,9 +178,8 @@ def test_replication_remote_to_global_by_ip_pglogical():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_appliance_set_type_global_ui():
+def test_replication_appliance_set_type_global_ui(setup_replication):
     """
     Set appliance replication type to "Global" and add subscription in the
     UI
@@ -193,7 +198,6 @@ def test_replication_appliance_set_type_global_ui():
             1.
             2. No error, appliance subscribed.
     """
-    pass
 
 
 @pytest.mark.manual
