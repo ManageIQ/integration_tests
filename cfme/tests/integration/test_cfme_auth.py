@@ -204,7 +204,9 @@ def retrieve_group(temp_appliance_preconfig_long, auth_mode, username, groupname
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode, auth_user:
                          auth_mode == 'amazon' or
-                         not any([True for g in auth_user.groups or [] if 'evmgroup' in g.lower()]),
+                         not any(
+                             [True for g in auth_user.groups or [] if 'evmgroup' not in g.lower()]
+                         ),
                          reason='Amazon auth mode with default groups tested elsewhere,'
                                 'or the auth user does not have an evm built-in group')
 def test_login_retrieve_group(
