@@ -463,7 +463,7 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
     ent_slice = slice(0, num_hosts, None)
     hosts_view = navigate_to(provider.collections.hosts, "All", force=True)
     for h in hosts_view.entities.get_all(slice=ent_slice):
-        h.check()
+        h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
     compare_hosts_view = provider.create_view(HostsCompareView)
