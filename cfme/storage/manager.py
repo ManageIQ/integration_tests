@@ -12,6 +12,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
+from cfme.common import TaggableCollection
 from cfme.common import TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.modeling.base import BaseCollection
@@ -25,6 +26,8 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.providers import get_crud_by_name
 from widgetastic_manageiq import Accordion
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import SummaryTable
@@ -35,6 +38,7 @@ class StorageManagerToolbar(View):
     """The toolbar on the Storage Manager or Provider page"""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class StorageManagerDetailsToolbar(View):
@@ -46,7 +50,7 @@ class StorageManagerDetailsToolbar(View):
     download = Button(title='Print or export summary')
 
 
-class StorageManagerEntities(View):
+class StorageManagerEntities(BaseEntitiesView):
     """The entities on the main list Storage Manager or Provider page"""
     table = Table(".//div[@id='list_grid' or @class='miq-data-table']/table")
 
@@ -92,7 +96,7 @@ class StorageManagerAllView(StorageManagerView):
             self.title.text in ('Storage Managers', self.context['object'].manager_type))
 
     toolbar = View.nested(StorageManagerToolbar)
-    entities = View.nested(StorageManagerEntities)
+    including_entities = View.include(StorageManagerEntities, use_parent=True)
     paginator = PaginationPane()
 
 
@@ -166,7 +170,7 @@ class StorageManager(BaseEntity, CustomButtonEventsMixin, Taggable, PolicyProfil
 
 
 @attr.s
-class BlockManagerCollection(BaseCollection):
+class BlockManagerCollection(BaseCollection, TaggableCollection):
     """Collection object [block manager] for the :py:class:'cfme.storage.manager'"""
     ENTITY = StorageManager
     manager_type = 'Block Storage Managers'
@@ -199,7 +203,7 @@ class BlockManagerCollection(BaseCollection):
 
 
 @attr.s
-class ObjectManagerCollection(BaseCollection):
+class ObjectManagerCollection(BaseCollection, TaggableCollection):
     """Collection object [object manager] for the :py:class:'cfme.storage.manager'"""
     ENTITY = StorageManager
     manager_type = 'Object Storage Managers'
@@ -246,9 +250,9 @@ class StorageManagerDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table, Name=self.obj.name)
+            row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
             row.click()
         except NoSuchElementException:
             raise ItemNotFound('Could not locate {}'.format(self.obj.name))
