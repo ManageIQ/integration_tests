@@ -147,7 +147,7 @@ def report(directory):
     "--filename",
     "-f",
     "fname",
-    default=f"bz-report-{current_version().vstring}.yaml",
+    default=lambda: f"bz-report-{current_version().vstring}.yaml",
     help="Filename into which the report is written (must be yaml file)"
 )
 def build_report(version, query_file, output, fname):
