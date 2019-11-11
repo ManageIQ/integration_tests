@@ -36,7 +36,9 @@ cloud_test_items = [
     ('cloud_av_zones', 'All'),
     ('cloud_tenants', 'All'),
     ('cloud_keypairs', 'All'),
-    ('cloud_images', 'AllForProvider')
+    ('cloud_images', 'AllForProvider'),
+    ('block_managers', 'All'),
+    ('object_managers', 'All'),
 ]
 
 
@@ -434,27 +436,6 @@ def test_tagvis_cloud_host_aggregates():
             5. Check cloud host aggregate is visible for restricted user
             6. Remove tag for cloud host aggregate via list
             7 . Check cloud host aggregate isn"t visible for restricted user
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_tagvis_storage_managers():
-    """
-    Polarion:
-        assignee: anikifor
-        casecomponent: Tagging
-        caseimportance: medium
-        initialEstimate: 1/8h
-        testSteps:
-            1. Create group with tag, use this group for user creation
-            2. Add tag(used in group) for storage manager via detail page
-            3. Remove tag for storage manager via detail page
-            4. Add tag for storage manager via list
-            5. Check storage manager is visible for restricted user
-            6. Remove tag for storage manager via list
-            7 . Check storage manager isn"t visible for restricted user
     """
     pass
 
