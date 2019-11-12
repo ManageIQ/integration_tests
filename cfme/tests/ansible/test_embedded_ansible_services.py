@@ -24,7 +24,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.meta(blockers=[BZ(1677548, forced_streams=["5.11"])]),
     test_requirements.ansible,
 ]
 
@@ -542,6 +541,7 @@ def test_service_ansible_playbook_pass_extra_vars(
 @pytest.mark.tier(3)
 def test_service_ansible_execution_ttl(
     request,
+    appliance,
     ansible_service_catalog,
     local_ansible_catalog_item,
     ansible_service,
@@ -579,7 +579,8 @@ def test_service_ansible_execution_ttl(
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
     view = navigate_to(ansible_service, "Details")
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    expected = 'successful' if appliance.version < '5.11' else 'Finished'
+    assert view.provisioning.results.get_text_of("Status") == expected
 
 
 @pytest.mark.tier(3)
@@ -700,21 +701,17 @@ def test_embed_tower_exec_play_against(
             }
 
         service = MyService(appliance, local_ansible_catalog_item.name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
         if service.exists:
             service.delete()
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
-    request_descr = (f"Provisioning Service [{local_ansible_catalog_item.name}] "
-        f"from [{local_ansible_catalog_item.name}]")
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+    if service_request.exists():
+        service_request.wait_for_request()
 
     view = navigate_to(ansible_service, "Details")
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    expected = 'successful' if appliance.version < '5.11' else 'Finished'
+    assert view.provisioning.results.get_text_of("Status") == expected
 
 
 @pytest.mark.tier(2)
@@ -828,7 +825,7 @@ def test_ansible_service_order_vault_credentials(
     request,
     local_ansible_catalog_item,
     ansible_service_catalog,
-    ansible_service_request,
+    ansible_service_request_funcscope,
     ansible_service,
 ):
     """
@@ -863,11 +860,12 @@ def test_ansible_service_order_vault_credentials(
         vault_creds.delete_if_exists()
 
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
+    ansible_service_request_funcscope.wait_for_request()
 
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    expected = 'successful' if appliance.version < '5.11' else 'Finished'
+    assert view.provisioning.results.get_text_of("Status") == expected
 
 
 @pytest.mark.tier(3)
@@ -901,11 +899,8 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     service_request.wait_for_request(num_sec=300, delay=20)
 
     view = navigate_to(ansible_service_funcscope, "Details")
-    assert (
-        view.provisioning.results.get_text_of("Status") == "successful"
-        if appliance.version < "5.11"
-        else "Finished"
-    )
+    expected = 'successful' if appliance.version < '5.11' else 'Finished'
+    assert view.provisioning.results.get_text_of("Status") == expected
 
 
 @pytest.mark.tier(3)
