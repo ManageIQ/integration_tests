@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from widgetastic.utils import ParametrizedLocator
 from widgetastic_patternfly import BootstrapSelect
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module contains control REST API specific tests."""
 import fauxfactory
 import pytest

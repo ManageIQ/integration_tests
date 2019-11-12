@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Module containing classes with common behaviour for consoles of both VMs and Instances of all types.
 """

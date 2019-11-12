@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Plugin that does basic test case validation.
 
 Use ``--validate-test-cases`` to enable it.

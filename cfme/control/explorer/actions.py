@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 import attr
 from cached_property import cached_property

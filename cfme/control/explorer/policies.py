@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 from copy import copy
 

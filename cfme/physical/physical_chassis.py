@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalChassis in CFME."""
 import attr
 from lxml.html import document_fromstring

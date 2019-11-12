@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # added new list_tbl definition
 import attr
 from navmazing import NavigateToAttribute

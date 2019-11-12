@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module contains tests that check priority of domains."""
 import fauxfactory
 import pytest

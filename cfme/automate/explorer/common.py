@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from widgetastic.utils import Fillable
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text

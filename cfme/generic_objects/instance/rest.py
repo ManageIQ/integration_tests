@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from cfme.generic_objects.definition.associations import get_rest_resource
 from cfme.generic_objects.instance import GenericObjectInstance
 from cfme.generic_objects.instance import GenericObjectInstanceCollection

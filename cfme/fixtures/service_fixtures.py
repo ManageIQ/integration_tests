@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 import yaml
 from riggerlib import recursive_update

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboards"""
 import attr
 from navmazing import NavigateToAttribute

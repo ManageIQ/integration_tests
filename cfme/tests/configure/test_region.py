@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import fauxfactory
 
 from cfme.utils.appliance.implementations.ui import navigate_to

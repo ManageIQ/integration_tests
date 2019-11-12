@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Page model for Automation/Ansible/Repositories"""
 import attr
 from navmazing import NavigateToAttribute

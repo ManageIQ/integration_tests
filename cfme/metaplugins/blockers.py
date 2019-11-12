@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A generalized framowork for handling test blockers.
 
 Currently handling Bugzilla, GitHub and JIRA issues. For extensions, see this file and

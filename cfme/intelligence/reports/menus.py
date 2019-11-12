@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module handling report menus contents"""
 from contextlib import contextmanager
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute

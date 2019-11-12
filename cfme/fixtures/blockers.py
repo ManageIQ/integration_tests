@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Collection of fixtures for simplified work with blockers.
 
 You can use the :py:func:`blocker` fixture to retrieve any blocker

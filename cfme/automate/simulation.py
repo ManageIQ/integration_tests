@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 

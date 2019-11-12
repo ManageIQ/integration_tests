@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module tests tagging of objects in different locations."""
 import pytest
 

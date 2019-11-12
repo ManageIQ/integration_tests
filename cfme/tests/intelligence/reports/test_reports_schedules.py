@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
 import yaml

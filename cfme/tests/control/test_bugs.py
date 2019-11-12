@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import random
 from collections import namedtuple
 from datetime import datetime

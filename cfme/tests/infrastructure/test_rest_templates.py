@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from wrapanapi.exceptions import MultipleItemsError
 from wrapanapi.exceptions import NotFoundError

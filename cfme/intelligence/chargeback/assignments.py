@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Assignments.
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling

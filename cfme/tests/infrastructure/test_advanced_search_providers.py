@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This testing module tests the behaviour of the search box in the Provider section
 
 It does not check for filtering results so far."""

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Method variant decorator. You specify the desired method variant by a kwarg.
 
 .. code-block:: python

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module tests events that are invoked by Cloud/Infra VMs."""
 import fauxfactory
 import pytest

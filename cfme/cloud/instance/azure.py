@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import attr
 from riggerlib import recursive_update
 

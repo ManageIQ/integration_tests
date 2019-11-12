@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Cleanup unused instance snapshot from glance repository
 
 Usage: scripts/cleanup_openstack_instance_snapshot.py [optional list of provider keys]

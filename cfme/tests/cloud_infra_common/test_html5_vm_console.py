@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test for HTML5 Remote Consoles of VMware/RHEV/RHOSP Providers."""
 import imghdr
 import re

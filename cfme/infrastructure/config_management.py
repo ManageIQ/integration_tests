@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from manageiq_client.api import APIException
 from manageiq_client.api import Entity as RestEntity
 from navmazing import NavigateToAttribute

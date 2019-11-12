@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Cleanup unattached volumes
 
 Usage: scripts/cleanup_openstack_volumes.py [optional list of provider keys]

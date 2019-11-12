@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Cleanup unassigned floating ips
 
 Usage: scripts/cleanup_openstack_fips.py [optional list of provider keys]

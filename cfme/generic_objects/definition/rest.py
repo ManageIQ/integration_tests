@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from cfme.generic_objects.definition import GenericObjectDefinition
 from cfme.generic_objects.definition import GenericObjectDefinitionCollection
 from cfme.utils.appliance import MiqImplementationContext

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module tests Redfish physical infrastructure events."""
 import pytest
 

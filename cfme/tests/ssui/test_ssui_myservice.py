@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test Service Details page functionality."""
 import pytest
 
