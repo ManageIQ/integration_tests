@@ -74,6 +74,13 @@ class VMConsole(Pretty):
         self.appliance_handle = appliance_handle
         self.provider = vm.provider
 
+    @property
+    def console_type(self):
+        self.switch_to_console()
+        console_type = self.provider.get_console_type_name()
+        self.switch_to_appliance()
+        return console_type
+
     ###
     # Methods
     #

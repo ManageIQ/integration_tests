@@ -70,6 +70,15 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         - A command that creates a file will be sent through the console.
         - Using ssh we will check that the command worked (i.e. that the file
           was created.
+    In the latest 5.11 build, for VMware, if VNC is not available for a VM, CFME Falls forward to
+    WebMKS. To avoid that from happening, make sure your VM(.vmx)/Template(.vmtx) file
+    has following two lines in it:
+
+    RemoteDisplay.vnc.enabled = "true"
+    RemoteDisplay.vnc.port = "5900"
+
+    If not for above lines, Console may fall forward to WebMKS which is not something we
+    want in this test case.
 
     Polarion:
         assignee: apagac
@@ -81,8 +90,6 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
     console_vm_password = credentials[provider.data.templates.get('console_template')
                             ['creds']].get('password')
 
-    # Ensuring VM has pingable IP is important before attemping console operations for reliability
-    wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=240)
     vm_obj.open_console(console='VM Console')
     assert vm_obj.vm_console, 'VMConsole object should be created'
     vm_console = vm_obj.vm_console
@@ -99,7 +106,16 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
             # canvas and cannot send keys or interact, hence only basic check that VM Console
             # does have some text displayed in it is all we will do.
             assert vm_console.get_screen_text() != '', "Console Screen is blank"
-        else:
+        elif provider.one_of(VMwareProvider):
+            # VMware VM Console has selenium issue where selenium fails to focus on
+            # canvas and cannot send keys or interact, hence only basic check that VM Console
+            # does have some text displayed and it is correct type of console is all we will do.
+            assert vm_console.console_type == 'VNC', ("Wrong console type: looking for VNC found {}"
+                .format(vm_console.console_type))
+            assert vm_console.get_screen_text() != '', "Console Screen is blank"
+        else:  # RHV provider
+            # Ensure pingable IP is present before trying console operations for reliability
+            wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=240)
             assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
             " didn't prompt for Login")
 
@@ -196,24 +212,6 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
 
 
 @pytest.mark.manual
-@test_requirements.html5
-@pytest.mark.tier(2)
-def test_html5_negative_console_ports():
-    """
-    Negative port number should fail to open console(VMware only)
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/2h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_html5_console_ports_present():
     """
@@ -221,7 +219,7 @@ def test_html5_console_ports_present():
         1514594
 
     Check to see if the Add provider screen has the Host VNC Start Port
-    and Host VNC End port.
+    and Host VNC End port - applicable for VMware 6.0 only.
 
     Polarion:
         assignee: apagac

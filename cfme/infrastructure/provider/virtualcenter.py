@@ -47,6 +47,7 @@ class VMwareProvider(InfraProvider):
     _fullscreen_xpath = '//*[@id="fullscreen"]'
     bad_credentials_error_msg = 'Cannot complete login due to an incorrect user name or password.'
     log_name = 'vim'
+    _console_type = '//*[@id="console-type"]'
 
     ems_events = [
         ('vm_create', {'event_type': 'VmDeployedEvent', 'dest_vm_or_template_id': None}),
@@ -109,3 +110,6 @@ class VMwareProvider(InfraProvider):
 
     def get_console_fullscreen_btn(self):
         return self._try_element_lookup(self._fullscreen_xpath)
+
+    def get_console_type_name(self):
+        return self._try_element_lookup(self._console_type).text
