@@ -15,6 +15,7 @@ from cfme.services.myservice import MyService
 from cfme.services.myservice.ssui import DetailsMyServiceView
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -23,7 +24,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     test_requirements.ssui,
-    pytest.mark.long_running,
     pytest.mark.provider(
         selector=ONE_PER_TYPE,
         gen_func=providers,
@@ -34,6 +34,7 @@ pytestmark = [
 
 
 @pytest.mark.rhv1
+@pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
     """Test Myservice crud in SSUI.
@@ -56,6 +57,7 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
         my_service.delete()
 
 
+@pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_retire_service_ssui(appliance, setup_provider,
                         context, order_service, request):
@@ -81,6 +83,7 @@ def test_retire_service_ssui(appliance, setup_provider,
 
 
 @pytest.mark.rhv3
+@pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,
                        order_service, provider, request):
@@ -122,6 +125,7 @@ def test_service_start(appliance, setup_provider, context,
             my_service.delete()
 
 
+@pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
@@ -329,11 +333,10 @@ def test_service_dialog_check_on_ssui():
     pass
 
 
-@pytest.mark.meta(coverage=[1743734])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1743734])
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
-def test_list_supported_languages_on_ssui():
+def test_list_supported_languages_on_ssui(appliance, soft_assert):
     """
     Bugzilla:
         1743734
@@ -349,4 +352,9 @@ def test_list_supported_languages_on_ssui():
         expectedResults:
             1. Service UI should list the Supported languages:
     """
-    pass
+    with appliance.context.use(ViaSSUI):
+        view = ssui_nav(appliance.server, "LoggedIn")
+
+    for lang in ["Browser Default", "English", "Español", "Français", "日本語"]:
+        # Its Dropdown with language options
+        assert soft_assert(lang in view.settings.items[1])
