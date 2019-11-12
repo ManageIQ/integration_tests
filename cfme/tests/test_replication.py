@@ -5,7 +5,7 @@ from cfme import test_requirements
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.utils.conf import credentials
 
-pytestmark = [test_requirements.replication]
+pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
 
 @pytest.fixture
@@ -14,10 +14,10 @@ def setup_replication(configured_appliance, unconfigured_appliance):
     remote_app, global_app = configured_appliance, unconfigured_appliance
     app_params = dict(
         region=99,
-        dbhostname="localhost",
+        dbhostname='localhost',
         username=credentials["database"]["username"],
         password=credentials["database"]["password"],
-        dbname="vmdb_production",
+        dbname='vmdb_production',
         dbdisk=global_app.unpartitioned_disks[0],
         fetch_key=remote_app.hostname,
         sshlogin=credentials["ssh"]["username"],
@@ -28,8 +28,8 @@ def setup_replication(configured_appliance, unconfigured_appliance):
     global_app.evmserverd.wait_for_running()
     global_app.wait_for_web_ui()
 
-    remote_app.set_pglogical_replication(replication_type=":remote")
-    global_app.set_pglogical_replication(replication_type=":global")
+    remote_app.set_pglogical_replication(replication_type=':remote')
+    global_app.set_pglogical_replication(replication_type=':global')
     global_app.add_pglogical_replication_subscription(remote_app.hostname)
 
     return configured_appliance, unconfigured_appliance
@@ -62,6 +62,7 @@ def test_replication_powertoggle():
 @pytest.mark.tier(2)
 def test_replication_appliance_add_single_subscription(setup_replication):
     """
+
     Add one remote subscription to global region
 
     Polarion:
@@ -103,8 +104,10 @@ def test_replication_re_add_deleted_remote(setup_replication):
     remote_app, global_app = setup_replication
     region = global_app.collections.regions.instantiate()
 
-    # Remove the Remote subscription from Global
+    # Remove the Remote subscription from Global and make sure it is removed
     region.replication.remove_global_appliance(host=remote_app.hostname)
+    with pytest.raises(RowNotFound):
+        region.replication.get_replication_status(host=remote_app.hostname)
 
     # Add the Remote to Global again
     global_app.set_pglogical_replication(replication_type=":global")
@@ -167,8 +170,9 @@ def test_replication_remote_to_global_by_ip_pglogical():
     pass
 
 
+@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_appliance_set_type_global_ui(setup_replication):
+def test_replication_appliance_set_type_global_ui():
     """
     Set appliance replication type to "Global" and add subscription in the
     UI

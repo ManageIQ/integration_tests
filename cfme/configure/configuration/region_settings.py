@@ -1098,15 +1098,16 @@ class Replication(NavigatableMixin):
 
         view.save_button.click()
 
-        def _row_exists(self):
+        def _row_exists():
             try:
+                view.browser.refresh()
                 self._global_replication_row(host)
                 return True
             except RowNotFound:
                 return False
 
         # wait until the row no longer exists
-        wait_for(lambda: _row_exists, fail_condition=True, num_sec=60, delay=2)
+        wait_for(_row_exists, fail_condition=True, num_sec=60, delay=2)
         return True
 
 
