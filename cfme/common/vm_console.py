@@ -291,6 +291,7 @@ class VMConsole(Pretty):
         try:
             if to_disappear:
                 logger.info("Waiting for {} to disappear from screen".format(text_to_find))
+
             result = wait_for(func=lambda: to_disappear != self.find_text_on_screen(text_to_find),
                      delay=5,
                      num_sec=timeout)

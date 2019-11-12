@@ -11,6 +11,7 @@ from cfme.utils import ssh
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.net import wait_pingable
 from cfme.utils.providers import ProviderFilter
 
 
@@ -45,6 +46,7 @@ def ssh_client(vm_obj, console_template):
     """Provide vm_ssh_client for ssh operations in the test."""
     console_vm_username = credentials.get(console_template.creds).username
     console_vm_password = credentials.get(console_template.creds).password
+    wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
     with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
             password=console_vm_password) as vm_ssh_client:
         yield vm_ssh_client
@@ -151,7 +153,7 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
         assert vm_console.wait_for_text(text_to_find="login:", timeout=200), (
             "VM Console didn't prompt for Login")
         assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does not work")
-
+        wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
         wait_for(
             func=ssh_client.run_command,
             func_args=["ls blather"],

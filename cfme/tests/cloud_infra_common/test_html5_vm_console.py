@@ -11,8 +11,10 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import providers
 from cfme.utils import ssh
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
@@ -112,10 +114,16 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
             # does have some text displayed and it is correct type of console is all we will do.
             assert vm_console.console_type == 'VNC', ("Wrong console type: looking for VNC found {}"
                 .format(vm_console.console_type))
-            assert vm_console.get_screen_text() != '', "Console Screen is blank"
+            # wait for screen text to return non-empty string, which implies console is loaded
+            # and has readable text
+            wait_for(func=lambda: vm_console.get_screen_text() != '', delay=5, timeout=45)
+            # this is additional check to see if text contains "login:" propmt to make sure
+            # console is running and showing login prompt.
+            assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
+            " didn't prompt for Login")
         else:  # RHV provider
             # Ensure pingable IP is present before trying console operations for reliability
-            wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=240)
+            wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
             assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
             " didn't prompt for Login")
 
@@ -183,7 +191,7 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
                 " not work")
 
             # Ensure VM had pingable IP before attempting SSH
-            wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=240)
+            wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
             with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
                     password=console_vm_password) as ssh_client:
                 # if file was created in previous steps it will be removed here
@@ -211,15 +219,15 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         appliance.server.logout()
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_html5_console_ports_present():
+@pytest.mark.provider([VMwareProvider], selector=ONE)
+def test_html5_console_ports_present(appliance, provider):
     """
     Bugzilla:
         1514594
 
-    Check to see if the Add provider screen has the Host VNC Start Port
-    and Host VNC End port - applicable for VMware 6.0 only.
+    Check to see if the Add/Edit provider screen has the Host VNC Start Port
+    and Host VNC End port. Only applicable to versions of VMware that support VNC console.
 
     Polarion:
         assignee: apagac
@@ -227,7 +235,9 @@ def test_html5_console_ports_present():
         initialEstimate: 1/4h
         startsin: 5.8
     """
-    pass
+    edit_view = navigate_to(provider, 'Edit')
+    assert edit_view.vnc_start_port.is_displayed
+    assert edit_view.vnc_end_port.is_displayed
 
 
 @pytest.mark.manual
