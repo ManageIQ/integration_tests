@@ -582,7 +582,10 @@ class Table(VanillaTable):
             Attributized!
             That means its lowercase
         """
-        return attributize_string(self.browser.text(self.SORTED_BY_LOC, parent=self))
+        try:
+            return attributize_string(self.browser.text(self.SORTED_BY_LOC, parent=self))
+        except NoSuchElementException:
+            return False
 
     @property
     def sort_order(self):
@@ -630,7 +633,7 @@ class Table(VanillaTable):
             self.logger.debug("sort_by(%r, %r): column already selected", column, order)
 
         # Sort order
-        if self.sort_order != order:
+        if self.sort_order != order and order in ["asc", "desc"]:
             self.logger.info("sort_by(%r, %r): changing the sort order", column, order)
             self.click_sort(column)
             self.logger.debug("sort_by(%r, %r): order already selected", column, order)

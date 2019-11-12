@@ -120,36 +120,6 @@ def test_vm_volume_free_space_less_than_20_percent():
 
 @pytest.mark.manual
 @test_requirements.report
-@pytest.mark.tier(0)
-@pytest.mark.ignore_stream("5.10")
-def test_reports_sort_column():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        initialEstimate: 1/3h
-        startsin: 5.11
-        setup:
-            1. Go to Cloud Intel -> Reports -> All Reports
-            2. Select a report and queue it, make sure it's not empty.
-            3. Note the order of content of a targetted column.
-        testSteps:
-            1. Sort the targetted column on the basis of some property.
-            2. Traverse through all the rows, note the order of content of the targetted column.
-            3. Sort the first order and compare it with the second order.
-        expectedResults:
-            1.
-            2.
-            3. Both the orders must be same.
-
-    Bugzilla:
-        1678150
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.report
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("5.10")
 def test_reports_timezone():
