@@ -1573,9 +1573,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.evmserverd.stop()
 
         logger.info("Running yum update")
-        cmd = "cfme -y " if cfme_only else "-y"
+        cmd = " cfme" if cfme_only else ""
         try:
-            result = self.ssh_client.run_command(f"yum update {cmd}", timeout=3600)
+            result = self.ssh_client.run_command(f"yum -y update{cmd}", timeout=3600)
         except socket.timeout:
             logger.error(f"SSH timed out while updating appliance: {result.output}")
 
@@ -1583,7 +1583,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         self.evmserverd.start()
 
         # May be chance to update kernal with all update.
-        if cmd == "-y" or reboot:
+        if reboot or not cfme_only:
             self.reboot()
 
         self.wait_for_web_ui()
