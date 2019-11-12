@@ -250,22 +250,15 @@ class AllGenericObjectInstanceView(BaseLoggedInPage):
 
 
 @MiqImplementationContext.external_for(MyService.retire, ViaUI)
-def retire(self):
+def retire(self, wait=True):
     view = navigate_to(self, 'Details')
     view.toolbar.lifecycle.item_select('Retire this Service', handle_alert=True)
     view.flash.assert_no_error()
 
-    # wait for service to retire
-    if self.appliance.version < '5.10':
-        wait_for(
-            lambda: view.entities.lifecycle.get_text_of('Retirement State') == 'Retired',
-            fail_func=view.toolbar.reload.click,
-            num_sec=10 * 60, delay=3,
-            message='Service Retirement wait')
-    else:
-        request_descr = f"Service Retire for: {self.name}"
+    if wait:
         service_request = self.appliance.collections.requests.instantiate(
-            description=request_descr)
+            description=f"Service Retire for: {self.name}"
+        )
         service_request.wait_for_request()
 
 
