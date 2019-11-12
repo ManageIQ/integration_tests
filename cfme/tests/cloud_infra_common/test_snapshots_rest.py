@@ -62,27 +62,12 @@ def vm(provider, appliance, collection, setup_provider_modscope, small_template_
     new_vm.cleanup_on_provider()
 
 
-def _delete_snapshot(vm, description):
-    """Deletes snapshot if it exists."""
-    to_delete = vm.snapshots.find_by(description=description)
-    if to_delete:
-        snap = to_delete[0]
-        snap.action.delete()
-        snap.wait_not_exists(num_sec=300, delay=5)
-
-
-@pytest.fixture(scope='function')
-def vm_snapshot(request, appliance, collection, vm):
-    """Creates VM/instance snapshot using REST API.
-
-    Returns:
-        Tuple with VM and snapshot resources in REST API
-    """
+def _create_snapshot_rest(appliance, vm):
+    """Implement the snapshot create so tests can use the same method directly"""
     uid = fauxfactory.gen_alphanumeric(8)
-    snap_desc = 'snapshot {}'.format(uid)
-    request.addfinalizer(lambda: _delete_snapshot(vm, snap_desc))
+    snap_desc = f'snapshot {uid}'
     vm.snapshots.action.create(
-        name='test_snapshot_{}'.format(uid),
+        name=f'test_snapshot_{uid}',
         description=snap_desc,
         memory=False,
     )
@@ -96,6 +81,24 @@ def vm_snapshot(request, appliance, collection, vm):
     snap = snap[0]
 
     return vm, snap
+
+
+@pytest.fixture(scope='function')
+def vm_snapshot(appliance, vm):
+    """Creates VM/instance snapshot using REST API.
+
+    Returns:
+        Tuple with VM and snapshot resources in REST API
+    """
+    vm, snapshot = _create_snapshot_rest(appliance, vm)
+
+    yield vm, snapshot
+
+    to_delete = vm.snapshots.find_by(description=snapshot.description)
+    if to_delete:
+        snap = to_delete[0]
+        snap.action.delete()
+        snap.wait_not_exists(num_sec=300, delay=5)
 
 
 class TestRESTSnapshots(object):
@@ -153,7 +156,7 @@ class TestRESTSnapshots(object):
         delete_resources_from_collection(
             [snapshot], vm.snapshots, not_found=True, num_sec=300, delay=5)
 
-    def test_delete_snapshot_race(self, request, appliance, collection, vm):
+    def test_delete_snapshot_race(self, request, appliance, collection, vm, vm_snapshot):
         """Tests creation of snapshot while delete is in progress.
 
         Testing race condition described in BZ 1550551
@@ -171,13 +174,13 @@ class TestRESTSnapshots(object):
             initialEstimate: 1/4h
         """
         # create and delete snapshot #1
-        __, snap1 = vm_snapshot(request, appliance, collection, vm)
+        __, snap1 = vm_snapshot
         snap1.action.delete()
 
         # create snapshot #2 without waiting for delete
         # of snapshot #1 to finish
         try:
-            vm_snapshot(request, appliance, collection, vm)
+            _create_snapshot_rest(appliance, vm)
         except AssertionError as err:
             # The `vm_snapshot` calls `assert_response` that checks status of the Task.
             # AssertionError is raised when Task failed and Task message is included
@@ -187,7 +190,7 @@ class TestRESTSnapshots(object):
                 raise
 
     @pytest.mark.rhv2
-    @pytest.mark.provider([VMwareProvider, RHEVMProvider])
+    @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope='module')
     def test_revert_snapshot(self, appliance, provider, vm_snapshot):
         """Reverts VM/instance snapshot using REST API.
 
