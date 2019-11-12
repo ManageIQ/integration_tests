@@ -15,8 +15,8 @@ function rhel7y {
 }
 
 function rhel8y {
-    RHEL_8_Y_IDENTIFIER="Red Hat Enterprise Linux release 8\.. .* (Ootpa)"
-    grep -q "$RHEL_8_Y_IDENTIFIER" /etc/redhat-release
+    RHEL_8_Y_IDENTIFIER="Red Hat Enterprise Linux release 8\.. (Ootpa)"
+    grep "$RHEL_8_Y_IDENTIFIER" /etc/redhat-release
 }
 
 sed -i'.orig' -e's/without-password/yes/' /etc/ssh/sshd_config
