@@ -1,4 +1,5 @@
 import re
+from textwrap import dedent
 
 import fauxfactory
 import pytest
@@ -53,6 +54,29 @@ def setup_obj(appliance, button_group):
     else:
         logger.error("No object collected for custom button object type '{}'".format(obj_type))
     return obj
+
+
+@pytest.fixture(scope="module")
+def method(custom_instance, button_group):
+    _, obj_type = button_group
+
+    # Note: More information available about method creation
+    # https://github.com/ManageIQ/manageiq-ui-classic/pull/6040#issue-307723899
+    target_obj_map = {
+        "USER": "$evm.root['user']",
+        "GROUP": "$evm.root['miq_group']",
+        "TENANT": "$evm.vmdb($evm.root['vmdb_object_type']).find_by(:id=>$evm.root['tenant_id'])"
+    }
+
+    ruby_code = dedent(
+        f"""
+        # open external url with target object
+        target_obj = {target_obj_map[obj_type]}
+        $evm.log(:info, "Opening url")
+        target_obj.external_url = "https://example.com"
+        """
+    )
+    yield custom_instance(ruby_code)
 
 
 @pytest.mark.tier(1)
@@ -314,10 +338,13 @@ def test_custom_button_expression_evm_obj(appliance, request, setup_obj, button_
             assert button.text in custom_button_group.items
 
 
-@pytest.mark.manual
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1550002])
-def test_custom_button_open_url_evm_obj(setup_obj, button_group):
+@pytest.mark.meta(automates=[1550002])
+@pytest.mark.uncollectif(
+    lambda button_group: "TENANT" in button_group,
+    reason="external_url not supported by tenant object BZ-1550002"
+)
+def test_custom_button_open_url_evm_obj(request, setup_obj, button_group, method):
     """ Test Open url functionality of custom button.
 
     Polarion:
@@ -345,4 +372,36 @@ def test_custom_button_open_url_evm_obj(setup_obj, button_group):
     Bugzilla:
         1550002
     """
-    pass
+    group, obj_type = button_group
+
+    button = group.buttons.create(
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
+        open_url=True,
+        system="Request",
+        request=method.name,
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    view = navigate_to(setup_obj, "Details")
+    custom_button_group = Dropdown(view, group.hover)
+    assert custom_button_group.has_item(button.text)
+
+    initial_count = len(view.browser.window_handles)
+    main_window = view.browser.current_window_handle
+    custom_button_group.item_select(button.text)
+
+    wait_for(
+        lambda: len(view.browser.window_handles) > initial_count,
+        timeout=30,
+        message="Check for window open",
+    )
+    open_url_window = (set(view.browser.window_handles) - {main_window}).pop()
+    view.browser.switch_to_window(open_url_window)
+
+    @request.addfinalizer
+    def _reset_window():
+        view.browser.close_window(open_url_window)
+        view.browser.switch_to_window(main_window)
+
+    assert "example.com" in view.browser.url
