@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 """ Chargeback reports are supported for all infra and cloud providers.
 

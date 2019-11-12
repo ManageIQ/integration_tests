@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ The expression editor present in some locations of CFME.
 
 """

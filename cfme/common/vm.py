@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
 import json
 from datetime import date

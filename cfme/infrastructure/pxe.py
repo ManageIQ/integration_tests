@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ A model of a PXE Server in CFME
 """
 import attr

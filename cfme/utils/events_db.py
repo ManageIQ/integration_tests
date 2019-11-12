@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Library for event testing.
 """
 from collections import Iterable

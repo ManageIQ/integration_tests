@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module tests Nuage EMS events."""
 import pytest
 

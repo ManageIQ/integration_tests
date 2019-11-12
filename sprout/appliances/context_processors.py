@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from sprout import redis, settings
 
 

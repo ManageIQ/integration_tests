@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tests around the appliance"""
 import os
 

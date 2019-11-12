@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from weakref import proxy
 from weakref import WeakKeyDictionary
 

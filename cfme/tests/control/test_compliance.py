@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import diaper
 import fauxfactory
 import pytest

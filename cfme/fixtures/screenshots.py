@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Taking screenshots inside tests!
 
 If you want to take a screenshot inside your test, just do it like this:

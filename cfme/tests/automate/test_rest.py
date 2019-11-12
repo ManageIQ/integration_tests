@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """REST API specific automate tests."""
 import fauxfactory
 import pytest

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module tests various ways how to set up the provisioning using the provisioning dialog."""
 import re
 from datetime import datetime

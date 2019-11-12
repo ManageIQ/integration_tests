@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This testing module tests the behaviour of the search box in the Hosts section"""
 from itertools import dropwhile
 

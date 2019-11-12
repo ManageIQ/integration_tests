@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A model of an Openstack Infrastructure Node in CFME."""
 import attr
 

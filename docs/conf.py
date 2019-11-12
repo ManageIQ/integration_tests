@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # cfme_tests documentation build configuration file, created by
 # sphinx-quickstart on Thu Nov 21 09:32:22 2013.

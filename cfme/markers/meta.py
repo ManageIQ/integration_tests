@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """meta(**metadata): Marker for metadata addition.
 
 To add metadata to a test simply pass the kwargs as plugins wish.

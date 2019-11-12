@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Fixtures that VMware console tests use to configure VM Console type and start websocket."""
 import pytest
 

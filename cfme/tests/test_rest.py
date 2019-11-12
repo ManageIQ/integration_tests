@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
 import os
 import random

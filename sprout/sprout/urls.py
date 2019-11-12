@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.urls import include, re_path
 from django.contrib import admin
 from django.views.generic.base import RedirectView

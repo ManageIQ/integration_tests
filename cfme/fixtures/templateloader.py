@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Preloads all templates on all providers that were selected for testing. Useful for test collect.
 """
 import pytest

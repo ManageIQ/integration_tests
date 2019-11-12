@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Reporter plugin for Artifactor
 
 Add a stanza to the artifactor config like this,

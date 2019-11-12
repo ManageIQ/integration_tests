@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Event testing fixture.
 
 The idea of this fixture is to pass some "expected" events to

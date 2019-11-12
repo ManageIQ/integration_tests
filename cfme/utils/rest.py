@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Helper functions for tests using REST API."""
 from collections import namedtuple
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module provides a fixture useful for checking the e-mails arrived.
 
 Main use is of fixture :py:meth:`smtp_test`, which is function scoped. There is also

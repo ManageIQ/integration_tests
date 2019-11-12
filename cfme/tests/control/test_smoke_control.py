@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This test contains necessary smoke tests for the Control."""
 import pytest
 

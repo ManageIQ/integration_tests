@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
 from textwrap import dedent

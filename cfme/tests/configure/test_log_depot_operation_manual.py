@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Manual tests for log depot
 import pytest
 

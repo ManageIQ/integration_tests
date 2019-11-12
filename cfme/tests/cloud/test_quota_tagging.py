@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
 from riggerlib import recursive_update

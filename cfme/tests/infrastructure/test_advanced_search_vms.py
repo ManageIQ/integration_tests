@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """This testing module tests the behaviour of the view.entities.search box in the VMs section"""
 from random import sample
 

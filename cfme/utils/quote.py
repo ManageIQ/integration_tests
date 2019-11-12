@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 ######################################################################
 #  Written by Kevin L. Sitze on 2006-12-03
 #  This code may be used pursuant to the MIT License.

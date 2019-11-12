@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Tests used to check whether assigned actions really do what they're supposed to do. Events are
 not supported by gc and scvmm providers. Tests are uncollected for these
 providers. When the support will be implemented these tests can enabled for them.

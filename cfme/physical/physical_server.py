@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A model of an Infrastructure PhysicalServer in CFME."""
 import attr
 from cached_property import cached_property

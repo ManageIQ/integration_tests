@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import attr
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
