@@ -3,7 +3,6 @@ from collections import namedtuple
 
 import fauxfactory
 import pytest
-from paramiko_expect import SSHClientInteraction
 from wait_for import wait_for
 
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -22,6 +21,7 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.ssh import SSHClient
+from cfme.utils.ssh_expect import SSHExpect
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
@@ -237,17 +237,8 @@ def setup_nfs_samba_backup(appl1):
     nfs_smb.put_file(dump_filename, "{}share.backup".format(loc))
 
 
-def logging_callback(appliance):
-    # TODO (jhenner) Remove me. This is being defined also in some other PR:
-    # Fix minor version update tests. #8521
-    def the_logger(m):
-        logger.info('Appliance %s:\n%s', appliance.hostname, m)
-    return the_logger
-
-
 def restore_db(appl, location=''):
-    interaction = SSHClientInteraction(appl.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(appl))
+    interaction = SSHExpect(appl)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
@@ -314,8 +305,7 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
     appl1, appl2 = two_appliances_one_with_providers
     backup_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
 
-    interaction = SSHClientInteraction(appl1.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(appl1))
+    interaction = SSHExpect(appl1)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
@@ -337,8 +327,7 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
     appl2.db.drop()
     appl2.db.create()
 
-    interaction = SSHClientInteraction(appl2.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(appl2))
+    interaction = SSHExpect(appl2)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
@@ -620,8 +609,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     fetch_v2key(appl1, appl2)
 
     # setup_nfs_samba_backup(appl1)
-    interaction = SSHClientInteraction(appl1.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(appl1))
+    interaction = SSHExpect(appl1)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
@@ -643,8 +631,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     appl2.db.drop()
     appl2.db.create()
 
-    interaction = SSHClientInteraction(appl2.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(appl2))
+    interaction = SSHExpect(appl2)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
@@ -697,8 +684,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     fetch_v2key(appl1, appl2)
 
     # setup_nfs_samba_backup(appl1)
-    interaction = SSHClientInteraction(appl1.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(appl1))
+    interaction = SSHExpect(appl1)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
@@ -725,8 +711,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     appl2.db.drop()
     appl2.db.create()
 
-    interaction = SSHClientInteraction(appl2.ssh_client, timeout=10, display=True,
-                                       output_callback=logging_callback(appl2))
+    interaction = SSHExpect(appl2)
     interaction.send('ap')
     interaction.expect('Press any key to continue.', timeout=40)
     interaction.send('')
