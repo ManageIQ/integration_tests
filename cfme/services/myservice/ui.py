@@ -163,6 +163,26 @@ class MyServiceDetailView(MyServicesView):
             self.title.text == 'Service "{}"'.format(self.context['object'].name))
 
 
+class MyServiceRetiredView(MyServicesView):
+    """ is_displayed for Retired view. """
+
+    @property
+    def is_displayed(self):
+        return self.in_myservices and self.myservice.is_opened
+
+
+class MyServiceRetiredDetailsView(MyServiceDetailView):
+    """ is_displayed for RetiredDetails view. """
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_myservices
+            and self.myservice.is_opened
+            and self.title.text == f'Service "{self.context["object"].name}"'
+        )
+
+
 class EditMyServiceView(ServiceEditForm):
     title = Text('#explorer_title_text')
 
@@ -431,6 +451,26 @@ class MyServiceSetRetirement(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select(
             'Set Retirement Dates for this Service')
+
+
+@navigator.register(MyService, 'Retired')
+class MyServiceRetired(CFMENavigateStep):
+    VIEW = MyServiceRetiredView
+
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.myservice.tree.click_path('Retired Services')
+
+
+@navigator.register(MyService, 'RetiredDetails')
+class MyServiceRetiredDetails(CFMENavigateStep):
+    VIEW = MyServiceRetiredDetailsView
+
+    prerequisite = NavigateToSibling('Retired')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(MyService, 'Reconfigure')
