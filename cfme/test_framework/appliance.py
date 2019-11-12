@@ -18,6 +18,7 @@ def pytest_addoption(parser):
     parser.addoption('--dummy-appliance', action='store_true')
     parser.addoption('--dummy-appliance-version', default=None)
     parser.addoption('--appliance-version', default=None)
+    parser.addoption('--num-dummies', default=1, type=int)
 
 
 def appliances_from_cli(cli_appliances, appliance_version):
@@ -49,7 +50,9 @@ def pytest_configure(config):
         return
     reporter = terminalreporter.reporter()
     if config.getoption('--dummy-appliance'):
-        appliances = [DummyAppliance.from_config(config)]
+        appliances = [
+            DummyAppliance.from_config(config) for _ in range(config.getoption('--num-dummies'))
+        ]
         reporter.write_line('Retrieved Dummy Appliance', red=True)
     elif stack.top:
         appliances = [stack.top]
