@@ -287,23 +287,18 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
 
     with SSHExpect(appl2) as interaction:
         interaction.send('ap')
-        interaction.expect('Press any key to continue.', timeout=40)
-        interaction.send('')
-        interaction.expect('Choose the advanced setting: ')
-        interaction.send('6')
-        interaction.expect(re.escape(
-            'Choose the restore database file source: |1| '))
-        interaction.send('')
-        interaction.expect(re.escape(
-            'Enter the location of the local restore file: |/tmp/evm_db.backup| '))
-        interaction.send(backup_file_name)
-        interaction.expect(re.escape(
-            'Should this file be deleted after completing the restore? (Y/N): '))
-        interaction.send('n')
-        interaction.expect(re.escape(
-            'Are you sure you would like to restore the database? (Y/N): '))
-        interaction.send('y')
-        interaction.expect('Press any key to continue.', timeout=80)
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer(
+            resc('Choose the restore database file source: |1| '), '')
+        interaction.answer(
+            resc('Enter the location of the local restore file: |/tmp/evm_db.backup| '),
+            backup_file_name)
+        interaction.answer(
+            resc('Should this file be deleted after completing the restore? (Y/N): '), 'n')
+        interaction.answer(
+            resc('Are you sure you would like to restore the database? (Y/N): '), 'y')
+        interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
@@ -581,20 +576,17 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     # Do the backup
     with SSHExpect(appl1) as interaction:
         interaction.send('ap')
-        interaction.expect('Press any key to continue.', timeout=40)
-        interaction.send('')
-        interaction.expect('Choose the advanced setting: ')
-        interaction.send('4')
-        interaction.expect(r'Choose the backup output file destination: \|1\| ')
-        interaction.send('2')
-        interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
-        interaction.send(nfs_dump_file_name)
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', '4')
+        interaction.answer(r'Choose the backup output file destination: \|1\| ', '2')
+        interaction.answer(r'Enter the location to save the backup file to: \|.*\| ',
+            nfs_dump_file_name)
         # Enter the location to save the remote backup file to
-        interaction.expect(re.escape(
-            'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
-        interaction.send(nfs_restore_dir_path)
+        interaction.answer(
+            resc('Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '),
+            nfs_restore_dir_path)
         # Running Database backup to nfs://XX.XX.XX.XX/srv/export...
-        interaction.expect('Press any key to continue.', timeout=240)
+        interaction.answer('Press any key to continue.', '', timeout=240)
 
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
@@ -603,19 +595,15 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
 
     with SSHExpect(appl2) as interaction:
         interaction.send('ap')
-        interaction.expect('Press any key to continue.', timeout=40)
-        interaction.send('')
-        interaction.expect('Choose the advanced setting: ')
-        interaction.send('6')
-        interaction.expect(r'Choose the restore database file source: \|1\| ')
-        interaction.send('2')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer(r'Choose the restore database file source: \|1\| ', '2')
         # Enter the location of the remote backup file
-        interaction.expect(re.escape(
-            'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
-        interaction.send(nfs_restore_file_path)
-        interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
-        interaction.send('y')
-        interaction.expect('Press any key to continue.', timeout=80)
+        interaction.answer(
+            re.escape('Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '),
+            nfs_restore_file_path)
+        interaction.answer(r'Are you sure you would like to restore the database\? \(Y\/N\): ', 'y')
+        interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
@@ -659,25 +647,20 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     # Do the backup
     with SSHExpect(appl1) as interaction:
         interaction.send('ap')
-        interaction.expect('Press any key to continue.', timeout=40)
-        interaction.send('')
-        interaction.expect('Choose the advanced setting: ')
-        interaction.send('4')
-        interaction.expect(r'Choose the backup output file destination: \|1\| ')
-        interaction.send('3')
-        interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
-        interaction.send(smb_dump_file_name)
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', '4')
+        interaction.answer(r'Choose the backup output file destination: \|1\| ', '3')
+        interaction.answer(r'Enter the location to save the backup file to: \|.*\| ',
+            smb_dump_file_name)
         # Enter the location to save the remote backup file to
-        interaction.expect(re.escape(
-            'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
-        interaction.send(smb_restore_dir_path)
+        interaction.answer(
+            resc('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
+            smb_restore_dir_path)
         # Enter the username with access to this file.
-        interaction.expect(re.escape("Example: 'mydomain.com/user': "))
-        interaction.send(usr)
-        interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
-        interaction.send(pwd)
+        interaction.answer(resc("Example: 'mydomain.com/user': "), usr)
+        interaction.answer(resc('Enter the password for {}: '.format(usr)), pwd)
         # Running Database backup to nfs://10.8.198.142/srv/export...
-        interaction.expect('Press any key to continue.', timeout=120)
+        interaction.answer('Press any key to continue.', '', timeout=120)
 
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
@@ -686,24 +669,18 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
 
     with SSHExpect(appl2) as interaction:
         interaction.send('ap')
-        interaction.expect('Press any key to continue.', timeout=40)
-        interaction.send('')
-        interaction.expect('Choose the advanced setting: ')
-        interaction.send('6')
-        interaction.expect(r'Choose the restore database file source: \|1\| ')
-        interaction.send('3')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer(r'Choose the restore database file source: \|1\| ', '3')
         # Enter the location of the remote backup file
-        interaction.expect(re.escape(
-            'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
-        interaction.send(smb_restore_file_path)
+        interaction.answer(
+            resc('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
+            smb_restore_file_path)
         # Enter the username with access to this file.
-        interaction.expect(re.escape("Example: 'mydomain.com/user': "))
-        interaction.send(usr)
-        interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
-        interaction.send(pwd)
-        interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
-        interaction.send('y')
-        interaction.expect('Press any key to continue.', timeout=80)
+        interaction.answer(resc("Example: 'mydomain.com/user': "), usr)
+        interaction.answer(resc('Enter the password for {}: '.format(usr)), pwd)
+        interaction.answer(r'Are you sure you would like to restore the database\? \(Y\/N\): ', 'y')
+        interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
