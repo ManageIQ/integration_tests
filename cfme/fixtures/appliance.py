@@ -64,8 +64,10 @@ def sprout_appliances(
             logger.info("Initiating appliance update on temp appliance ...")
             urls = config.getoption("update_urls")
             app.update_rhel(*urls, reboot=True)
-            logger.info("Appliance update finished on temp appliance, waiting for UI ...")
-            app.wait_for_web_ui()
+            # Web UI not available on unconfigured appliances
+            if preconfigured:
+                logger.info("Appliance update finished on temp appliance, waiting for UI ...")
+                app.wait_for_web_ui()
             logger.info("Appliance update finished on temp appliance...")
 
     try:
