@@ -46,14 +46,45 @@ CREDENTIALS = [
 ]
 
 
+@pytest.fixture(scope="function")
+def local_ansible_catalog_item(appliance, ansible_repository):
+    """override global ansible_catalog_item for function scope
+        as these tests modify the catalog item
+    """
+    collection = appliance.collections.catalog_items
+    cat_item = collection.create(
+        collection.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        display_in_catalog=True,
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+            "extra_vars": [("some_var", "some_value")]
+        },
+        retirement={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "extra_vars": [("some_var", "some_value")]
+        }
+    )
+    yield cat_item
+
+    cat_item.delete_if_exists()
+
+
 @pytest.fixture()
-def ansible_linked_vm_action(appliance, ansible_catalog_item, new_vm):
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
+def ansible_linked_vm_action(appliance, local_ansible_catalog_item, new_vm):
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
 
     action_values = {
         "run_ansible_playbook": {
-            "playbook_catalog_item": ansible_catalog_item.name,
+            "playbook_catalog_item": local_ansible_catalog_item.name,
             "inventory": {"specific_hosts": True, "hosts": new_vm.ip_address},
         }
     }
@@ -147,7 +178,7 @@ def ansible_credential(appliance):
 
 
 @pytest.fixture
-def custom_service_button(appliance, ansible_catalog_item):
+def custom_service_button(appliance, local_ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
@@ -155,7 +186,7 @@ def custom_service_button(appliance, ansible_catalog_item):
     button = buttongroup.buttons.create(
         text=fauxfactory.gen_alphanumeric(),
         hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
-        dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],
+        dialog=local_ansible_catalog_item.provisioning["provisioning_dialog_name"],
         system="Request",
         request="Order_Ansible_Playbook",
     )
@@ -471,7 +502,7 @@ def test_service_ansible_playbook_plays_table(
 
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_order_credentials(
-    ansible_catalog_item, ansible_credential, ansible_service_catalog
+    local_ansible_catalog_item, ansible_credential, ansible_service_catalog
 ):
     """Test if credentials avaialable in the dropdown in ordering ansible playbook service
     screen.
@@ -483,8 +514,8 @@ def test_service_ansible_playbook_order_credentials(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {
             "machine_credential": ansible_credential.name
         }
     view = navigate_to(ansible_service_catalog, "Order")
@@ -528,7 +559,7 @@ def test_service_ansible_playbook_pass_extra_vars(
 def test_service_ansible_execution_ttl(
     request,
     ansible_service_catalog,
-    ansible_catalog_item,
+    local_ansible_catalog_item,
     ansible_service,
     ansible_service_request,
 ):
@@ -547,15 +578,15 @@ def test_service_ansible_execution_ttl(
         1519275
         1515841
     """
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {
             "playbook": "long_running_playbook.yml",
             "max_ttl": 200
         }
 
     def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {
+        with update(local_ansible_catalog_item):
+            local_ansible_catalog_item.provisioning = {
                 "playbook": "dump_all_variables.yml",
                 "max_ttl": "",
             }
@@ -654,7 +685,7 @@ def test_ansible_group_id_in_payload(
 def test_embed_tower_exec_play_against(
     appliance,
     request,
-    ansible_catalog_item,
+    local_ansible_catalog_item,
     ansible_service,
     ansible_service_catalog,
     credential,
@@ -669,8 +700,8 @@ def test_embed_tower_exec_play_against(
         tags: ansible_embed
     """
     playbook = credential[2]
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {
             "playbook": playbook,
             "cloud_type": provider_credentials.credential_type,
             "cloud_credential": provider_credentials.name,
@@ -678,13 +709,13 @@ def test_embed_tower_exec_play_against(
 
     @request.addfinalizer
     def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {
+        with update(local_ansible_catalog_item):
+            local_ansible_catalog_item.provisioning = {
                 "playbook": "dump_all_variables.yml",
                 "cloud_type": "<Choose>",
             }
 
-        service = MyService(appliance, ansible_catalog_item.name)
+        service = MyService(appliance, local_ansible_catalog_item.name)
         if service_request.exists():
             service_request.wait_for_request()
             appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
@@ -693,7 +724,8 @@ def test_embed_tower_exec_play_against(
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    request_descr = (f"Provisioning Service [{local_ansible_catalog_item.name}] "
+        f"from [{local_ansible_catalog_item.name}]")
     service_request = appliance.collections.requests.instantiate(description=request_descr)
     service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
@@ -717,7 +749,7 @@ def test_embed_tower_exec_play_against(
 def test_service_ansible_verbosity(
     appliance,
     request,
-    ansible_catalog_item,
+    local_ansible_catalog_item,
     ansible_service_catalog,
     ansible_service_request,
     ansible_service,
@@ -736,9 +768,9 @@ def test_service_ansible_verbosity(
     """
     # Adding index 0 which will give pattern for e.g. pattern = "verbosity"=>0.
     pattern = '"verbosity"=>{}'.format(verbosity[0])
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {"verbosity": verbosity}
-        ansible_catalog_item.retirement = {"verbosity": verbosity}
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {"verbosity": verbosity}
+        local_ansible_catalog_item.retirement = {"verbosity": verbosity}
     # Log Validator
     log = LogValidator("/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern])
     # Start Log check or given pattern
@@ -746,7 +778,7 @@ def test_service_ansible_verbosity(
 
     @request.addfinalizer
     def _revert():
-        service = MyService(appliance, ansible_catalog_item.name)
+        service = MyService(appliance, local_ansible_catalog_item.name)
         if ansible_service_request.exists():
             ansible_service_request.wait_for_request()
             appliance.rest_api.collections.service_requests.action.delete(
@@ -759,7 +791,8 @@ def test_service_ansible_verbosity(
     ansible_service_request.wait_for_request()
     # 'request_descr' and 'service_request' being used in finalizer to remove
     # first service request
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    request_descr = (f"Provisioning Service [{local_ansible_catalog_item.name}] "
+                     f"from [{local_ansible_catalog_item.name}]")
     service_request = appliance.rest_api.collections.service_requests.get(
         description=request_descr
     )
@@ -808,7 +841,7 @@ def test_ansible_service_linked_vm(
 def test_ansible_service_order_vault_credentials(
     appliance,
     request,
-    ansible_catalog_item,
+    local_ansible_catalog_item,
     ansible_service_catalog,
     ansible_service_request,
     ansible_service,
@@ -828,16 +861,16 @@ def test_ansible_service_order_vault_credentials(
         "Vault_Credentials_{}".format(fauxfactory.gen_alpha()), "Vault", **creds_dict
     )
 
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {
             "playbook": "dump_secret_variable_from_vault.yml",
             "vault_credential": vault_creds.name,
         }
 
     @request.addfinalizer
     def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {
+        with update(local_ansible_catalog_item):
+            local_ansible_catalog_item.provisioning = {
                 "playbook": "dump_all_variables.yml",
                 "vault_credential": "<Choose>",
             }
@@ -869,15 +902,15 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
         tags: ansible_embed
     """
     old_playbook_value = ansible_catalog_item.provisioning
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {
             "playbook": "ansible_galaxy_role_users.yaml"
         }
 
     @request.addfinalizer
     def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
+        with update(local_ansible_catalog_item):
+            local_ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
@@ -925,7 +958,7 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     reason='Credential type not valid for parametrized provider'
 )
 @pytest.mark.tier(3)
-def test_ansible_service_cloud_credentials(appliance, request, ansible_catalog_item,
+def test_ansible_service_cloud_credentials(appliance, request, local_ansible_catalog_item,
 ansible_service_catalog, credential, provider_credentials, ansible_service_funcscope,
 ansible_service_request_funcscope):
     """
@@ -943,10 +976,10 @@ ansible_service_request_funcscope):
         tags: ansible_embed
     """
     # TODO: Include all providers once all playbooks are in place.
-    old_playbook_value = ansible_catalog_item.provisioning
+    old_playbook_value = local_ansible_catalog_item.provisioning
     playbook = credential[2]
-    with update(ansible_catalog_item):
-        ansible_catalog_item.provisioning = {
+    with update(local_ansible_catalog_item):
+        local_ansible_catalog_item.provisioning = {
             "playbook": playbook,
             "cloud_type": provider_credentials.credential_type,
             "cloud_credential": provider_credentials.name,
@@ -954,8 +987,8 @@ ansible_service_request_funcscope):
 
     @request.addfinalizer
     def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
+        with update(local_ansible_catalog_item):
+            local_ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
