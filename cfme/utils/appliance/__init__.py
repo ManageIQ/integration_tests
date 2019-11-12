@@ -2441,6 +2441,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         # in the subsequent command (appliance console IPA configuration)
         self.evmserverd.restart()
         self.wait_for_web_ui()
+        # since the browser will be stuck on the server settings page, and logout on next click
+        # after the evmserverd restart, quit the browser before the next step.
+        self.browser.quit_browser()
 
         # backend appliance configuration of ext auth provider
         self.appliance_console_cli.configure_ipa(**auth_provider.as_external_value())

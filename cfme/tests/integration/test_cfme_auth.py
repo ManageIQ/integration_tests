@@ -157,7 +157,7 @@ def test_login_evm_group(
     evm_group_names = [group for group in auth_user.groups if 'evmgroup' in group.lower()]
     with user_obj:
         logger.info('Logging in as user %s, member of groups %s', user_obj, evm_group_names)
-        view = navigate_to(temp_appliance_preconfig_long.server, 'Dashboard')
+        view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
         assert view.is_displayed, 'user {} failed login'.format(user_obj)
         soft_assert(user_obj.name == view.current_fullname,
                     'user {} is not in view fullname'.format(user_obj))
