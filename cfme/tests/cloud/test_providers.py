@@ -231,17 +231,34 @@ def ec2_provider_with_sts_creds(appliance):
 
 
 @pytest.fixture
-def ec2_instance_without_name(provider, appliance):
+def ec2_instance_without_name(appliance, provider):
     template_id = provider.mgmt.get_template(
         provider.data.templates.get('small_template').name).uuid
-    instance = appliance.collections.cloud_instances.instantiate(name='',
-                                                                 provider=provider,
-                                                                 template_name=template_id)
-    instance = instance.mgmt.create_vm()
-    wait_for(lambda: instance.mgmt.state == VmState.RUNNING, delay=15, timeout=900)
+    instance = provider.mgmt.create_vm(template_id)
+    wait_for(lambda: instance.state == VmState.RUNNING, delay=15, timeout=900)
 
     yield instance
-    instance.cleanup_on_provider()
+    instance.cleanup()
+
+@pytest.fixture
+def aws_stack_without_parameters(appliance, provider):
+    stack = provider.mgmt.create_stack(name=fauxfactory.gen_alpha(10),
+        template_url="https://s3-us-west-2.amazonaws.com/cloudformation-templates-us-west-2/Managed"
+                     "_EC2_Batch_Environment.template",
+        capabilities=["CAPABILITY_IAM"])
+    wait_for(lambda : stack.status_active == True, delay=15, timeout=900)
+
+    yield stack
+    stack.delete()
+
+@pytest.fixture()
+def ec2_instance_with_ssh_addition_template(appliance, provider):
+    form_values = {'customize': {'custom_template':  { 'name': "SSH key addition template"}}}
+    instance = appliance.collections.cloud_instances.create(random_vm_name('refr'), provider,
+                                                            form_values=form_values)
+
+    yield instance
+    instance.delete()
 
 def set_public_images_and_refresh(appliance, provider, enable):
     appliance.set_public_images(enable, provider)
@@ -1211,10 +1228,10 @@ def test_refresh_with_stack_without_parameters(provider, request, stack_without_
     provider.validate_stats(ui=True)
 
 
-@test_requirements.ec2
+@test_requirements.cloud
 @pytest.mark.long_running
 @pytest.mark.provider([AzureProvider, EC2Provider], scope="function", override=True)
-def test_public_images_enable_disable(setup_provider, appliance, provider):
+def test_public_images_enable_disable(setup_provider, request, appliance, provider):
     """
     Bugzilla:
         1612086
@@ -1243,6 +1260,7 @@ def test_public_images_enable_disable(setup_provider, appliance, provider):
             5. Refresh should be successful and public images uncollected
     """
     # enable
+    request.finalizer(lambda: appliance.set_public_images(False, provider))
     provider_images = 20000 if provider.one_of(AzureProvider) else 40000
     print(provider)
     images = set_public_images_and_refresh(appliance, provider, enable=True)
@@ -1343,7 +1361,8 @@ def test_deploy_instance_with_ssh_addition_template(setup_provider,
 
 @pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
 @test_requirements.ec2
-def test_add_provider_with_instance_without_name(provider, ec2_instance_without_name):
+def test_add_provider_with_instance_without_name(has_no_cloud_providers, provider,
+                                                 ec2_instance_without_name):
     """
     Polarion:
         assignee: mmojzis
@@ -1359,6 +1378,7 @@ def test_add_provider_with_instance_without_name(provider, ec2_instance_without_
     """
     provider.create()
     provider.validate_stats(ui=True)
+    provider.delete()
 
 
 @pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
