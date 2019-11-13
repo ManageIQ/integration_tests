@@ -4,6 +4,7 @@ from textwrap import dedent
 import fauxfactory
 import pytest
 
+from . import tag_delete_from_category
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
@@ -842,3 +843,37 @@ def test_copy_with_embedded_method(request, appliance, klass):
     )
     view = navigate_to(copied_method, "Details")
     assert view.embedded_method_table.read()[0]["Path"] == embedded_method_path
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1744514)], automates=[1744514])
+@pytest.mark.customer_scenario
+def test_delete_tag_from_category(custom_instance):
+    """
+    Bugzilla:
+        1744514
+        1767901
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        initialEstimate: 1/12h
+    """
+    instance = custom_instance(ruby_code=tag_delete_from_category)
+
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=[f'.*Tag exists: {value}.*' for value in ['true', 'false']],
+    ).waiting(timeout=120):
+        # Executing automate method using simulation
+        simulate(
+            appliance=instance.klass.appliance,
+            message="create",
+            request="Call_Instance",
+            execute_methods=True,
+            attributes_values={
+                "namespace": instance.klass.namespace.name,
+                "class": instance.klass.name,
+                "instance": instance.name,
+            },
+        )

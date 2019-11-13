@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from textwrap import dedent
 
+import fauxfactory
+
 user_list_hash_data = dedent(
     """
 module Demo
@@ -64,4 +66,24 @@ if __FILE__ == $PROGRAM_NAME
   Demo::Automate::System::Request::Test::AvailableUsers.new.main
 end
         """
+)
+
+tag_values = [fauxfactory.gen_alphanumeric(start="tag_", length=12).lower(), "{tag_exist}"]
+tag_delete_from_category = (
+    f"""
+    # Create tag under category - 'Location'
+    $evm.execute(
+'tag_create', 'location', :name => '{tag_values[0]}', :description => 'Testing tag {tag_values[0]}'
+)
+    # Check if tag exists
+    tag_exist = $evm.execute('tag_exists?', 'location', '{tag_values[0]}')
+    $evm.log(:info, "Tag exists: #{tag_values[1]}")
+
+    # Delete the tag
+    $evm.execute('tag_delete', 'location', '{tag_values[0]}')
+
+    # Check if deleted tag exists
+    tag_exist = $evm.execute('tag_exists?', 'location', '{tag_values[0]}')
+    $evm.log(:info, "Tag exists: #{tag_values[1]}")
+    """
 )
