@@ -8,6 +8,7 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import providers
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance.implementations.ssui import navigate_to
 from cfme.utils.providers import ProviderFilter
 
 pytestmark = [
@@ -115,9 +116,8 @@ def test_in_ssui_portal_reconfigure_service_should_shows_available_provisioning_
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_refresh_ssui_page():
+def test_refresh_ssui_page(appliance, generic_service):
     """
     Polarion:
         assignee: nansari
@@ -127,7 +127,14 @@ def test_refresh_ssui_page():
         startsin: 5.8
         tags: ssui
     """
-    pass
+    service, _ = generic_service
+
+    with appliance.context.use(ViaSSUI):
+        view = navigate_to(service, "Details")
+
+        # After refresh it should be on the same page or shouldn't logout
+        view.browser.refresh()
+        assert view.is_displayed
 
 
 @pytest.mark.manual
