@@ -147,3 +147,44 @@ def test_automate_simulation_result_has_hash_data(custom_instance):
         ).text
         == "Key"
     )
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1630800, forced_streams=["5.11"])], automates=[1630800])
+def test_simulation_copy_button(appliance):
+    """
+    Bugzilla:
+        1630800
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Go to Automation > Automate > Simulation
+            2. Fill in any required fields to enable submit button and click on 'Submit'
+            4. Change any field - for example 'Object Attribute'
+            5. Select Copy button
+        expectedResults:
+            1. Copy button should be disabled
+            2. Copy button should be enabled
+            3.
+            4.
+            5. Copy button should be disabled until form is submitted
+    """
+    view = navigate_to(appliance.server, 'AutomateSimulation')
+    assert not view.copy.is_enabled
+    view.fill({
+        'instance': "Request",
+        'message': "Hello",
+        'request': "InspectMe",
+        'execute_methods': True,
+        'target_type': "EVM User",
+        'target_object': "Administrator",
+    })
+    view.submit_button.click()
+    assert view.copy.is_enabled
+    view.target_type.select_by_visible_text("Provider")
+    assert not view.copy.is_enabled
