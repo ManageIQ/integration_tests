@@ -104,3 +104,40 @@ def test_widget_generate_content_via_rest(implementation):
             4. Both values must be different, value must be updated.
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1730813])
+@pytest.mark.tier(2)
+def test_service_refresh_dialog_fields_default_values():
+    """
+    Bugzilla:
+        1730813
+
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Import dialog `RTP Testgear Client Provision` from the BZ attachments and create
+                a service_template and service catalog to attach it.
+        testSteps:
+            1. Start monitoring the evm log and look for fields `tag_1_region` and `tag_0_function`.
+            2. Perform action `refresh_dialog_fields` by sending a request
+                POST /api/service_catalogs/<:id>/sevice_templates/<:id>
+                    {
+                    "action": "refresh_dialog_fields",
+                    "resource": {
+                        "fields": [
+                            "tag_1_region",
+                            "tag_0_function"
+                            ]
+                        }
+                    }
+        expectedResults:
+            1.
+            2. Request must be successful and evm must have the default values
+                for the fields mentioned in testStep 1.
+    """
+    pass
