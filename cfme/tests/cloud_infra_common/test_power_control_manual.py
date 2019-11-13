@@ -316,59 +316,6 @@ def test_power_states_with_respective_provider():
     pass
 
 
-@pytest.mark.tier(1)
-def test_archived_instance_status():
-    """Tests archived instance status
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Cloud
-        caseimportance: high
-        initialEstimate: 1/8h
-        tags: power
-        testSteps:
-            1. Add cloud provider(rhos, ec2 or azure)
-            2. Provision instance and retire it
-            3. Navigate to cloud > instance > Instance by provider > archived
-            4. See any instance power state
-        expectedResults:
-            1.
-            2.
-            3. Cloud instances should be present
-            4. Power state of cloud instances should be changed to 'archived'
-
-    Bugzilla:
-        1701188
-    """
-
-
-@pytest.mark.tier(1)
-def test_orphaned_instance_status():
-    """Tests orphaned instance status
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/10h
-        casecomponent: Cloud
-        initialEstimate: 1/8h
-        tags: power
-        testSteps:
-            1. Add cloud provider(rhos, ec2 or azure)
-            2. Delete provider
-            3. Navigate to cloud > instance > Instance by provider > orphaned
-            4. See any instance power state
-        expectedResults:
-            1.
-            2.
-            3. Cloud instances should be present
-            4. Power state of cloud instances should be changed to 'orphaned'
-
-    Bugzilla:
-        1701188
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1740285])
 def test_power_operations_on_paused_provider():
