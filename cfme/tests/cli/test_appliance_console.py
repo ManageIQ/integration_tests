@@ -585,7 +585,8 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     3. '1' configure network,
     4. '1' configure DHCP,
     5. 'y' confirm IPv4 configuration,
-    6. 'y' IPv6 configuration.
+    6. 'y' IPv6 configuration,
+    7. Check the changes persist after reboot.
 
     Polarion:
         assignee: mnadeem
@@ -595,10 +596,7 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     """
     command_set = ('ap', RETURN, '1', '1', 'y', TimedCommand('y', 90), RETURN, RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set)
-
-    def appliance_is_connective():
-        unconfigured_appliance.ssh_client.run_command("true")
-    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+    unconfigured_appliance.reboot(wait_for_web_ui=False)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
         r"ip a show dev eth0 | grep 'inet\s.*dynamic'").success)
@@ -607,6 +605,7 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[BZ(1766939)])
 def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
     """ Commands:
     1. 'ap' launches appliance_console,
@@ -619,7 +618,8 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
     8. RETURN confirm default primary DNS,
     9. RETURN confirm default secondary DNS,
     10. RETURN confirm default search order,
-    11. 'y' apply static configuration.
+    11. 'y' apply static configuration,
+    12. Check the static ipv4 persist after reboot to cover the BZ #1766939 #1755398.
 
     Polarion:
         assignee: mnadeem
@@ -628,11 +628,8 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
         initialEstimate: 1/6h
     """
     command_set = ('ap', RETURN, '1', '2', RETURN, RETURN, RETURN, RETURN, RETURN, RETURN, 'y')
-    unconfigured_appliance.appliance_console.run_commands(command_set)
-
-    def appliance_is_connective():
-        unconfigured_appliance.ssh_client.run_command("true")
-    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+    unconfigured_appliance.appliance_console.run_commands(command_set, timeout=90)
+    unconfigured_appliance.reboot(wait_for_web_ui=False)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
         "ip -4 a show dev eth0 | grep 'inet .*scope global eth0'"))
@@ -652,7 +649,8 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
     8. RETURN confirm default primary DNS,
     9. RETURN confirm default secondary DNS,
     10. RETURN confirm default search order,
-    11. 'y' apply static configuration.
+    11. 'y' apply static configuration,
+    12. Check the static ipv6 persist after reboot.
 
     Polarion:
         assignee: mnadeem
@@ -661,11 +659,8 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
         initialEstimate: 1/4h
     """
     command_set = ('ap', RETURN, '1', '3', '1::1', RETURN, '1::f', RETURN, RETURN, RETURN, 'y', '')
-    unconfigured_appliance.appliance_console.run_commands(command_set, timeout=30)
-
-    def appliance_is_connective():
-        unconfigured_appliance.ssh_client.run_command("true")
-    wait_for(appliance_is_connective, handle_exception=True, delay=1, timeout=30)
+    unconfigured_appliance.appliance_console.run_commands(command_set, timeout=90)
+    unconfigured_appliance.reboot(wait_for_web_ui=False)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
         "ip -6 a show dev eth0 | grep 'inet6 1::1.*scope global'"))
