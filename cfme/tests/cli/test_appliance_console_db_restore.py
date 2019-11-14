@@ -7,14 +7,11 @@ from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.fixtures.cli import configure_appliances_ha
-from cfme.fixtures.cli import configure_automatic_failover
 from cfme.fixtures.cli import provider_app_crud
-from cfme.fixtures.cli import reconfigure_primary_replication_node
-from cfme.fixtures.cli import reconfigure_standby_replication_node
 from cfme.fixtures.cli import replicated_appliances_with_providers
-from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.appliance.console import configure_appliances_ha
+from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
 from cfme.utils.conf import cfme_data
@@ -561,10 +558,10 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     fetch_v2key(appl3, appl1)
     restore_db(appl1)
 
-    reconfigure_primary_replication_node(appl1, pwd)
-    reconfigure_standby_replication_node(appl2, pwd, appl1.hostname)
+    appl1.reconfigure_primary_replication_node(pwd)
+    appl2.reconfigure_standby_replication_node(pwd, appl1.hostname)
 
-    configure_automatic_failover(appl3, primary_ip=appl1.hostname)
+    appl3.configure_automatic_failover(primary_ip=appl1.hostname)
     appl3.evm_failover_monitor.restart()
 
     appl3.evmserverd.start()
