@@ -472,3 +472,9 @@ vmware = pytest.mark.requirement(
     description='Support of VMWare in MIQ/CFME',
     assignee_id='kkulkarn'
 )
+
+webmks = pytest.mark.requirement(
+    "VM Consoles: VMWare WebMKS",
+    description='VMWare WebMKS support',
+    assignee_id='apagac',
+)

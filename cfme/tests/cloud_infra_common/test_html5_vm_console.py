@@ -13,7 +13,9 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import providers
+from cfme.services.myservice import MyService
 from cfme.utils import ssh
+from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
@@ -55,6 +57,7 @@ def vm_obj(request, provider, setup_provider, console_template):
 
 
 @pytest.mark.rhv1
+@test_requirements.html5
 def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         configure_console_vnc, take_screenshot):
     """
@@ -220,6 +223,7 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
 
 
 @pytest.mark.tier(2)
+@test_requirements.html5
 @pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_html5_console_ports_present(appliance, provider):
     """
@@ -243,60 +247,13 @@ def test_html5_console_ports_present(appliance, provider):
 @pytest.mark.manual
 @test_requirements.html5
 @pytest.mark.tier(2)
-def test_html5_console_matrix():
+@pytest.mark.parametrize('browser', ['chrome_latest', 'firefox_latest'])
+@pytest.mark.parametrize('operating_system', ['fedora_latest', 'rhel8.x', 'rhel7.x', 'rhel6.x'])
+def test_html5_console_linux(browser, operating_system, provider):
     """
     This testcase is here to reflect testing matrix for html5 consoles. Combinations listed
     are being tested manually. Originally, there was one testcase for every combination, this
     approach reduces number of needed testcases.
-
-    Testing matrix:
-        Systems:
-            - fedora latest
-            - rhel 6.x
-            - rhel 7.x
-            - windows 7
-            - windows 2012
-            - windows 10
-        Browsers:
-            - firefox latest
-            - chrome latest
-            - edge latest
-            - explorer 11
-        Providers:
-            - vsphere 6
-            - rhevm 4.2
-
-    Importance:
-        High:
-            - fedora latest + firefox, chrome + vsphere6, rhevm42
-            - rhel 7.x + firefox, chrome + vsphere6, rhevm42
-            - windows 10 + firefox, chrome, edge + vsphere6, rhevm42
-        Medium:
-            - everything else
-
-    Testcases:
-        - test_html5_console_firefox_vsphere6_win2012
-        - test_html5_console_firefox_vsphere6_win10
-        - test_html5_console_firefox_vsphere6_rhel6x
-        - test_html5_console_firefox_vsphere6_fedora
-        - test_html5_console_firefox_vsphere6_win7
-        - test_html5_console_firefox_vsphere6_rhel7x
-        - test_html5_console_firefox_rhevm42_fedora_vnc
-        - test_html5_console_firefox_rhevm42_fedora_spice
-        - test_html5_console_chrome_vsphere6_fedora
-        - test_html5_console_chrome_vsphere6_fedora
-        - test_html5_console_chrome_vsphere6_win7
-        - test_html5_console_chrome_vsphere6_rhel7x
-        - test_html5_console_chrome_vsphere6_win10
-        - test_html5_console_chrome_vsphere6_fedora
-        - test_html5_console_chrome_vsphere6_win2012
-        - test_html5_console_chrome_rhevm42_fedora_vnc
-        - test_html5_console_chrome_rhevm42_fedora_spice
-        - test_html5_console_edge_vsphere6_win10
-        - test_html5_console_edge_rhevm42_win10_vnc
-        - test_html5_console_edge_rhevm42_win10_spice
-        - test_html5_console_ie11_vsphere6_win7
-        - test_html5_console_ie11_vsphere6_win2012
 
     Polarion:
         assignee: apagac
@@ -326,50 +283,55 @@ def test_html5_console_matrix():
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.manual('manualonly')
 @test_requirements.html5
 @pytest.mark.tier(2)
-def test_html5_ssui_console_matrix():
+@pytest.mark.parametrize('browser', ['edge', 'internet_explorer'])
+@pytest.mark.parametrize('operating_system', ['windows7', 'windows10',
+ 'windows_server2012', 'windows_server2016'])
+def test_html5_console_windows(browser, operating_system, provider):
+    """This testcase is here to reflect testing matrix for html5 consoles. Combinations listed
+    are being tested manually. Originally, there was one testcase for every combination, this
+    approach reduces number of needed testcases.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Login to CFME Appliance as admin.
+            2. On top right click Administrator|EVM -> Configuration.
+            3. Under VMware Console Support section and click on Dropdown in front
+               of "Use" and select "VNC".
+            4. Click save at the bottom of the page.
+               This will setup your appliance for using HTML5 VNC Console and not to
+               use VMRC Plug in which is Default when you setup appliance.
+            5. Provision a testing VM.
+        testSteps:
+            1. Navigate to testing VM
+            2. Launch the console by Access -> VM Console
+            3. Make sure the console accepts commands
+            4. Make sure the characters are visible
+        expectedResults:
+            1. VM Details displayed
+            2. Console launched
+            3. Console accepts characters
+            4. Characters not garbled; no visual defect
+    """
+    pass
+
+
+@pytest.mark.manual('manualonly')
+@test_requirements.html5
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('browser', ['chrome_latest', 'firefox_latest'])
+@pytest.mark.parametrize('operating_system', ['fedora_latest', 'rhel8.x', 'rhel7.x', 'rhel6.x'])
+def test_html5_ssui_console_linux(browser, operating_system, provider):
     """
     This testcase is here to reflect testing matrix for html5 consoles going via ssui.
     Combinations listed are being tested manually. Originally, there was one testcase for every
     combination, this approach reduces number of needed testcases.
-
-    Testing matrix:
-        Systems:
-            - fedora latest
-            - rhel
-            - windows 7
-            - windows 10
-        Browsers:
-            - firefox latest
-            - chrome latest
-            - edge latest
-            - explorer 11
-        Providers:
-            - vsphere 6
-            - rhevm 4.2
-
-
-    Importance:
-        High:
-            - fedora latest + firefox, chrome + vsphere6, rhevm42
-            - rhel 7.x + firefox, chrome + vsphere6, rhevm42
-            - windows 10 + firefox, chrome, edge + vsphere6, rhevm42
-        Medium:
-            - everything else
-
-    Testcases:
-        - test_html5_console_firefox_ssui_rhel
-        - test_html5_console_firefox_ssui_win7
-        - test_html5_console_firefox_ssui_fedora
-        - test_html5_console_firefox_ssui_win10
-        - test_html5_console_chrome_ssui_fedora
-        - test_html5_console_chrome_ssui_rhel
-        - test_html5_console_chrome_ssui_win7
-        - test_html5_console_ie11_ssui_win7
-        - test_html5_console_edge_ssui_win10
-        - test_html5_console_vsphere6_ssui
 
     Polarion:
         assignee: apagac
@@ -396,3 +358,138 @@ def test_html5_ssui_console_matrix():
             4. Characters not garbled; no visual defect
     """
     pass
+
+
+@pytest.mark.manual('manualonly')
+@test_requirements.html5
+@pytest.mark.tier(2)
+@pytest.mark.parametrize('browser', ['edge', 'internet_explorer'])
+@pytest.mark.parametrize('operating_system', ['windows7', 'windows10',
+    'windows_server2012', 'windows_server2016'])
+def test_html5_ssui_console_windows(browser, operating_system, provider):
+    """
+    This testcase is here to reflect testing matrix for html5 consoles going via ssui.
+    Combinations listed are being tested manually. Originally, there was one testcase for every
+    combination, this approach reduces number of needed testcases.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Appliance
+        initialEstimate: 2/3h
+        setup:
+            1. Login to CFME Appliance as admin.
+            2. On top right click Administrator|EVM -> Configuration.
+            3. Under VMware Console Support section and click on Dropdown in front
+               of "Use" and select "VNC".
+            4. Click save at the bottom of the page.
+               This will setup your appliance for using HTML5 VNC Console and not to
+               use VMRC Plug in which is Default when you setup appliance.
+            6. Create a service dialog and catalog that provisions a VM
+        testSteps:
+            1. Via ssui, order the catalog and wait for VM provision
+            2. Via ssui, navigate to service details and click on
+                Access-> VM Console for testing VM
+            3. Make sure the console accepts commands
+            4. Make sure the characters are visible
+        expectedResults:
+            1. Catalog ordered; VM provisioned
+            3. Console accepts characters
+            4. Characters not garbled; no visual defect
+    """
+    pass
+
+
+@pytest.mark.parametrize('context', [ViaSSUI])
+@test_requirements.html5
+@pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
+def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
+        configure_console_vnc, order_service, take_screenshot,
+        console_template, provider):
+    """Test Myservice VM Console in SSUI.
+
+    Metadata:
+        test_flag: ssui
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/2h
+    """
+    if (provider.one_of(VMwareProvider) and provider.version >= 6.5 or
+            'html5_console' in provider.data.get('excluded_test_flags', [])):
+        pytest.skip('VNC consoles are unsupported on VMware ESXi 6.5 and later')
+
+    catalog_item = order_service
+    service_name = catalog_item.name
+    console_vm_username = credentials[provider.data.templates.console_template
+                            .creds].username
+    console_vm_password = credentials[provider.data.templates.console_template
+                            .creds].password
+    with appliance.context.use(context):
+        myservice = MyService(appliance, service_name)
+        vm_obj = myservice.launch_vm_console(catalog_item)
+        vm_console = vm_obj.vm_console
+        if provider.one_of(OpenStackProvider):
+            public_net = provider.data['public_network']
+            vm_obj.mgmt.assign_floating_ip(public_net)
+        request.addfinalizer(vm_console.close_console_window)
+        request.addfinalizer(appliance.server.logout)
+        ssh_who_command = ("who --count" if not provider.one_of(OpenStackProvider)
+            else "who -aH")
+        with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
+                password=console_vm_password) as vm_ssh_client:
+            try:
+                assert vm_console.wait_for_connect(180), ("VM Console did not reach 'connected'"
+                    " state")
+                user_count_before_login = vm_ssh_client.run_command(ssh_who_command,
+                    ensure_user=True)
+                logger.info("Output of '{}' is {} before login"
+                    .format(ssh_who_command, user_count_before_login))
+                assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
+                    " didn't prompt for Login")
+                # Enter Username:
+                vm_console.send_keys("{}".format(console_vm_username))
+                assert vm_console.wait_for_text(text_to_find="Password", timeout=200), ("VM Console"
+                " didn't prompt for Password")
+                # Enter Password:
+                vm_console.send_keys("{}".format(console_vm_password))
+                logger.info("Wait to get the '$' prompt")
+                if not provider.one_of(OpenStackProvider):
+                    vm_console.wait_for_text(text_to_find=provider.data.templates.
+                        console_template.prompt_text, timeout=200)
+
+                def _validate_login():
+                    # the following try/except is required to handle the exception thrown by SSH
+                    # while connecting to VMware VM.It throws "[Error 104]Connection reset by Peer".
+                    try:
+                        user_count_after_login = vm_ssh_client.run_command(ssh_who_command,
+                            ensure_user=True)
+                        logger.info("Output of '{}' is {} after login"
+                            .format(ssh_who_command, user_count_after_login))
+                        return user_count_before_login < user_count_after_login
+                    except Exception as e:
+                        logger.info("Exception: {}".format(e))
+                        logger.info("Trying again to perform 'who --count' over ssh.")
+                        return False
+
+                # Number of users before login would be 0 and after login would be 180
+                # If below assertion would fail user_count_after_login is also 0,
+                # denoting login failed
+                wait_for(func=_validate_login, timeout=300, delay=5)
+                # create file on system
+                vm_console.send_keys("touch blather")
+                wait_for(func=vm_ssh_client.run_command, func_args=["ls blather"],
+                    func_kwargs={'ensure_user': True},
+                    fail_condition=lambda result: result.rc != 0, delay=1, num_sec=10)
+                # if file was created in previous steps it will be removed here
+                # we will get instance of SSHResult
+                command_result = vm_ssh_client.run_command("rm blather", ensure_user=True)
+                assert command_result
+
+            except Exception:
+                # Take a screenshot if an exception occurs
+                vm_console.switch_to_console()
+                take_screenshot("ConsoleScreenshot")
+                vm_console.switch_to_appliance()
+                raise
