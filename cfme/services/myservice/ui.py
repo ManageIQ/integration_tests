@@ -260,6 +260,7 @@ def retire(self, wait=True):
             description=f"Service Retire for: {self.name}"
         )
         service_request.wait_for_request()
+    return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
 
 
 @MiqImplementationContext.external_for(MyService.retire_on_date, ViaUI)
@@ -297,6 +298,12 @@ def exists(self):
         return True
     except (CandidateNotFound, ItemNotFound):
         return False
+
+
+@MiqImplementationContext.external_for(MyService.is_retired.getter, ViaUI)
+def is_retired(self):
+    view = navigate_to(self, 'Details')
+    return view.entities.lifecycle.get_text_of("Retirement State") == "Retired"
 
 
 @MiqImplementationContext.external_for(MyService.delete, ViaUI)
