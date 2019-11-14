@@ -1654,15 +1654,15 @@ def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, requ
         navigate_to(appliance.server, 'LoggedIn')
         assert appliance.server.current_full_name() == new_tenant_admin.name
 
-        user_collection = appliance.collections.users
-        user = user_collection.create(
-            description=f'tenantgrp_{fauxfactory.gen_alphanumeric()}',
-            role=tenant_role.name, tenant=f'My Company/{child_tenant.name}')
+        pytest.set_trace()
+        group = appliance.collections.groups.instantiate(
+            description=new_tenant_admin.groups[0].description)
+        user = new_user(appliance, group)
         request.addfinalizer(user.delete_if_exists)
         assert user.exists
 
         with update(user):
-            user.description = "{}edited".format(user.description)
+            user.name = "{}edited".format(user.name)
 
         user.delete()
         assert not user.exists
