@@ -258,7 +258,7 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance,
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_update_replicated_webui(replicated_appliances_with_providers, appliance, request,
+def test_update_replicated_webui(get_replicated_appliances_with_providers, appliance, request,
                                  old_version, soft_assert):
     """ Tests updating an appliance with providers, also confirms that the
             provisioning continues to function correctly after the update has completed
@@ -269,6 +269,7 @@ def test_update_replicated_webui(replicated_appliances_with_providers, appliance
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
+    replicated_appliances_with_providers = get_replicated_appliances_with_providers
     providers_before_upgrade = set(replicated_appliances_with_providers[0].managed_provider_names)
     update_appliance(replicated_appliances_with_providers[0])
     update_appliance(replicated_appliances_with_providers[1])
