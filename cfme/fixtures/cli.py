@@ -509,7 +509,6 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     return ha_multiple_preupdate_appliances
 
 
-@pytest.fixture
 def replicated_appliances_with_providers(multiple_preupdate_appliances):
     """Returns two database-owning appliances, configures with providers."""
     appl1, appl2 = multiple_preupdate_appliances
