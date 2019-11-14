@@ -102,8 +102,8 @@ def get_prs():
 
     if pr_nums_without_label:
         print(
-            "ERROR: The following PRs don't have any of recognized labels:",
-            ", ".join(pr_nums_without_label),
+            "ERROR: The following PRs don't have any of recognized labels: \n",
+            "\n".join(pr_nums_without_label),
         )
         print("Recognized labels:", ", ".join(VALID_LABELS))
         sys.exit(1)
@@ -143,13 +143,12 @@ def main(tag, old_tag, report_type, line_limit):
     if old_tag is None:
         old_tag = repo.git.describe(tags=True, abbrev=0)
 
-    commits = list(repo.iter_commits("{}..master".format(old_tag)))
+    commits = list(repo.iter_commits(f"{old_tag}..master"))
 
-    print("integration_tests {} Released".format(tag))
-    print("")
-    print("Includes: {} -> {}".format(old_tag, tag))
+    print(f"integration_tests {tag} Released")
+    print(f"\nIncludes: {old_tag} -> {tag}")
 
-    max_len_labels = max(list(map(len, VALID_LABELS)))
+    max_len_labels = max(len(l) for l in VALID_LABELS)
 
     prs = get_prs()
 
