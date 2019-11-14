@@ -23,7 +23,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def vm_crud(provider, small_template):
     collection = provider.appliance.provider_based_collection(provider)
     return collection.instantiate(random_vm_name(context='genealogy'),
@@ -89,7 +89,7 @@ def test_vm_genealogy_detected(
 @pytest.mark.manual
 @pytest.mark.tier(1)
 @test_requirements.genealogy
-def test_compare_button_enabled():
+def test_compare_button_enabled(provider, appliance, vm_crud):
     """
     Test that compare button is enabled
 
@@ -112,7 +112,24 @@ def test_compare_button_enabled():
     Bugzilla:
         1694712
     """
-    pass
+
+
+####################################################
+    # setup provider
+    vm_crud.cleanup_on_provider(find_in_cfme=True, allow_skip="default")
+
+
+
+    # establish relationship between VM's
+
+    # navigate to VM summary page
+
+    # Check 2 boxes from tree
+
+    # Verify: Genealogy is set(not null?)
+    # Verify: Genealogy summary is displayed
+    # Verify: Compare button is enabled
+    # Verify: Compare button leads to compare?
 
 
 @pytest.mark.manual
@@ -146,3 +163,4 @@ def test_cloud_infra_genealogy():
         1399144
     """
     pass
+
