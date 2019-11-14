@@ -13,9 +13,11 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
+    test_requirements.genealogy,
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider', 'setup provider'),
     pytest.mark.tier(2),
     pytest.mark.provider(
+        CloudProvider,
         gen_func=providers,
         filters=[ProviderFilter(classes=[BaseProvider]),
                  ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)],
@@ -86,10 +88,10 @@ def test_vm_genealogy_detected(
             "{} is not in {}'s ancestors".format(small_template.name, vm_crud.name)
 
 
-@pytest.mark.manual
+#@pytest.mark.manual
 @pytest.mark.tier(1)
 @test_requirements.genealogy
-def test_compare_button_enabled(provider, appliance, vm_crud):
+def test_compare_button_enabled(request, appliance, vm_crud):
     """
     Test that compare button is enabled
 
@@ -113,23 +115,29 @@ def test_compare_button_enabled(provider, appliance, vm_crud):
         1694712
     """
 
+    # Setup
+    template_name, provider, vm = vm_crud
 
-####################################################
-    # setup provider
-    vm_crud.cleanup_on_provider(find_in_cfme=True, allow_skip="default")
+    vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
+
+    request.addfinalizer(lambda: vm_crud.cleanup_on_provider()) #should yield be used in fixture?
+    vm_crud.mgmt.wait_for_steady_state()
 
 
+    # Establish parent-child relationship
 
-    # establish relationship between VM's
 
-    # navigate to VM summary page
+    # Navigate to VM summary page
+    view = navigate_to(vm_crud[1], 'Details')
+
 
     # Check 2 boxes from tree
+
 
     # Verify: Genealogy is set(not null?)
     # Verify: Genealogy summary is displayed
     # Verify: Compare button is enabled
-    # Verify: Compare button leads to compare?
+    # Verify: Compare button leads to compare summary?
 
 
 @pytest.mark.manual
