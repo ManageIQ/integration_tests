@@ -492,11 +492,11 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
     """
     ent_slice = slice(0, num_hosts, None)
     if hosts_collection == "provider":
-        hosts_view = navigate_to(provider.collections.hosts, "All", force=True)
+        hosts_view = navigate_to(provider.collections.hosts, "All")
     elif hosts_collection == "appliance":
-        hosts_view = navigate_to(appliance.collections.hosts, "All", force=True)
+        hosts_view = navigate_to(appliance.collections.hosts, "All")
     for h in hosts_view.entities.get_all(slice=ent_slice):
-        h.check()
+        h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
     hosts_view.toolbar.download.item_select(report_format)
