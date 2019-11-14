@@ -117,6 +117,22 @@ class TextInputDialogView(View):
         return self.submit.is_displayed and self.service_name.is_displayed
 
 
+class TextInputAutomateView(View):
+    """This is view comes on clicking custom button"""
+
+    title = Text("#explorer_title_text")
+    text_box1 = TextInput(id="text_box_1")
+    text_box2 = TextInput(id="text_box_2")
+    submit = Button("Submit")
+    cancel = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        # This is only for wait for view
+        return (self.submit.is_displayed and self.text_box1.is_displayed
+                and self.text_box2.is_displayed)
+
+
 class CredsHostsDialogView(View):
     """This view for custom button default ansible playbook dialog"""
 
@@ -141,6 +157,7 @@ class DropdownDialogView(ParametrizedView):
     """ This is custom view for custom button dropdown dialog execution"""
 
     title = Text("#explorer_title_text")
+
     class service_name(ParametrizedView):  # noqa
         PARAMETERS = ("dialog_id",)
         dropdown = BootstrapSelect(

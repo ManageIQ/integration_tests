@@ -349,55 +349,6 @@ def test_vm_name_automate_method():
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1717501, 1715396])
-def test_dialog_element_values_passed_to_button():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        startsin: 5.10
-        casecomponent: Automate
-        testSteps:
-            1. Import the attached automate domain and dialog exports in BZ - 1715396. The automate
-               domain contains a method to populate the dynamic second element in the dialog.
-            2. Install object_walker automate domain from https://github.com/pemcg/object_walker
-            3. Add a custom button to a VM (or any) object. The button should use the newly imported
-               BZ dialog, and should run object_walker when submitted (/System/Process: Request,
-               Message: create, Request: object_walker)
-            4. Click the custom button, and observe the dialog. The element 'Text Box 1' default
-               value is empty, the dynamic element 'Text Box 2' has been dynamically populated.
-               click on submit the button.
-            5. Repeat step 4, but type some some value(like "aa") in element 'Text Box 1'.
-               Submit the button.
-            6. Repeat step 5, but now also amend the text dynamically entered into 'Text Box 2'
-               (for example adding the string "also").
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Values passed through to object_walker - both element values should be passed:
-               >> ~/object_walker_reader.rb | grep dialog
-                     |    $evm.root['dialog_text_box_1'] =    (type: String)
-                     |    $evm.root['dialog_text_box_2'] = The dynamic method ran at:
-                     2019-05-30 09:42:40 +0100   (type: String)
-            5. The value from both test boxes should be passed through object_walker:
-                ~/object_walker_reader.rb -t 2019-05-30T09:43:25.558037 | grep dialog
-                     |    $evm.root['dialog_text_box_1'] = aa   (type: String)
-                     |    $evm.root['dialog_text_box_2'] = The dynamic method ran at:
-                     2019-05-30 09:42:43 +0100   (type: String)
-            6. Note that both element values are now passed through to object_walker:
-                ~/object_walker_reader.rb | grep dialog
-                     |    $evm.root['dialog_text_box_1'] = ccdd   (type: String)
-                     |    $evm.root['dialog_text_box_2'] = The dynamic method also ran at:
-                     2019-05-30 09:50:10 +0100   (type: String)Provision more than 10 VMs
-    Bugzilla:
-        1715396
-        1717501
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_git_refresh_with_renamed_yaml():
     """
     Polarion:
