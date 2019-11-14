@@ -12,8 +12,10 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import providers
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ssui import DetailsMyServiceView
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
@@ -272,11 +274,12 @@ def test_no_error_while_fetching_the_service():
     pass
 
 
-@pytest.mark.meta(coverage=[1628520])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1628520])
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
-def test_retire_owned_service():
+@pytest.mark.parametrize('context', [ViaUI, ViaSSUI])
+def test_retire_owned_service(request, appliance, context, user_self_service_role,
+                              generic_catalog_item):
     """
 
     Bugzilla:
@@ -298,7 +301,51 @@ def test_retire_owned_service():
             3.
             4. Service should retire
     """
-    pass
+    user, _ = user_self_service_role
+
+    # login with user having self service role
+    with user:
+        with appliance.context.use(context):
+            appliance.server.login(user)
+
+            # order service from catalog item
+            serv_cat = ServiceCatalogs(
+                appliance,
+                catalog=generic_catalog_item.catalog,
+                name=generic_catalog_item.name,
+            )
+
+            if context == ViaSSUI:
+                serv_cat.add_to_shopping_cart()
+
+            provision_request = serv_cat.order()
+            provision_request.wait_for_request()
+            service = MyService(appliance, generic_catalog_item.dialog.label)
+
+            @request.addfinalizer
+            def _clear_request_service():
+                if provision_request.exists():
+                    provision_request.remove_request(method="rest")
+                if service.exists:
+                    service.delete()
+
+            assert service.exists
+
+            # Retire service
+            retire_request = service.retire()
+            assert retire_request.exists()
+
+            @request.addfinalizer
+            def _clear_retire_request():
+                if retire_request.exists():
+                    retire_request.remove_request()
+
+            wait_for(
+                lambda: service.is_retired,
+                delay=5, num_sec=120,
+                fail_func=service.browser.refresh,
+                message="waiting for service retire"
+            )
 
 
 @pytest.mark.meta(coverage=[1695804])

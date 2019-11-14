@@ -288,7 +288,7 @@ def user_self_service_role(appliance):
 
         # credentials for user
         creds = Credential(
-            principal=format(fauxfactory.gen_alphanumeric(start="usr_")),
+            principal=fauxfactory.gen_alphanumeric(start="user_"),
             secret=fauxfactory.gen_alphanumeric(),
         )
 
