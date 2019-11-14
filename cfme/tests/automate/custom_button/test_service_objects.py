@@ -571,7 +571,7 @@ def test_custom_button_role_access_service(
 
 @test_requirements.customer_stories
 @pytest.mark.meta(automates=[BZ(1439883)])
-@pytest.mark.provider([VMwareProvider], override=True)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 @pytest.mark.uncollectif(lambda button_group:
                          "GENERIC" in button_group,
                          reason='Generic button group type not valid for test')
