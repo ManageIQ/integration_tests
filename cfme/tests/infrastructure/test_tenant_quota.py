@@ -16,6 +16,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.quota,
@@ -506,3 +507,79 @@ def test_quota_exceed_mail_with_more_info_link(configure_mail, appliance, provid
         provision_request = appliance.collections.requests.instantiate(request_description)
         provision_request.wait_for_request(method='ui')
         assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1644351])
+@pytest.mark.provider([VMwareProvider], selector=ONE)
+def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, full_template_vm):
+    """
+    Bugzilla:
+        1644351
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: Infra
+        tags: quota
+        testSteps:
+            1. Add infra provider and Add disk(s) to a vm instance
+            2. Turn quota on
+            3. Remove the disk(s)
+            4. Check automation logs
+        expectedResults:
+            1.
+            2.
+            3. Request should be successful and size of disk(s) should be included in quota
+               requested.
+            4. Quota is bypassed while removing disk
+    """
+    orig_config = full_template_vm.configuration.copy()
+    new_config = orig_config.copy()
+    new_config.add_disk(size=1024, size_unit='MB', type="thin", mode="persistent")
+    add_disk_request = full_template_vm.reconfigure(new_config)
+
+    # Add disk request verification
+    wait_for(
+        add_disk_request.is_succeeded, timeout=360, delay=45, message="confirm that disk was added"
+    )
+
+    # Add disk UI verification
+    wait_for(
+        lambda: full_template_vm.configuration.num_disks == new_config.num_disks,
+        timeout=360,
+        delay=45,
+        fail_func=full_template_vm.refresh_relationships,
+        message="confirm that disk was added"
+    )
+
+    # Set root tenant quota for storage
+    root_tenant = appliance.collections.tenants.get_root_tenant()
+    view = navigate_to(root_tenant, "ManageQuotas")
+    reset_data = view.form.read()
+    root_tenant.set_quota(**{'storage_cb': True, "storage": "2"})
+    request.addfinalizer(lambda: root_tenant.set_quota(**reset_data))
+
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=[
+                ".*VM Reconfigure storage change: -1073741824 Bytes.*",
+                ".*VmReconfigureRequest: Bypassing quota check.*",
+            ],
+    ).waiting(timeout=400):
+        remove_disk_request = full_template_vm.reconfigure(orig_config)
+
+        # Remove disk request verification
+        wait_for(
+            remove_disk_request.is_succeeded,
+            timeout=360,
+            delay=45,
+            message="confirm that previously-added disk was removed",
+        )
+
+        # Remove disk UI verification
+        assert full_template_vm.configuration.num_disks == orig_config.num_disks
