@@ -232,7 +232,8 @@ def test_login_retrieve_group(
     non_evm_group = [g for g in auth_user.groups or [] if 'evmgroup' not in g.lower()][0]
     # retrieving in test call and not fixture, getting the group from auth provider is part of test
     group = retrieve_group(
-        temp_appliance_preconfig_long, auth_mode, auth_user.username, non_evm_group, auth_provider
+        temp_appliance_preconfig_long, auth_mode, auth_user.username, non_evm_group, auth_provider,
+        tenant="My Company"  # tenant is required for group
     )
 
     with user_obj:
