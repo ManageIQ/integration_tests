@@ -636,7 +636,6 @@ role_access_ui_511z = {
         'Monitor': {
             'Alerts': ['Overview', 'All Alerts']
         },
-        'Red Hat Cloud': ['Services', 'Providers']
     },
     'evmgroup-administrator': {
         'Overview': ['Dashboard', 'Reports', 'Utilization', 'Chargeback'],
