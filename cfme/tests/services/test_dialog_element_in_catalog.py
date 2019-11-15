@@ -117,10 +117,12 @@ def test_required_dialog_elements(appliance, catalog_item_local, service_dialog,
         assert not view.submit_button.disabled
 
 
-@pytest.mark.meta(coverage=[1692736])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1692736])
+@pytest.mark.customer_scenario
 @pytest.mark.tier(1)
-def test_validate_not_required_dialog_element():
+@pytest.mark.parametrize("file_name", ["bz_1692736.yml"], ids=["dialog"])
+def test_validate_not_required_dialog_element(appliance, file_name,
+                                              generic_catalog_item_with_imported_dialog):
     """
     Polarion:
         assignee: nansari
@@ -140,7 +142,41 @@ def test_validate_not_required_dialog_element():
     Bugzilla:
         1692736
     """
-    pass
+    catalog_item, sd, el_lable = generic_catalog_item_with_imported_dialog
+    textboxs = {
+        "required": "text_box_1_1",
+        "validated": "text_box_1_2",
+        "non_required": "text_box_1",
+    }
+
+    service_catalog = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalog, "Order")
+
+    def clean_textboxes():
+        for t in textboxs:
+            view.fields(textboxs[t]).fill("")
+
+    # Check required
+    clean_textboxes()
+    assert view.fields(textboxs["required"]).input.warning == "This field is required"
+    assert view.submit_button.disabled
+    view.fields(textboxs["required"]).fill(fauxfactory.gen_alphanumeric())
+    assert not view.fields(textboxs["required"]).input.warning
+    assert not view.submit_button.disabled
+
+    # Check validate
+    clean_textboxes()
+    view.fields(textboxs["required"]).fill(fauxfactory.gen_alphanumeric())
+    view.fields(textboxs["validated"]).fill(fauxfactory.gen_numeric_string())
+    msg = (
+        "Entered text should match the format: "
+        "^(?:[1-9]|(?:[1-9][0-9])|(?:[1-9][0-9][0-9])|(?:900))$"
+    )
+    assert view.fields(textboxs["validated"]).input.warning == msg
+    assert view.submit_button.disabled
+    view.fields(textboxs["validated"]).fill(fauxfactory.gen_numeric_string(3))  # matching pattern
+    assert not view.fields(textboxs["validated"]).input.warning
+    assert not view.submit_button.disabled
 
 
 @pytest.mark.meta(coverage=[1696474])
