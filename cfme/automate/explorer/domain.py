@@ -13,6 +13,7 @@ from widgetastic_patternfly import Input
 
 from cfme.automate.explorer import AutomateExplorerView
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import RestLookupError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils import clear_property_cache
@@ -300,6 +301,18 @@ class Domain(BaseEntity, Fillable, Updateable):
         else:
             view.cancel_button.click()
         view.flash.assert_no_error()
+
+    @property
+    def rest_api_entity(self):
+        try:
+            return (
+                self.appliance.rest_api.collections.automate_domains.find_by(
+                    name=self.name)
+            ).resources[0]
+        except IndexError:
+            raise RestLookupError(
+                f"No automate domain rest entity found matching name {self.name}"
+            )
 
 
 @attr.s

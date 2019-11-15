@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 import fauxfactory
 import pytest
 
+from . import imported_domain_info
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.base.credential import Credential
@@ -418,3 +419,82 @@ def test_automate_git_import_without_master(appliance, request):
     )
     domain = repo.import_domain_from(branch="origin/testbranch")
     request.addfinalizer(domain.delete_if_exists)
+
+
+@pytest.fixture
+def setup_datastore(appliance):
+    """This fixture create setup of datastore similar to domain which we are going to import.
+       Note: Names of domain, namespace, klass, method are hardcoded as per their names in
+       datastore which we are going to import.
+    """
+    domain = appliance.collections.domains.create(
+        name=imported_domain_info['domain'],
+        description=fauxfactory.gen_alpha(),
+        enabled=True)
+
+    namespace = domain.namespaces.create(
+        name=imported_domain_info['namespace'],
+        description=fauxfactory.gen_alpha()
+    )
+
+    klass = namespace.classes.create(
+        name=imported_domain_info['klass'],
+        display_name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+
+    method = klass.methods.create(
+        name=imported_domain_info['method'],
+        display_name=fauxfactory.gen_alphanumeric(),
+        location="inline",
+        script=imported_domain_info['script'],
+    )
+    yield
+    domain.delete_if_exists()
+    namespace.delete_if_exists()
+    klass.delete_if_exists()
+    method.delete_if_exists()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1470738])
+def test_automate_git_verify_ssl(appliance, setup_datastore, imported_domain):
+    """
+    Bugzilla:
+        1470738
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: low
+        initialEstimate: 1/12h
+        tags: automate
+        startsin: 5.7
+        setup:
+            1. Create datastore containing domain, namespace, class etc. This datastore must be
+               similar to datastore which we are going to import using git repository
+            2. Import datastore using git repository. While importing verify ssl should be false
+        testSteps:
+            1. Check in db for verify ssl status after importing domain
+            2. Refresh imported domain via REST
+            3. Check in db for verify ssl status after importing domain
+        expectedResults:
+            1. It should be 0
+            2.
+            3. It should be 0
+    """
+    table = appliance.db.client['miq_ae_namespaces']
+    query = appliance.db.client.session.query(table.name, table.git_repository_id)
+    repo_table = appliance.db.client['git_repositories']
+
+    def check_verify_ssl():
+        for domain_name, git_repo_id in query:
+            if domain_name == imported_domain.name:
+                repo = appliance.db.client.session.query(repo_table).filter(
+                    repo_table.id == git_repo_id
+                ).first()
+                assert repo.verify_ssl == 0
+
+    check_verify_ssl()
+    imported_domain.rest_api_entity.action.refresh_from_source()
+    check_verify_ssl()
