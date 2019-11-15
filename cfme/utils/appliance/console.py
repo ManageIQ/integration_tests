@@ -7,9 +7,6 @@ from re import escape as resc
 import lxml
 import yaml
 
-from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.fixtures.cli import provider_app_crud
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.plugin import AppliancePlugin
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
@@ -334,10 +331,6 @@ def configure_appliances_ha(appliances, pwd):
     apps1.appliance_console.configure_standby_replication_node(pwd, app0_ip)
 
     apps2.appliance_console.configure_automatic_failover(primary_ip=None)
-
-    # Add infra/cloud providers and create db backup
-    provider_app_crud(VMwareProvider, apps2).setup()
-    provider_app_crud(EC2Provider, apps2).setup()
     return appliances
 
 

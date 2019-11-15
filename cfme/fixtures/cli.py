@@ -254,7 +254,10 @@ def ha_multiple_preupdate_appliances(appliance, old_version, request):
 
 @pytest.fixture
 def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
-    configure_appliances_ha(ha_multiple_preupdate_appliances, app_creds["password"])
+    _, _, appl2 = configure_appliances_ha(ha_multiple_preupdate_appliances, app_creds["password"])
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl2).setup()
+    provider_app_crud(EC2Provider, appl2).setup()
     return ha_multiple_preupdate_appliances
 
 

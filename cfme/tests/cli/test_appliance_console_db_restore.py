@@ -45,17 +45,6 @@ def provision_vm(request, provider):
     return vm
 
 
-def add_providers(appliances):
-    appl1, appl2, appl3 = appliances
-
-    # Add infra/cloud providers and create db backup
-    provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(EC2Provider, appl3).setup()
-    appl1.db.backup()
-
-    return appliances
-
-
 @pytest.fixture
 def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     """Returns two database-owning appliances, configures first appliance with providers and
@@ -546,8 +535,13 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
         initialEstimate: 1/4h
     """
     pwd = app_creds["password"]
-    appl1, appl2, appl3 = add_providers(
-        configure_appliances_ha(unconfigured_appliances, pwd))
+    appl1, appl2, appl3 = configure_appliances_ha(unconfigured_appliances, pwd)
+
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl3).setup()
+    provider_app_crud(EC2Provider, appl3).setup()
+    appl1.db.backup()
+
     providers_before_restore = set(appl3.managed_provider_names)
     # Restore DB on the second appliance
     appl3.evmserverd.stop()
