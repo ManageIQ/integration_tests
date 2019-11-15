@@ -8,9 +8,9 @@ from cfme.common.provider import BaseProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 
 pytestmark = [
-    pytest.mark.ignore_stream('upstream'),
+    pytest.mark.ignore_stream("upstream"),
     pytest.mark.manual,
-    test_requirements.general_ui
+    test_requirements.general_ui,
 ]
 
 
@@ -58,7 +58,7 @@ def test_notification_window_can_be_closed_by_clicking_x():
     pass
 
 
-@pytest.mark.manual('manualonly')
+@pytest.mark.manual("manualonly")
 @pytest.mark.tier(1)
 def test_infrastructure_provider_left_panel_titles():
     """
@@ -112,7 +112,7 @@ def test_pdf_summary_provider(provider):
     pass
 
 
-@pytest.mark.manual('manualonly')
+@pytest.mark.manual("manualonly")
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(coverage=[1740131])
@@ -185,5 +185,31 @@ def test_compliance_column_header():
             1.
             2.
             3. There should be no 500 Internal Server Error and the page must be displayed as is.
+    """
+    pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1733120])
+def test_compare_vm_from_datastore_relationships():
+    """
+    Bugzilla:
+        1733120
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/18h
+        setup:
+            1. Add an infra provider.
+        testSteps:
+            1. Select a datastore with at least 2 VMS, and navigate to a it's Details page.
+            2. Click on Managed VMs from the relationships table.
+            3. Select at least 2 VMs and click on `Configuration > Compare the selected items`
+        expectedResults:
+            1.
+            2.
+            3. Comparison page should be displayed, there should be no exception on the page.
     """
     pass

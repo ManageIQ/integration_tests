@@ -145,14 +145,14 @@ def test_service_refresh_dialog_fields_default_values():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1486765, 1730813])
+@pytest.mark.meta(coverage=[1486765, 1740340])
 @pytest.mark.parametrize(
     "scheduler", ["2", "2019-08-14 17:41:06 UTC"], ids=["number_of_days", "exact_time"]
 )
 def test_schedule_automation_request(scheduler):
     """
     Bugzilla:
-        1730813
+        1740340
         1486765
 
     Polarion:
