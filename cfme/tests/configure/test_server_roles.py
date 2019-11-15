@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from cfme.utils.conf import cfme_data

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module handling schedules"""
 import attr
 from navmazing import NavigateToAttribute

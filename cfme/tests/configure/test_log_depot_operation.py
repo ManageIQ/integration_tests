@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Tests used to check the operation of log collecting.
 
 Author: Milan Falešník <mfalesni@redhat.com>

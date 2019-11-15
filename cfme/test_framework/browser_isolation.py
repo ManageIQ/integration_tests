@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Plugin enabling us to isolate browser sessions per test.
 
 If active, then when each test ends, the browser gets killed. That ensures that whatever way the

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
 import json
 

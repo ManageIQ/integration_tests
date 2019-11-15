@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
 from widgetastic.utils import Parameter
 from widgetastic.widget import View

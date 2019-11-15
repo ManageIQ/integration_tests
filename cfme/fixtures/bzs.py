@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Collection of fixtures for simplified work with bzs.
 
 The main purpose of this file is to add a pytest option which generates a BZ report. This option

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*
 """Functions for performance analysis/charting of the backend messages and top_output from an
 appliance.
 """

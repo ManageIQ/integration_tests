@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ This test generate one default report for each category under reports accordion
 
 """

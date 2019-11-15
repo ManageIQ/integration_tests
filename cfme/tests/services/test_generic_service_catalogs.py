@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
 from widgetastic_patternfly import CandidateNotFound

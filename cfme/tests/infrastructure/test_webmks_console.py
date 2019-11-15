@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test for WebMKS Remote Consoles of VMware Providers."""
 import imghdr
 import socket

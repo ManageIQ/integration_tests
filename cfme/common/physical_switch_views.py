@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from lxml.html import document_fromstring
 from widgetastic.utils import Parameter
 from widgetastic.widget import ParametrizedView

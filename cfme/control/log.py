@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import uuid
 from copy import copy
 from copy import deepcopy

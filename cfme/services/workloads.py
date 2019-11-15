@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ A model of Workloads page in CFME
 """
 from navmazing import NavigateToAttribute

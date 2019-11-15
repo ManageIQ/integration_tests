@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module contains tests that exercise the canned VMware Automate stuff."""
 from textwrap import dedent
 

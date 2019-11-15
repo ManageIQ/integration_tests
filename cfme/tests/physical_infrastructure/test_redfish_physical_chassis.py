@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from cfme.physical.provider.redfish import RedfishProvider

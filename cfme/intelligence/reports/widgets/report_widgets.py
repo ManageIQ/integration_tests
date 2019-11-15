@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Reports"""
 import attr
 from widgetastic_patternfly import BootstrapSelect

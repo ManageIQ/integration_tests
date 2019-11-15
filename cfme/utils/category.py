@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module used for handling categories of let's say form values and for categorizing them."""
 
 

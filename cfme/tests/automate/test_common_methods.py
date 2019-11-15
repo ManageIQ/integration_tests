@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module contains tests that test the universally applicable canned methods in Automate."""
 from datetime import date
 from datetime import timedelta

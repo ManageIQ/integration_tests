@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Manual VMware Provider tests"""
 import os
 import re

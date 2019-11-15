@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module contains tests that are supposed to test CFME's CLI functionality."""
 import pytest
 

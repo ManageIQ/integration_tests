@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module allows you to update an appliance with latest RHEL.
 
 It has two uses:

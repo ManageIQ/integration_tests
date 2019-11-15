@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ignore_stream(*streams): Marker for uncollecting the tests based on appliance stream.
 
 Streams are the first two fields from version of the appliance (5.0, 5.1, ...), the nightly upstream

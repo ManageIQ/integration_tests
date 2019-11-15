@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Rates.
 import attr
 from cached_property import cached_property

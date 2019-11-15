@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Set server roles based on a list of roles attached to the test using metadata plugin.
 
 If you want to specify certain roles that have to be set,

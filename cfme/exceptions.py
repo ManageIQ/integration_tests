@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Provides custom exceptions for the ``cfme`` module. """
 
 

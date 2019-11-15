@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 This script browses through the REST API and shows all collections,
 subcollections and their actions.

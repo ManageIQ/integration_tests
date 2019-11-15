@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 from urllib.parse import urlparse
 from xmlrpc.client import Fault as RPCFault

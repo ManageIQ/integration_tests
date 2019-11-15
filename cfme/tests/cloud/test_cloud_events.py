@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """This module tests only cloud specific events"""
 import time
 

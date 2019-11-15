@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Menus"""
 import attr
 

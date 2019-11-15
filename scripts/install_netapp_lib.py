@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """SSH into a running appliance and install Netapp SDK
 """
 import argparse

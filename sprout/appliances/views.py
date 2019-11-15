@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 from functools import wraps
 from xmlrpc.client import Fault as RPCFault

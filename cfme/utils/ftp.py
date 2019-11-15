@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ FTP manipulation library
 
 @author: Milan Falešník <mfalesni@redhat.com>

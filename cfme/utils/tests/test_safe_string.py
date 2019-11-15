@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from cfme.utils import safe_string

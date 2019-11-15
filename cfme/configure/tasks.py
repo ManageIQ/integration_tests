@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Module dealing with Configure/Tasks section.
 """
 import re
