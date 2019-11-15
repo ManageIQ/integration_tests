@@ -9,6 +9,8 @@ from widgetastic.utils import partial_match
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.provider import setup_or_skip
+from cfme.fixtures.templates import _get_template
+from cfme.fixtures.templates import Templates
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -398,7 +400,7 @@ def cleanup_target(provider, migrated_vm):
         provider.mgmt.delete_volume(*volumes)
 
 
-def get_vm(request, appliance, source_provider, template, datastore='nfs'):
+def get_vm(request, appliance, source_provider, template_type, datastore='nfs'):
     """ Helper method that takes template , source provider and datastore
         and creates VM on source provider to migrate .
 
@@ -416,8 +418,9 @@ def get_vm(request, appliance, source_provider, template, datastore='nfs'):
     source_datastore = [d.name for d in source_datastores_list if d.type == datastore][0]
     collection = source_provider.appliance.provider_based_collection(source_provider)
     vm_name = random_vm_name("v2v-auto")
+    template = _get_template(source_provider, template_type)
     vm_obj = collection.instantiate(
-        vm_name, source_provider, template_name=template["name"]
+        vm_name, source_provider, template_name=template.name
     )
     power_on_vm = True
     if 'win10' in template.name:
@@ -484,10 +487,10 @@ def infra_mapping_default_data(source_provider, provider):
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_mini(request, appliance, source_provider, provider, rhel7_minimal):
+def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
     """Fixture to return minimal mapping data and vm object for migration plan"""
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
-    vm_obj = get_vm(request, appliance, source_provider, template=rhel7_minimal)
+    vm_obj = get_vm(request, appliance, source_provider, template=Templates.RHEL7_MINIMAL)
 
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping = infrastructure_mapping_collection.create(**infra_mapping_data)
@@ -501,7 +504,8 @@ def mapping_data_vm_obj_mini(request, appliance, source_provider, provider, rhel
 
 
 @pytest.fixture(scope="function")
-def mapping_data_multiple_vm_obj_single_datastore(request, appliance, source_provider, provider):
+def mapping_data_multiple_vm_obj_single_datastore(request, appliance, source_provider, provider,
+                                                  source_type, dest_type, template_type):
     # this fixture will take list of N VM templates via request and call get_vm for each
     cluster = provider.data.get("clusters", [False])[0]
     if not cluster:
@@ -512,28 +516,29 @@ def mapping_data_multiple_vm_obj_single_datastore(request, appliance, source_pro
         infra_mapping_data,
         {
             "description": "Single Datastore migration of VM from {ds_type1} to {ds_type2},".format(
-                ds_type1=request.param[0], ds_type2=request.param[1]
+                ds_type1=source_type, ds_type2=dest_type
             ),
         },
     )
     vm_list = []
-    for template_name in request.param[2]:
+    for template_name in template_type:
         vm_list.append(get_vm(request, appliance, source_provider, template_name))
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=vm_list)
 
 
 @pytest.fixture(scope="function")
-def mapping_data_single_datastore(request, source_provider, provider):
+def mapping_data_single_datastore(request, source_provider, provider,
+                                  source_type, dest_type, template_type):
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     recursive_update(
         infra_mapping_data,
         {
             "description": "Single Datastore migration of VM from {ds_type1} to {ds_type2},".format(
-                ds_type1=request.param[0], ds_type2=request.param[1]
+                ds_type1=source_type, ds_type2=dest_type
             ),
             "datastores": [
                 component_generator(
-                    "datastores", source_provider, provider, request.param[0], request.param[1]
+                    "datastores", source_provider, provider, source_type, dest_type
                 )
             ],
         },
@@ -542,17 +547,18 @@ def mapping_data_single_datastore(request, source_provider, provider):
 
 
 @pytest.fixture(scope="function")
-def mapping_data_single_network(request, source_provider, provider):
+def mapping_data_single_network(request, source_provider, provider,
+                                source_type, dest_type, template_type):
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     recursive_update(
         infra_mapping_data,
         {
             "description": "Single Network migration of VM from {vlan1} to {vlan2},".format(
-                vlan1=request.param[0], vlan2=request.param[1]
+                vlan1=source_type, vlan2=dest_type
             ),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, request.param[0], request.param[1]
+                    "vlans", source_provider, provider, source_type, dest_type
                 )
             ],
         }
@@ -562,6 +568,9 @@ def mapping_data_single_network(request, source_provider, provider):
 
 @pytest.fixture(scope="function")
 def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider, provider):
+    # Picking two datastores on Vmware and Target provider for this test
+    source_type = dest_type = ['nfs', 'iscsi']
+
     vmware_nw = source_provider.data.get("vlans", [None])[0]
     rhvm_nw = provider.data.get("vlans", [None])[0]
     cluster = provider.data.get("clusters", [False])[0]
@@ -573,24 +582,24 @@ def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider,
         infra_mapping_data,
         {
             "description": "Dual DS migration of VM from {dss1} to {dst1},& from {dss2} to {dst2}".
-            format(dss1=request.param[0][0],
-                   dst1=request.param[0][1],
-                   dss2=request.param[1][0],
-                   dst2=request.param[1][1]),
+            format(dss1=source_type[0],
+                   dst1=source_type[1],
+                   dss2=dest_type[0],
+                   dst2=dest_type[1]),
             "datastores": [
                 component_generator(
                     "datastores",
                     source_provider,
                     provider,
-                    request.param[0][0],
-                    request.param[0][1],
+                    source_type[0],
+                    source_type[1],
                 ),
                 component_generator(
                     "datastores",
                     source_provider,
                     provider,
-                    request.param[1][0],
-                    request.param[1][1],
+                    dest_type[0],
+                    dest_type[1],
                 ),
             ],
             "networks": [
@@ -605,13 +614,14 @@ def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider,
         },
     )
     # creating 2 VMs on two different datastores and returning its object list
-    vm_obj1 = get_vm(request, appliance, source_provider, request.param[0][2], request.param[0][0])
-    vm_obj2 = get_vm(request, appliance, source_provider, request.param[1][2], request.param[1][0])
+    vm_obj1 = get_vm(request, appliance, source_provider, Templates.RHEL7_MINIMAL, source_type[0])
+    vm_obj2 = get_vm(request, appliance, source_provider, Templates.RHEL7_MINIMAL, dest_type[0])
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj1, vm_obj2])
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
+def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider,
+                                  source_type, dest_type, template_type):
     vmware_nw = source_provider.data.get("vlans", [None])[0]
     rhvm_nw = provider.data.get("vlans", [None])[0]
     cluster = provider.data.get("clusters", [False])[0]
@@ -623,55 +633,57 @@ def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider)
         infra_mapping_data,
         {
             "description": "Dual DS migration of VM from {network1} to {network2}".format(
-                network1=request.param[0], network2=request.param[1]),
+                network1=source_type, network2=dest_type),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, request.param[0], request.param[1])
+                    "vlans", source_provider, provider, source_type, dest_type)
             ]
         }
     )
-    vm_obj = get_vm(request, appliance, source_provider, request.param[2])
+    vm_obj = get_vm(request, appliance, source_provider, template_type)
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_single_datastore(request, appliance, source_provider, provider):
+def mapping_data_vm_obj_single_datastore(request, appliance, source_provider, provider,
+                                         source_type, dest_type, template_type):
     """Return Infra Mapping form data and vm object"""
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     recursive_update(
         infra_mapping_data,
         {
             "description": "Single DS migration of VM from {ds_type1} to {ds_type2},".format(
-                ds_type1=request.param[0], ds_type2=request.param[1]
+                ds_type1=source_type, ds_type2=dest_type
             ),
             "datastores": [
                 component_generator(
-                    "datastores", source_provider, provider, request.param[0], request.param[1]
+                    "datastores", source_provider, provider, source_type, dest_type
                 )
             ],
         },
     )
-    vm_obj = get_vm(request, appliance, source_provider, request.param[2], request.param[0])
+    vm_obj = get_vm(request, appliance, source_provider, template_type, source_type)
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_single_network(request, appliance, source_provider, provider):
+def mapping_data_vm_obj_single_network(request, appliance, source_provider, provider,
+                                       source_type, dest_type, template_type):
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     recursive_update(
         infra_mapping_data,
         {
             "description": "Single Network migration of VM from {vlan1} to {vlan2},".format(
-                vlan1=request.param[0], vlan2=request.param[1]
+                vlan1=source_type, vlan2=dest_type
             ),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, request.param[0], request.param[1]
+                    "vlans", source_provider, provider, source_type, dest_type
                 )
             ],
         },
     )
-    vm_obj = get_vm(request, appliance, source_provider, request.param[2])
+    vm_obj = get_vm(request, appliance, source_provider, template_type)
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 

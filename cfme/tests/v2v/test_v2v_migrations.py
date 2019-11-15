@@ -4,16 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.templates import dportgroup_template
-from cfme.fixtures.templates import dual_disk_template
-from cfme.fixtures.templates import dual_network_template
-from cfme.fixtures.templates import rhel69_template
-from cfme.fixtures.templates import rhel7_minimal
-from cfme.fixtures.templates import ubuntu16_template
-from cfme.fixtures.templates import win10_template
-from cfme.fixtures.templates import win2012_template
-from cfme.fixtures.templates import win2016_template
-from cfme.fixtures.templates import win7_template
+from cfme.fixtures.templates import Templates
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -40,24 +31,23 @@ pytestmark = [
 
 
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_single_datastore",
+    "source_type, dest_type, template_type",
     [
-        ["nfs", "iscsi", rhel7_minimal],
-        ["iscsi", "iscsi", rhel7_minimal],
-        ["iscsi", "nfs", rhel7_minimal],
-        ["local", "nfs", rhel7_minimal],
-    ],
-    indirect=True,
+        ["nfs", "iscsi", Templates.RHEL7_MINIMAL],
+        ["iscsi", "iscsi", Templates.RHEL7_MINIMAL],
+        ["iscsi", "nfs", Templates.RHEL7_MINIMAL],
+        ["local", "nfs", Templates.RHEL7_MINIMAL],
+    ]
 )
 @pytest.mark.uncollectif(
-    lambda source_provider, mapping_data_vm_obj_single_datastore:
+    lambda source_provider, source_type:
     source_provider.one_of(VMwareProvider) and source_provider.version == 6.5 and
-    "local" in mapping_data_vm_obj_single_datastore,
+    "local" in source_type,
     reason='Single datastore of local and source provider version 6.5 not supported'
 )
-def test_single_datastore_single_vm_migration(
-    request, appliance, provider, mapping_data_vm_obj_single_datastore
-):
+def test_single_datastore_single_vm_migration(request, appliance, provider,
+                                              source_type, dest_type, template_type,
+                                              mapping_data_vm_obj_single_datastore):
     """
     Test VM migration with single datastore
     Polarion:
@@ -101,19 +91,19 @@ def test_single_datastore_single_vm_migration(
 
 
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_single_network",
-    [["DPortGroup", "ovirtmgmt", dportgroup_template], ["VM Network", "ovirtmgmt", rhel7_minimal]],
-    indirect=True,
+    "source_type, dest_type, template_type",
+    [["DPortGroup", "ovirtmgmt", Templates.DPORTGROUP_TEMPLATE],
+     ["VM Network", "ovirtmgmt", Templates.RHEL7_MINIMAL]]
 )
 @pytest.mark.uncollectif(
-    lambda source_provider, mapping_data_vm_obj_single_network:
+    lambda source_provider, source_type:
     source_provider.one_of(VMwareProvider) and source_provider.version != 6.5 and
-    "DPortGroup" in mapping_data_vm_obj_single_network,
+    "DPortGroup" in source_type,
     reason='Single network of DPortGroup only supported on source provider version 6.5'
 )
-def test_single_network_single_vm_migration(
-    request, appliance, provider, mapping_data_vm_obj_single_network
-):
+def test_single_network_single_vm_migration(request, appliance, provider,
+                                            source_type, dest_type, template_type,
+                                            mapping_data_vm_obj_single_network):
     """
     Polarion:
         assignee: sshveta
@@ -155,14 +145,9 @@ def test_single_network_single_vm_migration(
     assert src_vm.mac_address == migrated_vm.mac_address
 
 
-@pytest.mark.parametrize(
-    "mapping_data_dual_vm_obj_dual_datastore",
-    [[["nfs", "nfs", rhel7_minimal], ["iscsi", "iscsi", rhel7_minimal]]],
-    indirect=True,
-)
-def test_dual_datastore_dual_vm_migration(
-    request, appliance, provider, mapping_data_dual_vm_obj_dual_datastore, soft_assert
-):
+def test_dual_datastore_dual_vm_migration(request, appliance, provider,
+                                          mapping_data_dual_vm_obj_dual_datastore,
+                                          soft_assert):
     """
     Polarion:
         assignee: sshveta
@@ -208,20 +193,21 @@ def test_dual_datastore_dual_vm_migration(
 
 
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_dual_nics",
+    "source_type, dest_type, template_type",
     [
-        ["VM Network", "ovirtmgmt", dual_network_template],
-        ["DPortGroup", "Storage - VLAN 33", dual_network_template]
+        ["VM Network", "ovirtmgmt", Templates.DUAL_NETWORK_TEMPLATE],
+        ["DPortGroup", "Storage - VLAN 33", Templates.DUAL_NETWORK_TEMPLATE]
     ],
-    indirect=True,
 )
 @pytest.mark.uncollectif(
-    lambda source_provider, mapping_data_vm_obj_dual_nics:
+    lambda source_provider, source_type:
     source_provider.one_of(VMwareProvider) and source_provider.version != 6.5 and
-    "DPortGroup" in mapping_data_vm_obj_dual_nics,
+    "DPortGroup" in source_type,
     reason='Dual network of DPortGroup only supported on source provider version 6.5'
 )
-def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_dual_nics):
+def test_dual_nics_migration(request, appliance, provider,
+                             source_type, dest_type, template_type,
+                             mapping_data_vm_obj_dual_nics):
     """
     Polarion:
         assignee: sshveta
@@ -261,11 +247,11 @@ def test_dual_nics_migration(request, appliance, provider, mapping_data_vm_obj_d
 
 
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", dual_disk_template]], indirect=True
+    "source_type, dest_type, template_type", [["nfs", "nfs", Templates.DUAL_DISK_TEMPLATE]]
 )
-def test_dual_disk_vm_migration(
-    request, appliance, provider, mapping_data_vm_obj_single_datastore
-):
+def test_dual_disk_vm_migration(request, appliance, provider,
+                                source_type, dest_type, template_type,
+                                mapping_data_vm_obj_single_datastore):
     """
     Polarion:
         assignee: sshveta
@@ -306,20 +292,20 @@ def test_dual_disk_vm_migration(
 
 
 @pytest.mark.parametrize(
-    "mapping_data_multiple_vm_obj_single_datastore",
+    "source_type, dest_type, template_type",
     [
-        ["nfs", "nfs", [win7_template]],
-        ["nfs", "nfs", [win10_template]],
-        ["nfs", "nfs", [win2016_template]],
-        ["nfs", "nfs", [rhel69_template]],
-        ["nfs", "nfs", [win2012_template]],
-        ["nfs", "nfs", [ubuntu16_template]],
-    ],
-    indirect=True,
+        ["nfs", "nfs", Templates.WIN7_TEMPLATE],
+        ["nfs", "nfs", Templates.WIN10_TEMPLATE],
+        ["nfs", "nfs", Templates.WIN2016_TEMPLATE],
+        ["nfs", "nfs", Templates.RHEL69_TEMPLATE],
+        ["nfs", "nfs", Templates.WIN2012_TEMPLATE],
+        ["nfs", "nfs", Templates.UBUNTU16_TEMPLATE],
+    ]
 )
-def test_migrations_different_os_templates(
-    request, appliance, provider, mapping_data_multiple_vm_obj_single_datastore, soft_assert
-):
+def test_migrations_different_os_templates(request, appliance, provider,
+                                           source_type, dest_type, template_type,
+                                           mapping_data_multiple_vm_obj_single_datastore,
+                                           soft_assert):
     """
     Polarion:
         assignee: sshveta

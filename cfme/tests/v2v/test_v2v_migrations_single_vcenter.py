@@ -5,10 +5,8 @@ from widgetastic.exceptions import WebDriverException
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.templates import rhel69_template
-from cfme.fixtures.templates import rhel7_minimal
-from cfme.fixtures.templates import ubuntu16_template
-from cfme.fixtures.templates import win7_template
+from cfme.fixtures.templates import _get_template
+from cfme.fixtures.templates import Templates
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
@@ -97,9 +95,16 @@ def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
     assert 'Never' not in vm_obj.retirement_date
 
 
-@pytest.mark.parametrize('mapping_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
-        [rhel7_minimal, ubuntu16_template, rhel69_template, win7_template]]], indirect=True)
-def test_multi_host_multi_vm_migration(request, appliance, provider, soft_assert,
+@pytest.mark.parametrize('source_type, dest_type, template_type',
+                         [
+                             ['nfs', 'nfs', [Templates.RHEL7_MINIMAL,
+                                             Templates.UBUNTU16_TEMPLATE,
+                                             Templates.RHEL69_TEMPLATE,
+                                             Templates.WIN7_TEMPLATE]
+                              ]
+                         ])
+def test_multi_host_multi_vm_migration(request, appliance, provider,
+                                       source_type, dest_type, template_type,
                                        mapping_data_multiple_vm_obj_single_datastore):
     """
     Polarion:
@@ -209,10 +214,11 @@ def test_migration_long_name(request, appliance, provider, source_provider):
     # Following code will create vm name with 64 characters
     vm_name = "{vm_name}{extra_words}".format(vm_name=random_vm_name(context="v2v"),
                                               extra_words=fauxfactory.gen_alpha(51))
+    template = _get_template(source_provider, Templates.RHEL7_MINIMAL)
     vm_obj = collection.instantiate(
         name=vm_name,
         provider=source_provider,
-        template_name=rhel7_minimal(source_provider)["name"],
+        template_name=template.name,
     )
     vm_obj.create_on_provider(
         timeout=2400,
@@ -246,9 +252,10 @@ def test_migration_long_name(request, appliance, provider, source_provider):
     assert vm_obj.mac_address == migrated_vm.mac_address
 
 
-@pytest.mark.parametrize('mapping_data_vm_obj_single_datastore', [['nfs', 'nfs', rhel7_minimal]],
- indirect=True)
+@pytest.mark.parametrize('source_type, dest_type, template_type',
+                         [['nfs', 'nfs', Templates.RHEL7_MINIMAL]])
 def test_migration_with_edited_mapping(request, appliance, source_provider, provider,
+                                       source_type, dest_type, template_type,
                                        mapping_data_vm_obj_single_datastore):
     """
         Test migration with edited infrastructure mapping.
@@ -294,8 +301,11 @@ def test_migration_with_edited_mapping(request, appliance, source_provider, prov
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", ubuntu16_template]], indirect=True)
-def test_migration_restart(request, appliance, provider, mapping_data_vm_obj_single_datastore):
+    "source_type, dest_type, template_type",
+    [["nfs", "nfs", Templates.UBUNTU16_TEMPLATE]])
+def test_migration_restart(request, appliance, provider,
+                           source_type, dest_type, template_type,
+                           mapping_data_vm_obj_single_datastore):
     """
     Test migration by restarting evmserverd in middle of the process
 

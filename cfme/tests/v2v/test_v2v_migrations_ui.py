@@ -6,7 +6,7 @@ from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.templates import rhel7_minimal
+from cfme.fixtures.templates import Templates
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.fixtures.v2v_fixtures import infra_mapping_default_data
@@ -376,8 +376,9 @@ def test_v2v_rbac(appliance, new_credential):
 
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
-    'mapping_data_vm_obj_single_datastore', [['iscsi', 'iscsi', rhel7_minimal]], indirect=True)
+    'source_type, dest_type, template_type', [['iscsi', 'iscsi', Templates.RHEL7_MINIMAL]])
 def test_v2v_infra_map_edit(request, appliance, source_provider, provider,
+                            source_type, dest_type, template_type,
                             mapping_data_vm_obj_single_datastore, soft_assert):
     """
     Test migration by editing migration mapping fields
@@ -575,9 +576,10 @@ def test_migration_with_no_conversion(appliance, delete_conversion_hosts, source
                       required_flags=["v2v"], override=True, scope='module')
 @pytest.mark.parametrize("attribute", ["flavor", "security_group"])
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True)
-def test_v2v_custom_attribute(
-        request, appliance, provider, attribute, mapping_data_vm_obj_single_datastore):
+    "source_type, dest_type, template_type", [["nfs", "nfs", Templates.RHEL7_MINIMAL]])
+def test_v2v_custom_attribute(request, appliance, provider,
+                              source_type, dest_type, template_type,
+                              attribute, mapping_data_vm_obj_single_datastore):
     """
     Test V2V with custom attributes of openstack provider projects
     Polarion:
