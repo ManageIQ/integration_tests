@@ -247,10 +247,12 @@ def import_dialog(appliance, file_name):
     with open(file_path, "r") as stream:
         dialog = yaml.load(stream, Loader=yaml.BaseLoader)
         # It returns list of dicts
+        description = dialog[0].get("description")
+        label = dialog[0].get("label")
         ele_label = dialog[0]['dialog_tabs'][0]['dialog_groups'][0]['dialog_fields'][0]['name']
 
     # File name contains '.yml' or '.yaml', Hence replacing it.
-    sd = appliance.collections.service_dialogs.instantiate(label=file_name.split(".")[0])
+    sd = appliance.collections.service_dialogs.instantiate(label=label, description=description)
     yield sd, ele_label
     sd.delete_if_exists()
 
