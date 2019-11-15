@@ -200,6 +200,17 @@ def temp_appliances_unconfig_modscope_rhevm(appliance, pytestconfig):
         yield appliances
 
 
+@pytest.fixture(scope="function")
+def temp_appliances_preconfig_funcscope(appliance, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig,
+            count=2,
+            preconfigured=True
+    ) as appliances:
+        yield appliances
+
+
 @pytest.fixture(scope="class")
 def temp_appliances_unconfig_clsscope(appliance, pytestconfig):
     with sprout_appliances(

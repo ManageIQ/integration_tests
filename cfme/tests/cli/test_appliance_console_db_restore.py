@@ -1,3 +1,4 @@
+import re
 from collections import namedtuple
 
 import fauxfactory
@@ -6,6 +7,12 @@ from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.fixtures.cli import configure_appliances_ha
+from cfme.fixtures.cli import configure_automatic_failover
+from cfme.fixtures.cli import provider_app_crud
+from cfme.fixtures.cli import reconfigure_primary_replication_node
+from cfme.fixtures.cli import reconfigure_standby_replication_node
+from cfme.fixtures.cli import replicated_appliances_with_providers
 from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -14,8 +21,8 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.providers import list_providers_by_class
 from cfme.utils.ssh import SSHClient
+from cfme.utils.ssh_expect import SSHExpect
 
 pytestmark = [
     test_requirements.restore
@@ -24,16 +31,6 @@ pytestmark = [
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 evm_log = '/var/www/miq/vmdb/log/evm.log'
-
-
-def provider_app_crud(provider_class, appliance):
-    try:
-        prov = list_providers_by_class(provider_class)[0]
-        logger.info('using provider {}'.format(prov.name))
-        prov.appliance = appliance
-        return prov
-    except IndexError:
-        pytest.skip("No {} providers available (required)".format(provider_class.type))
 
 
 def provision_vm(request, provider):
@@ -49,6 +46,17 @@ def provision_vm(request, provider):
         logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
     return vm
+
+
+def add_providers(appliances):
+    appl1, appl2, appl3 = appliances
+
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl3).setup()
+    provider_app_crud(EC2Provider, appl3).setup()
+    appl1.db.backup()
+
+    return appliances
 
 
 @pytest.fixture
@@ -77,19 +85,7 @@ def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_
     prior to running tests.
 
     """
-    appl1, appl2 = temp_appliances_unconfig_funcscope_rhevm
-    # configure appliances
-    appl1.configure(region=0)
-    appl1.wait_for_web_ui()
-    appl2.configure(region=99)
-    appl2.wait_for_web_ui()
-    # configure replication between appliances
-    appl1.set_pglogical_replication(replication_type=':remote')
-    appl2.set_pglogical_replication(replication_type=':global')
-    appl2.add_pglogical_replication_subscription(appl1.hostname)
-    # Add infra/cloud providers and create db backups
-    provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
     appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
     appl1.db.backup()
     appl2.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
@@ -106,7 +102,7 @@ def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     appl1 = temp_appliance_preconfig_funcscope
     # enable embedded ansible and create pg_basebackup
     appl1.enable_embedded_ansible_role()
-    assert appl1.is_embedded_ansible_running
+    appl1.wait_for_embedded_ansible()
     appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
     return temp_appliance_preconfig_funcscope
 
@@ -138,31 +134,31 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
-    '' clear info screen, '5' setup db, '1' Creates v2_key, '1' selects internal db,
-    '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
+    '' clear info screen, '7' setup db, '1' Creates v2_key, '1' selects internal db,
+    '2' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
     360 secs and '' finish.
 
     Appliance two creating region in dedicated database, 'ap' launch appliance_console, '' clear
-    info screen, '5' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
+    info screen, '7' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
     'pwd' appliance password, '' default v2_key location, '2' create region in external db, '0' db
     region number, 'y' confirm create region in external db 'app0_ip', '' ip and default port for
     dedicated db, '' use default db name, '' default username, 'pwd' db password, 'pwd' confirm db
     password + wait 360 seconds and '' finish.
 
     Appliance one configuring primary node for replication, 'ap' launch appliance_console, '' clear
-    info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
+    info screen, '8' configure db replication, '1' configure node as primary, '1' cluster node
     number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
     'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
 
 
     Appliance three configuring standby node for replication, 'ap' launch appliance_console, ''
-    clear info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
+    clear info screen, '8' configure db replication, '1' configure node as primary, '1' cluster node
     number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
     'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
 
 
     Appliance two configuring automatic failover of database nodes, 'ap' launch appliance_console,
-    '' clear info screen '9' configure application database failover monitor, '1' start failover
+    '' clear info screen '10' configure application database failover monitor, '1' start failover
     monitor. wait 30 seconds for service to start '' finish.
 
     """
@@ -171,27 +167,29 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     app1_ip = appl2.hostname
     pwd = app_creds['password']
     # Configure first appliance as dedicated database
-    command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', '', '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), '')
     appl1.appliance_console.run_commands(command_set)
     wait_for(lambda: appl1.db.is_dedicated_active)
     # Configure EVM webui appliance with create region in dedicated database
-    command_set = ('ap', '', '5', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
-        pwd, TimedCommand(pwd, 360), '')
+    command_set = ('ap', '', '7', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
+        TimedCommand(pwd, 360), '')
     appl3.appliance_console.run_commands(command_set)
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Configure primary replication node
-    command_set = ('ap', '', '6', '1', '1', '', '', pwd, pwd, app0_ip, 'y',
+    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip,
         TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
+
     # Configure secondary replication node
-    command_set = ('ap', '', '6', '2', '2', app0_ip, '', pwd, '', '1', '2', '', '', pwd, pwd,
+    command_set = ('ap', '', '8', '2', '2', app0_ip, '', pwd, '', '2', '2', '', '', pwd, pwd,
                    app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
     appl2.appliance_console.run_commands(command_set)
-
+    #
+    # Configure automatic failover on EVM appliance
     with waiting_for_ha_monitor_started(appl3, app1_ip, timeout=300):
         # Configure automatic failover on EVM appliance
-        command_set = ('ap', '', '8', TimedCommand('1', 30), '')
+        command_set = ('ap', '', '10', TimedCommand('1', 30), '')
         appl3.appliance_console.run_commands(command_set)
 
     # Add infra/cloud providers and create db backup
@@ -212,11 +210,22 @@ def fetch_v2key(appl1, appl2):
     appl2.ssh_client.put_file(rand_yml_filename, "/var/www/miq/vmdb/config/database.yml")
 
 
-def fetch_db_local(appl1, appl2):
+def fetch_db_local(appl1, appl2, file_name):
     # Fetch db from the first appliance
     dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
-    appl1.ssh_client.get_file("/tmp/evm_db.backup", dump_filename)
-    appl2.ssh_client.put_file(dump_filename, "/tmp/evm_db.backup")
+    appl1.ssh_client.get_file(file_name, dump_filename)
+    appl2.ssh_client.put_file(dump_filename, file_name)
+
+
+@pytest.fixture
+def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
+    """Requests two configured appliances from sprout."""
+    appl1, appl2 = temp_appliances_preconfig_funcscope
+
+    # Add infra/cloud providers
+    provider_app_crud(VMwareProvider, appl1).setup()
+    provider_app_crud(EC2Provider, appl1).setup()
+    return appl1, appl2
 
 
 def setup_nfs_samba_backup(appl1):
@@ -233,12 +242,30 @@ def setup_nfs_samba_backup(appl1):
     nfs_smb.put_file(dump_filename, "{}share.backup".format(loc))
 
 
+def restore_db(appl, location=''):
+    interaction = SSHExpect(appl)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect('Choose the restore database file source: |1| ')
+    interaction.send('1')
+    interaction.expect('Enter the location of the local restore file: |/tmp/evm_db.backup| ')
+    interaction.send(location)
+    interaction.expect(r'Should this file be deleted after completing the restore\? \(Y\/N\): ')
+    interaction.send('N')
+    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
+    interaction.send('Y')
+    interaction.expect('Press any key to continue.', timeout=60)
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_local(request, get_appliances_with_providers):
-    """ Test single appliance backup and restore, configures appliance with providers,
-    backs up database, restores it to fresh appliance and checks for matching providers.
+def test_appliance_console_dump_restore_db_local(request, get_appliances_with_providers):
+    """ Test single appliance dump and restore, configures appliance with providers,
+    dumps a database, restores it to fresh appliance and checks for matching providers.
 
     Polarion:
         assignee: jhenner
@@ -249,13 +276,82 @@ def test_appliance_console_restore_db_local(request, get_appliances_with_provide
     appl1, appl2 = get_appliances_with_providers
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    fetch_db_local(appl1, appl2)
+    fetch_db_local(appl1, appl2, "/tmp/evm_db.backup")
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+    restore_db(appl2)
+    appl2.evmserverd.start()
+    appl2.wait_for_web_ui()
+    # Assert providers on the second appliance
+    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+        'Restored DB is missing some providers'
+    )
+    # Verify that existing provider can detect new VMs on the second appliance
+    virtual_crud = provider_app_crud(VMwareProvider, appl2)
+    vm = provision_vm(request, virtual_crud)
+    assert vm.mgmt.is_running, "vm not running"
+
+
+@pytest.mark.rhel_testing
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream('upstream')
+def test_appliance_console_backup_restore_db_local(request, two_appliances_one_with_providers):
+    """ Test single appliance backup and restore, configures appliance with providers,
+    backs up database, restores it to fresh appliance and checks for matching providers.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/2h
+    """
+    appl1, appl2 = two_appliances_one_with_providers
+    backup_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+
+    interaction = SSHExpect(appl1)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect(r'Choose the backup output file destination: \|1\| ')
+    interaction.send('')
+    interaction.expect(re.escape(
+        'Enter the location to save the backup file to: |/tmp/evm_db.backup| '))
+    interaction.send(backup_file_name)
+    interaction.expect('Press any key to continue.', timeout=120)
+
+    # Transfer v2_key and db backup from first appliance to second appliance
+    fetch_v2key(appl1, appl2)
+    fetch_db_local(appl1, appl2, backup_file_name)
+
+    # Restore DB on the second appliance
+    appl2.evmserverd.stop()
+    appl2.db.drop()
+    appl2.db.create()
+
+    interaction = SSHExpect(appl2)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect(re.escape(
+        'Choose the restore database file source: |1| '))
+    interaction.send('')
+    interaction.expect(re.escape(
+        'Enter the location of the local restore file: |/tmp/evm_db.backup| '))
+    interaction.send(backup_file_name)
+    interaction.expect(re.escape(
+        'Should this file be deleted after completing the restore? (Y/N): '))
+    interaction.send('n')
+    interaction.expect(re.escape(
+        'Are you sure you would like to restore the database? (Y/N): '))
+    interaction.send('y')
+    interaction.expect('Press any key to continue.', timeout=80)
+
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
@@ -282,8 +378,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     # Restore DB on the second appliance
     appl1.evmserverd.stop()
     appl1.db_service.restart()
-    command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
+    restore_db(appl1, '/tmp/backup/base.tar.gz')
     manager.quit()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -331,9 +426,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     appl2.evmserverd.stop()
     appl1.db_service.restart()
     appl2.db_service.restart()
-    command_set = ('ap', '', '4', '1', '/tmp/backup/base.tar.gz', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
-    appl2.appliance_console.run_commands(command_set)
+    restore_db(appl1, '/tmp/backup/base.tar.gz')
+    restore_db(appl2, '/tmp/backup/base.tar.gz')
     appl1.evmserverd.start()
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -374,8 +468,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     appl1.db_service.restart()
     appl1.db.drop()
     appl1.db.create()
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
+    restore_db(appl1)
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.evmserverd.start()
@@ -411,14 +504,14 @@ def test_appliance_console_restore_db_replicated(
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+
+    restore_db(appl2)
     # Restore db on first appliance
     appl1.set_pglogical_replication(replication_type=':none')
     appl1.evmserverd.stop()
     appl1.db.drop()
     appl1.db.create()
-    appl1.appliance_console.run_commands(command_set)
+    restore_db(appl1)
     appl1.evmserverd.start()
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -445,7 +538,7 @@ def test_appliance_console_restore_db_replicated(
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_providers):
+def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_creds):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
 
@@ -455,19 +548,25 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    appl1, appl2, appl3 = get_ha_appliances_with_providers
+    pwd = app_creds["password"]
+    appl1, appl2, appl3 = add_providers(
+        configure_appliances_ha(unconfigured_appliances, pwd))
     providers_before_restore = set(appl3.managed_provider_names)
     # Restore DB on the second appliance
     appl3.evmserverd.stop()
-    appl1.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
-    appl2.ssh_client.run_command("systemctl stop rh-postgresql95-repmgr")
+    appl1.rh_postgresql95_repmgr.stop()
+    appl2.rh_postgresql95_repmgr.stop()
     appl1.db.drop()
     appl1.db.create()
     fetch_v2key(appl3, appl1)
-    command_set = ('ap', '', '4', '1', '', TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
-    appl1.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
-    appl2.ssh_client.run_command("systemctl start rh-postgresql95-repmgr")
+    restore_db(appl1)
+
+    reconfigure_primary_replication_node(appl1, pwd)
+    reconfigure_standby_replication_node(appl2, pwd, appl1.hostname)
+
+    configure_automatic_failover(appl3, primary_ip=appl1.hostname)
+    appl3.evm_failover_monitor.restart()
+
     appl3.evmserverd.start()
     appl3.wait_for_web_ui()
     # Assert providers still exist after restore
@@ -479,9 +578,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
                       matched_patterns=['Starting to execute failover'],
                       hostname=appl3.hostname).waiting(timeout=450):
         # Cause failover to occur
-        result = appl1.ssh_client.run_command(
-            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+        appl1.db_service.stop()
 
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
@@ -497,7 +594,7 @@ def test_appliance_console_restore_db_ha(request, get_ha_appliances_with_provide
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers):
+def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_providers):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -507,19 +604,54 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
         caseimportance: critical
         initialEstimate: 1h
     """
-    appl1, appl2 = get_appliances_with_providers
+    appl1, appl2 = two_appliances_one_with_providers
     host = cfme_data['network_share']['hostname']
     loc = cfme_data['network_share']['nfs_path']
-    nfs_dump = 'nfs://{}{}share.backup'.format(host, loc)
+    nfs_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+    nfs_restore_dir_path = 'nfs://{}{}'.format(host, loc)
+    nfs_restore_file_path = '{}/db_backup/{}'.format(nfs_restore_dir_path, nfs_dump_file_name)
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    setup_nfs_samba_backup(appl1)
+
+    # setup_nfs_samba_backup(appl1)
+    interaction = SSHExpect(appl1)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect(r'Choose the backup output file destination: \|1\| ')
+    interaction.send('2')
+    interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
+    interaction.send(nfs_dump_file_name)
+    # Enter the location to save the remote backup file to
+    interaction.expect(re.escape(
+        'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
+    interaction.send(nfs_restore_dir_path)
+    # Running Database backup to nfs://10.8.198.142/srv/export...
+    interaction.expect('Press any key to continue.', timeout=120)
+
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '2', nfs_dump, TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+
+    interaction = SSHExpect(appl2)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect(r'Choose the restore database file source: \|1\| ')
+    interaction.send('2')
+    # Enter the location of the remote backup file
+    interaction.expect(re.escape(
+        'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
+    interaction.send(nfs_restore_file_path)
+    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
+    interaction.send('y')
+    interaction.expect('Press any key to continue.', timeout=40)
+
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
@@ -534,7 +666,7 @@ def test_appliance_console_restore_db_nfs(request, get_appliances_with_providers
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_samba(request, get_appliances_with_providers):
+def test_appliance_console_restore_db_samba(request, two_appliances_one_with_providers):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -544,21 +676,67 @@ def test_appliance_console_restore_db_samba(request, get_appliances_with_provide
         caseimportance: critical
         initialEstimate: 1h
     """
-    appl1, appl2 = get_appliances_with_providers
+    appl1, appl2 = two_appliances_one_with_providers
     host = cfme_data['network_share']['hostname']
     loc = cfme_data['network_share']['smb_path']
-    smb_dump = 'smb://{}{}share.backup'.format(host, loc)
-    pwd = credentials['depot_credentials']['password']
-    usr = credentials['depot_credentials']['username']
+    smb_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+    smb_restore_dir_path = 'smb://{}{}'.format(host, loc)
+    smb_restore_file_path = '{}/db_backup/{}'.format(smb_restore_dir_path, smb_dump_file_name)
+
+    pwd = credentials['depot_smb_credentials']['password']
+    usr = credentials['depot_smb_credentials']['username']
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
-    setup_nfs_samba_backup(appl1)
+
+    # setup_nfs_samba_backup(appl1)
+    interaction = SSHExpect(appl1)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('4')
+    interaction.expect(r'Choose the backup output file destination: \|1\| ')
+    interaction.send('3')
+    interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
+    interaction.send(smb_dump_file_name)
+    # Enter the location to save the remote backup file to
+    interaction.expect(re.escape(
+        'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
+    interaction.send(smb_restore_dir_path)
+    # Enter the username with access to this file.
+    interaction.expect(re.escape("Example: 'mydomain.com/user': "))
+    interaction.send(usr)
+    interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
+    interaction.send(pwd)
+    # Running Database backup to nfs://10.8.198.142/srv/export...
+    interaction.expect('Press any key to continue.', timeout=120)
+
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
-    command_set = ('ap', '', '4', '3', smb_dump, usr, pwd, TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
+
+    interaction = SSHExpect(appl2)
+    interaction.send('ap')
+    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.send('')
+    interaction.expect('Choose the advanced setting: ')
+    interaction.send('6')
+    interaction.expect(r'Choose the restore database file source: \|1\| ')
+    interaction.send('3')
+    # Enter the location of the remote backup file
+    interaction.expect(re.escape(
+        'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
+    interaction.send(smb_restore_file_path)
+    # Enter the username with access to this file.
+    interaction.expect(re.escape("Example: 'mydomain.com/user': "))
+    interaction.send(usr)
+    interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
+    interaction.send(pwd)
+    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
+    interaction.send('y')
+    interaction.expect('Press any key to continue.', timeout=40)
+
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
