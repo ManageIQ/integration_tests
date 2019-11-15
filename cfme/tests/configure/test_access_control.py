@@ -1628,7 +1628,7 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
 @test_requirements.multi_tenancy
 def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
     """
-    As a Tenant Admin I want to be able to create users in my tenant
+    As a Tenant Admin, I want to be able to create users in my tenant.
     Polarion:
         assignee: nachandr
         casecomponent: Configuration
