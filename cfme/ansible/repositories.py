@@ -9,6 +9,7 @@ from widgetastic.widget import Fillable
 from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Text
 from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
@@ -89,7 +90,7 @@ class RepositoryFormView(RepositoryBaseView):
     name = Input(name="name")
     description = Input(name="description")
     url = Input(name="scm_url")
-    scm_credentials = Dropdown("Select credentials")
+    scm_credentials = BootstrapSelect(name="authentication_id")
     scm_branch = Input(name="scm_branch")
     # SCM Update Options
     clean = Checkbox(name="clean")

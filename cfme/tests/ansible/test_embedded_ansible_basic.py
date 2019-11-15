@@ -256,7 +256,7 @@ def test_embedded_ansible_add_private_repository_crud(
     wait_for(
         lambda: repository.status == "successful",
         num_sec=120,
-        delay=5,
+        delay=2,
         fail_func=view.toolbar.refresh.click
     )
     assert repository.exists
