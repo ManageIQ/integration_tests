@@ -5,7 +5,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.templates import rhel7_minimal
+from cfme.fixtures.templates import Templates
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -71,10 +71,11 @@ def cancel_migration_plan(appliance, provider, mapping_data_vm_obj_mini):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.parametrize('mapping_data_multiple_vm_obj_single_datastore', [['nfs', 'nfs',
-    [rhel7_minimal, rhel7_minimal]]],
-    indirect=True)
+@pytest.mark.parametrize('source_type, dest_type, template_type',
+                         [['nfs', 'nfs', [Templates.RHEL7_MINIMAL,
+                                          Templates.RHEL7_MINIMAL]]])
 def test_dual_vm_cancel_migration(request, appliance, soft_assert, provider,
+                                  source_type, dest_type, template_type,
                                   mapping_data_multiple_vm_obj_single_datastore):
     """
     Polarion:
@@ -136,9 +137,12 @@ def test_dual_vm_cancel_migration(request, appliance, soft_assert, provider,
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True)
+    "source_type, dest_type, template_type",
+    [["nfs", "nfs", Templates.RHEL7_MINIMAL]])
 def test_cancel_migration_attachments(
-        request, appliance, soft_assert, provider, mapping_data_vm_obj_single_datastore):
+        request, appliance, soft_assert, provider,
+        source_type, dest_type, template_type,
+        mapping_data_vm_obj_single_datastore):
     """
     Test to cancel migration and check attached instance, volume and port is removed from provider
     Polarion:

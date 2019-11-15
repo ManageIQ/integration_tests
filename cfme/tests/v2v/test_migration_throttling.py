@@ -4,9 +4,7 @@ from widgetastic.widget import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.templates import rhel69_template
-from cfme.fixtures.templates import rhel7_minimal
-from cfme.fixtures.templates import ubuntu16_template
+from cfme.fixtures.templates import Templates
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -33,15 +31,16 @@ pytestmark = [
 
 
 @pytest.mark.parametrize(
-    "mapping_data_multiple_vm_obj_single_datastore",
+    "source_type, dest_type, template_type",
     [
-        ["nfs", "nfs", [rhel7_minimal, rhel69_template, ubuntu16_template]],
+        ["nfs", "nfs", [Templates.RHEL7_MINIMAL,
+                        Templates.RHEL69_TEMPLATE,
+                        Templates.UBUNTU16_TEMPLATE]],
     ],
-    indirect=True,
 )
-def test_migration_throttling(
-    request, appliance, provider, mapping_data_multiple_vm_obj_single_datastore
-):
+def test_migration_throttling(request, appliance, provider,
+                              source_type, dest_type, template_type,
+                              mapping_data_multiple_vm_obj_single_datastore):
     """
     Polarion:
         assignee: sshveta

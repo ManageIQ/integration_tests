@@ -1,6 +1,7 @@
 from collections import Mapping
 
 import pytest
+from aenum import NamedConstant
 
 from cfme.fixtures.templateloader import TEMPLATES
 from cfme.utils.log import logger
@@ -8,6 +9,21 @@ from cfme.utils.log import logger
 
 # TODO restructure these to indirectly parametrize the name, and provide name constants here
 # These are getting improperly imported and used as functions
+
+class Templates(NamedConstant):
+    DPORTGROUP_TEMPLATE = "dportgroup_template"
+    DPORTGROUP_TEMPLATE_MODSCOPE = "dportgroup_template_modscope"
+    DUAL_DISK_TEMPLATE = "dual_disk_template"
+    DUAL_NETWORK_TEMPLATE = "dual_network_template"
+    RHEL69_TEMPLATE = "rhel69_template"
+    RHEL7_MINIMAL = "rhel7_minimal"
+    RHEL7_MINIMAL_MODSCOPE = "rhel7_minimal_modscope"
+    UBUNTU16_TEMPLATE = "ubuntu16_template"
+    WIN7_TEMPLATE = "win7_template"
+    WIN10_TEMPLATE = "win10_template"
+    WIN2016_TEMPLATE = "win2016_template"
+    WIN2012_TEMPLATE = "win2012_template"
+
 
 @pytest.fixture(scope="function")
 def template(template_location, provider):
