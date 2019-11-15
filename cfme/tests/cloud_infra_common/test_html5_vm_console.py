@@ -106,103 +106,92 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         # Get the login screen image, and make sure it is a jpeg file:
         screen = vm_console.get_screen()
         assert imghdr.what('', screen) == 'jpeg'
-        if provider.one_of(OpenStackProvider):
-            # OpenStack VM Console has selenium issue where selenium fails to focus on
-            # canvas and cannot send keys or interact, hence only basic check that VM Console
-            # does have some text displayed in it is all we will do.
-            assert vm_console.get_screen_text() != '', "Console Screen is blank"
-        elif provider.one_of(VMwareProvider):
-            # VMware VM Console has selenium issue where selenium fails to focus on
-            # canvas and cannot send keys or interact, hence only basic check that VM Console
+
+        if provider.one_of(VMwareProvider):
             # does have some text displayed and it is correct type of console is all we will do.
-            assert vm_console.console_type == 'VNC', ("Wrong console type: looking for VNC found {}"
-                .format(vm_console.console_type))
-            # wait for screen text to return non-empty string, which implies console is loaded
-            # and has readable text
-            wait_for(func=lambda: vm_console.get_screen_text() != '', delay=5, timeout=45)
-            # this is additional check to see if text contains "login:" propmt to make sure
-            # console is running and showing login prompt.
+            assert vm_console.console_type == 'VNC', ("Wrong console type:"
+            " looking for VNC found {}".format(vm_console.console_type))
+        # wait for screen text to return non-empty string, which implies console is loaded
+        # and has readable text
+        wait_for(func=lambda: vm_console.get_screen_text() != '', delay=5, timeout=45)
+        # Ensure pingable IP is present before trying console operations for reliability
+        wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
+        assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
+        " didn't prompt for Login")
+
+        # Enter Username:
+        vm_console.send_keys(console_vm_username)
+        # find only "Pass" as sometime tessaract reads "w" as "u" and fails
+        assert vm_console.wait_for_text(text_to_find="Pass", timeout=200), ("VM Console"
+            " didn't prompt for Password")
+        # Enter Password:
+        vm_console.send_keys("{}\n".format(console_vm_password))
+
+        time.sleep(5)  # wait for login to complete
+
+        # This regex can find if there is a word 'login','password','incorrect' present in
+        # text, irrespective of its case
+        regex_for_login_password = re.compile(r'\blogin\b | \bpassword\b| \bincorrect\b',
+         flags=re.I | re.X)
+
+        def _validate_login():
+            """
+            Try to read what is on present on the last line in console.
+
+            If it is word 'login', enter username, if 'password' enter password, in order
+            to make the login successful
+            """
+            if vm_console.find_text_on_screen(text_to_find='login', current_line=True):
+                vm_console.send_keys(console_vm_username)
+
+            if vm_console.find_text_on_screen(text_to_find='Password', current_line=True):
+                vm_console.send_keys("{}\n".format(console_vm_password))
+            # if the login attempt failed for some reason (happens with RHOS-cirros),
+            # last line of the console will contain one of the following words:
+            # [login, password, incorrect]
+            # if so, regex_for_login_password will find it and result will not be []
+            # .split('\n')[-1] splits the console text on '\n' & picks last item of the list
+            result = regex_for_login_password.findall(vm_console.get_screen_text()
+                .split('\n')[-1])
+            return result == []
+
+        # if _validate_login() returns True, it means we did not find any of words
+        # [login, password, incorrect] on last line of console text, which implies login success
+        wait_for(func=_validate_login, timeout=300, delay=5)
+
+        logger.info("Wait to get the '$' prompt")
+        if provider.one_of(VMwareProvider):
+            vm_console.wait_for_text(text_to_find=provider.data.templates
+                .get('console_template')['prompt_text'], timeout=200)
+        else:
+            time.sleep(15)
+
+        # create file on system
+        vm_console.send_keys("touch blather")
+        if not (BZ.bugzilla.get_bug(1491387).is_opened):
+            # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
+            vm_console.send_ctrl_alt_delete()
+            assert vm_console.wait_for_text(text_to_find="login:", timeout=200,
+                to_disappear=True), ("Text 'login:' never disappeared, indicating failure"
+                " of CTRL+ALT+DEL button functionality, please check if OS reboots on "
+                "CTRL+ALT+DEL key combination and CTRL+ALT+DEL button on HTML5 Console works.")
             assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-            " didn't prompt for Login")
-        else:  # RHV provider
-            # Ensure pingable IP is present before trying console operations for reliability
-            wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
-            assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-            " didn't prompt for Login")
+                " didn't prompt for Login")
 
-            # Enter Username:
-            vm_console.send_keys(console_vm_username)
-            # find only "Pass" as sometime tessaract reads "w" as "u" and fails
-            assert vm_console.wait_for_text(text_to_find="Pass", timeout=200), ("VM Console"
-                " didn't prompt for Password")
-            # Enter Password:
-            vm_console.send_keys("{}\n".format(console_vm_password))
+        if not provider.one_of(OpenStackProvider):
+            assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does"
+            " not work")
 
-            time.sleep(5)  # wait for login to complete
-
-            # This regex can find if there is a word 'login','password','incorrect' present in
-            # text, irrespective of its case
-            regex_for_login_password = re.compile(r'\blogin\b | \bpassword\b| \bincorrect\b',
-             flags=re.I | re.X)
-
-            def _validate_login():
-                """
-                Try to read what is on present on the last line in console.
-
-                If it is word 'login', enter username, if 'password' enter password, in order
-                to make the login successful
-                """
-                if vm_console.find_text_on_screen(text_to_find='login', current_line=True):
-                    vm_console.send_keys(console_vm_username)
-
-                if vm_console.find_text_on_screen(text_to_find='Password', current_line=True):
-                    vm_console.send_keys("{}\n".format(console_vm_password))
-                # if the login attempt failed for some reason (happens with RHOS-cirros),
-                # last line of the console will contain one of the following words:
-                # [login, password, incorrect]
-                # if so, regex_for_login_password will find it and result will not be []
-                # .split('\n')[-1] splits the console text on '\n' & picks last item of the list
-                result = regex_for_login_password.findall(vm_console.get_screen_text()
-                    .split('\n')[-1])
-                return result == []
-
-            # if _validate_login() returns True, it means we did not find any of words
-            # [login, password, incorrect] on last line of console text, which implies login success
-            wait_for(func=_validate_login, timeout=300, delay=5)
-
-            logger.info("Wait to get the '$' prompt")
-            if provider.one_of(VMwareProvider):
-                vm_console.wait_for_text(text_to_find=provider.data.templates
-                    .get('console_template')['prompt_text'], timeout=200)
-            else:
-                time.sleep(15)
-
-            # create file on system
-            vm_console.send_keys("touch blather")
-            if not (BZ.bugzilla.get_bug(1491387).is_opened):
-                # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
-                vm_console.send_ctrl_alt_delete()
-                assert vm_console.wait_for_text(text_to_find="login:", timeout=200,
-                    to_disappear=True), ("Text 'login:' never disappeared, indicating failure"
-                    " of CTRL+ALT+DEL button functionality, please check if OS reboots on "
-                    "CTRL+ALT+DEL key combination and CTRL+ALT+DEL button on HTML5 Console works.")
-                assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-                    " didn't prompt for Login")
-
-            if not provider.one_of(OpenStackProvider):
-                assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does"
-                " not work")
-
-            # Ensure VM had pingable IP before attempting SSH
-            wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
-            with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
-                    password=console_vm_password) as ssh_client:
-                # if file was created in previous steps it will be removed here
-                # we will get instance of SSHResult
-                # Sometimes Openstack drops characters from word 'blather' hence try to remove
-                # file using partial file name. Known issue, being worked on.
-                command_result = ssh_client.run_command("rm blather", ensure_user=True)
-                assert command_result
+        # Ensure VM had pingable IP before attempting SSH
+        wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
+        with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
+                password=console_vm_password) as ssh_client:
+            # if file was created in previous steps it will be removed here
+            # we will get instance of SSHResult
+            # Sometimes Openstack drops characters from word 'blather' hence try to remove
+            # file using partial file name. Known issue, being worked on.
+            command_result = ssh_client.run_command("rm blather", ensure_user=True)
+            assert command_result
     except Exception:
         # Take a screenshot if an exception occurs
         vm_console.switch_to_console()
@@ -402,7 +391,7 @@ def test_html5_ssui_console_windows(browser, operating_system, provider):
 @pytest.mark.parametrize('context', [ViaSSUI])
 @test_requirements.html5
 @pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
-def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
+def test_vm_console_ssui(request, appliance, setup_provider, context, configure_websocket,
         configure_console_vnc, order_service, take_screenshot,
         console_template, provider):
     """Test Myservice VM Console in SSUI.
