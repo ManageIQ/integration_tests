@@ -259,7 +259,7 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
 
     @property
     def region(self):
-        zone_res = self.appliance.rest_api.collections.zones.find_by(id=self.id)
+        zone_res = self.appliance.rest_api.collections.zones.find_by(name=self.name)
         zone, = zone_res
         zone.reload(attributes=['region_number'])
         region_obj = self.appliance.collections.regions.instantiate(number=zone.region_number)
