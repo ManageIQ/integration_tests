@@ -236,7 +236,7 @@ def import_dialog(appliance, file_name):
     """This fixture will help to import dialog file."""
 
     # Download dialog file from FTP server
-    fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.dialogs)
     file_path = fs.download(file_name)
 
     # Import dialog yml to appliance
