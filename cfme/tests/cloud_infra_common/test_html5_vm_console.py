@@ -10,6 +10,7 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import providers
@@ -390,9 +391,11 @@ def test_html5_ssui_console_windows(browser, operating_system, provider):
 
 @pytest.mark.parametrize('context', [ViaSSUI])
 @test_requirements.html5
+@pytest.mark.provider(gen_func=providers, filters=[ProviderFilter(
+    classes=[OpenStackProvider, VMwareProvider, RHEVMProvider])])
 @pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
 def test_vm_console_ssui(request, appliance, setup_provider, context, configure_websocket,
-        configure_console_vnc, order_service, take_screenshot,
+        configure_console_vnc, configure_console_webmks, order_service, take_screenshot,
         console_template, provider):
     """Test Myservice VM Console in SSUI.
 
@@ -405,8 +408,8 @@ def test_vm_console_ssui(request, appliance, setup_provider, context, configure_
         caseimportance: medium
         initialEstimate: 1/2h
     """
-    if (provider.one_of(VMwareProvider) and provider.version >= 6.5 or
-            'html5_console' in provider.data.get('excluded_test_flags', [])):
+    if (provider.one_of(VMwareProvider) and provider.version >= 6.5 and appliance.version <
+            '5.11'):
         pytest.skip('VNC consoles are unsupported on VMware ESXi 6.5 and later')
 
     catalog_item = order_service
@@ -439,7 +442,7 @@ def test_vm_console_ssui(request, appliance, setup_provider, context, configure_
                     " didn't prompt for Login")
                 # Enter Username:
                 vm_console.send_keys("{}".format(console_vm_username))
-                assert vm_console.wait_for_text(text_to_find="Password", timeout=200), ("VM Console"
+                assert vm_console.wait_for_text(text_to_find="Pass", timeout=200), ("VM Console"
                 " didn't prompt for Password")
                 # Enter Password:
                 vm_console.send_keys("{}".format(console_vm_password))
@@ -456,7 +459,15 @@ def test_vm_console_ssui(request, appliance, setup_provider, context, configure_
                             ensure_user=True)
                         logger.info("Output of '{}' is {} after login"
                             .format(ssh_who_command, user_count_after_login))
-                        return user_count_before_login < user_count_after_login
+                        if not provider.one_of(OpenStackProvider):
+                            return (user_count_before_login.output.split('=')[1][0] <
+                                user_count_after_login.output.split('=')[1][0])
+                        # for OSP Cirros image, user 'cirros' shows up in `who` output post
+                        # login to vm console is successful, `who` command does not provide
+                        # any count based output that we can compare, hence comparing output
+                        # for username works best
+                        return (console_vm_username not in user_count_before_login.output and
+                            console_vm_username in user_count_after_login.output)
                     except Exception as e:
                         logger.info("Exception: {}".format(e))
                         logger.info("Trying again to perform 'who --count' over ssh.")

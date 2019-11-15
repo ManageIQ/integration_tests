@@ -1,8 +1,8 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.markers.env_markers.provider import providers
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.providers import ProviderFilter
 
 
