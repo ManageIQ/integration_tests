@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.automate.import_export import FileImportSelectorView
 from cfme.automate.simulation import simulate
 from cfme.control.explorer import alert_profiles
 from cfme.fixtures.automate import DatastoreImport
@@ -12,6 +13,7 @@ from cfme.services.service_catalogs.ui import OrderServiceCatalogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import TimedOutError
@@ -418,3 +420,56 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
         provision_request = appliance.collections.requests.instantiate(request_description)
         provision_request.wait_for_request(method="ui")
         request.addfinalizer(provision_request.remove_request)
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1677575])
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1677575.zip", "bz_1677575", None)],
+    ids=["datastore"],
+)
+def test_import_domain_containing_playbook_method(request, appliance, setup_ansible_repository,
+                                                  import_data):
+    """This test case tests support of Export/Import of Domain with Ansible Method
+
+    Bugzilla:
+        1677575
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: high
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: Automate
+        tags: automate
+        setup:
+            1. Add playbook repository
+            2. Create a new automate method with playbook type.
+            3. Fill the required fields, for instance repository and playbook.
+            4. Export this datastore.
+            5. Playbook method fields are stored as a names instead of IDs. (this is not
+               possible via automate need to check manually in method yaml)
+        testSteps:
+            1. Import the exported datastore and change name of playbook in method yaml to invalid
+               playbook name(Note: These test steps needs to execute manually and then import
+               datastore)
+        expectedResults:
+            1. Proper error should be displayed while importing datastore with invalid playbook
+    """
+    # Download datastore file from FTP server
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+    file_path = fs.download(import_data.file_name)
+
+    # Import datastore file to appliance
+    datastore = appliance.collections.automate_import_exports.instantiate(
+        import_type="file", file_path=file_path
+    )
+    domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
+    request.addfinalizer(domain.delete_if_exists)
+    view = appliance.browser.create_view(FileImportSelectorView)
+    error_msg = "Playbook 'invalid_1677575.yml' not found in repository 'test_playbooks_automate'"
+    assert error_msg in view.flash.read()[0]
