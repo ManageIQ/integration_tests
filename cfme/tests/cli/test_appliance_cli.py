@@ -270,7 +270,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
 
     with waiting_for_ha_monitor_started(apps[2], app1_ip, timeout=300):
         # Configure automatic failover on EVM appliance
-        command_set = ('ap', '', '8', '1', '')
+        command_set = ('ap', '', '10', '1', '')
         apps[2].appliance_console.run_commands(command_set)
 
     with LogValidator(evm_log,
