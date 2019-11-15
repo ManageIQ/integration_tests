@@ -3,7 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.templates import rhel7_minimal
+from cfme.fixtures.templates import Templates
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -85,10 +85,12 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
 
 
 @pytest.mark.parametrize(
-    "mapping_data_vm_obj_single_datastore", [["nfs", "nfs", rhel7_minimal]], indirect=True
+    "source_type, dest_type, template_type",
+    [["nfs", "nfs", Templates.RHEL7_MINIMAL]]
 )
 def test_migration_playbooks(request, appliance, source_provider, provider,
-                             ansible_repository, mapping_data_vm_obj_single_datastore):
+                             ansible_repository, source_type, dest_type,
+                             template_type, mapping_data_vm_obj_single_datastore):
     """
     Test for migrating vms with pre and post playbooks
 

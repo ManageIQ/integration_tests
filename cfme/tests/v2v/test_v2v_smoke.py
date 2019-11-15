@@ -4,7 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures.templates import rhel7_minimal
+from cfme.fixtures.templates import Templates
 from cfme.fixtures.v2v_fixtures import cleanup_target
 from cfme.fixtures.v2v_fixtures import get_migrated_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -31,21 +31,17 @@ pytestmark = [
 ]
 
 
+@pytest.mark.parametrize("mapping_data_multiple_vm_obj_single_datastore",
+                         ['SSH', 'VDDK'], indirect=True)
 @pytest.mark.parametrize(
-    "v2v_provider_setup, mapping_data_multiple_vm_obj_single_datastore",
+    "source_type, dest_type, template_type",
     [
-        [
-            "SSH", ["nfs", "nfs", [rhel7_minimal]]
-        ],
-        [
-            "VDDK", ["nfs", "nfs", [rhel7_minimal]]
-        ]
-    ],
-    indirect=True,
+        ["nfs", "nfs", Templates.RHEL7_MINIMAL]
+    ]
 )
-def test_single_vm_migration_with_ssh_and_vddk(
-    request, appliance, provider, mapping_data_multiple_vm_obj_single_datastore
-):
+def test_single_vm_migration_with_ssh_and_vddk(request, appliance, provider,
+                                               source_type, dest_type, template_type,
+                                               mapping_data_multiple_vm_obj_single_datastore):
     """
     Polarion:
         assignee: sshveta
