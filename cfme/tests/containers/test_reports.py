@@ -15,7 +15,7 @@ pytestmark = [
     pytest.mark.meta(
         server_roles='+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor'),
     pytest.mark.tier(1),
-    pytest.mark.long_running_env,
+    pytest.mark.long_running,
     pytest.mark.provider([ContainersProvider], scope='function'),
     test_requirements.containers
 ]

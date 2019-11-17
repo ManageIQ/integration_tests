@@ -31,7 +31,7 @@ pytestmark = [
     pytest.mark.parametrize('obj_type', obj_types, scope='module'),
     pytest.mark.parametrize('rate_type', rate_types, scope='module'),
     pytest.mark.parametrize('interval', intervals, scope='module'),
-    pytest.mark.long_running_env,
+    pytest.mark.long_running,
     pytest.mark.provider([ContainersProvider], scope='module'),
     pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:8798')]),
     test_requirements.containers  # This should eventually move to the chargeback req
