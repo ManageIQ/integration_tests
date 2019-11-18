@@ -490,7 +490,7 @@ def infra_mapping_default_data(source_provider, provider):
 def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
     """Fixture to return minimal mapping data and vm object for migration plan"""
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
-    vm_obj = get_vm(request, appliance, source_provider, template=Templates.RHEL7_MINIMAL)
+    vm_obj = get_vm(request, appliance, source_provider, Templates.RHEL7_MINIMAL)
 
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping = infrastructure_mapping_collection.create(**infra_mapping_data)
