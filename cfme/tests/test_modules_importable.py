@@ -19,7 +19,6 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
     'cfme/intelligence/chargeback/rates.py',
     'cfme/intelligence/chargeback/assignments.py',
     'cfme/intelligence/chargeback/__init__.py',
-    'cfme/fixtures/widgets.py',
     'cfme/dashboard.py',
     'cfme/configure/tasks.py',
     'cfme/scripting/bz.py',
