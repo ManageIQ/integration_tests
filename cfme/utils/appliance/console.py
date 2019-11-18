@@ -1,8 +1,8 @@
 import os
+import re
 import socket
 import tempfile
 from contextlib import contextmanager
-from re import escape as resc
 
 import lxml
 import yaml
@@ -121,7 +121,8 @@ class ApplianceConsole(AppliancePlugin):
                 db_name='', db_username='', db_password=pwd)
             interaction.answer(r'Enter the primary database hostname or IP address: \|.*\| ',
                                self.appliance.hostname)
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '')
 
     def reconfigure_primary_replication_node(self, pwd):
@@ -139,8 +140,9 @@ class ApplianceConsole(AppliancePlugin):
             interaction.answer(r'Enter the primary database hostname or IP address: \|.*\| ',
                                self.appliance.hostname)
             # Warning: File /etc/repmgr.conf exists. Replication is already configured
-            interaction.answer(resc('Continue with configuration? (Y/N): '), 'y')
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer(re.escape('Continue with configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '')
 
     def configure_standby_replication_node(self, pwd, primary_ip):
@@ -154,22 +156,23 @@ class ApplianceConsole(AppliancePlugin):
 
             # Configure Server as Standby
             interaction.answer('Choose the database replication operation: ', '2')
-            interaction.answer(resc('Choose the encryption key: |1| '), '2')
+            interaction.answer(re.escape('Choose the encryption key: |1| '), '2')
             interaction.send(primary_ip)
-            interaction.answer(resc('Enter the appliance SSH login: |root| '), '')
+            interaction.answer(re.escape('Enter the appliance SSH login: |root| '), '')
             interaction.answer('Enter the appliance SSH password: ', pwd)
-            interaction.answer(resc('Enter the path of remote encryption key: '
+            interaction.answer(re.escape('Enter the path of remote encryption key: '
                                     '|/var/www/miq/vmdb/certs/v2_key| '), '')
-            interaction.answer(resc('Choose the standby database disk: '),
+            interaction.answer(re.escape('Choose the standby database disk: '),
                                '1' if self.appliance.version < '5.10' else '2')
             answer_cluster_related_questions(interaction, node_uid='2',
                 db_name='', db_username='', db_password=pwd)
             interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
             interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ',
                                self.appliance.hostname)
-            interaction.answer(resc('Configure Replication Manager (repmgrd) for automatic '
+            interaction.answer(re.escape('Configure Replication Manager (repmgrd) for automatic '
                                     r'failover? (Y/N): '), 'y')
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '', timeout=10 * 60)
 
     def reconfigure_standby_replication_node(self, pwd, primary_ip, repmgr_reconfigure=False):
@@ -186,29 +189,30 @@ class ApplianceConsole(AppliancePlugin):
             interaction.answer('Choose the database replication operation: ', '2')
             # Would you like to remove the existing database before configuring as a standby server?
             # WARNING: This is destructive. This will remove all previous data from this server
-            interaction.answer(resc('Continue? (Y/N): '), 'y')
+            interaction.answer(re.escape('Continue? (Y/N): '), 'y')
             interaction.answer(
                 # Don't partition the disk
-                resc('Choose the standby database disk: |1| '),
+                re.escape('Choose the standby database disk: |1| '),
                 '1' if self.appliance.version < '5.10' else '2')
-            interaction.answer(resc(
+            interaction.answer(re.escape(
                 "Are you sure you don't want to partition the Standby "
                 "database disk? (Y/N): "), 'y')
             answer_cluster_related_questions(interaction, node_uid='2',
                 db_name='', db_username='', db_password=pwd)
             interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
             interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ', '')
-            interaction.answer(resc(
+            interaction.answer(re.escape(
                 'Configure Replication Manager (repmgrd) for automatic '
                 r'failover? (Y/N): '), 'y')
             # interaction.answer('An active standby node (10.8.198.223) with the node number 2
             # already exists\n')
             # 'Would you like to continue configuration by overwriting '
             # 'the existing node?
-            interaction.answer(resc('(Y/N): |N| '), 'y')
+            interaction.answer(re.escape('(Y/N): |N| '), 'y')
             # Warning: File /etc/repmgr.conf exists. Replication is already configured
-            interaction.answer(resc('Continue with configuration? (Y/N): '), 'y')
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer(re.escape('Continue with configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '', timeout=20)
 
     def configure_automatic_failover(self, primary_ip):
@@ -281,7 +285,7 @@ def configure_appliances_ha(appliances, pwd):
         interaction.answer('Press any key to continue.', '', timeout=20)
         interaction.answer('Choose the advanced setting: ',
                            '5' if apps0.version < '5.10' else '7')  # Configure Database
-        interaction.answer(resc('Choose the encryption key: |1| '), '1')
+        interaction.answer(re.escape('Choose the encryption key: |1| '), '1')
         interaction.answer('Choose the database operation: ', '1')
         # On 5.10, rhevm provider:
         #
@@ -290,10 +294,10 @@ def configure_appliances_ha(appliances, pwd):
         #    1) /dev/sr0: 0 MB
         #    2) /dev/vdb: 4768 MB
         #    3) Don't partition the disk
-        interaction.answer(resc('Choose the database disk: '),
+        interaction.answer(re.escape('Choose the database disk: '),
                           '1' if apps0.version < '5.10' else '2')
         # Should this appliance run as a standalone database server?
-        interaction.answer(resc('? (Y/N): |N| '), 'y')
+        interaction.answer(re.escape('? (Y/N): |N| '), 'y')
         interaction.answer('Enter the database password on localhost: ', pwd)
         interaction.answer('Enter the database password again: ', pwd)
         # Configuration activated successfully.
@@ -307,22 +311,22 @@ def configure_appliances_ha(appliances, pwd):
         interaction.answer('Press any key to continue.', '', timeout=20)
         interaction.answer('Choose the advanced setting: ',
                            '5' if apps2.version < '5.10' else '7')  # Configure Database
-        interaction.answer(resc('Choose the encryption key: |1| '), '2')
+        interaction.answer(re.escape('Choose the encryption key: |1| '), '2')
         interaction.send(app0_ip)
-        interaction.answer(resc('Enter the appliance SSH login: |root| '), '')
+        interaction.answer(re.escape('Enter the appliance SSH login: |root| '), '')
         interaction.answer('Enter the appliance SSH password: ', pwd)
         interaction.answer(
-            resc('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key| '),
+            re.escape('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key| '),
             '')
         interaction.answer('Choose the database operation: ', '2', timeout=30)
         interaction.answer('Enter the database region number: ', '0')
         # WARNING: Creating a database region will destroy any existing data and
         # cannot be undone.
-        interaction.answer(resc('Are you sure you want to continue? (Y/N):'), 'y')
+        interaction.answer(re.escape('Are you sure you want to continue? (Y/N):'), 'y')
         interaction.answer('Enter the database hostname or IP address: ', app0_ip)
-        interaction.answer(resc('Enter the port number: |5432| '), '')
+        interaction.answer(re.escape('Enter the port number: |5432| '), '')
         interaction.answer(r'Enter the name of the database on .*: \|vmdb_production\| ', '')
-        interaction.answer(resc('Enter the username: |root| '), '')
+        interaction.answer(re.escape('Enter the username: |root| '), '')
         interaction.answer('Enter the database password on .*: ', pwd)
         # Configuration activated successfully.
         interaction.answer('Press any key to continue.', '', timeout=360)
@@ -343,8 +347,10 @@ def answer_cluster_related_questions(interaction, node_uid, db_name,
     # This seems to happen when (re)configuring the standby replication node.
     interaction.answer('.* the number uniquely identifying '
                        'this node in the replication cluster: ', node_uid)
-    interaction.answer(resc('Enter the cluster database name: |vmdb_production| '), db_name)
-    interaction.answer(resc('Enter the cluster database username: |root| '), db_username)
+    interaction.answer(re.escape('Enter the cluster database name: |vmdb_production| '),
+                       db_name)
+    interaction.answer(re.escape('Enter the cluster database username: |root| '),
+                       db_username)
     interaction.answer('Enter the cluster database password: ', db_password)
     interaction.answer('Enter the cluster database password: ', db_password)
 
