@@ -143,39 +143,37 @@ def test_validate_not_required_dialog_element(appliance, file_name,
         1692736
     """
     catalog_item, sd, el_lable = generic_catalog_item_with_imported_dialog
-    textboxs = {
-        "required": "text_box_1_1",
-        "validated": "text_box_1_2",
-        "non_required": "text_box_1",
-    }
 
     service_catalog = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-    view = navigate_to(service_catalog, "Order")
+    view = navigate_to(service_catalog, "Order", wait="20s")
+
+    required = view.fields("text_box_1_1").input
+    validated = view.fields("text_box_1_2").input
 
     def clean_textboxes():
-        for t in textboxs:
-            view.fields(textboxs[t]).fill("")
+        required.fill("")
+        validated.fill("")
 
     # Check required
     clean_textboxes()
-    assert view.fields(textboxs["required"]).input.warning == "This field is required"
+    assert required.warning == "This field is required"
     assert view.submit_button.disabled
-    view.fields(textboxs["required"]).fill(fauxfactory.gen_alphanumeric())
-    assert not view.fields(textboxs["required"]).input.warning
+    required.fill(fauxfactory.gen_alphanumeric())
+    assert wait_for(lambda: not required.warning, timeout=10)
     assert not view.submit_button.disabled
 
     # Check validate
     clean_textboxes()
-    view.fields(textboxs["required"]).fill(fauxfactory.gen_alphanumeric())
-    view.fields(textboxs["validated"]).fill(fauxfactory.gen_numeric_string())
+    required.fill(fauxfactory.gen_alphanumeric())
+    validated.fill(fauxfactory.gen_numeric_string())
     msg = (
         "Entered text should match the format: "
         "^(?:[1-9]|(?:[1-9][0-9])|(?:[1-9][0-9][0-9])|(?:900))$"
     )
-    assert view.fields(textboxs["validated"]).input.warning == msg
+    assert validated.warning == msg
     assert view.submit_button.disabled
-    view.fields(textboxs["validated"]).fill(fauxfactory.gen_numeric_string(3))  # matching pattern
-    assert not view.fields(textboxs["validated"]).input.warning
+    validated.fill(fauxfactory.gen_numeric_string(2))  # matching pattern
+    assert wait_for(lambda: not validated.warning, timeout=10)
     assert not view.submit_button.disabled
 
 
