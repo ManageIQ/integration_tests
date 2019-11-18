@@ -496,6 +496,7 @@ def test_infra_discovery_screen(appliance):
         view.start.click()
         view.flash.assert_message(ips['msg'])
 
+
 @pytest.fixture
 def setup_provider_min_templates(request, appliance, provider, min_templates):
     templates_yaml = len(provider.data.get('templates', {}))
