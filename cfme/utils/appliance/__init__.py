@@ -667,8 +667,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
             self.fix_httpd_issue(log_callback=log_callback)
 
-            self.deploy_merkyl(start=True, log_callback=log_callback)
-
             # TODO: Handle external DB setup
             # This is workaround for appliances to use only one disk for the VMDB
             # If they have been provisioned with a second disk in the infra,

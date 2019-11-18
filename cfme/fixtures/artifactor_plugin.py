@@ -306,8 +306,6 @@ def shutdown(config):
                 if not store.slave_manager:
                     write_line('collecting artifacts')
                     fire_art_hook(config, 'finish_session')
-                fire_art_hook(config, 'teardown_merkyl',
-                              ip=app.hostname)
                 if not store.slave_manager:
                     config._art_client.terminate()
                     proc.wait()
