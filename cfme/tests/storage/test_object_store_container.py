@@ -22,7 +22,7 @@ def container(appliance, provider):
         # Maintaining at least one container as creation not possible with UI for OSP.
 
         cont = collection.instantiate(
-            key="cont_{}".format(fauxfactory.gen_alpha(3)), provider=provider
+            key=fauxfactory.gen_alpha(start="cont_"), provider=provider
         )
         provider.mgmt.create_container(cont.key)
         collection.manager.refresh()

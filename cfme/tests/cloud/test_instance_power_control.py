@@ -37,7 +37,7 @@ def create_instance(appliance, provider, template_name):
     if not instance.exists_on_provider:
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
     elif instance.provider.one_of(EC2Provider) and instance.mgmt.state == VmState.DELETED:
-        instance.mgmt.rename('test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
+        instance.mgmt.rename(fauxfactory.gen_alphanumeric(20, "test_terminated_"))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
     return instance
 

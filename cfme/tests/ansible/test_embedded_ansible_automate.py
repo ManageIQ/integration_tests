@@ -29,7 +29,7 @@ pytestmark = [
 @pytest.fixture(scope="module")
 def ansible_credential(appliance, ansible_repository, full_template_modscope):
     credential = appliance.collections.ansible_credentials.create(
-        fauxfactory.gen_alpha(),
+        fauxfactory.gen_alpha(start="cred_"),
         "Machine",
         username=credentials[full_template_modscope["creds"]]["username"],
         password=credentials[full_template_modscope["creds"]]["password"]
@@ -56,7 +56,7 @@ def management_event_class(appliance, namespace):
 @pytest.fixture
 def management_event_method(management_event_class, ansible_repository):
     return management_event_class.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="meth_"),
         location="playbook",
         repository=ansible_repository.name,
         playbook="copy_file_example.yml",
@@ -68,7 +68,7 @@ def management_event_method(management_event_class, ansible_repository):
 @pytest.fixture
 def management_event_instance(management_event_class, management_event_method):
     return management_event_class.instances.create(
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="inst_"),
         description=fauxfactory.gen_alphanumeric(),
         fields={"meth1": {"value": management_event_method.name}}
     )
@@ -77,13 +77,13 @@ def management_event_instance(management_event_class, management_event_method):
 @pytest.fixture(scope="module")
 def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=appliance.collections.button_groups.VM_INSTANCE)
     button = buttongroup.buttons.create(
         type="Ansible Playbook",
-        text=fauxfactory.gen_alphanumeric(),
-        hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         playbook_cat_item=ansible_catalog_item.name)
     yield button
     button.delete_if_exists()
@@ -93,7 +93,7 @@ def custom_vm_button(appliance, ansible_catalog_item):
 @pytest.fixture
 def alert(appliance, management_event_instance):
     _alert = appliance.collections.alerts.create(
-        "Trigger by Un-Tag Complete {}".format(fauxfactory.gen_alpha(length=4)),
+        fauxfactory.gen_alpha(30, start="Trigger by Un-Tag Complete "),
         active=True,
         based_on="VM and Instance",
         evaluate="Nothing",
@@ -131,7 +131,7 @@ def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repositor
         initialEstimate: 1/12h
     """
     method = klass.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="meth_"),
         location="playbook",
         repository=ansible_repository.name,
         playbook="copy_file_example.yml",
@@ -154,7 +154,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, ansible_repos
     """
     klass.schema.add_field(name="execute", type="Method", data_type="String")
     method = klass.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="meth_"),
         location="playbook",
         repository=ansible_repository.name,
         playbook="copy_file_example.yml",
@@ -162,7 +162,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, ansible_repos
         playbook_input_parameters=[("key", "value", "string")]
     )
     instance = klass.instances.create(
-        name=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(start="inst_"),
         description=fauxfactory.gen_alphanumeric(),
         fields={"execute": {"value": method.name}})
 
@@ -189,21 +189,21 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
         initialEstimate: 1/6h
     """
     buttongroup = appliance.collections.button_groups.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=appliance.collections.button_groups.VM_INSTANCE)
     request.addfinalizer(buttongroup.delete_if_exists)
     button = buttongroup.buttons.create(
         type='Ansible Playbook',
-        text=fauxfactory.gen_alphanumeric(),
-        hover=fauxfactory.gen_alphanumeric(),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         playbook_cat_item=ansible_catalog_item.name)
     request.addfinalizer(button.delete_if_exists)
     assert button.exists
     view = navigate_to(button, 'Details')
     assert view.text.text == button.text
     assert view.hover.text == button.hover
-    edited_hover = "edited {}".format(fauxfactory.gen_alphanumeric())
+    edited_hover = fauxfactory.gen_alphanumeric(15, start="edited_")
     with update(button):
         button.hover = edited_hover
     assert button.exists
@@ -396,8 +396,8 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
     # Creating generic catalog items
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
+        description=fauxfactory.gen_alphanumeric(15, start="item_disc_"),
         display_in=True,
         catalog=catalog,
         dialog=dialog,

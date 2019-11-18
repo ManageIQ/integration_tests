@@ -23,7 +23,7 @@ pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore
 def catalog_item(appliance, dialog, catalog):
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
-        name='test_item_{}'.format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
         description="my catalog item", display_in=True,
         catalog=catalog, dialog=dialog
     )
@@ -47,7 +47,7 @@ def catalog_bundle(appliance, catalog_item):
         Args:
             catalog_item: as resource for bundle creation
     """
-    bundle_name = "bundle" + fauxfactory.gen_alphanumeric()
+    bundle_name = fauxfactory.gen_alphanumeric(15, start="cat_bundle_")
     catalog_bundle = appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog,
@@ -90,7 +90,7 @@ def test_catalog_item_crud(appliance, dialog, catalog):
     """
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
-        name="test_item_{}".format(fauxfactory.gen_alphanumeric()),
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
         description="my catalog item",
         display_in=True,
         catalog=catalog,
@@ -164,7 +164,7 @@ def test_catalog_item_duplicate_name(appliance, dialog, catalog):
         initialEstimate: 1/8h
         tags: service
     """
-    cat_item_name = fauxfactory.gen_alphanumeric()
+    cat_item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.GENERIC,
         name=cat_item_name,
@@ -202,7 +202,7 @@ def test_permissions_catalog_item_add(appliance, catalog, dialog, request):
     def _create_catalog(appliance):
         cat_item = appliance.collections.catalog_items.create(
             appliance.collections.catalog_items.GENERIC,
-            name='test_item_{}'.format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
             description="my catalog item",
             display_in=True,
             catalog=catalog,

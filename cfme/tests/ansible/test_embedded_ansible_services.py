@@ -89,7 +89,7 @@ def ansible_linked_vm_action(appliance, local_ansible_catalog_item, new_vm):
     }
 
     action = appliance.collections.actions.create(
-        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(15, start="action_"),
         action_type="Run Ansible Playbook",
         action_values=action_values,
     )
@@ -116,14 +116,14 @@ def new_vm(provider, big_template):
 def ansible_policy_linked_vm(appliance, new_vm, ansible_linked_vm_action):
     policy = appliance.collections.policies.create(
         VMControlPolicy,
-        fauxfactory.gen_alpha(),
+        fauxfactory.gen_alpha(15, start="policy_"),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(new_vm.name),
     )
     policy.assign_actions_to_event(
         "Tag Complete", [ansible_linked_vm_action.description]
     )
     policy_profile = appliance.collections.policy_profiles.create(
-        fauxfactory.gen_alpha(), policies=[policy]
+        fauxfactory.gen_alpha(15, start="profile_"), policies=[policy]
     )
     new_vm.assign_policy_profiles(policy_profile.description)
     yield
@@ -166,10 +166,10 @@ def provider_credentials(appliance, provider, credential):
 @pytest.fixture(scope="module")
 def ansible_credential(appliance):
     credential = appliance.collections.ansible_credentials.create(
-        fauxfactory.gen_alpha(),
+        fauxfactory.gen_alpha(start="cred_"),
         "Machine",
-        username=fauxfactory.gen_alpha(),
-        password=fauxfactory.gen_alpha(),
+        username=fauxfactory.gen_alpha(start="usr_"),
+        password=fauxfactory.gen_alpha(start="pwd_"),
     )
     yield credential
 
@@ -179,12 +179,12 @@ def ansible_credential(appliance):
 @pytest.fixture
 def custom_service_button(appliance, local_ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
         type=appliance.collections.button_groups.SERVICE)
     button = buttongroup.buttons.create(
-        text=fauxfactory.gen_alphanumeric(),
-        hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
         dialog=local_ansible_catalog_item.provisioning["provisioning_dialog_name"],
         system="Request",
         request="Order_Ansible_Playbook",
@@ -220,19 +220,19 @@ def test_service_ansible_playbook_crud(appliance, ansible_repository):
     """
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(15, "cat_item"),
+        fauxfactory.gen_alphanumeric(15, "item_disc_"),
         provisioning={
             "repository": ansible_repository.name,
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(12, start="dialog_"),
         }
     )
     assert cat_item.exists
     with update(cat_item):
-        new_name = "edited_{}".format(fauxfactory.gen_alphanumeric())
+        new_name = fauxfactory.gen_alphanumeric(15, start="edited_")
         cat_item.name = new_name
         cat_item.provisioning = {
             "playbook": "copy_file_example.yml"
@@ -401,8 +401,8 @@ def test_service_ansible_retirement_remove_resources(
     """
     cat_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(15, start="cat_item_"),
+        fauxfactory.gen_alphanumeric(15, start="item_desc_"),
         provisioning={
             "repository": ansible_repository.name,
             "playbook": "dump_all_variables.yml",
@@ -857,7 +857,7 @@ def test_ansible_service_order_vault_credentials(
     creds = conf.credentials['vault_creds']['password']
     creds_dict = {"vault_password": creds}
     vault_creds = appliance.collections.ansible_credentials.create(
-        "Vault_Credentials_{}".format(fauxfactory.gen_alpha()), "Vault", **creds_dict
+        fauxfactory.gen_alpha(22, start="Vault_Credentials_"), "Vault", **creds_dict
     )
 
     with update(local_ansible_catalog_item):

@@ -45,10 +45,10 @@ class DbBackupData(Pretty):
         self.__dict__.update(self._get_data(protocol_data, protocol_type))
 
     def _get_random_schedule_name(self):
-        return '{}_name'.format(fauxfactory.gen_alphanumeric())
+        return fauxfactory.gen_alphanumeric(15, start="schedule_")
 
     def _get_random_schedule_description(self):
-        return '{}_desc'.format(fauxfactory.gen_alphanumeric())
+        return fauxfactory.gen_alphanumeric(20, start="schedule_desc_")
 
     def _get_credentials(self):
         """ Loads credentials that correspond to 'credentials' key from machine_data dict

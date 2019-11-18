@@ -47,7 +47,7 @@ def zero_disk_flavor(provider):
 def private_flavor(appliance, provider):
     prov_data = provider.data['provisioning']
     collection = appliance.collections.cloud_flavors
-    private_flavor = collection.create(name=fauxfactory.gen_alpha(),
+    private_flavor = collection.create(name=fauxfactory.gen_alpha(12, start="flavor_"),
                                provider=provider,
                                ram=RAM,
                                vcpus=VCPUS,
@@ -177,7 +177,7 @@ def test_flavor_crud(appliance, provider, request):
         initialEstimate: 1/4h
     """
     collection = appliance.collections.cloud_flavors
-    flavor = collection.create(name=fauxfactory.gen_alpha(),
+    flavor = collection.create(name=fauxfactory.gen_alpha(12, start="flavor_"),
                                provider=provider,
                                ram=RAM,
                                vcpus=VCPUS,

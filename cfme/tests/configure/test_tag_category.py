@@ -123,7 +123,7 @@ class TestCategoriesViaREST(object):
         new = []
         for _ in range(categories_len):
             new.append(
-                {'description': 'test_category_{}'.format(fauxfactory.gen_alphanumeric().lower())})
+                {'description': fauxfactory.gen_alphanumeric(20, start="test_category_").lower()})
         if multiple:
             for index in range(categories_len):
                 new[index].update(categories[index]._ref_repr())

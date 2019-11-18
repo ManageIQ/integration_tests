@@ -26,8 +26,8 @@ def generic_object_button(appliance, generic_object_button_group, generic_defini
             button_parent = (
                 generic_object_button_group(button_group) if button_group else generic_definition
             )
-            button_name = 'button_{}'.format(fauxfactory.gen_alphanumeric())
-            button_desc = 'Button_description_{}'.format(fauxfactory.gen_alphanumeric())
+            button_name = fauxfactory.gen_alphanumeric(12, start="button_")
+            button_desc = fauxfactory.gen_alphanumeric(23, start="Button_description_")
             generic_object_button = button_parent.collections.generic_object_buttons.create(
                 name=button_name,
                 description=button_desc,
@@ -45,8 +45,8 @@ def generic_object_button_group(appliance, generic_definition):
     def _generic_object_button_group(create_action=True):
         if create_action:
             with appliance.context.use(ViaUI):
-                group_name = "button_group_{}".format(fauxfactory.gen_alphanumeric())
-                group_desc = "Group_button_description_{}".format(fauxfactory.gen_alphanumeric())
+                group_name = fauxfactory.gen_alphanumeric(15, start="button_group_")
+                group_desc = fauxfactory.gen_alphanumeric(28, start="Group_button_description_")
                 groups_buttons = generic_definition.collections.generic_object_groups_buttons
                 generic_object_button_group = groups_buttons.create(
                     name=group_name, description=group_desc, image="fa-user"

@@ -17,10 +17,10 @@ pytestmark = [
 def credential(wait_for_ansible, appliance):
     credentials_collection = appliance.collections.ansible_credentials
     _credential = credentials_collection.create(
-        "{}_credential_{}".format('Machine', fauxfactory.gen_alpha()),
+        fauxfactory.gen_alpha(18, start="Machine_Cred_"),
         'Machine',
-        username=fauxfactory.gen_alpha(),
-        password=fauxfactory.gen_alpha()
+        username=fauxfactory.gen_alpha(start="usr_"),
+        password=fauxfactory.gen_alpha(start="pwd_")
     )
     wait_for(
         func=lambda: _credential.exists,

@@ -24,7 +24,7 @@ updated_files = [
     {'Name': files_list[0]['Name'],
      'Collect Contents?': not files_list[0]['Collect Contents?']}]
 
-TENANT_NAME = "tenant_{}".format(fauxfactory.gen_alphanumeric())
+TENANT_NAME = fauxfactory.gen_alphanumeric(15, start="tenant_")
 
 # Operations performed on service dialogs with respect to RBAC permissions
 OPERATIONS = ["Add", "Edit", "Delete", "Copy"]
@@ -403,13 +403,12 @@ def test_custom_role_modify_for_dynamic_product_feature(request, appliance, prod
     """
     tenant = appliance.collections.tenants.create(
         name=TENANT_NAME,
-        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(15, start="tenant_desc_"),
         parent=appliance.collections.tenants.get_root_tenant(),
     )
     request.addfinalizer(tenant.delete)
     role = appliance.collections.roles.instantiate(name='EvmRole-tenant_quota_administrator')
-    copied_role = role.copy(name="{role}_{name}".format(
-        role=role.name, name=fauxfactory.gen_alpha()))
+    copied_role = role.copy(name=fauxfactory.gen_alpha(start=role.name))
     request.addfinalizer(copied_role.delete)
     view = navigate_to(copied_role, 'Details')
     # node_checked: Checks whether feature tree path is checked for given node

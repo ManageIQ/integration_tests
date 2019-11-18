@@ -469,7 +469,7 @@ def infra_mapping_default_data(source_provider, provider):
     plan_type = VersionPicker({Version.lowest(): None,
                                "5.10": "rhv" if provider.one_of(RHEVMProvider) else "osp"}).pick()
     infra_mapping_data = {
-        "name": "infra_map_{}".format(fauxfactory.gen_alphanumeric()),
+        "name": fauxfactory.gen_alphanumeric(15, start="infra_map_"),
         "description": "migration with vmware to {}".format(plan_type),
         "plan_type": plan_type,
         "clusters": [component_generator("clusters", source_provider, provider)],

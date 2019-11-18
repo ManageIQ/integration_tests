@@ -29,7 +29,7 @@ def delete_entity(entity):
 
 def create_network(appliance, provider, is_external):
     collection = appliance.collections.cloud_networks
-    network = collection.create(name=fauxfactory.gen_alpha(),
+    network = collection.create(name=fauxfactory.gen_alpha(start="nwk_"),
                                 tenant=provider.data.get('provisioning').get('cloud_tenant'),
                                 provider=provider,
                                 network_type='VXLAN',
@@ -40,7 +40,7 @@ def create_network(appliance, provider, is_external):
 
 def create_subnet(appliance, provider, network):
     collection = appliance.collections.network_subnets
-    subnet = collection.create(name=fauxfactory.gen_alpha(),
+    subnet = collection.create(name=fauxfactory.gen_alpha(12, start="subnet_"),
                                tenant=provider.data.get('provisioning').get('cloud_tenant'),
                                provider=provider,
                                network_manager='{} Network Manager'.format(provider.name),
@@ -51,7 +51,7 @@ def create_subnet(appliance, provider, network):
 
 def create_router(appliance, provider, ext_gw, ext_network=None, ext_subnet=None):
     collection = appliance.collections.network_routers
-    router = collection.create(name=fauxfactory.gen_alpha(),
+    router = collection.create(name=fauxfactory.gen_alpha(12, start="router_"),
                                tenant=provider.data.get('provisioning').get('cloud_tenant'),
                                provider=provider,
                                network_manager='{} Network Manager'.format(provider.name),
@@ -133,7 +133,7 @@ def test_edit_network(network):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    network.edit(name=fauxfactory.gen_alpha())
+    network.edit(name=fauxfactory.gen_alpha(12, start="edited_"))
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
     wait_for(lambda: network.exists,
@@ -184,7 +184,7 @@ def test_edit_subnet(subnet):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    subnet.edit(new_name=fauxfactory.gen_alpha())
+    subnet.edit(new_name=fauxfactory.gen_alpha(12, start="edited_"))
     wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
     wait_for(lambda: subnet.exists, delay=15, timeout=600, fail_func=subnet.browser.refresh)
@@ -244,7 +244,7 @@ def test_edit_router(router):
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
-    router.edit(name=fauxfactory.gen_alpha())
+    router.edit(name=fauxfactory.gen_alpha(12, start="edited_"))
     wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
              delay=10)
     wait_for(lambda: router.exists,

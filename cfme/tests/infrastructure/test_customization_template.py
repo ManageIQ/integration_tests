@@ -37,14 +37,13 @@ def test_customization_template_crud(collection, script_type, image_type):
         initialEstimate: 1/15h
     """
 
-    template_crud = collection.create(name="{}_{}".format(script_type,
-                                                          fauxfactory.gen_alphanumeric(4)),
+    template_crud = collection.create(name=fauxfactory.gen_alphanumeric(15, script_type),
                                       description=fauxfactory.gen_alphanumeric(16),
                                       image_type=image_type.name,
                                       script_type=script_type,
                                       script_data='Testing the script')
     with update(template_crud):
-        template_crud.name = template_crud.name + "_update"
+        template_crud.name = f"{template_crud.name}_update"
     collection.delete(False, template_crud)
 
 

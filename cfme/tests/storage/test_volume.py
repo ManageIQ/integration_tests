@@ -77,7 +77,7 @@ def instance_fixture(appliance, provider, small_template):
     if not instance.exists_on_provider:
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
     elif instance.provider.one_of(EC2Provider) and instance.mgmt.state == VmState.DELETED:
-        instance.mgmt.rename('test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
+        instance.mgmt.rename(fauxfactory.gen_alphanumeric(20, start="test_terminated_"))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield instance
     instance.cleanup_on_provider()
@@ -86,7 +86,7 @@ def instance_fixture(appliance, provider, small_template):
 def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=False,
                   should_assert=False):
     volume_collection = appliance.collections.volumes
-    name = fauxfactory.gen_alpha()
+    name = fauxfactory.gen_alpha(start="vol_")
     if provider.one_of(OpenStackProvider):
         if appliance.version < "5.11":
             volume = volume_collection.create(name=name,
@@ -159,7 +159,7 @@ def test_storage_volume_crud(appliance, provider, from_manager):
 
     # update volume
     old_name = volume.name
-    new_name = fauxfactory.gen_alpha()
+    new_name = fauxfactory.gen_alpha(12, start="edited_")
     if provider.one_of(OpenStackProvider):
         updates = {'volume_name': new_name}
     else:

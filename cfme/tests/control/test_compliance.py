@@ -24,12 +24,12 @@ pytestmark = [
 
 @pytest.fixture
 def policy_name():
-    return "compliance_testing: policy {}".format(fauxfactory.gen_alphanumeric(8))
+    return fauxfactory.gen_alphanumeric(35, start="compliance_testing: policy ")
 
 
 @pytest.fixture
 def policy_profile_name():
-    return "compliance_testing: policy profile {}".format(fauxfactory.gen_alphanumeric(8))
+    return fauxfactory.gen_alphanumeric(43, start="compliance_testing: policy profile ")
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
 
 @pytest.fixture(scope="module")
 def compliance_vm(configure_fleecing_modscope, provider, full_template_modscope):
-    name = "{}-{}".format("test-compliance", fauxfactory.gen_alpha(4))
+    name = fauxfactory.gen_alpha(20, start="test-compliance-")
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(name, provider, full_template_modscope.name)
     # TODO: remove this check once issue with SSA on other hosts in vSphere 6.5 is figured out
@@ -115,19 +115,19 @@ def test_check_package_presence(request, appliance, compliance_vm, analysis_prof
     """
     condition = appliance.collections.conditions.create(
         VMCondition,
-        "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
+        fauxfactory.gen_alphanumeric(40, start="Compliance testing condition "),
         expression=("fill_find(field=VM and Instance.Guest Applications : Name, "
             "skey=STARTS WITH, value=kernel, check=Check Count, ckey= = , cvalue=1)")
     )
     request.addfinalizer(lambda: diaper(condition.delete))
     policy = appliance.collections.policies.create(
         VMCompliancePolicy,
-        "Compliance {}".format(fauxfactory.gen_alphanumeric(8))
+        fauxfactory.gen_alphanumeric(15, start="Compliance ")
     )
     request.addfinalizer(lambda: diaper(policy.delete))
     policy.assign_conditions(condition)
     profile = appliance.collections.policy_profiles.create(
-        "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
+        fauxfactory.gen_alphanumeric(20, start="Compliance PP "),
         policies=[policy]
     )
     request.addfinalizer(lambda: diaper(profile.delete))
@@ -158,7 +158,7 @@ def test_check_files(request, appliance, compliance_vm, analysis_profile):
     check_file_contents = "127.0.0.1"
     condition = appliance.collections.conditions.create(
         VMCondition,
-        "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
+        fauxfactory.gen_alphanumeric(40, start="Compliance testing condition "),
         expression=("fill_find(VM and Instance.Files : Name, "
             "=, {}, Check Any, Contents, INCLUDES, {})".format(
                 check_file_name, check_file_contents))
@@ -166,12 +166,12 @@ def test_check_files(request, appliance, compliance_vm, analysis_profile):
     request.addfinalizer(lambda: diaper(condition.delete))
     policy = appliance.collections.policies.create(
         VMCompliancePolicy,
-        "Compliance {}".format(fauxfactory.gen_alphanumeric(8))
+        fauxfactory.gen_alphanumeric(15, start="Compliance ")
     )
     request.addfinalizer(lambda: diaper(policy.delete))
     policy.assign_conditions(condition)
     profile = appliance.collections.policy_profiles.create(
-        "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
+        fauxfactory.gen_alphanumeric(20, start="Compliance PP "),
         policies=[policy]
     )
     request.addfinalizer(lambda: diaper(profile.delete))

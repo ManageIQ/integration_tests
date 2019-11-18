@@ -19,7 +19,7 @@ GEN_OBJ_DIRECTORY = "/var/www/miq/vmdb/tmp/generic_object_definitions"
 def gen_obj_def_import_export(appliance):
     with appliance.context.use(ViaREST):
         definition = appliance.collections.generic_object_definitions.create(
-            name="rest_gen_class_imp_exp{}".format(fauxfactory.gen_alphanumeric()),
+            name=fauxfactory.gen_alphanumeric(28, start="rest_gen_class_imp_exp_"),
             description="Generic Object Definition",
             attributes={'addr01': 'string'},
             methods=['add_vm', 'remove_vm']

@@ -35,9 +35,9 @@ def new_user(appliance):
     """This fixture creates new user which assigned with non-super group"""
     group = appliance.collections.groups.instantiate(description='EvmGroup-administrator')
     user = appliance.collections.users.create(
-        name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
-        credential=Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric(4)),
-                              secret='{password}'.format(password=fauxfactory.gen_alphanumeric(4))),
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                              secret=fauxfactory.gen_alphanumeric(start="pwd")),
         email=fauxfactory.gen_email(),
         groups=[group],
         cost_center="Workload",

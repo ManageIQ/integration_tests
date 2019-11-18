@@ -73,7 +73,7 @@ def datastore_init(iso_cust_template, iso_datastore, provisioning, setup_provide
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_iso_prov_{}'.format(fauxfactory.gen_alphanumeric(8))
+    vm_name = fauxfactory.gen_alphanumeric(20, start="test_iso_prov_")
     return vm_name
 
 

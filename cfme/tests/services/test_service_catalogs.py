@@ -117,7 +117,7 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
         lambda: appliance.collections.infra_vms.instantiate(
             "{}0001".format(vm_name), provider).cleanup_on_provider()
     )
-    bundle_name = fauxfactory.gen_alphanumeric()
+    bundle_name = fauxfactory.gen_alphanumeric(12, start="bundle_")
     catalog_bundle = appliance.collections.catalog_bundles.create(
         bundle_name, description="catalog_bundle",
         display_in=True, catalog=catalog_item.catalog,
@@ -149,7 +149,7 @@ def test_no_template_catalog_item(provider, provisioning, dialog, catalog, appli
         initialEstimate: 1/8h
         tags: service
     """
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalogs.instantiate(
         # TODO pass catalog class for instantiation
         item_type=provider.catalog_name, name=item_name,

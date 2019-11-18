@@ -339,9 +339,11 @@ def test_vmware_inaccessible_datastore_vm_provisioning(request, appliance, provi
         logger.info("Found {} inaccessible_datastores".format(inaccessible_datastores))
     else:
         pytest.skip("This provider {} has no inaccessible_datastores.".format(provider.name))
-    vm = appliance.collections.infra_vms.create('test-vmware-{}'.format(
-        fauxfactory.gen_alphanumeric()), provider, find_in_cfme=True, wait=True,
-        form_values={'environment': {'automatic_placement': True}})
+    vm = appliance.collections.infra_vms.create(
+        fauxfactory.gen_alphanumeric(18, start="test-vmware-"),
+        provider, find_in_cfme=True, wait=True,
+        form_values={'environment': {'automatic_placement': True}}
+    )
     request.addfinalizer(vm.delete)
     assert vm.datastore.name not in inaccessible_datastores
 
@@ -369,10 +371,11 @@ def test_vmware_provisioned_vm_host_relationship(request, appliance, provider):
             2.See all available templates
             3.CFME Provisioned VM should have host relationship.
     """
-    vm = appliance.collections.infra_vms.create('test-vmware-{}'
-        .format(fauxfactory.gen_alphanumeric()),
+    vm = appliance.collections.infra_vms.create(
+        fauxfactory.gen_alphanumeric(18, start="test-vmware-"),
         provider, find_in_cfme=True, wait=True,
-        form_values={'environment': {'automatic_placement': True}})
+        form_values={'environment': {'automatic_placement': True}}
+    )
     request.addfinalizer(vm.delete)
     # assert if Host property is set for VM.
     assert isinstance(vm.host, Host)

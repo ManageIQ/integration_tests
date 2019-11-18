@@ -11,14 +11,18 @@ from cfme.utils.update import update
 pytestmark = [pytest.mark.provider([OpenStackProvider], scope='module')]
 
 # List of tenant's names
-TENANTS = ["parent_{}".format(fauxfactory.gen_alphanumeric()),
-           "child_{}".format(fauxfactory.gen_alphanumeric())]
+TENANTS = [
+    fauxfactory.gen_alphanumeric(start="parent_"),
+    fauxfactory.gen_alphanumeric(start="child_")
+]
 
 
 @pytest.fixture(scope='function')
 def tenant(provider, setup_provider, appliance):
-    tenant = appliance.collections.cloud_tenants.create(name=fauxfactory.gen_alphanumeric(8),
-                                                        provider=provider)
+    tenant = appliance.collections.cloud_tenants.create(
+        name=fauxfactory.gen_alphanumeric(start="tenant_"),
+        provider=provider
+    )
     yield tenant
 
     try:
@@ -46,7 +50,7 @@ def test_tenant_crud(tenant):
     """
 
     with update(tenant):
-        tenant.name = fauxfactory.gen_alphanumeric(8)
+        tenant.name = fauxfactory.gen_alphanumeric(15, start="edited_")
     tenant.wait_for_appear()
     assert tenant.exists
 
@@ -59,7 +63,7 @@ def new_tenant(appliance):
     # Here TENANT[0] is the first tenant(parent tenant) from the tenant's list
     tenant = collection.create(
         name=TENANTS[0],
-        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(15, start="tenant_desc_"),
         parent=collection.get_root_tenant(),
     )
     yield tenant
@@ -72,7 +76,7 @@ def child_tenant(new_tenant):
     # Here TENANT[1] is the second tenant(child tenant) from the tenant's list
     child_tenant = new_tenant.appliance.collections.tenants.create(
         name=TENANTS[1],
-        description="tenant_des{}".format(fauxfactory.gen_alphanumeric()),
+        description=fauxfactory.gen_alphanumeric(15, start="tenant_desc_"),
         parent=new_tenant,
     )
     yield child_tenant
@@ -164,7 +168,7 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
 
         # Creating two different groups with assigned custom roles and tenants
         group = appliance.collections.groups.create(
-            description="group_{}".format(fauxfactory.gen_alphanumeric()),
+            description=fauxfactory.gen_alphanumeric(start="group_"),
             role=new_role.name,
             tenant=tenant_[i]
         )
@@ -172,10 +176,10 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
 
         # Creating two different users which are assigned with different groups
         user = appliance.collections.users.create(
-            name="user_{}".format(fauxfactory.gen_alphanumeric().lower()),
+            name=fauxfactory.gen_alphanumeric(start="user_").lower(),
             credential=Credential(
-                principal="uid{}".format(fauxfactory.gen_alphanumeric(4)),
-                secret="{password}".format(password=fauxfactory.gen_alphanumeric(4)),
+                principal=fauxfactory.gen_alphanumeric(start="uid"),
+                secret=fauxfactory.gen_alphanumeric(start="pwd_"),
             ),
             email=fauxfactory.gen_email(),
             groups=group,

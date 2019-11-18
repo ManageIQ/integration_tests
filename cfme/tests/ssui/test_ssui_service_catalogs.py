@@ -43,7 +43,7 @@ def test_service_catalog_crud_ssui(appliance, setup_provider,
 
     catalog_item = order_service
     with appliance.context.use(context):
-        dialog_values = {'service_name': "ssui_{}".format(fauxfactory.gen_alphanumeric())}
+        dialog_values = {'service_name': fauxfactory.gen_alphanumeric(start="ssui_")}
         service = ServiceCatalogs(appliance, name=catalog_item.name,
                                   dialog_values=dialog_values)
         service.add_to_shopping_cart()

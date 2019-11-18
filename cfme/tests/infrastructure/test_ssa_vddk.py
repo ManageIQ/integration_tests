@@ -33,7 +33,7 @@ def ssa_analysis_profile(appliance):
     for file in ["/etc/hosts", "/etc/passwd"]:
         collected_files.append({"Name": file, "Collect Contents?": True})
 
-    analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
+    analysis_profile_name = fauxfactory.gen_alphanumeric(18, start="ssa_analysis_")
     analysis_profile_collection = appliance.collections.analysis_profiles
     analysis_profile = analysis_profile_collection.create(
         name=analysis_profile_name,
