@@ -50,7 +50,6 @@ from cfme.utils.net import is_pingable
 from cfme.utils.net import net_check
 from cfme.utils.net import resolve_hostname
 from cfme.utils.path import conf_path
-from cfme.utils.path import data_path
 from cfme.utils.path import patches_path
 from cfme.utils.path import scripts_path
 from cfme.utils.ssh import SSHTail

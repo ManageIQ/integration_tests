@@ -1,13 +1,4 @@
-import re
-from argparse import Namespace
-from contextlib import contextmanager
-
 import pytest
-
-from cfme.exceptions import NeedleNotFoundInLog
-from cfme.utils.log import logger
-from cfme.utils.wait import TimedOutError
-from cfme.utils.wait import wait_for
 
 
 @pytest.fixture
@@ -57,7 +48,7 @@ def targeted_refresh():
     #         raise NeedleNotFoundInLog('Targeted refresh did not trigger for:\n{}'.format(
     #                                   ',\n'.join(['- ' + t[1] for t in targets])))
 
-    def register_target(ems_ref, comment):
-        targets.add((re.compile(needle_template.format(ems_ref), re.MULTILINE), comment))
-
-    yield Namespace(register_target=register_target, timeout=timeout)
+    # def register_target(ems_ref, comment):
+    #     targets.add((re.compile(needle_template.format(ems_ref), re.MULTILINE), comment))
+    #
+    # yield Namespace(register_target=register_target, timeout=timeout)

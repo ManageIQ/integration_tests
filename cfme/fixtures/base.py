@@ -1,9 +1,7 @@
 import pytest
 
-from cfme.fixtures.artifactor_plugin import fire_art_hook
 from cfme.utils.appliance import DummyAppliance
 from cfme.utils.log import logger
-from cfme.utils.path import data_path
 
 
 @pytest.fixture(scope="session", autouse=True)
