@@ -5362,7 +5362,7 @@ class HiddenFileInput(BaseFileInput):
         return self.browser.is_displayed(self)
 
 
-class ConversionHostProgress(Widget):
+class ConversionHost(Widget):
     """Represents the progress widget for conversion Host configuration"""
 
     ROOT = './/div[contains(@id,"conversion_hosts")]'
@@ -5370,24 +5370,37 @@ class ConversionHostProgress(Widget):
     ITEM_LOCATOR = './/div[contains(@class,"list-view-pf-main-info")]'
     ERROR_LOCATOR = './/div/span[contains(@class,"pficon-error-circle-o")]'
     OK_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
-
+    REMOVE_BUTTON = Button("Remove")
+    DELETE_BUTTON_LOCATOR = './/button[contains(@class,"btn btn-primary")and text()="Remove"]'
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
 
-    def _conversion_host(self, hostname):
-        for el in self.browser.elements(self.ITEM_LOCATOR):
-            if hostname in self.browser.text(el):
-                return el
-        raise ItemNotFound("No host found with host name : {}".format(hostname))
+    def conversion_host(self, hostname):
+        try:
+            for el in self.browser.elements(self.ITEM_LOCATOR):
+                if hostname in self.browser.text(el):
+                    return el
+        except ItemNotFound:
+            return False
 
     def in_progress(self, hostname):
-        el = self._conversion_host(hostname)
-        return self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
+        if self.conversion_host(hostname):
+            el = self.conversion_host(hostname)
+            return self.browser.is_displayed(self.SPINNER_LOCATOR, parent=el)
+        else:
+            return False
 
     def is_host_configured(self, hostname):
         """Returns True if OK is displayed and spinner not present"""
-        el = self._conversion_host(hostname)
+        el = self.conversion_host(hostname)
         ok_displayed = self.browser.is_displayed(self.OK_LOCATOR, parent=el)
         return ok_displayed
+
+    def remove_conversion_host(self, hostname):
+        el = self.conversion_host(hostname)
+        self.browser.click(self.REMOVE_BUTTON, parent=el)
+        del_btn = self.root_browser.element(self.DELETE_BUTTON_LOCATOR)
+        del_btn.click()
+        return True
 
 
 class MigrationProgressBar(Widget):
