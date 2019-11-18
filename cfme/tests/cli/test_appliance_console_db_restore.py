@@ -1,6 +1,5 @@
 import re
 from collections import namedtuple
-from re import escape as resc
 
 import fauxfactory
 import pytest
@@ -214,12 +213,12 @@ def restore_db(appl, location=''):
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=40)
         interaction.answer('Choose the advanced setting: ', '6')
-        interaction.answer(resc('Choose the restore database file source: |1| '), '1')
-        interaction.answer(resc('Enter the location of the local restore file: '
+        interaction.answer(re.escape('Choose the restore database file source: |1| '), '1')
+        interaction.answer(re.escape('Enter the location of the local restore file: '
                                 '|/tmp/evm_db.backup| '), location)
-        interaction.answer(resc('Should this file be deleted after completing the restore? '
+        interaction.answer(re.escape('Should this file be deleted after completing the restore? '
                                 '(Y/N): '), 'N')
-        interaction.answer(resc(
+        interaction.answer(re.escape(
             'Are you sure you would like to restore the database? (Y/N): '), 'Y')
         interaction.answer('Press any key to continue.', '', timeout=60)
 
@@ -290,14 +289,14 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
         interaction.answer('Press any key to continue.', '', timeout=40)
         interaction.answer('Choose the advanced setting: ', '6')
         interaction.answer(
-            resc('Choose the restore database file source: |1| '), '')
+            re.escape('Choose the restore database file source: |1| '), '')
         interaction.answer(
-            resc('Enter the location of the local restore file: |/tmp/evm_db.backup| '),
+            re.escape('Enter the location of the local restore file: |/tmp/evm_db.backup| '),
             backup_file_name)
         interaction.answer(
-            resc('Should this file be deleted after completing the restore? (Y/N): '), 'n')
+            re.escape('Should this file be deleted after completing the restore? (Y/N): '), 'n')
         interaction.answer(
-            resc('Are you sure you would like to restore the database? (Y/N): '), 'y')
+            re.escape('Are you sure you would like to restore the database? (Y/N): '), 'y')
         interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
@@ -590,7 +589,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
             nfs_dump_file_name)
         # Enter the location to save the remote backup file to
         interaction.answer(
-            resc('Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '),
+            re.escape('Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '),
             nfs_restore_dir_path)
         # Running Database backup to nfs://XX.XX.XX.XX/srv/export...
         interaction.answer('Press any key to continue.', '', timeout=240)
@@ -661,11 +660,11 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
             smb_dump_file_name)
         # Enter the location to save the remote backup file to
         interaction.answer(
-            resc('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
+            re.escape('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
             smb_restore_dir_path)
         # Enter the username with access to this file.
-        interaction.answer(resc("Example: 'mydomain.com/user': "), usr)
-        interaction.answer(resc('Enter the password for {}: '.format(usr)), pwd)
+        interaction.answer(re.escape("Example: 'mydomain.com/user': "), usr)
+        interaction.answer(re.escape('Enter the password for {}: '.format(usr)), pwd)
         # Running Database backup to nfs://10.8.198.142/srv/export...
         interaction.answer('Press any key to continue.', '', timeout=120)
 
@@ -681,11 +680,11 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
         interaction.answer(r'Choose the restore database file source: \|1\| ', '3')
         # Enter the location of the remote backup file
         interaction.answer(
-            resc('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
+            re.escape('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
             smb_restore_file_path)
         # Enter the username with access to this file.
-        interaction.answer(resc("Example: 'mydomain.com/user': "), usr)
-        interaction.answer(resc('Enter the password for {}: '.format(usr)), pwd)
+        interaction.answer(re.escape("Example: 'mydomain.com/user': "), usr)
+        interaction.answer(re.escape('Enter the password for {}: '.format(usr)), pwd)
         interaction.answer(r'Are you sure you would like to restore the database\? \(Y\/N\): ', 'y')
         interaction.answer('Press any key to continue.', '', timeout=80)
 
