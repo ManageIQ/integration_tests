@@ -1,5 +1,5 @@
-import fauxfactory
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from pytest_polarion_collect.utils import get_parsed_docstring
 from pytest_polarion_collect.utils import process_json_data
@@ -109,7 +109,7 @@ def create_vm(setup_provider, request, provider):
     else:
         pytest.error('Any appropriate Template was not passed to the fixture.')
     vm_name = _get_vm_name(request)
-    return _create_vm(request, full_template, provider, vm_name)
+    return _create_vm(request, template_type, provider, vm_name)
 
 
 def _create_instance(appliance, provider, template_name):

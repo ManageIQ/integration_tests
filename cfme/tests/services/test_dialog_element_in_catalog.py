@@ -845,8 +845,9 @@ def test_service_service_vms_retires_archived():
     ids=["domain"],
 )
 @pytest.mark.parametrize("file_name", ["bz_1558926.yml"], ids=["dialog"])
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 @pytest.mark.provider([RHEVMProvider], scope='function', selector=ONE)
-def test_service_dialog_expression_method(appliance, setup_provider, full_template_vm,
+def test_service_dialog_expression_method(appliance, setup_provider, create_vm,
                                           import_datastore, import_data, file_name,
                                           generic_catalog_item_with_imported_dialog):
     """
@@ -876,7 +877,7 @@ def test_service_dialog_expression_method(appliance, setup_provider, full_templa
         appliance, catalog=catalog_item.catalog, name=catalog_item.name
     )
     view = navigate_to(service_catalogs, "Order")
-    assert full_template_vm.name in [
+    assert create_vm.name in [
         opt.text for opt in view.fields("dropdown_list_1").dropdown.all_options
     ]
 

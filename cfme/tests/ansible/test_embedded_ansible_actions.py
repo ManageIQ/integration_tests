@@ -37,8 +37,8 @@ def ansible_action(appliance, ansible_catalog_item):
 
 
 @pytest.fixture(scope="module")
-def policy_for_testing(appliance, full_template_vm_modscope, provider, ansible_action):
-    vm = full_template_vm_modscope
+def policy_for_testing(appliance, create_vm_modscope, provider, ansible_action):
+    vm = create_vm_modscope
     policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha(15, start="policy_"),
@@ -71,8 +71,9 @@ def ansible_credential(wait_for_ansible, appliance, full_template_modscope):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, ansible_action,
-        policy_for_testing, full_template_vm_modscope, ansible_credential, ansible_service_request,
+        policy_for_testing, create_vm_modscope, ansible_credential, ansible_service_request,
         ansible_service):
     """Tests a policy with ansible playbook action against localhost.
 
@@ -83,8 +84,8 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
     """
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"localhost": True}}
-    added_tag = full_template_vm_modscope.add_tag()
-    request.addfinalizer(lambda: full_template_vm_modscope.remove_tag(added_tag))
+    added_tag = create_vm_modscope.add_tag()
+    request.addfinalizer(lambda: create_vm_modscope.remove_tag(added_tag))
     wait_for(ansible_service_request.exists, num_sec=600)
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
@@ -93,8 +94,9 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
 
 
 @pytest.mark.tier(3)
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_item, ansible_action,
-        policy_for_testing, full_template_vm_modscope, ansible_credential, ansible_service_request,
+        policy_for_testing, create_vm_modscope, ansible_credential, ansible_service_request,
         ansible_service):
     """Tests a policy with ansible playbook action against manual address.
 
@@ -103,7 +105,7 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
-    vm = full_template_vm_modscope
+    vm = create_vm_modscope
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
     with update(ansible_action):
@@ -123,8 +125,9 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
 
 
 @pytest.mark.tier(3)
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_item, ansible_action,
-        policy_for_testing, full_template_vm_modscope, ansible_credential, ansible_service_request,
+        policy_for_testing, create_vm_modscope, ansible_credential, ansible_service_request,
         ansible_service):
     """Tests a policy with ansible playbook action against target machine.
 
@@ -133,7 +136,7 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
-    vm = full_template_vm_modscope
+    vm = create_vm_modscope
     with update(ansible_action):
         ansible_action.run_ansible_playbook = {"inventory": {"target_machine": True}}
     added_tag = vm.add_tag()
@@ -146,8 +149,9 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
 
 
 @pytest.mark.tier(3)
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalog_item,
-        full_template_vm_modscope, ansible_action, policy_for_testing, ansible_credential,
+        create_vm_modscope, ansible_action, policy_for_testing, ansible_credential,
         ansible_service_request, ansible_service):
     """Tests a policy with ansible playbook action against unavailable address.
 
@@ -156,7 +160,7 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
-    vm = full_template_vm_modscope
+    vm = create_vm_modscope
     with update(ansible_catalog_item):
         ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
     with update(ansible_action):
@@ -176,8 +180,9 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
 
 
 @pytest.mark.tier(3)
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_control_action_run_ansible_playbook_in_requests(request,
-        full_template_vm_modscope, policy_for_testing, ansible_service_request):
+        create_vm_modscope, policy_for_testing, ansible_service_request):
     """Checks if execution of the Action result in a Task/Request being created.
 
     Polarion:
@@ -185,7 +190,7 @@ def test_control_action_run_ansible_playbook_in_requests(request,
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
-    vm = full_template_vm_modscope
+    vm = create_vm_modscope
     added_tag = vm.add_tag()
     request.addfinalizer(lambda: vm.remove_tag(added_tag))
     assert ansible_service_request.exists

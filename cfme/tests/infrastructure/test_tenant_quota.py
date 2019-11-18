@@ -512,7 +512,8 @@ def test_quota_exceed_mail_with_more_info_link(configure_mail, appliance, provid
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1644351])
 @pytest.mark.provider([VMwareProvider], selector=ONE)
-def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, full_template_vm):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, create_vm):
     """
     Bugzilla:
         1644351
@@ -538,10 +539,10 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, fu
                requested.
             4. Quota is bypassed while removing disk
     """
-    orig_config = full_template_vm.configuration.copy()
+    orig_config = create_vm.configuration.copy()
     new_config = orig_config.copy()
     new_config.add_disk(size=1024, size_unit='MB', type="thin", mode="persistent")
-    add_disk_request = full_template_vm.reconfigure(new_config)
+    add_disk_request = create_vm.reconfigure(new_config)
 
     # Add disk request verification
     wait_for(
@@ -550,10 +551,10 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, fu
 
     # Add disk UI verification
     wait_for(
-        lambda: full_template_vm.configuration.num_disks == new_config.num_disks,
+        lambda: create_vm.configuration.num_disks == new_config.num_disks,
         timeout=360,
         delay=45,
-        fail_func=full_template_vm.refresh_relationships,
+        fail_func=create_vm.refresh_relationships,
         message="confirm that disk was added"
     )
 
@@ -571,7 +572,7 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, fu
                 ".*VmReconfigureRequest: Bypassing quota check.*",
             ],
     ).waiting(timeout=400):
-        remove_disk_request = full_template_vm.reconfigure(orig_config)
+        remove_disk_request = create_vm.reconfigure(orig_config)
 
         # Remove disk request verification
         wait_for(
