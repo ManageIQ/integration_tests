@@ -1654,7 +1654,6 @@ def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, requ
         navigate_to(appliance.server, 'LoggedIn')
         assert appliance.server.current_full_name() == new_tenant_admin.name
 
-        pytest.set_trace()
         group = appliance.collections.groups.instantiate(
             description=new_tenant_admin.groups[0].description)
         user = new_user(appliance, group)
