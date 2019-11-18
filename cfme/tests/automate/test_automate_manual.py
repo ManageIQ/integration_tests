@@ -487,33 +487,6 @@ def test_git_refresh_with_rapid_updates():
 
 
 @pytest.mark.tier(2)
-def test_simulation_copy_button():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        startsin: 5.10
-        casecomponent: Automate
-        testSteps:
-            1. Go to Automation > Automate > Simulation
-            2. Fill in any required fields to enable submit button and click on 'Submit'
-            4. Change any field - for example 'Object Attribute'
-            5. Select Copy button
-        expectedResults:
-            1. Copy button should be disabled
-            2. Copy button should be enabled
-            3.
-            4.
-            5. Copy button should be disabled until form is submitted
-
-    Bugzilla:
-        1630800
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1713072, 1745197])
 def test_automate_task_schedule():
     """
