@@ -135,11 +135,3 @@ def pytest_sessionfinish(session, exitstatus):
     if failed_test_tracking['tests']:
         failed_tests_report = failed_tests_template.render(**failed_test_tracking)
         outfile.write(failed_tests_report)
-
-
-@pytest.fixture(scope='session')
-def browser(appliance):
-    from cfme.utils.appliance import DummyAppliance
-    if isinstance(appliance, DummyAppliance):
-        pytest.xfail("browser not supported with DummyAppliance")
-    return browser_module.browser
