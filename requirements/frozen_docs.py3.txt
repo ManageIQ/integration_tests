@@ -214,7 +214,7 @@ pyOpenSSL==19.0.0
 pyparsing==2.4.0
 pyperclip==1.7.0
 pytesseract==0.2.6
-pytest==3.4.1
+pytest==5.2.4
 pytest-polarion-collect==0.17.1
 #pytest-report-parameters==0.4
 python-box==3.2.4
