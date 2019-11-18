@@ -9,52 +9,6 @@ pytestmark = [
 ]
 
 
-def test_ssa_datastore_files():
-    """
-    Check datastore files are fetched correctly
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_users():
-    """
-    Check users are fetched correctly for analysed VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_datastore_files_unicode():
-    """
-    Make sure https://bugzilla.redhat.com/show_bug.cgi?id=1221149 is fixed
-
-    Bugzilla:
-        1221149
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        startsin: 5.3
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_groups_scvmm2k12_windows2012r2_ntfs():
     """
     Add SCVMM-2012 provider.
@@ -311,34 +265,6 @@ def test_ssa_groups_ec2_fedora():
     pass
 
 
-def test_ssa_vm_init_processes():
-    """
-    Check init services are fetched correctly for analysed VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_packages():
-    """
-    Check packages are fetched correctly for analysed VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_patches_azure_windows2012r2_ntfs():
     """
     1. Add Azure provider
@@ -382,20 +308,6 @@ def test_ssa_patches_azure_windows2016_ntfs():
         casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_groups():
-    """
-    Check groups are fetched correctly for analysed VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
         tags: smartstate
     """
     pass
@@ -1287,34 +1199,6 @@ def test_ssa_vm_ec2_vpc():
     pass
 
 
-def test_ssa_vm_actions():
-    """
-    Check SSA can be a part of action for VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_running_processes():
-    """
-    Check running processes are fetched correctly for analysed VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_users_azure_windows2016_ntfs():
     """
     1. Add Azure provider
@@ -2157,20 +2041,6 @@ def test_ssa_files_windows_utf_8_files():
     pass
 
 
-def test_ssa_vm_files():
-    """
-    Check file list is fetched correctly for analysed VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
 @test_requirements.drift
 def test_drift_analysis_vpshere6_rhel():
     """
@@ -2188,75 +2058,6 @@ def test_drift_analysis_vpshere6_rhel():
         casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.3
-        tags: smartstate
-    """
-    pass
-
-
-def test_rhi_appliance():
-    """
-    Red Hat Insights:
-    Register an Appliance to RHSM or Satellite.
-    Perform SmartState Analysis on appliance.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_rhi_inventory():
-    """
-    Verify various tabs by applying filters on one or more systems
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_rhi_unregister():
-    """
-    Verify Unregisteration of system by selecting one or more systems from
-    list
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_rhi_rules():
-    """
-    Verify all sub-tabs in rules and whether filter is working properly
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_rhi_overview():
-    """
-    Verify testing whether issues related to systems are categorised or
-    not
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
         tags: smartstate
     """
     pass
