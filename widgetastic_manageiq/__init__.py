@@ -3292,6 +3292,18 @@ class JSBaseEntity(View, ReportDataControllerMixin):
         else:
             return getattr(self, "_name", None)
 
+    def ensure_checked(self):
+        if not self.is_checked:
+            self.check()
+        if not self.is_checked:
+            raise WidgetOperationFailed(f"Checking of Entity {self} unsuccessful.")
+
+    def ensure_unchecked(self):
+        if self.is_checked:
+            self.uncheck()
+        if self.is_checked:
+            raise WidgetOperationFailed(f"Unchecking of Entity {self} unsuccessful.")
+
     def check(self):
         self._call_item_method("select")
 
