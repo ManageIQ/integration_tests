@@ -236,9 +236,13 @@ class ConversionHost(BaseEntity):
         """Remove conversion host"""
         view = navigate_to(self.parent, "All")
         view.tabs.conversion_hosts.conv_host_progress.remove_conversion_host(self.hostname)
-        return wait_for(view.tabs.conversion_hosts.conv_host_progress.in_progress,
-                        func_args=[self.hostname],
-                        fail_condition=True)
+        try:
+            wait_for(view.tabs.conversion_hosts.conv_host_progress.in_progress,
+                     func_args=[self.hostname],
+                     fail_condition=True)
+        except TimedOutError:
+            self.logger.warning("Timed out waiting for {} to be removed".format(self.hostname))
+        return view.tabs.conversion_hosts.conv_host_progress.in_progress(self.hostname)
 
 
 @attr.s
