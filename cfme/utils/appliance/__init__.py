@@ -313,7 +313,6 @@ class IPAppliance(object):
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     evm_failover_monitor = SystemdService.declare(unit_name='evm-failover-monitor')
     httpd = SystemdService.declare(unit_name='httpd')
-    merkyl = SystemdService.declare(unit_name='merkyl')
     nginx = SystemdService.declare(unit_name='nginx')
     rabbitmq_server = SystemdService.declare(unit_name='rabbitmq-server')
     rh_postgresql95_repmgr = SystemdService.declare(unit_name='rh-postgresql95-repmgr')
@@ -1333,42 +1332,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             raise ApplianceException(msg)
 
         return result.rc, result.output
-
-    @logger_wrap("Deploying Merkyl: {}")
-    def deploy_merkyl(self, start=False, log_callback=None):
-        """Deploys the Merkyl log relay service to the appliance"""
-
-        with self.ssh_client as client:
-
-            client.run_command('mkdir -p /root/merkyl')
-            for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
-                             'allowed.files']:
-                try:
-                    src, dest = filename
-                except (TypeError, ValueError):
-                    # object is not iterable or too many values to unpack
-                    src = dest = filename
-                log_callback('Sending {} to appliance'.format(src))
-                client.put_file(data_path.join(
-                    'bundles', 'merkyl', src).strpath, os.path.join('/root/merkyl', dest))
-
-            client.put_file(data_path.join(
-                'bundles', 'merkyl', 'merkyl').strpath, os.path.join('/etc/init.d/merkyl'))
-            client.run_command('chmod 775 /etc/init.d/merkyl')
-            client.run_command(
-                '/bin/bash -c '
-                '\'if ! [[ $(iptables -L -n | grep "state NEW tcp dpt:8192") ]]; '
-                'then '
-                'iptables -I INPUT 6 -m state --state NEW -m tcp -p tcp --dport 8192 -j ACCEPT; '
-                'fi\'')
-
-        self.merkyl.daemon_reload()
-
-        if start:
-            log_callback("Starting ...")
-            self.merkyl.restart()
-            log_callback("Setting it to start after reboot")
-            self.merkyl.enable()
 
     def get_repofile_list(self):
         """Returns list of repofiles present at the appliance.

@@ -149,11 +149,6 @@ def pytest_configure(config):
     config._art_client = art_client
 
 
-@pytest.fixture(scope='session')
-def merkyl_setup(request, appliance):
-    fire_art_hook(request.config, 'setup_merkyl', ip=appliance.hostname)
-
-
 def fire_art_hook(config, hook, **hook_args):
     client = getattr(config, '_art_client', None)
     if client is None:
