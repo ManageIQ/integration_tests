@@ -163,7 +163,7 @@ class ApplianceConsole(AppliancePlugin):
                 db_name='', db_username='', db_password=pwd)
             interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
             interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ',
-                               self.appl.hostname)
+                               self.appliance.hostname)
             interaction.answer(resc('Configure Replication Manager (repmgrd) for automatic '
                                     r'failover? (Y/N): '), 'y')
             interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
