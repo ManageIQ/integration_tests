@@ -1,12 +1,10 @@
 import base64
 from urllib.error import URLError
 
-import pytest
 from py.error import ENOENT
 
 import cfme.utils.browser
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
-from cfme.utils import browser as browser_module
 from cfme.utils import safe_string
 from cfme.utils.appliance import find_appliance
 from cfme.utils.browser import take_screenshot

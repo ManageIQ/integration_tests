@@ -2900,7 +2900,7 @@ class ApplianceStack(LocalStack):
 
         current = self.top
         logger.info(f"Popped appliance {was_before.hostname if was_before else 'empty'} from the "
-                    f"stack (now there is current.hostname if current else 'empty')")
+                    f"stack (now there is {current.hostname if current else 'empty'})")
 
         if was_before and was_before.browser_steal:
             from cfme.utils import browser
