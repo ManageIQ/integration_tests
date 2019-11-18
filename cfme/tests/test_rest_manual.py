@@ -3,6 +3,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance.implementations.rest import ViaREST
+from cfme.utils.appliance.implementations.ui import ViaUI
 
 
 @pytest.mark.manual
@@ -71,8 +73,8 @@ def test_notification_url_parallel_requests():
 @pytest.mark.manual
 @pytest.mark.meta(coverage=[1761836])
 @pytest.mark.tier(3)
-@pytest.mark.parametrize("implementation", ["UI", "Rest"])
-def test_widget_generate_content_via_rest(implementation):
+@pytest.mark.parametrize("context", [ViaUI, ViaREST])
+def test_widget_generate_content_via_rest(context):
     """
     Bugzilla:
        1761836
