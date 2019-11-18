@@ -229,7 +229,7 @@ class ConversionHost(BaseEntity):
                      func_args=[self.hostname],
                      fail_condition=True)
         except TimedOutError:
-            self.logger.warning("Timed out waiting for {} to configure".format(self.hostname))
+            self.logger.warning("Timed out waiting for %s to configure", self.hostname)
         return view.tabs.conversion_hosts.conv_host_progress.is_host_configured(self.hostname)
 
     def remove_conversion_host(self):
@@ -241,7 +241,7 @@ class ConversionHost(BaseEntity):
                      func_args=[self.hostname],
                      fail_condition=True)
         except TimedOutError:
-            self.logger.warning("Timed out waiting for {} to be removed".format(self.hostname))
+            self.logger.warning("Timed out waiting for %s to be removed", self.hostname)
         return view.tabs.conversion_hosts.conv_host_progress.in_progress(self.hostname)
 
 
