@@ -552,10 +552,10 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     fetch_v2key(appl3, appl1)
     restore_db(appl1)
 
-    appl1.reconfigure_primary_replication_node(pwd)
-    appl2.reconfigure_standby_replication_node(pwd, appl1.hostname)
+    appl1.appliance_console.reconfigure_primary_replication_node(pwd)
+    appl2.appliance_console.reconfigure_standby_replication_node(pwd, appl1.hostname)
 
-    appl3.configure_automatic_failover(primary_ip=appl1.hostname)
+    appl3.appliance_console.configure_automatic_failover(primary_ip=appl1.hostname)
     appl3.evm_failover_monitor.restart()
 
     appl3.evmserverd.start()
