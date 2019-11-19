@@ -4780,6 +4780,9 @@ class MigrationPlansList(Widget):
     ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR = (
         './/button[contains(@class,"btn btn-primary")' ' and text()="Archive"]'
     )
+    ITEM_EDIT_BUTTON_LOCATOR = (
+        './/div[contains(@class,"dropdown-kebab-pf")]/ul/li/a[normalize-space(.)="Edit plan"]'
+    )
     ITEM_DELETE_BUTTON_LOCATOR = (
         './/div[contains(@class,"dropdown-kebab-pf")]/ul/li/a[normalize-space(.)="Delete plan"]'
     )
@@ -4797,6 +4800,9 @@ class MigrationPlansList(Widget):
     ITEM_MODAL_MINUTE_INCREMENT_LOCATOR = (
         './/*[@id="dateTimePicker"]/div/div/div[2]/div[1]' "/table/tbody/tr[1]/td[3]"
     )
+    MODAL_ALERT = './/div[contains(@class, "alert--")]'
+    INFRA_MAP_LOCATOR = './/button[@data-id="infrastructure_mapping"]'
+    SECOND_INFRA_MAP = './/li[contains(@data-original-index, "2")]'
 
     def __init__(self, parent, list_class, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -4878,6 +4884,30 @@ class MigrationPlansList(Widget):
             return self.browser.is_displayed(
                 self.browser.element(self.ITEM_IS_SUCCESSFUL_LOCATOR, parent=el)
             )
+        except NoSuchElementException:
+            return False
+
+    def edit_plan(self, plan_name, cancel=False):
+        """Edit the plan by its name"""
+        try:
+            el = self._get_plan_element(plan_name)
+            self.browser.click(self.ITEM_KEBAB_DROPDOWN_LOCATOR, parent=el)
+            self.root_browser.click(self.ITEM_EDIT_BUTTON_LOCATOR)
+            self.root_browser.click(self.INFRA_MAP_LOCATOR)
+            self.root_browser.click(self.SECOND_INFRA_MAP)
+            if not cancel:
+                if "Completed" not in self.ROOT.locator:
+                    pass
+                    # save logic
+                else:
+                    # TODO(mnadeem): Write save edit plan part after widget refactor
+                    self.root_browser.click(self.ITEM_MODAL_CANCEL_BUTTON_LOCATOR)
+            else:
+                alert_msg = self.root_browser.text(self.MODAL_ALERT)
+                self.root_browser.click(self.ITEM_MODAL_CANCEL_BUTTON_LOCATOR)
+                return alert_msg
+            if plan_name not in self.all_items:
+                return True
         except NoSuchElementException:
             return False
 

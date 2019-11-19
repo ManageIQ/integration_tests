@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import partial_match
+from widgetastic_manageiq import MigrationPlansList
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -41,6 +42,7 @@ pytestmark = [
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1645629])
 def test_v2v_infra_map_data(request, appliance, source_provider, provider, soft_assert):
     """
     Test to validate infra map data
@@ -510,6 +512,51 @@ def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider, requ
     view.general.description.fill("description")
     assert view.general.alert.read() == "Name {name} already exists".format(name=name)
     view.cancel_btn.click()
+
+
+@pytest.mark.tier(2)
+def test_plan_update_warning(
+        appliance, mapping_data_vm_obj_mini, source_provider, provider, request):
+    """
+    Test Updating Migration plan with new mapping
+
+    Polarion:
+        assignee: mnadeem
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caseposneg: negative
+        testtype: functional
+        startsin: 5.10
+        casecomponent: V2V
+        testSteps:
+            1. Edit the migration plans with new mapping
+        expectedResults:
+            1. Plan will shows Warning message before moving ahead.
+    """
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    name = fauxfactory.gen_alphanumeric(start="plan_")
+    migration_plan = migration_plan_collection.create(
+        name=name,
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
+        infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
+        target_provider=provider,
+        vm_list=mapping_data_vm_obj_mini.vm_list,
+        start_migration=False
+    )
+
+    map_data = infra_mapping_default_data(source_provider, provider)
+    map_collection = appliance.collections.v2v_infra_mappings
+    mapping = map_collection.create(**map_data)
+
+    @request.addfinalizer
+    def _cleanup():
+        migration_plan.delete_not_started_plan()
+        map_collection.delete(mapping)
+
+    view = navigate_to(migration_plan_collection, "NotStarted")
+    not_started_view = MigrationPlansList(view, "plans-not-started-list")
+    warning_msg = not_started_view.edit_plan(plan_name=migration_plan.plan, cancel=True)
+    assert "selections to be cleared" in warning_msg
 
 
 @pytest.mark.tier(2)
