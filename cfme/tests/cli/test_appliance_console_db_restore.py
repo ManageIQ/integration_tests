@@ -7,14 +7,11 @@ from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.fixtures.cli import configure_appliances_ha
-from cfme.fixtures.cli import configure_automatic_failover
 from cfme.fixtures.cli import provider_app_crud
-from cfme.fixtures.cli import reconfigure_primary_replication_node
-from cfme.fixtures.cli import reconfigure_standby_replication_node
 from cfme.fixtures.cli import replicated_appliances_with_providers
-from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.appliance.console import configure_appliances_ha
+from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
 from cfme.utils.conf import cfme_data
@@ -46,17 +43,6 @@ def provision_vm(request, provider):
         logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
     return vm
-
-
-def add_providers(appliances):
-    appl1, appl2, appl3 = appliances
-
-    # Add infra/cloud providers and create db backup
-    provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(EC2Provider, appl3).setup()
-    appl1.db.backup()
-
-    return appliances
 
 
 @pytest.fixture
@@ -549,8 +535,13 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
         initialEstimate: 1/4h
     """
     pwd = app_creds["password"]
-    appl1, appl2, appl3 = add_providers(
-        configure_appliances_ha(unconfigured_appliances, pwd))
+    appl1, appl2, appl3 = configure_appliances_ha(unconfigured_appliances, pwd)
+
+    # Add infra/cloud providers and create db backup
+    provider_app_crud(VMwareProvider, appl3).setup()
+    provider_app_crud(EC2Provider, appl3).setup()
+    appl1.db.backup()
+
     providers_before_restore = set(appl3.managed_provider_names)
     # Restore DB on the second appliance
     appl3.evmserverd.stop()
@@ -561,10 +552,10 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     fetch_v2key(appl3, appl1)
     restore_db(appl1)
 
-    reconfigure_primary_replication_node(appl1, pwd)
-    reconfigure_standby_replication_node(appl2, pwd, appl1.hostname)
+    appl1.appliance_console.reconfigure_primary_replication_node(pwd)
+    appl2.appliance_console.reconfigure_standby_replication_node(pwd, appl1.hostname)
 
-    configure_automatic_failover(appl3, primary_ip=appl1.hostname)
+    appl3.appliance_console.configure_automatic_failover(primary_ip=appl1.hostname)
     appl3.evm_failover_monitor.restart()
 
     appl3.evmserverd.start()

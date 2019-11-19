@@ -3,7 +3,6 @@ import logging
 import os
 import re
 import socket
-import tempfile
 import traceback
 import warnings
 from copy import copy
@@ -15,11 +14,9 @@ from urllib.parse import urlparse
 import attr
 import dateutil.parser
 import fauxfactory
-import lxml.etree
 import pytz
 import requests
 import sentaku
-import yaml
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException
@@ -36,13 +33,13 @@ from cfme.utils import clear_property_cache
 from cfme.utils import conf
 from cfme.utils import ports
 from cfme.utils import ssh
+from cfme.utils.appliance import console
 from cfme.utils.appliance.db import ApplianceDB
 from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ssui import ViaSSUI
 from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.appliance.services import SystemdException
 from cfme.utils.appliance.services import SystemdService
-from cfme.utils.conf import hidden
 from cfme.utils.log import create_sublogger
 from cfme.utils.log import logger
 from cfme.utils.log import logger_wrap
@@ -103,186 +100,6 @@ class ApplianceException(Exception):
     pass
 
 
-class ApplianceConsole(object):
-    """ApplianceConsole is used for navigating and running appliance_console commands against an
-    appliance."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def timezone_check(self, timezone):
-        channel = self.appliance.ssh_client.invoke_shell()
-        channel.settimeout(20)
-        channel.send("ap")
-        result = ''
-        try:
-            while True:
-                result += str(channel.recv(1))
-                if ("{}".format(timezone[0])) in result:
-                    break
-        except socket.timeout:
-            pass
-        logger.debug(result)
-
-    def run_commands(self, commands, autoreturn=True, timeout=10, channel=None):
-        if not channel:
-            channel = self.appliance.ssh_client.invoke_shell()
-        self.commands = commands
-        for command in commands:
-            if isinstance(command, str):
-                cmd, timeout = command, timeout
-            else:
-                cmd, timeout = command
-            channel.settimeout(timeout)
-            cmd = "{}\n".format(cmd) if autoreturn else "{}".format(cmd)
-            channel.send(cmd)
-            result = ''
-            try:
-                while True:
-                    result += str(channel.recv(1))
-                    if 'Press any key to continue' in result:
-                        break
-            except socket.timeout:
-                pass
-            logger.debug(result)
-
-    def scap_harden_appliance(self):
-        """Commands:
-        1. 'ap' launches appliance_console,
-        2. '' clears info screen,
-        3. '14' Hardens appliance using SCAP configuration,
-        4. '' complete."""
-        command_set = ('ap', '', '13', '')
-        self.appliance.appliance_console.run_commands(command_set)
-
-    def scap_check_rules(self):
-        """Check that rules have been applied correctly."""
-        rules_failures = []
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(hidden['scap.rb'])
-            f.flush()
-            os.fsync(f.fileno())
-            self.appliance.ssh_client.put_file(
-                f.name, '/tmp/scap.rb')
-        if self.appliance.version >= "5.8":
-            rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
-        else:
-            rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
-        self.appliance.ssh_client.run_command(
-            'cd /tmp/ && ruby scap.rb --rulesfile={rules}'.format(rules=rules))
-        self.appliance.ssh_client.get_file(
-            '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
-        self.appliance.ssh_client.get_file(
-            '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')  # Get the scap rules
-
-        with open('/tmp/scap_rules.yml') as f:
-            yml = yaml.safe_load(f.read())
-            rules = yml['rules']
-
-        tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
-        root = tree.getroot()
-        for rule in rules:
-            elements = root.findall(
-                './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
-            if elements:
-                result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
-                if result:
-                    if result[0].text != 'pass':
-                        rules_failures.append(rule)
-                    logger.info("{}: {}".format(rule, result[0].text))
-                else:
-                    logger.info("{}: no result".format(rule))
-            else:
-                logger.info("{}: rule not found".format(rule))
-        return rules_failures
-
-
-class ApplianceConsoleCli(object):
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def _run(self, appliance_console_cli_command, timeout=35):
-        result = self.appliance.ssh_client.run_command(
-            "appliance_console_cli {}".format(appliance_console_cli_command),
-            timeout)
-        return result
-
-    def set_hostname(self, hostname):
-        return self._run("--host {host}".format(host=hostname), timeout=60)
-
-    def configure_appliance_external_join(self, dbhostname,
-            username, password, dbname, fetch_key, sshlogin, sshpass):
-        self._run("--hostname {dbhostname} --username {username} --password {password}"
-            " --dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
-            " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
-                password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass), timeout=300)
-
-    def configure_appliance_external_create(self, region, dbhostname,
-            username, password, dbname, fetch_key, sshlogin, sshpass):
-        self._run("--region {region} --hostname {dbhostname} --username {username}"
-            " --password {password} --dbname {dbname} --verbose --fetch-key {fetch_key}"
-            " --sshlogin {sshlogin} --sshpassword {sshpass}".format(
-                region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass),
-            timeout=300)
-
-    def configure_appliance_internal(self, region, dbhostname, username, password, dbname, dbdisk):
-        self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
-            " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk}".format(
-                region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, dbdisk=dbdisk), timeout=5 * 60)
-
-    def configure_appliance_internal_fetch_key(self, region, dbhostname,
-            username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass):
-        self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
-            " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk} --fetch-key"
-            " {fetch_key} --sshlogin {sshlogin} --sshpassword {sshpass}".format(
-                region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass), timeout=600)
-
-    def configure_appliance_dedicated_db(self, username, password, dbname, dbdisk):
-        self._run("--internal --username {username} --password {password}"
-            " --dbname {dbname} --verbose --dbdisk {dbdisk} --key --standalone".format(
-                username=username, password=password, dbname=dbname, dbdisk=dbdisk), timeout=300)
-
-    def configure_ipa(self, ipaserver, ipaprincipal, ipapassword, ipadomain=None, iparealm=None):
-        cmd_result = self._run(
-            '--ipaserver {s} --ipaprincipal {u} --ipapassword {p} {d} {r}'
-            .format(s=ipaserver, u=ipaprincipal, p=ipapassword,
-                    d='--ipadomain {}'.format(ipadomain) if ipadomain else '',
-                    r='--iparealm {}'.format(iparealm) if iparealm else ''), timeout=90)
-        logger.debug('IPA configuration output: %s', str(cmd_result))
-        assert cmd_result.success
-        assert 'ipa-client-install exit code: 1' not in cmd_result.output
-        self.appliance.sssd.wait_for_running()
-        assert self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf "
-                                                     "| grep 'enable_ra = True'")
-
-    def configure_appliance_dedicated_ha_primary(
-            self, username, password, reptype, primhost, node, dbname):
-        self._run("--username {username} --password {password} --replication {reptype}"
-            " --primary-host {primhost} --cluster-node-number {node} --auto-failover --verbose"
-            " --dbname {dbname}".format(
-                username=username, password=password, reptype=reptype, primhost=primhost, node=node,
-                dbname=dbname))
-
-    def configure_appliance_dedicated_ha_standby(
-            self, username, password, reptype, primhost, standhost, node, dbname, dbdisk):
-        self._run("--internal --username {username} --password {password} --replication {reptype}"
-            " --primary-host {primhost} --standby-host {standhost} --cluster-node-number {node}"
-            " --auto-failover --dbname {dbname} --verbose --dbdisk {dbdisk}"
-            " --standalone".format(username=username, password=password, reptype=reptype,
-                primhost=primhost, standhost=standhost, node=node, dbname=dbname, dbdisk=dbdisk),
-                  timeout=300)
-
-    def uninstall_ipa_client(self):
-        assert self._run("--uninstall-ipa", timeout=90)
-        assert not self.appliance.ssh_client.run_command("cat /etc/ipa/default.conf")
-
-
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -320,6 +137,8 @@ class IPAppliance(object):
     supervisord = SystemdService.declare(unit_name='supervisord')
     firewalld = SystemdService.declare(unit_name='firewalld')
     db = ApplianceDB.declare()
+    appliance_console = console.ApplianceConsole.declare()
+    appliance_console_cli = console.ApplianceConsoleCli.declare()
 
     CONFIG_MAPPING = {
         'hostname': 'hostname',
@@ -401,8 +220,6 @@ class IPAppliance(object):
         self.openshift_creds = openshift_creds or {}
         self.is_dev = is_dev
         self._user = None
-        self.appliance_console = ApplianceConsole(self)
-        self.appliance_console_cli = ApplianceConsoleCli(self)
 
         if self.openshift_creds:
             self.is_pod = True
