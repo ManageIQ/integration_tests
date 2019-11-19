@@ -327,7 +327,6 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
     selector=ONE_PER_VERSION,
     required_flags=["v2v"],
     scope="module",
-    override=True,
 )
 @pytest.mark.provider(
     classes=[VMwareProvider],
@@ -335,7 +334,6 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
     fixture_name="source_provider",
     required_flags=["v2v"],
     scope="module",
-    override=True
 )
 def test_v2v_rbac(appliance, new_credential):
     """
@@ -573,7 +571,7 @@ def test_migration_with_no_conversion(appliance, delete_conversion_hosts, source
 
 
 @pytest.mark.provider([OpenStackProvider], selector=ONE_PER_VERSION,
-                      required_flags=["v2v"], override=True, scope='module')
+                      required_flags=["v2v"], scope='module')
 @pytest.mark.parametrize("attribute", ["flavor", "security_group"])
 @pytest.mark.parametrize(
     "source_type, dest_type, template_type", [["nfs", "nfs", Templates.RHEL7_MINIMAL]])

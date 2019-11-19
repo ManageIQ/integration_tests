@@ -182,7 +182,6 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
     gen_func=providers,
     filters=[ProviderFilter([BaseProvider]),
              ProviderFilter([RHEVMProvider, AzureProvider], inverted=True)],
-    override=True,
 )
 def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance, provider):
     """

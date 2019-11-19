@@ -103,8 +103,7 @@ def test_provision_from_template(provider, provisioned_instance):
     assert provisioned_instance.exists_on_provider, "Instance wasn't provisioned successfully"
 
 
-@pytest.mark.provider([GCEProvider], required_fields=[['provisioning', 'image']],
-                      override=True)
+@pytest.mark.provider([GCEProvider], required_fields=[['provisioning', 'image']])
 @pytest.mark.usefixtures('setup_provider')
 def test_gce_preemptible_provision(appliance, provider, instance_args, soft_assert):
     """
@@ -365,8 +364,7 @@ def copy_domains(original_request_class, domain):
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[BZ(1713632)])
 @pytest.mark.parametrize("disks", [1, 2])
-@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
-                      override=True)
+@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']])
 def test_cloud_provision_from_template_with_attached_disks(
         appliance, request, instance_args, provider, disks, soft_assert, domain,
         modified_request_class, copy_domains, provisioning):
@@ -472,8 +470,7 @@ def test_cloud_provision_from_template_with_attached_disks(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[BZ(1746931)])
-@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
-                      override=True)
+@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']])
 def test_provision_with_boot_volume(request, instance_args, provider, soft_assert,
                                     modified_request_class, appliance, copy_domains):
     """ Tests provisioning from a template and attaching one booting volume.
@@ -543,8 +540,7 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[BZ(1746931)])
-@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']],
-                      override=True)
+@pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']])
 def test_provision_with_additional_volume(request, instance_args, provider, small_template,
                                           soft_assert, modified_request_class, appliance,
                                           copy_domains):
