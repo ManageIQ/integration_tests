@@ -2875,15 +2875,11 @@ def provision_appliance(
 
 class ApplianceStack(LocalStack):
     def __init__(self):
-        self._registered_hooks = {'on_push': [], 'on_pop': []}
+        self._registered_hooks = {'on push': [], 'on pop': []}
         super(ApplianceStack, self).__init__()
 
     def push(self, obj):
         was_before = self.top
-        for hook in self._registered_hooks['on_push']:
-            logger.info(f"appliance hook {hook.__name__} triggered on push")
-            hook(obj)
-
         super(ApplianceStack, self).push(obj)
 
         logger.info(f"Pushed appliance {obj.hostname} on stack "
@@ -2892,10 +2888,14 @@ class ApplianceStack(LocalStack):
             from cfme.utils import browser
             browser.start()
 
+        for hook in self._registered_hooks['on push']:
+            logger.info(f"appliance hook {hook.__name__} triggered on push")
+            hook(obj)
+
     def pop(self):
         was_before = super(ApplianceStack, self).pop()
         if was_before:
-            for hook in self._registered_hooks['on_pop']:
+            for hook in self._registered_hooks['on pop']:
                 logger.info(f"appliance hook {hook.__name__} triggered on pop")
                 hook(was_before)
 
@@ -2910,7 +2910,7 @@ class ApplianceStack(LocalStack):
 
     def register_hook(self, hook, func):
         if hook in self._registered_hooks:
-            logger.info(f"registering appliance hook {func.__name__} triggered on {hook}")
+            logger.debug(f"registering appliance method {func.__name__} on hook {hook}")
             self._registered_hooks.get(hook).append(func)
         else:
             msg = f" there is no hook called {hook}"
