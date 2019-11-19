@@ -3,10 +3,12 @@ import json
 import attr
 import importscan
 import sentaku
+from cached_property import cached_property
 
 from cfme.exceptions import RestLookupError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.modeling.base import parent_of_type
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -257,13 +259,16 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
         from cfme.configure.configuration.diagnostics_settings import ZoneCollectLog
         return ZoneCollectLog(self.appliance)
 
-    @property
+    @cached_property
     def region(self):
-        zone_res = self.appliance.rest_api.collections.zones.find_by(name=self.name)
-        zone, = zone_res
-        zone.reload(attributes=['region_number'])
-        region_obj = self.appliance.collections.regions.instantiate(number=zone.region_number)
-        return region_obj
+        possible_parent = parent_of_type(self, Region)
+        if possible_parent:
+            return possible_parent
+        else:
+            zone_res = self.appliance.rest_api.collections.zones.find_by(id=self.id)
+            zone, = zone_res
+            zone.reload(attributes=['region_number'])
+            return self.appliance.collections.regions.instantiate(number=zone.region_number)
 
     @property
     def _api_settings_url(self):

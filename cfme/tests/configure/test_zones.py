@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.base.ui import ZoneAddView
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -9,26 +10,27 @@ from cfme.utils.update import update
 
 pytestmark = [test_requirements.configuration]
 
+NAME_LEN = 5
+DESC_LEN = 8
 
-@pytest.mark.tier(1)
-@pytest.mark.sauce
-def test_zone_crud(appliance):
-    """
-    Bugzilla:
-        1216224
 
-    Polarion:
-        assignee: tpapaioa
-        caseimportance: low
-        initialEstimate: 1/15h
-        casecomponent: WebUI
-    """
+# Finalizer method that clicks Cancel for tests that expect zone
+# creation to fail. This avoids logging of UnexpectedAlertPresentException
+# for the 'Abandon changes?' alert when the next test tries to navigate
+# elsewhere in the UI.
+def cancel_zone_add(appliance):
+    view = appliance.browser.create_view(ZoneAddView)
+    if view.is_displayed:
+        view.cancel_button.click()
+
+
+def create_zone(appliance, name_len=NAME_LEN, desc_len=DESC_LEN):
     zc = appliance.collections.zones
     region = appliance.server.zone.region
 
     # CREATE
-    name = fauxfactory.gen_alphanumeric(5)
-    description = fauxfactory.gen_alphanumeric(8)
+    name = fauxfactory.gen_alphanumeric(name_len)
+    description = fauxfactory.gen_alphanumeric(desc_len)
     zc.create(name=name, description=description)
 
     # query to get the newly-created zone's id
@@ -44,20 +46,37 @@ def test_zone_crud(appliance):
             f'Zone matching name ({name}) and \
             description ({description}) not found in the collection')
 
-    assert new_zone.exists, f'Zone {description} could not be created.'
+    return new_zone
+
+
+@pytest.mark.tier(1)
+@pytest.mark.sauce
+def test_zone_crud(appliance):
+    """
+    Bugzilla:
+        1216224
+
+    Polarion:
+        assignee: tpapaioa
+        caseimportance: low
+        initialEstimate: 1/15h
+        casecomponent: WebUI
+    """
+    zone = create_zone(appliance)
+    assert zone.exists, 'Zone could not be created.'
 
     # UPDATE
-    with update(new_zone):
-        new_zone.description = f'{description}_updated'
+    with update(zone):
+        zone.description = f'{zone.description}_updated'
 
     try:
-        navigate_to(new_zone, 'Zone')
+        navigate_to(zone, 'Zone')
     except ItemNotFound:
-        pytest.fail(f'Zone {new_zone.description} could not be updated.')
+        pytest.fail(f'Zone {zone.description} could not be updated.')
 
     # DELETE
-    new_zone.delete()
-    assert (not new_zone.exists), f'Zone {new_zone.description} could not be deleted.'
+    zone.delete()
+    assert (not zone.exists), f'Zone {zone.description} could not be deleted.'
 
 
 @pytest.mark.tier(3)
@@ -70,11 +89,9 @@ def test_zone_add_cancel_validation(appliance):
         caseimportance: low
         initialEstimate: 1/20h
     """
-    zc = appliance.collections.zones
-    # CREATE
-    zc.create(
-        name=fauxfactory.gen_alphanumeric(5),
-        description=fauxfactory.gen_alphanumeric(8),
+    appliance.collections.zones.create(
+        name=fauxfactory.gen_alphanumeric(NAME_LEN),
+        description=fauxfactory.gen_alphanumeric(DESC_LEN),
         cancel=True
     )
 
@@ -92,24 +109,20 @@ def test_zone_change_appliance_zone(request, appliance):
         caseimportance: low
         initialEstimate: 1/15h
     """
-    zc = appliance.collections.zones
-    # CREATE
-    zone = zc.create(
-        name=fauxfactory.gen_alphanumeric(5),
-        description=fauxfactory.gen_alphanumeric(8)
-    )
+    zone = create_zone(appliance)
     request.addfinalizer(zone.delete)
 
     server_settings = appliance.server.settings
     request.addfinalizer(lambda: server_settings.update_basic_information(
-        {'appliance_zone': "default"}))
+        {'appliance_zone': 'default'}))
+
     server_settings.update_basic_information({'appliance_zone': zone.name})
     assert (zone.description == appliance.server.zone.description)
 
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_zone_add_dupe(appliance, request):
+def test_zone_add_dupe(request, appliance):
     """
     Polarion:
         assignee: tpapaioa
@@ -117,21 +130,18 @@ def test_zone_add_dupe(appliance, request):
         caseimportance: low
         initialEstimate: 1/4h
     """
-    zc = appliance.collections.zones
-    name = fauxfactory.gen_alphanumeric(5)
-    description = fauxfactory.gen_alphanumeric(8)
-    zone = zc.create(
-        name=name,
-        description=description)
+    zone = create_zone(appliance)
     request.addfinalizer(zone.delete)
 
+    request.addfinalizer(lambda: cancel_zone_add(appliance))
     with pytest.raises(
         Exception,
         match=f'Name is not unique within region {appliance.server.zone.region.number}'
     ):
-        zc.create(
-            name=name,
-            description=description)
+        appliance.collections.zones.create(
+            name=zone.name,
+            description=zone.description
+        )
 
 
 @pytest.mark.tier(3)
@@ -144,18 +154,14 @@ def test_zone_add_maxlength(request, appliance):
         caseimportance: low
         initialEstimate: 1/4h
     """
-    zc = appliance.collections.zones
-    zone = zc.create(
-        name=fauxfactory.gen_alphanumeric(50),
-        description=fauxfactory.gen_alphanumeric(50)
-    )
+    zone = create_zone(appliance, name_len=50, desc_len=50)
     request.addfinalizer(zone.delete)
-    assert zone.exists, f'The zone {zone.description} does not exist.'
+    assert zone.exists, f'Zone does not exist.'
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-def test_zone_add_blank_name(appliance):
+def test_zone_add_blank_name(request, appliance):
     """
     Polarion:
         assignee: tpapaioa
@@ -164,17 +170,17 @@ def test_zone_add_blank_name(appliance):
         caseposneg: negative
         initialEstimate: 1/8h
     """
-    zc = appliance.collections.zones
+    request.addfinalizer(lambda: cancel_zone_add(appliance))
     with pytest.raises(Exception, match="Name can't be blank"):
-        zc.create(
+        appliance.collections.zones.create(
             name='',
-            description=fauxfactory.gen_alphanumeric(8)
+            description=fauxfactory.gen_alphanumeric(DESC_LEN)
         )
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-def test_zone_add_blank_description(appliance):
+def test_zone_add_blank_description(request, appliance):
     """
     Polarion:
         assignee: tpapaioa
@@ -183,10 +189,10 @@ def test_zone_add_blank_description(appliance):
         caseposneg: negative
         initialEstimate: 1/8h
     """
-    zc = appliance.collections.zones
+    request.addfinalizer(lambda: cancel_zone_add(appliance))
     with pytest.raises(Exception, match=r"(Description can't be blank|Description is required)"):
-        zc.create(
-            name=fauxfactory.gen_alphanumeric(5),
+        appliance.collections.zones.create(
+            name=fauxfactory.gen_alphanumeric(NAME_LEN),
             description=''
         )
 
@@ -202,22 +208,22 @@ def test_add_zone_windows_domain_credentials(request, appliance):
         initialEstimate: 1/4h
         casecomponent: WebUI
     """
-    zc = appliance.collections.zones.all()
+    zone = appliance.collections.zones.all()[0]
     values = {'username': 'userid',
               'password': 'password',
               'verify': 'password'}
-    zc[0].update(values)
+    zone.update(values)
 
     def _cleanup():
-        remove_values = {'username': '',
-                         'password': '',
-                         'verify': ''}
-        zc[0].update(remove_values)
+        values = {'username': '',
+                  'password': '',
+                  'verify': ''}
+        zone.update(values)
 
     request.addfinalizer(_cleanup)
-    view = navigate_to(zc[0], 'Edit')
-    zc_username = view.username.read()
-    assert zc_username == values['username'], f'Current username is {zc_username}'
+    view = navigate_to(zone, 'Edit')
+    username = view.username.read()
+    assert username == values['username'], f'Current username is {username}'
 
 
 @pytest.mark.tier(3)
@@ -231,19 +237,21 @@ def test_remove_zone_windows_domain_credentials(appliance):
         initialEstimate: 1/4h
         casecomponent: WebUI
     """
-    zc = appliance.collections.zones.all()
+    zone = appliance.collections.zones.all()[0]
     values = {'username': 'userid',
               'password': 'password',
               'verify': 'password'}
-    zc[0].update(values)
-    view = navigate_to(zc[0], 'Edit')
-    zc_username = view.username.read()
-    assert zc_username == values['username'], "Username wasn't updated"
+    zone.update(values)
 
-    remove_values = {'username': '',
-                     'password': '',
-                     'verify': ''}
-    zc[0].update(remove_values)
-    view = navigate_to(zc[0], 'Edit')
-    removed_zc_username = view.username.read()
-    assert removed_zc_username == remove_values['username'], "Username wasn't removed"
+    view = navigate_to(zone, 'Edit')
+    username = view.username.read()
+    assert username == values['username'], "Username wasn't updated"
+
+    values = {'username': '',
+              'password': '',
+              'verify': ''}
+    zone.update(values)
+
+    view = navigate_to(zone, 'Edit')
+    username = view.username.read()
+    assert username == values['username'], "Username wasn't removed"
