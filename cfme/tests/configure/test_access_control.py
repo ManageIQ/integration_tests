@@ -1623,12 +1623,11 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
     assert view.flash.read() == [msg]
 
 
-@pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
-def test_tenantadmin_user_crud():
+def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
     """
-    As a Tenant Admin I want to be able to create users in my tenant
+    As a Tenant Admin, I want to be able to create users in my tenant.
     Polarion:
         assignee: nachandr
         casecomponent: Configuration
@@ -1650,7 +1649,19 @@ def test_tenantadmin_user_crud():
             must be created by superadministrator. In 5.5.0.13 after giving additional permissions
             to tenant_admin,able to create new roles
     """
-    pass
+    with new_tenant_admin:
+        navigate_to(appliance.server, 'LoggedIn')
+        assert appliance.server.current_full_name() == new_tenant_admin.name
+
+        user = new_user(appliance, new_tenant_admin.groups[0])
+        request.addfinalizer(user.delete_if_exists)
+        assert user.exists
+
+        with update(user):
+            user.name = f"{user.name}_edited"
+
+        user.delete()
+        assert not user.exists
 
 
 @pytest.mark.manual
