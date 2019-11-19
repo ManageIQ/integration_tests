@@ -56,7 +56,6 @@ pytest_plugins = [
     "cfme.fixtures.has_persistent_volume",
     "cfme.fixtures.log",
     "cfme.fixtures.maximized",
-    "cfme.fixtures.merkyl",
     "cfme.fixtures.model_collections",
     "cfme.fixtures.multi_region",
     "cfme.fixtures.nelson",

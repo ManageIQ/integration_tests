@@ -6,7 +6,6 @@ from artifactor import Artifactor
 from artifactor import initialize
 from artifactor.plugins import filedump
 from artifactor.plugins import logger
-from artifactor.plugins import merkyl
 from artifactor.plugins import ostriz
 from artifactor.plugins import post_result
 from artifactor.plugins import reporter
@@ -29,7 +28,6 @@ def run(port, run_id=None):
         art_config["artifact_dir"] = log_path.join("artifacts").strpath
     art.set_config(art_config)
 
-    art.register_plugin(merkyl.Merkyl, "merkyl")
     art.register_plugin(logger.Logger, "logger")
     art.register_plugin(video.Video, "video")
     art.register_plugin(filedump.Filedump, "filedump")
@@ -39,7 +37,6 @@ def run(port, run_id=None):
 
     initialize(art)
 
-    art.configure_plugin("merkyl")
     art.configure_plugin("logger")
     art.configure_plugin("video")
     art.configure_plugin("filedump")
