@@ -2,6 +2,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance.implementations.rest import ViaREST
+from cfme.utils.appliance.implementations.ui import ViaUI
 
 
 @pytest.mark.manual
@@ -22,34 +24,6 @@ def test_create_rhev_provider_with_metric():
 
     Bugzilla:
         1656502
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rest
-def test_automation_request_task():
-    """
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        testSteps:
-            1. Create an automation request.
-            2. Edit the automation request task:
-                POST /api/automation_requests/:id/request_tasks/:request_task_id
-                {
-                "action" : "edit",
-                "resource" : {
-                    "options" : {
-                    "request_param_a" : "value_a",
-                    "request_param_b" : "value_b"
-                    }
-                }
-        expectedResults:
-            1.
-            2. Task must be edited successfully.
     """
     pass
 
@@ -91,5 +65,150 @@ def test_notification_url_parallel_requests():
 
     Bugzilla:
         1700378
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1761836])
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("context", [ViaUI, ViaREST])
+def test_widget_generate_content_via_rest(context):
+    """
+    Bugzilla:
+       1761836
+       1623607
+       1753682
+
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        testSteps:
+            1. Depending on the implementation -
+                i. GET /api/widgtes/:id and note the `last_generated_content_on`.
+                ii. Navigate to Dashboard and note the `last_generated_content_on` for the widget.
+            2. POST /api/widgets/:id
+                {
+                    "action": "generate_content"
+                }
+            3. Wait until the task completes.
+            4. Depending on the implementation
+                i. GET /api/widgets/:id and compare the value of `last_generated_content_on`
+                    with the value noted in step 1.
+                ii.  Navigate to the dashboard and check if the value was updated for the widget.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Both values must be different, value must be updated.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1730813])
+@pytest.mark.tier(2)
+def test_service_refresh_dialog_fields_default_values():
+    """
+    Bugzilla:
+        1730813
+
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Import dialog `RTP Testgear Client Provision` from the BZ attachments and create
+                a service_template and service catalog to attach it.
+        testSteps:
+            1. Start monitoring the evm log and look for fields `tag_1_region` and `tag_0_function`.
+            2. Perform action `refresh_dialog_fields` by sending a request
+                POST /api/service_catalogs/<:id>/sevice_templates/<:id>
+                    {
+                    "action": "refresh_dialog_fields",
+                    "resource": {
+                        "fields": [
+                            "tag_1_region",
+                            "tag_0_function"
+                            ]
+                        }
+                    }
+        expectedResults:
+            1.
+            2. Request must be successful and evm must have the default values
+                for the fields mentioned in testStep 1.
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1486765, 1740340])
+@pytest.mark.parametrize(
+    "scheduler", ["2", "2019-08-14 17:41:06 UTC"], ids=["number_of_days", "exact_time"]
+)
+def test_schedule_automation_request(scheduler):
+    """
+    Bugzilla:
+        1740340
+        1486765
+
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        testSteps:
+            1. Send a request POST /api/automation_requests
+                {
+                    "uri_parts" : {
+                        "namespace" : "System",
+                        "class"     : "Request",
+                        "instance"  : "InspectME",
+                        "message"   : "create"
+                    },
+                    "parameters" : {
+                        "var1" : "value 1",
+                        "var2" : "value 2",
+                        "minimum_memory" : 2048,
+                        "schedule_time": scheduler
+                    },
+                    "requester" : {
+                        "auto_approve" : true
+                    }
+                }
+            2. Compare the `created_on` and `options::schedule_time` from the response.
+        expectedResults:
+            1. Request must be successful.
+            2.Difference between the two dates must be equal to scheduler
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1596142])
+def test_update_roles_via_rest_name_change():
+    """
+    Bugzilla:
+        1596142
+
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Change the current server name to something other than the default.
+        testSteps:
+            1. Send a PATCH request to update the server roles via REST using
+                `appliance.update_advanced_settings({"server": {"role": :roles}})`
+            2. Check if the server name was set to default.
+        expectedResults:
+            1. Request was successful.
+            2. Server name remains the same.
     """
     pass
