@@ -48,25 +48,6 @@ def get_tls_key(provider):
     return tls_cert_key
 
 
-def configure_conversion_host_ui(appliance, target_provider, hostname, default_value,
-                                 conv_host_key, transformation_method,
-                                 vmware_ssh_key, osp_cert_switch=None, osp_ca_cert=None):
-    """ Configures conversion host from UI"""
-    conv_host_collection = appliance.collections.v2v_conversion_hosts
-    conv_host = conv_host_collection.create(
-        target_provider=target_provider,
-        cluster=get_data(target_provider, "clusters", default_value),
-        hostname=hostname,
-        conv_host_key=conv_host_key,
-        transformation_method=transformation_method,
-        vddk_library_path=vddk_url(),
-        vmware_ssh_key=vmware_ssh_key,
-        osp_cert_switch=osp_cert_switch,
-        osp_ca_cert=osp_ca_cert
-    )
-    return conv_host
-
-
 def test_add_conversion_host_ui_crud(appliance, delete_conversion_hosts,
                                      source_provider, provider):
     """
@@ -88,24 +69,29 @@ def test_add_conversion_host_ui_crud(appliance, delete_conversion_hosts,
     conv_host_key = temp_file.name
 
     if provider.one_of(RHEVMProvider):
-        rhev_hosts = [h.name for h in provider.hosts.all()]
-        for host in rhev_hosts:
-            conv_host = configure_conversion_host_ui(appliance, provider,
-                                                     host, "Default",
-                                                     conv_host_key, transformation_method,
-                                                     get_vmware_ssh_key(transformation_method,
-                                                                        source_provider))
-            assert conv_host.is_host_configured
-            assert conv_host.remove_conversion_host()
-
+        hosts = [h.name for h in provider.hosts.all()]
+        default_value = 'Default'
+        osp_cert_switch = None
+        osp_ca_cert = None
     else:
-        conversion_instances = provider.data['conversion_instances']
-        for instance in conversion_instances:
-            conv_host = configure_conversion_host_ui(appliance, provider, instance, "admin",
-                                                     conv_host_key, transformation_method,
-                                                     get_vmware_ssh_key(transformation_method,
-                                                                        source_provider),
-                                                     osp_cert_switch=True,
-                                                     osp_ca_cert=get_tls_key(provider))
-            assert conv_host.is_host_configured
-            assert conv_host.remove_conversion_host()
+        hosts = provider.data['conversion_instances']
+        default_value = 'admin'
+        osp_cert_switch = True
+        osp_ca_cert = get_tls_key(provider)
+
+    conv_host_collection = appliance.collections.v2v_conversion_hosts
+    for host in hosts:
+        conv_host = conv_host_collection.create(
+            target_provider=provider,
+            cluster=get_data(provider, "clusters", default_value),
+            hostname=host,
+            conv_host_key=conv_host_key,
+            transformation_method=transformation_method,
+            vddk_library_path=vddk_url(),
+            vmware_ssh_key=get_vmware_ssh_key(transformation_method, source_provider),
+            osp_cert_switch=osp_cert_switch,
+            osp_ca_cert=osp_ca_cert
+        )
+        assert conv_host.is_host_configured
+        assert conv_host.remove_conversion_host()
+        assert conv_host.is_host_removed
