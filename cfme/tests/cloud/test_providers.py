@@ -526,7 +526,7 @@ def test_azure_subscription_required(request, provider):
 
 @pytest.mark.tier(2)
 @test_requirements.azure
-@pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
+@pytest.mark.provider([AzureProvider], scope="function", selector=ONE)
 @pytest.mark.provider([AzureProvider], fixture_name="second_provider", selector=SECOND)
 def test_azure_multiple_subscription(
         appliance, request, soft_assert, provider, second_provider, setup_provider
@@ -567,7 +567,7 @@ def test_azure_multiple_subscription(
 @pytest.mark.tier(3)
 @test_requirements.azure
 @pytest.mark.meta(automates=[1495318], blockers=[BZ(1756984)])
-@pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
+@pytest.mark.provider([AzureProvider], scope="function", selector=ONE)
 def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
     """
     Polarion:
@@ -599,7 +599,7 @@ def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
 
 @test_requirements.azure
 @pytest.mark.meta(automates=[1412363])
-@pytest.mark.provider([AzureProvider], scope="function", override=True, selector=ONE)
+@pytest.mark.provider([AzureProvider], scope="function", selector=ONE)
 @pytest.mark.tier(2)
 def test_regions_gov_azure(provider):
     """
@@ -798,7 +798,7 @@ def test_display_network_topology(appliance, openstack_provider):
     view.flash.assert_no_error()
 
 
-@pytest.mark.provider([CloudProvider], scope='class', override=True)
+@pytest.mark.provider([CloudProvider], scope='class')
 class TestProvidersRESTAPI(object):
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])

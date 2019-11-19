@@ -347,8 +347,7 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
 @pytest.mark.provider([RHEVMProvider],
                       required_fields=[['provisioning', 'template'],
                                        ['provisioning', 'host'],
-                                       ['provisioning', 'datastore']],
-                      override=True)
+                                       ['provisioning', 'datastore']])
 @pytest.mark.parametrize('vnic_profile', ['<No Profile>', '<Use template nics>'],
                          ids=['no_profile', 'use_template_nics'])
 def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, vnic_profile):
@@ -397,8 +396,7 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
 
 @pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider],
-                      required_fields=[['provisioning', 'template_2_nics']],
-                      override=True)
+                      required_fields=[['provisioning', 'template_2_nics']])
 @pytest.mark.meta(blockers=[BZ(1625139, forced_streams=['5.10', 'upstream'])])
 def test_provision_vm_with_2_nics(provisioner, provisioning, prov_data, vm_name):
     """ Tests provision VM from a template configured with 2 NICs.
@@ -476,8 +474,7 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
 
 
 @pytest.mark.rhv2
-@pytest.mark.provider([RHEVMProvider], override=True,
-                      required_fields=[['provisioning', 'template_false_sparse']])
+@pytest.mark.provider([RHEVMProvider], required_fields=[['provisioning', 'template_false_sparse']])
 @pytest.mark.meta(automates=[1726590], blockers=[BZ(1726590, forced_streams=["5.10"])])
 def test_linked_clone_default(provisioner, provisioning, provider, prov_data, vm_name):
     """ Tests provision VM from a template with the selected "Linked Clone" option.

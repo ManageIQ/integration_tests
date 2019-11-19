@@ -802,7 +802,7 @@ def test_service_service_vms_retires_archived():
     ids=["domain"],
 )
 @pytest.mark.parametrize("file_name", ["bz_1558926.yml"], ids=["dialog"])
-@pytest.mark.provider([RHEVMProvider], scope='function', override=True, selector=ONE)
+@pytest.mark.provider([RHEVMProvider], scope='function', selector=ONE)
 def test_service_dialog_expression_method(request, appliance, setup_provider, full_template_vm,
                                           import_datastore, import_data, import_dialog, file_name,
                                           catalog):

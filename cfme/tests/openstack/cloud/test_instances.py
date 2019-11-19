@@ -308,7 +308,7 @@ def test_delete_instance(new_instance, provider):
 @pytest.mark.regression
 @pytest.mark.provider([OpenStackProvider],
                       required_fields=[['provisioning', 'image', 'os_distro']],
-                      override=True, scope='module')
+                      scope='module')
 def test_instance_operating_system_linux(new_instance):
     """
     Polarion:

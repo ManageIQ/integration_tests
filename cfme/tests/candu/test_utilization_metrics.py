@@ -203,7 +203,6 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider, GCEProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
     scope='module',
-    override=True
 )
 @pytest.mark.meta(automates=[1671580, 1722937])
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
@@ -229,7 +228,6 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
     scope='module',
-    override=True
 )
 def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     """
@@ -253,7 +251,6 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
     scope='module',
-    override=True
 )
 def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     """
@@ -278,7 +275,6 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
     scope='module',
-    override=True
 )
 def test_raw_metric_host_network(metrics_collection, appliance, provider):
     """
@@ -302,7 +298,6 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
     scope='module',
-    override=True
 )
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     """

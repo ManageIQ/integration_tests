@@ -16,8 +16,7 @@ pytestmark = [
 @pytest.mark.manual
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
-@pytest.mark.provider([OpenStackProvider], required_fields=['templates'],
-                      selector=ONE_PER_TYPE, override=True)
+@pytest.mark.provider([OpenStackProvider], required_fields=['templates'], selector=ONE_PER_TYPE)
 @test_requirements.multi_region
 @test_requirements.reconfigure
 def test_vm_reconfigure_from_global_region(context):

@@ -187,7 +187,7 @@ class TestRESTSnapshots(object):
                 raise
 
     @pytest.mark.rhv2
-    @pytest.mark.provider([VMwareProvider, RHEVMProvider], override=True)
+    @pytest.mark.provider([VMwareProvider, RHEVMProvider])
     def test_revert_snapshot(self, appliance, provider, vm_snapshot):
         """Reverts VM/instance snapshot using REST API.
 
