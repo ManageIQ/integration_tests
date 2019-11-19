@@ -3201,21 +3201,5 @@ def fix_missing_hostname(appliance):
                 logger.error('Failed to mangle /etc/hosts')
 
 
-def fix_missing_appliance_name(appliance):
-    """Fix for an empty appliance server name"""
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
-        return
-    logger.info('Checking appliance server name is set')
-    if appliance.server.name == '':
-        appliance.update_advanced_settings(
-            {
-                'server': {
-                    'name': getattr(appliance, '_default_name', 'EVM')
-                }
-            }
-        )
-
-
 stack.register_hook('on_push', ensure_websocket_role_disabled)
 stack.register_hook('on_push', fix_missing_hostname)
-stack.register_hook('on_push', fix_missing_appliance_name)
