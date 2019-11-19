@@ -1654,14 +1654,12 @@ def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, requ
         navigate_to(appliance.server, 'LoggedIn')
         assert appliance.server.current_full_name() == new_tenant_admin.name
 
-        group = appliance.collections.groups.instantiate(
-            description=new_tenant_admin.groups[0].description)
-        user = new_user(appliance, group)
+        user = new_user(appliance, new_tenant_admin.groups[0])
         request.addfinalizer(user.delete_if_exists)
         assert user.exists
 
         with update(user):
-            user.name = "{}edited".format(user.name)
+            user.name = f"{user.name}_edited"
 
         user.delete()
         assert not user.exists
