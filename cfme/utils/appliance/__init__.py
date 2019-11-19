@@ -3201,5 +3201,5 @@ def fix_missing_hostname(appliance):
                 logger.error('Failed to mangle /etc/hosts')
 
 
-stack.register_hook('on_push', ensure_websocket_role_disabled)
-stack.register_hook('on_push', fix_missing_hostname)
+stack.register_hook('on push', ensure_websocket_role_disabled)
+stack.register_hook('on push', fix_missing_hostname)
