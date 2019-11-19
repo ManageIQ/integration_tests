@@ -1,9 +1,7 @@
 import pytest
 
-from cfme.fixtures.artifactor_plugin import fire_art_hook
 from cfme.utils.appliance import DummyAppliance
 from cfme.utils.log import logger
-from cfme.utils.path import data_path
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -16,24 +14,6 @@ def ensure_websocket_role_disabled(appliance):
     if 'websocket' in roles and roles['websocket']:
         logger.info('Disabling the websocket role to ensure we get no intrusive popups')
         server_settings.disable_server_roles('websocket')
-
-
-@pytest.fixture(scope="session", autouse=True)
-def fix_merkyl_workaround(request, appliance):
-    """Workaround around merkyl not opening an iptables port for communication"""
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev or appliance.is_pod:
-        return
-    ssh_client = appliance.ssh_client
-    if ssh_client.run_command('test -s /etc/init.d/merkyl').failed:
-        logger.info('Rudely overwriting merkyl init.d on appliance;')
-        local_file = data_path.join("bundles").join("merkyl").join("merkyl")
-        remote_file = "/etc/init.d/merkyl"
-        ssh_client.put_file(local_file.strpath, remote_file)
-        ssh_client.run_command("service merkyl restart")
-        fire_art_hook(
-            request.config,
-            'setup_merkyl',
-            ip=appliance.hostname)
 
 
 @pytest.fixture(scope="session", autouse=True)

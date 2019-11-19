@@ -149,11 +149,6 @@ def pytest_configure(config):
     config._art_client = art_client
 
 
-@pytest.fixture(scope='session')
-def merkyl_setup(request, appliance):
-    fire_art_hook(request.config, 'setup_merkyl', ip=appliance.hostname)
-
-
 def fire_art_hook(config, hook, **hook_args):
     client = getattr(config, '_art_client', None)
     if client is None:
@@ -311,8 +306,6 @@ def shutdown(config):
                 if not store.slave_manager:
                     write_line('collecting artifacts')
                     fire_art_hook(config, 'finish_session')
-                fire_art_hook(config, 'teardown_merkyl',
-                              ip=app.hostname)
                 if not store.slave_manager:
                     config._art_client.terminate()
                     proc.wait()
