@@ -1,9 +1,7 @@
 import re
 from collections import Sequence
-from contextlib import contextmanager
 
 from bugzilla import Bugzilla as _Bugzilla
-from bugzilla.transport import BugzillaError
 from cached_property import cached_property
 from miq_version import LATEST
 from miq_version import Version
@@ -58,6 +56,9 @@ class Bugzilla(object):
         self.__kwargs = kwargs
         self.__bug_cache = {}
         self.__product_cache = {}
+        self.user = kwargs.get('user')
+        self.password = kwargs.get('password')
+        self.key = kwargs.get('api_key')
 
     @property
     def bug_count(self):
@@ -78,9 +79,7 @@ class Bugzilla(object):
 
     @property
     def default_product(self):
-        if self.__product is None:
-            return None
-        return self.product(self.__product)
+        return None if self.__product is None else self.product(self.__product)
 
     @classmethod
     def from_config(cls):
@@ -89,14 +88,30 @@ class Bugzilla(object):
         if url is None:
             url = 'https://bugzilla.redhat.com/xmlrpc.cgi'
             logger.warning("No Bugzilla URL specified in conf, using default: %s", url)
-        cred_key = bz_conf.get("bugzilla", {}).get("credentials")
-        return cls(url=url,
-                   user=credentials.get(cred_key, {}).get("username"),
-                   password=credentials.get(cred_key, {}).get("password"),
-                   cookiefile=None,
-                   tokenfile=None,
-                   product=bz_conf.get("bugzilla", {}).get("product"),
-                   config_options=bz_conf)
+        cred_key = bz_conf.get("credentials")
+        bz_kwargs = dict(
+            url=url,
+            cookiefile=None,
+            tokenfile=None,
+            product=bz_conf.get("bugzilla", {}).get("product"),
+            config_options=bz_conf)
+        if cred_key:
+            bz_creds = credentials.get(cred_key, {})
+            if bz_creds.get('username'):
+                logger.info('Using username/password for Bugzilla authentication')
+                bz_kwargs.update(dict(
+                    user=bz_creds.get("username"),
+                    password=bz_creds.get("password")
+                ))
+            elif bz_creds.get('api_key'):
+                logger.info('Using api key for Bugzilla authentication')
+                bz_kwargs.update(dict(api_key=bz_creds.get('api_key')))
+            else:
+                logger.error('Credentials key for bugzilla does not have username or api key')
+        else:
+            logger.warn('No credentials found for bugzilla')
+
+        return cls(**bz_kwargs)
 
     @cached_property
     def bugzilla(self):
@@ -206,47 +221,46 @@ class Bugzilla(object):
                 return bug
         return None
 
-    @contextmanager
-    def logged_into_bugzilla(self):
-        bz_creds = credentials.get("bugzilla", None)
-
-        # login to bzapi
-        if not bz_creds:
-            # error out if there are no creds available in yamls
-            raise BugzillaError("No creds available to log into Bugzilla")
-        try:
-            yield self.bugzilla.login(bz_creds.get("username"), bz_creds.get("password"))
-        except BugzillaError:
-            logger.exception("Unable to login to Bugzilla with those creds.")
-            raise
-        else:
-            self.bugzilla.logout()
-
     def set_flags(self, idlist, flags):
         # set the flags
-        with self.logged_into_bugzilla():
-            for bug in self.bugzilla.getbugs(idlist):
-                result = bug.updateflags(flags)
-                logger.info("Got %s from updating %s", result, bug)
+        for bug in self.bugzilla.getbugs(idlist):
+            result = bug.updateflags(flags)
+            logger.info("Got %s from updating %s", result, bug)
 
-    def get_bz_info(self, idlist):
+    def get_bz_info(self, idlist, clones=True):
         """ Get information about the BZs in idlist """
         logger.info("Getting information about the following BZ's: %s", idlist)
 
         # build info
-        with self.logged_into_bugzilla():
-            info = {}
-            for bug_id, bug in zip(idlist, self.bugzilla.getbugs(idlist)):
-                # assign some attrs for each BZ
-                info[bug_id] = AttrDict()
-                info[bug_id].description = bug.description
-                info[bug_id].summary = bug.summary
-                info[bug_id].flags = bug.flags
-                info[bug_id].qa_contact = bug.qa_contact
-                info[bug_id].is_open = bug.is_open
-                info[bug_id].status = bug.status
-                info[bug_id].keywords = bug.keywords
-                info[bug_id].blocks = bug.blocks
+        info = {}
+        for bug_id, bug in zip(idlist, self.bugzilla.getbugs(idlist)):
+            # assign some attrs for each BZ
+            info[bug_id] = AttrDict(
+                description=bug.description,
+                summary=bug.summary,
+                flags=bug.flags,
+                qa_contact=bug.qa_contact,
+                is_open=bug.is_open,
+                status=bug.status,
+                keywords=bug.keywords,
+                blocks=bug.blocks,
+            )
+            variants = self.get_bug_variants(bug_id)
+            if clones and variants:
+                # add clones into the info list
+                # variants are BugWrappers
+                for clone in variants:
+                    logger.info(f'Handling BZ clone for info: {clone._bug}')
+                    info[clone._bug.id] = AttrDict(
+                        description=clone._bug.description,
+                        summary=clone._bug.summary,
+                        flags=clone._bug.flags,
+                        qa_contact=clone._bug.qa_contact,
+                        is_open=clone._bug.is_open,
+                        status=clone._bug.status,
+                        keywords=clone._bug.keywords,
+                        blocks=clone._bug.blocks,
+                    )
         return info
 
 
