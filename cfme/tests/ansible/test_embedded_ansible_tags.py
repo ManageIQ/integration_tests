@@ -1,3 +1,5 @@
+from functools import partial
+
 import fauxfactory
 import pytest
 
@@ -60,80 +62,25 @@ def check_tag_place(soft_assert):
     return _check_tag_place
 
 
-@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_ansible_repository(ansible_repository, tag_place, check_tag_place):
-    """ Test for cloud items tagging action from list and details pages
-
-    Polarion:
-        assignee: anikifor
-        initialEstimate: 1/4h
-        casecomponent: Tagging
-    """
-    check_tag_place(ansible_repository, tag_place)
+@pytest.fixture(params=['credential', 'ansible_repository', 'playbook'])
+def obj(request):
+    return request.getfixturevalue(request.param)
 
 
-@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_ansible_credential(credential, tag_place, check_tag_place):
-    """ Test for cloud items tagging action from list and details pages
-
-    Polarion:
-        assignee: anikifor
-        initialEstimate: 1/4h
-        casecomponent: Tagging
-    """
-    check_tag_place(credential, tag_place)
+@pytest.fixture(params=['check_tag_place', 'check_item_visibility'], ids=['tag_details', 'tagvis'])
+def ansible_tag_test_func(request, obj):
+    test_func = request.getfixturevalue(request.param)
+    return partial(test_func, obj)
 
 
-@pytest.mark.parametrize('tag_place', [True, False], ids=['details', 'list'])
-def test_tag_ansible_playbook(playbook, tag_place, check_tag_place):
-    """ Test for cloud items tagging action from list and details pages
-
-    Polarion:
-        assignee: anikifor
-        initialEstimate: 1/4h
-        casecomponent: Tagging
-    """
-    check_tag_place(playbook, tag_place)
-
-
-@pytest.mark.meta(automates=[1526217])
+@pytest.mark.meta(automates=[1526219, 1526217, 1526218])
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_ansible_repository(ansible_repository, check_item_visibility, visibility):
-    """ Test for cloud items tagging action from list and details pages
-
-    Bugzilla:
-        1526217
-
-    Polarion:
-        assignee: anikifor
-        initialEstimate: 1/4h
-        casecomponent: Tagging
-    """
-    check_item_visibility(ansible_repository, visibility)
-
-
-@pytest.mark.meta(automates=[1526219])
-@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_ansible_credential(credential, check_item_visibility, visibility):
+def test_ansible_tagging(ansible_tag_test_func, visibility):
     """ Test for cloud items tagging action from list and details pages
 
     Bugzilla:
         1526219
-
-    Polarion:
-        assignee: anikifor
-        initialEstimate: 1/4h
-        casecomponent: Tagging
-    """
-    check_item_visibility(credential, visibility)
-
-
-@pytest.mark.meta(automates=[1526218])
-@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
-def test_tagvis_playbook(playbook, check_item_visibility, visibility):
-    """ Test for cloud items tagging action from list and details pages
-
-    Bugzilla:
+        1526217
         1526218
 
     Polarion:
@@ -141,7 +88,7 @@ def test_tagvis_playbook(playbook, check_item_visibility, visibility):
         initialEstimate: 1/4h
         casecomponent: Tagging
     """
-    check_item_visibility(playbook, visibility)
+    ansible_tag_test_func(visibility)
 
 
 @pytest.mark.manual
