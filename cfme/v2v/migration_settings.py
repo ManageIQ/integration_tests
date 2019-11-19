@@ -20,7 +20,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import ConversionHostProgress
+from widgetastic_manageiq import ConversionHost
 from widgetastic_manageiq import HiddenFileInput
 from widgetastic_manageiq import SearchBox
 from widgetastic_manageiq import V2VBootstrapSwitch
@@ -72,7 +72,7 @@ class MigrationThrottlingForm(View):
 
 class ConversionHostForm(View):
     configure_conversion_host = Text(locator='(//a|//button)[text()="Configure Conversion Host"]')
-    conversion_host_progress = ConversionHostProgress()
+    conv_host_progress = ConversionHost()
 
 
 class MigrationSettingsView(BaseLoggedInPage):
@@ -115,7 +115,7 @@ class MigrationSettingsView(BaseLoggedInPage):
 
 class ConfigureConversionHostsView(View):
     title = Text(locator='.//h4[contains(@class,"modal-title")]')
-    conversion_host_progress = ConversionHostProgress()
+    conv_host_progress = ConversionHost()
     fill_strategy = WaitFillViewStrategy("20s")
 
     next_btn = Button("Next")
@@ -225,12 +225,29 @@ class ConversionHost(BaseEntity):
         """Wait for conversion host to configure and return success/failure state"""
         view = navigate_to(self.parent, "All")
         try:
-            wait_for(view.conversion_host_progress.in_progress,
+            wait_for(view.tabs.conversion_hosts.conv_host_progress.in_progress,
                      func_args=[self.hostname],
                      fail_condition=True)
         except TimedOutError:
-            self.logger.warning("Timed out waiting for {} to configure".format(self.hostname))
-        return view.conversion_host_progress.is_host_configured(self.hostname)
+            self.logger.warning("Timed out waiting for %s to configure", self.hostname)
+        return view.tabs.conversion_hosts.conv_host_progress.is_host_configured(self.hostname)
+
+    def remove_conversion_host(self):
+        """Remove conversion host"""
+        view = navigate_to(self.parent, "All")
+        return view.tabs.conversion_hosts.conv_host_progress.remove_conversion_host(self.hostname)
+
+    @property
+    def is_host_removed(self):
+        """Returns True if host is removed"""
+        view = navigate_to(self.parent, "All")
+        try:
+            wait_for(view.tabs.conversion_hosts.conv_host_progress.in_progress,
+                     func_args=[self.hostname],
+                     fail_condition=True)
+        except TimedOutError:
+            self.logger.warning("Timed out waiting for %s to be removed", self.hostname)
+        return not view.tabs.conversion_hosts.conv_host_progress.in_progress(self.hostname)
 
 
 @attr.s
@@ -302,7 +319,7 @@ class ConversionHosts(CFMENavigateStep):
         else:
             self.prerequisite_view.navigation.select("Migration", "Migration Settings")
         self.view.tabs.conversion_hosts.click()
-        self.view.tabs.configure_conversion_host.wait_displayed()
+        self.view.tabs.conversion_hosts.configure_conversion_host.wait_displayed()
 
 
 @navigator.register(ConversionHostCollection, "Configure")
@@ -311,5 +328,5 @@ class ConfigureConversionHost(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self):
-        self.prerequisite_view.configure_conversion_host.wait_displayed()
-        self.prerequisite_view.configure_conversion_host.click()
+        self.prerequisite_view.tabs.conversion_hosts.configure_conversion_host.wait_displayed()
+        self.prerequisite_view.tabs.conversion_hosts.configure_conversion_host.click()
