@@ -51,6 +51,7 @@ def get_report(directory):
         "--long-running",
         "--use-template-cache",
         "--collect-only",
+        "--dummy-appliance",
         "-q",
         "--generate-bz-report", directory
     ])
