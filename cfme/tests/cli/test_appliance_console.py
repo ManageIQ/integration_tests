@@ -8,8 +8,8 @@ from wait_for import TimedOutError
 from wait_for import wait_for
 
 from cfme import test_requirements
-from cfme.fixtures.cli import waiting_for_ha_monitor_started
 from cfme.utils import os
+from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
