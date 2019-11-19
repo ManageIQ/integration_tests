@@ -431,32 +431,6 @@ def test_automate_ansible_playbook_method_type_verbosity():
 
 
 @pytest.mark.tier(2)
-def test_embed_tower_repo_add_remote_zone():
-    """
-    Test whether repository or credentials on New Zone.
-
-    Bugzilla:
-        1656308
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/2h
-        testSteps:
-            1. Configure a CFME appliance with the Embedded Ansible provider
-            2. Create a new zone
-            3. Move the appliance into the new zone
-            4. Add an embedded Ansible repository or credential
-        expectedResults:
-            1. Check Embedded Ansible Role is started.
-            2.
-            3.
-            4. Check Repository or Credentials were added.
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_embed_tower_playbook_with_retry_interval():
     """
 
