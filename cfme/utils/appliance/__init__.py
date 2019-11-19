@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 import attr
 import dateutil.parser
 import fauxfactory
+import pytest
 import pytz
 import requests
 import sentaku
@@ -2990,6 +2991,10 @@ class DummyAppliance(object):
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
     url = 'http://dummies.r.us'
     is_dummy = attr.ib(default=True)
+
+    @property
+    def browser(self):
+        pytest.xfail("browser not supported with DummyAppliance")
 
     @property
     def is_downstream(self):
