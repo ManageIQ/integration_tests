@@ -1,8 +1,4 @@
 """Test for HTML5 Remote Consoles of VMware/RHEV/RHOSP Providers."""
-import imghdr
-import re
-import time
-
 import pytest
 from wait_for import wait_for
 
@@ -15,14 +11,9 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import providers
 from cfme.services.myservice import MyService
-from cfme.utils import ssh
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
-from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
-from cfme.utils.log import logger
-from cfme.utils.net import wait_pingable
 from cfme.utils.providers import ProviderFilter
 
 
@@ -49,11 +40,6 @@ def vm_obj(request, provider, setup_provider, console_template):
 
     request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
     vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
-    if provider.one_of(OpenStackProvider):
-        # Assign FloatingIP to Openstack Instance from pool
-        # so that we can SSH to it
-        public_net = provider.data['public_network']
-        vm_obj.mgmt.assign_floating_ip(public_net)
     return vm_obj
 
 
@@ -91,11 +77,6 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    console_vm_username = credentials[provider.data.templates.get('console_template')
-                            ['creds']].get('username')
-    console_vm_password = credentials[provider.data.templates.get('console_template')
-                            ['creds']].get('password')
-
     vm_obj.open_console(console='VM Console')
     assert vm_obj.vm_console, 'VMConsole object should be created'
     vm_console = vm_obj.vm_console
@@ -104,10 +85,6 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         # the connection status text and if the console is healthy, it should connect.
         assert vm_console.wait_for_connect(180), "VM Console did not reach 'connected' state"
 
-        # Get the login screen image, and make sure it is a jpeg file:
-        screen = vm_console.get_screen()
-        assert imghdr.what('', screen) == 'jpeg'
-
         if provider.one_of(VMwareProvider):
             # does have some text displayed and it is correct type of console is all we will do.
             assert vm_console.console_type == 'VNC', ("Wrong console type:"
@@ -115,84 +92,9 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         # wait for screen text to return non-empty string, which implies console is loaded
         # and has readable text
         wait_for(func=lambda: vm_console.get_screen_text() != '', delay=5, timeout=45)
-        # Ensure pingable IP is present before trying console operations for reliability
-        wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
-        assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-        " didn't prompt for Login")
-
-        # Enter Username:
-        vm_console.send_keys(console_vm_username)
-        # find only "Pass" as sometime tessaract reads "w" as "u" and fails
-        assert vm_console.wait_for_text(text_to_find="Pass", timeout=200), ("VM Console"
-            " didn't prompt for Password")
-        # Enter Password:
-        vm_console.send_keys("{}\n".format(console_vm_password))
-
-        time.sleep(5)  # wait for login to complete
-
-        # This regex can find if there is a word 'login','password','incorrect' present in
-        # text, irrespective of its case
-        regex_for_login_password = re.compile(r'\blogin\b | \bpassword\b| \bincorrect\b',
-         flags=re.I | re.X)
-
-        def _validate_login():
-            """
-            Try to read what is on present on the last line in console.
-
-            If it is word 'login', enter username, if 'password' enter password, in order
-            to make the login successful
-            """
-            if vm_console.find_text_on_screen(text_to_find='login', current_line=True):
-                vm_console.send_keys(console_vm_username)
-
-            if vm_console.find_text_on_screen(text_to_find='Password', current_line=True):
-                vm_console.send_keys("{}\n".format(console_vm_password))
-            # if the login attempt failed for some reason (happens with RHOS-cirros),
-            # last line of the console will contain one of the following words:
-            # [login, password, incorrect]
-            # if so, regex_for_login_password will find it and result will not be []
-            # .split('\n')[-1] splits the console text on '\n' & picks last item of the list
-            result = regex_for_login_password.findall(vm_console.get_screen_text()
-                .split('\n')[-1])
-            return result == []
-
-        # if _validate_login() returns True, it means we did not find any of words
-        # [login, password, incorrect] on last line of console text, which implies login success
-        wait_for(func=_validate_login, timeout=300, delay=5)
-
-        logger.info("Wait to get the '$' prompt")
-        if provider.one_of(VMwareProvider):
-            vm_console.wait_for_text(text_to_find=provider.data.templates
-                .get('console_template')['prompt_text'], timeout=200)
-        else:
-            time.sleep(15)
-
-        # create file on system
-        vm_console.send_keys("touch blather")
-        if not (BZ.bugzilla.get_bug(1491387).is_opened):
-            # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
-            vm_console.send_ctrl_alt_delete()
-            assert vm_console.wait_for_text(text_to_find="login:", timeout=200,
-                to_disappear=True), ("Text 'login:' never disappeared, indicating failure"
-                " of CTRL+ALT+DEL button functionality, please check if OS reboots on "
-                "CTRL+ALT+DEL key combination and CTRL+ALT+DEL button on HTML5 Console works.")
-            assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-                " didn't prompt for Login")
-
+        assert vm_console.get_screen_text() != '', "VM Console screen text returned Empty"
         if not provider.one_of(OpenStackProvider):
-            assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does"
-            " not work")
-
-        # Ensure VM had pingable IP before attempting SSH
-        wait_pingable(vm_obj.mgmt, allow_ipv6=False, wait=300)
-        with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
-                password=console_vm_password) as ssh_client:
-            # if file was created in previous steps it will be removed here
-            # we will get instance of SSHResult
-            # Sometimes Openstack drops characters from word 'blather' hence try to remove
-            # file using partial file name. Known issue, being worked on.
-            command_result = ssh_client.run_command("rm blather", ensure_user=True)
-            assert command_result
+            assert vm_console.send_fullscreen(), "VM Console Toggle Full Screen button doesn't work"
     except Exception:
         # Take a screenshot if an exception occurs
         vm_console.switch_to_console()
@@ -414,10 +316,6 @@ def test_vm_console_ssui(request, appliance, setup_provider, context, configure_
 
     catalog_item = order_service
     service_name = catalog_item.name
-    console_vm_username = credentials[provider.data.templates.console_template
-                            .creds].username
-    console_vm_password = credentials[provider.data.templates.console_template
-                            .creds].password
     with appliance.context.use(context):
         myservice = MyService(appliance, service_name)
         vm_obj = myservice.launch_vm_console(catalog_item)
@@ -427,69 +325,13 @@ def test_vm_console_ssui(request, appliance, setup_provider, context, configure_
             vm_obj.mgmt.assign_floating_ip(public_net)
         request.addfinalizer(vm_console.close_console_window)
         request.addfinalizer(appliance.server.logout)
-        ssh_who_command = ("who --count" if not provider.one_of(OpenStackProvider)
-            else "who -aH")
-        with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
-                password=console_vm_password) as vm_ssh_client:
-            try:
-                assert vm_console.wait_for_connect(180), ("VM Console did not reach 'connected'"
-                    " state")
-                user_count_before_login = vm_ssh_client.run_command(ssh_who_command,
-                    ensure_user=True)
-                logger.info("Output of '{}' is {} before login"
-                    .format(ssh_who_command, user_count_before_login))
-                assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-                    " didn't prompt for Login")
-                # Enter Username:
-                vm_console.send_keys("{}".format(console_vm_username))
-                assert vm_console.wait_for_text(text_to_find="Pass", timeout=200), ("VM Console"
-                " didn't prompt for Password")
-                # Enter Password:
-                vm_console.send_keys("{}".format(console_vm_password))
-                logger.info("Wait to get the '$' prompt")
-                if not provider.one_of(OpenStackProvider):
-                    vm_console.wait_for_text(text_to_find=provider.data.templates.
-                        console_template.prompt_text, timeout=200)
-
-                def _validate_login():
-                    # the following try/except is required to handle the exception thrown by SSH
-                    # while connecting to VMware VM.It throws "[Error 104]Connection reset by Peer".
-                    try:
-                        user_count_after_login = vm_ssh_client.run_command(ssh_who_command,
-                            ensure_user=True)
-                        logger.info("Output of '{}' is {} after login"
-                            .format(ssh_who_command, user_count_after_login))
-                        if not provider.one_of(OpenStackProvider):
-                            return (user_count_before_login.output.split('=')[1][0] <
-                                user_count_after_login.output.split('=')[1][0])
-                        # for OSP Cirros image, user 'cirros' shows up in `who` output post
-                        # login to vm console is successful, `who` command does not provide
-                        # any count based output that we can compare, hence comparing output
-                        # for username works best
-                        return (console_vm_username not in user_count_before_login.output and
-                            console_vm_username in user_count_after_login.output)
-                    except Exception as e:
-                        logger.info("Exception: {}".format(e))
-                        logger.info("Trying again to perform 'who --count' over ssh.")
-                        return False
-
-                # Number of users before login would be 0 and after login would be 180
-                # If below assertion would fail user_count_after_login is also 0,
-                # denoting login failed
-                wait_for(func=_validate_login, timeout=300, delay=5)
-                # create file on system
-                vm_console.send_keys("touch blather")
-                wait_for(func=vm_ssh_client.run_command, func_args=["ls blather"],
-                    func_kwargs={'ensure_user': True},
-                    fail_condition=lambda result: result.rc != 0, delay=1, num_sec=10)
-                # if file was created in previous steps it will be removed here
-                # we will get instance of SSHResult
-                command_result = vm_ssh_client.run_command("rm blather", ensure_user=True)
-                assert command_result
-
-            except Exception:
-                # Take a screenshot if an exception occurs
-                vm_console.switch_to_console()
-                take_screenshot("ConsoleScreenshot")
-                vm_console.switch_to_appliance()
-                raise
+        try:
+            assert vm_console.wait_for_connect(180), ("VM Console did not reach 'connected'"
+                " state")
+            assert vm_console.get_screen_text() != '', "VM Console screen text returned Empty"
+        except Exception:
+            # Take a screenshot if an exception occurs
+            vm_console.switch_to_console()
+            take_screenshot("ConsoleScreenshot")
+            vm_console.switch_to_appliance()
+            raise
