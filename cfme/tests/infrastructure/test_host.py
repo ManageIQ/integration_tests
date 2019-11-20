@@ -474,8 +474,7 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
 
 
 @test_requirements.infra_hosts
-@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], override=True, selector=ONE)
-#@pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"])], automates=[1747545])
+@pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"])], automates=[1747545])
 @pytest.mark.parametrize("num_hosts", [2, 4])
 @pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
 @pytest.mark.parametrize('report_format', IPAppliance.DownloadOptions, ids=[fmt.name for fmt in
