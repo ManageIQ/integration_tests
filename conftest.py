@@ -95,6 +95,5 @@ pytest_plugins = [
     "cfme.fixtures.vm",
     "cfme.fixtures.vm_console",
     "cfme.fixtures.vporizer",
-    "cfme.fixtures.widgets",
     "cfme.fixtures.xunit_tools",
 ]

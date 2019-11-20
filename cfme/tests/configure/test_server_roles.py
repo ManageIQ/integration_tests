@@ -6,7 +6,7 @@ server_roles_conf = cfme_data.get('server_roles',
                                   {'all': [], 'sets': {}})
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def all_possible_roles(appliance):
     roles = server_roles_conf['all']
     if roles == []:
