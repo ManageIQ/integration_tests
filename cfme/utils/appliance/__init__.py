@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 import attr
 import dateutil.parser
 import fauxfactory
+import pytest
 import pytz
 import requests
 import sentaku
@@ -2873,27 +2874,48 @@ def provision_appliance(
 
 
 class ApplianceStack(LocalStack):
+    def __init__(self):
+        self._registered_hooks = {'on push': [], 'on pop': []}
+        super(ApplianceStack, self).__init__()
 
     def push(self, obj):
         was_before = self.top
         super(ApplianceStack, self).push(obj)
 
-        logger.info("Pushed appliance {} on stack (was {} before) ".format(
-            obj.hostname, was_before.hostname if was_before else 'empty'))
+        logger.info(f"Pushed appliance {obj.hostname} on stack "
+                    f"(was {was_before.hostname if was_before else 'empty'} before)")
         if obj.browser_steal:
             from cfme.utils import browser
             browser.start()
 
+        for hook in self._registered_hooks['on push']:
+            logger.info(f"appliance hook {hook.__name__} triggered on push")
+            hook(obj)
+
     def pop(self):
         was_before = super(ApplianceStack, self).pop()
+        if was_before:
+            for hook in self._registered_hooks['on pop']:
+                logger.info(f"appliance hook {hook.__name__} triggered on pop")
+                hook(was_before)
+
         current = self.top
-        logger.info("Popped appliance %s from the stack (now there is %s)",
-            was_before.hostname if was_before else 'empty',
-            current.hostname if current else 'empty')
+        logger.info(f"Popped appliance {was_before.hostname if was_before else 'empty'} from the "
+                    f"stack (now there is {current.hostname if current else 'empty'})")
+
         if was_before and was_before.browser_steal:
             from cfme.utils import browser
             browser.start()
         return was_before
+
+    def register_hook(self, hook, func):
+        if hook in self._registered_hooks:
+            logger.debug(f"registering appliance method {func.__name__} on hook {hook}")
+            self._registered_hooks.get(hook).append(func)
+        else:
+            msg = f" there is no hook called {hook}"
+            logger.exception(msg)
+            raise ValueError(msg)
 
 
 stack = ApplianceStack()
@@ -2969,6 +2991,10 @@ class DummyAppliance(object):
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
     url = 'http://dummies.r.us'
     is_dummy = attr.ib(default=True)
+
+    @property
+    def browser(self):
+        pytest.xfail("browser not supported with DummyAppliance")
 
     @property
     def is_downstream(self):
@@ -3139,3 +3165,41 @@ class Navigatable(NavigatableMixin):
 class MiqImplementationContext(sentaku.ImplementationContext):
     """ Our context for Sentaku"""
     pass
+
+
+def ensure_websocket_role_disabled(appliance):
+    # TODO: This is a temporary solution until we find something better.
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
+        return
+    server_settings = appliance.server.settings
+    roles = server_settings.server_roles_db
+    if 'websocket' in roles and roles['websocket']:
+        logger.info('Disabling the websocket role to ensure we get no intrusive popups')
+        server_settings.disable_server_roles('websocket')
+
+
+def fix_missing_hostname(appliance):
+    """Fix for hostname missing from the /etc/hosts file
+
+    Note: Affects RHOS-based appliances but can't hurt the others so
+          it's applied on all.
+    """
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
+        return
+    logger.info("Checking appliance's /etc/hosts for a resolvable hostname")
+    hosts_grep_cmd = 'grep {} /etc/hosts'.format(appliance.get_resolvable_hostname())
+    with appliance.ssh_client as ssh_client:
+        if ssh_client.run_command(hosts_grep_cmd).failed:
+            logger.info('Setting appliance hostname')
+            if not appliance.set_resolvable_hostname():
+                # not resolvable, just use hostname output through appliance_console_cli to modify
+                cli_hostname = ssh_client.run_command('hostname').output.rstrip('\n')
+                logger.warning('Unable to resolve hostname, using `hostname`: %s', cli_hostname)
+                appliance.appliance_console_cli.set_hostname(cli_hostname)
+
+            if ssh_client.run_command('grep $(hostname) /etc/hosts').failed:
+                logger.error('Failed to mangle /etc/hosts')
+
+
+stack.register_hook('on push', ensure_websocket_role_disabled)
+stack.register_hook('on push', fix_missing_hostname)

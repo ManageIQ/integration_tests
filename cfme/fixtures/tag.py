@@ -8,7 +8,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def category(appliance):
     """
         Returns random created category object
@@ -25,7 +25,7 @@ def category(appliance):
     cg.delete_if_exists()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def tag(category, appliance):
     """
         Returns random created tag object

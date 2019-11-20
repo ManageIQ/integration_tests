@@ -1,12 +1,10 @@
 import base64
 from urllib.error import URLError
 
-import pytest
 from py.error import ENOENT
 
 import cfme.utils.browser
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
-from cfme.utils import browser as browser_module
 from cfme.utils import safe_string
 from cfme.utils.appliance import find_appliance
 from cfme.utils.browser import take_screenshot
@@ -135,11 +133,3 @@ def pytest_sessionfinish(session, exitstatus):
     if failed_test_tracking['tests']:
         failed_tests_report = failed_tests_template.render(**failed_test_tracking)
         outfile.write(failed_tests_report)
-
-
-@pytest.fixture(scope='session')
-def browser(appliance):
-    from cfme.utils.appliance import DummyAppliance
-    if isinstance(appliance, DummyAppliance):
-        pytest.xfail("browser not supported with DummyAppliance")
-    return browser_module.browser
