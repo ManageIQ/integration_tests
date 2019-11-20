@@ -172,7 +172,7 @@ class IPAppliance(object):
     class DownloadOptions(Enum):
         TEXT = 'Download as Text'
         CSV = 'Download as CSV'
-        PRINT = 'Print or export as PDF'
+        PDF = 'Print or export as PDF'
 
     @cached_property
     def db_service(self):
