@@ -21,6 +21,7 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.tests.networks.test_sdn_downloads import handle_extra_tabs
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
@@ -473,13 +474,12 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
 
 
 @test_requirements.infra_hosts
-@pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"])], automates=[1747545])
+@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], override=True, selector=ONE)
+#@pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"])], automates=[1747545])
 @pytest.mark.parametrize("num_hosts", [2, 4])
 @pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
-@pytest.mark.parametrize(
-    "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
-    ids=["txt", "csv", "pdf"]
-)
+@pytest.mark.parametrize('report_format', IPAppliance.DownloadOptions, ids=[fmt.name for fmt in
+                                                                IPAppliance.DownloadOptions])
 def test_infrastructure_hosts_navigation_after_download_from_compare(
         appliance, setup_provider_min_hosts, provider, report_format, hosts_collection, num_hosts
 ):
@@ -502,8 +502,8 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
-    hosts_view.toolbar.download.item_select(report_format)
-    if report_format == "Print or export as PDF":
+    hosts_view.toolbar.download.item_select(report_format.value)
+    if report_format.value == "Print or export as PDF":
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
     compare_hosts_view = provider.create_view(HostsCompareView)
