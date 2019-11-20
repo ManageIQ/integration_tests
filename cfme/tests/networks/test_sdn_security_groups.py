@@ -79,7 +79,7 @@ def test_security_group_create_cancel(appliance, provider):
 
 @test_requirements.ec2
 @pytest.mark.manual
-@pytest.mark.provider([EC2Provider], override=True)
+@pytest.mark.provider([EC2Provider])
 @pytest.mark.meta(coverage=[1540283])
 def test_security_group_record_values_ec2(provider):
     """

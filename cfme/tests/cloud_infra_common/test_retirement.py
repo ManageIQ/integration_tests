@@ -164,8 +164,7 @@ def test_retirement_now(retire_vm):
 
 @pytest.mark.provider(gen_func=providers,
                       filters=[ProviderFilter(classes=[EC2Provider],
-                                              required_flags=['provision', 'retire'])],
-                      override=True)
+                                              required_flags=['provision', 'retire'])])
 @pytest.mark.parametrize('tagged', [True, False], ids=['tagged', 'untagged'])
 def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance):
     """Tests on-demand retirement of an instance/vm

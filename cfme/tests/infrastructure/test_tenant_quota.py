@@ -449,7 +449,7 @@ def configure_mail(domain):
 
 @pytest.mark.meta(automates=[1579031, 1759123])
 @pytest.mark.tier(1)
-@pytest.mark.provider([RHEVMProvider], override=True, selector=ONE)
+@pytest.mark.provider([RHEVMProvider], selector=ONE)
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
     [

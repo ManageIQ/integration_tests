@@ -226,7 +226,7 @@ def test_mapping_tags(
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize("collection_type", ["vms", "templates"])
-@pytest.mark.provider([EC2Provider], override=True, scope='function')
+@pytest.mark.provider([EC2Provider], scope='function')
 def test_ec2_tags(provider, request, collection_type, testing_instance):
     """
     Requirement: Have an ec2 provider

@@ -30,7 +30,7 @@ def db_user(appliance):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider], override=True, scope="function", selector=ONE)
+@pytest.mark.provider([VMwareProvider], scope="function", selector=ONE)
 @pytest.mark.usefixtures('setup_provider')
 def test_validate_lookup_button_provisioning(
         appliance, provider, small_template, setup_ldap_auth_provider

@@ -121,7 +121,7 @@ def test_provision(request, appliance, provider, provision_data):
 
 @pytest.mark.rhv2
 # These profile names are RHV specific
-@pytest.mark.provider([RHEVMProvider], override=True, scope='module')
+@pytest.mark.provider([RHEVMProvider], scope='module')
 @pytest.mark.parametrize('vnic_profile', ['empty_vnic_profile', 'specific_vnic_profile'])
 def test_provision_vlan(request, appliance, provision_data, vnic_profile, provider):
     """Tests provision via REST API for vlan Empty/Specific vNic profile.
@@ -313,7 +313,7 @@ def request_task(appliance, request, provider, provision_data):
     ).resources[0]
 
 
-@pytest.mark.provider([VMwareProvider], override=True, scope="module")
+@pytest.mark.provider([VMwareProvider], scope="module")
 def test_edit_provider_request_task(appliance, request, provider, request_task):
     """
     Polarion:

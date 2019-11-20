@@ -520,9 +520,9 @@ def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE,
-required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
-override=True)
+@pytest.mark.provider([VMwareProvider],
+                      selector=ONE,
+                      required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
 @pytest.mark.meta(automates=[1755070])
 def test_vm_notes_ui(appliance, provider):
     """

@@ -47,7 +47,7 @@ def create_vm(appliance, provider, request):
     vm.cleanup_on_provider()
 
 
-@pytest.mark.provider([VMwareProvider], override=True, **filter_fields)
+@pytest.mark.provider([VMwareProvider], **filter_fields)
 @pytest.mark.meta(blockers=[BZ(1685201)])
 @test_requirements.provision
 def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
@@ -69,8 +69,7 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
 
 @pytest.mark.rhv3
 @pytest.mark.provider(gen_func=providers,
-                      filters=[infra_filter, not_vmware],
-                      override=True)
+                      filters=[infra_filter, not_vmware],)
 @test_requirements.provision
 def test_vm_clone_neg(provider, clone_vm_name, create_vm):
     """Tests that we can't clone non-VMware VM

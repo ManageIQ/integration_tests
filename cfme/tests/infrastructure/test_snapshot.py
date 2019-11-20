@@ -309,7 +309,7 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
 
 
 @pytest.mark.rhv2
-@pytest.mark.provider([RHEVMProvider], override=True)
+@pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1552732)])
 def test_revert_to_active_vm(small_test_vm, provider):
     """

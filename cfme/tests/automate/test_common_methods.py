@@ -269,7 +269,7 @@ def set_root_tenant_quota(request, appliance):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1334318])
-@pytest.mark.provider([RHEVMProvider], override=True, selector=ONE)
+@pytest.mark.provider([RHEVMProvider], selector=ONE)
 @pytest.mark.parametrize(
     "set_root_tenant_quota", [("memory", "1000")], indirect=["set_root_tenant_quota"],
     ids=["memory"]

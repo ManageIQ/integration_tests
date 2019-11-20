@@ -99,8 +99,7 @@ def navigate_and_select_quads(provider):
 @pytest.mark.provider([VMwareProvider],
                       required_fields=['hosts'],
                       selector=ONE_PER_VERSION,
-                      scope='module',
-                      override=True)
+                      scope='module',)
 def test_discover_host(request, provider, appliance, host_ips):
     """Tests hosts discovery.
 
@@ -332,7 +331,7 @@ def test_infrastructure_hosts_icons_states(
 
 @test_requirements.rhev
 @pytest.mark.rhv3
-@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], override=True, selector=ONE)
+@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
 @pytest.mark.meta(automates=[1528859])
 def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
     """Tests hosts not displayed several times after removing and adding provider.
@@ -471,7 +470,7 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
 
 @test_requirements.rhev
 @pytest.mark.rhv3
-@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], override=True, selector=ONE)
+@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
 @pytest.mark.meta(automates=[1669011])
 def test_add_ipmi_refresh(appliance, setup_provider):
     """
