@@ -414,8 +414,7 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
 @pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], automates=[1738664])
 @pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
 @pytest.mark.parametrize(
-    "report_format", ["Download as Text", "Download as CSV", "Print or export as PDF"],
-    ids=["txt", "csv", "pdf"]
+    "report_format", ["txt", "csv", "print"]
 )
 def test_infrastructure_hosts_navigation_after_download(
     appliance, setup_provider, provider, report_format, hosts_collection
@@ -433,8 +432,12 @@ def test_infrastructure_hosts_navigation_after_download(
         hosts_view = navigate_to(provider.collections.hosts, "All")
     elif hosts_collection == "appliance":
         hosts_view = navigate_to(appliance.collections.hosts, "All")
-    hosts_view.toolbar.download.item_select(report_format)
-    if report_format == "Print or export as PDF":
+    if report_format == "txt":
+        hosts_view.toolbar.download.item_select(appliance.DownloadOptions.TEXT)
+    elif report_format == "csv":
+        hosts_view.toolbar.download.item_select(appliance.DownloadOptions.CSV)
+    elif report_format == "print":
+        hosts_view.toolbar.download.item_select(appliance.DownloadOptions.PRINT)
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
     if hosts_collection == "provider":
