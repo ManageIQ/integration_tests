@@ -80,7 +80,7 @@ def generic_catalog_item(request, appliance, dialog_modscope, catalog_modscope):
 
 
 def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-        console_test=False):
+         vm_count='1', console_test=False,):
     provision_type, template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
     if console_test:
@@ -92,7 +92,8 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
         provisioning_data = {
             'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
                         'vm_name': random_vm_name('serv'),
-                        'provision_type': provision_type},
+                        'provision_type': provision_type,
+                        'num_vms': vm_count},
             'environment': {'host_name': {'name': host},
                             'datastore_name': {'name': datastore}},
             'network': {'vlan': partial_match(vlan)},
@@ -160,11 +161,12 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
 @pytest.fixture
 def order_service(appliance, provider, provisioning, dialog, catalog, request):
     """ Orders service once the catalog item is created"""
-
     if hasattr(request, 'param'):
         param = request.param
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-                                           console_test=True if 'console_test' in param else None)
+                                           vm_count='2',
+                                           console_test=True if 'console_test' in param else None
+                                           )
     else:
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)

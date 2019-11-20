@@ -235,6 +235,26 @@ def test_monthly_charges(appliance, has_no_providers_modscope, setup_provider, c
         assert monthly_charges != '$0'
 
 
+@pytest.mark.long_running
+@pytest.mark.parametrize('context', [ViaSSUI])
+@pytest.mark.parametrize('order_service', [['vm_count']], indirect=True)
+def test_service_chargeback_multiple_vm(appliance, has_no_providers_modscope, setup_provider,
+        context, order_service, run_service_chargeback_report):
+    """Tests chargeback data for a service with multiple VMs
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: SelfServiceUI
+        caseimportance: high
+        initialEstimate: 1/2h
+    """
+    with appliance.context.use(context):
+        dashboard = Dashboard(appliance)
+        monthly_charges = dashboard.monthly_charges()
+        logger.info('Monthly charges is {}'.format(monthly_charges))
+        assert monthly_charges != '$0'
+
+
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_total_requests(appliance, context):
     """Tests total requests displayed.
