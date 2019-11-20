@@ -5,6 +5,7 @@ import re
 import socket
 import traceback
 import warnings
+from aenum import NamedConstant
 from copy import copy
 from datetime import datetime
 from time import sleep
@@ -167,6 +168,11 @@ class IPAppliance(object):
         'openldap': '/etc/openldap/ldap.conf',
         'sssd': '/etc/sssd/sssd.conf'
     }
+
+    class DownloadOptions(NamedConstant):
+        TEXT = 'Download as Text'
+        CSV = 'Download as CSV'
+        PRINT = 'Print or export as PDF'
 
     @cached_property
     def db_service(self):
