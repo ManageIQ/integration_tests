@@ -433,7 +433,7 @@ def test_infrastructure_hosts_navigation_after_download(
     elif hosts_collection == "appliance":
         hosts_view = navigate_to(appliance.collections.hosts, "All")
     hosts_view.toolbar.download.item_select(report_format.value)
-    if report_format == "print":
+    if report_format.name == "PDF":
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
     if hosts_collection == "provider":
