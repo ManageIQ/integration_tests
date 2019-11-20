@@ -5,7 +5,7 @@ import re
 import socket
 import traceback
 import warnings
-from aenum import NamedConstant
+from aenum import Enum
 from copy import copy
 from datetime import datetime
 from time import sleep
@@ -169,7 +169,7 @@ class IPAppliance(object):
         'sssd': '/etc/sssd/sssd.conf'
     }
 
-    class DownloadOptions(NamedConstant):
+    class DownloadOptions(Enum):
         TEXT = 'Download as Text'
         CSV = 'Download as CSV'
         PRINT = 'Print or export as PDF'
