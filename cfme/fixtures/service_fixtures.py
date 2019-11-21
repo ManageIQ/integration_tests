@@ -164,7 +164,8 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     if hasattr(request, 'param'):
         pytest.set_trace()
         param = request.param
-        vm_count = param if 'vm_count' in param else '1'
+        if 'vm_count' in param:
+            vm_count = '2' if '2' in param else '1'
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
                                            vm_count=vm_count,
                                            console_test=True if 'console_test' in param else None
