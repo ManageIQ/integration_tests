@@ -37,6 +37,7 @@ from widgetastic_manageiq import MigrationProgressBar
 from widgetastic_manageiq import RadioGroup
 from widgetastic_manageiq import SearchBox
 from widgetastic_manageiq import Table
+from widgetastic_manageiq import V2VFlashMessages
 from widgetastic_manageiq import V2VPaginatorPane
 
 
@@ -317,6 +318,7 @@ class MigrationPlanRequestDetailsView(View):
     migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
     paginator_view = View.include(V2VPaginatorPane, use_parent=True)
     download_logs = Dropdown("Download Log")
+    flash = V2VFlashMessages('.//div[@class="modal-wizard-alert"]')
 
     @property
     def is_displayed(self):
