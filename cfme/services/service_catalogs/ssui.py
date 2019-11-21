@@ -76,6 +76,7 @@ def add_to_shopping_cart(self):
         view.fill(self.dialog_values)
     if self.ansible_dialog_values:
         view.fill(self.ansible_dialog_values)
+
     view.add_to_shopping_cart.click()
     view.flash.assert_no_error()
     view = self.create_view(DetailsServiceCatalogsView)
@@ -95,6 +96,7 @@ def order(self):
     # TODO - remove sleep when BZ 1496233 is fixed
     time.sleep(10)
     assert view.notification.assert_message("Shopping cart successfully ordered")
+    return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
 
 
 @navigator.register(ServiceCatalogs, 'All')

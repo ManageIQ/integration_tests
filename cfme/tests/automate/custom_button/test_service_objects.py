@@ -4,7 +4,6 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
-from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.myservice import MyService
@@ -126,38 +125,6 @@ def vis_enb_button_service(request, appliance, service_button_group):
         )
         yield service_button_group, button, request.param
         button.delete_if_exists()
-
-
-@pytest.fixture(scope="module")
-def user_self_service_role(appliance):
-    with appliance.context.use(ViaUI):
-        # copy role with no restrictions
-        role = appliance.collections.roles.instantiate(name="EvmRole-user_self_service")
-        user_self_service_role = role.copy(name="user_self_service_role", vm_restriction="None")
-
-        # Group with user self service role
-        user_self_service_gp = appliance.collections.groups.create(
-            description="user_self_service_gp", role=user_self_service_role.name
-        )
-
-        # credentials for user
-        creds = Credential(
-            principal=fauxfactory.gen_alphanumeric(start="usr_"),
-            secret=fauxfactory.gen_alphanumeric(),
-        )
-
-        # user with above group
-        user = appliance.collections.users.create(
-            name=fauxfactory.gen_alphanumeric(start="user_"),
-            credential=creds,
-            email=fauxfactory.gen_email(),
-            groups=user_self_service_gp,
-        )
-
-        yield user, user_self_service_role
-        user.delete_if_exists()
-        user_self_service_gp.delete_if_exists()
-        user_self_service_role.delete_if_exists()
 
 
 @pytest.mark.tier(1)
