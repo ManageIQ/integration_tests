@@ -70,7 +70,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
         try:
             # API does not accept a unicode string, setting the image name to a string
             return (self.appliance.rest_api.collections.container_images.
-                    get(name=str(self.name)).last_scan_attempt_on)
+                    find_by(image_ref=str(self.id)).resources[0].last_scan_attempt_on)
         # If no scan has been performed on the image, it will return an AttributeError
         except AttributeError:
             return None
@@ -140,7 +140,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
 
         # API does not accept a unicode string, setting the image name to a string
         return (self.appliance.rest_api.collections.container_images.
-                get(name=str(self.name)).action.scan())
+                find_by(image_ref=str(self.id)).resources[0].action.scan())
 
 
 @attr.s
