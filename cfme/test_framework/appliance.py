@@ -17,7 +17,7 @@ PLUGIN_KEY = "appliance-holder"
 def pytest_addoption(parser):
     group = parser.getgroup("cfme")
     # common appliance options
-    group.addoption('--app-version', default=None, dest='appliance-version')
+    group.addoption('--app-version', default=None, dest='app-version')
 
     # dummy appliance type
     group.addoption('--use-dummy-apps', action='store_true', default=False)
@@ -81,23 +81,40 @@ def pytest_configure(config):
     if config.getoption('--help'):
         return
     reporter = terminalreporter.reporter()
-    if config.getoption('--dummy-appliance'):
+    if config.getoption('--use-dummy-apps'):
         appliances = [
-            DummyAppliance.from_config(config) for _ in range(config.getoption('--num-dummies'))
+            DummyAppliance.from_config(config) for _ in range(config.getoption('--num-dummy-apps'))
         ]
-        reporter.write_line('Retrieved Dummy Appliance', red=True)
-    elif stack.top:
-        appliances = [stack.top]
-    elif config.option.appliances:
-        appliances = appliances_from_cli(config.option.appliances, config.option.appliance_version)
-        reporter.write_line('Retrieved these appliances from the --appliance parameters', red=True)
-    elif config.getoption('--use-sprout'):
-        from cfme.test_framework.sprout.plugin import mangle_in_sprout_appliances
+        reporter.write_line('Retrieved Dummy Appliances', red=True)
+    elif config.getoption('--use-local-apps'):
+        # TODO: add appropriate code to create local appliance
+        pass
 
-        mangle_in_sprout_appliances(config)
-        # TODO : handle direct sprout pass on?
-        appliances = appliances_from_cli(config.option.appliances, None)
+    elif (not config.getoption('--no-regular-apps') or config.getoption('--use-pod-apps') or
+          config.getoption('--use-mr-apps') or config.getoption('--use-upgraded-apps')):
+        from cfme.test_framework.sprout.plugin import mangle_in_sprout_appliances
+        appliances = []
+        # TODO: parallelize these requests
+        if not config.getoption('--no-regular-apps'):
+            # TODO: request regular appliances
+            mangle_in_sprout_appliances(config)
+            appliances = appliances_from_cli(config.option.appliances, None)
+
+        if config.getoption('--use-pod-apps'):
+            # TODO: request pod appliances
+            mangle_in_sprout_appliances(config)
+            appliances = appliances_from_cli(config.option.appliances, None)
+        if config.getoption('--use-mr-apps'):
+            # TODO: request multi-region appliances
+            mangle_in_sprout_appliances(config)
+            appliances = appliances_from_cli(config.option.appliances, None)
+        if config.getoption('--use-upgraded-apps'):
+            # TODO: request regular appliances and upgrade them
+            mangle_in_sprout_appliances(config)
+            appliances = appliances_from_cli(config.option.appliances, None)
+
         reporter.write_line('Retrieved these appliances from the --sprout-* parameters', red=True)
+
     else:
         appliances = load_appliances_from_config(conf.env)
         reporter.write_line('Retrieved these appliances from the conf.env', red=True)
