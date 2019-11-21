@@ -7,7 +7,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.containers.provider import ContainersProvider
-from cfme.infrastructure.config_management import ConfigManager
+from cfme.infrastructure.config_management import ConfigManagerProvider
 from cfme.infrastructure.config_management import ConfigSystem
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
@@ -23,7 +23,7 @@ SearchParam = namedtuple("SearchParam",
 
 pytestmark = [
     pytest.mark.uncollectif(lambda param, appliance:
-        (param.collection in [ConfigManager, 'ansible_tower_providers'] or
+        (param.collection in [ConfigManagerProvider, 'config_managers'] or
          param.filter == 'Job Template (Ansible Tower) : Name') or
         (appliance.version >= '5.11' and param.entity == 'network_load_balancers'),
         reason='load balancers are no longer supported in 5.11 -> BZ 1672949'),
@@ -331,7 +331,7 @@ class TestStorage(object):
 @inject_tests
 class TestConfigManagement(object):
     params_values = [
-        SearchParam(ConfigManager, 'All', 'configuration_management',
+        SearchParam(ConfigManagerProvider, 'All', 'configuration_management',
                     'Configuration Manager : Name',
                     ('sidebar.providers', "All Configuration Management Providers")),
         SearchParam(ConfigSystem, 'All', 'configuration_management_systems',
