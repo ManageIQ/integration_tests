@@ -13,11 +13,6 @@ For tests that require multiple unconfigured appliances (e.g. replication testin
 from contextlib import contextmanager
 
 import pytest
-import sys
-
-from _pytest.compat import getimfunc
-from _pytest.fixtures import call_fixture_func
-from _pytest.outcomes import TEST_OUTCOME
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
