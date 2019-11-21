@@ -238,7 +238,7 @@ def test_monthly_charges(appliance, has_no_providers_modscope, setup_provider, c
 @pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 @pytest.mark.parametrize('order_service', ['vm_count_1', 'vm_count_2'], indirect=True)
-def test_service_chargeback_multiple_vm(appliance, has_no_providers_modscope, setup_provider,
+def test_service_chargeback_multiple_vms(appliance, has_no_providers_modscope, setup_provider,
         context, order_service, run_service_chargeback_report):
     """Tests chargeback data for a service with multiple VMs
 
