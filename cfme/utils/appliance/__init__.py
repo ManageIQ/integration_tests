@@ -5,7 +5,6 @@ import re
 import socket
 import traceback
 import warnings
-from aenum import Enum
 from copy import copy
 from datetime import datetime
 from time import sleep
@@ -19,6 +18,7 @@ import pytest
 import pytz
 import requests
 import sentaku
+from aenum import Enum
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException
