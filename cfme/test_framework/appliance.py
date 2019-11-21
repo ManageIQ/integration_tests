@@ -15,10 +15,42 @@ PLUGIN_KEY = "appliance-holder"
 
 
 def pytest_addoption(parser):
-    parser.addoption('--dummy-appliance', action='store_true')
-    parser.addoption('--dummy-appliance-version', default=None)
-    parser.addoption('--appliance-version', default=None)
-    parser.addoption('--num-dummies', default=1, type=int)
+    group = parser.getgroup("cfme")
+    # common appliance options
+    group.addoption('--app-version', default=None, dest='appliance-version')
+
+    # dummy appliance type
+    group.addoption('--use-dummy-apps', action='store_true', default=False)
+    group.addoption('--num-dummy-apps', default=1, type=int)
+
+    # dev/local appliance type
+    group.addoption('--use-local-apps', action='store_true', default=False)
+
+    # regular appliance type
+    group.addoption('--no-regular-apps', action='store_false', default=True)
+    group.addoption('--num-regular-apps', action=1, type=int)
+
+    # pod appliance type
+    group.addoption('--use-pod-apps', action='store_true', default=False)
+    group.addoption('--num-pod-apps', action=1, type=int)
+    # todo: add below options
+    # --sprout-template-type=openshift_pod
+    # --sprout-ignore-preconfigured
+
+    # multi-region appliance type
+    group.addoption('--use-mr-apps', action='store_true', default=False,
+                    dest='use-multi-region-apps')
+    group.addoption('--num-mr-apps', action=1, type=int, dest='num-multi-region-apps')
+
+    # some providers aren't suitable for multi-region tests due to issues with floating IP and etc
+    group.addoption('--mr-apps-provider-type', default='rhevm',
+                    dest='multi-region-apps-provider-type')
+    group.addoption('--num-mr-apps-remote-nodes', action=1, type=int,
+                    dest='num-multi-region-apps-remote-nodes')
+
+    # upgraded appliance type
+    group.addoption('--use-upgraded-apps', action='store_true', default=False)
+    group.addoption('--upgraded-apps-versions-from', default=[], action='append')
 
 
 def appliances_from_cli(cli_appliances, appliance_version):

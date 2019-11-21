@@ -3017,7 +3017,7 @@ class DummyAppliance(object):
 
     @classmethod
     def from_config(cls, pytest_config):
-        version = pytest_config.getoption('--dummy-appliance-version')
+        version = pytest_config.getoption('--appliance-version')
         return cls(version=(version or attr.NOTHING))
 
     @classmethod
