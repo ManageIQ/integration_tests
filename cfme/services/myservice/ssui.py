@@ -5,11 +5,14 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Select
 from widgetastic.widget import Text
+from widgetastic.widget import TextInput
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.dashboard import Kebab
+from cfme.exceptions import ItemNotFound
 from cfme.services.myservice import MyService
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ssui import navigate_to
@@ -69,6 +72,9 @@ class DetailsMyServiceView(MyServicesView):
     configuration = SSUIDropdown('Configuration')
     lifecycle = SSUIDropdown('Lifecycle')
     console_button = Button(tooltip="HTML5 console", classes=['open-console-button'])
+    retirement_state = TextInput(
+        locator=".//label[text()='Retirement State']/parent::div/div/input"
+    )
     resource_power_status = PowerIcon(".//span/i[contains(@class, 'pficon') and contains("
                                       "@uib-tooltip,'Power State')]")
 
@@ -264,6 +270,21 @@ def launch_vm_console(self, catalog_item):
     return vm_obj
 
 
+@MiqImplementationContext.external_for(MyService.exists.getter, ViaSSUI)
+def exists(self):
+    try:
+        navigate_to(self, 'Details')
+        return True
+    except (CandidateNotFound, ItemNotFound):
+        return False
+
+
+@MiqImplementationContext.external_for(MyService.is_retired.getter, ViaSSUI)
+def is_retired(self):
+    view = navigate_to(self, 'Details')
+    return view.retirement_state.value == "retired"
+
+
 @MiqImplementationContext.external_for(MyService.retire, ViaSSUI)
 def retire(self):
     view = navigate_to(self, 'Retire')
@@ -274,6 +295,7 @@ def retire(self):
     else:
         view = self.create_view(DetailsMyServiceView, wait='20s')
         assert view.notification.assert_message("Service Retire - Request Created")
+    return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
 
 
 @MiqImplementationContext.external_for(MyService.service_power, ViaSSUI)
@@ -307,6 +329,7 @@ class Details(SSUINavigateStep):
         wait_for(
             lambda: self.prerequisite_view.service.is_displayed(self.obj.name),
             delay=5, num_sec=300,
+            fail_func=self.prerequisite_view.browser.refresh,
             message="waiting for view to be displayed"
         )
         self.prerequisite_view.service.click_at(self.obj.name)

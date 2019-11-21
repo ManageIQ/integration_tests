@@ -1,9 +1,11 @@
+import fauxfactory
 import pytest
 import yaml
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
 
 from cfme.automate.dialog_import_export import DialogImportExport
+from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -16,6 +18,7 @@ from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.rest.gen_data import service_templates_rest as _service_templates
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance import ViaUI
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
@@ -263,3 +266,41 @@ def catalog_item_with_imported_dialog(appliance, provider, provisioning, import_
     yield catalog_item, import_dialog[1]
     catalog_item.delete_if_exists()
     catalog.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def user_self_service_role(appliance):
+    """This is fixture with create user with user_self_service_role"""
+
+    with appliance.context.use(ViaUI):
+        # copy role with no restrictions
+        role = appliance.collections.roles.instantiate(name="EvmRole-user_self_service")
+        user_self_service_role = role.copy(
+            name=fauxfactory.gen_alphanumeric(25, "self_service_role_"),
+            vm_restriction="None"
+        )
+
+        # Group with user self service role
+        user_self_service_gp = appliance.collections.groups.create(
+            description=fauxfactory.gen_alphanumeric(22, "self_service_gp_"),
+            role=user_self_service_role.name
+        )
+
+        # credentials for user
+        creds = Credential(
+            principal=fauxfactory.gen_alphanumeric(start="user_"),
+            secret=fauxfactory.gen_alphanumeric(),
+        )
+
+        # user with above group
+        user = appliance.collections.users.create(
+            name=fauxfactory.gen_alphanumeric(start="user_"),
+            credential=creds,
+            email=fauxfactory.gen_email(),
+            groups=user_self_service_gp,
+        )
+
+        yield user, user_self_service_role
+        user.delete_if_exists()
+        user_self_service_gp.delete_if_exists()
+        user_self_service_role.delete_if_exists()
