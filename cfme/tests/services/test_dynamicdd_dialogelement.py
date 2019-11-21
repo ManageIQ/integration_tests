@@ -3,7 +3,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
+from cfme.fixtures.automate import DatastoreImport
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.long_running,
@@ -232,21 +236,50 @@ def test_in_dynamic_multi_select_dialog_elements_the_first_element_shouldnt_be_s
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_textbox_value_should_update_with_automate_method():
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1613443])
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1613443.zip", "bz_1613443", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1613443.yml"], ids=["update_dialog"])
+def test_dynamic_field_on_textbox(request, appliance, import_datastore, import_data,
+                                  import_dialog, file_name, catalog):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
     Bugzilla:
         1613443
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.9
+        casecomponent: Services
+        initialEstimate: 1/16h
+        testSteps:
+            1. Import Datastore and dialog
+            2. Add service catalog with above created dialog
+            3. Navigate to order page of service
+            4. In service Order page
+            5. Add value in first textbox
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Second textbox should update with value
     """
-    pass
+    sd, ele_label = import_dialog
+
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd)
+    request.addfinalizer(catalog_item.delete_if_exists)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    view.fields(ele_label).fill(fauxfactory.gen_alphanumeric())
+    wait_for(lambda: view.fields("name_validation").read() == 'indice_1', timeout=7)
 
 
 @pytest.mark.manual
