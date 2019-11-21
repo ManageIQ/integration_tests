@@ -19,11 +19,11 @@ from cfme.rest.gen_data import service_templates_rest as _service_templates
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaUI
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+# from cfme.utils.blockers import BZ
 
 
 @pytest.fixture(scope="function")
@@ -80,7 +80,7 @@ def generic_catalog_item(request, appliance, dialog_modscope, catalog_modscope):
 
 
 def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-         vm_count='1', console_test=False,):
+         vm_count='1', console_test=False):
     provision_type, template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
     if console_test:
@@ -162,9 +162,11 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
 def order_service(appliance, provider, provisioning, dialog, catalog, request):
     """ Orders service once the catalog item is created"""
     if hasattr(request, 'param'):
+        pytest.set_trace()
         param = request.param
+        vm_count = param if 'vm_count' in param else '1'
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-                                           vm_count='2',
+                                           vm_count=vm_count,
                                            console_test=True if 'console_test' in param else None
                                            )
     else:
@@ -175,8 +177,8 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     assert provision_request.is_succeeded()
     if provision_request.exists():
         provision_request.wait_for_request()
-        if not BZ(1646333, forced_streams=['5.10']).blocks:
-            provision_request.remove_request()
+        # if not BZ(1646333, forced_streams=['5.10']).blocks:
+        #    provision_request.remove_request()
     yield catalog_item
     service = MyService(appliance, catalog_item.name)
     if service.exists:
