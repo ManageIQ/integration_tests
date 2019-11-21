@@ -98,6 +98,11 @@ def download_and_migrate_db(app, db_url):
 
     # Stop EVM service and drop vmdb_production DB
     app.evmserverd.stop()
+    # Invalidate some of the cache
+    # as it was be causing problems
+    # when running more than one test with
+    # the same vm.
+    app.__dict__.pop('rest_api', None)
     app.db.drop()
     app.db.create()
     # restore new DB
