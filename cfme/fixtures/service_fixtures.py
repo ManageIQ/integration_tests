@@ -160,6 +160,8 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
 
 @pytest.fixture
 def order_service(appliance, provider, provisioning, dialog, catalog, request):
+    # BZ 1646333 - Delete this request button is not shown in service Request details page
+    # The above BZ got closed because of  INSUFFICIENT_DATA.
     """ Orders service once the catalog item is created"""
     if hasattr(request, 'param'):
         vm_count = request.param['vm_count'] if 'vm_count' in request.param else '1'
@@ -175,7 +177,7 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     assert provision_request.is_succeeded()
     if provision_request.exists():
         provision_request.wait_for_request()
-        if not BZ(1646333, forced_streams=['5.10']).blocks:
+        if not BZ(1775779, forced_streams=['5.10', '5.11']).blocks:
             provision_request.remove_request()
     yield catalog_item
     service = MyService(appliance, catalog_item.name)
