@@ -1,3 +1,5 @@
+from functools import partial
+
 from manageiq_client.api import APIException
 from manageiq_client.api import Entity as RestEntity
 from navmazing import NavigateToAttribute
@@ -250,7 +252,7 @@ class ConfigManagementEditView(ConfigManagementView):
     is_displayed = displayed_not_implemented
 
 
-class ConfigManager(Updateable, Pretty, NavigatableMixin):
+class ConfigManager(Updateable, Pretty, NavigatableMixin, Taggable):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
 
@@ -277,6 +279,8 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
         self.ssl = ssl
         self.credentials = credentials
         self.key = key or name
+        self.add_tag = partial(self.add_tag, details=False)
+        self.remove_tag = partial(self.remove_tag, details=False)
 
     class Credential(BaseCredential, Updateable):
         pass
@@ -402,6 +406,17 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
                 )
                 # check the provider is indeed deleted
                 assert not self.exists
+
+    def get_tags(self, tenant="My Company Tags"):
+        """Overridden get_tags method to deal with the fact that providers don't have a
+        details view."""
+        view = navigate_to(self, 'EditTags')
+        return [
+            self.appliance.collections.categories.instantiate(
+                display_name=r.category.text.replace('*', '').strip()).collections.tags.instantiate(
+                display_name=r.assigned_value.text.strip())
+            for r in view.form.tags
+        ]
 
     @property
     def rest_api_entity(self):
@@ -761,6 +776,19 @@ class MgrEditFromDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
+
+
+@navigator.register(ConfigManager, 'EditTags')
+class MgrEditTags(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+            self.prerequisite_view.entities.elements, provider_name=self.obj.ui_name)
+        row[0].check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(ConfigProfile, 'Details')

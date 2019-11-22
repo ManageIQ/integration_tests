@@ -164,6 +164,20 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_ma
     assert tag in job_template.get_tags(), "Added tag not found on configuration system"
 
 
+@test_requirements.tag
+@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'invisible'])
+def test_tagvis_config_manager(config_manager, check_item_visibility, visibility):
+    """
+    Polarion:
+        assignee: anikifor
+        initialEstimate: 1/10h
+        casecomponent: Ansible
+        caseimportance: medium
+
+    """
+    check_item_visibility(config_manager, visibility)
+
+
 # def test_config_system_reprovision(config_system):
 #    # TODO specify machine per stream in yamls or use mutex (by tagging/renaming)
 #    pass
