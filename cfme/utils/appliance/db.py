@@ -597,7 +597,7 @@ class ApplianceDB(AppliancePlugin):
     @property
     def is_enabled(self):
         """Is database enabled"""
-        return self.address is not None
+        return self.appliance.db_service.enabled
 
     @property
     def is_internal(self):
