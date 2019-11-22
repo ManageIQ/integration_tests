@@ -203,27 +203,6 @@ def test_embed_tower_add_private_repo():
     pass
 
 
-@pytest.mark.tier(3)
-def test_service_ansible_service_name():
-    """
-    Bugzilla:
-        1505929
-
-    After creating the service using ansible playbook type add a new text
-    field to service dialog named "service_name" and then use that service
-    to order the service which will have a different name than the service
-    catalog item.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_tower_repo_url_validation():
     """
