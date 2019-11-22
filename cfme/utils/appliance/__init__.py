@@ -301,6 +301,11 @@ class IPAppliance(object):
     def appliance(self):
         return self
 
+    @property
+    def configured(self):
+        """"Return boolean indicating if the appliance is configured """
+        return self.db_service.enabled and self.evmserverd.enabled
+
     def __repr__(self):
         # TODO: Put something better here. This solves the purpose temporarily.
         return '{}.from_json({!r})'.format(type(self).__name__, self.as_json)
@@ -3169,7 +3174,8 @@ class MiqImplementationContext(sentaku.ImplementationContext):
 
 def ensure_websocket_role_disabled(appliance):
     # TODO: This is a temporary solution until we find something better.
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev or not appliance.configured:
+        logger.debug(f'Skipping hook ensure_websocket_role_disabled on {appliance}')
         return
     server_settings = appliance.server.settings
     roles = server_settings.server_roles_db
@@ -3185,8 +3191,9 @@ def fix_missing_hostname(appliance):
           it's applied on all.
     """
     if isinstance(appliance, DummyAppliance) or appliance.is_dev:
+        logger.debug(f'Skipping hook ensure_websocket_role_disabled on {appliance}')
         return
-    logger.info("Checking appliance's /etc/hosts for a resolvable hostname")
+    logger.debug("Checking appliance's /etc/hosts for a resolvable hostname")
     hosts_grep_cmd = 'grep {} /etc/hosts'.format(appliance.get_resolvable_hostname())
     with appliance.ssh_client as ssh_client:
         if ssh_client.run_command(hosts_grep_cmd).failed:
