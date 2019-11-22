@@ -21,7 +21,7 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.tests.networks.test_sdn_downloads import handle_extra_tabs
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance.constants import DownloadOptions
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
@@ -414,8 +414,8 @@ def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts,
 @test_requirements.infra_hosts
 @pytest.mark.meta(blockers=[BZ(1738664, forced_streams=["5.10"])], automates=[1738664])
 @pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
-@pytest.mark.parametrize('report_format', IPAppliance.DownloadOptions, ids=[fmt.name for fmt in
-                                                                IPAppliance.DownloadOptions])
+@pytest.mark.parametrize('report_format', DownloadOptions, ids=[fmt.name for fmt in
+                                                                DownloadOptions])
 def test_infrastructure_hosts_navigation_after_download(
     appliance, setup_provider, provider, report_format, hosts_collection
 ):
@@ -433,7 +433,7 @@ def test_infrastructure_hosts_navigation_after_download(
     elif hosts_collection == "appliance":
         hosts_view = navigate_to(appliance.collections.hosts, "All")
     hosts_view.toolbar.download.item_select(report_format.value)
-    if report_format == IPAppliance.DownloadOptions.PDF:
+    if report_format == DownloadOptions.PDF:
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
     if hosts_collection == "provider":
@@ -473,8 +473,8 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
     "5.10"])], automates=[1747545])
 @pytest.mark.parametrize("num_hosts", [2, 4])
 @pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
-@pytest.mark.parametrize('report_format', IPAppliance.DownloadOptions, ids=[fmt.name for fmt in
-                                                                IPAppliance.DownloadOptions])
+@pytest.mark.parametrize('report_format', DownloadOptions, ids=[fmt.name for fmt in
+                                                                DownloadOptions])
 def test_infrastructure_hosts_navigation_after_download_from_compare(
         appliance, setup_provider_min_hosts, provider, report_format, hosts_collection, num_hosts
 ):
@@ -498,7 +498,7 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
     hosts_view.toolbar.download.item_select(report_format.value)
-    if report_format == IPAppliance.DownloadOptions.PDF:
+    if report_format == DownloadOptions.PDF:
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
     compare_hosts_view = provider.create_view(HostsCompareView)
