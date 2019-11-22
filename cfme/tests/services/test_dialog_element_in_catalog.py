@@ -6,6 +6,8 @@ from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
@@ -55,7 +57,7 @@ def service_dialog(appliance, widget_name):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, service_dialog, catalog):
+def catalog_item_local(appliance, service_dialog, catalog):
     sd, element_data = service_dialog
     item_name = fauxfactory.gen_alphanumeric(15, start="cat_item_")
     catalog_item = appliance.collections.catalog_items.create(
@@ -74,7 +76,7 @@ def catalog_item(appliance, service_dialog, catalog):
     "widget_name", list(WIDGETS.keys()),
     ids=["_".join(w.split()).lower() for w in WIDGETS.keys()],
 )
-def test_required_dialog_elements(appliance, catalog_item, service_dialog, widget_name):
+def test_required_dialog_elements(appliance, catalog_item_local, service_dialog, widget_name):
     """
     Polarion:
         assignee: nansari
@@ -92,7 +94,9 @@ def test_required_dialog_elements(appliance, catalog_item, service_dialog, widge
             3. Submit button should be disabled
     """
     sd, element_data = service_dialog
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(
+        appliance, catalog_item_local.catalog, catalog_item_local.name
+    )
     view = navigate_to(service_catalogs, "Order")
     ele_name = element_data["element_information"]["ele_name"]
     choose_type = element_data["element_information"]["choose_type"]
@@ -337,10 +341,13 @@ def test_dialog_based_on_aws_orchestration_template():
     pass
 
 
-@pytest.mark.meta(coverage=[1686076])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1686076])
 @pytest.mark.tier(2)
-def test_provider_field_should_display_in_vm_details_page_in_ssui():
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.provider([RHEVMProvider], selector=ONE)
+def test_provider_field_should_display_in_vm_details_page_in_ssui(appliance, provider,
+                                                                  setup_provider,
+                                                                  service_vm):
     """
 
     Bugzilla:
@@ -362,7 +369,12 @@ def test_provider_field_should_display_in_vm_details_page_in_ssui():
             3.
             4. Vm details page should display which provider it belongs to
     """
-    pass
+    service, vm = service_vm
+
+    with appliance.context.use(ViaSSUI):
+        view = ssui_nav(service, "VMDetails")
+        assert provider.name in view.provider_info.read()
+        assert vm.name in view.vm_info.read()
 
 
 @pytest.mark.meta(coverage=[1685266])
