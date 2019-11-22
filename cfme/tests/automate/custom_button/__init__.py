@@ -128,9 +128,9 @@ class TextInputAutomateView(View):
 
     @property
     def is_displayed(self):
-        # This is only for wait for view
-        return (self.submit.is_displayed and self.text_box1.is_displayed
-                and self.text_box2.is_displayed)
+        return (self.submit.is_displayed and
+                self.text_box1.is_displayed and
+                self.text_box2.is_displayed)
 
 
 class CredsHostsDialogView(View):
