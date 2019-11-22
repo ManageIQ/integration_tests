@@ -22,6 +22,7 @@ from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Notification
 from widgetastic_manageiq import SSUIAppendToBodyDropdown
+from widgetastic_manageiq import SSUICardPFInfoStatus
 from widgetastic_manageiq import SSUIDropdown
 from widgetastic_manageiq import SSUIlist
 from widgetastic_manageiq import SSUIPaginationPane
@@ -175,6 +176,11 @@ class MyServiceVMDetailsView(MyServicesView):
     # TODO: This view needs enhancement by FA owner.
     #  TimelinesChart Widget not supporting completely need improvements as per SSUI.
 
+    # I won't found better way than indexing on this Page.
+    vm_info = SSUICardPFInfoStatus(locator="(.//div[contains(@class, 'card-pf-info-status')])[1]")
+    provider_info = SSUICardPFInfoStatus(
+        locator="(.//div[contains(@class, 'card-pf-info-status')])[2]"
+    )
     snapshots = SSUIDropdown("Snapshots")
     power_operations = SSUIDropdown("Power Operations")
     timeline = TimelinesChart(locator='.//*[@class="timeline"]')
