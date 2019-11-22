@@ -498,7 +498,7 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
     hosts_view.toolbar.download.item_select(report_format.value)
-    if report_format.value == "Print or export as PDF":
+    if report_format.name == "PDF":
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
     compare_hosts_view = provider.create_view(HostsCompareView)
