@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partialmethod
 
 from manageiq_client.api import APIException
 from manageiq_client.api import Entity as RestEntity
@@ -40,6 +40,26 @@ from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
+
+
+class TaggableByEditTags(Taggable):
+    """Tag trough EditTag View instead of Details View
+
+    Classes inheriting this one should have EditTag View implemented """
+
+    add_tag = partialmethod(Taggable.add_tag, details=False)
+    remove_tag = partialmethod(Taggable.remove_tag, details=False)
+
+    def get_tags(self, tenant="My Company Tags"):
+        """Overridden get_tags method to deal with the fact that some objects don't have a
+        details view."""
+        view = navigate_to(self, 'EditTags')
+        return [
+            self.appliance.collections.categories.instantiate(
+                display_name=r.category.text.replace('*', '').strip()).collections.tags.instantiate(
+                display_name=r.assigned_value.text.strip())
+            for r in view.form.tags
+        ]
 
 
 class ConfigManagementToolbar(View):
@@ -252,7 +272,7 @@ class ConfigManagementEditView(ConfigManagementView):
     is_displayed = displayed_not_implemented
 
 
-class ConfigManager(Updateable, Pretty, NavigatableMixin, Taggable):
+class ConfigManager(Updateable, Pretty, NavigatableMixin, TaggableByEditTags):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
 
@@ -279,8 +299,6 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin, Taggable):
         self.ssl = ssl
         self.credentials = credentials
         self.key = key or name
-        self.add_tag = partial(self.add_tag, details=False)
-        self.remove_tag = partial(self.remove_tag, details=False)
 
     class Credential(BaseCredential, Updateable):
         pass
@@ -406,17 +424,6 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin, Taggable):
                 )
                 # check the provider is indeed deleted
                 assert not self.exists
-
-    def get_tags(self, tenant="My Company Tags"):
-        """Overridden get_tags method to deal with the fact that providers don't have a
-        details view."""
-        view = navigate_to(self, 'EditTags')
-        return [
-            self.appliance.collections.categories.instantiate(
-                display_name=r.category.text.replace('*', '').strip()).collections.tags.instantiate(
-                display_name=r.assigned_value.text.strip())
-            for r in view.form.tags
-        ]
 
     @property
     def rest_api_entity(self):
