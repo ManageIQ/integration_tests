@@ -19,11 +19,11 @@ from cfme.rest.gen_data import service_templates_rest as _service_templates
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaUI
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-# from cfme.utils.blockers import BZ
 
 
 @pytest.fixture(scope="function")
@@ -162,14 +162,11 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
 def order_service(appliance, provider, provisioning, dialog, catalog, request):
     """ Orders service once the catalog item is created"""
     if hasattr(request, 'param'):
-        pytest.set_trace()
-        param = request.param
-        if 'vm_count' in param:
-            vm_count = '2' if '2' in param else '1'
+        vm_count = request.param['vm_count'] if 'vm_count' in request.param else '1'
+        console_test = request.param['console_test'] if 'console_test' in request.param else False
+
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-                                           vm_count=vm_count,
-                                           console_test=True if 'console_test' in param else None
-                                           )
+                            vm_count=vm_count, console_test=console_test)
     else:
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
@@ -178,15 +175,17 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     assert provision_request.is_succeeded()
     if provision_request.exists():
         provision_request.wait_for_request()
-        # if not BZ(1646333, forced_streams=['5.10']).blocks:
-        #    provision_request.remove_request()
+        if not BZ(1646333, forced_streams=['5.10']).blocks:
+            provision_request.remove_request()
     yield catalog_item
     service = MyService(appliance, catalog_item.name)
     if service.exists:
         service.delete()
-    vm_name = '{}0001'.format(catalog_item.prov_data['catalog']['vm_name'])
-    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
-    vm.cleanup_on_provider()
+    name = catalog_item.prov_data['catalog']['vm_name']
+    for i in range(vm_count):
+        vm_name = f'{name}000'f'{i+1}'
+        vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
+        vm.cleanup_on_provider()
 
 
 @pytest.fixture()
