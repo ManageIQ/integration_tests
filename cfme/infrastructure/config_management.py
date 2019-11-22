@@ -365,7 +365,7 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin, TaggableByEditTags):
                     config_profiles_loaded,
                     fail_func=self.refresh_relationships,
                     handle_exception=True,
-                    num_sec=180, delay=30)
+                    num_sec=270, delay=130)
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """Updates the manager through UI
