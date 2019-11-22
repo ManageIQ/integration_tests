@@ -135,7 +135,7 @@ def test_discover_host(request, provider, appliance, host_ips):
     for host in hosts_view.entities.entity_names:
         assert host in host_ips
 
-@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
+
 @pytest.mark.rhv2
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
