@@ -647,24 +647,6 @@ def test_retire_ansible_stack():
 
 @pytest.mark.manual
 @test_requirements.service
-@pytest.mark.tier(3)
-def test_check_all_availability_zones_for_amazon_provider():
-    """
-    Check if all availability zones can be selected while creating catalog
-    item.
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.service
 @pytest.mark.tier(2)
 def test_multiple_stack_deployment():
     """
