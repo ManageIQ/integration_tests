@@ -111,10 +111,7 @@ def ensure_resolvable_hostname(temp_appliance_preconfig_long):
 
 
 @pytest.fixture(scope='function')
-def configure_auth(
-    temp_appliance_preconfig_long,
-    auth_mode, auth_provider, user_type, request, fix_missing_hostname
-):
+def configure_auth(temp_appliance_preconfig_long, auth_mode, auth_provider, user_type, request):
     """Given auth_mode, auth_provider, user_type parametrization, configure auth for login
     testing.
 

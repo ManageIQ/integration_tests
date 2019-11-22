@@ -11,8 +11,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.version import UPSTREAM
 
-pytestmark = pytest.mark.usefixtures('browser')
-
 
 @pytest.mark.rhel_testing
 @test_requirements.drift
