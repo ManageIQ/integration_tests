@@ -165,6 +165,8 @@ def test_migration_playbooks(request, appliance, source_provider, provider,
     view = navigate_to(migration_plan, "CompletedPlanDetails")
     view.download_logs.item_select("Premigration log")
     view.flash.assert_no_error()
+    # It takes few secs to download the log hence we need to wait
+    wait_for(lambda: view.download_logs.item_enabled("Postmigration log"), timeout=5)
     view.download_logs.item_select("Postmigration log")
     view.flash.assert_no_error()
 
