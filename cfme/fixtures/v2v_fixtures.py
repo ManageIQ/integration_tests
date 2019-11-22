@@ -636,6 +636,9 @@ def component_generator(selector, source_provider, provider, source_type=None, t
             [partial_match(sources[0])], [partial_match(targets[0])]
         )
     else:
+        if provider.one_of(OpenStackProvider):
+            # default lan for OSP
+            target_type = "public"
         sources = [v for v in source_data if v == source_type]
         targets = [v for v in target_data if v == target_type]
         component = InfraMapping.NetworkComponent(
