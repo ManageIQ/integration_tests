@@ -147,7 +147,7 @@ class Rdb(Pdb):
                 msg = MIMEText(body)
                 msg['Subject'] = subject
                 msg['To'] = ', '.join(recipients)
-                smtp.sendmail('rdb-breakpoint@example.com', recipients, msg.as_string())
+                smtp.sendmail('rdb-breakpoint@redhat.com', recipients, msg.as_string())
             except socket.error:
                 logger.critical("Couldn't send email")
 
