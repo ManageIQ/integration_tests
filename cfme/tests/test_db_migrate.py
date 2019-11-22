@@ -90,7 +90,7 @@ def download_and_migrate_db(app, db_url):
     logger.info("Downloading database: {}".format(db_url))
     url_basename = os_path.basename(db_url)
     loc = "/tmp/"
-    v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
+    v2key_url = os_path.join(os_path.dirname(db_url), "v2_key.bak")
     database_yml_url = os_path.join(os_path.dirname(db_url), "database.yml")
     db_format = guess_the_db_format(url_basename)
 
@@ -119,12 +119,17 @@ def download_and_migrate_db(app, db_url):
     # fetch the files needed for decrypt the db
     try:
         fetch(v2key_url, '/var/www/miq/vmdb/certs/v2_key')
-        fetch(database_yml_url, '/var/www/miq/vmdb/conf/database.yml')
         v2_key_available = True
     except AssertionError:
         v2_key_available = False
-        logger.info("Failed to download the v2_key or database_yml. "
+        logger.info("Failed to download the v2_key. "
                     "Will have to use the fix_auth tool.")
+    try:
+        fetch(database_yml_url, '/var/www/miq/vmdb/conf/database.yml')
+        database_yml_available = True
+    except AssertionError:
+        database_yml_available = False
+        logger.info("Failed to download the database_yml.")
 
     if not v2_key_available:
         app.db.fix_auth_key()
@@ -135,6 +140,8 @@ def download_and_migrate_db(app, db_url):
         # ansible keys. See BZ 1755553.
         app.db.migrate(env_vars=["HARDCODE_ANSIBLE_PASSWORD=bogus"])
     else:
+        if not database_yml_available:
+            app.db.fix_auth_dbyml()
         app.db.migrate()
 
     # start evmserverd, wait for web UI to start and try to log in
