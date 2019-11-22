@@ -90,7 +90,7 @@ def navigate_and_select_quads(provider):
         view: the provider nodes view, quadicons already selected"""
     hosts_view = navigate_to(provider, 'ProviderNodes')
     assert hosts_view.is_displayed
-    [h.check() for h in hosts_view.entities.get_all()]
+    [h.ensure_checked() for h in hosts_view.entities.get_all()]
 
     hosts_view.toolbar.configuration.item_select('Edit Selected items')
     edit_view = provider.create_view(HostsEditView)
@@ -135,7 +135,7 @@ def test_discover_host(request, provider, appliance, host_ips):
     for host in hosts_view.entities.entity_names:
         assert host in host_ips
 
-
+@pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
 @pytest.mark.rhv2
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
