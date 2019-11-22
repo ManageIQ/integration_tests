@@ -31,7 +31,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.parametrize("mapping_data_multiple_vm_obj_single_datastore",
+@pytest.mark.parametrize("mapping_data_vm_obj_single_datastore",
                          ['SSH', 'VDDK'], indirect=True)
 @pytest.mark.parametrize(
     "source_type, dest_type, template_type",
@@ -41,7 +41,7 @@ pytestmark = [
 )
 def test_single_vm_migration_with_ssh_and_vddk(request, appliance, provider,
                                                source_type, dest_type, template_type,
-                                               mapping_data_multiple_vm_obj_single_datastore):
+                                               mapping_data_vm_obj_single_datastore):
     """
     Polarion:
         assignee: sshveta
@@ -53,7 +53,7 @@ def test_single_vm_migration_with_ssh_and_vddk(request, appliance, provider,
         initialEstimate: 1h
     """
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
-    mapping_data = mapping_data_multiple_vm_obj_single_datastore.infra_mapping_data
+    mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
@@ -62,7 +62,7 @@ def test_single_vm_migration_with_ssh_and_vddk(request, appliance, provider,
         description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
-        vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
+        vm_list=mapping_data_vm_obj_single_datastore.vm_list,
     )
 
     assert migration_plan.wait_for_state("Started")
@@ -71,7 +71,7 @@ def test_single_vm_migration_with_ssh_and_vddk(request, appliance, provider,
     assert migration_plan.wait_for_state("Successful")
 
     # validate MAC address matches between source and target VMs
-    src_vm = mapping_data_multiple_vm_obj_single_datastore.vm_list.pop()
+    src_vm = mapping_data_vm_obj_single_datastore.vm_list.pop()
     migrated_vm = get_migrated_vm(src_vm, provider)
 
     @request.addfinalizer
