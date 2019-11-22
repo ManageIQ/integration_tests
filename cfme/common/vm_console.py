@@ -199,7 +199,6 @@ class VMConsole(Pretty):
         logger.info("Sending following Keys to Console {}".format(text))
         for character in text:
             self.browser.send_keys_to_focused_element(character)
-            # canvas.send_keys(character)
             # time.sleep() is used as a short delay between two keystrokes.
             # If keys are sent to canvas any faster, canvas fails to receive them.
             time.sleep(0.3)

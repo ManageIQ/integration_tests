@@ -2,15 +2,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import providers
-from cfme.utils.providers import ProviderFilter
 
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[VMwareProvider])],
-                         scope='module'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
+    pytest.mark.provider([VMwareProvider], scope='module')
 ]
 
 

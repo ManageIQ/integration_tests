@@ -6,24 +6,11 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
-from cfme.markers.env_markers.provider import providers
-from cfme.services.myservice import MyService
-from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
-from cfme.utils.providers import ProviderFilter
-
-
-pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[CloudProvider, InfraProvider],
-                                                 required_flags=['html5_console'])],
-                         scope='module'),
-]
 
 
 @pytest.fixture(scope="function")
@@ -43,9 +30,33 @@ def vm_obj(request, provider, setup_provider, console_template):
     return vm_obj
 
 
+@pytest.mark.tier(2)
+@test_requirements.html5
+@pytest.mark.provider([VMwareProvider], selector=ONE)
+@pytest.mark.meta(automates=[BZ(1514594)])
+def test_html5_console_ports_present(appliance, setup_provider, provider):
+    """
+    Bugzilla:
+        1514594
+
+    Check to see if the Add/Edit provider screen has the Host VNC Start Port
+    and Host VNC End port. Only applicable to versions of VMware that support VNC console.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Appliance
+        initialEstimate: 1/4h
+        startsin: 5.8
+    """
+    edit_view = navigate_to(provider, 'Edit')
+    assert edit_view.vnc_start_port.is_displayed
+    assert edit_view.vnc_end_port.is_displayed
+
+
 @pytest.mark.rhv1
 @test_requirements.html5
-def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
+@pytest.mark.provider([CloudProvider, InfraProvider], required_flags=['html5_console'])
+def test_html5_vm_console(appliance, setup_provider, provider, configure_websocket, vm_obj,
         configure_console_vnc, take_screenshot):
     """
     Test the HTML5 console support for a particular provider.
@@ -92,7 +103,7 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         # wait for screen text to return non-empty string, which implies console is loaded
         # and has readable text
         wait_for(func=lambda: vm_console.get_screen_text() != '', delay=5, timeout=45)
-        assert vm_console.get_screen_text() != '', "VM Console screen text returned Empty"
+        assert vm_console.get_screen_text(), "VM Console screen text returned Empty"
         if not provider.one_of(OpenStackProvider):
             assert vm_console.send_fullscreen(), "VM Console Toggle Full Screen button doesn't work"
     except Exception:
@@ -112,28 +123,6 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         # at the End of test for RHV Provider Console and test would fail.
         # Logging out would get rid of this issue.
         appliance.server.logout()
-
-
-@pytest.mark.tier(2)
-@test_requirements.html5
-@pytest.mark.provider([VMwareProvider], selector=ONE)
-def test_html5_console_ports_present(appliance, provider):
-    """
-    Bugzilla:
-        1514594
-
-    Check to see if the Add/Edit provider screen has the Host VNC Start Port
-    and Host VNC End port. Only applicable to versions of VMware that support VNC console.
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Appliance
-        initialEstimate: 1/4h
-        startsin: 5.8
-    """
-    edit_view = navigate_to(provider, 'Edit')
-    assert edit_view.vnc_start_port.is_displayed
-    assert edit_view.vnc_end_port.is_displayed
 
 
 @pytest.mark.manual
@@ -289,49 +278,3 @@ def test_html5_ssui_console_windows(browser, operating_system, provider):
             4. Characters not garbled; no visual defect
     """
     pass
-
-
-@pytest.mark.parametrize('context', [ViaSSUI])
-@test_requirements.html5
-@pytest.mark.provider(gen_func=providers, filters=[ProviderFilter(
-    classes=[OpenStackProvider, VMwareProvider, RHEVMProvider])])
-@pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
-def test_vm_console_ssui(request, appliance, setup_provider, context, configure_websocket,
-        configure_console_vnc, configure_console_webmks, order_service, take_screenshot,
-        console_template, provider):
-    """Test Myservice VM Console in SSUI.
-
-    Metadata:
-        test_flag: ssui
-
-    Polarion:
-        assignee: apagac
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/2h
-    """
-    if (provider.one_of(VMwareProvider) and provider.version >= 6.5 and appliance.version <
-            '5.11'):
-        pytest.skip('VNC consoles are unsupported on VMware ESXi 6.5 and later')
-
-    catalog_item = order_service
-    service_name = catalog_item.name
-    with appliance.context.use(context):
-        myservice = MyService(appliance, service_name)
-        vm_obj = myservice.launch_vm_console(catalog_item)
-        vm_console = vm_obj.vm_console
-        if provider.one_of(OpenStackProvider):
-            public_net = provider.data['public_network']
-            vm_obj.mgmt.assign_floating_ip(public_net)
-        request.addfinalizer(vm_console.close_console_window)
-        request.addfinalizer(appliance.server.logout)
-        try:
-            assert vm_console.wait_for_connect(180), ("VM Console did not reach 'connected'"
-                " state")
-            assert vm_console.get_screen_text() != '', "VM Console screen text returned Empty"
-        except Exception:
-            # Take a screenshot if an exception occurs
-            vm_console.switch_to_console()
-            take_screenshot("ConsoleScreenshot")
-            vm_console.switch_to_appliance()
-            raise

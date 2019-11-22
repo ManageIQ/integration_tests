@@ -165,7 +165,7 @@ def find_pingable(mgmt_vm, allow_ipv6=True):
          In priority: first pingable address, address 'selected' by wrapanapi (possibly None)
      """
     for ip in getattr(mgmt_vm, 'all_ips', []):
-        if ip is not None:
+        if ip:
             if not allow_ipv6 and is_ipv6(ip):
                 logger.debug('VMs ip is ipv6, skipping it: %s', ip)
                 continue

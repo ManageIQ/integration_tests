@@ -1,20 +1,14 @@
 """Test for WebMKS Remote Consoles of VMware Providers."""
-
 import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.markers.env_markers.provider import providers
 from cfme.utils.generators import random_vm_name
-from cfme.utils.providers import ProviderFilter
 
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider_modscope'),
-    pytest.mark.provider(gen_func=providers,
-                         filters=[ProviderFilter(classes=[VMwareProvider],
-                                                 required_flags=['webmks_console'])],
-                         scope='module'),
+    pytest.mark.provider([VMwareProvider], scope='module', required_flags=['webmks_console']),
 ]
 
 
@@ -64,7 +58,7 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj, configure_webso
     request.addfinalizer(appliance.server.logout)
     try:
         assert vm_console.wait_for_connect(180), "VM Console did not reach 'connected' state"
-        assert vm_console.get_screen_text() != '', "VM Console screen text returned Empty"
+        assert vm_console.get_screen_text(), "VM Console screen text returned Empty"
         assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does not work")
     except Exception:
         # Take a screenshot if an exception occurs
