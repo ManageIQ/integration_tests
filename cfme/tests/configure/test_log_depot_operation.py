@@ -85,10 +85,14 @@ def pytest_generate_tests(metafunc):
                 protocol, creds,
                 proto_data.get('sub_folder'), proto_data.get('path_on_host'))])
             ids.append(protocol)
-    if metafunc.function.__name__ in ['test_collect_multiple_servers',
+    if metafunc.function.__name__ in ["test_collect_multiple_servers",
                                       "test_collect_single_servers"]:
         ids = ids[:1]
         depots = depots[:1]
+    elif metafunc.function.__name__ == "test_log_collection_over_ipv6":
+        anon_id = ids.index("anon_ftp")
+        ids = [ids[anon_id]]
+        depots = [depots[anon_id]]
     testgen.parametrize(metafunc, fixtures, depots, ids=ids, scope="function")
     return
 
@@ -364,5 +368,54 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
         collect_logs.collect_all()
     else:
         collect_logs.collect_current()
+
+    check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.sid)
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1452224])
+def test_log_collection_over_ipv6(log_depot, depot_machine_ipv4_and_ipv6, appliance, request):
+    """
+    Bug 1452224 - Log Collection fails via IPv6
+
+    Bugzilla:
+        1452224
+
+    An IPv6 FTP server can be validated for log collection, and log
+    collection succeeds.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    ipv4, ipv6 = depot_machine_ipv4_and_ipv6
+    # FTPClient gives error with ipv6
+    log_depot.machine_ip = ipv4
+
+    @request.addfinalizer
+    def _clear_ftp():
+        with log_depot.ftp as ftp:
+            ftp.cwd(ftp.upload_dir)
+            ftp.recursively_delete()
+
+    # Prepare empty workspace
+    with log_depot.ftp as ftp:
+        # move to upload folder
+        ftp.cwd(ftp.upload_dir)
+        # delete all files
+        ftp.recursively_delete()
+
+    uri = f"{ipv6}{log_depot.access_dir}"
+    collect_logs = appliance.server.collect_logs
+    with update(collect_logs):
+        collect_logs.depot_type = log_depot.protocol
+        collect_logs.depot_name = fauxfactory.gen_alphanumeric()
+        collect_logs.uri = uri
+        collect_logs.username = log_depot.credentials.username
+        collect_logs.password = log_depot.credentials.password
+    request.addfinalizer(collect_logs.clear)
+    collect_logs.collect_all()
 
     check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.sid)
