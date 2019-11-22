@@ -538,37 +538,38 @@ def test_service_dialogs_crud_non_admin_user(appliance, user_self_service_role):
         dialog.delete()
 
 
-@pytest.fixture(scope="module")
-def custom_button(appliance):
+@pytest.fixture(scope="function")
+def custom_button(appliance, import_dialog):
     """This fixture creates custom button for user object"""
-    def button(dialog):
-        collection = appliance.collections.button_groups
+    sd, ele_label = import_dialog
+    collection = appliance.collections.button_groups
 
-        # Create custom button group
-        button_grp = collection.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
-            type=getattr(collection, "USER"),
-        )
+    # Create custom button group
+    button_grp = collection.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        type=getattr(collection, "USER"),
+    )
 
-        # Create custom button
-        button = button_grp.buttons.create(
-            text=fauxfactory.gen_alphanumeric(),
-            hover=fauxfactory.gen_alphanumeric(),
-            dialog=dialog,
-            system="Request",
-            request="InspectMe",
-        )
-        return button_grp, button
+    # Create custom button
+    button = button_grp.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        dialog=sd,
+        system="Request",
+        request="InspectMe",
+    )
 
-    return button
+    yield button_grp, button
+    button.delete_if_exists()
+    button_grp.delete_if_exists()
 
 
 def navigation_to_view(custom_button_group, button):
-    """This function helps to navigate on view comes after clicking on custom button"""
+    """This function helps to navigate to view that comes after clicking on custom button"""
     custom_button_group.item_select(button.text)
     view = button.create_view(TextInputAutomateView, wait="10s")
-    return view.text_box2.read(), view
+    return view
 
 
 @pytest.mark.tier(1)
@@ -580,8 +581,8 @@ def navigation_to_view(custom_button_group, button):
     ids=["domain"]
 )
 @pytest.mark.parametrize("file_name", ["bz_1715396.yml"], ids=["dialog"])
-def test_dialog_element_values_passed_to_button(request, appliance, import_datastore, import_data,
-                                                import_dialog, custom_button, soft_assert):
+def test_dialog_element_values_passed_to_button(appliance, import_datastore, import_data,
+                                                custom_button, file_name):
     """
     Bugzilla:
         1715396
@@ -602,10 +603,10 @@ def test_dialog_element_values_passed_to_button(request, appliance, import_datas
                Message: create, Request: object_walker)
             4. Click the custom button, and observe the dialog. The element 'Text Box 1' default
                value is empty, the dynamic element 'Text Box 2' has been dynamically populated.
-               click on submit the button.
-            5. Repeat step 4, but type some some value(like "aa") in element 'Text Box 1'.
-               Submit the button.
-            6. Repeat step 5, but now also amend the text dynamically entered into 'Text Box 2'
+               click on submit button.
+            5. Repeat step 4, but type some value(like "aa") in element 'Text Box 1' and click on
+               Submit button.
+            6. Repeat step 5, but now amend the text dynamically entered into 'Text Box 2'
                (for example adding the string "also").
         expectedResults:
             1.
@@ -627,38 +628,36 @@ def test_dialog_element_values_passed_to_button(request, appliance, import_datas
                      |    $evm.root['dialog_text_box_2'] = The dynamic method also ran at:
                      2019-05-30 09:50:10 +0100   (type: String)Provision more than 10 VMs
     """
-    sd, ele_label = import_dialog
-    button_grp, button = custom_button(dialog=sd)
-    request.addfinalizer(button_grp.delete_if_exists)
-    request.addfinalizer(button.delete_if_exists)
+    button_grp, button = custom_button
 
-    obj = appliance.collections.users.instantiate(name="Administrator")
-    view = navigate_to(obj, "Details")
+    user_obj = appliance.collections.users.instantiate(name="Administrator")
+    view = navigate_to(user_obj, "Details")
     custom_button_group = Dropdown(view, button_grp.hover)
-    dynamic_value, view = navigation_to_view(custom_button_group, button)
+    view = navigation_to_view(custom_button_group, button)
 
     # Step 4
     with LogValidator("/var/www/miq/vmdb/log/automation.log",
                       matched_patterns=[".*dialog_text_box_1:      .*",
-                                        f".*dialog_text_box_2: {dynamic_value}.*"]
+                                        f".*dialog_text_box_2: {view.text_box2.read()}.*"]
                       ).waiting(timeout=120):
         view.submit.click()
 
     # Step 5
-    dynamic_value, view = navigation_to_view(custom_button_group, button)
+    view = navigation_to_view(custom_button_group, button)
+    msg = fauxfactory.gen_alphanumeric()
     with LogValidator("/var/www/miq/vmdb/log/automation.log",
-                      matched_patterns=[".*dialog_text_box_1: Hello.*",
-                                        f".*dialog_text_box_2: Also{dynamic_value}.*"]
+                      matched_patterns=[f".*dialog_text_box_1: {msg}.*",
+                                        f".*dialog_text_box_2: {view.text_box2.read()}.*"]
                       ).waiting(timeout=120):
-        view.text_box1.fill("Hello")
+        view.text_box1.fill(msg)
         view.submit.click()
 
     # Step 6
-    dynamic_value, view = navigation_to_view(custom_button_group, button)
+    view = navigation_to_view(custom_button_group, button)
     with LogValidator("/var/www/miq/vmdb/log/automation.log",
-                      matched_patterns=[".*dialog_text_box_1: Hello.*",
-                                        f".*dialog_text_box_2: {dynamic_value}.*"]
+                      matched_patterns=[f".*dialog_text_box_1: {msg}.*",
+                                        f".*dialog_text_box_2: also{view.text_box2.read()}.*"]
                       ).waiting(timeout=120):
-        view.text_box1.fill("Hello")
-        view.text_box2.fill(f"Also{view.text_box2.read()}")
+        view.text_box1.fill(msg)
+        view.text_box2.fill(f"also{view.text_box2.read()}")
         view.submit.click()
