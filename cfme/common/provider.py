@@ -468,7 +468,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             "hostname": self.hostname,
             "ipaddress": self.ip_address,
             "name": self.name,
-            "type": "ManageIQ::Providers::{}".format(self.db_types[0]),
+            "type": f"ManageIQ::Providers::{self.db_types[0]}",
         }
 
         # data for provider_attributes['connection_configurations']
@@ -486,15 +486,14 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         try:
             self.appliance.rest_api.collections.providers.action.create(**provider_attributes)
         except APIException as err:
-            raise AssertionError("Provider wasn't added: {}".format(err))
+            raise AssertionError(f"Provider was not added: {err}")
 
         response = self.appliance.rest_api.response
         if not response:
-            raise AssertionError("Provider wasn't added, status code {}".format(
-                response.status_code))
+            raise AssertionError(f"Provider was not added, status code {response.status_code}")
 
         if validate_inventory:
-            self.validate()
+            self.validate(timeout=300)
 
         self.appliance.rest_api.response = response
         return True
@@ -652,14 +651,14 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         else:
             return True
 
-    def validate(self):
+    def validate(self, timeout=1000, delay=5):
         refresh_timer = RefreshTimer(time_for_refresh=300)
         try:
             wait_for(self.is_refreshed,
                      [refresh_timer],
                      message="is_refreshed",
-                     num_sec=1000,
-                     delay=60,
+                     timeout=timeout,
+                     delay=delay,
                      handle_exception=True)
         except Exception:
             # To see the possible error.
