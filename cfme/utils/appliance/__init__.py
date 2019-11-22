@@ -18,7 +18,6 @@ import pytest
 import pytz
 import requests
 import sentaku
-from aenum import Enum
 from cached_property import cached_property
 from debtcollector import removals
 from manageiq_client.api import APIException
@@ -168,11 +167,6 @@ class IPAppliance(object):
         'openldap': '/etc/openldap/ldap.conf',
         'sssd': '/etc/sssd/sssd.conf'
     }
-
-    class DownloadOptions(Enum):
-        TEXT = 'Download as Text'
-        CSV = 'Download as CSV'
-        PDF = 'Print or export as PDF'
 
     @cached_property
     def db_service(self):
