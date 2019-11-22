@@ -183,23 +183,6 @@ def test_dd_multiselect_default_element_is_shouldnt_be_blank_when_loaded_by_anot
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_expression_method_definitions_should_not_fail_with_script_error_in_a_dialog():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.10
-        tags: service
-    Bugzilla:
-        1558926
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_dialog_text_box_triggers_fields_shouldnt_refresh_too_soon_often():
     """
     Polarion:
