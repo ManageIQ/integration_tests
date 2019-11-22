@@ -5946,3 +5946,17 @@ class V2VFlashMessages(FlashMessages):
         except NoSuchElementException:
             pass
         return result
+
+
+class SSUICardPFInfoStatus(Widget):
+    """This widget represent custom pf info card on SSUI VM Page """
+
+    ROOT = ParametrizedLocator("{@locator}")
+    ITEMS = ".//div[contains(@class, 'card-pf-info-item')]"
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    def read(self):
+        return [self.browser.text(el) for el in self.browser.elements(self.ITEMS)]
