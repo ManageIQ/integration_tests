@@ -1,5 +1,4 @@
 import attr
-from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Table
 from widgetastic.widget import Text
@@ -64,70 +63,68 @@ class OptimizationSavedReportDetailsView(OptimizationView):
             and self.table.is_displayed
             and self.navigation.currently_selected == ["Overview", "Optimization"]
             and self.breadcrumb.locations
-            == ["Overview", "Optimization", context_obj.parent_obj.menu_name, context_obj.name]
+            == ["Overview", "Optimization", context_obj.parent.parent.menu_name, context_obj.name]
         )
+
+
+@attr.s
+class OptimizationSavedReport(BaseEntity):
+    name = attr.ib()
+    run_at = attr.ib()
+    username = attr.ib(default=None)
+
+
+@attr.s
+class OptimizationSavedReportsCollection(BaseCollection):
+    ENTITY = OptimizationSavedReport
 
 
 @attr.s
 class OptimizationReport(BaseEntity):
     menu_name = attr.ib()
-    last_run_at = attr.ib(default=None)
     runs = attr.ib(default=None)
 
-    def __attrs_post_init__(self):
-        self._collections = {
-            "optimization_saved_reports": OptimizationSavedReportsCollection,
-            "saved_reports": SavedReportsCollection,
-            "reports": ReportsCollection,
-        }
+    _collections = {
+        "optimization_saved_reports": OptimizationSavedReportsCollection,
+        "saved_reports": SavedReportsCollection,
+        "reports": ReportsCollection,
+    }
+
+    @property
+    def last_run_at(self):
+        view = navigate_to(self.parent, "All")
+        return view.table.row(report_name=self.menu_name)["Last Run at"].text
 
     def queue(self):
         view = navigate_to(self.parent, "All")
         row = view.table.row(report_name=self.menu_name)
         row.action.widget.click()
         view.flash.assert_no_error()
-        last_run_at = row["Last Run at"].text
+
+        # column value for "Last Run at" changes to an empty string after `Queue report` button is
+        # pressed
         wait_for(
-            lambda: row["Last Run at"].text != last_run_at,
+            lambda: row["Last Run at"].text != "",
             fail_func=view.refresh.click,
             num_sec=60,
             message="Wait for report queue completion",
             delay=1,
         )
-        view.refresh.click()
-        self.last_run_at = row["Last Run at"].text
+        last_run_at = row["Last Run at"].text
         row.click()
+
         view = self.create_view(OptimizationReportAllView)
-        return self.saved_optimization_reports.instantiate(
-            name=view.table.row(last_run_at=self.last_run_at)["Report"].text,
-            last_run_at=self.last_run_at,
+
+        return self.collections.optimization_saved_reports.instantiate(
+            name=view.table.row(last_run_at=last_run_at)["Report"].text,
+            run_at=last_run_at,
             username=self.appliance.user.credential.principal,
         )
-
-    @cached_property
-    def saved_optimization_reports(self):
-        return self.collections.optimization_saved_reports
 
 
 @attr.s
 class OptimizationReportsCollection(BaseCollection):
     ENTITY = OptimizationReport
-
-
-@attr.s
-class OptimizationSavedReport(BaseEntity):
-    name = attr.ib()
-    last_run_at = attr.ib()
-    username = attr.ib(default=None)
-
-    @property
-    def parent_obj(self):
-        return self.parent.parent
-
-
-@attr.s
-class OptimizationSavedReportsCollection(BaseCollection):
-    ENTITY = OptimizationSavedReport
 
 
 @navigator.register(OptimizationReportsCollection, "All")
@@ -151,7 +148,7 @@ class SavedOptimizationReportAll(CFMENavigateStep):
 @navigator.register(OptimizationSavedReport, "Details")
 class SavedOptimizationReportDetails(CFMENavigateStep):
     VIEW = OptimizationSavedReportDetailsView
-    prerequisite = NavigateToAttribute("parent_obj", "SavedAll")
+    prerequisite = NavigateToAttribute("parent.parent", "SavedAll")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.table.row(last_run_at=self.obj.last_run_at).click()
+        self.prerequisite_view.table.row(last_run_at=self.obj.run_at).click()

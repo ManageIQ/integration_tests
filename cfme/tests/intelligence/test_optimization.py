@@ -17,11 +17,6 @@ REPORTS = [
 
 
 @pytest.mark.meta(automates=[1769346])
-@pytest.mark.uncollectif(
-    lambda menu_name: menu_name in ["Top CPU Consumers (weekly)", "Top Memory Consumers (weekly)"]
-    and BZ(1769346, forced_streams=["5.11"]).blocks,
-    reason="Breadcrumb for these reports is incorrect which is why the exists method fails.",
-)
 @pytest.mark.parametrize("menu_name", REPORTS, ids=[attributize_string(i) for i in REPORTS])
 def test_generate_optimization_report(appliance, menu_name):
     """
@@ -38,6 +33,14 @@ def test_generate_optimization_report(appliance, menu_name):
             1. Navigate to Overview > Optimization and queue the report with parametrized menu_name.
             2. Check if the report exists.
     """
+    if (
+        menu_name in ["Top CPU Consumers (weekly)", "Top Memory Consumers (weekly)"]
+        and BZ(1769346).blocks
+    ):
+        pytest.skip(
+            "Breadcrumb for these reports is incorrect which is why the exists method fails."
+        )
+
     saved_report = appliance.collections.optimization_reports.instantiate(
         menu_name=menu_name
     ).queue()
