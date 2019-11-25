@@ -64,17 +64,6 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
 
 
 @pytest.fixture
-def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
-    """Returns two database-owning appliances, configures first appliance with provider,
-    enables embedded ansible, takes a backup.
-    """
-    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
-    appl1.db.backup()
-    appl2.db.backup()
-    return temp_appliances_unconfig_funcscope_rhevm
-
-
-@pytest.fixture
 def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     """Returns database-owning appliance, enables embedded ansible,
     takes a backup prior to running tests.
@@ -355,7 +344,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_pg_basebackup_replicated(
-        request, get_replicated_appliances_with_providers):
+        request, temp_appliances_unconfig_funcscope_rhevm):
     """
     Polarion:
         assignee: jhenner
@@ -364,7 +353,10 @@ def test_appliance_console_restore_pg_basebackup_replicated(
         initialEstimate: 1/2h
         upstream: no
     """
-    appl1, appl2 = get_replicated_appliances_with_providers
+    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
+    appl1.db.backup()
+    appl2.db.backup()
+
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
     appl2.set_pglogical_replication(replication_type=':none')
@@ -439,7 +431,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_replicated(
-        request, get_replicated_appliances_with_providers):
+        request, temp_appliances_unconfig_funcscope_rhevm):
     """
     Polarion:
         assignee: jhenner
@@ -447,12 +439,15 @@ def test_appliance_console_restore_db_replicated(
         casecomponent: Configuration
         initialEstimate: 1h
     """
-    appl1, appl2 = get_replicated_appliances_with_providers
+    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
+    appl1.db.backup()
+    appl2.db.backup()
     providers_before_restore = set(appl1.managed_provider_names)
+
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
-
     restore_db(appl2)
+
     # Restore db on first appliance
     appl1.set_pglogical_replication(replication_type=':none')
     appl1.evmserverd.stop()
@@ -463,6 +458,7 @@ def test_appliance_console_restore_db_replicated(
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.wait_for_web_ui()
+
     # reconfigure replication between appliances which switches to "disabled"
     # during restore
     appl2.set_pglogical_replication(replication_type=':none')
