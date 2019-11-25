@@ -171,33 +171,6 @@ def test_schedule_automation_request(scheduler):
     pass
 
 
-@pytest.mark.tier(1)
-@pytest.mark.customer_scenario
-@pytest.mark.meta(coverage=[1596142])
-@test_requirements.rest
-def test_update_roles_via_rest_name_change():
-    """
-    Bugzilla:
-        1596142
-
-    Polarion:
-        assignee: pvala
-        caseimportance: high
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        setup:
-            1. Change the current server name to something other than the default.
-        testSteps:
-            1. Send a PATCH request to update the server roles via REST using
-                `appliance.update_advanced_settings({"server": {"role": :roles}})`
-            2. Check if the server name was set to default.
-        expectedResults:
-            1. Request was successful.
-            2. Server name remains the same.
-    """
-    pass
-
-
 @pytest.mark.customer_scenario
 @pytest.mark.meta(coverage=[1661445])
 @pytest.mark.tier(1)
