@@ -16,7 +16,7 @@ pytestmark = [
     pytest.mark.meta(server_roles="-automate"),  # To prevent the provisioning itself.
     test_requirements.service,
     pytest.mark.provider(classes=[InfraProvider], scope="module", selector=ONE),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider_modscope')
 ]
 
 

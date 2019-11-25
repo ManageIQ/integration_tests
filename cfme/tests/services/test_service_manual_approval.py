@@ -18,7 +18,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider_modscope', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running,
     pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE,

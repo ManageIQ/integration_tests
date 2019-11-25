@@ -47,7 +47,7 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.provider([CloudProvider, InfraProvider], scope='module', selector=ONE_PER_TYPE,
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
-    pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider'),
+    pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     test_requirements.chargeback,
 ]
 

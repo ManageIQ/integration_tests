@@ -16,7 +16,7 @@ pytestmark = [
     test_requirements.rest,
     pytest.mark.tier(2),
     pytest.mark.meta(server_roles='+automate'),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope='module')
 ]
 

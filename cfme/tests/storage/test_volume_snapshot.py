@@ -14,7 +14,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     test_requirements.storage,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider(
         [EC2Provider, OpenStackProvider],
         scope='module',

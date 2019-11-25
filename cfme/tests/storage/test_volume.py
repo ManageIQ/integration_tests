@@ -18,7 +18,7 @@ pytestmark = [
     pytest.mark.tier(3),
     test_requirements.storage,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider(
         [OpenStackProvider, EC2Provider],
         scope='module',
