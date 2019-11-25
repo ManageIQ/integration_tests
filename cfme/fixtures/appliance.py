@@ -299,13 +299,6 @@ def _walk_to_obj_parent(obj):
             pass
     return obj
 
-#
-# @pytest.mark.hookwrapper
-# def pytest_runtest_setup(item):
-#     blabla = item
-#     config = getattr(item, 'config')
-#     yield
-
 
 @pytest.mark.hookwrapper
 def pytest_fixture_setup(fixturedef, request):

@@ -29,6 +29,7 @@ pytest_plugins = [
     "cfme.test_framework.sprout.plugin",
     "cfme.test_framework.appliance_police",
     "cfme.test_framework.appliance",
+    "cfme.test_framework.appliance.dummy",
     "cfme.test_framework.appliance_log_collector",
     "cfme.test_framework.browser_isolation",
     "cfme.fixtures.ansible_fixtures",
