@@ -106,10 +106,7 @@ def check_item_visibility(tag, user_restricted):
         Returns: None
         """
         if vis_expect:
-            vis_object.add_tag(tag=tag, exists_check=True)
-        else:
-            if tag in vis_object.get_tags():
-                vis_object.remove_tag(tag=tag)
+            vis_object.add_tag(tag=tag)
         with user_restricted:
             try:
                 if isinstance(vis_object, Host):
@@ -126,6 +123,8 @@ def check_item_visibility(tag, user_restricted):
             except Exception:
                 logger.debug('Tagged item is not visible')
                 actual_visibility = False
+        if vis_expect:
+            vis_object.remove_tag(tag=tag)
 
         assert actual_visibility == vis_expect
 
