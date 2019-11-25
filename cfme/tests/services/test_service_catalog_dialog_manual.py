@@ -149,21 +149,6 @@ def test_reconfigure_service_fields_empty_after_deploying_service():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_order_service_after_deleting_provider():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: service
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_custom_image_on_item_bundle_crud():
     """
     Polarion:
