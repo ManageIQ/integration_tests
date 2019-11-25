@@ -1,4 +1,5 @@
-"""This module contains REST API specific tests."""
+"""This module contains REST API specific tests which require a provider setup.
+For tests that do not require provider setup, add them to test_providerless_rest.py"""
 import os
 import random
 from datetime import datetime
