@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fauxfactory import gen_alphanumeric
 
@@ -301,10 +303,23 @@ def local_user(temp_appliance_preconfig_long, auth_user, user_type, auth_provide
         user.delete()
 
 
+@pytest.fixture
+def do_not_fetch_remote_groups(temp_appliance_preconfig_long):
+    # modify auth settings to not get groups
+    temp_appliance_preconfig_long.server.authentication.auth_settings = {
+        'auth_settings': {'get_groups': False}
+    }
+    # this setting takes a bit to register, so wait 30 s
+    time.sleep(30)
+    yield
+    # resetting settings not necessary as it's handled by the configure_auth fixture
+
+
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
                          reason='Amazon auth_data needed for local group testing')
-def test_login_local_group(temp_appliance_preconfig_long, local_user, local_group, soft_assert):
+def test_login_local_group(temp_appliance_preconfig_long, local_user, local_group, soft_assert,
+                           do_not_fetch_remote_groups):
     """
     Test remote authentication with a locally created group.
     Group is NOT retrieved from or matched to those on authentication provider
@@ -315,11 +330,6 @@ def test_login_local_group(temp_appliance_preconfig_long, local_user, local_grou
         initialEstimate: 1/4h
         casecomponent: Auth
     """
-    # modify auth settings to not get groups
-    temp_appliance_preconfig_long.server.authentication.auth_settings = {
-        'auth_settings': {'get_groups': False}
-    }
-
     with local_user:
         view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
         soft_assert(view.current_fullname == local_user.name,
