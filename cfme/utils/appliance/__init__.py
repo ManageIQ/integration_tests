@@ -1584,7 +1584,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             logger.exception('Exception clearing cached_property "guid"')
         return str(result).rstrip('\n')  # should return UUID from stdout
 
-    def wait_for_ssh(self, timeout=600):
+    def wait_for_ssh(self, timeout=30):
         """Waits for appliance SSH connection to be ready
 
         Args:
@@ -1592,7 +1592,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         """
         wait_for(func=lambda: self.is_ssh_running,
                  message='appliance.is_ssh_running',
-                 delay=5,
+                 delay=1,
                  num_sec=timeout)
 
     @property
@@ -2884,34 +2884,44 @@ class ApplianceStack(LocalStack):
         super(ApplianceStack, self).__init__()
 
     def push(self, obj):
-        was_before = self.top
+        stack_parent = self.top
         super(ApplianceStack, self).push(obj)
 
-        logger.info(f"Pushed appliance {obj.hostname} on stack "
-                    f"(was {was_before.hostname if was_before else 'empty'} before)")
+        logger.info(f"Pushed appliance hostname [{obj.hostname}] on stack \n"
+                    f"Previous stack head was {getattr(stack_parent, 'hostname', 'empty')}")
         if obj.browser_steal:
             from cfme.utils import browser
             browser.start()
 
         for hook in self._registered_hooks['on push']:
-            logger.info(f"appliance hook {hook.__name__} triggered on push")
-            hook(obj)
+            logger.info(f"appliance hostname [{obj.hostname}] hook {hook.__name__} "
+                        f"triggered on push")
+            # Diaper the heck out of these because all kinds of exceptions could happen
+            try:
+                hook(obj)
+            except Exception:
+                logger.exception(f'Exception running push hook {hook.__name__} on appliance {obj}')
 
     def pop(self):
-        was_before = super(ApplianceStack, self).pop()
-        if was_before:
+        stack_parent = super(ApplianceStack, self).pop()
+        if stack_parent:
             for hook in self._registered_hooks['on pop']:
-                logger.info(f"appliance hook {hook.__name__} triggered on pop")
-                hook(was_before)
+                logger.info(f"appliance hostname [{stack_parent.hostname}] hook {hook.__name__} "
+                            f"triggered on pop")
+                try:
+                    hook(stack_parent)
+                except Exception:
+                    logger.exception(f'Exception running pop hook {hook.__name__} '
+                                     f'on appliance {stack_parent}')
 
         current = self.top
-        logger.info(f"Popped appliance {was_before.hostname if was_before else 'empty'} from the "
-                    f"stack (now there is {current.hostname if current else 'empty'})")
+        logger.info(f"Popped appliance {getattr(stack_parent, 'hostname', 'empty')} from stack\n"
+                    f"Stack head is {getattr(current, 'hostname', 'empty')}")
 
-        if was_before and was_before.browser_steal:
+        if stack_parent and stack_parent.browser_steal:
             from cfme.utils import browser
             browser.start()
-        return was_before
+        return stack_parent
 
     def register_hook(self, hook, func):
         if hook in self._registered_hooks:
