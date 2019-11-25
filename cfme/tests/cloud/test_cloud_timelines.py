@@ -16,8 +16,8 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(2),
-    # Only onr prov out of the 2 is taken, if not supplying --use-provider=complete
-    pytest.mark.provider([AzureProvider, EC2Provider]),
+    # Only one prov out of the 2 is taken, if not supplying --use-provider=complete
+    pytest.mark.provider([AzureProvider, EC2Provider], required_flags=['timelines', 'events']),
     pytest.mark.usefixtures('setup_provider'),
     test_requirements.timelines,
     test_requirements.events,
