@@ -329,7 +329,7 @@ def setup_ansible_repository(appliance, wait_for_ansible):
         timeout=60,
         fail_func=view.toolbar.refresh.click
     )
-    yield
+    yield repository
     repository.delete_if_exists()
 
 
@@ -471,5 +471,9 @@ def test_import_domain_containing_playbook_method(request, appliance, setup_ansi
     domain = datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
     request.addfinalizer(domain.delete_if_exists)
     view = appliance.browser.create_view(FileImportSelectorView)
-    error_msg = "Playbook 'invalid_1677575.yml' not found in repository 'test_playbooks_automate'"
-    assert error_msg in view.flash.read()[0]
+    # setup_ansible_repository.name is ansible repository name already there in datastore yml which
+    # we are going to import.
+    error_msg = (
+        f"Playbook 'invalid_1677575.yml' not found in repository '{setup_ansible_repository.name}'"
+    )
+    view.flash.assert_message(text=error_msg, partial=True)
