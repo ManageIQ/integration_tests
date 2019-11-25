@@ -26,7 +26,7 @@ pytestmark = [
     pytest.mark.provider([RHEVMProvider], selector=ONE,
                        scope='module',
                        required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     test_requirements.chargeback,
 ]
 
