@@ -17,7 +17,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     test_requirements.quota,
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider([RHEVMProvider, VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 ]
 

@@ -9,7 +9,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.report,
-    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.provider([BaseProvider], selector=ONE, scope="module"),
 ]
 

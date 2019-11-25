@@ -13,7 +13,7 @@ from cfme.utils.update import update
 
 pytestmark = [
     test_requirements.quota,
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider([OpenStackProvider],
                          required_fields=[['provisioning', 'image']], scope="module")
 ]

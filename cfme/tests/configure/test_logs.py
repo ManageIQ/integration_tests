@@ -15,7 +15,7 @@ pytestmark = [
     pytest.mark.provider(
         [AzureProvider, EC2Provider, RHEVMProvider, SCVMMProvider], scope="module"
     ),
-    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.usefixtures("setup_provider_modscope"),
 ]
 
 

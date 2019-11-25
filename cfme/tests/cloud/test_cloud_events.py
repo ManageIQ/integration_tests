@@ -12,7 +12,7 @@ from cfme.utils.log import logger
 pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([AzureProvider], scope='module'),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     test_requirements.events
 ]
 

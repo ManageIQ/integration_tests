@@ -14,7 +14,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider([VMwareProvider], required_fields=['hosts'], selector=ONE, scope='module'),
-    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.usefixtures("setup_provider_modscope"),
     test_requirements.scheduled_ops
 ]
 

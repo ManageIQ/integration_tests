@@ -7,7 +7,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.provider([OpenStackProvider], scope="module"),
 ]
 

@@ -13,7 +13,7 @@ from cfme.markers.env_markers.provider import ONE
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.report,
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider([InfraProvider], scope='module', selector=ONE),
 ]
 
