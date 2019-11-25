@@ -10,7 +10,7 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 
 pytestmark = [
     test_requirements.service,
-    pytest.mark.usefixtures('setup_provider', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider_module', 'catalog_item', 'uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.tier(3),

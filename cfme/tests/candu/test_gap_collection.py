@@ -13,7 +13,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.c_and_u,
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider([VMwareProvider],
     scope='module',
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')]),

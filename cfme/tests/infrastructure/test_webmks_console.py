@@ -15,7 +15,7 @@ from cfme.utils.providers import ProviderFilter
 
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider(gen_func=providers,
                          filters=[ProviderFilter(classes=[InfraProvider],
                                                  required_flags=['webmks_console'])],

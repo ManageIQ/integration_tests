@@ -13,7 +13,7 @@ from cfme.networks.views import SubnetView
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider([AzureProvider], selector=ONE_PER_CATEGORY, scope='module'),
     test_requirements.tag
 ]

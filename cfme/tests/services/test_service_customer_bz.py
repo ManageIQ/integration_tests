@@ -15,7 +15,7 @@ from cfme.utils.wait import TimedOutError
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider_modscope', 'uses_infra_providers'),
     test_requirements.customer_stories,
     test_requirements.service,
     pytest.mark.long_running,

@@ -24,7 +24,7 @@ filter_fields = [['provisioning', 'template'],
 pytestmark = [
     test_requirements.vmware,
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider', 'uses_infra_providers'),
+    pytest.mark.usefixtures('setup_provider_modscope', 'uses_infra_providers'),
     pytest.mark.provider([VMwareProvider], required_fields=filter_fields, scope="module")
 ]
 

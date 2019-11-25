@@ -10,7 +10,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.storage,
-    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.usefixtures("setup_provider_modscope"),
     pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module"),
     pytest.mark.uncollectif(lambda manager, provider:
                             provider.one_of(EC2Provider) and "object_managers" in manager,

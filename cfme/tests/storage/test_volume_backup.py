@@ -8,7 +8,7 @@ from cfme.utils.log import logger
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider(
         [OpenStackProvider],
         scope='module',

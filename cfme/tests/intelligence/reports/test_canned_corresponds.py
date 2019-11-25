@@ -10,7 +10,7 @@ from cfme.utils.providers import get_crud_by_name
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider(classes=[InfraProvider], scope='module'),
     test_requirements.report,
 ]
