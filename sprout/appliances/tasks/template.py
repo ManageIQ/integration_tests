@@ -202,7 +202,6 @@ def prepare_template_configure(self, template_id):
         template.provider_name, template.name, container=template.container)
     try:
         appliance.configure(
-            setup_fleece=False,
             log_callback=lambda s: template.set_status("Customization progress: {}".format(s)),
             on_openstack=template.provider.provider_data.get('type', None) == 'openstack')
     except Exception as e:
