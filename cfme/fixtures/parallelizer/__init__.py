@@ -109,7 +109,8 @@ class SlaveDetail(object):
 
     appliance = attr.ib()
     worker_config = attr.ib()
-    id = attr.ib(default=attr.Factory(lambda: next(SlaveDetail.slaveid_generator)))
+    id = attr.ib(default=attr.Factory(lambda: next(SlaveDetail.slaveid_generator)),
+                 repr=lambda value: value.decode('utf-8'))
     forbid_restart = attr.ib(default=False, init=False)
     tests = attr.ib(default=attr.Factory(set), repr=False)
     process = attr.ib(default=None, repr=False)
@@ -205,7 +206,7 @@ class ParallelSession(object):
             if returncode:
                 slave.process = None
                 if returncode == -9:
-                    msg = f'{slave.id} killed due to error, respawning'
+                    msg = f'{slave.id.decode("utf-8")} killed due to error, respawning'
                 else:
                     msg = f'{slave.id} terminated unexpectedly with status {returncode}, respawning'
                 if slave.tests:
