@@ -37,14 +37,14 @@ def utility_vm():
                 authorized_ssh_keys=authorized_ssh_keys)
         )
     except AttributeError:
-        msg = 'Missing data in cfme_data.yaml, cannot deploy proxy'
+        msg = 'Missing utility_vm data from cfme_data.yaml, cannot deploy the utility vm.'
         logger.exception(msg)
         pytest.skip(msg)
 
     try:
         found_ip = wait_pingable(vm, wait=300)
     except TimedOutError:
-        msg = 'Timed out waiting for reachable proxy VM IP'
+        msg = 'Timed out waiting for reachable IP on utility_vm'
         logger.exception(msg)
         pytest.skip(msg)
 
