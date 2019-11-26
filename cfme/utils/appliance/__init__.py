@@ -2562,11 +2562,11 @@ class Appliance(IPAppliance):
             vm_name: Name of the VM this appliance is running as
             browser_steal: Setting of the browser_steal attribute.
         """
-        from cfme.utils.providers import get_crud
-        from cfme.containers.provider.openshift import OpenshiftProvider
+        from wrapanapi.systems.container import Openshift as OpenShiftSystem
+        from cfme.utils.providers import get_mgmt
         from cfme.utils import conf
 
-        provider = get_crud(provider_key)
+        provider_mgmt = get_mgmt(provider_key)
         app_kwargs = kwargs.copy()
 
         if 'hostname' not in app_kwargs:
@@ -2574,10 +2574,10 @@ class Appliance(IPAppliance):
                 found_ip = None
                 try:
                     # TODO: change after openshift wrapanapi refactor
-                    if provider.one_of(OpenshiftProvider):
-                        found_ip = provider.mgmt.get_ip_address(vm_name)
+                    if isinstance(provider_mgmt, OpenShiftSystem):
+                        found_ip = provider_mgmt.get_ip_address(vm_name)
                     else:
-                        vm = provider.mgmt.get_vm(vm_name)
+                        vm = provider_mgmt.get_vm(vm_name)
                         vm.ensure_state(VmState.RUNNING)
                         # intentionally taking the time to ping all of these so its recorded
                         potentials = [ip for ip in vm.all_ips if is_pingable(ip)]
@@ -2593,15 +2593,16 @@ class Appliance(IPAppliance):
                               num_sec=600)
             app_kwargs['hostname'] = str(vm_ip)
 
-        if provider.one_of(OpenshiftProvider):
+        if isinstance(provider_mgmt, OpenShiftSystem):
             # there should also be present appliance hostname, container, db_host
-            provider_creds = conf.credentials[provider.provider_data['credentials']]
-            ssh_creds = conf.credentials[provider.provider_data['ssh_creds']]
+            provider_data = conf.cfme_data.management_systems[provider_key]
+            provider_creds = conf.credentials[provider_data['credentials']]
+            ssh_creds = conf.credentials[provider_data['ssh_creds']]
 
             if not app_kwargs.get('project'):
                 app_kwargs['project'] = vm_name
             app_kwargs['openshift_creds'] = {
-                'hostname': provider.provider_data['hostname'],
+                'hostname': provider_data['hostname'],
                 'username': provider_creds['username'],
                 'password': provider_creds['password'],
                 'ssh': {
@@ -2612,12 +2613,12 @@ class Appliance(IPAppliance):
 
         appliance = cls(**app_kwargs)
         appliance.vm_name = vm_name
-        appliance.provider = provider
+        appliance.provider = provider_mgmt
         appliance.provider_key = provider_key
         return appliance
 
     @logger_wrap("Configure Appliance: {}")
-    def configure(self, setup_fleece=False, log_callback=None, on_openstack=False, **kwargs):
+    def configure(self, log_callback=None, on_openstack=False, **kwargs):
         """Configures appliance - database setup, rename, ntp sync
 
         Utility method to make things easier.
@@ -2636,10 +2637,8 @@ class Appliance(IPAppliance):
 
         # Defer to the IPAppliance.
         super(Appliance, self).configure(log_callback=log_callback, on_openstack=on_openstack)
-        # And do configure the fleecing if requested
-        if setup_fleece:
-            self.configure_fleecing(log_callback=log_callback)
 
+    #  TODO Can we remove this?
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
         with self(browser_steal=True):
@@ -2657,29 +2656,30 @@ class Appliance(IPAppliance):
 
             # add provider
             log_callback('Setting up provider...')
-            self.provider.setup()
+            from cfme.utils.providers import get_crud
+            provider = get_crud(self.provider_key, appliance=self)
+            provider.setup()
 
             # credential hosts
             log_callback('Credentialing hosts...')
             if not RUNNING_UNDER_SPROUT:
-                self.provider.setup_hosts_credentials()
+                provider.setup_hosts_credentials()
 
             # if rhev, set relationship
             if self.is_on_rhev:
                 from cfme.infrastructure.virtual_machines import InfraVm
                 log_callback('Setting up CFME VM relationship...')
-                from cfme.utils.providers import get_crud
-                vm = self.collections.infra_vms.instantiate(self.vm_name,
-                                                            get_crud(self.provider_key))
+                vm = self.collections.infra_vms.instantiate(self.vm_name, provider)
                 cfme_rel = InfraVm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server.name), self.server.sid)
 
+    # TODO Remove cached property, could be a lot of references
     @cached_property
     def mgmt(self):
-        return self.provider.mgmt.get_vm(self.vm_name)
+        return self.provider
 
     def does_vm_exist(self):
-        return self.provider.mgmt.does_vm_exist(self.vm_name)
+        return self.provider.does_vm_exist(self.vm_name)
 
     def destroy(self):
         """Destroys the VM this appliance is running as
@@ -2725,23 +2725,23 @@ class Appliance(IPAppliance):
     @property
     def is_on_rhev(self):
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
-        return isinstance(self.provider.mgmt, RHEVMProvider.mgmt_class)
+        return isinstance(self.provider, RHEVMProvider.mgmt_class)
 
     @property
     def is_on_vsphere(self):
         from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-        return isinstance(self.provider.mgmt, VMwareProvider.mgmt_class)
+        return isinstance(self.provider, VMwareProvider.mgmt_class)
 
     @property
     def is_on_openshift(self):
         from cfme.containers.provider.openshift import OpenshiftProvider
-        return isinstance(self.provider.mgmt, OpenshiftProvider.mgmt_class)
+        return isinstance(self.provider, OpenshiftProvider.mgmt_class)
 
     @logger_wrap("Setting ansible url: {}")
     def set_ansible_url(self, log_callback=None):
         if self.is_on_openshift:
             try:
-                config_map = self.provider.mgmt.get_appliance_tags(self.project)
+                config_map = self.provider.get_appliance_tags(self.project)
                 url = config_map['cfme-openshift-embedded-ansible']['url']
                 tag = config_map['cfme-openshift-embedded-ansible']['tag']
                 config = {'embedded_ansible': {'container': {'image_name': url, 'image_tag': tag}}}
