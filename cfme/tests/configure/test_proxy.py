@@ -5,7 +5,6 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
@@ -18,19 +17,18 @@ pytestmark = [
 
 
 @pytest.fixture(scope='module')
-def proxy_machine(utility_vm):
-    utility_vm_ip, utility_vm_root_password = utility_vm
-    yield (utility_vm_ip, utility_vm_root_password,
-           cfme_data.utility_vm.proxy.port)
+def proxy_data(utility_vm):
+    utility_vm_ip, injected_user_creds, data = utility_vm
+    yield utility_vm_ip, data.proxy.port
 
 
 @pytest.fixture(scope='module')
-def proxy_ssh(proxy_machine):
-    proxy_ip, root_password, __ = proxy_machine
+def proxy_ssh(utility_vm):
+    proxy_ip, injected_user_credentials, __ = utility_vm
     with SSHClient(
             hostname=proxy_ip,
-            username='root',
-            password=root_password) as ssh_client:
+            username=injected_user_credentials['username'],
+            password=injected_user_credentials['password']) as ssh_client:
         yield ssh_client
 
 
@@ -47,8 +45,8 @@ def validate_proxy_logs(provider, proxy_ssh, appliance_ip):
 
 
 @pytest.fixture(scope="function")
-def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, __, proxy_port = proxy_machine
+def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_data):
+    proxy_ip, proxy_port = proxy_data
     prov_type = provider.type
     # 192.0.2.1 is from TEST-NET-1 which doesn't exist on the internet (RFC5737).
     appliance.set_proxy('192.0.2.1', proxy_port, prov_type='default')
@@ -60,8 +58,8 @@ def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_machine):
 
 
 @pytest.fixture(scope="function")
-def prepare_proxy_default(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, __, proxy_port = proxy_machine
+def prepare_proxy_default(proxy_ssh, provider, appliance, proxy_data):
+    proxy_ip, proxy_port = proxy_data
     prov_type = provider.type
     appliance.set_proxy(proxy_ip, proxy_port, prov_type='default')
     appliance.reset_proxy(prov_type)
@@ -82,7 +80,7 @@ def prepare_proxy_invalid(provider, appliance):
     appliance.reset_proxy()
 
 
-def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default, provider):
+def test_proxy_valid(appliance, proxy_ssh, prepare_proxy_default, provider):
     """ Check whether valid proxy settings works.
 
     Bugzilla:

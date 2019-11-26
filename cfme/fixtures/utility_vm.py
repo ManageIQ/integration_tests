@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import os.path
 
-import fauxfactory
 import pytest
 
 from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.net import wait_pingable
@@ -20,20 +20,25 @@ def utility_vm():
     After the test run vm is deleted from provider.
     """
     try:
-        root_password = fauxfactory.gen_alphanumeric(length=10)
+        data = cfme_data['utility_vm']
+        injected_user_creds = credentials[data['injected_credentials']]
+        injected_user_password = injected_user_creds['password']
+        injected_user_name = injected_user_creds['username']
         try:
             with open(os.path.expanduser('~/.ssh/id_rsa.pub')) as f:
                 authorized_ssh_keys = f.read()
         except FileNotFoundError:
             authorized_ssh_keys = None
-        data = cfme_data.utility_vm
         vm = deploy_template(
             data.provider,
             random_vm_name('proxy'),
             template_name=data.template_name,
+            # The naming is not great. It comes from
+            # https://access.redhat.com/documentation/en-us/red_hat_virtualization/4.2/
+            # html-single/python_sdk_guide/index#Starting_a_Virtual_Machine_with_Cloud-Init
             initialization=dict(
-                user_name='root',
-                root_password=root_password,
+                user_name=injected_user_name,
+                root_password=injected_user_password,
                 authorized_ssh_keys=authorized_ssh_keys)
         )
     except AttributeError:
@@ -48,5 +53,5 @@ def utility_vm():
         logger.exception(msg)
         pytest.skip(msg)
 
-    yield found_ip, root_password
+    yield found_ip, injected_user_creds, data
     vm.delete()
