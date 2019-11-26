@@ -564,7 +564,7 @@ class DiagnosticsCollectLogsSecond(CFMENavigateStep):
         self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.appliance.server_region_string(),
             f"Zone: {self.appliance.server.zone.description} (current)",
-            f"Server: {secondary_server.name}, [{int(secondary_server.sid)}]")
+            f"Server: {secondary_server.name} [{int(secondary_server.sid)}]")
         self.prerequisite_view.collectlogs.select()
 
 
