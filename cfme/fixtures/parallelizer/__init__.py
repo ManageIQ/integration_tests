@@ -206,7 +206,7 @@ class ParallelSession(object):
             if returncode:
                 slave.process = None
                 if returncode == -9:
-                    msg = f'{slave.id.decode("utf-8")} killed due to error, respawning'
+                    msg = f'{slave.id} killed due to error, respawning'
                 else:
                     msg = f'{slave.id} terminated unexpectedly with status {returncode}, respawning'
                 if slave.tests:
@@ -291,6 +291,7 @@ class ParallelSession(object):
 
     def _monitor_shutdown_t(self, slaveid, process):
         # a KeyError here means self.slaves got mangled, indicating a problem elsewhere
+        slaveid = slaveid.decode('utf-8') if isinstance(slaveid, bytes) else slaveid
         if process is None:
             self.log.warning('Slave was missing when trying to monitor shutdown')
 
@@ -361,7 +362,7 @@ class ParallelSession(object):
             test_perc = self.sent_tests * 100 / collect_len
             self.print_message(
                 f'sent {tests_len} tests '
-                f'to {slave.id} \n'
+                f'to {slave.id.decode("utf-8") if isinstance(slave.id, bytes) else slave.id} \n'
                 f'Total sent: {self.sent_tests} of {collect_len}, ({test_perc:.1f}%)'
             )
         return tests
