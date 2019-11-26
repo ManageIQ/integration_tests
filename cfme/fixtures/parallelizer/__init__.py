@@ -109,7 +109,8 @@ class SlaveDetail(object):
 
     appliance = attr.ib()
     worker_config = attr.ib()
-    id = attr.ib(default=attr.Factory(lambda: next(SlaveDetail.slaveid_generator)))
+    id = attr.ib(default=attr.Factory(lambda: next(SlaveDetail.slaveid_generator)),
+                 repr=lambda value: value.decode('utf-8'))
     forbid_restart = attr.ib(default=False, init=False)
     tests = attr.ib(default=attr.Factory(set), repr=False)
     process = attr.ib(default=None, repr=False)
@@ -290,6 +291,7 @@ class ParallelSession(object):
 
     def _monitor_shutdown_t(self, slaveid, process):
         # a KeyError here means self.slaves got mangled, indicating a problem elsewhere
+        slaveid = slaveid.decode('utf-8') if isinstance(slaveid, bytes) else slaveid
         if process is None:
             self.log.warning('Slave was missing when trying to monitor shutdown')
 
@@ -360,7 +362,7 @@ class ParallelSession(object):
             test_perc = self.sent_tests * 100 / collect_len
             self.print_message(
                 f'sent {tests_len} tests '
-                f'to {slave.id} \n'
+                f'to {slave.id.decode("utf-8") if isinstance(slave.id, bytes) else slave.id} \n'
                 f'Total sent: {self.sent_tests} of {collect_len}, ({test_perc:.1f}%)'
             )
         return tests
