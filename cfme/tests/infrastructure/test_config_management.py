@@ -135,7 +135,7 @@ def test_config_system_tag(config_system, tag, appliance, config_manager, config
         initialEstimate: 1/4h
         casecomponent: Ansible
     """
-    config_system.add_tag(tag=tag, details=False)
+    config_system.add_tag(tag=tag)
     assert tag in config_system.get_tags(), "Added tag not found on configuration system"
 
 
@@ -159,7 +159,7 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_ma
         job_template = config_manager.appliance.collections.ansible_tower_job_templates.all()[0]
     except IndexError:
         pytest.skip("No job template was found")
-    job_template.add_tag(tag=tag, details=False)
+    job_template.add_tag(tag=tag)
     request.addfinalizer(lambda: job_template.remove_tag(tag=tag))
     assert tag in job_template.get_tags(), "Added tag not found on configuration system"
 

@@ -54,6 +54,8 @@ class TaggableByEditTags(Taggable):
         """Overridden get_tags method to deal with the fact that some objects don't have a
         details view."""
         view = navigate_to(self, 'EditTags')
+        if self.appliance.version >= "5.11":
+            raise NotImplementedError("get_tags is not implemented for 5.11")
         return [
             self.appliance.collections.categories.instantiate(
                 display_name=r.category.text.replace('*', '').strip()).collections.tags.instantiate(
@@ -107,8 +109,9 @@ class ConfigManagementEntities(BaseEntitiesView):
 
 class ConfigManagementProfileEntities(BaseEntitiesView):
     """Entities view for the detail page"""
+
     @View.nested
-    class summary(WaitTab):                     # noqa
+    class summary(WaitTab):  # noqa
         TAB_NAME = 'Summary'
 
         properties = SummaryTable(title='Properties')
@@ -118,7 +121,7 @@ class ConfigManagementProfileEntities(BaseEntitiesView):
         smart_management = SummaryTable(title='Smart Management')
 
     @View.nested
-    class configured_systems(WaitTab):          # noqa
+    class configured_systems(WaitTab):  # noqa
         TAB_NAME = 'Configured Systems'
         elements = Table('//div[@id="main_div"]//div[@id="list_grid" or @id="gtl_div"]//table')
 
@@ -611,7 +614,7 @@ class ConfigProfile(Pretty, NavigatableMixin):
         return list()
 
 
-class ConfigSystem(Pretty, NavigatableMixin, Taggable):
+class ConfigSystem(Pretty, NavigatableMixin, TaggableByEditTags):
     """The tags pages of the config system"""
     pretty_attrs = ['name', 'manager_key']
 
@@ -619,17 +622,6 @@ class ConfigSystem(Pretty, NavigatableMixin, Taggable):
         self.appliance = appliance
         self.name = name
         self.profile = profile
-
-    def get_tags(self, tenant="My Company Tags"):
-        """Overridden get_tags method to deal with the fact that configured systems don't have a
-        details view."""
-        view = navigate_to(self, 'EditTags')
-        return [
-            self.appliance.collections.categories.instantiate(
-                display_name=r.category.text.replace('*', '').strip()).collections.tags.instantiate(
-                display_name=r.assigned_value.text.strip())
-            for r in view.form.tags
-        ]
 
 
 class Satellite(ConfigManager):
