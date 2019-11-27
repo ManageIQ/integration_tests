@@ -536,12 +536,11 @@ def test_copy_save_service_dialog_with_the_same_name():
     pass
 
 
-@pytest.mark.meta(coverage=[1696697])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_request_details_page_tagcontrol_field():
+@pytest.mark.meta(automates=[1696697])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["bz_1696697.yml"], ids=["sample_dialog"],)
+def test_request_details_page_tagcontrol_field(request, appliance, import_dialog, catalog):
     """
-
     Bugzilla:
         1696697
 
@@ -564,7 +563,30 @@ def test_request_details_page_tagcontrol_field():
             5. No error when go to on service request details page
 
     """
-    pass
+    sd, ele_label = import_dialog
+
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd)
+    request.addfinalizer(catalog_item.delete_if_exists)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+
+    view.fields(ele_label).dropdown.fill("One")
+    view.submit_button.click()
+    request_description = 'Provisioning Service [{name}] from [{name}]'.format(
+        name=catalog_item.name)
+    service_request = appliance.collections.requests.instantiate(
+        description=request_description,
+        partial_check=True)
+    request.addfinalizer(lambda: service_request.remove_request(method="rest"))
+    details_view = navigate_to(service_request, "Details")
+    # Request Details should appear without ui exception
+    assert details_view.is_displayed
 
 
 @pytest.mark.meta(coverage=[1694737])
