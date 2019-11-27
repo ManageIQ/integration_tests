@@ -343,7 +343,7 @@ def test_tls_openssl_verify_mode(temp_appliance_preconfig, request):
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1733207])
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
-def test_vm_right_size_recommendation_back_button(appliance, setup_provider, full_template_vm):
+def test_vm_right_size_recommendation_back_button(setup_provider, full_template_vm):
     """
     Bugzilla:
         1733207
@@ -364,31 +364,6 @@ def test_vm_right_size_recommendation_back_button(appliance, setup_provider, ful
     view.back_button.click()
     view = full_template_vm.create_view(InfraVmDetailsView)
     assert view.is_displayed
-
-
-@pytest.mark.ignore_stream('5.10')
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_consistent_breadcrumbs():
-    """
-    BreadCrumbs should be consistent across whole CloudForms UI
-
-    Bugzilla:
-        1678192
-
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: high
-        initialEstimate: 1/2h
-        startsin: 5.11
-        testSteps:
-            1. Navigate to all pages in the UI
-        expectedResults:
-            1. BreadCrumbs are displayed on every page and look the same
-
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -438,80 +413,6 @@ def test_ui_notification_icon():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-def test_containers_topology_display_names():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: low
-        initialEstimate: 1/30h
-        startsin: 5.6
-        testSteps:
-            1. Navigate to Compute -> Containers -> Topology.
-            2. Check whether the "Display Name" box is displayed correctly.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_configuration_icons_trusted_forest_settings():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Configuration
-        caseimportance: low
-        initialEstimate: 1/20h
-        testSteps:
-            1. Go to Configuration -> Authentication
-            2. Select Mode LDAP
-            3. Check Get User Groups from LDAP
-            4. Now there should be green plus icon in Trusted Forest Settings
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_cloud_icons_instances():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/20h
-        testSteps:
-            1. Have a cloud provider added.Navigate to Compute -> Cloud -> Instances
-            2. Mark off any instance.
-            3. Go through all select bars and everything on this page and check for missing icons.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_key_pairs_quadicon():
-    """
-    Bugzilla:
-        1352914
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Cloud
-        caseimportance: low
-        initialEstimate: 1/20h
-        testSteps:
-            1. Have a cloud provider with at least one key pair
-            2. Go to Compute -> Cloud -> Key Pairs
-            3. Set View to Grid
-            4. Cloud with two keys icon should be displayed(auth_key_pair.png)
-            5. Same in Key Pairs summary.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
 def test_misclicking_checkbox_vms():
     """
     BZ1627387
@@ -522,46 +423,5 @@ def test_misclicking_checkbox_vms():
         caseimportance: low
         initialEstimate: 1/8h
         setup: https://bugzilla.redhat.com/show_bug.cgi?id=1627387
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_timeout():
-    """
-    Polarion:
-        assignee: pvala
-        caseimportance: medium
-        casecomponent: WebUI
-        initialEstimate: 1/4h
-        testSteps:
-            1. Set timeout to 5 minutes.
-            2. Wait 6 minutes.
-            3. Click on anything.
-            4. There should be redirection to login view.
-            5. Log in.
-            6. There should be redirection to dashboard view.
-    """
-    pass
-
-
-@pytest.mark.manual()
-@pytest.mark.tier(0)
-def test_custom_navigation_menu():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        initialEstimate: 1/5h
-        setup:
-            1. Create a custom navigation menu.
-        testSteps:
-            1. Check if the custom menu is visible in the left Navigation Bar.
-        expectedResults:
-            1. Custom menu must be visible.
-
-    Bugzilla:
-        1678151
     """
     pass
