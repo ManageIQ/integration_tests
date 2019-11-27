@@ -697,31 +697,6 @@ def test_load_values_on_init_option_service_dialog_element():
 @pytest.mark.meta(coverage=[1677724])
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_service_dialogs_crud_non_admin_user():
-    """
-
-    Bugzilla:
-        1677724
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testSteps:
-            1. Create a user with tenant admin group
-            2. Log in with said user and try to edit/add service dialog
-        expectedResults:
-            1.
-            2.
-            3. User should able to perform crud operations
-    """
-    pass
-
-
-@pytest.mark.meta(coverage=[1677724])
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_datepicker_field_set_to_required():
     """
 

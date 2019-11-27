@@ -481,3 +481,55 @@ def test_automate_methods_from_dynamic_dialog_should_run_as_per_designed(
         for ele_name in [ele_label, "label2", "label3"]:
             # Checking if automate method is not triggered after updating values of dialog widgets
             view.fields(ele_name).input.fill(fauxfactory.gen_alphanumeric())
+
+
+@pytest.mark.meta(automates=[1677724])
+@pytest.mark.customer_scenario
+@pytest.mark.tier(2)
+def test_service_dialogs_crud_non_admin_user(appliance, user_self_service_role):
+    """
+    Bugzilla:
+        1677724
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testSteps:
+            1. Create a user with tenant admin group
+            2. Log in with said user and try to edit/add service dialog
+        expectedResults:
+            1.
+            2.
+            3. User should able to perform crud operations
+    """
+    user, role = user_self_service_role
+
+    product_features = [
+        (['Everything'], True), (['Everything'], False),
+        (['Everything', 'Automation', 'Automate'], True)
+    ]
+    role.update({'product_features': product_features})
+
+    with user:
+        element_data = {
+            'element_information': {
+                'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+                'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+                'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
+                'choose_type': "Text Box"
+            },
+            'options': {
+                'default_text_box': "Default text"
+            }
+        }
+
+        dialog, element = create_dialog(appliance, element_data)
+        view = appliance.browser.create_view(DialogsView, wait="10s")
+        flash_message = f'{dialog.label} was saved'
+        view.flash.assert_message(flash_message)
+        with update(dialog):
+            dialog.description = "my edited description"
+        view.flash.assert_message(flash_message)
+        dialog.delete()
