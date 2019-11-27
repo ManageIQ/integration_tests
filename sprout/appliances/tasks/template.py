@@ -87,7 +87,8 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
                             date=template_info.datestamp,
                             version=template_version,
                             original_name=template_name, parent_template=source_template,
-                            exists=False)
+                            exists=False,
+                            custom_data='{}')
         template.save()
     workflow = chain(
         prepare_template_deploy.si(template.id),
