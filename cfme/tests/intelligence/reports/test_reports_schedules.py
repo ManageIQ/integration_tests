@@ -1,3 +1,5 @@
+import os
+
 import fauxfactory
 import pytest
 import yaml
@@ -7,6 +9,9 @@ from cfme.intelligence.reports.schedules import NewScheduleView
 from cfme.intelligence.reports.schedules import ScheduleDetailsView
 from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.path import data_path
 from cfme.utils.wait import wait_for
 
@@ -246,3 +251,50 @@ def test_reports_schedules_user(appliance, request, user, schedule_data):
     assert schedule.exists
     view = schedule.create_view(ScheduleDetailsView)
     assert view.schedule_info.get_text_of("To E-mail") == f"{user.name} ({user.email})"
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1740229])
+def test_miq_schedule_validation_failed(temp_appliance_preconfig):
+    """
+    Bugzilla:
+        1729441
+        1740229
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/10h
+        testSteps:
+            1. Restore the customer database and monitor the EVM logs while restoring.
+            2. Restart the server.
+        expectedResults:
+            1. Should not encounter the following message(refer BZ description) in the logs.
+            2. Server should restart successfully.
+    """
+    appliance = temp_appliance_preconfig
+    dump = FTPClientWrapper(cfme_data.ftpserver.entities.databases).get_file("miqschedule_dump")
+    dump_destination = os.path.join("/tmp", dump.name)
+
+    # Download the customer db on appliance
+    if not appliance.ssh_client.run_command(
+        f"curl -o {dump_destination} ftp://{dump.link}"
+    ).success:
+        pytest.fail("Failed to download the file to the appliance.")
+
+    # In case the failure pattern is encountered, the following piece of code will raise
+    # a TimedOutError from appliance.wait_for_web_ui
+    # The matched_patterns will only be found on successful database restore.
+    with LogValidator(
+        "/var/www/miq/vmdb/log/evm.log",
+        failure_patterns=[
+            ".* ERROR .*Validation failed: MiqSchedule: Name has already been taken  Method.*"
+        ],
+        matched_patterns=[
+            ".*INFO.* Widget: .*chart_server_availability.* file has been .* disk.*",
+            ".*INFO.* : MIQ.*EvmDatabase.seed.* Seeding MiqAction.*"
+        ]
+    ).waiting():
+        appliance.db.restore_database(
+            db_path=dump_destination, is_major=bool(appliance.version > "5.11")
+        )
