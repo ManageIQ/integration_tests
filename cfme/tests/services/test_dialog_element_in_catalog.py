@@ -409,12 +409,16 @@ def test_service_dialog_date_datetime_picker_dynamic_dialog():
     pass
 
 
-@pytest.mark.meta(coverage=[1684567])
-@pytest.mark.manual
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1684567])
 @pytest.mark.tier(2)
-def test_service_dynamic_dialog_load_values_on_init():
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1684567.zip", "bz_1684567", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1684567.yml"], ids=["load-init"])
+def test_service_dd_dialog_load_values_on_init(request, appliance, import_datastore, import_data,
+                                  import_dialog, file_name, catalog):
     """
-
     Bugzilla:
         1684567
 
@@ -434,9 +438,21 @@ def test_service_dynamic_dialog_load_values_on_init():
             3.
             4. The dialog elements should not be populated as the method
               should not have run as "load_values_on_init: false" is set in the element definition.
-
     """
-    pass
+    sd, ele_label = import_dialog
+
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd)
+    request.addfinalizer(catalog_item.delete_if_exists)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    # Dynamic textbox field should be empty
+    assert not view.fields("text_box").read()
 
 
 @pytest.mark.meta(coverage=[1684092])
