@@ -1,7 +1,10 @@
 import fauxfactory
 import pytest
+from widgetastic.widget import Table
+from widgetastic.widget import Text
 
 from cfme import test_requirements
+from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import ContainerProviderAddView
 from cfme.common.provider_views import InfraProviderAddView
@@ -9,6 +12,7 @@ from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmDetailsView
+from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -366,6 +370,72 @@ def test_vm_right_size_recommendation_back_button(setup_provider, full_template_
     assert view.is_displayed
 
 
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1627387])
+@pytest.mark.provider([BaseProvider], selector=ONE)
+def test_misclicking_checkbox_vms(appliance, setup_provider, provider):
+    """
+    Bugzilla:
+        1627387
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/8h
+        setup:
+            1. Add a provider.
+        testSteps:
+            1. Navigate to All VMs/Instances page.
+            2. Select the list view.
+            3. Click on the first column, it contains checkbox.
+            4. Assert that nothing happens and the page stays the same.
+    """
+    collection = appliance.provider_based_collection(provider)
+    view = navigate_to(collection, "All")
+    if view.toolbar.view_selector.selected != "List View":
+        view.toolbar.view_selector.select("List View")
+    table = Table(view, '//*[@id="miq-gtl-view"]//table')
+    row = next(table.rows())
+    # Click the first column, it contains checkbox and assert that nothing happens
+    row[0].click()
+    assert view.is_displayed
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1745660])
+@pytest.mark.provider([BaseProvider], selector=ONE)
+def test_compliance_column_header(appliance, setup_provider, provider):
+    """
+    Bugzilla:
+        1745660
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/18h
+        setup:
+            1. Add a infra/cloud provider
+        testSteps:
+            1. Navigate to All VMs/Instances page.
+            2. Select the List View
+            3. Click on the Compliance Column Header
+        expectedResults:
+            1.
+            2.
+            3. There should be no 500 Internal Server Error and the page must be displayed as is.
+    """
+    collection = appliance.provider_based_collection(provider)
+    view = navigate_to(collection, "All")
+    if view.toolbar.view_selector.selected != "List View":
+        view.toolbar.view_selector.select("List View")
+    compliant_column = Text(view, locator='//*//th[contains(normalize-space(.), "Compliant")]')
+    compliant_column.click()
+    # Page should not break after after clicking the compliant column
+    assert view.is_displayed
+
+
 @pytest.mark.manual
 @pytest.mark.tier(1)
 def test_ui_pinning_after_relog():
@@ -407,21 +477,5 @@ def test_ui_notification_icon():
             Notification.create(:type => :automate_global_error, :initiator =>
             User.first, :options => { :message => "test" })
             4. Check in UI whether notification icon was displayed
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_misclicking_checkbox_vms():
-    """
-    BZ1627387
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/8h
-        setup: https://bugzilla.redhat.com/show_bug.cgi?id=1627387
     """
     pass
