@@ -4,12 +4,14 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import RowNotFound
+from widgetastic.exceptions import UnexpectedAlertPresentException
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapSwitch
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
+from widgetastic_patternfly import Kebab
 
 from cfme.base.ui import RegionView
 from cfme.modeling.base import BaseCollection
@@ -23,6 +25,7 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Dropdown
 from widgetastic_manageiq import DynamicTable
 from widgetastic_manageiq import SummaryFormItem
@@ -955,7 +958,13 @@ class ReplicationView(RegionView):
 class ReplicationGlobalView(ReplicationView):
     """ Replication Global setup View"""
     add_subscription = Button('Add Subscription')
-    subscription_table = VanillaTable('//form[@id="form_div"]//table[contains(@class, "table")]')
+    subscription_table = VanillaTable(
+        '//form[@id="form_div"]//table[contains(@class, "table")]',
+        column_widgets={
+            "Actions": Button("Update"),
+            10: Kebab(locator='//td[10]/div[contains(@class, "dropdown-kebab-pf")]')
+        }
+    )
 
     @property
     def is_displayed(self):
@@ -1071,6 +1080,35 @@ class Replication(NavigatableMixin):
         """
         row = self._global_replication_row(host)
         return int(row.backlog.text.split(' ')[0])
+
+    def remove_global_appliance(self, host=None):
+        """ Remove the remote appliance subscription from the Global region
+
+            Args:
+                host: host value
+            Returns: True once the subsciption is removed
+        """
+        row = self._global_replication_row(host)
+        view = self.create_view(ReplicationGlobalView)
+
+        try:
+            row[10].widget.item_select("Delete")
+        except UnexpectedAlertPresentException:
+            view.browser.handle_alert()
+
+        view.save_button.click()
+
+        def _row_exists():
+            try:
+                view.browser.refresh()
+                self._global_replication_row(host)
+                return True
+            except RowNotFound:
+                return False
+
+        # wait until the row no longer exists
+        wait_for(_row_exists, fail_condition=True, num_sec=60, delay=2)
+        return True
 
 
 @navigator.register(Replication, 'Details')
