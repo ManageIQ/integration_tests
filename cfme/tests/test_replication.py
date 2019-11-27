@@ -1,14 +1,17 @@
 import pytest
+from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
+from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.utils.conf import credentials
 
+pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
-pytestmark = [test_requirements.replication]
 
-
-def setup_replication(remote_app, global_app):
+@pytest.fixture
+def setup_replication(configured_appliance, unconfigured_appliance):
     """Configure global_app database with region number 99 and subscribe to remote_app."""
+    remote_app, global_app = configured_appliance, unconfigured_appliance
     app_params = dict(
         region=99,
         dbhostname='localhost',
@@ -18,7 +21,7 @@ def setup_replication(remote_app, global_app):
         dbdisk=global_app.unpartitioned_disks[0],
         fetch_key=remote_app.hostname,
         sshlogin=credentials["ssh"]["username"],
-        sshpass=credentials["ssh"]["password"]
+        sshpass=credentials["ssh"]["password"],
     )
 
     global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
@@ -28,6 +31,8 @@ def setup_replication(remote_app, global_app):
     remote_app.set_pglogical_replication(replication_type=':remote')
     global_app.set_pglogical_replication(replication_type=':global')
     global_app.add_pglogical_replication_subscription(remote_app.hostname)
+
+    return configured_appliance, unconfigured_appliance
 
 
 @pytest.mark.manual
@@ -55,9 +60,9 @@ def test_replication_powertoggle():
 
 
 @pytest.mark.tier(2)
-def test_replication_appliance_add_single_subscription(configured_appliance,
-                                                       unconfigured_appliance):
+def test_replication_appliance_add_single_subscription(setup_replication):
     """
+
     Add one remote subscription to global region
 
     Polarion:
@@ -73,17 +78,49 @@ def test_replication_appliance_add_single_subscription(configured_appliance,
             1.
             2. No error. Appliance subscribed.
     """
-    remote_app = configured_appliance
-    global_app = unconfigured_appliance
+    remote_app, global_app = setup_replication
     region = global_app.collections.regions.instantiate()
-
-    setup_replication(remote_app, global_app)
     assert region.replication.get_replication_status(host=remote_app.hostname)
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
-def test_replication_delete_remote_from_global():
+def test_replication_re_add_deleted_remote(setup_replication):
+    """
+    Re-add deleted remote region
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: Replication
+        initialEstimate: 1/12h
+        testSteps:
+            1. Have A Remote subscribed to Global.
+            2. Remove the Remote subscription from Global.
+            3. Add the Remote to Global again
+        expectedResults:
+            1.
+            2. Subscription is successfully removed.
+            3. No error. Appliance subscribed.
+    """
+    remote_app, global_app = setup_replication
+    region = global_app.collections.regions.instantiate()
+
+    # Remove the Remote subscription from Global and make sure it is removed
+    region.replication.remove_global_appliance(host=remote_app.hostname)
+    with pytest.raises(RowNotFound):
+        region.replication.get_replication_status(host=remote_app.hostname)
+
+    # Add the Remote to Global again
+    global_app.set_pglogical_replication(replication_type=":global")
+    global_app.add_pglogical_replication_subscription(remote_app.hostname)
+
+    # Assert the hostname is present
+    view = region.replication.create_view(ReplicationGlobalView)
+    view.browser.refresh()
+    assert region.replication.get_replication_status(host=remote_app.hostname)
+
+
+@pytest.mark.tier(3)
+def test_replication_delete_remote_from_global(setup_replication):
     """
     Delete remote subscription from global region
 
@@ -99,41 +136,13 @@ def test_replication_delete_remote_from_global():
             1.
             2. No error. Appliance unsubscribed.
     """
-    pass
+    remote_app, global_app = setup_replication
+    region = global_app.collections.regions.instantiate()
 
-
-@pytest.mark.manual
-def test_replication_low_bandwidth():
-    """
-    ~5MB/s up/down
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Replication
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_replication_re_add_deleted_remote():
-    """
-    Re-add deleted remote region
-
-    Polarion:
-        assignee: mnadeem
-        casecomponent: Replication
-        initialEstimate: 1/12h
-        testSteps:
-            1. Have A Remote subscribed to Global.
-            2. Remove the Remote subscription from Global.
-            3. Add the Remote to Global again
-        expectedResults:
-            1.
-            2. No error. Appliance subscribed.
-    """
-    pass
+    # Remove the Remote subscription from Global
+    region.replication.remove_global_appliance(host=remote_app.hostname)
+    with pytest.raises(RowNotFound):
+        region.replication.get_replication_status(host=remote_app.hostname)
 
 
 @pytest.mark.manual
