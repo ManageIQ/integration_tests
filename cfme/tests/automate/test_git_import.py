@@ -420,3 +420,32 @@ def test_automate_git_domain_import_connection(request, temp_appliance_preconfig
         msg = "Error during repository fetch: hostname does not match certificate"
         with pytest.raises(AssertionError, match=msg):
             repo.import_domain_from(branch="origin/master")
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1508881])
+def test_automate_git_import_without_master(appliance, request):
+    """
+    Bugzilla:
+        1508881
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/12h
+        tags: automate
+        testSteps:
+            1. Create git repository with different default branch than master.
+            2. Add some valid automate code.
+            3. Import domain by navigating to Automation -> Automate -> Import/Export
+        expectedResults:
+            1.
+            2.
+            3. Domain was imported from git
+    """
+    repo = appliance.collections.automate_import_exports.instantiate(
+        import_type="git", url=GIT_REPO_URL, verify_ssl=False
+    )
+    domain = repo.import_domain_from(branch="origin/testbranch")
+    request.addfinalizer(domain.delete_if_exists)

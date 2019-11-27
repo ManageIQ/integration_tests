@@ -110,34 +110,6 @@ def test_automate_check_quota_regression():
 
 
 @pytest.mark.tier(3)
-def test_automate_git_import_without_master():
-    """
-    Git repository doesn't have to have master branch
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        tags: automate
-        testSteps:
-            1. Create git repository with different default branch than master.
-            2. Add some valid code, for example exported one.
-            3. Navigate to Automation -> Automate -> Import/Export
-            4. Enter credentials and hit the submit button.
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Domain was imported from git
-
-    Bugzilla:
-        1508881
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_automate_git_import_deleted_tag():
     """
 
