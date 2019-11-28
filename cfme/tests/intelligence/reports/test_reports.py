@@ -534,6 +534,33 @@ def test_reports_filter_content(
     assert sorted(expected) == sorted(got)
 
 
+@test_requirements.filtering
+@pytest.mark.meta(automates=[1696412])
+def test_reports_filter_expression_editor_disk_size(appliance, request, get_report):
+    """
+    Bugzilla:
+        1696412
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Reporting
+        initialEstimate: 1/10h
+    """
+    report_name = "test_filter_report"
+    report = get_report("filter_report.yaml", report_name)
+    report.update(
+        {"filter": {"primary_filter": (
+            "fill_field(VM and Instance : Allocated Disk Storage, > , 1)")
+        }, "title": report_name}
+    )
+
+    generated_report = appliance.collections.reports.instantiate(
+        type="My Company (All Groups)", subtype="Custom", menu_name=report_name
+    ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete_if_exists)
+    assert generated_report.exists
+
+
 @pytest.mark.long_running
 @pytest.mark.customer_scenario
 @pytest.mark.tier(2)
