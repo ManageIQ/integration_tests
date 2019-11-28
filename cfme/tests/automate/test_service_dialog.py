@@ -1,14 +1,17 @@
 import fauxfactory
 import pytest
+from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
 from cfme.automate.dialogs.service_dialogs import DialogsView
 from cfme.fixtures.automate import DatastoreImport
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.tests.automate.custom_button import TextInputAutomateView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
+
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -533,3 +536,128 @@ def test_service_dialogs_crud_non_admin_user(appliance, user_self_service_role):
             dialog.description = "my edited description"
         view.flash.assert_message(flash_message)
         dialog.delete()
+
+
+@pytest.fixture(scope="function")
+def custom_button(appliance, import_dialog):
+    """This fixture creates custom button for user object"""
+    sd, ele_label = import_dialog
+    collection = appliance.collections.button_groups
+
+    # Create custom button group
+    button_grp = collection.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        type=getattr(collection, "USER"),
+    )
+
+    # Create custom button
+    button = button_grp.buttons.create(
+        text=fauxfactory.gen_alphanumeric(),
+        hover=fauxfactory.gen_alphanumeric(),
+        dialog=sd,
+        system="Request",
+        request="InspectMe",
+    )
+
+    yield button_grp, button
+    button.delete_if_exists()
+    button_grp.delete_if_exists()
+
+
+def navigation_to_view(custom_button_group, button):
+    """This function helps to navigate to view that comes after clicking on custom button"""
+    custom_button_group.item_select(button.text)
+    view = button.create_view(TextInputAutomateView, wait="10s")
+    return view
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1715396])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1715396.zip", "bz_1715396", None)],
+    ids=["domain"]
+)
+@pytest.mark.parametrize("file_name", ["bz_1715396.yml"], ids=["dialog"])
+def test_dialog_element_values_passed_to_button(appliance, import_datastore, import_data,
+                                                custom_button, file_name):
+    """
+    Bugzilla:
+        1715396
+        1717501
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Import the attached automate domain and dialog exports in BZ - 1715396. The automate
+               domain contains a method to populate the dynamic second element in the dialog.
+            2. Put 'Request: InspectMe' or Install object_walker automate domain from
+               https://github.com/pemcg/object_walker
+            3. Add a custom button to a VM (or any) object. The button should use the newly imported
+               BZ dialog, and should run object_walker when submitted (/System/Process: Request,
+               Message: create, Request: object_walker)
+            4. Click the custom button, and observe the dialog. The element 'Text Box 1' default
+               value is empty, the dynamic element 'Text Box 2' has been dynamically populated.
+               click on submit button.
+            5. Repeat step 4, but type some value(like "aa") in element 'Text Box 1' and click on
+               Submit button.
+            6. Repeat step 5, but now amend the text dynamically entered into 'Text Box 2'
+               (for example adding the string "also").
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Values passed through to object_walker - both element values should be passed:
+               >> ~/object_walker_reader.rb | grep dialog
+                     |    $evm.root['dialog_text_box_1'] =    (type: String)
+                     |    $evm.root['dialog_text_box_2'] = The dynamic method ran at:
+                     2019-05-30 09:42:40 +0100   (type: String)
+            5. The value from both test boxes should be passed through object_walker:
+                ~/object_walker_reader.rb -t 2019-05-30T09:43:25.558037 | grep dialog
+                     |    $evm.root['dialog_text_box_1'] = aa   (type: String)
+                     |    $evm.root['dialog_text_box_2'] = The dynamic method ran at:
+                     2019-05-30 09:42:43 +0100   (type: String)
+            6. Note that both element values are now passed through to object_walker:
+                ~/object_walker_reader.rb | grep dialog
+                     |    $evm.root['dialog_text_box_1'] = ccdd   (type: String)
+                     |    $evm.root['dialog_text_box_2'] = The dynamic method also ran at:
+                     2019-05-30 09:50:10 +0100   (type: String)Provision more than 10 VMs
+    """
+    button_grp, button = custom_button
+
+    user_obj = appliance.collections.users.instantiate(name="Administrator")
+    view = navigate_to(user_obj, "Details")
+    custom_button_group = Dropdown(view, button_grp.hover)
+    view = navigation_to_view(custom_button_group, button)
+
+    # Step 4
+    with LogValidator("/var/www/miq/vmdb/log/automation.log",
+                      matched_patterns=[".*dialog_text_box_1:      .*",
+                                        f".*dialog_text_box_2: {view.text_box2.read()}.*"]
+                      ).waiting(timeout=120):
+        view.submit.click()
+
+    # Step 5
+    view = navigation_to_view(custom_button_group, button)
+    msg = fauxfactory.gen_alphanumeric()
+    with LogValidator("/var/www/miq/vmdb/log/automation.log",
+                      matched_patterns=[f".*dialog_text_box_1: {msg}.*",
+                                        f".*dialog_text_box_2: {view.text_box2.read()}.*"]
+                      ).waiting(timeout=120):
+        view.text_box1.fill(msg)
+        view.submit.click()
+
+    # Step 6
+    view = navigation_to_view(custom_button_group, button)
+    with LogValidator("/var/www/miq/vmdb/log/automation.log",
+                      matched_patterns=[f".*dialog_text_box_1: {msg}.*",
+                                        f".*dialog_text_box_2: also{view.text_box2.read()}.*"]
+                      ).waiting(timeout=120):
+        view.text_box1.fill(msg)
+        view.text_box2.fill(f"also{view.text_box2.read()}")
+        view.submit.click()
