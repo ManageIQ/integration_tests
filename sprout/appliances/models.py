@@ -644,7 +644,7 @@ class Template(MetadataMixin):
             template = Template.objects.get(id=self.id)
             template.status = status
             template.status_changed = timezone.now()
-            template.save()
+            template.save(update_fields=['status', 'status_changed'])
             self.logger.info("{}: {}".format(self.pk, status))
 
     @property
@@ -900,7 +900,7 @@ class Appliance(MetadataMixin):
                 appliance = type(self).objects.get(pk=self.pk)
                 appliance.cpu = params['cpu']
                 appliance.ram = params['ram']
-                appliance.save()
+                appliance.save(update_fields=['cpu', ['ram']])
 
     @property
     def serialized(self):
@@ -1033,7 +1033,7 @@ class Appliance(MetadataMixin):
             if status != appliance.status:
                 appliance.status = status
                 appliance.status_changed = timezone.now()
-                appliance.save()
+                appliance.save(update_fields=['status', 'status_changed'])
                 self.logger.info("Status changed: {}".format(status))
 
     def set_power_state(self, power_state):
@@ -1119,7 +1119,7 @@ class Appliance(MetadataMixin):
                 self.class_logger(self.pk).info("Killing")
                 if not self.marked_for_deletion or force_delete:
                     self.marked_for_deletion = True
-                    self.save()
+                    self.save(update_fields=['marked_for_deletion'])
                     return kill_appliance.delay(self.id)
 
     def delete(self, *args, **kwargs):
@@ -1139,7 +1139,7 @@ class Appliance(MetadataMixin):
         with transaction.atomic():
             appliance = Appliance.objects.get(id=self.id)
             appliance.leased_until = timezone.now() + timedelta(minutes=time)
-            appliance.save()
+            appliance.save(update_fields=['leased_until'])
 
     @property
     def owner(self):
@@ -1488,7 +1488,7 @@ class AppliancePool(MetadataMixin):
         with transaction.atomic():
             p = type(self).objects.get(pk=self.pk)
             p.not_needed_anymore = True
-            p.save()
+            p.save(update_fields=['not_needed_anymore'])
         save_lives = not self.finished
         self.logger.info("Killing")
         if self.appliances:
