@@ -46,6 +46,18 @@ CREDENTIALS = [
 
 
 @pytest.fixture(scope="function")
+def delete_old_request(appliance, ansible_catalog_item):
+    """ This fixture will delete any duplicate request present before test setup run
+    """
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+
+    if service_request.exists():
+        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
+
+@pytest.fixture(scope="function")
 def local_ansible_catalog_item(appliance, ansible_repository):
     """override global ansible_catalog_item for function scope
         as these tests modify the catalog item
@@ -307,7 +319,8 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(2)
 def test_service_ansible_playbook_provision_in_requests(
-    appliance, ansible_catalog_item, ansible_service, ansible_service_request, request
+    appliance, ansible_service_catalog, delete_old_request, ansible_service_funcscope,
+    ansible_service_request_funcscope, request
 ):
     """Tests if ansible playbook service provisioning is shown in service requests.
 
@@ -318,24 +331,10 @@ def test_service_ansible_playbook_provision_in_requests(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service.order()
-    ansible_service_request.wait_for_request()
-    cat_item_name = ansible_catalog_item.name
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
+    ansible_service_catalog.order()
+    ansible_service_request_funcscope.wait_for_request()
 
-    @request.addfinalizer
-    def _finalize():
-        service = MyService(appliance, cat_item_name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-        if service.exists:
-            service.delete()
-
-    assert service_request.exists()
+    assert ansible_service_request_funcscope.exists()
 
 
 @pytest.mark.tier(2)
@@ -433,16 +432,17 @@ def test_service_ansible_retirement_remove_resources(
 )
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
 def test_service_ansible_playbook_order_retire(
+    request,
     appliance,
     ansible_catalog_item,
+    delete_old_request,
     ansible_service_catalog,
     ansible_service_request,
-    ansible_service,
+    ansible_service_funcscope,
     host_type,
     order_value,
     result,
     action,
-    request
 ):
     """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.
@@ -457,24 +457,16 @@ def test_service_ansible_playbook_order_retire(
     ansible_service_catalog.ansible_dialog_values = {"hosts": order_value}
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
-    cat_item_name = ansible_catalog_item.name
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
-    @request.addfinalizer
-    def _finalize():
-        service = MyService(appliance, cat_item_name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-        if service.exists:
-            service.delete()
+    def _clear_retire_request():
+        if retire_request.exists():
+            retire_request.remove_request()
 
     if action == "retirement":
-        ansible_service.retire()
-    view = navigate_to(ansible_service, "Details")
+        retire_request = ansible_service_funcscope.retire()
+        request.addfinalizer(_clear_retire_request)
+
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert result == view.provisioning.details.get_text_of("Hosts")
 
 
