@@ -175,7 +175,7 @@ class EventAttr(object):
 
     def __repr__(self):
         return "{name}({type})={val}, cmp_func {cmp}".format(name=self.name, type=self.type,
-                                                             val=self.value, cmp=self.cmp_func)
+                                                             val=self.value, eq=self.cmp_func)
 
 
 # fixme: would it be better to create event prototype and just clone it ?

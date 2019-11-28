@@ -3184,7 +3184,7 @@ class MiqImplementationContext(sentaku.ImplementationContext):
 
 def ensure_websocket_role_disabled(appliance):
     # TODO: This is a temporary solution until we find something better.
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev or not appliance.configured:
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev or appliance.is_pod or not appliance.configured:
         logger.debug(f'Skipping hook ensure_websocket_role_disabled on {appliance}')
         return
     server_settings = appliance.server.settings
@@ -3200,7 +3200,7 @@ def fix_missing_hostname(appliance):
     Note: Affects RHOS-based appliances but can't hurt the others so
           it's applied on all.
     """
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
+    if isinstance(appliance, DummyAppliance) or appliance.is_dev or appliance.is_pod:
         logger.debug(f'Skipping hook ensure_websocket_role_disabled on {appliance}')
         return
     logger.debug("Checking appliance's /etc/hosts for a resolvable hostname")

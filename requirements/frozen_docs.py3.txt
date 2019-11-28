@@ -4,7 +4,7 @@
 
 
 adal==1.2.2
-aenum==2.1.2
+aenum==2.2.3
 alabaster==0.7.12
 anytree==2.6.0
 appdirs==1.4.3

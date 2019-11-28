@@ -86,7 +86,7 @@ def pytest_unconfigure():
     stack.pop()
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class ApplianceHolderPlugin(object):
     held_appliance = attr.ib()
     appliances = attr.ib(default=attr.Factory(list))

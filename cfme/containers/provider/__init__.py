@@ -184,7 +184,7 @@ class ContainersProviderDashboardView(ContainerProviderDetailsView):
             'Dashboard' in self.breadcrumb.active_location)
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     PLURAL = 'Providers'
     provider_types = {}
