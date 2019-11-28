@@ -9,27 +9,6 @@ pytestmark = [pytest.mark.manual]
 
 
 @test_requirements.rest
-@pytest.mark.tier(3)
-def test_create_rhev_provider_with_metric():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/10h
-        testSteps:
-            1. Add rhv provider with metrics via REST
-        expectedResults:
-            1. Provider must be added with all the details provided.
-                In this case metric data. no data should be missing.
-
-    Bugzilla:
-        1656502
-    """
-    pass
-
-
-@test_requirements.rest
 @pytest.mark.customer_scenario
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1700378])

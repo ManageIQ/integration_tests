@@ -4,6 +4,9 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.markers.env_markers.provider import ONE
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -198,3 +201,27 @@ def test_provider_delete_from_collection(provider_rest):
         initialEstimate: 1/4h
     """
     delete_resources_from_collection([provider_rest], num_sec=50)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1656502])
+@pytest.mark.provider([RHEVMProvider], selector=ONE, required_flags=["metrics_collection"])
+def test_create_rhev_provider_with_metric(setup_provider, provider):
+    """
+    Bugzilla:
+        1656502
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/10h
+        testSteps:
+            1. Add rhv provider with metrics via REST
+        expectedResults:
+            1. Provider must be added with all the details provided.
+                In this case metric data. no data should be missing.
+    """
+    navigate_to(provider, "Edit")
+    view = provider.create_view(provider.endpoints_form)
+    assert view.candu.hostname.read() == provider.endpoints["candu"].hostname
