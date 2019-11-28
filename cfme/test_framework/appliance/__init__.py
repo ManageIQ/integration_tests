@@ -8,14 +8,16 @@ from cfme.utils.appliance import DummyAppliance
 from cfme.utils.appliance import load_appliances_from_config
 from cfme.utils.appliance import stack
 from cfme.utils.path import log_path
+from .regular import APP_TYPE as DEFAULT_APP_TYPE
 
 PLUGIN_KEY = "appliance-holder"
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup("cfme")
+    group = parser.getgroup("appliances")
     # common appliance options
     group.addoption('--app-version', default=None, dest='app-version')
+    group.addoption('--use-apps', default=[DEFAULT_APP_TYPE], dest='app-types', nargs='+')
 
 
 def appliances_from_cli(cli_appliances, appliance_version):
@@ -42,16 +44,12 @@ def appliances_from_cli(cli_appliances, appliance_version):
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    plugin = ApplianceHolderPlugin(None, [])
+    # TODO: get rid of below
+    plugin = ApplianceHolderPlugin(None, {})
     config.pluginmanager.register(plugin, PLUGIN_KEY)
 
     if config.getoption('--help'):
         return
-
-
-@pytest.hookimpl(trylast=True)
-def pytest_unconfigure(config):
-    pass
 
 
 def pytest_sessionstart(session):
@@ -66,5 +64,5 @@ def pytest_sessionstart(session):
 @attr.s(cmp=False)
 class ApplianceHolderPlugin(object):
     held_appliance = attr.ib()
-    appliances = attr.ib(default=attr.Factory(list))
+    pools = attr.ib(type=dict)
     stack = attr.ib(default=stack)

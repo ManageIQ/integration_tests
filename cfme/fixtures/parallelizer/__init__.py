@@ -77,8 +77,7 @@ def pytest_configure(config):
 
     reporter = terminalreporter.reporter()
     holder = config.pluginmanager.get_plugin(APPLIANCE_PLUGIN)
-
-    appliances = holder.appliances
+    appliances = [app for pool in holder.pools.values() for app in pool]
 
     if len(appliances) > 1:
         session = ParallelSession(config, appliances)

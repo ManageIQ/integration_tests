@@ -60,7 +60,8 @@ def pytest_unconfigure(config):
             return
 
         written_files = []
-        for app in holder.appliances:
+        appliances = [app for pool in holder.pools.values() for app in pool]
+        for app in appliances:
             with app.ssh_client as ssh_client:
                 tar_file = 'log-collector-{}.tar.gz'.format(
                     app.hostname)

@@ -7,25 +7,23 @@ from cfme.utils.appliance import DummyAppliance
 
 
 PLUGIN_KEY = "dummy-appliance"
+APP_TYPE = 'dummy'
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup("cfme")
-
-    # dummy appliance type
-    group.addoption('--use-dummy-apps', action='store_true', default=False)
-    group.addoption('--num-dummy-apps', default=1, type=int)
+    group = parser.getgroup("appliances")
+    group.addoption('--num-dummy-apps', default=10, type=int)
 
 
 @pytest.hookimpl
 def pytest_configure(config):
-    if config.getoption('--help'):
-        return
-    reporter = terminalreporter.reporter()
+    app_types = config.getoption('--use-apps')
+    if APP_TYPE in app_types:
+        if len(app_types) > 1:
+            raise ValueError("dummy appliances cannot be mixed with other types")
 
-    if config.getoption('--use-dummy-apps'):
-        plugin = DummyAppliancePlugin()
-        config.pluginmanager.register(plugin, PLUGIN_KEY)
+        reporter = terminalreporter.reporter()
+        config.pluginmanager.register(DummyAppliancePlugin(), PLUGIN_KEY)
         appliances = [
             DummyAppliance.from_config(config) for _ in range(config.getoption('--num-dummy-apps'))
         ]
@@ -39,7 +37,7 @@ def pytest_configure(config):
 
         holder.stack.push(appliances[0])
         holder.held_appliance = appliances[0]
-        holder.appliances = appliances
+        holder.pools[APP_TYPE] = appliances
 
 
 @pytest.hookimpl(trylast=True)
