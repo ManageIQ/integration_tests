@@ -5,8 +5,9 @@ from cfme import test_requirements
 from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import ViaUI
 
+pytestmark = [pytest.mark.manual]
 
-@pytest.mark.manual
+
 @test_requirements.rest
 @pytest.mark.tier(3)
 def test_create_rhev_provider_with_metric():
@@ -29,11 +30,15 @@ def test_create_rhev_provider_with_metric():
 
 
 @test_requirements.rest
-@pytest.mark.manual()
+@pytest.mark.customer_scenario
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1700378])
 def test_notification_url_parallel_requests():
     """
+    Bugzilla:
+        1700378
+        1714615
+
     Polarion:
         assignee: pvala
         caseimportance: medium
@@ -62,16 +67,13 @@ def test_notification_url_parallel_requests():
             3.
             4.
             5. Check if all the requests were processed and completed
-
-    Bugzilla:
-        1700378
     """
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.meta(coverage=[1761836])
 @pytest.mark.tier(3)
+@test_requirements.rest
 @pytest.mark.parametrize("context", [ViaUI, ViaREST])
 def test_widget_generate_content_via_rest(context):
     """
@@ -107,13 +109,15 @@ def test_widget_generate_content_via_rest(context):
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.meta(coverage=[1730813])
 @pytest.mark.tier(2)
+@test_requirements.rest
+@pytest.mark.customer_scenario
 def test_service_refresh_dialog_fields_default_values():
     """
     Bugzilla:
         1730813
+        1731977
 
     Polarion:
         assignee: pvala
@@ -144,12 +148,12 @@ def test_service_refresh_dialog_fields_default_values():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1486765, 1740340])
 @pytest.mark.parametrize(
     "scheduler", ["2", "2019-08-14 17:41:06 UTC"], ids=["number_of_days", "exact_time"]
 )
+@test_requirements.rest
 def test_schedule_automation_request(scheduler):
     """
     Bugzilla:
@@ -188,9 +192,10 @@ def test_schedule_automation_request(scheduler):
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
+@pytest.mark.customer_scenario
 @pytest.mark.meta(coverage=[1596142])
+@test_requirements.rest
 def test_update_roles_via_rest_name_change():
     """
     Bugzilla:
@@ -210,5 +215,83 @@ def test_update_roles_via_rest_name_change():
         expectedResults:
             1. Request was successful.
             2. Server name remains the same.
+    """
+    pass
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(coverage=[1661445])
+@pytest.mark.tier(1)
+@test_requirements.rest
+def test_authorization_header_sql_response():
+    """
+    Bugzilla:
+        1661445
+        1686021
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        testSteps:
+            1. GET /api/auth?requester_type=ui HEADERS: {"Authorization": "Basic testing"}
+                Perform this GET request with requests.get()
+        expectedResults:
+            1. There should be no sql statement in the response.
+                Expected Response:
+                {
+                "error": {
+                    "kind": "unauthorized",
+                    "message": ("PG::CharacterNotInRepertoire: ERROR:"
+                                "  invalid byte sequence for encoding \"UTF8\": 0xb5\n:"),
+                    "klass": "Api::AuthenticationError"
+                    }
+                }
+    """
+    # Check if it is possible to perform this testing with manageiq-api-client instead of requests.
+    pass
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(coverage=[1682739])
+@pytest.mark.tier(1)
+@test_requirements.rest
+def test_vm_compliance_attribute_rest():
+    """
+    Bugzilla:
+        1682739
+        1684196
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Create a compliance policy.
+            2. Create a policy profile and assign the newly created compliance policy to it.
+            3. Provision a VM and assign the new policy profile to it.
+        testSteps:
+            1. Query the VM. GET /api/vms/:id?attributes=compliances
+        expectedResults:
+            1. Expected Response:
+                {
+                    "href": "https://<ip_address>/api/vms/8",
+                    "id": "8",
+                    "vendor": "vmware",
+                    "name": "v2v-rhel8-mini",
+                    ...
+                    "compliances": [
+                        {
+                            "id": "1",
+                            "resource_id": "8",
+                            "resource_type": "VmOrTemplate",
+                            "compliant": true,
+                            "timestamp": "2019-03-06T09:48:55Z",
+                            "updated_on": "2019-03-06T09:48:55Z",
+                            "event_type": "vm_compliance_check"
+                        }
+                  ],
+                    ...
+                }
     """
     pass

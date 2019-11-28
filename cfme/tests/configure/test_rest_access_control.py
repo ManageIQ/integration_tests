@@ -910,9 +910,14 @@ def role_api(appliance, request, create_role):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1727948, 1731157], blockers=[1731157])
-def test_create_picture_with_role(appliance, request, role_api):
+def test_create_picture_with_role(role_api):
     """
+    Bugzilla:
+        1727948
+        1731157
+
     Polarion:
         assignee: pvala
         caseimportance: high
@@ -928,10 +933,6 @@ def test_create_picture_with_role(appliance, request, role_api):
         expectedResults:
             1. Picture must be created without any error.
                 Check for `Use of Action create is forbidden` in response.
-
-    Bugzilla:
-        1727948
-        1731157
     """
     picture = role_api.collections.pictures.action.create(
         {
