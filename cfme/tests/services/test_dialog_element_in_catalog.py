@@ -918,3 +918,43 @@ def test_dialog_dropdown_integer_required():
             5. "<None>" should not be displayed in the list of selected options
     """
     pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1740899])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["bz_1740899.yml"], ids=["sample_dialog"],)
+def test_dialog_dropdown_int_required(request, appliance, import_dialog, catalog):
+    """
+    Bugzilla:
+        1740899
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.10
+        testSteps:
+            1. Create a dialog dropdown that is required with a value type of integer
+            2. Order a catalog item that uses that dialog
+            3. Make a selection for the dropdown
+        expectedResults:
+            1.
+            2.
+            3. The field should validate successfully
+    """
+    sd, ele_label = import_dialog
+
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd)
+    request.addfinalizer(catalog_item.delete_if_exists)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+
+    view.fields(ele_label).dropdown.fill("2")
+    wait_for(lambda: not view.submit_button.disabled, timeout=7)
