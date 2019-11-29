@@ -69,7 +69,7 @@ def test_custom_report_crud(custom_report_values, appliance, request):
     Polarion:
         assignee: pvala
         casecomponent: Reporting
-        caseimportance: high
+        caseimportance: critical
         initialEstimate: 1/16h
     """
     custom_report = appliance.collections.reports.create(**custom_report_values)
@@ -142,6 +142,7 @@ def test_menuwidget_crud(appliance, request):
     Polarion:
         assignee: jhenner
         casecomponent: Reporting
+        caseimportance: critical
         initialEstimate: 1/12h
     """
     dashboard = "{} / Dashboard".format(appliance.server.intel_name)
@@ -177,6 +178,7 @@ def test_reportwidget_crud(appliance, request):
         assignee: jhenner
         casecomponent: Reporting
         initialEstimate: 1/12h
+        caseimportance: critical
     """
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.REPORT,
@@ -205,6 +207,7 @@ def test_chartwidget_crud(appliance, request):
     Polarion:
         assignee: jhenner
         casecomponent: Reporting
+        caseimportance: critical
         initialEstimate: 1/12h
     """
     w = appliance.collections.dashboard_report_widgets.create(
@@ -233,6 +236,7 @@ def test_rssfeedwidget_crud(appliance, request):
     Polarion:
         assignee: jhenner
         casecomponent: Reporting
+        caseimportance: critical
         initialEstimate: 1/12h
     """
     w = appliance.collections.dashboard_report_widgets.create(
@@ -270,6 +274,7 @@ def test_dashboard_crud(appliance, request):
     """
     Polarion:
         assignee: jhenner
+        caseimportance: critical
         casecomponent: Reporting
         initialEstimate: 1/12h
     """

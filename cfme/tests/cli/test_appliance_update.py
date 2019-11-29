@@ -126,7 +126,7 @@ def test_update_yum(appliance_preupdate, appliance):
 
     Polarion:
         assignee: jhenner
-        caseimportance: high
+        caseimportance: critical
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
@@ -142,7 +142,7 @@ def test_update_webui(appliance_with_providers, appliance, request, old_version)
 
     Polarion:
         assignee: jhenner
-        caseimportance: high
+        caseimportance: critical
         casecomponent: Appliance
         initialEstimate: 1/4h
     """

@@ -60,7 +60,7 @@ def test_schedule_crud(appliance, current_server_time):
         assignee: jhenner
         casecomponent: Reporting
         initialEstimate: 1/16h
-        caseimportance: high
+        caseimportance: critical
     """
     current_time, _ = current_server_time
     start_date = current_time + relativedelta.relativedelta(days=2)
@@ -173,7 +173,7 @@ def test_schedule_timer(appliance, run_types, host_with_credentials, request, cu
     """
     Polarion:
         assignee: jhenner
-        caseimportance: high
+        caseimportance: critical
         casecomponent: Reporting
         initialEstimate: 1/4h
     """
