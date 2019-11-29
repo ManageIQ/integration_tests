@@ -33,7 +33,7 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
     """
     Polarion:
         assignee: jhenner
-        caseimportance: high
+        caseimportance: critical
         casecomponent: Reporting
         initialEstimate: 1/12h
     """
