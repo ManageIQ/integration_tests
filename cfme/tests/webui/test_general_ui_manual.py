@@ -3,8 +3,9 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.common.provider import BaseProvider
-from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -81,11 +82,11 @@ def test_infrastructure_provider_left_panel_titles():
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.manual("manualonly")
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1651194, 1503213])
 @test_requirements.general_ui
-@pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.provider([InfraProvider, CloudProvider], selector=ONE)
 def test_pdf_summary_provider(provider):
     """
     Polarion:
