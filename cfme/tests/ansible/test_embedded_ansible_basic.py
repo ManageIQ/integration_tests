@@ -236,11 +236,7 @@ def test_embedded_ansible_add_private_repository_crud(
         "password": conf.credentials["scm_creds"]["password"],
     }
 
-    scm_credential = credentials_collection.create(
-        "Scm_credential",
-        "Scm",
-        **creds
-    )
+    scm_credential = credentials_collection.create("Scm_credential", "Scm", **creds)
 
     assert scm_credential.exists
 
@@ -252,6 +248,12 @@ def test_embedded_ansible_add_private_repository_crud(
         description=fauxfactory.gen_alpha(),
         scm_credentials=scm_credential.name,
     )
+
+    @request.addfinalizer
+    def _cleanup():
+        scm_credential.delete_if_exists()
+        repository.delete_if_exists()
+
     view = navigate_to(repository, "Details")
     wait_for(
         lambda: repository.status == "successful",
@@ -261,8 +263,8 @@ def test_embedded_ansible_add_private_repository_crud(
     )
     assert repository.exists
 
-    scm_credential.delete_if_exists()
-    repository.delete_if_exists()
+    scm_credential.delete()
+    repository.delete()
 
 
 @pytest.mark.rhel_testing
