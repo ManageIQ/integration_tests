@@ -14,6 +14,7 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.ownership,
     pytest.mark.tier(3),
+    pytest.mark.usefixtures("setup_provider"),
     pytest.mark.provider(
         [CloudProvider, InfraProvider],
         scope='module',
@@ -23,7 +24,7 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def vm_crud(provider):
+def vm_crud_local(provider):
     collection = provider.appliance.provider_based_collection(provider)
     vm = collection.instantiate(random_vm_name(context='ownrs'), provider)
     try:
@@ -150,7 +151,7 @@ def check_vm_exists(vm_ownership):
 
 
 @pytest.mark.rhv3
-def test_form_button_validation(request, user1, setup_provider, provider, vm_crud):
+def test_form_button_validation(request, user1, provider, vm_crud_local):
     """Tests group ownership
 
     Metadata:
@@ -163,17 +164,17 @@ def test_form_button_validation(request, user1, setup_provider, provider, vm_cru
         initialEstimate: 1/4h
     """
     # Reset button test
-    vm_crud.set_ownership(user=user1, click_reset=True)
+    vm_crud_local.set_ownership(user=user1, click_reset=True)
     # Cancel button test
-    vm_crud.set_ownership(user=user1, click_cancel=True)
+    vm_crud_local.set_ownership(user=user1, click_cancel=True)
     # Save button test
-    vm_crud.set_ownership(user=user1)
+    vm_crud_local.set_ownership(user=user1)
     # Unset the ownership
-    vm_crud.unset_ownership()
+    vm_crud_local.unset_ownership()
 
 
 @pytest.mark.rhv2
-def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
+def test_user_ownership_crud(request, user1, provider, vm_crud_local):
     """Tests user ownership
 
     Metadata:
@@ -186,16 +187,16 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
         initialEstimate: 1/4h
     """
     # Set the ownership and checking it
-    vm_crud.set_ownership(user=user1)
+    vm_crud_local.set_ownership(user=user1)
     with user1:
-        assert vm_crud.exists, "vm not found"
-    vm_crud.unset_ownership()
+        assert vm_crud_local.exists, "vm not found"
+    vm_crud_local.unset_ownership()
     with user1:
-        assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
+        assert not check_vm_exists(vm_crud_local), "vm exists! but shouldn't exist"
 
 
 @pytest.mark.rhv3
-def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider, vm_crud):
+def test_group_ownership_on_user_only_role(request, user2, provider, vm_crud_local):
     """Tests group ownership
 
     Metadata:
@@ -209,17 +210,16 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     """
 
     # user is only a member of a single group so it will always be the current group
-    vm_crud.set_ownership(group=user2.groups[0])
+    vm_crud_local.set_ownership(group=user2.groups[0])
     with user2:
-        assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
-    vm_crud.set_ownership(user=user2)
+        assert not check_vm_exists(vm_crud_local), "vm exists! but shouldn't exist"
+    vm_crud_local.set_ownership(user=user2)
     with user2:
-        assert vm_crud.exists, "vm exists"
+        assert vm_crud_local.exists, "vm exists"
 
 
 @pytest.mark.rhv3
-def test_group_ownership_on_user_or_group_role(
-        request, user3, setup_provider, provider, vm_crud):
+def test_group_ownership_on_user_or_group_role(request, user3, provider, vm_crud_local):
     """Tests group ownership
 
     Metadata:
@@ -232,17 +232,17 @@ def test_group_ownership_on_user_or_group_role(
         initialEstimate: 1/4h
     """
     # user is only a member of a single group so it will always be the current group
-    vm_crud.set_ownership(group=user3.groups[0])
+    vm_crud_local.set_ownership(group=user3.groups[0])
     with user3:
-        assert vm_crud.exists, "vm not found"
-    vm_crud.unset_ownership()
+        assert vm_crud_local.exists, "vm not found"
+    vm_crud_local.unset_ownership()
     with user3:
-        assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
+        assert not check_vm_exists(vm_crud_local), "vm exists! but shouldn't exist"
 
 
 @pytest.mark.provider([VMwareProvider], scope="module")
 @pytest.mark.meta(blockers=[BZ(1622952, forced_streams=['5.10'])])
-def test_template_set_ownership(appliance, request, provider, setup_provider, vm_crud):
+def test_template_set_ownership(appliance, request, provider, vm_crud_local):
     """ Sets ownership to an infra template.
 
     First publishes a template from a VM, then tries to unset an ownership of that template,
@@ -259,7 +259,7 @@ def test_template_set_ownership(appliance, request, provider, setup_provider, vm
 
     # setup the test
     # publish a vm to a template
-    template = vm_crud.publish_to_template(template_name=random_vm_name(context='ownrs'))
+    template = vm_crud_local.publish_to_template(template_name=random_vm_name(context='ownrs'))
     # instantiate a user representing no owner
     user_no_owner = appliance.collections.users.instantiate(name="<No Owner>")
     # instantiate a user representing Administrator
