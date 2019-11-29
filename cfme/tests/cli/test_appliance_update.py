@@ -300,6 +300,7 @@ def test_update_replicated_webui(get_replicated_appliances_with_providers, appli
 
 
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(coverage=[1704835])
 @pytest.mark.parametrize("update_strategy", [update_appliance, do_yum_update], ids=["webui", "yum"])
 def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, request, old_version):
     """ Tests updating an appliance with providers using webui, also confirms that the
@@ -316,12 +317,6 @@ def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, req
     wait_for(do_appliance_versions_match, func_args=(appliance, ha_appliances_with_providers[2]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
-
-    if BZ(1704835, forced_streams=get_stream(ha_appliances_with_providers[2].version)).blocks:
-        with LogValidator(evm_log,
-                          matched_patterns=[r'Starting database failover monitor'],
-                          hostname=ha_appliances_with_providers[2].hostname).waiting(wait=30):
-            ha_appliances_with_providers[2].evm_failover_monitor.restart()
 
     assert ha_appliances_with_providers[2].evm_failover_monitor.running
 
