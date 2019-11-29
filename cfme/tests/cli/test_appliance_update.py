@@ -12,11 +12,9 @@ from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.version import get_stream
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 from cfme.utils.wait import wait_for_decorator
@@ -121,6 +119,7 @@ def do_yum_update(appliance):
     appliance.wait_for_web_ui()
 
 
+@pytest.mark.meta(coverage=[1714236])
 def test_update_yum(appliance_preupdate, appliance):
     """Tests appliance update between versions
 
