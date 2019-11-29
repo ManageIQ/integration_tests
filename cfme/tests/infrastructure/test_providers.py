@@ -15,6 +15,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -373,6 +374,48 @@ def test_rhv_guest_devices_count(appliance, setup_provider, provider):
     wait_for(_refresh_provider, timeout=300, delay=30)
     gd_count_after = _gd_count()
     assert gd_count_before == gd_count_after, "guest devices count changed after refresh!"
+
+
+@pytest.mark.rhv2
+@test_requirements.rhev
+@pytest.mark.meta(automates=[1594817])
+@pytest.mark.provider([RHEVMProvider], selector=ONE, scope="function")
+def test_rhv_custom_attributes_after_refresh(appliance, setup_provider, provider):
+    """
+    Bugzilla:
+        1594817
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create a custom attribute on a vm
+            2. Run a targeted refresh of the VM
+            3. Check if the custom attribute is still there
+        expectedResults:
+            1.
+            2.
+            3. The custom attribute is still there
+    """
+    # get the name of any VM on the provider
+    view = navigate_to(provider, 'ProviderVms')
+    vm_name = view.entities.all_entity_names[0]
+
+    vm = f"Vm.where(name: '{vm_name}').last"
+
+    # set the attributes to the VM
+    assert appliance.ssh_client.run_rails_console(f"{vm}.miq_custom_set('mykey', 'myval')").success
+
+    # check the attributes are set
+    assert "myval" in appliance.ssh_client.run_rails_console(f"{vm}.miq_custom_get('mykey')").output
+
+    # run a targeted refresh on the VM
+    assert appliance.ssh_client.run_rails_console(f"EmsRefresh.refresh({vm})").success
+
+    # verify the attribute is still here
+    assert "myval" in appliance.ssh_client.run_rails_console(f"{vm}.miq_custom_get('mykey')").output
 
 
 @test_requirements.general_ui
