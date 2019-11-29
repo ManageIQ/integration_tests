@@ -911,7 +911,7 @@ def role_api(appliance, request, create_role):
 
 @pytest.mark.tier(2)
 @pytest.mark.customer_scenario
-@pytest.mark.meta(automates=[1727948, 1731157], blockers=[1731157])
+@pytest.mark.meta(automates=[1727948, 1731157])
 def test_create_picture_with_role(role_api):
     """
     Bugzilla:

@@ -187,35 +187,3 @@ def test_reports_timelines_tab():
             1. Timelines tab must not be visible.
     """
     pass
-
-
-@test_requirements.report
-@pytest.mark.customer_scenario
-@pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1638533])
-@pytest.mark.parametrize("preserve_owner", [True, False])
-def test_import_report_preserve_owner(preserve_owner):
-    """
-    Bugzilla:
-        1638533
-        1693719
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        initialEstimate: 1/2h
-        setup:
-            1. Have a report with user and group values other than that of the admin
-                and note the user and group values.
-        testSteps:
-            1. While importing the report, mark `Preserve Owner` with the parametrization values.
-            2. Assert the user and group values are as expected.
-                i. If `preserve_owner` is True
-                ii. If `preserve_owner` is False
-        expectedResults:
-            1. Report imported successfully.
-            2.
-                i. Then expected values will be the original user and group
-                ii. Then expected values will be user and group of the currently logged in user
-    """
-    pass
