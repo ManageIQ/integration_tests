@@ -1,10 +1,7 @@
 import fauxfactory
 import pytest
-from widgetastic.widget import Table
-from widgetastic.widget import Text
 
 from cfme import test_requirements
-from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import ContainerProviderAddView
 from cfme.common.provider_views import InfraProviderAddView
@@ -373,7 +370,7 @@ def test_vm_right_size_recommendation_back_button(setup_provider, full_template_
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1627387])
 @pytest.mark.customer_scenario
-@pytest.mark.provider([BaseProvider], selector=ONE)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_misclicking_checkbox_vms(appliance, setup_provider, provider):
     """
     Bugzilla:
@@ -394,11 +391,9 @@ def test_misclicking_checkbox_vms(appliance, setup_provider, provider):
     """
     collection = appliance.provider_based_collection(provider)
     view = navigate_to(collection, "All")
-    if view.toolbar.view_selector.selected != "List View":
-        view.toolbar.view_selector.select("List View")
+    view.toolbar.view_selector.select("List View")
 
-    table = Table(view, '//*[@id="miq-gtl-view"]//table')
-    row = next(table.rows())
+    row = next(view.entities.elements.rows())
     # Click the first column, it contains checkbox and assert that nothing happens
     row[0].click()
     assert view.is_displayed
@@ -406,7 +401,7 @@ def test_misclicking_checkbox_vms(appliance, setup_provider, provider):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1745660])
-@pytest.mark.provider([BaseProvider], selector=ONE)
+@pytest.mark.provider([VMwareProvider], selector=ONE)
 def test_compliance_column_header(appliance, setup_provider, provider):
     """
     Bugzilla:
@@ -430,11 +425,10 @@ def test_compliance_column_header(appliance, setup_provider, provider):
     """
     collection = appliance.provider_based_collection(provider)
     view = navigate_to(collection, "All")
-    if view.toolbar.view_selector.selected != "List View":
-        view.toolbar.view_selector.select("List View")
+    view.toolbar.view_selector.select("List View")
 
-    compliant_column = Text(view, locator='//*//th[contains(normalize-space(.), "Compliant")]')
-    compliant_column.click()
+    table = view.entities.elements
+    next(hr for hr in table.browser.elements(table.HEADERS) if hr.text == "Compliant").click()
     # Page should not break after after clicking the compliant column
     assert view.is_displayed
 
