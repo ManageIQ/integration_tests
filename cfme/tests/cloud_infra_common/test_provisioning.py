@@ -96,7 +96,7 @@ def test_provision_from_template(provider, provisioned_instance):
 
     Polarion:
         assignee: jhenner
-        caseimportance: high
+        caseimportance: critical
         casecomponent: Provisioning
         initialEstimate: 1/4h
     """
