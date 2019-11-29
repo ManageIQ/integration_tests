@@ -511,6 +511,7 @@ def test_azure_subscription_required(request, provider):
         assignee: anikifor
         casecomponent: WebUI
         caseposneg: negative
+        caseimportance: critical
         initialEstimate: 1/10h
         testSteps:
             1.Add Azure Provider w/0 subscription
@@ -545,6 +546,7 @@ def test_azure_multiple_subscription(
         assignee: anikifor
         casecomponent: Cloud
         initialEstimate: 1/4h
+        caseimportance: critical
     """
     providers = [provider, second_provider]
     prov_inventory = []

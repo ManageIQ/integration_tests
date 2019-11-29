@@ -59,6 +59,7 @@ def test_publish_vm_to_template(request, setup_provider, vm_crud):
         assignee: anikifor
         initialEstimate: 1/4h
         casecomponent: Provisioning
+        caseimportance: critical
     """
     vm_crud.mgmt.ensure_state(VmState.STOPPED)
     vm_crud.refresh_relationships()

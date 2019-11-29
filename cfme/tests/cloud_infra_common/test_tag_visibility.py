@@ -37,6 +37,7 @@ def test_tag_vis_vm(tagged_vm, user_restricted):
         assignee: anikifor
         casecomponent: Tagging
         initialEstimate: 1/4h
+        caseimportance: critical
     """
     with user_restricted:
         assert tagged_vm.exists, "vm not found"

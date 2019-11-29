@@ -35,6 +35,7 @@ def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
         assignee: anikifor
         initialEstimate: 1/4h
         casecomponent: Infra
+        caseimportance: critical
     """
     template_crud = pxe.ISODatastore(provider.name)
     template_crud.create()
