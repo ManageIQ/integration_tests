@@ -29,16 +29,6 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 evm_log = '/var/www/miq/vmdb/log/evm.log'
 
 
-@pytest.fixture
-def network_share(utility_vm):
-    utility_vm_hostname, root_password = utility_vm
-    info = {
-        'hostname': utility_vm_hostname,
-    }
-    info.update(cfme_data.utility_vm.network_share)
-    return info
-
-
 def provision_vm(request, provider):
     """Function to provision appliance to the provider being tested"""
     vm_name = fauxfactory.gen_alphanumeric(16, start="test_rest_db_")
@@ -581,7 +571,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_providers,
-                                          network_share):
+                                          utility_vm):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -592,8 +582,8 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
         initialEstimate: 1h
     """
     appl1, appl2 = two_appliances_one_with_providers
-    host = network_share['hostname']
-    loc = network_share['nfs']['path']
+    host, _, data = utility_vm
+    loc = data['network_share']['nfs']['path']
     nfs_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
     nfs_restore_dir_path = 'nfs://{}{}'.format(host, loc)
     nfs_restore_file_path = '{}/db_backup/{}'.format(nfs_restore_dir_path, nfs_dump_file_name)
@@ -654,7 +644,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_samba(request, two_appliances_one_with_providers,
-                                            network_share):
+                                            utility_vm):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -665,13 +655,13 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
         initialEstimate: 1h
     """
     appl1, appl2 = two_appliances_one_with_providers
-    host = network_share['hostname']
-    loc = network_share['smb']['path']
+    host, _, data = utility_vm
+    loc = data['network_share']['smb']['path']
     smb_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
     smb_restore_dir_path = 'smb://{}{}'.format(host, loc)
     smb_restore_file_path = '{}/db_backup/{}'.format(smb_restore_dir_path, smb_dump_file_name)
 
-    creds_key = network_share['smb']['credentials']
+    creds_key = data['network_share']['smb']['credentials']
     pwd = credentials[creds_key]['password']
     usr = credentials[creds_key]['username']
     # Transfer v2_key and db backup from first appliance to second appliance
