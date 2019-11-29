@@ -214,6 +214,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
         assignee: anikifor
         casecomponent: Configuration
         initialEstimate: 1/4h
+        caseimportance: critical
     Bugzilla:
         1652116
         1656318

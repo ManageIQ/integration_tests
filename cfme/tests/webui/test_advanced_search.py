@@ -61,7 +61,7 @@ def _can_open_advanced_search(param, appliance):
     Polarion:
         assignee: anikifor
         casecomponent: WebUI
-        caseimportance: high
+        caseimportance: critical
         initialEstimate: 1/10h
     """
     view = _navigation(param, appliance)
