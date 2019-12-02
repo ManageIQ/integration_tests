@@ -27,31 +27,6 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
 
 
 @pytest.mark.tier(1)
-def test_regions_disable_azure():
-    """
-    CloudForms should be able to enable/disable unusable regions in Azure,
-    like the Government one for example.
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/10h
-        testSteps:
-            1. Go into advanced settings and add or remove items from the following section.
-               :ems_azure:
-               :disabled_regions:
-               - usgovarizona
-               - usgoviowa
-               - usgovtexas
-               - usgovvirginia
-    Bugzilla:
-        1412355
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_public_ip_without_nic_azure():
     """
     Update testcase after BZ gets resolved
