@@ -18,7 +18,8 @@ pytestmark = [
         [CloudProvider, InfraProvider],
         scope='module',
         required_fields=[['templates', 'small_template']]  # default for create_on_provider
-    )
+    ),
+    pytest.mark.usefixtures('setup_provider_modscope'),
 ]
 
 
@@ -150,7 +151,7 @@ def check_vm_exists(vm_ownership):
 
 
 @pytest.mark.rhv3
-def test_form_button_validation(request, user1, setup_provider, provider, vm_crud):
+def test_form_button_validation(user1, vm_crud):
     """Tests group ownership
 
     Metadata:
@@ -173,7 +174,7 @@ def test_form_button_validation(request, user1, setup_provider, provider, vm_cru
 
 
 @pytest.mark.rhv2
-def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
+def test_user_ownership_crud(user1, vm_crud):
     """Tests user ownership
 
     Metadata:
@@ -195,7 +196,7 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, vm_crud):
 
 
 @pytest.mark.rhv3
-def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider, vm_crud):
+def test_group_ownership_on_user_only_role(user2, vm_crud):
     """Tests group ownership
 
     Metadata:
@@ -218,8 +219,7 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
 
 
 @pytest.mark.rhv3
-def test_group_ownership_on_user_or_group_role(
-        request, user3, setup_provider, provider, vm_crud):
+def test_group_ownership_on_user_or_group_role(user3, vm_crud):
     """Tests group ownership
 
     Metadata:
@@ -242,7 +242,7 @@ def test_group_ownership_on_user_or_group_role(
 
 @pytest.mark.provider([VMwareProvider], scope="module")
 @pytest.mark.meta(blockers=[BZ(1622952, forced_streams=['5.10'])])
-def test_template_set_ownership(appliance, request, provider, setup_provider, vm_crud):
+def test_template_set_ownership(appliance, vm_crud):
     """ Sets ownership to an infra template.
 
     First publishes a template from a VM, then tries to unset an ownership of that template,
