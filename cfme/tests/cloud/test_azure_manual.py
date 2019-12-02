@@ -27,24 +27,6 @@ def test_refresh_azure_provider_with_empty_ipv6_config_on_vm():
 
 
 @pytest.mark.tier(1)
-def test_regions_all_azure():
-    """
-    Need to validate the list of regions we show in the UI compared with
-    regions.rb  Recent additions include UK South
-    These really don"t change much, but you can use this test case id
-    inside bugzilla to set qe_test flag.
-
-    Polarion:
-        assignee: anikifor
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/12h
-        startsin: 5.6
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_regions_disable_azure():
     """
     CloudForms should be able to enable/disable unusable regions in Azure,

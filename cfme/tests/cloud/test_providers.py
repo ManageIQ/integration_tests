@@ -1,6 +1,7 @@
 # pylint: disable=E1101
 # pylint: disable=W0621
 import os
+import re
 import uuid
 from urllib.parse import urljoin
 
@@ -597,11 +598,30 @@ def test_refresh_with_empty_iot_hub_azure(request, provider, setup_provider):
     assert result.validate(wait="60s")
 
 
+@pytest.fixture()
+def _azure_available_regions(provider):
+    view = navigate_to(AzureProvider, "Add")
+    # prefill the provider type to enable regions dropdown
+    view.fill({'prov_type': provider.type.capitalize()})
+    return [opt.text for opt in view.region.all_options][1:]  # first option is '<Choose>'
+
+
+@pytest.fixture()
+def _azure_available_regions_backend(appliance):
+    regions_rb = appliance.ssh_client.run_command(
+        "cat /opt/rh/cfme-gemset/bundler/gems/cfme-providers-azure-*/"
+        "app/models/manageiq/providers/azure/regions.rb")
+    c = [x.group(1) for x in re.finditer(r':description => _\(\"([ \w]*)\"\)',
+                                         regions_rb.output,
+                                         flags=re.MULTILINE)]
+    return c
+
+
 @test_requirements.azure
 @pytest.mark.meta(automates=[1412363])
 @pytest.mark.provider([AzureProvider], scope="function", selector=ONE)
 @pytest.mark.tier(2)
-def test_regions_gov_azure(provider):
+def test_regions_gov_azure(_azure_available_regions):
     """
     This test verifies that Azure Government regions are not included in
     the default region list as most users will receive errors if they try
@@ -618,12 +638,29 @@ def test_regions_gov_azure(provider):
         setup: Check the region list when adding a Azure Provider.
         startsin: 5.7
     """
-    view = navigate_to(AzureProvider, "Add")
-    # prefill the provider type to enable regions dropdown
-    view.fill({'prov_type': provider.type.capitalize()})
-    available_regions = [opt.text for opt in view.region.all_options]
     # no government regions should be available by default
-    assert not any(reg for reg in available_regions if 'gov' in reg.lower())
+    assert not any(reg for reg in _azure_available_regions if 'gov' in reg.lower())
+
+
+@test_requirements.azure
+@pytest.mark.provider([AzureProvider], scope="function", selector=ONE)
+@pytest.mark.tier(2)
+def test_regions_all_azure(_azure_available_regions_backend, _azure_available_regions):
+    """
+    Need to validate the list of regions we show in the UI compared with
+    regions.rb  Recent additions include UK South
+    These really don"t change much, but you can use this test case id
+    inside bugzilla to set qe_test flag.
+
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/12h
+        startsin: 5.6
+    """
+    dif = set(_azure_available_regions_backend).symmetric_difference(set(_azure_available_regions))
+    assert bool(dif), f"Regions {list(dif)} differ in UI and backend"
 
 
 @test_requirements.general_ui
