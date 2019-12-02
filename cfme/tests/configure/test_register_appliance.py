@@ -199,10 +199,10 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 
 
 @pytest.mark.rhel_testing
+@pytest.mark.meta(coverage=[1694073])
 def test_rhsm_registration_check_repo_names(
         temp_appliance_preconfig_funcscope, soft_assert, appliance):
     """ Checks default rpm repos on a fresh appliance
-
     Polarion:
         assignee: jhenner
         caseimportance: high
