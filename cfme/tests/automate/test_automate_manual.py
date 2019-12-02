@@ -446,33 +446,6 @@ def test_automate_task_schedule():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1693362])
-def test_redhat_domain_sync_after_upgrade():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        testSteps:
-            1. Either dump database of appliance with version X to appliance with version Y
-               or upgrade the appliance
-            2. grep 'domain version on disk differs from db version' /var/www/miq/vmdb/log/evm.log
-            3. Check last_startup.txt file
-        expectedResults:
-            1.
-            2. You should find this string in logs: RedHat domain version on disk differs from db
-               version
-            3. You should find this string in file: RedHat domain version on disk differs from db
-               version
-
-    Bugzilla:
-        1693362
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1753860])
 def test_overwrite_import_domain():
     """
