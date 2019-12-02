@@ -3,11 +3,11 @@ import pytest
 from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
-from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
 from cfme.utils.conf import credentials
-from cfme.utils.wait import wait_for
+
 
 pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
@@ -40,7 +40,7 @@ def setup_replication(configured_appliance, unconfigured_appliance):
 
 
 @pytest.mark.provider([OpenStackProvider])
-def test_replication_powertoggle(request, provider, configured_appliance, unconfigured_appliance):
+def test_replication_powertoggle(request, provider, setup_replication, small_template):
     """
     power toggle from global to remote
 
@@ -58,42 +58,45 @@ def test_replication_powertoggle(request, provider, configured_appliance, unconf
             1.
             2. VM state changes to off in the Remote and Global appliance.
             3. VM state changes to on in the Remote and Global appliance.
-.
     """
-    instance_name = "test_replication_{}".format(fauxfactory.gen_alphanumeric().lower())
-    remote_app = configured_appliance
-    global_app = unconfigured_appliance
+    instance_name = fauxfactory.gen_alphanumeric(start="test_replication_", length=25).lower()
+    remote_app, global_app = setup_replication
 
     provider_app_crud(OpenStackProvider, remote_app).setup()
-    setup_replication(remote_app, global_app)
+    provider.appliance = remote_app
 
-    wait_for(lambda: len(remote_app.rest_api.collections.providers.find_by(
-        name=provider.name)) != 0, num_sec=30, delay=2)
-    remote_instance = remote_app.collections.cloud_instances.create_rest(instance_name, provider)
-    request.addfinalizer(lambda: remote_instance.delete())
-
+    remote_instance = remote_app.collections.cloud_instances.instantiate(
+        instance_name, provider, small_template.name
+    )
     global_instance = global_app.collections.cloud_instances.instantiate(instance_name, provider)
+
+    # Create instance
+    remote_instance.create_on_provider(find_in_cfme=True)
+    request.addfinalizer(remote_instance.cleanup_on_provider)
+
     remote_instance.wait_for_instance_state_change(desired_state=remote_instance.STATE_ON)
-
-    global_instance = global_app.collections.cloud_instances.instantiate(instance_name, provider)
 
     # Power OFF instance using global appliance
     global_instance.power_control_from_cfme(option=global_instance.STOP)
 
     # Assert instance power off state from both remote and global appliance
     assert global_instance.wait_for_instance_state_change(
-        desired_state=global_instance.STATE_OFF).out
+        desired_state=global_instance.STATE_OFF
+    ).out
     assert remote_instance.wait_for_instance_state_change(
-        desired_state=remote_instance.STATE_OFF).out
+        desired_state=remote_instance.STATE_OFF
+    ).out
 
     # Power ON instance using global appliance
     global_instance.power_control_from_cfme(option=global_instance.START)
 
     # Assert instance power ON state from both remote and global appliance
     assert global_instance.wait_for_instance_state_change(
-        desired_state=global_instance.STATE_ON).out
+        desired_state=global_instance.STATE_ON
+    ).out
     assert remote_instance.wait_for_instance_state_change(
-        desired_state=global_instance.STATE_ON).out
+        desired_state=global_instance.STATE_ON
+    ).out
 
 
 @pytest.mark.tier(2)
