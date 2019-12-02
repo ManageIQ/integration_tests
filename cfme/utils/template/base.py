@@ -317,10 +317,14 @@ class ProviderTemplateUpload(object):
             r'^.*?[.](?P<ext>tar\.gz|tar\.bz2|\w+)$').match(self.image_name).group('ext')
         # Check if file exists already:
         if path.isfile(self.image_name):
-            logger.info('Local image found, skipping download: %s', self.local_file_path)
-            if suffix not in ARCHIVE_TYPES:
-                return True
-        else:
+            if self.checksum_verification():
+                logger.info('Local image found, skipping download: %s', self.local_file_path)
+                if suffix not in ARCHIVE_TYPES:
+                    return True
+            else:
+                os.remove(self.local_file_path)
+
+        if not path.isfile(self.image_name):
             # Download file to cli-tool-client
             try:
                 request.urlretrieve(self.raw_image_url, self.local_file_path)
