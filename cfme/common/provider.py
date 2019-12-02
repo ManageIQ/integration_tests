@@ -415,7 +415,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             events_connection["endpoint"]["security_protocol"] = security_protocol
         connection_configs.append(events_connection)
 
-    def _fill_smartstate_endpoint_dicts(self, provider_attributes, connection_configs):
+    def _fill_smartstate_endpoint_dicts(self, provider_attributes):
         """Fills dicts with smartstate endpoint data.
 
         Helper method for ``self.create_rest``
@@ -432,6 +432,26 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             "password": endpoint_rsa.credentials.secret,
             "auth_type": "smartstate_docker",
         })
+
+    def _fill_vmrc_console_endpoint_dicts(self, provider_attributes):
+        """Fills dicts with VMRC console endpoint data
+
+        Helper method for ``self.create_rest``
+        """
+        if "vmrc" not in self.endpoints:
+            return
+
+        endpoints_vmrc = self.endpoints["vmrc"]
+        if isinstance(provider_attributes["credentials"], dict):
+            provider_attributes["credentials"] = [provider_attributes["credentials"]]
+
+        provider_attributes["credentials"].append(
+            {
+                "auth_type": "console",
+                "userid": endpoints_vmrc.credentials.principal,
+                "password": endpoints_vmrc.credentials.secret,
+            }
+        )
 
     def _compile_connection_configurations(self, provider_attributes, connection_configs):
         """Compiles together all dicts with data for ``connection_configurations``.
@@ -481,6 +501,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self._fill_rsa_endpoint_dicts(connection_configs)
         self._fill_amqp_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_smartstate_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_vmrc_console_endpoint_dicts(provider_attributes)
         self._compile_connection_configurations(provider_attributes, connection_configs)
 
         try:
