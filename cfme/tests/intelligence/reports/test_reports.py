@@ -343,6 +343,10 @@ def test_send_text_custom_report_with_long_condition(
     appliance, setup_provider, smtp_test, request, get_report
 ):
     """
+    Bugzilla:
+        1677839
+        1693727
+
     Polarion:
         assignee: pvala
         casecomponent: Reporting
@@ -356,9 +360,6 @@ def test_send_text_custom_report_with_long_condition(
             1. Queue the schedule and monitor evm log.
         expectedResults:
             1. There should be no error in the log and report must be sent successfully.
-
-    Bugzilla:
-        1677839
     """
     report = get_report("long_condition_report.yaml", "test_long_condition_report")
     data = {
@@ -543,6 +544,8 @@ def test_reports_service_unavailable(temp_appliance_preconfig, file_name, restor
     """
     Bugzilla:
         1725142
+        1737123
+
     Polarion:
         assignee: pvala
         casecomponent: Reporting

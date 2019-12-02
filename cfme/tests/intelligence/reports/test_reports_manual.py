@@ -6,7 +6,9 @@ from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 
 
-@pytest.mark.manual
+pytestmark = [pytest.mark.manual]
+
+
 @test_requirements.report
 @pytest.mark.tier(1)
 def test_reports_generate_custom_conditional_filter_report():
@@ -34,11 +36,16 @@ def test_reports_generate_custom_conditional_filter_report():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(1)
+@pytest.mark.customer_scenario
+@pytest.mark.meta(coverage=[1686281])
 def test_vm_volume_free_space_less_than_20_percent():
     """
+    Bugzilla:
+        1686281
+        1696420
+
     Polarion:
         assignee: pvala
         casecomponent: Reporting
@@ -52,14 +59,10 @@ def test_vm_volume_free_space_less_than_20_percent():
         expectedResults:
             1. It should report only those VMs which has volume free space less than
                 or equal to 20%.
-
-    Bugzilla:
-        1686281
     """
     pass
 
 
-@pytest.mark.manual
 @test_requirements.report
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("5.10")
@@ -86,7 +89,6 @@ def test_reports_timezone():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.report
 @test_requirements.multi_region
 @pytest.mark.tier(2)
@@ -118,7 +120,6 @@ def test_reports_in_global_region(context, report):
 
 
 @test_requirements.report
-@pytest.mark.manual
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1743579])
 def test_created_on_time_report_field():
@@ -143,7 +144,6 @@ def test_created_on_time_report_field():
 
 @pytest.mark.ignore_stream("5.10")
 @test_requirements.report
-@pytest.mark.manual
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1714197])
 def test_optimization_reports():
@@ -168,7 +168,6 @@ def test_optimization_reports():
 
 @pytest.mark.ignore_stream("5.10")
 @test_requirements.report
-@pytest.mark.manual
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1743651])
 def test_reports_timelines_tab():
