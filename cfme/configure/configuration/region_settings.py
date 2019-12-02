@@ -26,7 +26,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-from widgetastic_manageiq import Dropdown
 from widgetastic_manageiq import DynamicTable
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import Table
@@ -974,6 +973,11 @@ class ReplicationGlobalView(ReplicationView):
         )
 
 
+class ReplicationKebab(Kebab):
+    ITEM = './ul/li/a[normalize-space(.)={} and not(contains(@class, "disabled"))]'
+    ITEMS = './ul/li/a[not(contains(@class, "disabled"))]'
+
+
 class ReplicationGlobalAddView(ReplicationView):
     database = Input(locator='//input[contains(@ng-model, "dbname")]')
     port = Input(name='port')
@@ -981,8 +985,12 @@ class ReplicationGlobalAddView(ReplicationView):
     username = Input(name='userid')
     password = Input(name='password')
     accept_button = Button('Accept')
-    action_dropdown = Dropdown(
-        "//*[@id='form_div']//table//button[contains(@class, 'dropdown-toggle')]")
+    action_dropdown = ReplicationKebab(
+        locator=(
+            '//tr[contains(@ng-if, "pglogicalReplicationModel.addEnabled")]'
+            '//div[contains(@class, "dropdown-kebab-pf")]'
+        )
+    )
 
     @property
     def is_displayed(self):
@@ -1005,7 +1013,7 @@ class Replication(NavigatableMixin):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def set_replication(self, updates=None, replication_type=None, reset=False):
+    def set_replication(self, updates=None, replication_type=None, reset=False, validate=False):
         """ Set replication settings
 
             Args:
@@ -1038,6 +1046,11 @@ class Replication(NavigatableMixin):
             view.flash.assert_message('All changes have been reset')
         else:
             try:
+                if validate:
+                    view.action_dropdown.item_select("Validate")
+                    view.flash.assert_success_message(
+                        "Subscription Credentials validated successfully"
+                    )
                 view.accept_button.click()
                 view.save_button.click()
             except Exception:
