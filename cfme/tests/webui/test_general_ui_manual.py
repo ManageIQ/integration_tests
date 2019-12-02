@@ -163,32 +163,6 @@ def test_provider_documentation():
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1745660])
-def test_compliance_column_header():
-    """
-    Bugzilla:
-        1745660
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/18h
-        setup:
-            1. Add a infra/cloud provider
-        testSteps:
-            1. Navigate to All VMs/Instances page.
-            2. Select the List View
-            3. Click on the Compliance Column Header
-        expectedResults:
-            1.
-            2.
-            3. There should be no 500 Internal Server Error and the page must be displayed as is.
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1733120])
 def test_compare_vm_from_datastore_relationships():
     """
