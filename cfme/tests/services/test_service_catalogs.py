@@ -3,6 +3,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.workloads import VmsInstances
@@ -202,3 +204,35 @@ def test_advanced_search_registry_element(request, appliance):
     request.addfinalizer(view.search.close_advanced_search)
     view.search.advanced_search_form.search_exp_editor.registry_form_view.fill({'type': "Registry"})
     assert view.search.advanced_search_form.search_exp_editor.registry_form_view.type.is_displayed
+
+
+@pytest.mark.tier(2)
+@pytest.mark.provider([RHEVMProvider], selector=ONE)
+def test_order_service_after_deleting_provider(appliance, provider, setup_provider, catalog_item):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.8
+        tags: service
+    """
+    template_name = catalog_item.prov_data["catalog"]["catalog_name"]["name"]
+    template_id = appliance.rest_api.collections.templates.find_by(name=template_name)[0].id
+
+    # delete provider
+    provider.delete()
+    provider.wait_for_delete()
+    assert not provider.exists
+
+    # order catalog item
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    provision_request = service_catalogs.order()
+    provision_request.wait_for_request()
+
+    # Verify state and msg
+    view = navigate_to(provision_request, "Details")
+    assert view.details.request_details.get_text_of("Request State") == "Finished"
+    last_msg = f"Error: Source Template/Vm with id [{template_id}] has no EMS, unable to provision"
+    assert view.details.request_details.get_text_of("Last Message") == last_msg
