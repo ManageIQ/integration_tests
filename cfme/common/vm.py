@@ -274,8 +274,7 @@ class BaseVM(
             invokes_alert: If the particular console will invoke a CFME popup/alert
                            setting this to true will handle this.
         """
-        # TODO: implement vmrc vm console
-        if console not in ['VM Console']:
+        if console not in ['VM Console', 'VMRC Console']:
             raise NotImplementedError('Not supported console type: {}'.format(console))
 
         view = navigate_to(self, 'Details')

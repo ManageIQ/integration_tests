@@ -19,6 +19,13 @@ def configure_console_webmks(appliance):
 
 
 @pytest.fixture(scope="module")
+def configure_console_vmrc(appliance):
+    """Configure VMware Console to use VMware WebMKS."""
+    logger.info("Changing VMware console suppport configuration to VMware VMRC Plugin")
+    appliance.server.settings.update_vmware_console({'console_type': 'VMware VMRC Plugin'})
+
+
+@pytest.fixture(scope="module")
 def configure_websocket(appliance):
     """Enable websocket role if it is disabled.
 

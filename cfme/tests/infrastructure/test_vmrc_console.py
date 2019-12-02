@@ -4,10 +4,47 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 
 
-pytestmark = [
-    pytest.mark.usefixtures('setup_provider_modscope'),
-    pytest.mark.provider([VMwareProvider], scope='module')
-]
+@test_requirements.vmrc
+@pytest.mark.provider([VMwareProvider],
+    required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
+def test_vmrc_console(request, appliance, setup_provider, provider, configure_console_vmrc):
+    """
+    Test VMRC console can be opened for the VMware provider.
+
+    Polarion:
+        assignee: apagac
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 2h
+        setup:
+            1. Login to CFME Appliance as admin.
+            2. Navigate to Configuration
+            3. Under VMware Console Support section and click on Dropdown in front
+               of "Use" & select "VMware VMRC Plugin"(Applicable to versions older than CFME 5.11).
+            4. Click save at the bottom of the page.
+            5. Provision a testing VM.
+        testSteps:
+            1. Navigtate to testing VM
+            2. Launch the console by Access -> VM Console
+        expectedResults:
+            1. VM Details displayed
+            2. You should see a Pop-up being Blocked, Please allow it to
+               open (always allow pop-ups for this site) and then a new tab
+               will open and then in few seconds for the VMRC console.
+    """
+    vms_collections = appliance.collections.infra_vms
+    vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
+    if not vm.exists_on_provider:
+        pytest.skip("Skipping test, cu-24x7 VM does not exist")
+    if appliance.version < '5.11':
+        vm.open_console(console='VM Console', invokes_alert=True)
+        assert vm.vm_console, 'VMConsole object should be created'
+        request.addfinalizer(vm.vm_console.close_console_window)
+    else:
+        vm.open_console(console='VMRC Console', invokes_alert=True)
+        assert vm.vm_console, 'VMConsole object should be created'
+        request.addfinalizer(vm.vm_console.close_console_window)
+    request.addfinalizer(appliance.server.logout)
 
 
 @test_requirements.vmrc
@@ -15,6 +52,7 @@ pytestmark = [
 @pytest.mark.parametrize('browser', ['edge', 'internet_explorer'])
 @pytest.mark.parametrize('operating_system', ['windows7', 'windows10',
  'windows_server2012', 'windows_server2016'])
+@pytest.mark.provider([VMwareProvider])
 def test_vmrc_console_windows(browser, operating_system, provider):
     """
     This testcase is here to reflect testing matrix for vmrc consoles. Combinations listed
@@ -59,6 +97,7 @@ def test_vmrc_console_windows(browser, operating_system, provider):
 @pytest.mark.manual("manualonly")
 @pytest.mark.parametrize('browser', ['chrome_latest', 'firefox_latest'])
 @pytest.mark.parametrize('operating_system', ['fedora_latest', 'rhel8.x', 'rhel7.x', 'rhel6.x'])
+@pytest.mark.provider([VMwareProvider])
 def test_vmrc_console_linux(browser, operating_system, provider):
     """
     This testcase is here to reflect testing matrix for vmrc consoles. Combinations listed

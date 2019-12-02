@@ -237,7 +237,8 @@ class VMConsole(Pretty):
     def switch_to_console(self):
         """Switch focus to console tab/window."""
         logger.info("Switching to console: window handle = {}".format(self.console_handle))
-        self.browser.selenium.switch_to.window(self.console_handle)
+        if (self.console_handle and self.console_handle in self.browser.selenium.window_handles):
+            self.browser.selenium.switch_to_window(self.console_handle)
 
     def wait_for_connect(self, timeout=30):
         """Wait for as long as the specified/default timeout for the console to be connected."""
@@ -252,7 +253,7 @@ class VMConsole(Pretty):
 
     def close_console_window(self):
         """Attempt to close Console window at the end of test."""
-        if self.console_handle is not None:
+        if (self.console_handle and self.console_handle in self.browser.selenium.window_handles):
             self.switch_to_console()
             self.browser.selenium.close()
             logger.info("Browser window/tab containing Console was closed.")
