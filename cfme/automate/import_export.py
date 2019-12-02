@@ -71,6 +71,7 @@ class AutomateImportExportView(AutomateImportExportBaseView):
 
 
 class FileImportSelectorView(AutomateImportExportBaseView):
+    flash = V2VFlashMessages(locator="div.import-flash-message")
     import_into = BootstrapSelect(id="selected_domain_to_import_to")
     import_from = BootstrapSelect(
         locator=".//div[contains(@class, 'bootstrap-select importing-domains')]"

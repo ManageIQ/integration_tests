@@ -502,52 +502,6 @@ def test_attribute_value_message():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1752875])
-def test_existing_domain_child_override():
-    """
-    PR:
-     https://github.com/ManageIQ/manageiq-ui-classic/pull/4912
-
-    Bugzilla:
-        1752875
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        testSteps:
-            1. Create custom domain and copy class - "ManageIQ/System/Request"
-            2. Lock this domain
-            3. Navigate to Automation > automate > Import/export and click on "export all classes
-               and instances to file"
-            4. Go to custom domain and unlock it. Remove instance - "ManageIQ/System/Request/" and
-               copy - "ManageIQ/System/Process/Request" (you can copy more classes or methods or
-               instances) to custom domain and again lock the domain.
-            5. Go to import/export page and click on 'choose file'. Select exported file and click
-               on upload
-            6. Select "Select domain you wish to import from:" - "custom_domain" and check Toggle
-               All/None
-            7. Click on commit button.
-            8. Then navigate to custom domain and unlock it
-            9. Perform step 5, 6 and 7(In this case, domain will get imported)
-            10. Go to custom domain
-        expectedResults:
-            1.
-            2.
-            3. Datastores exported on local system in zip format
-            4.
-            5.
-            6.
-            7. You should see flash message: "Error: Selected domain is locked"
-            8.
-            9. Selected domain imported successfully
-            10. You should see existing as well as imported namespace, class, instance or method
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1743227])
 def test_queue_up_schedule_run_now():
     """
