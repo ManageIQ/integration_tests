@@ -39,7 +39,7 @@ class EventAttr(object):
 
     def __repr__(self):
         return "{name}({type})={val}, cmp_func {cmp}".format(name=self.name, type=self.type,
-                                                             val=self.value, eq=self.cmp_func)
+                                                             val=self.value, cmp=self.cmp_func)
 
 
 class Event(object):
