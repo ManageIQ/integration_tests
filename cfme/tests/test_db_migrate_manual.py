@@ -6,18 +6,13 @@ from cfme import test_requirements
 @pytest.mark.manual
 @test_requirements.update
 @test_requirements.db_migration
+@pytest.mark.meta(coverage=[1478986, 1561075, 1590846, 1578957])
 @pytest.mark.tier(2)
 def test_upgrade_dedicated_db_migration_local():
     """
     Test that you can locally migrate a dedicated database after upgrade.
     Previously it was missing the database.yml during setup with would
     case the rake task to fail.
-
-    Bugzilla:
-        1478986
-        1561075
-        1590846
-        1578957
 
     Polarion:
         assignee: jhenner
@@ -88,11 +83,9 @@ def test_upgrade_single_negative_v2_key_fix_auth():
 @test_requirements.update
 @test_requirements.db_migration
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1553841])
 def test_upgrade_custom_css():
     """Test css customization"s function correctly after upgrades.
-
-    Bugzilla:
-        1553841
 
     Polarion:
         assignee: jhenner
@@ -117,11 +110,9 @@ def test_upgrade_custom_css():
 @test_requirements.update
 @test_requirements.db_migration
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1375313])
 def test_upgrade_custom_widgets():
     """
-    Bugzilla:
-        1375313
-
     Upgrade appliance with custom widgets added
 
     Polarion:
@@ -146,11 +137,10 @@ def test_upgrade_custom_widgets():
 @pytest.mark.manual
 @test_requirements.update
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1463389])
 def test_rh_rhsm_sat6_cred_save_crud():
     """
     Switch between rhsm and sat6 setup
-    Bugzilla:
-        1463389
 
     Polarion:
         assignee: jhenner
@@ -212,11 +202,9 @@ def test_upgrade_multi_ext_inplace():
 @pytest.mark.manual
 @test_requirements.update
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1375313])
 def test_update_custom_widgets():
     """
-    Bugzilla:
-        1375313
-
     Upgrade appliance with custom widgets added
 
     Polarion:
@@ -288,11 +276,9 @@ def test_rh_registration_ui_proxy():
 @pytest.mark.manual
 @test_requirements.update
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1553841])
 def test_update_webui_custom_css():
     """
-    Bugzilla:
-        1553841
-
     Test css customization"s function correctly after webui update.
     Old bugzilla, css customisation is not possible to be done in production,
     but custom.css file can be changed
@@ -328,12 +314,10 @@ def test_update_webui_custom_css():
 @pytest.mark.manual
 @test_requirements.update
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1463289])
 def test_rh_registration_proxy_crud():
     """
     Check proxy settings get added and removed from /etc/rhsm/rhsm.conf
-
-    Bugzilla:
-        1463289
 
     Polarion:
         assignee: jhenner
@@ -355,15 +339,11 @@ def test_rh_registration_proxy_crud():
 
 
 @pytest.mark.manual
-@test_requirements.update
-@test_requirements.db_migration
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1722540])
 def test_upgrade_multi_replication_inplace():
     """
     test_upgrade_multi_replication_inplace
-
-    Bugzilla:
-        1722540
 
     Polarion:
         assignee: jhenner
@@ -426,12 +406,10 @@ def test_update_webui_ipv6():
 @pytest.mark.manual
 @test_requirements.update
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1411890])
 def test_upgrade_check_repo_names():
     """
     Checks default rpm repos on a upgraded appliance
-
-    Bugzilla:
-        1411890
 
     Polarion:
         assignee: jhenner
@@ -560,12 +538,10 @@ def test_update_webui_ha():
 @pytest.mark.manual
 @test_requirements.update
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1461716])
 def test_rh_rhsm_reregistering():
     """
     Switch between rhsm and sat6 registration
-
-    Bugzilla:
-        1461716
 
     Polarion:
         assignee: jhenner
