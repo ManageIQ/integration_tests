@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.base.ui import ZoneAddView
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 
@@ -14,37 +15,37 @@ NAME_LEN = 5
 DESC_LEN = 8
 
 
-# Finalizer method that clicks Cancel for tests that expect zone
-# creation to fail. This avoids logging of UnexpectedAlertPresentException
-# for the 'Abandon changes?' alert when the next test tries to navigate
-# elsewhere in the UI.
 def cancel_zone_add(appliance):
+    """Finalizer method that clicks Cancel for tests that expect zone creation to fail.
+    This avoids logging of UnexpectedAlertPresentException for the 'Abandon changes?' alert
+    when the next test tries to navigate elsewhere in the UI."""
+
     view = appliance.browser.create_view(ZoneAddView)
     if view.is_displayed:
         view.cancel_button.click()
 
 
-def create_zone(appliance, name_len=NAME_LEN, desc_len=DESC_LEN):
+def create_zone(appliance, name, desc):
+    """Create zone with the given name and description.
+
+    Returns: :py:class:`cfme.base.Zone` object
+    """
     zc = appliance.collections.zones
     region = appliance.server.zone.region
+    zc.create(name=name, description=desc)
 
-    # CREATE
-    name = fauxfactory.gen_alphanumeric(name_len)
-    description = fauxfactory.gen_alphanumeric(desc_len)
-    zc.create(name=name, description=description)
-
-    # query to get the newly-created zone's id
+    # Re-instantiate the Zone object, to get the id.
     zc.filters = {'parent': region}
     zones = zc.all()
     new_zone = None
     for zone in zones:
-        if (zone.name == name and zone.description == description):
+        if zone.name == name and zone.description == desc:
             new_zone = zone
             break
     else:
         pytest.fail(
-            f'Zone matching name ({name}) and \
-            description ({description}) not found in the collection')
+            f"Zone with name {name!r} and description {desc!r} "
+            "not found in the collection.")
 
     return new_zone
 
@@ -62,21 +63,28 @@ def test_zone_crud(appliance):
         initialEstimate: 1/15h
         casecomponent: WebUI
     """
-    zone = create_zone(appliance)
-    assert zone.exists, 'Zone could not be created.'
+    name = fauxfactory.gen_string('alphanumeric', NAME_LEN)
+    desc = fauxfactory.gen_string('alphanumeric', DESC_LEN)
+
+    zone = create_zone(appliance, name, desc)
+    assert zone.exists, (
+        f"Zone could not be created with name {name} "
+        f"and description {desc}.")
 
     # UPDATE
+    new_desc = f'{zone.description}_updated'
     with update(zone):
-        zone.description = f'{zone.description}_updated'
-
+        zone.description = new_desc
     try:
         navigate_to(zone, 'Zone')
     except ItemNotFound:
-        pytest.fail(f'Zone {zone.description} could not be updated.')
+        pytest.fail("Zone description could not be updated."
+            f" Expected: {new_desc}."
+            f" Current: {zone.description}.")
 
     # DELETE
     zone.delete()
-    assert (not zone.exists), f'Zone {zone.description} could not be deleted.'
+    assert not zone.exists, f"Zone {zone.description} could not be deleted."
 
 
 @pytest.mark.tier(3)
@@ -89,9 +97,12 @@ def test_zone_add_cancel_validation(appliance):
         caseimportance: low
         initialEstimate: 1/20h
     """
+    name = fauxfactory.gen_string('alphanumeric', NAME_LEN)
+    desc = fauxfactory.gen_string('alphanumeric', DESC_LEN)
+
     appliance.collections.zones.create(
-        name=fauxfactory.gen_alphanumeric(NAME_LEN),
-        description=fauxfactory.gen_alphanumeric(DESC_LEN),
+        name=name,
+        description=desc,
         cancel=True
     )
 
@@ -99,7 +110,7 @@ def test_zone_add_cancel_validation(appliance):
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_zone_change_appliance_zone(request, appliance):
-    """ Tests that an appliance can be changed to another Zone
+    """Test that an appliance can be assigned to another zone.
     Bugzilla:
         1216224
 
@@ -109,7 +120,9 @@ def test_zone_change_appliance_zone(request, appliance):
         caseimportance: low
         initialEstimate: 1/15h
     """
-    zone = create_zone(appliance)
+    name = fauxfactory.gen_string('alphanumeric', NAME_LEN)
+    desc = fauxfactory.gen_string('alphanumeric', DESC_LEN)
+    zone = create_zone(appliance, name, desc)
     request.addfinalizer(zone.delete)
 
     server_settings = appliance.server.settings
@@ -122,7 +135,7 @@ def test_zone_change_appliance_zone(request, appliance):
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_zone_add_dupe(request, appliance):
+def test_zone_add_duplicate(request, appliance):
     """
     Polarion:
         assignee: tpapaioa
@@ -130,18 +143,20 @@ def test_zone_add_dupe(request, appliance):
         caseimportance: low
         initialEstimate: 1/4h
     """
-    zone = create_zone(appliance)
+    name = fauxfactory.gen_string('alphanumeric', NAME_LEN)
+    desc = fauxfactory.gen_string('alphanumeric', DESC_LEN)
+
+    zone = create_zone(appliance, name, desc)
+    assert zone.exists, (
+        f"Zone could not be created with name {name} and description {desc}.")
     request.addfinalizer(zone.delete)
 
     request.addfinalizer(lambda: cancel_zone_add(appliance))
     with pytest.raises(
         Exception,
-        match=f'Name is not unique within region {appliance.server.zone.region.number}'
+        match=f"Name is not unique within region {appliance.server.zone.region.number}"
     ):
-        appliance.collections.zones.create(
-            name=zone.name,
-            description=zone.description
-        )
+        create_zone(appliance, name, desc)
 
 
 @pytest.mark.tier(3)
@@ -154,9 +169,49 @@ def test_zone_add_maxlength(request, appliance):
         caseimportance: low
         initialEstimate: 1/4h
     """
-    zone = create_zone(appliance, name_len=50, desc_len=50)
+    name = fauxfactory.gen_string('alphanumeric', 50)
+    desc = fauxfactory.gen_string('alphanumeric', 50)
+    zone = create_zone(appliance, name, desc)
     request.addfinalizer(zone.delete)
-    assert zone.exists, f'Zone does not exist.'
+    assert zone.exists, "Zone does not exist."
+
+
+@pytest.mark.tier(3)
+@pytest.mark.sauce
+def test_zone_add_punctuation(request, appliance):
+    """
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: WebUI
+        caseimportance: low
+        initialEstimate: 1/4h
+    """
+    name = fauxfactory.gen_string('punctuation', NAME_LEN)
+    desc = fauxfactory.gen_string('punctuation', DESC_LEN)
+    zone = create_zone(appliance, name, desc)
+    request.addfinalizer(zone.delete)
+    assert zone.exists, "Zone does not exist."
+
+
+@pytest.mark.tier(3)
+@pytest.mark.sauce
+@pytest.mark.meta(blockers=[BZ(1797715, forced_streams=["5.10", "5.11"])])
+def test_zone_add_whitespace(request, appliance):
+    """When creating a new zone, the name can have whitespace, including leading and trailing
+    characters. After saving, the whitespace should be displayed correctly in the web UI.
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/30h
+    """
+    name = "    " + fauxfactory.gen_string('alphanumeric', 5)
+    desc = "    " + fauxfactory.gen_string('alphanumeric', 8)
+    zone = create_zone(appliance, name, desc)
+    request.addfinalizer(zone.delete)
+    assert zone.exists, (f"Zone with name {name} and description {desc}"
+                         "could not be found in the UI.")
 
 
 @pytest.mark.tier(3)
@@ -170,12 +225,11 @@ def test_zone_add_blank_name(request, appliance):
         caseposneg: negative
         initialEstimate: 1/8h
     """
+    name = ''
+    desc = fauxfactory.gen_string('alphanumeric', DESC_LEN)
     request.addfinalizer(lambda: cancel_zone_add(appliance))
     with pytest.raises(Exception, match="Name can't be blank"):
-        appliance.collections.zones.create(
-            name='',
-            description=fauxfactory.gen_alphanumeric(DESC_LEN)
-        )
+        create_zone(appliance, name, desc)
 
 
 @pytest.mark.tier(3)
@@ -189,12 +243,11 @@ def test_zone_add_blank_description(request, appliance):
         caseposneg: negative
         initialEstimate: 1/8h
     """
+    name = fauxfactory.gen_string('alphanumeric', NAME_LEN)
+    desc = ''
     request.addfinalizer(lambda: cancel_zone_add(appliance))
     with pytest.raises(Exception, match=r"(Description can't be blank|Description is required)"):
-        appliance.collections.zones.create(
-            name=fauxfactory.gen_alphanumeric(NAME_LEN),
-            description=''
-        )
+        create_zone(appliance, name, desc)
 
 
 @pytest.mark.tier(3)
