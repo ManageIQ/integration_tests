@@ -5,6 +5,7 @@ from wrapanapi.systems import VMWareSystem
 from cfme.common.candu_views import VMUtilizationView
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
+from cfme.common.provider import VMRCEndpoint
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_items import VMwareCatalogItem
@@ -69,17 +70,24 @@ class VMwareProvider(InfraProvider):
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
         appliance = appliance or cls.appliance
-        endpoint = VirtualCenterEndpoint(**prov_config['endpoints']['default'])
+        endpoints = {
+            VirtualCenterEndpoint.name: VirtualCenterEndpoint(**prov_config['endpoints']['default'])
+        }
+
+        vmrc_endpoint_config = prov_config["endpoints"].get(VMRCEndpoint.name, {})
+        if vmrc_endpoint_config:
+            endpoints[VMRCEndpoint.name] = VMRCEndpoint(**vmrc_endpoint_config)
 
         if prov_config.get('discovery_range'):
             start_ip = prov_config['discovery_range']['start']
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
+
         return appliance.collections.infra_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
-            endpoints={endpoint.name: endpoint},
+            endpoints=endpoints,
             zone=prov_config['server_zone'],
             key=prov_key,
             start_ip=start_ip,

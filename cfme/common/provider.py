@@ -500,7 +500,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_rsa_endpoint_dicts(connection_configs)
         self._fill_amqp_endpoint_dicts(provider_attributes, connection_configs)
-        self._fill_smartstate_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_smartstate_endpoint_dicts(provider_attributes)
         self._fill_vmrc_console_endpoint_dicts(provider_attributes)
         self._compile_connection_configurations(provider_attributes, connection_configs)
 
@@ -1282,6 +1282,15 @@ class EventsEndpoint(DefaultEndpoint):
 class SSHEndpoint(DefaultEndpoint):
     credential_class = SSHCredential
     name = 'rsa_keypair'
+
+    @property
+    def view_value_mapping(self):
+        return {}
+
+
+class VMRCEndpoint(DefaultEndpoint):
+    credential_class = Credential
+    name = 'vmrc'
 
     @property
     def view_value_mapping(self):
