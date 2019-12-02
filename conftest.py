@@ -28,9 +28,17 @@ pytest_plugins = [
     "cfme.fixtures.pytest_store",  # import early
     "cfme.test_framework.sprout.plugin",
     "cfme.test_framework.appliance_police",
-    "cfme.test_framework.appliance",
+
+    # appliance plugins
+    "cfme.test_framework.appliance.holder",
     "cfme.test_framework.appliance.dummy",
-    # "cfme.test_framework.appliance.local",
+    "cfme.test_framework.appliance.local",
+    "cfme.test_framework.appliance.regular",
+    "cfme.test_framework.appliance.pod",
+    "cfme.test_framework.appliance.multi_region",
+    "cfme.test_framework.appliance.upgraded",
+    "cfme.test_framework.appliance.env",
+
     "cfme.test_framework.appliance_log_collector",
     "cfme.test_framework.browser_isolation",
     "cfme.fixtures.ansible_fixtures",

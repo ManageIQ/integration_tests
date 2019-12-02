@@ -1,6 +1,5 @@
 import attr
 import pytest
-import sys
 
 from cfme.fixtures import terminalreporter
 
@@ -10,15 +9,11 @@ APP_TYPE = 'local'
 
 @pytest.hookimpl
 def pytest_configure(config):
-    if config.getoption('--help'):
-        return
-    reporter = terminalreporter.reporter()
-
-    if config.getoption('--use-local-apps'):
-        if config.getoption('--use-dummy-apps'):
-            # TODO: use subparser or mutually exclusive group instead
-            reporter.write_line('dummy appliances cannot be mixed with local appliance', red=True)
-            sys.exit(5)
+    app_types = config.getoption('--use-apps')
+    if APP_TYPE in app_types:
+        reporter = terminalreporter.reporter()
+        if len(app_types) > 1:
+            raise ValueError("local appliance cannot be mixed with other types")
 
         plugin = LocalAppliancePlugin()
         config.pluginmanager.register(plugin, PLUGIN_KEY)
@@ -36,7 +31,7 @@ def pytest_configure(config):
 
         holder.stack.push(appliances[0])
         holder.held_appliance = appliances[0]
-        holder.appliances = appliances
+        holder.pools[APP_TYPE] = appliances
 
 
 @pytest.hookimpl(trylast=True)
