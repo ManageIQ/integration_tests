@@ -545,7 +545,7 @@ class VMHardware(object):
         return self.mem_size * 1024 if self.mem_size_unit == 'GB' else self.mem_size
 
 
-class NetwrokAdapter(namedtuple("NetwrokAdapter", ["name", "vlan"])):
+class NetworkAdapter(namedtuple("NetworkAdapter", ["name", "vlan"])):
     # just compare name not vlan
     def __eq__(self, other):
         return self.name == other.name
@@ -572,10 +572,10 @@ class VMConfiguration(Pretty):
 
     def __eq__(self, other):
         return (
-            (self.hw == other.hw)
-            and (self.num_disks == other.num_disks)
+            self.hw == other.hw
+            and self.num_disks == other.num_disks
             and all(disk in other.disks for disk in self.disks)
-            and (self.num_nw_adapters == other.num_nw_adapters)
+            and self.num_nw_adapters == other.num_nw_adapters
         )
 
     def _load(self):
@@ -609,7 +609,7 @@ class VMConfiguration(Pretty):
                 guest_devices.hardware_id == hws.id).all()
 
             self.nw_adapters = [
-                NetwrokAdapter(devices.guest_devices.device_name, None)
+                NetworkAdapter(devices.guest_devices.device_name, None)
                 for devices in guest_device_nw_filter
             ]
 
@@ -693,7 +693,7 @@ class VMConfiguration(Pretty):
         return len(self.disks)
 
     def add_nw_adapter(self, name, vlan):
-        self.nw_adapters.append(NetwrokAdapter(name=name, vlan=vlan))
+        self.nw_adapters.append(NetworkAdapter(name=name, vlan=vlan))
 
     def remove_nw_adapter(self, name):
         nw_adapter = next(nw for nw in self.nw_adapters if nw.name == name)

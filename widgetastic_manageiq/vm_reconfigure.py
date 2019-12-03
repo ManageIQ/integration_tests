@@ -23,28 +23,28 @@ class DisksTable(VanillaTable):
     cancel_add_btn = DisksButton("contains", "Cancel Add", classes=[Button.DEFAULT])
 
     def click_add_disk(self):
-        """Clicks the Add Disk button attached to the table and returns the new editable row"""
+        """Clicks the 'Add Disk' button attached to the table and returns the new editable row"""
         self.add_disk_btn.click()
         return self[0]
 
     def click_cancel_add(self):
-        """Clicks the Cancel Add button to cancel adding a new row"""
+        """Clicks the 'Cancel Add' button to cancel adding a new row"""
         self.cancel_add_btn.click()
 
 
 class NetworkAdaptersTable(VanillaTable):
-    """Table to add and remove Disks (in VM Reconfigure form)"""
+    """Table to add and remove Network Adapters (in VM Reconfigure form)"""
 
     add_nw_btn = DisksButton("contains", "Add Network", classes=[Button.PRIMARY])
     cancel_add_nw_btn = DisksButton("contains", "Cancel Add", classes=[Button.DEFAULT])
 
     def click_add_nw_adapter(self):
-        """Clicks the Add Network Adapter button attached to the table and
+        """Clicks the 'Add Network' button attached to the table and
         returns the new editable row
         """
         self.add_nw_btn.click()
         return self[-1]
 
     def click_cancel_add_nw_adapter(self):
-        """Clicks the Cancel Add button to cancel adding a new row"""
+        """Clicks the 'Cancel Add' button to cancel adding a new row"""
         self.cancel_add_nw_btn.click()
