@@ -26,7 +26,7 @@ def pytest_collection_finish(session):
     """This hook will call the process_json_data and cause _docstrings_cache
     to be populated so that we can access required information in the _create_vm."""
     if not session.config.getoption('--no-assignee-vm-name'):
-        process_json_data(session, session.items, all_items=True)
+        process_json_data(session, session.items)
 
 
 def _create_vm(request, template, provider, vm_name):

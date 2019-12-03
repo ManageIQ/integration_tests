@@ -583,7 +583,7 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, cr
         )
 
         # Remove disk UI verification
-        assert full_template_vm.configuration.num_disks == orig_config.num_disks
+        assert create_vm.configuration.num_disks == orig_config.num_disks
 
 
 @pytest.fixture(scope='module')
