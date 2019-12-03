@@ -55,9 +55,7 @@ def set_and_get_tenant_quota(appliance):
     data = dict()
     for key, value in PROPERTY_MAPPING.items():
         suffix = "GB" if "GB" in value else "Count"
-        data[value] = "{data_value} {suffix}".format(
-            data_value=tenant_quota_data[key], suffix=suffix
-        )
+        data[value] = f"{tenant_quota_data[key]} {suffix}"
 
     yield data
 
@@ -107,17 +105,14 @@ def create_custom_tag(appliance):
     # cannot create a category with uppercase in the name
     category_name = fauxfactory.gen_alphanumeric().lower()
     category = appliance.rest_api.collections.categories.action.create(
-        {
-            "name": "{cat_name}".format(cat_name=category_name),
-            "description": "description_{cat_name}".format(cat_name=category_name),
-        }
+        {"name": f"{category_name}", "description": f"description_{category_name}"}
     )[0]
     assert_response(appliance)
 
     tag = appliance.rest_api.collections.tags.action.create(
         {
-            "name": "{cat_name}_entry".format(cat_name=category_name),
-            "description": "{cat_name}_entry_description".format(cat_name=category_name),
+            "name": f"{category_name}_entry",
+            "description": f"{category_name}_entry_description",
             "category": {"href": category.href},
         }
     )[0]
@@ -225,12 +220,12 @@ def test_reports_custom_tags(appliance, request, create_custom_tag):
     """
     category_name = create_custom_tag
     report_data = {
-        "menu_name": "Custom Category Report {}".format(category_name),
-        "title": "Custom Category Report Title {}".format(category_name),
+        "menu_name": f"Custom Category Report {category_name}",
+        "title": f"Custom Category Report Title {category_name}",
         "base_report_on": "Availability Zones",
         "report_fields": [
-            "Cloud Manager.My Company Tags : description_{}".format(category_name),
-            "VMs.My Company Tags : description_{}".format(category_name),
+            f"Cloud Manager.My Company Tags : description_{category_name}",
+            f"VMs.My Company Tags : description_{category_name}",
         ],
     }
     report = appliance.collections.reports.create(**report_data)
@@ -610,9 +605,7 @@ def test_reports_sort_column(set_and_get_tenant_quota, tenant_report):
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1638533])
 @pytest.mark.parametrize("preserve_owner", [True, False])
-def test_import_report_preserve_owner(
-    preserve_owner, create_po_user_and_group, get_report
-):
+def test_import_report_preserve_owner(preserve_owner, create_po_user_and_group, get_report):
     """
     Bugzilla:
         1638533
