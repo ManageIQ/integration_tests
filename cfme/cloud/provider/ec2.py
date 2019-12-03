@@ -71,7 +71,7 @@ class EC2AzoneUtilizationView(AzoneCloudUtilizationView):
     })
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class EC2Provider(CloudProvider):
     """
      BaseProvider->CloudProvider->EC2Provider class.

@@ -5,7 +5,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.providers import get_crud
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class KubeVirtProvider(InfraProvider):
     type_name = "kubevirt"
     settings_key = 'ems_kubevirt'

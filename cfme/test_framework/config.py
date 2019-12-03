@@ -47,7 +47,7 @@ class Configuration(object):
         return getattr(self.yaycl_config, name)
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class DeprecatedConfigWrapper(object):
     """
     a wrapper that provides the old :code:``utils.conf`` api

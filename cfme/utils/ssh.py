@@ -30,7 +30,7 @@ from cfme.utils.wait import wait_for
 RUNCMD_TIMEOUT = 1200.0
 
 
-@attr.s(frozen=True, cmp=False)
+@attr.s(frozen=True, eq=False)
 @total_ordering
 class SSHResult(object):
     """Allows rich comparison for more convenient testing.

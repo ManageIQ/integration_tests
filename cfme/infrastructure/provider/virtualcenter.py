@@ -28,7 +28,7 @@ class VirtualCenterVMUtilizationView(VMUtilizationView):
     vm_network = LineChart(id='miq_chart_parent_candu_4')
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class VMwareProvider(InfraProvider):
     catalog_item_type = VMwareCatalogItem
     vm_utilization_view = VirtualCenterVMUtilizationView

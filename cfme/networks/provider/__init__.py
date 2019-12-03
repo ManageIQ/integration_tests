@@ -34,7 +34,7 @@ from cfme.utils.log import logger
 from cfme.utils.providers import get_crud_by_name
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class NetworkProvider(BaseProvider, Taggable):
     """ Class representing network provider in sdn
 

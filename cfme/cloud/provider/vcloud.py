@@ -43,7 +43,7 @@ class VmwareCloudEndpointForm(View):
         api_port = Input('default_api_port')
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class VmwareCloudProvider(CloudProvider):
     STATS_TO_MATCH = ['num_availability_zone', 'num_orchestration_stack', 'num_vm']
     type_name = "vcloud"

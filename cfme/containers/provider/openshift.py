@@ -85,7 +85,7 @@ class AlertsEndpoint(ServiceBasedEndpoint):
     name = 'alerts'
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
 
     num_route = ['num_route']
