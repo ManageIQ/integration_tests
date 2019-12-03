@@ -61,6 +61,62 @@ def ansible_repository(request, appliance, wait_for_ansible):
     repository.delete_if_exists()
 
 
+@pytest.fixture(scope="function")
+def ansible_scm_credentials(appliance, wait_for_ansible):
+    """
+    This fixture will add git SCM credentials which used to add private git repositories.
+    """
+    # Check for the SCM credentials key from yaml.
+    credentials_collection = appliance.collections.ansible_credentials
+    try:
+        creds = {
+            "username": credentials["scm_creds"]["username"],
+            "password": credentials["scm_creds"]["password"],
+        }
+    # Create SCM credentails.
+        scm_credential = credentials_collection.create("Scm_credential", "Scm", **creds)
+    except (KeyError, AttributeError):
+        message = "Missing 'SCM credentails' key in cfme_data, cannot add SCM credentials."
+        logger.exception(message)  # log the exception for debug of the missing content
+        pytest.skip(message)
+
+    yield scm_credential
+
+    scm_credential.delete_if_exists()
+
+
+@pytest.fixture(scope="function")
+def ansible_private_repository(request, appliance, ansible_scm_credentials):
+    """
+    Ansible Repository fixture will be used to create SCM repositories by using SCM credentials.
+    """
+    repositories = appliance.collections.ansible_repositories
+    try:
+        playbooks_yaml = cfme_data.ansible_links.private_repository
+        playbook_name = getattr(request, 'param', 'private_repo')
+        repository = repositories.create(
+            name=fauxfactory.gen_alpha(),
+            url=getattr(playbooks_yaml, playbook_name),
+            description=fauxfactory.gen_alpha(),
+            scm_credentials=ansible_scm_credentials.name,
+        )
+    except (KeyError, AttributeError):
+        message = "Missing ansible_links content in cfme_data, cannot setup repository"
+        logger.exception(message)  # log the exception for debug of the missing content
+        pytest.skip(message)
+    view = navigate_to(repository, "Details")
+    wait_for(
+        lambda: repository.status == "successful",
+        num_sec=120,
+        delay=2,
+        fail_func=view.toolbar.refresh.click
+    )
+
+    yield repository
+
+    repository.delete_if_exists()
+
+
 @pytest.fixture(scope="module")
 def ansible_catalog_item(appliance, ansible_repository):
     collection = appliance.collections.catalog_items

@@ -237,6 +237,24 @@ def test_embedded_ansible_repository_invalid_url_crud(request, appliance, wait_f
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
+def test_embedded_ansible_private_repository_crud(request, ansible_private_repository):
+    """
+    Add Private Repository by using SCM credentials. Check repository gets added successfully.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    assert ansible_private_repository.exists
+    ansible_private_repository.delete()
+    assert not ansible_private_repository.exists
+
+
+@pytest.mark.rhel_testing
+@pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
     ids=[cred[0] for cred in CREDENTIALS])
 def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansible, credential_type,
