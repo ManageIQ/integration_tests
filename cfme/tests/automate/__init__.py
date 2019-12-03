@@ -86,3 +86,6 @@ tag_delete_from_category = (
     $evm.log(:info, "Tag exists: #{tag_values[1]}")
     """
 )
+
+imported_domain_info = {"domain": "testdomain", "namespace": "test", "klass": "TestClass1",
+                        "method": "meh", "script": '$evm.log(:info, ":P")'}

@@ -418,3 +418,76 @@ def test_automate_git_import_without_master(appliance, request):
     )
     domain = repo.import_domain_from(branch="origin/testbranch")
     request.addfinalizer(domain.delete_if_exists)
+
+
+@pytest.fixture
+def setup_datastore(appliance):
+    """This fixture create setup of datastore similar to domain which we are going to import.
+       Note: Names of domain, namespace, klass, method are hardcoded as per their names in
+       datastore which we are going to import.
+    """
+    domain = appliance.collections.domains.create(
+        name="testdomain",
+        description=fauxfactory.gen_alpha(),
+        enabled=True)
+
+    namespace = domain.namespaces.create(
+        name="test",
+        description=fauxfactory.gen_alpha()
+    )
+
+    klass = namespace.classes.create(
+        name="TestClass1",
+        display_name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+
+    method = klass.methods.create(
+        name="meh",
+        display_name=fauxfactory.gen_alphanumeric(),
+        location="inline",
+        script='$evm.log(:info, ":P")',
+    )
+    yield
+    domain.delete_if_exists()
+    namespace.delete_if_exists()
+    klass.delete_if_exists()
+    method.delete_if_exists()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1470738])
+def test_automate_git_verify_ssl(appliance, setup_datastore, imported_domain):
+    """
+    Bugzilla:
+        1470738
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: low
+        initialEstimate: 1/12h
+        tags: automate
+        startsin: 5.7
+        setup:
+            1. Create datastore containing domain, namespace, class etc. This datastore must be
+               similar to datastore which we are going to import using git repository
+            2. Import datastore using git repository. While importing verify ssl should be false
+        testSteps:
+            1. Check in db for verify ssl status after importing domain
+            2. Refresh imported domain via REST
+            3. Check in db for verify ssl status after importing domain
+        expectedResults:
+            1. It should be 0
+            2.
+            3. It should be 0
+    """
+    repo_table = appliance.db.client['git_repositories']
+
+    def check_verify_ssl():
+        repo = appliance.db.client.session.query(repo_table).first()
+        assert repo.verify_ssl == 0
+
+    check_verify_ssl()
+    imported_domain.rest_api_entity.action.refresh_from_source()
+    check_verify_ssl()

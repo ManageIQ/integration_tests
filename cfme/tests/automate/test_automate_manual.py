@@ -240,23 +240,6 @@ def test_automate_git_credentials_changed():
     pass
 
 
-@pytest.mark.tier(3)
-def test_automate_git_verify_ssl():
-    """
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: low
-        initialEstimate: 1/12h
-        tags: automate
-        startsin: 5.7
-
-    Bugzilla:
-        1470738
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_automate_buttons_requests():
     """
