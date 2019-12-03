@@ -509,34 +509,3 @@ def test_copy_automate_method_without_edit():
             3. You should be able to copy the highlighted text
     """
     pass
-
-
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1672007])
-def test_action_invoke_custom_automation():
-    """
-    Bugzilla:
-        1672007
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        testSteps:
-            1. Navigate to Control > explorer > actions
-            2. Select 'add a new action' from configuration dropdown
-            3. Add description and select 'Action Type' - Invoke custom automation
-            4. Fill attribute value pairs and click on save
-            5. Edit the created action and add new attribute value pair
-            6. Remove that newly added attribute value pair before clicking on save and then click
-               on save
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Save button should enable
-            6. Action should be saved successfully
-    """
-    pass
