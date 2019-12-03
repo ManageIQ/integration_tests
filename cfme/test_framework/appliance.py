@@ -74,8 +74,7 @@ def pytest_configure(config):
         for appliance in appliances:
             reporter.write_line('* {!r}'.format(appliance), cyan=True)
     appliance = appliances[0]
-    if not appliance.is_dev:
-        appliance.set_session_timeout(86400)
+
     stack.push(appliance)
     plugin = ApplianceHolderPlugin(appliance, appliances)
     config.pluginmanager.register(plugin, PLUGIN_KEY)
