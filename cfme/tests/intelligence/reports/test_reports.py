@@ -6,6 +6,7 @@ from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
+from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -54,9 +55,7 @@ def set_and_get_tenant_quota(appliance):
     data = dict()
     for key, value in PROPERTY_MAPPING.items():
         suffix = "GB" if "GB" in value else "Count"
-        data[value] = "{data_value} {suffix}".format(
-            data_value=tenant_quota_data[key], suffix=suffix
-        )
+        data[value] = f"{tenant_quota_data[key]} {suffix}"
 
     yield data
 
@@ -76,7 +75,7 @@ def tenant_report(appliance):
 
 @pytest.fixture(scope="module")
 def get_report(appliance, request):
-    def _report(file_name, menu_name):
+    def _report(file_name, menu_name, preserve_owner=False, overwrite=False):
         collection = appliance.collections.reports
 
         # download the report from server
@@ -84,7 +83,7 @@ def get_report(appliance, request):
         file_path = fs.download(file_name)
 
         # import the report
-        collection.import_report(file_path)
+        collection.import_report(file_path, preserve_owner=preserve_owner, overwrite=overwrite)
 
         # instantiate report and return it
         report = collection.instantiate(
@@ -106,19 +105,14 @@ def create_custom_tag(appliance):
     # cannot create a category with uppercase in the name
     category_name = fauxfactory.gen_alphanumeric().lower()
     category = appliance.rest_api.collections.categories.action.create(
-        {
-            "name": "{cat_name}".format(cat_name=category_name),
-            "description": "description_{cat_name}".format(cat_name=category_name),
-        }
+        {"name": f"{category_name}", "description": f"description_{category_name}"}
     )[0]
     assert_response(appliance)
 
     tag = appliance.rest_api.collections.tags.action.create(
         {
-            "name": "{cat_name}_entry".format(cat_name=category_name),
-            "description": "{cat_name}_entry_description".format(
-                cat_name=category_name
-            ),
+            "name": f"{category_name}_entry",
+            "description": f"{category_name}_entry_description",
             "category": {"href": category.href},
         }
     )[0]
@@ -132,12 +126,9 @@ def create_custom_tag(appliance):
 
 @pytest.fixture(scope="function")
 def rbac_api(appliance, request):
-    user, user_data = _users(
-        request, appliance, password="smartvm", group="EvmGroup-user"
-    )
+    user, user_data = _users(request, appliance, password="smartvm", group="EvmGroup-user")
     return appliance.new_rest_api_instance(
-        entry_point=appliance.rest_api._entry_point,
-        auth=(user[0].userid, user_data[0]["password"]),
+        entry_point=appliance.rest_api._entry_point, auth=(user[0].userid, user_data[0]["password"])
     )
 
 
@@ -170,11 +161,23 @@ def restore_db(temp_appliance_preconfig, file_name):
     temp_appliance_preconfig.db.restore_database(db_path, is_major=is_major)
 
 
+@pytest.fixture
+def create_po_user_and_group(request, appliance):
+    """This fixture creates custom user with tenant attached"""
+    group = _groups(
+        request,
+        appliance,
+        appliance.rest_api.collections.roles.get(name="EvmRole-super_administrator"),
+        description="Preserve Owner Report Group",
+    )
+    _users(request, appliance, group=group.description, userid="pouser")
+
+
 # =========================================== Tests ===============================================
 
 
 @pytest.mark.tier(1)
-def test_non_admin_user_reports_access_rest(appliance, request, rbac_api):
+def test_non_admin_user_reports_access_rest(appliance, rbac_api):
     """ This test checks if a non-admin user with proper privileges can access all reports via API.
 
     Polarion:
@@ -217,12 +220,12 @@ def test_reports_custom_tags(appliance, request, create_custom_tag):
     """
     category_name = create_custom_tag
     report_data = {
-        "menu_name": "Custom Category Report {}".format(category_name),
-        "title": "Custom Category Report Title {}".format(category_name),
+        "menu_name": f"Custom Category Report {category_name}",
+        "title": f"Custom Category Report Title {category_name}",
         "base_report_on": "Availability Zones",
         "report_fields": [
-            "Cloud Manager.My Company Tags : description_{}".format(category_name),
-            "VMs.My Company Tags : description_{}".format(category_name),
+            f"Cloud Manager.My Company Tags : description_{category_name}",
+            f"VMs.My Company Tags : description_{category_name}",
         ],
     }
     report = appliance.collections.reports.create(**report_data)
@@ -230,16 +233,13 @@ def test_reports_custom_tags(appliance, request, create_custom_tag):
     assert report.exists
 
 
-@pytest.mark.tier(0)
+@pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.parametrize(
     "based_on",
     [
         ("Floating IPs", ["Address", "Status", "Cloud Manager : Name"]),
-        (
-            "Cloud Tenants",
-            ["Name", "My Company Tags : Owner", "My Company Tags : Cost Center"],
-        ),
+        ("Cloud Tenants", ["Name", "My Company Tags : Owner", "My Company Tags : Cost Center"]),
     ],
     ids=["floating_ips", "cloud_tenants"],
 )
@@ -275,9 +275,7 @@ def test_new_report_fields(appliance, based_on, request):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1565171, 1519809])
-def test_report_edit_secondary_display_filter(
-    appliance, request, soft_assert, get_report
-):
+def test_report_edit_secondary_display_filter(soft_assert, get_report):
     """
     Polarion:
         assignee: pvala
@@ -327,8 +325,7 @@ def test_report_edit_secondary_display_filter(
         ' OR VM and Instance.EVM Custom Attributes : Region Description INCLUDES "E" )'
     )
     soft_assert(
-        view.report_info.primary_filter.read() == primary_filter,
-        "Primary Filter did not match.",
+        view.report_info.primary_filter.read() == primary_filter, "Primary Filter did not match."
     )
     soft_assert(
         view.report_info.secondary_filter.read() == secondary_filter,
@@ -340,7 +337,7 @@ def test_report_edit_secondary_display_filter(
 @pytest.mark.meta(server_roles="+notifier", automates=[1677839])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 def test_send_text_custom_report_with_long_condition(
-    appliance, setup_provider, smtp_test, request, get_report
+    setup_provider, smtp_test, request, get_report
 ):
     """
     Bugzilla:
@@ -371,18 +368,13 @@ def test_send_text_custom_report_with_long_condition(
     request.addfinalizer(schedule.delete_if_exists)
 
     # prepare LogValidator
-    log = LogValidator(
-        "/var/www/miq/vmdb/log/evm.log", failure_patterns=[".*negative argument.*"]
-    )
+    log = LogValidator("/var/www/miq/vmdb/log/evm.log", failure_patterns=[".*negative argument.*"])
 
     log.start_monitoring()
     schedule.queue()
 
     # assert that the mail was sent
-    assert (
-        len(smtp_test.wait_for_emails(wait=200, to_address=data["email"]["to_emails"]))
-        == 1
-    )
+    assert len(smtp_test.wait_for_emails(wait=200, to_address=data["email"]["to_emails"])) == 1
     # assert that the pattern was not found in the logs
     assert log.validate(), "Found error message in the logs."
 
@@ -485,9 +477,7 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
 
     # queue the report
     saved_report = appliance.collections.reports.instantiate(
-        type="Operations",
-        subtype="Virtual Machines",
-        menu_name="Online VMs (Powered On)",
+        type="Operations", subtype="Virtual Machines", menu_name="Online VMs (Powered On)"
     ).queue(wait_for_finish=True)
     request.addfinalizer(saved_report.delete_if_exists)
 
@@ -497,16 +487,15 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.uncollectif(lambda case_sensitive:
-                         not case_sensitive and BZ("1741588", forced_streams=["5.11"]).blocks,
-                         reason="Case Insensitive filtering is still a WIP")
-@pytest.mark.parametrize("case_sensitive",
-                         [True, False],
-                         ids=["case-sensitive", "case-insensitive"])
+@pytest.mark.uncollectif(
+    lambda case_sensitive: not case_sensitive and BZ("1741588", forced_streams=["5.11"]).blocks,
+    reason="Case Insensitive filtering is still a WIP",
+)
+@pytest.mark.parametrize(
+    "case_sensitive", [True, False], ids=["case-sensitive", "case-insensitive"]
+)
 @pytest.mark.meta(automates=[1678150, 1741588])
-def test_reports_filter_content(
-    appliance, case_sensitive, set_and_get_tenant_quota, tenant_report
-):
+def test_reports_filter_content(case_sensitive, set_and_get_tenant_quota, tenant_report):
     """
     Bugzilla:
         1678150
@@ -527,9 +516,7 @@ def test_reports_filter_content(
             2. Content must be filtered.
     """
     search_term = "in GB" if case_sensitive else "in gb"
-    table = tenant_report.filter_report_content(
-        field="Quota Name", search_term=search_term
-    )
+    table = tenant_report.filter_report_content(field="Quota Name", search_term=search_term)
     expected = ["Allocated Memory in GB", "Allocated Storage in GB"]
     got = [row["Quota Name"].text for row in table.rows()]
     assert sorted(expected) == sorted(got)
@@ -566,9 +553,7 @@ def test_reports_service_unavailable(temp_appliance_preconfig, file_name, restor
     assert view.is_displayed
 
     saved_report = appliance.collections.reports.instantiate(
-        type="Configuration Management",
-        subtype="Hosts",
-        menu_name="Host vLANs and vSwitches",
+        type="Configuration Management", subtype="Hosts", menu_name="Host vLANs and vSwitches"
     ).saved_reports.instantiate("06/17/19 11:46:59 UTC", "06/17/19 11:44:57 UTC", False)
     assert saved_report.exists
 
@@ -614,3 +599,46 @@ def test_reports_sort_column(set_and_get_tenant_quota, tenant_report):
 
     # assert the ascending list is reverse of descending list
     assert desc_list == asc_list[::-1]
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1638533])
+@pytest.mark.parametrize("preserve_owner", [True, False])
+def test_import_report_preserve_owner(preserve_owner, create_po_user_and_group, get_report):
+    """
+    Bugzilla:
+        1638533
+        1693719
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        initialEstimate: 1/2h
+        setup:
+            1. Have a report with user and group values other than that of the admin
+                and note the user and group values.
+            2. Create a group and user as mentioned in the report yaml.
+        testSteps:
+            1. While importing the report, mark `Preserve Owner` with the parametrization values.
+            2. Assert the user and group values are as expected.
+                i. If `preserve_owner` is True
+                ii. If `preserve_owner` is False
+        expectedResults:
+            1. Report imported successfully.
+            2.
+                i. Then expected values will be the original user and group
+                ii. Then expected values will be user and group of the currently logged in user
+    """
+    user = "pouser" if preserve_owner else "admin"
+    group = "Preserve Owner Report Group" if preserve_owner else "EvmGroup-super_administrator"
+    report = get_report(
+        "preserve_owner_report.yaml",
+        "Testing report",
+        preserve_owner=preserve_owner,
+        overwrite=True,
+    )
+    view = navigate_to(report, "Details")
+
+    assert view.report_info.user.text == user
+    assert view.report_info.group.text == group
