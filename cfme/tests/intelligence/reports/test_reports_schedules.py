@@ -288,7 +288,7 @@ def test_miq_schedule_validation_failed(temp_appliance_preconfig):
     with LogValidator(
         "/var/www/miq/vmdb/log/evm.log",
         failure_patterns=[
-            ".* ERROR .*Validation failed: MiqSchedule: Name has already been taken  Method.*"
+            ".* ERROR .*Validation failed: MiqSchedule:.*Name has already been taken.*Method.*"
         ],
         matched_patterns=[
             ".*INFO.* Widget: .*chart_server_availability.* file has been .* disk.*",
