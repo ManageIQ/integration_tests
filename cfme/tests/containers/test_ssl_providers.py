@@ -177,5 +177,5 @@ def test_setup_with_wrong_port(provider, sec_protocol, sync_ssl_certificate):
     new_provider.endpoints["default"].api_port = "1234"
     new_provider.endpoints["default"].sec_protocol = sec_protocol
 
-    with pytest.raises(AssertionError, message="Provider was set with wrong api port"):
+    with pytest.raises(AssertionError, match="Credential validation was not successful"):
         new_provider.setup()
