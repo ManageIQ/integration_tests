@@ -11,7 +11,7 @@ from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint
 from cfme.services.catalogs.catalog_items import OpenStackCatalogItem
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class OpenStackProvider(CloudProvider):
     """
      BaseProvider->CloudProvider->OpenStackProvider class.

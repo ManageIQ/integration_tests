@@ -91,7 +91,7 @@ def prepare_endpoints(endpoints):
         raise ValueError("Endpoints should be either dict or endpoint class")
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEventsMixin):
     # List of constants that every non-abstract subclass must have defined
 

@@ -30,10 +30,10 @@ class EntityCollections(object):
     of this class. It is initialized with an appliance object and locally stores a cache
     of all known good collections.
     """
-    _parent = attr.ib(repr=False, cmp=False, hash=False)
-    _availiable_collections = attr.ib(repr=False, cmp=False, hash=False)
-    _filters = attr.ib(cmp=False, hash=False, default=attr.Factory(dict))
-    _collection_cache = attr.ib(repr=False, cmp=False, hash=False, init=False,
+    _parent = attr.ib(repr=False, eq=False, hash=False)
+    _availiable_collections = attr.ib(repr=False, eq=False, hash=False)
+    _filters = attr.ib(eq=False, hash=False, default=attr.Factory(dict))
+    _collection_cache = attr.ib(repr=False, eq=False, hash=False, init=False,
                                 default=attr.Factory(dict))
 
     @classmethod
