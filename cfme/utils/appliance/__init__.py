@@ -2676,7 +2676,7 @@ class Appliance(IPAppliance):
     # TODO Remove cached property, could be a lot of references
     @cached_property
     def mgmt(self):
-        return self.provider
+        return self.provider.get_vm(self.vm_name)
 
     def does_vm_exist(self):
         return self.provider.does_vm_exist(self.vm_name)
