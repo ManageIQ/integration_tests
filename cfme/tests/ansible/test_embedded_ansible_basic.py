@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
@@ -217,9 +216,7 @@ def test_embedded_ansible_repository_invalid_url_crud(request, appliance, wait_f
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
-def test_embedded_ansible_add_private_repository_crud(
-    request, credentials_collection, appliance, wait_for_ansible
-):
+def test_embedded_ansible_private_repository_crud(request, ansible_private_repository):
     """
     Add Private Repository by using SCM credentials. Check repository gets added successfully.
 
@@ -230,41 +227,9 @@ def test_embedded_ansible_add_private_repository_crud(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    # Create SCM credentials.
-    creds = {
-        "username": conf.credentials["scm_creds"]["username"],
-        "password": conf.credentials["scm_creds"]["password"],
-    }
-
-    scm_credential = credentials_collection.create("Scm_credential", "Scm", **creds)
-
-    assert scm_credential.exists
-
-    # Create private repository using SCM credentials.
-    repositories = appliance.collections.ansible_repositories
-    repository = repositories.create(
-        name=fauxfactory.gen_alpha(),
-        url="https://gitlab.com/cfme/ansible_private_repo.git",
-        description=fauxfactory.gen_alpha(),
-        scm_credentials=scm_credential.name,
-    )
-
-    @request.addfinalizer
-    def _cleanup():
-        scm_credential.delete_if_exists()
-        repository.delete_if_exists()
-
-    view = navigate_to(repository, "Details")
-    wait_for(
-        lambda: repository.status == "successful",
-        num_sec=120,
-        delay=2,
-        fail_func=view.toolbar.refresh.click
-    )
-    assert repository.exists
-
-    scm_credential.delete()
-    repository.delete()
+    assert ansible_private_repository.exists
+    ansible_private_repository.delete()
+    assert not ansible_private_repository.exists
 
 
 @pytest.mark.rhel_testing
