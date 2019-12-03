@@ -3,7 +3,6 @@ from urllib.parse import urlparse
 import fauxfactory
 import pytest
 
-from . import imported_domain_info
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainDetailsView
 from cfme.base.credential import Credential
@@ -428,26 +427,26 @@ def setup_datastore(appliance):
        datastore which we are going to import.
     """
     domain = appliance.collections.domains.create(
-        name=imported_domain_info['domain'],
+        name="testdomain",
         description=fauxfactory.gen_alpha(),
         enabled=True)
 
     namespace = domain.namespaces.create(
-        name=imported_domain_info['namespace'],
+        name="test",
         description=fauxfactory.gen_alpha()
     )
 
     klass = namespace.classes.create(
-        name=imported_domain_info['klass'],
+        name="TestClass1",
         display_name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
     )
 
     method = klass.methods.create(
-        name=imported_domain_info['method'],
+        name="meh",
         display_name=fauxfactory.gen_alphanumeric(),
         location="inline",
-        script=imported_domain_info['script'],
+        script='$evm.log(:info, ":P")',
     )
     yield
     domain.delete_if_exists()
@@ -483,17 +482,11 @@ def test_automate_git_verify_ssl(appliance, setup_datastore, imported_domain):
             2.
             3. It should be 0
     """
-    table = appliance.db.client['miq_ae_namespaces']
-    query = appliance.db.client.session.query(table.name, table.git_repository_id)
     repo_table = appliance.db.client['git_repositories']
 
     def check_verify_ssl():
-        for domain_name, git_repo_id in query:
-            if domain_name == imported_domain.name:
-                repo = appliance.db.client.session.query(repo_table).filter(
-                    repo_table.id == git_repo_id
-                ).first()
-                assert repo.verify_ssl == 0
+        repo = appliance.db.client.session.query(repo_table).first()
+        assert repo.verify_ssl == 0
 
     check_verify_ssl()
     imported_domain.rest_api_entity.action.refresh_from_source()
