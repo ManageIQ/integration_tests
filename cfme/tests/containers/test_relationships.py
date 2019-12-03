@@ -94,31 +94,3 @@ def test_relationships_tables(soft_assert, provider, has_persistent_volume, appl
             new_view = appliance.browser.create_view(test_item.obj.details_view)
             assert text_of_field in new_view.breadcrumb.active_location
         view = navigate_to(test_obj, 'Details')
-
-
-@pytest.mark.ignore_stream("5.10")
-@pytest.mark.usefixtures('setup_provider')
-def test_container_status_relationships_data_integrity(provider, appliance, soft_assert):
-    """ This test verifies that the sum of running, waiting and terminated containers
-        in the status summary table
-        is the same number that appears in the Relationships table containers field
-
-    Polarion:
-        assignee: juwatts
-        initialEstimate: 1/4h
-        caseimportance: high
-        casecomponent: Containers
-    """
-
-    pod_instances = PodCollection(appliance).all()
-    for pod_instance in pod_instances:
-        if not pod_instance.exists:
-            continue
-        view = navigate_to(pod_instance, 'Details')
-
-        summary_fields = view.entities.summary('Container Statuses Summary').fields
-
-        soft_assert(
-            int(view.entities.summary('Relationships').get_text_of('Containers')) ==
-            sum([int(view.entities.summary('Container Statuses Summary').get_text_of(field))
-                 for field in summary_fields]))
