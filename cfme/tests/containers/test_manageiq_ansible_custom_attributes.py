@@ -166,7 +166,7 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(appliance, ansible_cust
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_result = run_ansible('add_custom_attributes_bad_user')
-    assert 'Authentication failed' in run_result
+    assert 'Authentication failed' in run_result.decode("utf-8")
     view = navigate_to(provider, 'Details', force=True)
     assert not view.entities.summary('Custom Attributes').is_displayed
 
