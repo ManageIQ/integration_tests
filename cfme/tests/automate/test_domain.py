@@ -8,9 +8,11 @@ from cfme.automate.explorer.domain import DomainAddView
 from cfme.automate.explorer.instance import InstanceCopyView
 from cfme.automate.explorer.klass import ClassCopyView
 from cfme.automate.explorer.method import MethodCopyView
+from cfme.automate.import_export import FileImportSelectorView
 from cfme.automate.simulation import simulate
 from cfme.base.credential import Credential
 from cfme.exceptions import OptionNotAvailable
+from cfme.fixtures.automate import DatastoreImport
 from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import users as _users
@@ -564,3 +566,87 @@ def test_redhat_domain_sync_after_upgrade(temp_appliance_preconfig, file_name):
         temp_appliance_preconfig.db.restore_database(
             db_path, is_major=bool(temp_appliance_preconfig.version > "5.11")
         )
+
+
+@pytest.fixture
+def custom_domain(custom_instance):
+    """This fixture creates dastastore setup and updates the name and description of domain. So that
+       the domain with same name can be imported successfully.
+    """
+    instance = custom_instance(ruby_code=None)
+    # Domain name and description are updated because we are importing domain with same name via
+    # import datastore file
+    domain_info = "bz_1752875"
+    instance.domain.update({"name": domain_info, "description": domain_info})
+    domain = instance.appliance.collections.domains.instantiate(name=domain_info,
+                                                                description=domain_info)
+    domain.lock()
+    yield domain
+    domain.delete_if_exists()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1752875])
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1752875.zip", "bz_1752875", None)],
+    ids=["domain"],
+)
+def test_existing_domain_child_override(appliance, custom_domain, import_data):
+    """
+    PR:
+        https://github.com/ManageIQ/manageiq-ui-classic/pull/4912
+
+    Bugzilla:
+        1752875
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup: First three steps are performed manually to have datastore zip file
+            1. Create custom domain and copy class - "ManageIQ/System/Process"
+            2. Lock this domain
+            3. Navigate to Automation > automate > Import/export and click on "export all classes
+               and instances to file"
+            4. Go to custom domain and unlock it. Remove instance - "ManageIQ/System/Process/" and
+               copy - "ManageIQ/System/Process/Request" (you can copy more classes or methods or
+               instances) to custom domain and again lock the domain.
+        testSteps:
+            1. Navigate to Import/Export page and import the exported file
+            2. Select "Select domain you wish to import from:" - "custom_domain" and check Toggle
+               All/None
+            3. Click on commit button.
+            4. Then navigate to custom domain and unlock it
+            5. Perform step 1, 2 and 3(In this case, domain will get imported)
+            6. Go to custom domain
+        expectedResults:
+            1.
+            2.
+            3. You should see flash message: "Error: Selected domain is locked"
+            4.
+            5. Selected domain imported successfully
+            6. You should see existing as well as imported namespace, class, instance or method
+    """
+    # Download datastore file from FTP server
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
+    file_path = fs.download(import_data.file_name)
+
+    # Import datastore file to appliance
+    datastore = appliance.collections.automate_import_exports.instantiate(
+        import_type="file", file_path=file_path
+    )
+    datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
+    view = appliance.browser.create_view(FileImportSelectorView)
+    view.flash.assert_message("Error: Selected domain is locked")
+    custom_domain.unlock()
+    datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
+    view.flash.assert_no_error()
+    view = navigate_to(custom_domain, 'Details')
+    if not BZ(1752875).blocks:
+        assert (
+            view.datastore.tree.has_path('Datastore', f'{custom_domain.name}', 'System', 'Request')
+        )
+    assert view.datastore.tree.has_path('Datastore', f'{custom_domain.name}', 'System', 'Process')
