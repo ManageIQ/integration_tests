@@ -475,33 +475,6 @@ def test_overwrite_import_domain():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1753523])
-def test_attribute_value_message():
-    """
-    Bugzilla:
-        1753523
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        testSteps:
-            1. Create domain, namespace, class and instance pointing to method
-            2. Navigate to automate > automation > simulation page
-            3. Fill values for attribute/value pairs of namespace, class, instance and add message
-               attribute with any value and click on submit.
-            4. See automation.log
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Custom message attribute should be considered with instance in logs
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1743227])
 def test_queue_up_schedule_run_now():
     """

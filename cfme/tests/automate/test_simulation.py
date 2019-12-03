@@ -187,3 +187,47 @@ def test_simulation_copy_button(appliance):
     assert view.copy.is_enabled
     view.target_type.select_by_visible_text("Provider")
     assert not view.copy.is_enabled
+
+
+@pytest.mark.meta(automates=[1753523], blockers=[BZ(1753523, forced_streams=['5.10'])])
+def test_attribute_value_message(custom_instance):
+    """
+    Bugzilla:
+        1753523
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup:
+            1. Create domain, namespace, class and instance pointing to method
+        testSteps:
+            1. Navigate to automate > automation > simulation page
+            2. Fill values for attribute/value pairs of namespace, class, instance and add message
+               attribute with any value and click on submit.
+            3. See automation.log
+        expectedResults:
+            1.
+            2.
+            3. Custom message attribute should be considered with instance in logs
+    """
+    instance = custom_instance(ruby_code=None)
+    msg = fauxfactory.gen_alphanumeric()
+
+    # Executing automate method
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=[f".*{instance.name}#{msg}.*"]).waiting(timeout=120):
+        simulate(
+            appliance=instance.appliance,
+            attributes_values={
+                "namespace": instance.klass.namespace.name,
+                "class": instance.klass.name,
+                "instance": instance.name,
+                "message": msg
+            },
+            message="create",
+            request="call_instance_with_message",
+            execute_methods=True,
+        )
