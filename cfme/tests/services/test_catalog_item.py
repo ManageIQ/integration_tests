@@ -15,7 +15,6 @@ from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
-
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
 
 
@@ -132,12 +131,14 @@ def test_add_button(catalog_item, appliance):
         casecomponent: Services
         tags: service
     """
-    button_name = catalog_item.add_button()
+    btn_data = {
+        "text": fauxfactory.gen_numeric_string(start="btn_"),
+        "hover": fauxfactory.gen_numeric_string(15, start="btn_hvr_"),
+        "image": "fa-user",
+    }
+    catalog_item.add_button(**btn_data)
     view = appliance.browser.create_view(BaseLoggedInPage)
-    if appliance.version.is_in_series('5.8'):
-        message = 'Button "{}" was added'.format(button_name)
-    else:
-        message = 'Custom Button "{}" was added'.format(button_name)
+    message = f'Custom Button "{btn_data["hover"]}" was added'
     view.flash.assert_success_message(message)
 
 
