@@ -262,11 +262,6 @@ class Domain(BaseEntity, Fillable, Updateable):
         details_page.configuration.item_select('Unlock this Domain')
         details_page.flash.assert_no_error()
         details_page.flash.assert_message('The selected Automate Domain were marked as Unlocked')
-
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
-
         clear_property_cache(self, 'locked')
         assert not self.locked
 
