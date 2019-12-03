@@ -521,31 +521,6 @@ def test_reorder_buttons_in_catalog_items():
     pass
 
 
-@pytest.mark.meta(coverage=[1740899])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dialog_dropdown_int_required():
-    """
-    Bugzilla:
-        1740899
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        startsin: 5.10
-        testSteps:
-            1. Create a dialog dropdown that is required with a value type of integer
-            2. Order a catalog item that uses that dialog
-            3. Make a selection for the dropdown
-        expectedResults:
-            1.
-            2.
-            3. The field should validate successfully
-    """
-    pass
-
-
 @pytest.mark.meta(coverage=[1740814])
 @pytest.mark.manual
 @pytest.mark.ignore_stream('5.10')
