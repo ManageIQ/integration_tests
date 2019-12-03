@@ -27,6 +27,7 @@ pytest_plugins = [
     # Store and framework plugins
     "cfme.fixtures.pytest_store",  # import early
     "cfme.test_framework.sprout.plugin",
+    "cfme.test_framework.appliances_hooks",
     "cfme.test_framework.appliance_police",
     "cfme.test_framework.appliance",
     "cfme.test_framework.appliance_log_collector",
