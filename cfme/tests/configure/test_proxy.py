@@ -5,7 +5,6 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -16,27 +15,11 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope='module')
-def proxy_data(utility_vm):
-    utility_vm_ip, __, data = utility_vm
-    yield utility_vm_ip, data.proxy.port
-
-
-@pytest.fixture(scope='module')
-def proxy_ssh(utility_vm):
-    proxy_ip, injected_user_cred, __ = utility_vm
-    with SSHClient(
-            hostname=proxy_ip,
-            username=injected_user_cred.principal,
-            password=injected_user_cred.secret) as ssh_client:
-        yield ssh_client
-
-
-def validate_proxy_logs(provider, proxy_ssh, appliance_ip):
+def validate_proxy_logs(provider, utility_vm_ssh, appliance_ip):
 
     def _is_ip_in_log():
         provider.refresh_provider_relationships()
-        return proxy_ssh.run_command(
+        return utility_vm_ssh.run_command(
             "grep {} /var/log/squid/access.log".format(appliance_ip)).success
 
     # need to wait until requests will occur in access.log or check if its empty after some time
@@ -45,25 +28,25 @@ def validate_proxy_logs(provider, proxy_ssh, appliance_ip):
 
 
 @pytest.fixture(scope="function")
-def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_data):
-    proxy_ip, proxy_port = proxy_data
+def prepare_proxy_specific(utility_vm_ssh, provider, appliance, utility_vm_proxy_data):
+    proxy_ip, proxy_port = utility_vm_proxy_data
     prov_type = provider.type
     # 192.0.2.1 is from TEST-NET-1 which doesn't exist on the internet (RFC5737).
     appliance.set_proxy('192.0.2.1', proxy_port, prov_type='default')
     appliance.set_proxy(proxy_ip, proxy_port, prov_type=prov_type)
-    proxy_ssh.run_command('echo "" > /var/log/squid/access.log')
+    utility_vm_ssh.run_command('echo "" > /var/log/squid/access.log')
     yield
     appliance.reset_proxy(prov_type)
     appliance.reset_proxy()
 
 
 @pytest.fixture(scope="function")
-def prepare_proxy_default(proxy_ssh, provider, appliance, proxy_data):
-    proxy_ip, proxy_port = proxy_data
+def prepare_proxy_default(utility_vm_ssh, provider, appliance, utility_vm_proxy_data):
+    proxy_ip, proxy_port = utility_vm_proxy_data
     prov_type = provider.type
     appliance.set_proxy(proxy_ip, proxy_port, prov_type='default')
     appliance.reset_proxy(prov_type)
-    proxy_ssh.run_command('echo "" > /var/log/squid/access.log')
+    utility_vm_ssh.run_command('echo "" > /var/log/squid/access.log')
     yield
     appliance.reset_proxy()
     appliance.reset_proxy(prov_type)
@@ -80,7 +63,7 @@ def prepare_proxy_invalid(provider, appliance):
     appliance.reset_proxy()
 
 
-def test_proxy_valid(appliance, proxy_ssh, prepare_proxy_default, provider):
+def test_proxy_valid(appliance, utility_vm_ssh, prepare_proxy_default, provider):
     """ Check whether valid proxy settings works.
 
     Bugzilla:
@@ -96,7 +79,7 @@ def test_proxy_valid(appliance, proxy_ssh, prepare_proxy_default, provider):
             3. Chceck whether the provider is accessed trough proxy by chceking the proxy logs.
     """
     provider.refresh_provider_relationships()
-    validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
+    validate_proxy_logs(provider, utility_vm_ssh, appliance.hostname)
     wait_for(
         provider.is_refreshed,
         func_kwargs={"refresh_delta": 120},
@@ -106,7 +89,7 @@ def test_proxy_valid(appliance, proxy_ssh, prepare_proxy_default, provider):
     )
 
 
-def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
+def test_proxy_override(appliance, utility_vm_ssh, prepare_proxy_specific, provider):
     """ Check whether invalid default and valid specific provider proxy settings
     results in provider refresh working.
 
@@ -124,7 +107,7 @@ def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
             4. Wait for the provider refresh to complete to check the settings worked.
     """
     provider.refresh_provider_relationships()
-    validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
+    validate_proxy_logs(provider, utility_vm_ssh, appliance.hostname)
     wait_for(
         provider.is_refreshed,
         func_kwargs={"refresh_delta": 120},

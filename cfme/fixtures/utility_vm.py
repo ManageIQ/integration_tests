@@ -1,5 +1,24 @@
 # -*- coding: utf-8 -*-
+""" The utility_vm is a vm that is meant to serve various services that the
+tests are requiring.
+
+The VM is spawned from the template that can be prepared using tooling in
+`scripts/utility-vm`. There is a README that you should read to get more info.
+
+When the VM is created, we need to find the IP to conenct to. The  This is done by
+attempting to create a tcp connection to an IPs retrieved from the provider the
+VM was spawned on. Each service is on different port so there are fixtures for
+obtaining the IP for each service.
+
+Note it may not be possible to use ping to find the VM responding as the ping
+may not be available in the docker image. But TCP certainly will be available.
+
+Note that using ping is also problematic because the OS may be responing on
+ping, but the required service may not be up and ready.
+"""
 import os.path
+import time
+from contextlib import contextmanager
 
 import pytest
 
@@ -7,9 +26,74 @@ from cfme.base.credential import SSHCredential
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.net import wait_pingable
+from cfme.utils.net import net_check
+from cfme.utils.ssh import SSHClient
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import TimedOutError
+
+
+def _trying_ips(vm, attempts=30, interval=10):
+    for attempt in range(attempts):
+        for ip in getattr(vm, 'all_ips', []):
+            yield ip
+            return
+        time.sleep(interval)
+
+
+@contextmanager
+def connect_ssh(vm, creds):
+    for ip in _trying_ips(vm):
+        try:
+            with SSHClient(hostname=ip, username=creds.principal, password=creds.secret) as client:
+                logger.info("SSH connected to IP %s", ip)
+                result = client.run_command("true")
+                if not result.success:
+                    raise Exception(f"Command `true` failed on ip {ip}.")
+                yield client
+                return
+        except Exception as ex:
+            logger.info("Failed to connect with SSH to %s: %s", ip, ex)
+    else:
+        raise TimedOutError(f"Coudln't find an IP responding to ssh for vm {vm}")
+
+
+def _pick_responding_ip(vm, port):
+    for ip in _trying_ips(vm):
+        if net_check(port, ip):
+            return ip
+    else:
+        raise TimedOutError(f"Coudln't find an IP of vm {vm} with port {port} responding")
+
+
+@pytest.fixture
+def utility_vm_nfs_ip(utility_vm):
+    vm, _, _ = utility_vm
+    one_of_the_nfs_ports = 111
+    yield _pick_responding_ip(vm, one_of_the_nfs_ports)
+
+
+@pytest.fixture
+def utility_vm_samba_ip(utility_vm):
+    vm, _, _ = utility_vm
+    yield _pick_responding_ip(vm, 445)
+
+
+@pytest.fixture(scope='module')
+def utility_vm_proxy_data(utility_vm):
+    vm, __, data = utility_vm
+    yield _pick_responding_ip(vm, data.proxy.port), data.proxy.port
+
+
+@pytest.fixture(scope='module')
+def utility_vm_ssh(utility_vm):
+    vm, injected_user_cred, __ = utility_vm
+    ip = _pick_responding_ip(vm, 22)
+
+    with SSHClient(
+            hostname=ip,
+            username=injected_user_cred.principal,
+            password=injected_user_cred.secret) as ssh_client:
+        yield ssh_client
 
 
 @pytest.fixture(scope='module')
@@ -44,12 +128,6 @@ def utility_vm():
         logger.exception(msg)
         pytest.skip(msg)
 
-    try:
-        found_ip = wait_pingable(vm, wait=300)
-    except TimedOutError:
-        msg = 'Timed out waiting for reachable IP on utility_vm'
-        logger.exception(msg)
-        pytest.skip(msg)
+    yield vm, injected_user_cred, data
 
-    yield found_ip, injected_user_cred, data
     vm.delete()
