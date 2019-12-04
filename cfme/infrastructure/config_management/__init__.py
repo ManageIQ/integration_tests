@@ -3,6 +3,7 @@ from manageiq_client.api import APIException
 from manageiq_client.api import Entity as RestEntity
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from navmazing import NavigationDestinationNotFound
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
@@ -245,7 +246,7 @@ class ConfigManagementProfileView(ConfigManagementView):
         return self.entities.title.text == title
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
@@ -594,7 +595,7 @@ class Details(CFMENavigateStep):
 class ConfigManagerAllPage(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
-        raise NotImplementedError(
+        raise NavigationDestinationNotFound(
             "There is no page in MIQ that displays all config managers."
             " Use 'AllOfType' on a config manager provider instance."
         )

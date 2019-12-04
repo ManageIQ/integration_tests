@@ -26,10 +26,9 @@ class ConfigProfile(BaseEntity, Pretty):
 
     @property
     def type(self):
-        kind = "Configuration Profile"
-        if self.manager.type == "ansible_tower":
-            kind = "Inventory Group"
-        return kind
+        return (
+            "Inventory Group" if self.manager.type == "ansible_tower" else "Configuration Profile"
+        )
 
     @property
     def config_systems(self):

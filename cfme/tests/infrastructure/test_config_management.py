@@ -12,7 +12,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.provider([AnsibleTowerProvider, SatelliteProvider], scope='module'),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider_modscope')
 ]
 
 
@@ -132,7 +132,7 @@ def test_config_system_tag(config_system, tag):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.provider([AnsibleTowerProvider])
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_ansible_tower_job_templates_tag(request, provider, tag):
     """
     Polarion:
@@ -159,7 +159,7 @@ def test_ansible_tower_job_templates_tag(request, provider, tag):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.provider([AnsibleTowerProvider])
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 @pytest.mark.parametrize('template_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
 def test_ansible_tower_service_dialog_creation_from_template(provider, template_type):
     """

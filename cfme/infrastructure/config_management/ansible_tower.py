@@ -43,7 +43,7 @@ class ConfigSystemAllView(AnsibleTowerProvidersAllView):
         )
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class AnsibleTowerProvider(ConfigManagerProvider):
     """
     Configuration manager object (Ansible Tower)

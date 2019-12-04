@@ -44,7 +44,7 @@ class SatelliteSystemsAllView(SatelliteProvidersAllView):
         )
 
 
-@attr.s(cmp=False)
+@attr.s(eq=False)
 class SatelliteProvider(ConfigManagerProvider):
     """
     Configuration manager object (Red Hat Satellite, Foreman)

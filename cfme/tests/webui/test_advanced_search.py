@@ -17,6 +17,7 @@ from cfme.services.workloads import TemplatesImages
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 
 SearchParam = namedtuple("SearchParam",
                          ["collection", "destination", "entity", "filter", "my_filters"])
@@ -296,11 +297,13 @@ class TestContainers(object):
 
 
 @inject_tests
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:9723')])
 class TestAnsibleTower(object):
     params_values = [
         SearchParam('ansible_tower_providers', 'All', 'ansible_tower_explorer_provider',
                     'Automation Manager (Ansible Tower) : Name',
                     ('sidebar.providers', 'All Ansible Tower Providers')),
+
         SearchParam('ansible_tower_systems', 'All', 'ansible_tower_explorer_system',
                     'Configured System (Ansible Tower) : Hostname',
                     ('sidebar.configured_systems', 'All Ansible Tower Configured Systems')),
@@ -329,6 +332,7 @@ class TestStorage(object):
 
 
 @inject_tests
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:9723')])
 class TestConfigManagement(object):
     params_values = [
         SearchParam(ConfigManagerProvider, 'All', 'configuration_management',
