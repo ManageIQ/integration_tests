@@ -66,8 +66,7 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
 @pytest.fixture
 def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     """Returns database-owning appliance, enables embedded ansible,
-    takes a backup prior to running tests.
-
+    waits for it to ready, takes a backup prior to running tests.
     """
     appl1 = temp_appliance_preconfig_funcscope
     # enable embedded ansible and create pg_basebackup
@@ -318,11 +317,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     manager.quit()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
-    appl1.reboot()
-    appl1.evmserverd.start()
-    appl1.wait_for_web_ui()
-    appl1.ssh_client.run_command(
-        'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
+    assert appl1.is_embedded_ansible_running
     repositories = appl1.collections.ansible_repositories
     try:
         repository = repositories.create(
