@@ -128,7 +128,7 @@ def test_service_start(appliance, setup_provider, context,
 
 @pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
-@pytest.mark.parametrize('order_service', [['console_test']], indirect=True)
+@pytest.mark.parametrize('order_service', [{'console_test': True}], indirect=True)
 def test_vm_console(request, appliance, setup_provider, context, configure_websocket,
         configure_console_vnc, order_service, take_screenshot,
         console_template, provider):

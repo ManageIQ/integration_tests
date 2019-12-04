@@ -19,7 +19,6 @@ from cfme.rest.gen_data import service_templates_rest as _service_templates
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaUI
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.generators import random_vm_name
@@ -80,7 +79,7 @@ def generic_catalog_item(request, appliance, dialog_modscope, catalog_modscope):
 
 
 def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-        console_test=False):
+         vm_count='1', console_test=False):
     provision_type, template, host, datastore, iso_file, vlan = map(provisioning.get,
         ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
     if console_test:
@@ -92,7 +91,8 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
         provisioning_data = {
             'catalog': {'catalog_name': {'name': catalog_name, 'provider': provider.name},
                         'vm_name': random_vm_name('serv'),
-                        'provision_type': provision_type},
+                        'provision_type': provision_type,
+                        'num_vms': vm_count},
             'environment': {'host_name': {'name': host},
                             'datastore_name': {'name': datastore}},
             'network': {'vlan': partial_match(vlan)},
@@ -159,12 +159,16 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
 
 @pytest.fixture
 def order_service(appliance, provider, provisioning, dialog, catalog, request):
+    # BZ 1646333 - Delete this request button is not shown in service Request details page
+    # The above BZ got closed because of  INSUFFICIENT_DATA, so I havve reported the same issue
+    # in BZ 775779.
     """ Orders service once the catalog item is created"""
-
     if hasattr(request, 'param'):
-        param = request.param
+        vm_count = request.param['vm_count'] if 'vm_count' in request.param else '1'
+        console_test = request.param['console_test'] if 'console_test' in request.param else False
+
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-                                           console_test=True if 'console_test' in param else None)
+                            vm_count=vm_count, console_test=console_test)
     else:
         catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
@@ -173,15 +177,17 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     assert provision_request.is_succeeded()
     if provision_request.exists():
         provision_request.wait_for_request()
-        if not BZ(1646333, forced_streams=['5.10']).blocks:
-            provision_request.remove_request()
+        # Provision request is being removed through REST API because of BZ 775779.
+        provision_request.remove_request(method='rest')
     yield catalog_item
     service = MyService(appliance, catalog_item.name)
     if service.exists:
         service.delete()
-    vm_name = '{}0001'.format(catalog_item.prov_data['catalog']['vm_name'])
-    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
-    vm.cleanup_on_provider()
+    name = catalog_item.prov_data['catalog']['vm_name']
+    for i in range(int(vm_count)):
+        vm_name = f'{name}000{i+1}'
+        vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
+        vm.cleanup_on_provider()
 
 
 @pytest.fixture()
