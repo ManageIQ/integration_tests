@@ -18,17 +18,17 @@ pytestmark = [
 
 @pytest.fixture(scope='module')
 def proxy_data(utility_vm):
-    utility_vm_ip, injected_user_creds, data = utility_vm
+    utility_vm_ip, __, data = utility_vm
     yield utility_vm_ip, data.proxy.port
 
 
 @pytest.fixture(scope='module')
 def proxy_ssh(utility_vm):
-    proxy_ip, injected_user_credentials, __ = utility_vm
+    proxy_ip, injected_user_cred, __ = utility_vm
     with SSHClient(
             hostname=proxy_ip,
-            username=injected_user_credentials['username'],
-            password=injected_user_credentials['password']) as ssh_client:
+            username=injected_user_cred.principal,
+            password=injected_user_cred.secret) as ssh_client:
         yield ssh_client
 
 

@@ -3,8 +3,8 @@ import os.path
 
 import pytest
 
+from cfme.base.credential import SSHCredential
 from cfme.utils.conf import cfme_data
-from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.net import wait_pingable
@@ -21,9 +21,7 @@ def utility_vm():
     """
     try:
         data = cfme_data['utility_vm']
-        injected_user_creds = credentials[data['injected_credentials']]
-        injected_user_password = injected_user_creds['password']
-        injected_user_name = injected_user_creds['username']
+        injected_user_cred = SSHCredential.from_config(data['injected_credentials'])
         try:
             with open(os.path.expanduser('~/.ssh/id_rsa.pub')) as f:
                 authorized_ssh_keys = f.read()
@@ -37,8 +35,8 @@ def utility_vm():
             # https://access.redhat.com/documentation/en-us/red_hat_virtualization/4.2/
             # html-single/python_sdk_guide/index#Starting_a_Virtual_Machine_with_Cloud-Init
             initialization=dict(
-                user_name=injected_user_name,
-                root_password=injected_user_password,
+                user_name=injected_user_cred.principal,
+                root_password=injected_user_cred.secret,
                 authorized_ssh_keys=authorized_ssh_keys)
         )
     except AttributeError:
@@ -53,5 +51,5 @@ def utility_vm():
         logger.exception(msg)
         pytest.skip(msg)
 
-    yield found_ip, injected_user_creds, data
+    yield found_ip, injected_user_cred, data
     vm.delete()
