@@ -2590,7 +2590,7 @@ class Appliance(IPAppliance):
                     return False
             vm_ip, _ = wait_for(is_ip_available,
                               delay=5,
-                              num_sec=600)
+                              num_sec=1200)
             app_kwargs['hostname'] = str(vm_ip)
 
         if isinstance(provider_mgmt, OpenShiftSystem):
