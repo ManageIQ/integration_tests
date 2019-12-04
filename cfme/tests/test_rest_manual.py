@@ -172,39 +172,6 @@ def test_schedule_automation_request(scheduler):
 
 
 @pytest.mark.customer_scenario
-@pytest.mark.meta(coverage=[1661445])
-@pytest.mark.tier(1)
-@test_requirements.rest
-def test_authorization_header_sql_response():
-    """
-    Bugzilla:
-        1661445
-        1686021
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        initialEstimate: 1/4h
-        testSteps:
-            1. GET /api/auth?requester_type=ui HEADERS: {"Authorization": "Basic testing"}
-                Perform this GET request with requests.get()
-        expectedResults:
-            1. There should be no sql statement in the response.
-                Expected Response:
-                {
-                "error": {
-                    "kind": "unauthorized",
-                    "message": ("PG::CharacterNotInRepertoire: ERROR:"
-                                "  invalid byte sequence for encoding \"UTF8\": 0xb5\n:"),
-                    "klass": "Api::AuthenticationError"
-                    }
-                }
-    """
-    # Check if it is possible to perform this testing with manageiq-api-client instead of requests.
-    pass
-
-
-@pytest.mark.customer_scenario
 @pytest.mark.meta(coverage=[1682739])
 @pytest.mark.tier(1)
 @test_requirements.rest
