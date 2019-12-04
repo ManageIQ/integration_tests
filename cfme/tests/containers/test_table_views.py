@@ -1,6 +1,3 @@
-from collections import OrderedDict
-from random import choice
-
 import pytest
 
 from cfme import test_requirements
@@ -15,43 +12,25 @@ pytestmark = [
     test_requirements.containers
 ]
 
-
-VIEWS = ('Grid View', 'Tile View', 'List View')
-# We're using OrderedDict in order to be able to set keys and values
-# to DefaultView and keep the order of the LUT
-objects_mapping = OrderedDict({  # <object> : <ui name>
-    ContainersProvider: 'Containers Providers',
-    'container_images': 'Container Images',
-    'container_image_registries': 'Image Registries',
-    'container_projects': 'Projects',
-    'container_routes': 'Routes',
-    'container_nodes': 'Nodes',
-    'container_pods': 'Pods',
-    'container_services': 'Services',
-    'containers': 'Containers',
-    'container_replicators': 'Replicators'
-})
+objects_mapping = {
+    'Containers Providers': ContainersProvider,
+    'Nodes': 'container_nodes',
+    'Pods': 'container_pods',
+    'Services': 'container_services',
+    'Routes': 'container_routes',
+    'Containers': 'containers',
+    'Projects': 'container_projects',
+    'Replicators': 'container_replicators',
+    'Container Images': 'container_images',
+    'Image Registries': 'container_image_registries',
+}
 
 
-@pytest.fixture(scope='function')
-def random_default_views(appliance):
-    """This fixture setup random default views for container objects.
-    Revert the default views to the original on exit"""
-    # Collecting the original default views and Generating random views LUT for test:
-    original_default_views, tested_default_views = OrderedDict(), OrderedDict()
-    for collection_name, ui_name in objects_mapping.items():
-        original_default_views[collection_name] = (
-            appliance.user.my_settings.default_views.get_default_view(ui_name))
-        tested_default_views[collection_name] = choice(VIEWS)
-    appliance.user.my_settings.default_views.set_default_view(objects_mapping.values(),
-                                                              tested_default_views.values())
-    yield tested_default_views
-    # setting back the default views to the original state:
-    appliance.user.my_settings.default_views.set_default_view(objects_mapping.values(),
-                                                              original_default_views.values())
-
-
-def test_default_views(appliance, random_default_views):
+@pytest.mark.parametrize('group_name', list(objects_mapping.keys()),
+                         ids=["_".join(gp.split()) for gp in objects_mapping], scope="module")
+@pytest.mark.parametrize('new_default_view', ['List View', 'Tile View', 'Grid View'],
+                         ids=['List_View', 'Tile_View', 'Grid_View'])
+def test_default_views(request, appliance, group_name, new_default_view):
     """
     Polarion:
         assignee: juwatts
@@ -59,18 +38,23 @@ def test_default_views(appliance, random_default_views):
         casecomponent: Containers
         initialEstimate: 1/6h
     """
-    for collection_name in objects_mapping.keys():
-        obj = (ContainersProvider if collection_name is ContainersProvider
-               else getattr(appliance.collections, collection_name))
-        view = navigate_to(obj, 'All', use_resetter=False)
-        assert (random_default_views[collection_name].lower() ==
-                view.toolbar.view_selector.selected.lower()), (
-            "Failed to setup default view \"{}\" for {}".format(
-                view, objects_mapping[collection_name])
-        )
+    collection_name = objects_mapping[group_name]
+    default_views = appliance.user.my_settings.default_views
+    orig_default = default_views.get_default_view(group_name)
+    default_views.set_default_view(group_name, new_default_view)
+    request.addfinalizer(lambda: default_views.set_default_view(group_name, orig_default))
+    obj = (ContainersProvider if collection_name is ContainersProvider
+           else getattr(appliance.collections, collection_name))
+    view = navigate_to(obj, 'All', use_resetter=False)
+    assert view.toolbar.view_selector.selected == new_default_view
+    default_views.set_default_view(group_name, orig_default)
 
 
-def test_table_views(appliance):
+@pytest.mark.parametrize('container_obj', list(objects_mapping.keys()),
+                         ids=["_".join(gp.split()) for gp in objects_mapping], scope="module")
+@pytest.mark.parametrize('selected_view', ['List View', 'Tile View', 'Grid View'],
+                         ids=['List_View', 'Tile_View', 'Grid_View'])
+def test_table_views(appliance, selected_view, container_obj):
     """
     Polarion:
         assignee: juwatts
@@ -78,12 +62,11 @@ def test_table_views(appliance):
         casecomponent: Containers
         initialEstimate: 1/6h
     """
-    for collection_name in objects_mapping.keys():
-        obj = (ContainersProvider if collection_name is ContainersProvider
-               else getattr(appliance.collections, collection_name))
-        view = navigate_to(obj, 'All')
-        view_to_select = choice(VIEWS)
-        view.toolbar.view_selector.select(view_to_select)
-        assert view_to_select.lower() == view.toolbar.view_selector.selected.lower(), (
-            "Failed to set view \"{}\" For {}".format(view, collection_name)
-        )
+    collection_name = objects_mapping[container_obj]
+    obj = (ContainersProvider if collection_name is ContainersProvider
+           else getattr(appliance.collections, collection_name))
+    view = navigate_to(obj, 'All')
+    view.toolbar.view_selector.select(selected_view)
+    assert selected_view == view.toolbar.view_selector.selected, (
+        f"Failed to set view {view} For {collection_name}"
+    )
