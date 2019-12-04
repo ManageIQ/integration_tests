@@ -1,6 +1,6 @@
 Command
 celery[redis]==4.3.0
-Django==2.2.5
+Django==2.2.8
 diaper
 django-object-actions
 django-ipware
