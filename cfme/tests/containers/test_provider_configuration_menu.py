@@ -75,6 +75,8 @@ def test_ocp_operator_out_of_the_box(appliance):
     assert is_role_found, "No {role} found".format(role=role_name_prefix)
 
 
+@pytest.mark.meta(automates=[1516292])
+@pytest.mark.ignore_stream("5.11")  # Pause/Resume was removed from UI in 5.11
 def test_pause_and_resume_provider(provider):
     """
     Basic testing for pause and resume for a container provider
@@ -87,7 +89,6 @@ def test_pause_and_resume_provider(provider):
         6. Resume the provider
         7. Validate button status
         8. Validate the provider marked as running
-    The test based on BZ1516292
 
     Polarion:
         assignee: juwatts
