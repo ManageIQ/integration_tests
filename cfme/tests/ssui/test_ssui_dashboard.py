@@ -111,7 +111,7 @@ def verify_vm_uptime(appliance, provider, vmname):
 def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
                                   order_service):
     catalog_item = order_service
-    vmname = '{}0001'.format(catalog_item.prov_data['catalog']["vm_name"])
+    vmname = catalog_item.prov_data['catalog']['vm_name']
 
     def verify_records_rollups_table(appliance, provider):
         # Verify that hourly rollups are present in the metric_rollups table
@@ -123,7 +123,8 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
             result = (
                 appliance.db.client.session.query(rollups.id)
                 .join(ems, rollups.parent_ems_id == ems.id)
-                .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vmname,
+                .filter(rollups.capture_interval_name == 'hourly',
+                rollups.resource_name.contains(vmname),
                 ems.name == provider.name, rollups.timestamp >= date.today())
             )
 
@@ -232,6 +233,26 @@ def test_monthly_charges(appliance, has_no_providers_modscope, setup_provider, c
         dashboard = Dashboard(appliance)
         monthly_charges = dashboard.monthly_charges()
         logger.info('Monthly charges is {}'.format(monthly_charges))
+        assert monthly_charges != '$0'
+
+
+@pytest.mark.long_running
+@pytest.mark.parametrize('context', [ViaSSUI])
+@pytest.mark.parametrize('order_service', [{'vm_count': '1'}, {'vm_count': '2'}], indirect=True,
+                ids=['vm-count1', 'vm-count2'])
+def test_service_chargeback_multiple_vms(appliance, has_no_providers_modscope, setup_provider,
+        context, order_service, run_service_chargeback_report):
+    """Tests chargeback data for a service with multiple VMs
+    Polarion:
+        assignee: nachandr
+        casecomponent: SelfServiceUI
+        caseimportance: high
+        initialEstimate: 1/2h
+    """
+    with appliance.context.use(context):
+        dashboard = Dashboard(appliance)
+        monthly_charges = dashboard.monthly_charges()
+        logger.info(f'Monthly charges is {monthly_charges}')
         assert monthly_charges != '$0'
 
 
