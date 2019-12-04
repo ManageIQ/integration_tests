@@ -18,10 +18,16 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 
 
 @attr.s
 class GenericObjectButton(BaseEntity, Updateable):
+    REMOVE_TEXT = VersionPicker({
+        "5.11": 'Remove this Custom Button from Inventory',
+        Version.lowest(): 'Remove this Button from Inventory'}
+    )
 
     name = attr.ib()
     description = attr.ib()
@@ -49,7 +55,7 @@ class GenericObjectButton(BaseEntity, Updateable):
             Args: cancel(bool): By default button will be deleted, pass True to cancel deletion
         """
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Remove this Button from Inventory', handle_alert=not cancel)
+        view.configuration.item_select(self.REMOVE_TEXT, handle_alert=not cancel)
         view = self.create_view(GenericObjectDefinitionAllView)
         assert view.is_displayed
         view.flash.assert_no_error()
@@ -203,6 +209,10 @@ class ButtonEdit(CFMENavigateStep):
 
 @attr.s
 class GenericObjectButtonGroup(BaseEntity, Updateable):
+    REMOVE_TEXT = VersionPicker({
+        "5.11": 'Remove this Custom Button Group from Inventory',
+        Version.lowest(): 'Remove this Button Group from Inventory'}
+    )
 
     name = attr.ib()
     description = attr.ib()
@@ -218,12 +228,12 @@ class GenericObjectButtonGroup(BaseEntity, Updateable):
         """
         view = navigate_to(self, 'Details')
 
-        if not view.configuration.item_enabled('Remove this Button Group from Inventory'):
+        if not view.configuration.item_enabled(self.REMOVE_TEXT):
             raise OptionNotAvailable(
                 "Remove this Button Group is not enabled, there are buttons assigned to this group")
         else:
             view.configuration.item_select(
-                'Remove this Button Group from Inventory', handle_alert=not cancel
+                self.REMOVE_TEXT, handle_alert=not cancel
             )
         view = self.create_view(GenericObjectDefinitionAllView, wait=10)
         view.flash.assert_no_error()
