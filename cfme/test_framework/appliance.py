@@ -74,15 +74,18 @@ def pytest_configure(config):
         for appliance in appliances:
             reporter.write_line('* {!r}'.format(appliance), cyan=True)
     appliance = appliances[0]
-    if not appliance.is_dev:
-        appliance.set_session_timeout(86400)
+
     stack.push(appliance)
     plugin = ApplianceHolderPlugin(appliance, appliances)
     config.pluginmanager.register(plugin, PLUGIN_KEY)
 
+    if not any((isinstance(appliance, DummyAppliance), appliance.is_dev)):
+        config.hook.pytest_appliance_setup(config=config)
+
 
 @pytest.hookimpl(trylast=True)
-def pytest_unconfigure():
+def pytest_unconfigure(config):
+    config.hook.pytest_appliance_teardown(config=config)
     stack.pop()
 
 
