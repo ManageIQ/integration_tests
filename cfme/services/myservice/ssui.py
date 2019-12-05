@@ -353,16 +353,16 @@ class MyServiceEdit(SSUINavigateStep):
 
 @navigator.register(MyService, 'VM Console')
 class LaunchVMConsole(SSUINavigateStep):
-    VIEW = EditMyServiceView
+    VIEW = DetailsMyServiceView
 
     def prerequisite(self):
         return navigate_to(self.obj, 'Details')
 
     def step(self, *args, **kwargs):
-        if self.appliance.version < "5.8":
-            self.prerequisite_view.console_button.click()
-        else:
+        if self.appliance.version < "5.11":
             self.prerequisite_view.access_dropdown.item_select('VM Console')
+        else:
+            self.prerequisite_view.access_dropdown.item_select('VM HTML5 Console')
 
 
 @navigator.register(MyService, 'SetOwnership')

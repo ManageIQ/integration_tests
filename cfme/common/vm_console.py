@@ -69,10 +69,18 @@ class VMConsole(Pretty):
 
     def __init__(self, vm, console_handle, appliance_handle):
         self.name = vm.name
-        self.selenium = vm.appliance.browser.widgetastic.selenium
+        self.browser = vm.appliance.browser.widgetastic
         self.console_handle = console_handle
         self.appliance_handle = appliance_handle
         self.provider = vm.provider
+        self.vm = vm
+
+    @property
+    def console_type(self):
+        self.switch_to_console()
+        console_type = self.provider.get_console_type_name()
+        self.switch_to_appliance()
+        return console_type
 
     ###
     # Methods
@@ -131,8 +139,9 @@ class VMConsole(Pretty):
 
         # Now run some java script to get the contents of the canvas element
         # base 64 encoded.
-        image_base64_url = self.selenium.execute_script(
-            "return arguments[0].toDataURL('image/jpeg',1);",
+        image_base64_url = self.browser.selenium.execute_script(
+            "return (document.getElementById('mainCanvas') ||"
+            "document.getElementsByTagName('canvas')[0]).toDataURL('image/jpeg',1);",
             canvas
         )
 
@@ -186,13 +195,14 @@ class VMConsole(Pretty):
         """Send text to the console."""
         self.switch_to_console()
         canvas = self.provider.get_remote_console_canvas()
+        canvas.click()
         logger.info("Sending following Keys to Console {}".format(text))
         for character in text:
-            canvas.send_keys(character)
+            self.browser.send_keys_to_focused_element(character)
             # time.sleep() is used as a short delay between two keystrokes.
             # If keys are sent to canvas any faster, canvas fails to receive them.
             time.sleep(0.3)
-        canvas.send_keys(Keys.ENTER)
+        self.browser.send_keys_to_focused_element(Keys.ENTER)
         self.switch_to_appliance()
 
     def send_ctrl_alt_delete(self):
@@ -208,9 +218,9 @@ class VMConsole(Pretty):
         self.switch_to_console()
         fullscreen_btn = self.provider.get_console_fullscreen_btn()
         logger.info("Sending following Keys to Console Toggle Fullscreen")
-        before_height = self.selenium.get_window_size()['height']
+        before_height = self.browser.selenium.get_window_size()['height']
         fullscreen_btn.click()
-        after_height = self.selenium.get_window_size()['height']
+        after_height = self.browser.selenium.get_window_size()['height']
         fullscreen_btn.click()
         self.switch_to_console()
         logger.info("Height before fullscreen: {}\n Height after fullscreen:{}\n".format(
@@ -222,12 +232,12 @@ class VMConsole(Pretty):
     def switch_to_appliance(self):
         """Switch focus to appliance tab/window."""
         logger.info("Switching to appliance: window handle = {}".format(self.appliance_handle))
-        self.selenium.switch_to_window(self.appliance_handle)
+        self.browser.selenium.switch_to.window(self.appliance_handle)
 
     def switch_to_console(self):
         """Switch focus to console tab/window."""
         logger.info("Switching to console: window handle = {}".format(self.console_handle))
-        self.selenium.switch_to_window(self.console_handle)
+        self.browser.selenium.switch_to.window(self.console_handle)
 
     def wait_for_connect(self, timeout=30):
         """Wait for as long as the specified/default timeout for the console to be connected."""
@@ -244,7 +254,7 @@ class VMConsole(Pretty):
         """Attempt to close Console window at the end of test."""
         if self.console_handle is not None:
             self.switch_to_console()
-            self.selenium.close()
+            self.browser.selenium.close()
             logger.info("Browser window/tab containing Console was closed.")
             self.switch_to_appliance()
 
@@ -282,6 +292,7 @@ class VMConsole(Pretty):
         try:
             if to_disappear:
                 logger.info("Waiting for {} to disappear from screen".format(text_to_find))
+
             result = wait_for(func=lambda: to_disappear != self.find_text_on_screen(text_to_find),
                      delay=5,
                      num_sec=timeout)
