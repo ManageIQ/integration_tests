@@ -2879,9 +2879,6 @@ def provision_appliance(
 
 
 class ApplianceStack(LocalStack):
-    def __init__(self):
-        self._registered_hooks = {'on push': [], 'on pop': []}
-        super(ApplianceStack, self).__init__()
 
     def push(self, obj):
         stack_parent = self.top
@@ -2893,27 +2890,8 @@ class ApplianceStack(LocalStack):
             from cfme.utils import browser
             browser.start()
 
-        for hook in self._registered_hooks['on push']:
-            logger.info(f"appliance hostname [{obj.hostname}] hook {hook.__name__} "
-                        f"triggered on push")
-            # Diaper the heck out of these because all kinds of exceptions could happen
-            try:
-                hook(obj)
-            except Exception:
-                logger.exception(f'Exception running push hook {hook.__name__} on appliance {obj}')
-
     def pop(self):
         stack_parent = super(ApplianceStack, self).pop()
-        if stack_parent:
-            for hook in self._registered_hooks['on pop']:
-                logger.info(f"appliance hostname [{stack_parent.hostname}] hook {hook.__name__} "
-                            f"triggered on pop")
-                try:
-                    hook(stack_parent)
-                except Exception:
-                    logger.exception(f'Exception running pop hook {hook.__name__} '
-                                     f'on appliance {stack_parent}')
-
         current = self.top
         logger.info(f"Popped appliance {getattr(stack_parent, 'hostname', 'empty')} from stack\n"
                     f"Stack head is {getattr(current, 'hostname', 'empty')}")
@@ -2922,15 +2900,6 @@ class ApplianceStack(LocalStack):
             from cfme.utils import browser
             browser.start()
         return stack_parent
-
-    def register_hook(self, hook, func):
-        if hook in self._registered_hooks:
-            logger.debug(f"registering appliance method {func.__name__} on hook {hook}")
-            self._registered_hooks.get(hook).append(func)
-        else:
-            msg = f" there is no hook called {hook}"
-            logger.exception(msg)
-            raise ValueError(msg)
 
 
 stack = ApplianceStack()
@@ -3180,43 +3149,3 @@ class Navigatable(NavigatableMixin):
 class MiqImplementationContext(sentaku.ImplementationContext):
     """ Our context for Sentaku"""
     pass
-
-
-def ensure_websocket_role_disabled(appliance):
-    # TODO: This is a temporary solution until we find something better.
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev or not appliance.configured:
-        logger.debug(f'Skipping hook ensure_websocket_role_disabled on {appliance}')
-        return
-    server_settings = appliance.server.settings
-    roles = server_settings.server_roles_db
-    if 'websocket' in roles and roles['websocket']:
-        logger.info('Disabling the websocket role to ensure we get no intrusive popups')
-        server_settings.disable_server_roles('websocket')
-
-
-def fix_missing_hostname(appliance):
-    """Fix for hostname missing from the /etc/hosts file
-
-    Note: Affects RHOS-based appliances but can't hurt the others so
-          it's applied on all.
-    """
-    if isinstance(appliance, DummyAppliance) or appliance.is_dev:
-        logger.debug(f'Skipping hook ensure_websocket_role_disabled on {appliance}')
-        return
-    logger.debug("Checking appliance's /etc/hosts for a resolvable hostname")
-    hosts_grep_cmd = 'grep {} /etc/hosts'.format(appliance.get_resolvable_hostname())
-    with appliance.ssh_client as ssh_client:
-        if ssh_client.run_command(hosts_grep_cmd).failed:
-            logger.info('Setting appliance hostname')
-            if not appliance.set_resolvable_hostname():
-                # not resolvable, just use hostname output through appliance_console_cli to modify
-                cli_hostname = ssh_client.run_command('hostname').output.rstrip('\n')
-                logger.warning('Unable to resolve hostname, using `hostname`: %s', cli_hostname)
-                appliance.appliance_console_cli.set_hostname(cli_hostname)
-
-            if ssh_client.run_command('grep $(hostname) /etc/hosts').failed:
-                logger.error('Failed to mangle /etc/hosts')
-
-
-stack.register_hook('on push', ensure_websocket_role_disabled)
-stack.register_hook('on push', fix_missing_hostname)

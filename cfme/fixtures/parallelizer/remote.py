@@ -273,5 +273,9 @@ if __name__ == '__main__':
     pytest_config = _init_config(slave_options, slave_args)
     slave_manager = SlaveManager(pytest_config, args.worker, config['zmq_endpoint'])
     pytest_config.pluginmanager.register(slave_manager, 'slave_manager')
+
+    pytest_config.hook.pytest_addhooks.call_historic(kwargs=dict(
+        pluginmanager=pytest_config.pluginmanager))
+
     pytest_config.hook.pytest_cmdline_main(config=pytest_config)
     signal.signal(signal.SIGQUIT, slave_manager.handle_quit)
