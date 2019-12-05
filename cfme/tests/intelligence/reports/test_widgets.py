@@ -52,7 +52,11 @@ def custom_widgets(appliance):
             filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
             timer={"run": "Hourly", "hours": "Hour"},
             visibility="<To All Users>"),
-        collection.create(
+    ]
+
+    # RSS Removed in 5.11 (BZ 1728328)
+    if appliance.version < '5.11':
+        ws.append(collection.create(
             collection.RSS,
             fauxfactory.gen_alphanumeric(),
             description=fauxfactory.gen_alphanumeric(),
@@ -60,8 +64,7 @@ def custom_widgets(appliance):
             type="Internal",
             feed="Administrative Events",
             rows="8",
-            visibility="<To All Users>")
-    ]
+            visibility="<To All Users>"))
     yield ws
     map(lambda w: w.delete(), ws)
 

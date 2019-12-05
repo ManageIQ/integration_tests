@@ -3657,22 +3657,20 @@ class DashboardWidgetsPicker(View):
 
     @property
     def all_dashboard_widgets(self):
-        widgets = list(self.dashboard_widgets)
-        if widgets:
-            return [self.browser.text(widget.div) for widget in widgets]
-        else:
-            return []
+        return [self.browser.text(widget.div) for widget in self.dashboard_widgets]
 
     def _values_to_remove(self, values):
-        return list(set(self.all_dashboard_widgets) - set(values))
+        return set(self.all_dashboard_widgets) - values
 
     def _values_to_add(self, values):
-        return list(set(values) - set(self.all_dashboard_widgets))
+        return values - set(self.all_dashboard_widgets)
 
     def fill(self, values):
         if isinstance(values, str):
             values = [values]
-        if set(values) == set(self.all_dashboard_widgets):
+        values = set(values)
+
+        if values == set(self.all_dashboard_widgets):
             return False
         else:
             values_to_remove = self._values_to_remove(values)
