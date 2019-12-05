@@ -173,7 +173,7 @@ def test_validate_not_required_dialog_element(appliance, file_name,
     )
     assert validated.warning == msg
     assert view.submit_button.disabled
-    validated.fill(fauxfactory.gen_numeric_string(3))  # matching pattern
+    validated.fill("123")  # matching pattern
     assert wait_for(lambda: not validated.warning, timeout=15)
     assert not view.submit_button.disabled
 
@@ -230,7 +230,8 @@ def test_dialog_editor_modify_field(dialog):
             3.
             4. The UI should confirm that you want to exit without saving your dialog
     """
-    view = navigate_to(dialog, "Edit")
+    # As dialog created with rest sometime force nav required.
+    view = navigate_to(dialog, "Edit", force=True)
     view.description.fill(fauxfactory.gen_alpha())
     view.cancel_button.click(handle_alert=True)
     view = navigate_to(dialog, "Edit")
