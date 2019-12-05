@@ -606,8 +606,8 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     interaction.expect(re.escape(
         'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
     interaction.send(nfs_restore_dir_path)
-    # Running Database backup to nfs://10.8.198.142/srv/export...
-    interaction.expect('Press any key to continue.', timeout=120)
+    # Running Database backup to nfs://XX.XX.XX.XX/srv/export...
+    interaction.expect('Press any key to continue.', timeout=240)
 
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
@@ -628,7 +628,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     interaction.send(nfs_restore_file_path)
     interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
     interaction.send('y')
-    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.expect('Press any key to continue.', timeout=60)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
@@ -690,7 +690,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
     interaction.send(pwd)
     # Running Database backup to nfs://10.8.198.142/srv/export...
-    interaction.expect('Press any key to continue.', timeout=120)
+    interaction.expect('Press any key to continue.', timeout=240)
 
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
@@ -716,7 +716,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     interaction.send(pwd)
     interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
     interaction.send('y')
-    interaction.expect('Press any key to continue.', timeout=40)
+    interaction.expect('Press any key to continue.', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
