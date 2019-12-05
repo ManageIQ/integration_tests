@@ -2,6 +2,7 @@
 import re
 import sys
 from collections import defaultdict
+from datetime import date
 
 import click
 import github
@@ -11,6 +12,8 @@ from cfme.utils.conf import docker
 
 
 REPO_NAME = "ManageIQ/integration_tests"
+
+MASTER = 'master'
 
 HEADERS = ['PR', 'Labels', 'Author', 'Title']
 FULL_HEADERS = HEADERS + ['DESCRIPTION']
@@ -73,7 +76,10 @@ def get_prs(release, old_release, gh):
 
     # GH searching supports by date, so get dates for the release objects
     old_date = old_release.created_at.date().isoformat()  # iso 8601 date
-    new_date = release.created_at.date().isoformat()
+    if release == MASTER:
+        new_date = date.today().isoformat()
+    else:
+        new_date = release.created_at.date().isoformat()
 
     pulls = gh.search_issues(
         "",  # empty query string, required positional arg
@@ -94,11 +100,11 @@ def get_prs(release, old_release, gh):
             pr_nums_without_label.append(pr.number)
 
     if pr_nums_without_label:
-        print(
+        click.echo(
             "ERROR: The following PRs don't have any of recognized labels: \n",
             "\n".join(pr_nums_without_label),
         )
-        print("Recognized labels:", ", ".join(VALID_LABELS))
+        click.echo("Recognized labels:", ", ".join(VALID_LABELS))
         sys.exit(1)
     return prs
 
@@ -154,11 +160,11 @@ def main(tag, old_tag, report_type, links, tableformat):
     or git tag.
     """
 
-    print(f"Report Includes: {old_tag} -> {tag}")
+    click.echo(f"Report Includes: {old_tag} -> {tag}")
 
     gh = github.Github(docker.gh_token)
     repo = gh.get_repo(REPO_NAME)
-    release = repo.get_release(tag)
+    release = tag if tag == MASTER else repo.get_release(tag)
     old_release = repo.get_release(old_tag)
 
     prs = get_prs(release, old_release, gh)
@@ -177,7 +183,7 @@ def main(tag, old_tag, report_type, links, tableformat):
                 pr_attrs.append(clean_body(pr.body))
             report_data.append(pr_attrs)
 
-        print(tabulate.tabulate(report_data,
+        click.echo(tabulate.tabulate(report_data,
                                 headers=FULL_HEADERS if report_type == 'full' else HEADERS,
                                 tablefmt=tableformat))
 
@@ -191,16 +197,16 @@ def main(tag, old_tag, report_type, links, tableformat):
             authors[pr.user.login] += 1
 
         # Label stats
-        print(tabulate.tabulate(sorted(labels.items(),
+        click.echo(tabulate.tabulate(sorted(labels.items(),
                                        key=lambda item: item[1],
                                        reverse=True),
                                 headers=["Label", "Number of PRs"],
                                 tablefmt=tableformat))
 
-        print('======================================')
+        click.echo('======================================')
 
         # Author stats
-        print(tabulate.tabulate(sorted(authors.items(),
+        click.echo(tabulate.tabulate(sorted(authors.items(),
                                        key=lambda item: item[1],
                                        reverse=True),
                                 headers=["Author", "Number of PRs"],
