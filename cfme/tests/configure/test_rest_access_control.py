@@ -445,21 +445,23 @@ class TestGroupsViaREST(object):
 
 class TestUsersViaREST(object):
     @pytest.fixture(scope="function")
-    def users_data(self, request, appliance, num=3):
-        num_users = num
-        response, prov_data = _users(request, appliance, num=num_users)
-        assert_response(appliance)
-        assert len(response) == num
-        return response, prov_data
+    def users_data(self, request, appliance):
+        def _users_data(num=3):
+            num_users = num
+            response, prov_data = _users(request, appliance, num=num_users)
+            assert_response(appliance)
+            assert len(response) == num
+            return response, prov_data
+        return _users_data
 
     @pytest.fixture(scope="function")
-    def user_auth(self, request, appliance):
-        users, prov_data = self.users_data(request, appliance, num=1)
+    def user_auth(self, users_data):
+        users, prov_data = users_data(num=1)
         return users[0].userid, prov_data[0]["password"]
 
     @pytest.fixture(scope="function")
-    def users(self, request, appliance):
-        users, __ = self.users_data(request, appliance)
+    def users(self, users_data):
+        users, __ = users_data()
         return users
 
     @pytest.mark.tier(3)
@@ -490,7 +492,7 @@ class TestUsersViaREST(object):
             caseimportance: low
             initialEstimate: 1/4h
         """
-        users, prov_data = users_data
+        users, prov_data = users_data()
         for index, user in enumerate(users):
             record = appliance.rest_api.collections.users.get(id=user.id)
             assert_response(appliance)
@@ -641,7 +643,7 @@ class TestUsersViaREST(object):
             assert edited[index].id == user.id
 
     @pytest.mark.tier(3)
-    def test_edit_current_group(self, request, appliance):
+    def test_edit_current_group(self, request, appliance, users_data):
         """Tests that editing current group using "edit" action is not supported.
 
         Testing BZ 1549086
@@ -661,7 +663,7 @@ class TestUsersViaREST(object):
             for desc in group_descriptions
         ]
         group_handles = [{"href": group.href} for group in groups]
-        users, __ = self.users_data(request, appliance, num=1)
+        users, __ = users_data(num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles)
         assert_response(appliance)
@@ -672,7 +674,7 @@ class TestUsersViaREST(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    def test_change_current_group_as_admin(self, request, appliance):
+    def test_change_current_group_as_admin(self, request, appliance, users_data):
         """Tests that it's possible to edit current group.
 
         Testing BZ 1549086
@@ -692,7 +694,7 @@ class TestUsersViaREST(object):
             for desc in group_descriptions
         ]
         group_handles = [{"href": group.href} for group in groups]
-        users, __ = self.users_data(request, appliance, num=1)
+        users, __ = users_data(num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles)
         assert_response(appliance)
@@ -705,7 +707,7 @@ class TestUsersViaREST(object):
         assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
-    def test_change_current_group_as_user(self, request, appliance):
+    def test_change_current_group_as_user(self, request, appliance, users_data):
         """Tests that users can update their own group.
 
         Metadata:
@@ -723,7 +725,7 @@ class TestUsersViaREST(object):
             for desc in group_descriptions
         ]
         group_handles = [{"href": group.href} for group in groups]
-        users, data = self.users_data(request, appliance, num=1)
+        users, data = users_data(num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles)
         assert_response(appliance)
@@ -737,7 +739,7 @@ class TestUsersViaREST(object):
         assert_response(user_api)
 
     @pytest.mark.tier(3)
-    def test_change_unassigned_group_as_user(self, request, appliance):
+    def test_change_unassigned_group_as_user(self, request, appliance, users_data):
         """Tests that users can't update their own group to a group they don't belong to.
 
         Metadata:
@@ -755,7 +757,7 @@ class TestUsersViaREST(object):
             for desc in group_descriptions
         ]
         group_handles = [{"href": group.href} for group in groups]
-        users, data = self.users_data(request, appliance, num=1)
+        users, data = users_data(num=1)
         user = users[0]
         user.action.edit(miq_groups=group_handles[:1])
         assert_response(appliance)
