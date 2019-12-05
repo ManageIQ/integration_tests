@@ -280,8 +280,15 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
 @pytest.mark.rhv1
 @pytest.mark.provider([CloudProvider, InfraProvider])
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[
-    BZ(1756984, unblock=lambda provider: not provider.one_of(AzureProvider))])
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1756984,
+            forced_streams=["5.11"],
+            unblock=lambda provider: not provider.one_of(AzureProvider),
+        )
+    ]
+)
 @pytest.mark.meta(automates=[1353285])
 def test_provider_refresh_relationship(provider, setup_provider):
     """Tests provider refresh
