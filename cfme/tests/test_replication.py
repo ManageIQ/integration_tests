@@ -273,9 +273,9 @@ def test_replication_global_to_remote_new_vm_from_template():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_subscription_revalidation_pglogical():
+def test_replication_subscription_revalidation_pglogical(configured_appliance,
+                                                         unconfigured_appliance):
     """
     Subscription validation passes for replication subscriptions which
     have been validated and successfully saved.
@@ -291,4 +291,26 @@ def test_replication_subscription_revalidation_pglogical():
             1. Validation succeeds as this subscription was successfully
                saved and is currently replicating
     """
-    pass
+
+    remote_app, global_app = configured_appliance, unconfigured_appliance
+    app_params = dict(
+        region=99,
+        dbhostname='localhost',
+        username=credentials["database"]["username"],
+        password=credentials["database"]["password"],
+        dbname='vmdb_production',
+        dbdisk=global_app.unpartitioned_disks[0],
+        fetch_key=remote_app.hostname,
+        sshlogin=credentials["ssh"]["username"],
+        sshpass=credentials["ssh"]["password"],
+    )
+
+    global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
+    global_app.evmserverd.wait_for_running()
+    global_app.wait_for_web_ui()
+
+    remote_app.set_pglogical_replication(replication_type=':remote')
+    region = global_app.collections.regions.instantiate(number=99)
+    region.replication.set_replication(replication_type="global",
+                                       updates={"host": remote_app.hostname},
+                                       validate=True)
