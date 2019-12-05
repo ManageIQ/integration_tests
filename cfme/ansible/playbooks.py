@@ -61,7 +61,7 @@ class PlaybookDetailsView(PlaybookBaseView):
     def is_displayed(self):
         return (
             self.in_ansible_playbooks and
-            self.context["object"].expected_details_title
+            self.title.text == self.context["object"].expected_details_title
         )
 
 
