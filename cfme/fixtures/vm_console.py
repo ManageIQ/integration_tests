@@ -25,5 +25,6 @@ def configure_websocket(appliance):
     Currently the fixture cfme/fixtures/base.py:27,
     disables the websocket role to avoid intrusive popups.
     """
-    logger.info('Enabling the websocket role to allow console connections')
-    appliance.server.settings.enable_server_roles('websocket')
+    if appliance.version < '5.11':
+        logger.info('Enabling the websocket role to allow console connections')
+        appliance.server.settings.enable_server_roles('websocket')

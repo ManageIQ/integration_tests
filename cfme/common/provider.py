@@ -960,6 +960,9 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     def get_console_fullscreen_btn(self):
         raise NotImplementedError("This method is not implemented for given provider")
 
+    def get_console_type_name(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
     def get_all_provider_ids(self):
         """
         Returns an integer list of provider ID's via the REST API
