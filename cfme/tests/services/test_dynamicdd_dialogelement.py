@@ -187,23 +187,6 @@ def test_dd_multiselect_default_element_is_shouldnt_be_blank_when_loaded_by_anot
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_dialog_text_box_triggers_fields_shouldnt_refresh_too_soon_often():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        testtype: functional
-        startsin: 5.10
-        tags: service
-    Bugzilla:
-        1614321
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_ssui_dd_values_are_not_loaded_in_dropdown_unless_refresh_button_is_pressed():
     """
     Polarion:
@@ -356,23 +339,6 @@ def test_dynamic_drop_down_dialog_should_work_with_automate_expression_method():
         tags: service
     Bugzilla:
         1583694
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_drop_down_list_dialog_does_should_keep_default_value_for_integer_type_in_dialogs():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1554780
     """
     pass
 

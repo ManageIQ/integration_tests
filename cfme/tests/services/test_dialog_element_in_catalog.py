@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+import yaml
 
 from cfme import test_requirements
 from cfme.fixtures.automate import DatastoreImport
@@ -9,8 +10,11 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     test_requirements.dialog,
@@ -971,7 +975,6 @@ def test_dialog_dropdown_int_required(appliance, generic_catalog_item_with_impor
     """
     Bugzilla:
         1740899
-
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -993,3 +996,41 @@ def test_dialog_dropdown_int_required(appliance, generic_catalog_item_with_impor
 
     view.fields(ele_label).dropdown.fill("2")
     wait_for(lambda: not view.submit_button.disabled, timeout=7)
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1554780])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["bz_1554780.yml"], ids=["sample_dialog"],)
+def test_dialog_default_value_integer(appliance, generic_catalog_item_with_imported_dialog,
+                                      file_name):
+    """
+    Bugzilla:
+        1554780
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        testtype: functional
+        startsin: 5.10
+    """
+    catalog_item, _, ele_label = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
+    # download yaml file
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.dialogs)
+    file_path = fs.download(file_name)
+    with open(file_path, "r") as stream:
+        dialog_data = yaml.load(stream, Loader=yaml.BaseLoader)
+        default_drop = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][0][
+            "default_value"
+        ]
+        default_radio = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][1][
+            "default_value"
+        ]
+
+    view = navigate_to(service_catalogs, "Order")
+    assert (
+        view.fields("dropdown").read() == default_drop
+        and view.fields("radio").read() == default_radio
+    )
