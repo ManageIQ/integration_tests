@@ -32,7 +32,7 @@ from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import TimedOutError
 
 
-def _trying_ips(vm, attempts=30, interval=10):
+def _trying_ips(vm, attempts=60, interval=10):
     for attempt in range(attempts):
         for ip in getattr(vm, 'all_ips', []):
             yield ip
