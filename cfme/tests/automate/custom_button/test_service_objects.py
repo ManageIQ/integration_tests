@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import fauxfactory
 import pytest
 from widgetastic_patternfly import Button
@@ -68,6 +70,28 @@ def button_group(appliance, request):
         )
         yield button_gp, request.param
         button_gp.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def method(custom_instance, button_group):
+    _, obj_type = button_group
+
+    # Note: More information available about method creation
+    # https://github.com/ManageIQ/manageiq-ui-classic/pull/6040#issue-307723899
+    target_obj_map = {
+        "SERVICE": "$evm.root['service']",
+        "GENERIC": "$evm.root['generic_object']",
+    }
+
+    ruby_code = dedent(
+        f"""
+        # open external url with target object
+        target_obj = {target_obj_map[obj_type]}
+        $evm.log(:info, "Opening url")
+        target_obj.external_url = "https://example.com"
+        """
+    )
+    yield custom_instance(ruby_code)
 
 
 @pytest.fixture(params=TEXT_DISPLAY, scope="module")
@@ -703,10 +727,9 @@ def test_custom_button_dialog_service_obj(
             )
 
 
-@pytest.mark.manual
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1550002])
-def test_custom_button_open_url_service_obj(objects, button_group):
+@pytest.mark.meta(automates=[1550002], blockers=[BZ(1550002, forced_streams=["5.11"])])
+def test_custom_button_open_url_service_obj(request, appliance, objects, button_group, method):
     """ Test Open url functionality of custom button.
 
     Polarion:
@@ -734,7 +757,41 @@ def test_custom_button_open_url_service_obj(objects, button_group):
     Bugzilla:
         1550002
     """
-    pass
+    group, obj_type = button_group
+
+    with appliance.context.use(ViaUI):
+        button = group.buttons.create(
+            text=fauxfactory.gen_alphanumeric(start="btn_"),
+            hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
+            open_url=True,
+            system="Request",
+            request=method.name,
+        )
+        request.addfinalizer(button.delete_if_exists)
+
+        obj, dest_name = objects[obj_type]["Details"]
+        view = ui_nav(obj, dest_name)
+        custom_button_group = Dropdown(view, group.hover)
+        assert custom_button_group.has_item(button.text)
+
+        initial_count = len(view.browser.window_handles)
+        main_window = view.browser.current_window_handle
+        custom_button_group.item_select(button.text)
+
+        wait_for(
+            lambda: len(view.browser.window_handles) > initial_count,
+            timeout=30,
+            message="Check for window open",
+        )
+        open_url_window = (set(view.browser.window_handles) - {main_window}).pop()
+        view.browser.switch_to_window(open_url_window)
+
+        @request.addfinalizer
+        def _reset_window():
+            view.browser.close_window(open_url_window)
+            view.browser.switch_to_window(main_window)
+
+        assert "example.com" in view.browser.url
 
 
 @pytest.fixture(params=["Service", "Provider"], scope="module")
