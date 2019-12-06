@@ -204,12 +204,13 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
         wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
                 num_sec=900, delay=20, handle_exception=True,
                 message='Waiting for appliance to update')
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running,
-                    num_sec=180)
-    assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running,
-                    num_sec=60)
-    assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running,
-                    num_sec=60)
+        if enabled_embedded_appliance.version < '5.11':
+            assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running,
+                            num_sec=180)
+            assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running,
+                            num_sec=60)
+            assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running,
+                            num_sec=60)
     enabled_embedded_appliance.wait_for_web_ui()
 
     with enabled_embedded_appliance:
