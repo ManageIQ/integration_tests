@@ -124,6 +124,10 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
 
 @pytest.mark.rhv2
 @pytest.mark.meta(automates=[1671580, 1722937])
+@pytest.mark.meta(
+    blockers=[BZ(1744845, forced_streams=['5.10'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
+)
 # Tests to check that specific metrics are being collected
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     """
@@ -181,6 +185,10 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 
 @pytest.mark.rhv2
 @pytest.mark.meta(automates=[1671580, 1722937])
+@pytest.mark.meta(
+    blockers=[BZ(1744845, forced_streams=['5.10'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
+)
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     """
     Polarion:
@@ -203,6 +211,10 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider, GCEProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
     scope='module',
+)
+@pytest.mark.meta(
+    blockers=[BZ(1744845, forced_streams=['5.10'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))]
 )
 @pytest.mark.meta(automates=[1671580, 1722937])
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
