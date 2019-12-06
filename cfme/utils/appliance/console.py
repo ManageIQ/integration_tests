@@ -371,7 +371,7 @@ class ApplianceConsoleCli(AppliancePlugin):
             " --dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
             " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
                 password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass), timeout=300)
+                sshpass=sshpass), timeout=500)
 
     def configure_appliance_external_create(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
