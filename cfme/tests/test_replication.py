@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 
 
@@ -201,9 +202,11 @@ def test_replication_appliance_set_type_global_ui():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_replication_appliance_add_multi_subscription():
+@pytest.mark.parametrize("temp_appliances_unconfig_modscope_rhevm", [3], indirect=True)
+def test_replication_appliance_add_multi_subscription(request, setup_multi_region_cluster,
+                                                      multi_region_cluster,
+                                                      temp_appliances_unconfig_modscope_rhevm):
     """
     add two or more subscriptions to global
 
@@ -220,7 +223,12 @@ def test_replication_appliance_add_multi_subscription():
             1.
             2. appliances subscribed.
     """
-    pass
+    region = multi_region_cluster.global_appliance.collections.regions.instantiate()
+    navigate_to(region.replication, "Global")
+    for host in multi_region_cluster.remote_appliances:
+        assert region.replication.get_replication_status(
+            host=host.hostname
+        ), f"{host.hostname} Remote Appliance is not found in Global Appliance's list"
 
 
 @pytest.mark.manual
