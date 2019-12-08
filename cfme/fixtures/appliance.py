@@ -189,11 +189,11 @@ def temp_appliances_unconfig_funcscope_rhevm(appliance, pytestconfig):
 
 
 @pytest.fixture(scope="module")
-def temp_appliances_unconfig_modscope_rhevm(appliance, pytestconfig):
+def temp_appliances_unconfig_modscope_rhevm(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             config=pytestconfig,
-            count=2,
+            count=getattr(request, "param", 2),
             preconfigured=False,
             provider_type='rhevm'
     ) as appliances:
