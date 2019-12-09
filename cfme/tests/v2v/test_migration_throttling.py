@@ -64,6 +64,7 @@ def test_migration_throttling(request, appliance, provider,
         description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
+        target_provider=provider,
     )
     assert migration_plan.wait_for_state("Started")
     request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
