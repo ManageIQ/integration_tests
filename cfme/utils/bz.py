@@ -234,6 +234,12 @@ class Bugzilla(object):
         # build info
         info = {}
         for bug_id, bug in zip(idlist, self.bugzilla.getbugs(idlist)):
+            # safety first
+            if bug is None:
+                logger.error(f'BZ {bug_id} is None while processing bz info, '
+                             'likely requires authentication, skipping')
+                continue
+
             # assign some attrs for each BZ
             info[bug_id] = AttrDict(
                 description=bug.description,
