@@ -1367,12 +1367,12 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         except socket.timeout:
             logger.error(f"SSH timed out while updating appliance: {result.output}")
 
-        self.db_service.restart()
-        self.evmserverd.start()
-
         # May be chance to update kernel with all update.
         if reboot or not cfme_only:
             self.reboot()
+        else:
+            self.db_service.restart()
+            self.evmserverd.start()
 
         self.wait_for_web_ui()
         logger.info("Appliance upgrade completed")
