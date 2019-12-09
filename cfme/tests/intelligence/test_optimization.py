@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from widgetastic.exceptions import RowNotFound
 from widgetastic.utils import attributize_string
 
 from cfme import test_requirements
@@ -95,13 +96,18 @@ def test_delete_generated_report(appliance):
         )
 
     view = navigate_to(optimization_report.collections.saved_reports, "All")
+
     # This asserts the report exists for SavedReports accordion.
-    # If the report did not exist, RowNotFound error would be raised here.
-    row = next(
-        view.table.rows(
-            run_at__contains=run_at_time, name__contains=opt_saved_report.parent.parent.menu_name
+    # If the report does not exist, RowNotFound error would be raised here.
+    try:
+        row = next(
+            view.table.rows(
+                run_at__contains=run_at_time,
+                name__contains=opt_saved_report.parent.parent.menu_name
+            )
         )
-    )
+    except RowNotFound:
+        pytest.fail("Saved Report does not exist.")
 
     # Assert the report exists for Reports accordion
     saved_report = appliance.collections.reports.instantiate(
