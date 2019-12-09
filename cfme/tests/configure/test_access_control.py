@@ -857,10 +857,22 @@ def test_role_crud(appliance):
         casecomponent: Configuration
         tags: rbac
     """
-    role = _mk_role(appliance, name=None, vm_restriction=None,
-                    product_features=[(['Everything'], False),
-                                      (['Everything', 'Settings', 'Configuration'], True),
-                                      (['Everything', 'Services', 'Catalogs Explorer'], True)])
+    product_feature = (
+        ['Everything', 'Configuration']
+        if appliance.version > "5.11"
+        else ['Everything', 'Settings', 'Configuration']
+    )
+
+    role = _mk_role(
+        appliance,
+        name=None,
+        vm_restriction=None,
+        product_features=[
+            (["Everything"], False),
+            (product_feature, True),
+            (["Everything", "Services", "Catalogs Explorer"], True),
+        ],
+    )
     with update(role):
         role.name = "{}edited".format(role.name)
     copied_role = role.copy()
@@ -1618,9 +1630,13 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
         'name': catalog_obj.name,
         'description': catalog_obj.description
     })
-    view.add_button.click()
-    view.flash.wait_displayed(timeout=20)
-    assert view.flash.read() == [msg]
+
+    if appliance.version > "5.11":
+        assert view.name.help_block == msg
+    else:
+        view.add_button.click()
+        view.flash.wait_displayed(timeout=20)
+        view.flash.assert_message(msg)
 
 
 @pytest.mark.ignore_stream("upstream")
