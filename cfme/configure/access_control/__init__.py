@@ -657,17 +657,9 @@ class Group(BaseEntity, Taggable):
         Note: In case updates is the same as original group data, update will be canceled,
         as 'Save' button will not be active
         """
-        edit_group_txt = 'Edit this Group'
-
         view = navigate_to(self, 'Details')
-        if self.appliance.version < '5.10':
-            if not view.toolbar.configuration.item_enabled(edit_group_txt):
-                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                    edit_group_txt))
-        else:
-            if not view.toolbar.configuration.is_enabled:
-                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                    edit_group_txt))
+        if not view.toolbar.configuration.is_enabled:
+            raise RBACOperationBlocked(f"Configuration action 'Edit this Group' is not enabled")
 
         view = navigate_to(self, 'Edit')
 
