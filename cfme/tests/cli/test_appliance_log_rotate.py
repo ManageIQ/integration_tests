@@ -3,10 +3,19 @@ import datetime
 import dateutil
 
 from cfme import test_requirements
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 
 
-LOGS = ["/var/www/miq/vmdb/log/evm.log",
-        "/var/opt/rh/rh-postgresql95/lib/pgsql/data/pg_log/postgresql.log"]
+_LOGS_pre_511 = [
+    "/var/www/miq/vmdb/log/evm.log",
+    "/var/opt/rh/rh-postgresql95/lib/pgsql/data/pg_log/postgresql.log"
+]
+_LOGS_511 = [
+    "/var/www/miq/vmdb/log/evm.log",
+    "/var/lib/pgsql/data/log/postgresql.log"
+]
+LOGS = VersionPicker({Version.lowest(): _LOGS_pre_511, '5.11': _LOGS_511})
 
 
 def advance_appliance_date_by_day(appliance):
@@ -32,7 +41,7 @@ def test_appliance_log_rotate(temp_appliance_preconfig_funcscope):
     assert appliance.ssh_client.run_command("/etc/cron.daily/logrotate").success
 
     initial_log_files = {}
-    for log_path in LOGS:
+    for log_path in LOGS.pick():
         initial_log_files[log_path] = appliance.ssh_client.run_command(
             "ls -1 {}*".format(log_path)).output.split('\n')
         appliance.ssh_client.run_command(
@@ -42,7 +51,7 @@ def test_appliance_log_rotate(temp_appliance_preconfig_funcscope):
     advance_appliance_date_by_day(appliance)
     assert appliance.ssh_client.run_command("/etc/cron.daily/logrotate").success
 
-    for log_path in LOGS:
+    for log_path in LOGS.pick():
         adv_time_log_files = appliance.ssh_client.run_command("ls -1 {}*".format(
             log_path)).output.split('\n')
         assert set(initial_log_files[log_path]) < set(adv_time_log_files)
