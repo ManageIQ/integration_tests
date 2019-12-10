@@ -1053,7 +1053,7 @@ def test_permission_edit(appliance, request, product_features):
                                      [(k, False) for k in product_features]
                  })
     with user:
-        with pytest.raises(Exception, message='Permissions have not been updated'):
+        with pytest.raises(Exception, match='Permissions have not been updated'):
             navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     @request.addfinalizer
