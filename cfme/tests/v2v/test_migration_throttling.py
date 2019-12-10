@@ -64,6 +64,7 @@ def test_migration_throttling(request, appliance, provider,
         description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
+        target_provider=provider
     )
     assert migration_plan.wait_for_state("Started")
     request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
@@ -75,14 +76,18 @@ def test_migration_throttling(request, appliance, provider,
         request_details_list.cancel_migration(vm, confirmed=True)
 
     conversion_host_popup = []
-    host_creds = provider.hosts.all()
-    hosts_dict = {key.name: [] for key in host_creds}
+    if provider.one_of(RHEVMProvider):
+        host_names = [h.name for h in provider.hosts.all()]
+    else:
+        host_names = provider.data['conversion_instances']
     # Check if conversion host is shown for each VM
     for vm in vms:
         try:
             popup_text = request_details_list.read_additional_info_popup(vm)
-            if popup_text['Conversion Host'] in hosts_dict:
+            if popup_text['Conversion Host'] in host_names:
                 conversion_host_popup.append(popup_text['Conversion Host'])
+                # open__additional_info_popup function also closes opened popup in our case
+                request_details_list.open_additional_info_popup(vm)
         except NoSuchElementException:
             # conversion host might be empty for throttled vm
             # until it is waiting for other VM's to finish until BZ 1716283 is fixed.
