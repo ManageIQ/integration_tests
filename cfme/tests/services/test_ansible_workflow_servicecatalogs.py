@@ -1,9 +1,9 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
@@ -11,6 +11,8 @@ from cfme.utils.log import logger
 pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2),
+    pytest.mark.provider([AnsibleTowerProvider], scope='module'),
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.parametrize('workflow_type', ['multiple_job_workflow', 'inventory_sync_workflow'],
         ids=['multiple_job_workflow', 'inventory_sync_workflow'],
         scope='module'),
@@ -18,39 +20,12 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.config_managers(metafunc)
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-
-        if not args['config_manager_obj'].yaml_data['provisioning']:
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope='module')
-
-
-@pytest.fixture(scope="module")
-def tower_manager(config_manager_obj, appliance):
-    """ Fixture that sets up Ansible Tower provider"""
-    config_manager_obj.appliance = appliance
-    if config_manager_obj.type == "Ansible Tower":
-        config_manager_obj.create(validate=True)
-    yield config_manager_obj
-    config_manager_obj.delete()
-
-
 @pytest.fixture(scope="function")
-def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog, workflow_type):
-    config_manager_obj = tower_manager
-    provider_name = config_manager_obj.yaml_data.get('name')
+def ansible_workflow_catitem(appliance, provider, dialog, catalog, workflow_type):
+    config_manager_obj = provider
+    provider_name = config_manager_obj.data.get('name')
     try:
-        template = config_manager_obj.yaml_data['provisioning_data'][workflow_type]
+        template = config_manager_obj.data['provisioning_data'][workflow_type]
     except KeyError:
         pytest.skip("No such Ansible template: {} found in cfme_data.yaml".format(workflow_type))
     catalog_item = appliance.collections.catalog_items.create(
@@ -67,8 +42,7 @@ def ansible_workflow_catitem(appliance, request, tower_manager, dialog, catalog,
 
 
 @pytest.mark.meta(automates=[BZ(1719051)])
-def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem, request,
-        workflow_type):
+def test_tower_workflow_item(appliance, ansible_workflow_catitem):
     """Tests ordering of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
@@ -94,7 +68,7 @@ def test_tower_workflow_item(appliance, tower_manager, ansible_workflow_catitem,
     )
 
 
-def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, request, workflow_type):
+def test_retire_ansible_workflow(appliance, ansible_workflow_catitem):
     """Tests retiring of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision

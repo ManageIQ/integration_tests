@@ -1,8 +1,9 @@
+import attr
 from manageiq_client.api import APIException
 from manageiq_client.api import Entity as RestEntity
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
+from navmazing import NavigationDestinationNotFound
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
@@ -12,12 +13,14 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import BaseLoggedInPage
-from cfme.common import Taggable
 from cfme.common import TagPageView
+from cfme.common.provider import BaseProvider
 from cfme.exceptions import displayed_not_implemented
-from cfme.utils import conf
+from cfme.infrastructure.config_management.config_profiles import ConfigProfile
+from cfme.infrastructure.config_management.config_profiles import ConfigProfilesCollection
+from cfme.infrastructure.config_management.config_systems import ConfigSystem
+from cfme.modeling.base import BaseCollection
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -25,9 +28,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
 from cfme.utils.update import Updateable
-from cfme.utils.version import LATEST
-from cfme.utils.version import LOWEST
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
@@ -83,24 +83,6 @@ class ConfigManagementEntities(BaseEntitiesView):
     table = Table("//div[@id='gtl_div']//table")
 
 
-class ConfigManagementProfileEntities(BaseEntitiesView):
-    """Entities view for the detail page"""
-    @View.nested
-    class summary(WaitTab):                     # noqa
-        TAB_NAME = 'Summary'
-
-        properties = SummaryTable(title='Properties')
-        environment = SummaryTable(title='Environment')
-        operating_system = SummaryTable(title='Operating System')
-        tenancy = SummaryTable(title='Tenancy')
-        smart_management = SummaryTable(title='Smart Management')
-
-    @View.nested
-    class configured_systems(WaitTab):          # noqa
-        TAB_NAME = 'Configured Systems'
-        elements = Table('//div[@id="main_div"]//div[@id="list_grid" or @id="gtl_div"]//table')
-
-
 class ConfigManagementAddForm(View):
     """Form to add a provider"""
     name = TextInput('name')
@@ -147,13 +129,14 @@ class ConfigManagementEditEntities(View):
     cancel = Button('Cancel')
 
 
-class ConfigManagementView(BaseLoggedInPage):
-    """The base page for both the all and details page"""
+class ConfigManagementCollectionView(BaseLoggedInPage):
+    """ Base page for ALL """
 
     @property
     def in_config(self):
         """Determine if we're in the config section"""
-        if getattr(self.context['object'], 'type', None) == 'Ansible Tower':
+        object_type = getattr(self.context['object'], 'type', None)
+        if object_type == 'ansible_tower':
             nav_chain = ['Automation', 'Ansible Tower', 'Explorer']
         else:
             nav_chain = ['Configuration', 'Management']
@@ -163,39 +146,20 @@ class ConfigManagementView(BaseLoggedInPage):
         )
 
 
-class ConfigManagementAllView(ConfigManagementView):
-    """The main list view"""
-    toolbar = View.nested(ConfigManagementToolbar)
-    sidebar = View.nested(ConfigManagementSideBar)
-    search = View.nested(Search)
-    including_entities = View.include(ConfigManagementEntities, use_parent=True)
+class ConfigManagementView(BaseLoggedInPage):
+    """The base page for the details page"""
 
     @property
-    def is_displayed(self):
-        """Is this view being displayed?"""
-        if self.context['object'].type == 'Ansible Tower':
-            title_text = 'All Ansible Tower Providers'
+    def in_config(self):
+        """Determine if we're in the config section"""
+        object_type = getattr(self.context['object'], 'type', None)
+        if object_type == 'ansible_tower':
+            nav_chain = ['Automation', 'Ansible Tower', 'Explorer']
         else:
-            title_text = 'All Configuration Management Providers'
+            nav_chain = ['Configuration', 'Management']
         return (
-            self.in_config and
-            self.entities.title.text == title_text
-        )
-
-
-class ConfigSystemAllView(ConfigManagementAllView):
-    """The config system view has a different title"""
-
-    @property
-    def is_displayed(self):
-        if hasattr(self.context['object'], 'type') and self.context['object'].type == \
-                'Ansible Tower':
-            title_text = 'All Ansible Tower Configured Systems'
-        else:
-            title_text = 'All Configured Systems'
-        return (
-            self.in_config and
-            self.entities.title.text == title_text
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == nav_chain
         )
 
 
@@ -219,21 +183,6 @@ class ConfigManagementDetailsView(ConfigManagementView):
         )
 
 
-class ConfigManagementProfileView(ConfigManagementView):
-    """The profile page"""
-    toolbar = View.nested(ConfigManagementDetailsToolbar)
-    sidebar = View.nested(ConfigManagementSideBar)
-    including_entities = View.include(ConfigManagementProfileEntities, use_parent=True)
-
-    @property
-    def is_displayed(self):
-        """Is this view being displayed?"""
-        title = 'Configured System ({}) "{}"'.format(
-            self.context['object'].manager.type,
-            self.context['object'].name)
-        return self.in_config and self.entities.title.text == title
-
-
 class ConfigManagementAddView(ConfigManagementView):
     """The add page"""
     sidebar = View.nested(ConfigManagementSideBar)
@@ -247,17 +196,64 @@ class ConfigManagementEditView(ConfigManagementView):
     entities = View.nested(ConfigManagementEditEntities)
     is_displayed = displayed_not_implemented
 
-    is_displayed = displayed_not_implemented
+
+class ConfigManagementProfileEntities(BaseEntitiesView):
+    """Entities view for the detail page"""
+    @View.nested
+    class summary(WaitTab):                     # noqa
+        TAB_NAME = 'Summary'
+
+        properties = SummaryTable(title='Properties')
+        environment = SummaryTable(title='Environment')
+        operating_system = SummaryTable(title='Operating System')
+        tenancy = SummaryTable(title='Tenancy')
+        smart_management = SummaryTable(title='Smart Management')
+
+    @View.nested
+    class configured_systems(WaitTab):          # noqa
+        TAB_NAME = 'Configured Systems'
+        elements = Table('//div[@id="main_div"]//div[@id="list_grid" or @id="gtl_div"]//table')
 
 
-class ConfigManager(Updateable, Pretty, NavigatableMixin):
+class ConfigManagerProvidersAllView(ConfigManagementCollectionView):
+    """The main list view"""
+    toolbar = View.nested(ConfigManagementToolbar)
+    sidebar = View.nested(ConfigManagementSideBar)
+    search = View.nested(Search)
+    including_entities = View.include(ConfigManagementEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed?"""
+        title_text = 'All Configuration Management Providers'
+        return (
+            self.in_config and
+            self.entities.title.text == title_text
+        )
+
+
+class ConfigManagementProfileView(ConfigManagementView):
+    """The profile page"""
+    toolbar = View.nested(ConfigManagementDetailsToolbar)
+    sidebar = View.nested(ConfigManagementSideBar)
+    including_entities = View.include(ConfigManagementProfileEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = 'Configured Systems under {} "{}"'.format(
+            self.context['object'].type,
+            self.context['object'].name)
+        return self.entities.title.text == title
+
+
+@attr.s(eq=False)
+class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
     """
     This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
 
     Args:
         name: Name of the config. manager
         url: URL, hostname or IP of the config. manager
-        ssl: Boolean value; `True` if SSL certificate validity should be checked, `False` otherwise
         credentials: Credentials to access the config. manager
         key: Key to access the cfme_data yaml data (same as `name` if not specified)
 
@@ -265,31 +261,33 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
         Use Satellite or AnsibleTower classes instead.
     """
 
-    pretty_attr = ['name', 'url']
+    pretty_attr = ['name', 'key']
     _param_name = ParamClassName('name')
-    type = None
+    category = "config_manager"
     refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
+    name = attr.ib(default=None)
+    url = attr.ib(default=None)
+    credentials = attr.ib(default=None)
+    key = attr.ib(default=None)
+    ui_type = None
 
-    def __init__(self, appliance, name=None, url=None, ssl=None, credentials=None, key=None):
-        self.appliance = appliance
-        self.name = name
-        self.url = url
-        self.ssl = ssl
-        self.credentials = credentials
-        self.key = key or name
+    _collections = {"config_profiles": ConfigProfilesCollection}
 
     class Credential(BaseCredential, Updateable):
         pass
 
     @property
-    def ui_name(self):
-        """Return the name used in the UI"""
-        if self.type == 'Ansible Tower':
-            return '{} Automation Manager'.format(self.name)
-        else:
-            return '{} Configuration Manager'.format(self.name)
+    def exists(self):
+        """ Returns ``True`` if a provider of the same name exists on the appliance
+            This overwrite of BaseProvider exists is necessary because MIQ appends
+            Configuration Manager to the provider name
+        """
+        for name in self.appliance.managed_provider_names:
+            if self.name in name:
+                return True
+        return False
 
-    def create(self, cancel=False, validate_credentials=True, validate=True, force=False):
+    def create(self, cancel=False, validate_credentials=True, validate=True, force=False, **kwargs):
         """Creates the manager through UI
 
         Args:
@@ -302,22 +300,24 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
             force (bool): Whether to force the creation even if the manager already exists.
                 True will try anyway; False will check for its existence and leave, if present.
         """
+
         def config_profiles_loaded():
             # Workaround - without this, validation of provider failed
             config_profiles_names = [prof.name for prof in self.config_profiles]
             logger.info(
                 "UI: %s\nYAML: %s",
-                set(config_profiles_names), set(self.yaml_data['config_profiles']))
+                set(config_profiles_names), set(self.data['config_profiles'])
+            )
             # Just validate any profiles from yaml are in UI - not all are displayed
             return any(
-                [cp in config_profiles_names for cp in self.yaml_data['config_profiles']])
+                [cp in config_profiles_names for cp in self.data['config_profiles']])
 
         if not force and self.exists:
             return
+
         form_dict = self.__dict__
         form_dict.update(self.credentials.view_value_mapping)
-        if self.appliance.version < '5.8':
-            form_dict['provider_type'] = self.type
+
         view = navigate_to(self, 'Add')
         view.entities.form.fill(form_dict)
         if validate_credentials:
@@ -329,12 +329,12 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
         else:
             view.entities.add.wait_displayed('2s')
             view.entities.add.click()
-            success_message = '{} Provider "{}" was added'.format(self.type, self.name)
+            success_message = f'{self.ui_type} Provider "{self.name}" was added'
             view.flash.assert_success_message(success_message)
             view.flash.assert_success_message(self.refresh_flash_msg)
             if validate:
                 try:
-                    self.yaml_data['config_profiles']
+                    self.data['config_profiles']
                 except KeyError as e:
                     logger.exception(e)
                     raise
@@ -343,7 +343,8 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
                     config_profiles_loaded,
                     fail_func=self.refresh_relationships,
                     handle_exception=True,
-                    num_sec=180, delay=30)
+                    num_sec=180, delay=30
+                )
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """Updates the manager through UI
@@ -369,7 +370,7 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
         else:
             view.entities.save.click()
             view.flash.assert_success_message(
-                '{} Provider "{}" was updated'.format(self.type, updates['name'] or self.name))
+                '{} Provider "{}" was updated'.format(self.ui_type, updates['name'] or self.name))
             self.__dict__.update(**updates)
 
     def delete(self, cancel=False, wait_deleted=True, force=False):
@@ -385,8 +386,7 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
         """
         if not force and not self.exists:
             return
-        view = navigate_to(self, 'All')
-        view.toolbar.view_selector.select('List View')
+        view = navigate_to(self, 'AllOfType')
         provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)
         provider_entity[0].check()
         remove_item = 'Remove selected items from Inventory'
@@ -413,32 +413,35 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
             name=self.ui_name
         ).provider_id
 
-        return RestEntity(
-            self.appliance.rest_api.collections.providers,
-            data={
-                "href": self.appliance.url_path(
-                    "/api/providers/{}?provider_class=provider".format(provider_id)
-                )
-            },
-        )
+        return RestEntity(self.appliance.rest_api.collections.providers, data={
+            "href": self.appliance.url_path(
+                "/api/providers/{}?provider_class=provider".format(provider_id)
+            )
+        })
 
+    # TODO: implement this via Sentaku
     def create_rest(self):
         """Create the config manager in CFME using REST"""
-        if "ansible_tower" in self.key:
+        include_ssl = False
+        if self.type == "ansible_tower":
             config_type = "AnsibleTower"
-        elif "satellite" in self.key:
+        else:
             config_type = "Foreman"
+            include_ssl = True
 
         payload = {
             "type": "ManageIQ::Providers::{}::Provider".format(config_type),
             "url": self.url,
             "name": self.name,
-            "verify_ssl": self.ssl,
             "credentials": {
                 "userid": self.credentials.view_value_mapping["username"],
                 "password": self.credentials.view_value_mapping["password"],
             },
         }
+
+        if include_ssl:
+            payload["verify_ssl"] = self.ssl
+
         try:
             self.appliance.rest_api.post(
                 api_endpoint_url=self.appliance.url_path(
@@ -471,18 +474,9 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
                 "Provider wasn't deleted, status code {}".format(response.status_code)
             )
 
-    @property
-    def exists(self):
-        """Returns whether the manager exists in the UI or not"""
-        try:
-            navigate_to(self, 'Details')
-        except NoSuchElementException:
-            return False
-        return True
-
     def refresh_relationships(self, cancel=False):
         """Refreshes relationships and power states of this manager"""
-        view = navigate_to(self, 'All')
+        view = navigate_to(self, 'AllOfType')
         view.toolbar.view_selector.select('List View')
         provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)[0]
         provider_entity.check()
@@ -495,244 +489,46 @@ class ConfigManager(Updateable, Pretty, NavigatableMixin):
     @property
     def config_profiles(self):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
-        view = navigate_to(self, 'Details')
-        # TODO - remove it later.Workaround for BZ 1452425
-        view.toolbar.view_selector.select('List View')
-        view.toolbar.refresh.click()
-        wait_for(lambda: view.entities.elements.is_displayed, fail_func=view.toolbar.refresh.click,
-                 handle_exception=True, num_sec=60, delay=5)
-        config_profiles = []
-        for row in view.entities.elements:
-            if self.type == 'Ansible Tower':
-                name = row.name.text
-            else:
-                name = row.description.text
-            if 'unassigned' in name.lower():
-                continue
-            config_profiles.append(ConfigProfile(appliance=self.appliance, name=name, manager=self))
-        return config_profiles
+        return self.collections.config_profiles.all()
 
     @property
-    def systems(self):
+    def config_systems(self):
         """Returns 'ConfigSystem' configured systems (hosts) available on this manager"""
-        return sum([prof.systems for prof in self.config_profiles])
-
-    @property
-    def yaml_data(self):
-        """Returns yaml data for this manager"""
-        return conf.cfme_data.configuration_managers[self.key]
-
-    @classmethod
-    def load_from_yaml(cls, key, appliance):
-        """Returns 'ConfigManager' object loaded from yamls, based on its key"""
-        data = conf.cfme_data.configuration_managers[key]
-        creds = conf.credentials[data['credentials']]
-        return cls(
-            appliance=appliance,
-            name=data['name'],
-            url=data['url'],
-            ssl=data['ssl'],
-            credentials=cls.Credential(
-                principal=creds['username'], secret=creds['password']),
-            key=key)
+        systems_per_prof = [prof.config_systems for prof in self.config_profiles]
+        return [item for sublist in systems_per_prof for item in sublist]
 
     @property
     def quad_name(self):
-        if self.type == 'Ansible Tower':
-            return '{} Automation Manager'.format(self.name)
-        else:
-            return '{} Configuration Manager'.format(self.name)
+        return self.ui_name
 
 
-def get_config_manager_from_config(cfg_mgr_key, appliance=None, mgr_type=None):
-    cfg_mgr = conf.cfme_data.get('configuration_managers', {})[cfg_mgr_key]
-    if mgr_type and cfg_mgr['type'] != mgr_type:
-        logger.info(f'Config managers loading type mismatch: {cfg_mgr} '
-                    f'key does not match desired type: [{mgr_type}]')
-        return None
-    if cfg_mgr['type'] == 'satellite':
-        return Satellite.load_from_yaml(cfg_mgr_key, appliance)
-    elif cfg_mgr['type'] == 'ansible':
-        return AnsibleTower.load_from_yaml(cfg_mgr_key, appliance)
-    else:
-        raise Exception("Unknown configuration manager key")
+class ConfigManagerProviderCollection(BaseCollection):
+
+    ENTITY = ConfigManagerProvider
+
+    def instantiate(self, prov_class, *args, **kwargs):
+        return prov_class.from_collection(self, *args, **kwargs)
+
+    def create(self, *args, **kwargs):
+        """ Create/add config manager via UI """
+        config_manager = self.instantiate(*args, **kwargs)
+        config_manager.create(**kwargs)
+        return config_manager
 
 
-class ConfigProfile(Pretty, NavigatableMixin):
-    """Configuration profile object (foreman-side hostgroup)
-
-    Args:
-        appliance: appliance object
-        name: Name of the profile
-        manager: ConfigManager object which this profile is bound to
-    """
-    pretty_attrs = ['name', 'manager']
-
-    def __init__(self, appliance, name, manager):
-        self.appliance = appliance
-        self.name = name
-        self.manager = manager
-
-    @property
-    def systems(self):
-        """Returns 'ConfigSystem' objects that are active under this profile"""
-        view = navigate_to(self, 'Details')
-        view.toolbar.view_selector.select('List View')
-
-        # Unassigned config profile has no tabstrip
-        if 'unassigned' not in self.name.lower():
-            view.entities.configured_systems.click()
-
-        if view.entities.configured_systems.elements.is_displayed:
-            return [ConfigSystem(appliance=self.appliance, name=row.hostname.text, profile=self)
-                    for row in view.entities.configured_systems.elements]
-        return list()
-
-
-class ConfigSystem(Pretty, NavigatableMixin, Taggable):
-    """The tags pages of the config system"""
-    pretty_attrs = ['name', 'manager_key']
-
-    def __init__(self, appliance, name, profile):
-        self.appliance = appliance
-        self.name = name
-        self.profile = profile
-
-    def get_tags(self, tenant="My Company Tags"):
-        """Overridden get_tags method to deal with the fact that configured systems don't have a
-        details view."""
-        view = navigate_to(self, 'EditTags')
-        return [
-            self.appliance.collections.categories.instantiate(
-                display_name=r.category.text.replace('*', '').strip()).collections.tags.instantiate(
-                display_name=r.assigned_value.text.strip())
-            for r in view.form.tags
-        ]
-
-
-class Satellite(ConfigManager):
-    """
-    Configuration manager object (Red Hat Satellite, Foreman)
-
-    Args:
-        name: Name of the Satellite/Foreman configuration manager
-        url: URL, hostname or IP of the configuration manager
-        ssl: Boolean value; `True` if SSL certificate validity should be checked, `False` otherwise
-        credentials: Credentials to access the config. manager
-        key: Key to access the cfme_data yaml data (same as `name` if not specified)
-
-    Usage:
-        Create provider:
-        .. code-block:: python
-
-            satellite_cfg_mgr = Satellite('my_satellite', 'my-satellite.example.com',
-                                ssl=False, ConfigManager.Credential(principal='admin',
-                                secret='testing'), key='satellite_yaml_key')
-            satellite_cfg_mgr.create()
-
-        Update provider:
-        .. code-block:: python
-
-            with update(satellite_cfg_mgr):
-                satellite_cfg_mgr.name = 'new_satellite_name'
-
-        Delete provider:
-        .. code-block:: python
-
-            satellite_cfg_mgr.delete()
-    """
-
-    type = VersionPicker({
-        LOWEST: 'Red Hat Satellite',
-        LATEST: 'Foreman'
-    })
-
-    def __init__(self, appliance, name=None, url=None, ssl=None, credentials=None, key=None):
-        super(Satellite, self).__init__(appliance=appliance,
-                                        name=name,
-                                        url=url,
-                                        ssl=ssl,
-                                        credentials=credentials,
-                                        key=key)
-        self.key = key or name
-
-
-class AnsibleTower(ConfigManager):
-    """
-    Configuration manager object (Ansible Tower)
-
-    Args:
-        name: Name of the Ansible Tower configuration manager
-        url: URL, hostname or IP of the configuration manager
-        ssl: Boolean value; `True` if SSL certificate validity should be checked, `False` otherwise
-        credentials: Credentials to access the config. manager
-        key: Key to access the cfme_data yaml data (same as `name` if not specified)
-
-    Usage:
-        Create provider:
-        .. code-block:: python
-
-            tower_cfg_mgr = AnsibleTower('my_tower', 'https://my-tower.example.com/api/v1',
-                                ssl=False, ConfigManager.Credential(principal='admin',
-                                secret='testing'), key='tower_yaml_key')
-            tower_cfg_mgr.create()
-
-        Update provider:
-        .. code-block:: python
-
-            with update(tower_cfg_mgr):
-                tower_cfg_mgr.name = 'new_tower_name'
-
-        Delete provider:
-        .. code-block:: python
-
-            tower_cfg_mgr.delete()
-    """
-
-    type = 'Ansible Tower'
-
-    def __init__(self, appliance, name=None, url=None, ssl=None, credentials=None, key=None):
-        super(AnsibleTower, self).__init__(appliance=appliance,
-                                           name=name,
-                                           url=url,
-                                           ssl=ssl,
-                                           credentials=credentials,
-                                           key=key)
-        self.key = key or name
-
-    @property
-    def ui_name(self):
-        """Return the name used in the UI"""
-        return '{} Automation Manager'.format(self.name)
-
-
-@navigator.register(ConfigManager, 'All')
-class MgrAll(CFMENavigateStep):
-    VIEW = ConfigManagementAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self, *args, **kwargs):
-        if self.obj.type == 'Ansible Tower':
-            self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
-            self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
-        else:
-            self.prerequisite_view.navigation.select('Configuration', 'Management')
-            self.view.sidebar.providers.tree.click_path('All Configuration Manager Providers')
-
-
-@navigator.register(ConfigManager, 'Add')
+@navigator.register(ConfigManagerProvider, 'Add')
 class MgrAdd(CFMENavigateStep):
     VIEW = ConfigManagementAddView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Provider')
 
 
-@navigator.register(ConfigManager, 'Edit')
+@navigator.register(ConfigManagerProvider, 'Edit')
 class MgrEdit(CFMENavigateStep):
     VIEW = ConfigManagementEditView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
@@ -742,10 +538,10 @@ class MgrEdit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
 
 
-@navigator.register(ConfigManager, 'Details')
+@navigator.register(ConfigManagerProvider, 'Details')
 class MgrDetails(CFMENavigateStep):
     VIEW = ConfigManagementDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
@@ -754,13 +550,26 @@ class MgrDetails(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(ConfigManager, 'EditFromDetails')
+@navigator.register(ConfigManagerProvider, 'EditFromDetails')
 class MgrEditFromDetails(CFMENavigateStep):
     VIEW = ConfigManagementEditView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('AllOfType')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
+
+
+@navigator.register(ConfigSystem, 'EditTags')
+class SysEditTags(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToAttribute('profile', 'Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+            self.prerequisite_view.entities.elements, hostname=self.obj.name)
+        row[0].check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(ConfigProfile, 'Details')
@@ -770,34 +579,23 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
-        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
-            self.prerequisite_view.entities.elements, description=self.obj.name)
+        try:
+            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                self.prerequisite_view.entities.elements, name=self.obj.name
+            )
+        except NameError:
+            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                self.prerequisite_view.entities.elements, description=self.obj.name
+            )
+
         row.click()
 
 
-@navigator.register(ConfigSystem, 'All')
-class SysAll(CFMENavigateStep):
-    VIEW = ConfigSystemAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+@navigator.register(ConfigManagerProviderCollection, "All")
+class ConfigManagerAllPage(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
-        if hasattr(self.obj, 'type') and self.obj.type == 'Ansible Tower':
-            self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
-            self.view.sidebar.configured_systems.tree.click_path(
-                'All Ansible Tower Configured Systems')
-        else:
-            self.prerequisite_view.navigation.select('Configuration', 'Management')
-            self.view.sidebar.configured_systems.tree.click_path("All Configured Systems")
-
-
-@navigator.register(ConfigSystem, 'EditTags')
-class SysEditTags(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('All')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.view_selector.select('List View')
-        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
-            self.prerequisite_view.entities.elements, hostname=self.obj.name)
-        row[0].check()
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+        raise NavigationDestinationNotFound(
+            "There is no page in MIQ that displays all config managers."
+            " Use 'AllOfType' on a config manager provider instance."
+        )

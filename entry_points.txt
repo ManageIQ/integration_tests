@@ -16,8 +16,7 @@ ansible_playbooks = cfme.ansible.playbooks:PlaybooksCollection
 ansible_repositories = cfme.ansible.repositories:RepositoryCollection
 ansible_tower_job_templates = cfme.ansible_tower.explorer:AnsibleTowerJobTemplatesCollection
 ansible_tower_jobs = cfme.ansible_tower.jobs:TowerJobsCollection
-ansible_tower_providers = cfme.ansible_tower.explorer:AnsibleTowerProvidersCollection
-ansible_tower_systems = cfme.ansible_tower.explorer:AnsibleTowerSystemsCollection
+ansible_tower_systems = cfme.infrastructure.config_management.config_systems.ansible_tower:AnsibleTowerSystemsCollection
 automate_import_exports = cfme.automate.import_export:AutomateImportExportsCollection
 balancers = cfme.networks.balancer:BalancerCollection
 block_managers = cfme.storage.manager:BlockManagerCollection
@@ -42,6 +41,7 @@ cloud_tenants = cfme.cloud.tenant:TenantCollection
 clusters = cfme.infrastructure.cluster:ClusterCollection
 compute_rates = cfme.intelligence.chargeback.rates:ComputeRateCollection
 conditions = cfme.control.explorer.conditions:ConditionCollection
+config_managers = cfme.infrastructure.config_management:ConfigManagerProviderCollection
 container_builds = cfme.containers.build:BuildCollection
 container_image_registries = cfme.containers.image_registry:ImageRegistryCollection
 container_images = cfme.containers.image:ImageCollection
@@ -105,6 +105,7 @@ reports = cfme.intelligence.reports.reports:ReportsCollection
 requests = cfme.services.requests:RequestCollection
 resource_pools = cfme.infrastructure.resource_pool:ResourcePoolCollection
 roles = cfme.configure.access_control:RoleCollection
+satellite_systems = cfme.infrastructure.config_management.config_systems.satellite:SatelliteSystemsCollection
 saved_reports = cfme.intelligence.reports.saved:SavedReportsCollection
 schedules = cfme.intelligence.reports.schedules:ScheduleCollection
 security_groups = cfme.cloud.security_groups:SecurityGroupCollection
@@ -139,6 +140,7 @@ saml = cfme.utils.auth:SAMLAuthProvider
 
 [manageiq.provider_categories]
 cloud = cfme.cloud.provider:CloudProvider
+config_manager = cfme.infrastructure.config_management:ConfigManagerProvider
 containers = cfme.containers.provider:ContainersProvider
 infra = cfme.infrastructure.provider:InfraProvider
 networks = cfme.networks.provider:NetworkProvider
@@ -160,6 +162,10 @@ openstack_infra = cfme.infrastructure.provider.openstack_infra:OpenstackInfraPro
 rhevm = cfme.infrastructure.provider.rhevm:RHEVMProvider
 scvmm = cfme.infrastructure.provider.scvmm:SCVMMProvider
 virtualcenter = cfme.infrastructure.provider.virtualcenter:VMwareProvider
+
+[manageiq.provider_types.config_manager]
+ansible_tower = cfme.infrastructure.config_management.ansible_tower:AnsibleTowerProvider
+satellite = cfme.infrastructure.config_management.satellite:SatelliteProvider
 
 [manageiq.provider_types.networks]
 nuage = cfme.networks.provider.nuage:NuageProvider

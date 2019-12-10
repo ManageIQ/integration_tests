@@ -31,3 +31,8 @@
         - 3.7
         - 3.9
         - 3.11
+    config_manager:
+      - satellite:
+        - 6.2
+      - ansible_tower:
+        - 3.10
