@@ -112,32 +112,6 @@ def test_pdf_summary_provider(provider):
     pass
 
 
-@pytest.mark.manual("manualonly")
-@pytest.mark.tier(1)
-@pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1740131])
-def test_red_hat_cloud_page_internal_server_error():
-    """
-    Bugzilla:
-        1740131
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/18h
-        startsin: 5.11
-        setup:
-            1. Enable Internet Connectivity role
-            2. Register the appliance
-        testSteps:
-            1. Navigate to Red Hat Cloud > Providers
-        expectedResults:
-            1. There should be no 500 Internal Server Error
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(coverage=[1741030])
