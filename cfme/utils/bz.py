@@ -235,7 +235,7 @@ class Bugzilla(object):
         info = {}
         for bug_id, bug in zip(idlist, self.bugzilla.getbugs(idlist)):
             # safety first
-            if bug is None:
+            if not bug:
                 logger.error(f'BZ {bug_id} is None while processing bz info, '
                              'likely requires authentication, skipping')
                 continue
