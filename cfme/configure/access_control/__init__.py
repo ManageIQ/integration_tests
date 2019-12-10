@@ -718,16 +718,12 @@ class Group(BaseEntity, Taggable):
 
         view = navigate_to(self, 'Details')
 
-        if self.appliance.version < '5.10':
-            if not view.toolbar.configuration.item_enabled(delete_group_txt):
-                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                    delete_group_txt))
-        else:
-            if not view.toolbar.configuration.is_enabled:
-                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                    delete_group_txt))
+        if not view.toolbar.configuration.is_enabled:
+            raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                delete_group_txt))
 
         view.toolbar.configuration.item_select(delete_group_txt, handle_alert=cancel)
+
         for flash_blocked_msg in flash_blocked_msg_list:
             try:
                 view.flash.assert_message(flash_blocked_msg)
@@ -735,16 +731,16 @@ class Group(BaseEntity, Taggable):
             except AssertionError:
                 pass
 
-            view.flash.assert_no_error()
-            view.flash.assert_message(flash_success_msg)
+        view.flash.assert_no_error()
+        view.flash.assert_message(flash_success_msg)
 
-            if cancel:
-                view = self.create_view(AllGroupView)
-                view.flash.assert_success_message(flash_success_msg)
-            else:
-                view = self.create_view(DetailsGroupView)
-                assert view.is_displayed, (
-                    "Access Control Group {} Detail View is not displayed".format(self.description))
+        if cancel:
+            view = self.create_view(AllGroupView)
+            view.flash.assert_success_message(flash_success_msg)
+        else:
+            view = self.create_view(DetailsGroupView)
+            assert view.is_displayed, (
+                "Access Control Group {} Detail View is not displayed".format(self.description))
 
     def set_group_order(self, updated_order):
         """ Sets group order for group lookup
