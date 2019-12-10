@@ -340,7 +340,7 @@ def test_rh_registration_proxy_crud():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1722540])
+@pytest.mark.meta(coverage=[1721596])
 def test_upgrade_multi_replication_inplace():
     """
     test_upgrade_multi_replication_inplace
@@ -348,7 +348,7 @@ def test_upgrade_multi_replication_inplace():
     Polarion:
         assignee: jhenner
         casecomponent: Configuration
-        caseimportance: medium
+        caseimportance: high
         initialEstimate: 1h
         setup: 2 appliances:
                - Appliance A: Replication Global, region 0

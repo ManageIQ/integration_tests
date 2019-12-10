@@ -135,6 +135,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1678223])
 def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance):
     """ Test scheduled one-type backup on given machines using smb/nfs
 
