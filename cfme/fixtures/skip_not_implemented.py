@@ -8,7 +8,7 @@ def pytest_runtest_setup(item):
     try:
         outcome.get_result()
     except NotImplementedError as e:
-        pytest.skip(e)
+        pytest.skip(str(e))
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
@@ -18,4 +18,4 @@ def pytest_runtest_call(item):
     try:
         outcome.get_result()
     except NotImplementedError as e:
-        pytest.skip(e)
+        pytest.skip(str(e))
