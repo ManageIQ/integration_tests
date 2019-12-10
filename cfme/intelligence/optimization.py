@@ -82,13 +82,17 @@ class OptimizationSavedReportsCollection(BaseCollection):
 @attr.s
 class OptimizationReport(BaseEntity):
     menu_name = attr.ib()
-    runs = attr.ib(default=None)
 
     _collections = {
         "optimization_saved_reports": OptimizationSavedReportsCollection,
         "saved_reports": SavedReportsCollection,
         "reports": ReportsCollection,
     }
+
+    @property
+    def runs(self):
+        view = navigate_to(self.parent, "All")
+        return int(view.table.row(report_name=self.menu_name)["Report runs"].text)
 
     @property
     def last_run_at(self):
@@ -151,4 +155,4 @@ class SavedOptimizationReportDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute("parent.parent", "SavedAll")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.table.row(last_run_at=self.obj.run_at).click()
+        self.prerequisite_view.table.row(last_run_at=self.obj.run_at, report=self.obj.name).click()

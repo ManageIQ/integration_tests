@@ -4,6 +4,7 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigationDestinationNotFound
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.exceptions import RowNotFound
 from widgetastic.utils import VersionPick
 from widgetastic_patternfly import CandidateNotFound
 
@@ -178,6 +179,7 @@ class BaseEntity(NavigatableMixin):
             NameError,
             NavigationDestinationNotFound,
             NoSuchElementException,
+            RowNotFound,
             TimedOutError,
         ):
             return False
