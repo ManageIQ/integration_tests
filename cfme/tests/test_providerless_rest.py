@@ -1,6 +1,7 @@
 """This module contains REST API specific tests which do not require a provider setup.
 For tests that do require provider setup, add them to test_rest.py"""
 import pytest
+from manageiq_client.api import APIException
 
 from cfme import test_requirements
 from cfme.utils.wait import wait_for
@@ -62,3 +63,45 @@ def test_update_roles_via_rest_name_change(appliance, request, change_company_na
         message="Wait until the role change comes into effect.",
     )
     assert appliance.advanced_settings["server"]["company"] == change_company_name
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1661445])
+@pytest.mark.tier(1)
+def test_authorization_header_sql_response(appliance):
+    """
+    Bugzilla:
+        1661445
+        1686021
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        testSteps:
+            1. GET /api/auth?requester_type=ui HEADERS: {"Authorization": "Basic testing"}
+                Perform this GET request with requests.get()
+        expectedResults:
+            1. There should be no sql statement in the response.
+                Expected Response:
+                {
+                "error": {
+                    "kind": "unauthorized",
+                    "message": ("PG::CharacterNotInRepertoire: ERROR:"
+                                "  invalid byte sequence for encoding \"UTF8\": 0xb5\n:"),
+                    "klass": "Api::AuthenticationError"
+                    }
+                }
+    """
+    rest_api = appliance.new_rest_api_instance(
+        entry_point=appliance.rest_api._entry_point
+    )
+    rest_api._session.headers = {"Authorization": "Basic testing"}
+    rest_api._session.auth = None
+    url = f"https://{appliance.hostname}/api/auth?requester_type=ui"
+
+    error_message = (
+        'PG::CharacterNotInRepertoire: ERROR:  invalid byte sequence for encoding "UTF8": 0xb5\n:'
+    )
+    with pytest.raises(APIException, match=error_message):
+        rest_api.get(url)
