@@ -116,6 +116,15 @@ def prepare_proxy_invalid(provider, appliance):
     appliance.reset_proxy()
 
 
+def test_provider_add(appliance, provider):
+    """
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/4h
+    """
+    pass
+
+
 def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default, provider):
     """ Check whether valid proxy settings works.
 
