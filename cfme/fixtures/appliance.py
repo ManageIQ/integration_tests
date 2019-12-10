@@ -72,6 +72,7 @@ def sprout_appliances(
             logger.info("Appliance update finished on temp appliance...")
 
     try:
+        # Renew in half the lease time interval which is number of minutes.
         with periodic_call(lease_time * 60 / 2.,
                            sprout_client.prolong_pool, (request_id, lease_time)):
             yield apps
