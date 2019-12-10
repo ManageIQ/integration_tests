@@ -7,11 +7,14 @@ from cfme.common.provider_views import ContainerProviderAddView
 from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import PhysicalProviderAddView
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
+from cfme.infrastructure.config_management.satellite import SatelliteProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
@@ -431,6 +434,35 @@ def test_compliance_column_header(appliance, setup_provider, provider):
     next(hr for hr in table.browser.elements(table.HEADERS) if hr.text == "Compliant").click()
     # Page should not break after after clicking the compliant column
     assert view.is_displayed
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(blockers=[BZ(1741310)], automates=[1741310])
+@pytest.mark.provider([AnsibleTowerProvider, SatelliteProvider])
+def test_add_provider_button_accordion(has_no_providers, provider):
+    """
+    Test that add_provider button is visible after clicking accordion on
+        Ansible Tower and Satellite Provider pages
+
+    Bugzilla:
+        1741310
+
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/30h
+        startsin: 5.11
+    """
+    view = navigate_to(provider, "AllOfType")
+    assert view.add_button.is_displayed
+    # now click somewhere on the accordion
+    view.sidebar.configured_systems.open()
+    # now click back at the providers page
+    view.sidebar.providers.open()
+    view.wait_displayed()
+    # assert that the button is still present
+    assert view.add_button.is_displayed
 
 
 @pytest.mark.manual

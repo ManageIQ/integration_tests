@@ -81,6 +81,7 @@ class ConfigManagementSideBar(View):
 class ConfigManagementEntities(BaseEntitiesView):
     """The entities on the page"""
     table = Table("//div[@id='gtl_div']//table")
+    add_button = Button('Add a Provider')
 
 
 class ConfigManagementAddForm(View):
