@@ -257,7 +257,7 @@ class ReporterBase(object):
         if not end:
             container["_sub"][head] = contents
             container["_stats"][contents["outcomes"]["overall"]] += 1
-            container["_duration"] += contents["duration"]
+            container["_duration"] += contents.get("duration", 0)
         # If we are in a module.
         else:
             if head not in container["_sub"]:
@@ -265,7 +265,7 @@ class ReporterBase(object):
             # Call again to recurse down the tree.
             self.build_dict(end, container["_sub"][head], contents)
             container["_stats"][contents["outcomes"]["overall"]] += 1
-            container["_duration"] += contents["duration"]
+            container["_duration"] += contents.get("duration", 0)
 
     def build_li(self, lev):
         """
