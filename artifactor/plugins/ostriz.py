@@ -58,7 +58,7 @@ class Ostriz(ArtifactorBasePlugin):
         json_data["jenkins"] = jenkins or None
         # Either None or a list of Polarion Test Case IDs
         json_data["polarion"] = polarion_ids
-        if not json_data["params"]:
+        if not json_data.get("params"):
             json_data["params"] = {}
         json_data["params"].update(env_params)
         requests.post(self.url, data=json.dumps(json_data))
