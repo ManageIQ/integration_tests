@@ -124,3 +124,35 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type):
     assert order_request.is_succeeded(method='ui'), msg
     myservice = MyService(appliance, catalog_item.name)
     myservice.retire()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.ignore_stream('upstream')
+def test_check_tower_job_status(appliance, catalog_item, request, config_manager_obj, job_type):
+    """Tests order Ansible Tower catalog item and check status on Jobs page
+    Metadata:
+        test_flag: provision
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Services
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    try:
+        template = config_manager_obj.yaml_data['provisioning_data'][job_type]
+    except KeyError:
+        pytest.skip("No Ansible job template was found in the yaml file.")
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    service_catalogs.order()
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
+    cells = {'Description': catalog_item.name}
+    order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
+    order_request.wait_for_request(method='ui')
+    msg = "Request failed with the message {}".format(order_request.row.last_message.text)
+    assert order_request.is_succeeded(method='ui'), msg
+
+    tower_job = appliance.collections.ansible_tower_jobs.instantiate(template_name=template)
+    request.addfinalizer(tower_job.delete_if_exists)
+    tower_job.wait_for_completion()
+    assert tower_job.is_job_successful(), 'Ansible Tower Job failed'
