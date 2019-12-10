@@ -124,6 +124,28 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
     soft_assert(instance.exists_on_provider, "Instance wasn't provisioned successfully")
 
 
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1676910])
+def test_provision_approval_deny():
+    """ Test whether the approver can deny the request.
+
+    Prerequisities:
+        * A provider that can provision.
+
+    Steps:
+        * Create a provisioning request that does not get automatically approved (eg. ``num_vms``
+            bigger than 1)
+        * Deny the created request
+
+    Polarion:
+        assignee: jhenner
+        caseimportance: high
+        casecomponent: Provisioning
+        initialEstimate: 1/3h
+    """
+    pass
+
+
 @pytest.mark.rhv2
 @pytest.mark.meta(automates=[1472844])
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
