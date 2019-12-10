@@ -11,6 +11,7 @@ from cfme.common import BaseLoggedInPage
 from cfme.common import Taggable
 from cfme.common import TaggableCollection
 from cfme.exceptions import ItemNotFound
+from cfme.infrastructure.config_management.config_systems.ansible_tower import AnsibleTowerSystemsCollection  # noqa
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -151,26 +152,6 @@ class TowerCreateServiceDialogFromTemplateView(TowerExplorerView):
 
 
 @attr.s
-class AnsibleTowerProvider(BaseEntity):
-    pass
-
-
-@attr.s
-class AnsibleTowerProvidersCollection(BaseCollection):
-    ENTITY = AnsibleTowerProvider
-
-
-@attr.s
-class AnsibleTowerSystem(BaseEntity):
-    pass
-
-
-@attr.s
-class AnsibleTowerSystemsCollection(BaseCollection):
-    ENTITY = AnsibleTowerSystem
-
-
-@attr.s
 class AnsibleTowerJobTemplate(BaseEntity, Taggable):
     name = attr.ib()
     job_type = attr.ib(None)
@@ -206,15 +187,6 @@ class AnsibleTowerExplorer(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
-        self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
-
-
-@navigator.register(AnsibleTowerProvidersCollection, 'All')
-class AnsibleTowerExplorerProvidersAll(CFMENavigateStep):
-    VIEW = TowerExplorerProvidersAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'AnsibleTowerExplorer')
-
-    def step(self, *args, **kwargs):
         self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
 
 

@@ -3,13 +3,18 @@ import pytest
 
 from cfme import test_requirements
 from cfme.ansible_tower.explorer import TowerCreateServiceDialogFromTemplateView
-from cfme.infrastructure.config_management import AnsibleTower
-from cfme.utils.testgen import config_managers
-from cfme.utils.testgen import generate
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
+from cfme.infrastructure.config_management.satellite import SatelliteProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 
-pytest_generate_tests = generate(gen_func=config_managers)
+pytestmark = [
+    pytest.mark.provider([AnsibleTowerProvider, SatelliteProvider], scope='module'),
+    pytest.mark.usefixtures('setup_provider_modscope')
+]
+
 
 TEMPLATE_TYPE = {
     "job": "Job Template (Ansible Tower)",
@@ -18,21 +23,14 @@ TEMPLATE_TYPE = {
 
 
 @pytest.fixture
-def config_manager(config_manager_obj, appliance):
-    """ Fixture that provides a random config manager and sets it up"""
-    config_manager_obj.appliance = appliance
-    config_manager_obj.create()
-    yield config_manager_obj
-    config_manager_obj.delete()
-
-
-@pytest.fixture
-def config_system(config_manager):
-    return fauxfactory.gen_choice(config_manager.systems)
+def config_system(provider):
+    # by selecting a profile we don't have to select fetch ALL the config systems on a provider
+    profile = provider.config_profiles[0]
+    return fauxfactory.gen_choice(profile.config_systems)
 
 
 @pytest.mark.tier(3)
-def test_config_manager_detail_config_btn(request, config_manager):
+def test_config_manager_detail_config_btn(provider):
     """
     Polarion:
         assignee: nachandr
@@ -40,23 +38,22 @@ def test_config_manager_detail_config_btn(request, config_manager):
         initialEstimate: 1/2h
         casecomponent: Ansible
     """
-    config_manager.refresh_relationships()
+    provider.refresh_relationships()
 
 
 @pytest.mark.tier(2)
-def test_config_manager_add(request, config_manager_obj):
+def test_config_manager_add(provider):
     """
     Polarion:
         assignee: nachandr
         casecomponent: Ansible
         initialEstimate: 1/4h
     """
-    request.addfinalizer(config_manager_obj.delete)
-    config_manager_obj.create()
+    navigate_to(provider, "Details")
 
 
 @pytest.mark.tier(3)
-def test_config_manager_add_invalid_url(request, config_manager_obj):
+def test_config_manager_add_invalid_url(has_no_providers, provider):
     """
     Polarion:
         assignee: nachandr
@@ -64,15 +61,15 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
         initialEstimate: 1/15h
         casecomponent: Ansible
     """
-    request.addfinalizer(config_manager_obj.delete)
-    config_manager_obj.url = 'https://invalid_url'
+    wait_for(lambda: not provider.exists, num_sec=60, delay=3)  # wait for provider to be deleted
+    provider.url = 'https://invalid_url'
     error_message = 'getaddrinfo: Name or service not known'
     with pytest.raises(Exception, match=error_message):
-        config_manager_obj.create()
+        provider.create()
 
 
 @pytest.mark.tier(3)
-def test_config_manager_add_invalid_creds(request, config_manager_obj):
+def test_config_manager_add_invalid_creds(has_no_providers, provider):
     """
     Polarion:
         assignee: nachandr
@@ -80,19 +77,19 @@ def test_config_manager_add_invalid_creds(request, config_manager_obj):
         initialEstimate: 1/4h
         casecomponent: Ansible
     """
-    request.addfinalizer(config_manager_obj.delete)
-    config_manager_obj.credentials.principal = 'invalid_user'
-    if config_manager_obj.type == "Ansible Tower":
+    wait_for(lambda: not provider.exists, num_sec=60, delay=3)  # wait for provider to be deleted
+    provider.credentials.principal = 'invalid_user'
+    if provider.type == "ansible_tower":
         msg = ('validation was not successful: {"detail":"Authentication credentials '
                'were not provided. To establish a login session, visit /api/login/."}')
     else:
         msg = 'Credential validation was not successful: 401 Unauthorized'
     with pytest.raises(Exception, match=msg):
-        config_manager_obj.create()
+        provider.create()
 
 
 @pytest.mark.tier(3)
-def test_config_manager_edit(request, config_manager):
+def test_config_manager_edit(request, provider):
     """
     Polarion:
         assignee: nachandr
@@ -101,16 +98,16 @@ def test_config_manager_edit(request, config_manager):
         casecomponent: Ansible
     """
     new_name = fauxfactory.gen_alpha(8)
-    old_name = config_manager.name
-    with update(config_manager):
-        config_manager.name = new_name
-    request.addfinalizer(lambda: config_manager.update(updates={'name': old_name}))
-    assert (config_manager.name == new_name and config_manager.exists),\
+    old_name = provider.name
+    with update(provider):
+        provider.name = new_name
+    request.addfinalizer(lambda: provider.update(updates={'name': old_name}))
+    assert (provider.name == new_name and provider.exists),\
         "Failed to update configuration manager's name"
 
 
 @pytest.mark.tier(3)
-def test_config_manager_remove(config_manager):
+def test_config_manager_remove(request, provider):
     """
     Polarion:
         assignee: nachandr
@@ -118,17 +115,12 @@ def test_config_manager_remove(config_manager):
         initialEstimate: 1/15h
         casecomponent: Ansible
     """
-    config_manager.delete()
+    request.addfinalizer(provider.create)
+    provider.delete()
 
 
-# Disable this test for Tower, no Configuration profiles can be retrieved from Tower side yet
-# this is all real hackish because configmanager isn't a proper provider.
 @pytest.mark.tier(3)
-@test_requirements.tag
-@pytest.mark.uncollectif(lambda config_manager_obj:
-                         isinstance(config_manager_obj, AnsibleTower),
-                         reason='Ansible tower not valid for this test')
-def test_config_system_tag(config_system, tag, appliance, config_manager, config_manager_obj):
+def test_config_system_tag(config_system, tag):
     """
     Polarion:
         assignee: anikifor
@@ -140,11 +132,8 @@ def test_config_system_tag(config_system, tag, appliance, config_manager, config
 
 
 @pytest.mark.tier(3)
-@test_requirements.tag
-@pytest.mark.uncollectif(lambda config_manager_obj:
-                         not isinstance(config_manager_obj, AnsibleTower),
-                         reason='Only Ansible tower is valid for this test')
-def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_manager_obj):
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
+def test_ansible_tower_job_templates_tag(request, provider, tag):
     """
     Polarion:
         assignee: anikifor
@@ -156,7 +145,7 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_ma
         1673104
     """
     try:
-        job_template = config_manager.appliance.collections.ansible_tower_job_templates.all()[0]
+        job_template = provider.appliance.collections.ansible_tower_job_templates.all()[0]
     except IndexError:
         pytest.skip("No job template was found")
     job_template.add_tag(tag=tag, details=False)
@@ -170,12 +159,9 @@ def test_ansible_tower_job_templates_tag(request, config_manager, tag, config_ma
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj:
-                         not isinstance(config_manager_obj, AnsibleTower),
-                         reason='Only Ansible tower is valid for this test')
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 @pytest.mark.parametrize('template_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
-def test_ansible_tower_service_dialog_creation_from_template(config_manager, appliance,
-        template_type, config_manager_obj):
+def test_ansible_tower_service_dialog_creation_from_template(provider, template_type):
     """
     Polarion:
         assignee: nachandr
@@ -185,7 +171,7 @@ def test_ansible_tower_service_dialog_creation_from_template(config_manager, app
 
     """
     try:
-        job_template = config_manager.appliance.collections.ansible_tower_job_templates.filter(
+        job_template = provider.appliance.collections.ansible_tower_job_templates.filter(
             {"job_type": template_type}).all()[0]
     except IndexError:
         pytest.skip("No job template was found")

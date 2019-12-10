@@ -1,9 +1,9 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
 from cfme.utils.log import logger
@@ -11,6 +11,8 @@ from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.service,
+    pytest.mark.provider([AnsibleTowerProvider], scope='module'),
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2),
     pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
         'textarea_survey'],
@@ -20,40 +22,11 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.config_managers(metafunc)
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(list(zip(argnames, argvalue_tuple)))
-
-        if not args['config_manager_obj'].yaml_data['provisioning']:
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope='module')
-
-
-@pytest.fixture(scope="module")
-def config_manager(config_manager_obj, appliance):
-    """ Fixture that provides a random config manager and sets it up"""
-    config_manager_obj.appliance = appliance
-    if config_manager_obj.type == "Ansible Tower":
-        config_manager_obj.create(validate=True)
-    else:
-        config_manager_obj.create()
-    yield config_manager_obj
-    config_manager_obj.delete()
-
-
 @pytest.fixture(scope="function")
-def catalog_item(appliance, request, config_manager, ansible_tower_dialog, catalog, job_type):
-    config_manager_obj = config_manager
-    provider_name = config_manager_obj.yaml_data.get('name')
-    template = config_manager_obj.yaml_data['provisioning_data'][job_type]
+def catalog_item(appliance, request, provider, ansible_tower_dialog, catalog, job_type):
+    config_manager_obj = provider
+    provider_name = config_manager_obj.data.get('name')
+    template = config_manager_obj.data['provisioning_data'][job_type]
     catalog_item = appliance.collections.catalog_items.create(
         appliance.collections.catalog_items.ANSIBLE_TOWER,
         name=ansible_tower_dialog.label,
@@ -69,7 +42,7 @@ def catalog_item(appliance, request, config_manager, ansible_tower_dialog, catal
 
 @pytest.mark.meta(automates=[BZ(1717500)])
 # The 'textarea_survey' job type automates BZ 1717500
-def test_order_tower_catalog_item(appliance, config_manager, catalog_item, request, job_type):
+def test_order_tower_catalog_item(appliance, provider, catalog_item, request, job_type):
     """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision
@@ -84,7 +57,7 @@ def test_order_tower_catalog_item(appliance, config_manager, catalog_item, reque
         caseimportance: high
     """
     if job_type == 'template_limit':
-        host = config_manager.yaml_data['provisioning_data']['inventory_host']
+        host = provider.data['provisioning_data']['inventory_host']
         dialog_values = {'limit': host}
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name,
             dialog_values=dialog_values)

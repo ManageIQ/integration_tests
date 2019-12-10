@@ -87,7 +87,6 @@ More information on ``parametrize`` can be found in pytest's documentation:
 import pytest
 
 from cfme.common.provider import BaseProvider
-from cfme.infrastructure.config_management import get_config_manager_from_config
 from cfme.roles import group_data
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import cfme_data
@@ -314,26 +313,6 @@ def auth_groups(metafunc, auth_mode):
         for group in group_data:
             argvalues.append([group, sorted(group_data[group])])
             idlist.append(group)
-    return argnames, argvalues, idlist
-
-
-def config_managers(metafunc, managers_type=None):
-    """Provides config managers
-    """
-    argnames = ['config_manager_obj']
-    argvalues = []
-    idlist = []
-
-    data = cfme_data.get('configuration_managers', {})
-
-    for cfg_mgr_key in data:
-        config_mgr = get_config_manager_from_config(cfg_mgr_key,
-                                                    appliance=None,
-                                                    mgr_type=managers_type)
-        if config_mgr is None:
-            continue  # type mismatch
-        argvalues.append([config_mgr])
-        idlist.append(cfg_mgr_key)
     return argnames, argvalues, idlist
 
 
