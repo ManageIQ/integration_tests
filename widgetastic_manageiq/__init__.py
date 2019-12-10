@@ -4559,7 +4559,7 @@ class LineChart(Widget, ClickableMixin):
         return tooltip_data
 
 
-class ReactTextInput(TextInput):
+class ReactTextInput(Input):
 
     # The clear method from the WebElement class in the Selenium package was not clearing the react
     # text field. arguments[0] is the widget name
