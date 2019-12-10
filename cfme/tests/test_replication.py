@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 
 
@@ -217,19 +216,16 @@ def test_replication_appliance_set_type_global_ui(configured_appliance, unconfig
 
     # Making configured app to Remote Appliance using UI
     remote_region = remote_app.collections.regions.instantiate()
-    navigate_to(remote_region.replication, "RemoteAdd")
     remote_region.replication.set_replication(replication_type="remote")
 
     # Adding Remote Appliance into Global appliance using UI
     global_region = global_app.collections.regions.instantiate(number=99)
-    navigate_to(global_region.replication, "Global")
-    global_region.replication.set_replication(replication_type="global",
-                                       updates={"host": remote_app.hostname},
-                                       validate=True)
+    global_region.replication.set_replication(
+        replication_type="global", updates={"host": remote_app.hostname}, validate=True)
 
     # Validating replication
-    assert global_region.replication.get_replication_status(host=remote_app.hostname),\
-        "Replication is not started."
+    assert global_region.replication.get_replication_status(
+        host=remote_app.hostname), "Replication is not started."
 
 
 @pytest.mark.manual
