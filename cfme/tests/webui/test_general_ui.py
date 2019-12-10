@@ -2,6 +2,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.base.ui import LoginPage
+from cfme.cloud.provider import CloudProvider
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import ContainerProviderAddView
 from cfme.common.provider_views import InfraProviderAddView
@@ -9,12 +11,15 @@ from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 
@@ -463,6 +468,45 @@ def test_add_provider_button_accordion(has_no_providers, provider):
     view.wait_displayed()
     # assert that the button is still present
     assert view.add_button.is_displayed
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1642948])
+@pytest.mark.provider([InfraProvider, CloudProvider], selector=ONE_PER_CATEGORY)
+def test_provider_details_page_refresh_after_clear_cookies(
+    appliance, request, setup_provider, provider
+):
+    """
+    Bugzilla:
+        1642948
+    Polarion:
+        assignee: pvala
+        casecomponent: WebUI
+        caseimportance: medium
+        initialEstimate: 1/12h
+        testSteps:
+            1. Navigate to a provider's Details page
+            2. Reboot the appliance
+            3. Click a button or refresh the page or do something on the page and see what happens.
+        expectedResults:
+            1.
+            2.
+            3. You'll be redirected to the Login Page.
+    """
+    view = navigate_to(provider, "Details")
+    appliance.reboot()
+
+    # When the test runs a second time for cloud provider, it raises an error,
+    # this finalizer is workaround for it.
+    request.addfinalizer(appliance.server.logout)
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/production.log", failure_patterns=[r".*FATAL.*"]
+    ).waiting():
+        view.browser.refresh()
+
+    login_view = appliance.server.create_view(LoginPage, wait="40s")
+    assert login_view.is_displayed
 
 
 @pytest.mark.manual
