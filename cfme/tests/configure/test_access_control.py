@@ -20,10 +20,21 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.update import update
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
+
 
 pytestmark = [
     test_requirements.rbac
 ]
+
+ACCESS_RULES_VMS = VersionPicker(
+    {
+        LOWEST: 'Access Rules for all Virtual Machines',
+        "5.11": 'All VM and Instance Access Rules'
+    }
+)
+SETTINGS = VersionPicker({LOWEST: "Settings", "5.11": "User Settings"})
 
 
 def new_credential():
@@ -1027,7 +1038,7 @@ def _test_vm_removal(appliance, provider):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'product_features', [
-        [['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'View'],
+        [['Everything', ACCESS_RULES_VMS, 'VM Access Rules', 'View'],
          ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions']]])
 def test_permission_edit(appliance, request, product_features):
     """
@@ -1104,7 +1115,7 @@ def _go_to(cls_or_obj, dest='All'):
         [  # Param Set 1
             [  # product_features
                 [['Everything'], False],  # minimal permission
-                [['Everything', 'Settings', 'Tasks'], True]
+                [['Everything', SETTINGS, 'Tasks'], True]
             ],
             {  # allowed_actions
                 'tasks':
