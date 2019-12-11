@@ -20,6 +20,7 @@ from widgetastic.browser import DefaultPlugin
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Text
 from widgetastic.widget import View
+from widgetastic_patternfly import CandidateNotFound
 
 from cfme import exceptions
 from cfme.fixtures.pytest_store import store
@@ -571,7 +572,7 @@ class CFMENavigateStep(NavigateStep):
             self.prerequisite_view = self.prerequisite()
             try:
                 self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
-            except (exceptions.CandidateNotFound, exceptions.ItemNotFound) as e:
+            except (CandidateNotFound, exceptions.ItemNotFound) as e:
                 self.log_message(
                     "Item/Tree Exception raised [{}] whilst running step, trying refresh"
                     .format(e), level="error"

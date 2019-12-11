@@ -92,21 +92,6 @@ class AutomateImportError(CFMEException):
     pass
 
 
-class CandidateNotFound(CFMEException):
-    """
-    Raised if there is no candidate found whilst trying to traverse a tree
-    """
-    def __init__(self, d):
-        self.d = d
-
-    @property
-    def message(self):
-        return ", ".join("{}: {}".format(k, v) for k, v in self.d.items())
-
-    def __str__(self):
-        return self.message
-
-
 class HostStatsNotContains(CFMEException):
     """
     Raised if the hosts information does not contain the specified key whilst running
