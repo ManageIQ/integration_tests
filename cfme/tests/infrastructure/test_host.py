@@ -4,11 +4,16 @@ import socket
 import fauxfactory
 import pytest
 from wait_for import TimedOutError
+from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
+from cfme.common.host_views import ProviderHostsCompareView
+from cfme.common.host_views import HostsEditView, HostEditView, HostsView, HostDetailsView
 from cfme.common.provider_views import InfraProviderDetailsView
+from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -86,7 +91,6 @@ def navigate_and_select_quads(provider):
 
     Returns:
         view: the provider nodes view, quadicons already selected"""
-    # TODO: prichard navigate instead of creating views and consider creaing EditableMixin
     hosts_view = navigate_to(provider, 'ProviderNodes')
     assert hosts_view.is_displayed
     [h.ensure_checked() for h in hosts_view.entities.get_all()]
@@ -462,6 +466,9 @@ def test_infrastructure_hosts_compare(appliance, setup_provider_min_hosts, provi
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/6h
+    Bugzilla:
+        1746214
+
     """
 
     h_coll = locals()[hosts_collection].collections.hosts
