@@ -560,3 +560,33 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     except UnexpectedAlertPresentException:
         pytest.fail("Abandon changes alert displayed, but no changes made.")
     # TODO add additional crud functionality.
+
+
+@test_requirements.infra_hosts
+@pytest.mark.parametrize("num_hosts", [2,])
+@pytest.mark.meta(blockers=[BZ(1634794, forced_streams=["5.10"])], automates=[1634794])
+def test_incomplete_edit_multi_infrastructure_hosts(appliance, setup_provider_min_hosts,
+                                                     provider, num_hosts):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/6h
+    Bugzilla:
+        1634794
+    """
+    # select 2 hosts, click edit button, but nav away before any changes made
+    my_slice = slice(0, num_hosts, None)
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    for h in hosts_view.entities.get_all(slice=my_slice):
+        h.ensure_checked()
+    hosts_view.toolbar.configuration.item_select('Edit Selected items',
+                                                handle_alert=False)
+    try:
+        hosts_view.navigation.select('Compute', 'Infrastructure', 'Providers', handle_alert=False)
+        final_view = provider.create_view(InfraProvidersView)
+        assert final_view.is_displayed
+    except UnexpectedAlertPresentException:
+        pytest.fail("Abandon changes alert displayed, but no changes made.")
+    # TODO multi edit and cancel (This works).
