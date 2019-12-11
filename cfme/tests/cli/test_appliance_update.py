@@ -12,11 +12,9 @@ from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import find_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
-from cfme.utils.version import get_stream
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 from cfme.utils.wait import wait_for_decorator
@@ -121,6 +119,7 @@ def do_yum_update(appliance):
     appliance.wait_for_web_ui()
 
 
+@pytest.mark.meta(automates=[1714236])
 def test_update_yum(appliance_preupdate, appliance):
     """Tests appliance update between versions
 
@@ -129,6 +128,9 @@ def test_update_yum(appliance_preupdate, appliance):
         caseimportance: critical
         casecomponent: Appliance
         initialEstimate: 1/4h
+
+    Bugzilla:
+        1714236
     """
     do_yum_update(appliance_preupdate)
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
@@ -300,6 +302,7 @@ def test_update_replicated_webui(get_replicated_appliances_with_providers, appli
 
 
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(automates=[1704835])
 @pytest.mark.parametrize("update_strategy", [update_appliance, do_yum_update], ids=["webui", "yum"])
 def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, request, old_version):
     """ Tests updating an appliance with providers using webui, also confirms that the
@@ -310,18 +313,15 @@ def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, req
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/4h
+
+    Bugzilla:
+        1704835
     """
     evm_log = '/var/www/miq/vmdb/log/evm.log'
     update_strategy(ha_appliances_with_providers[2])
     wait_for(do_appliance_versions_match, func_args=(appliance, ha_appliances_with_providers[2]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
-
-    if BZ(1704835, forced_streams=get_stream(ha_appliances_with_providers[2].version)).blocks:
-        with LogValidator(evm_log,
-                          matched_patterns=[r'Starting database failover monitor'],
-                          hostname=ha_appliances_with_providers[2].hostname).waiting(wait=30):
-            ha_appliances_with_providers[2].evm_failover_monitor.restart()
 
     assert ha_appliances_with_providers[2].evm_failover_monitor.running
 
