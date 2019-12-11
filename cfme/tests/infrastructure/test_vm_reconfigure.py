@@ -363,12 +363,14 @@ def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, full_vm
     assert not row[9].widget.is_displayed
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
 @pytest.mark.provider([VMwareProvider])
 @pytest.mark.parametrize(
-    'adapters_type', ['DPortGroup', 'VmNetwork', 'MgmtNetwork', 'VmKernel'])
-def test_vm_reconfig_add_remove_network_adapters(adapters_type):
+    "adapters_type",
+    ["DPortGroup", "VM Network", "Management Network", "VMkernel"],
+    ids=["DPortGroup", "VmNetwork", "MgmtNetwork", "VmKernel"],
+)
+def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm):
     """
     Polarion:
         assignee: nansari
@@ -384,7 +386,39 @@ def test_vm_reconfig_add_remove_network_adapters(adapters_type):
             4. Check the changes in VM reconfiguration page
             5. Remove the Adapters
     """
-    pass
+    orig_config = full_vm.configuration.copy()
+
+    # Create new configuration with new network adapter
+    new_config = orig_config.copy()
+    new_config.add_network_adapter(
+        f"Network adapter {orig_config.num_network_adapters + 1}", vlan=adapters_type
+    )
+    add_adapter_request = full_vm.reconfigure(new_config)
+    add_adapter_request.wait_for_request(method="ui")
+    request.addfinalizer(add_adapter_request.remove_request)
+
+    # Verify network adapter added or not
+    wait_for(
+        lambda: full_vm.configuration.num_network_adapters == new_config.num_network_adapters,
+        timeout=120,
+        delay=10,
+        fail_func=full_vm.refresh_relationships,
+        message="confirm that network adapter was added",
+    )
+
+    # Remove network adapter
+    remove_adapter_request = full_vm.reconfigure(orig_config)
+    remove_adapter_request.wait_for_request(method="ui")
+    request.addfinalizer(remove_adapter_request.remove_request)
+
+    # Verify network adapter removed or not
+    wait_for(
+        lambda: full_vm.configuration.num_network_adapters == orig_config.num_network_adapters,
+        timeout=120,
+        delay=10,
+        fail_func=full_vm.refresh_relationships,
+        message="confirm that network adapter was added",
+    )
 
 
 @pytest.mark.manual

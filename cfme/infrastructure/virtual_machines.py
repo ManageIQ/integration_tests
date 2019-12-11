@@ -66,6 +66,7 @@ from widgetastic_manageiq import SnapshotMemorySwitch
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq.vm_reconfigure import DisksTable
+from widgetastic_manageiq.vm_reconfigure import NetworkAdaptersTable
 
 
 def has_child(tree, text, parent_item=None):
@@ -410,6 +411,12 @@ class InfraVmReconfigureView(BaseLoggedInPage):
             9: Button(),
         }
     )
+
+    network_adapters_table = NetworkAdaptersTable(
+        '//div/table[./../h3[normalize-space(text())="Network Adapters"]]',
+        column_widgets={"vLan": BootstrapSelect(id="vLan"), "Actions": Button(), 4: Button()},
+    )
+
     cd_dvd_table = WTable('//div/table[./../h3[normalize-space(text())="CD/DVD Drives"]]',
         column_widgets={
             "Host File": BootstrapSelect(id="isoName"),
@@ -538,6 +545,12 @@ class VMHardware(object):
         return self.mem_size * 1024 if self.mem_size_unit == 'GB' else self.mem_size
 
 
+class NetworkAdapter(namedtuple("NetworkAdapter", ["name", "vlan"])):
+    # just compare name not vlan
+    def __eq__(self, other):
+        return self.name == other.name
+
+
 class VMConfiguration(Pretty):
     """Represents VM's full configuration - hardware, disks and so forth
 
@@ -554,12 +567,16 @@ class VMConfiguration(Pretty):
         self.hw = VMHardware()
         self.disks = []
         self.vm = vm
+        self.network_adapters = []
         self._load()
 
     def __eq__(self, other):
         return (
-            (self.hw == other.hw) and (self.num_disks == other.num_disks) and
-            all(disk in other.disks for disk in self.disks))
+            self.hw == other.hw
+            and self.num_disks == other.num_disks
+            and all(disk in other.disks for disk in self.disks)
+            and self.num_network_adapters == other.num_network_adapters
+        )
 
     def _load(self):
         """Loads the configuration from the VM object's appliance (through DB)
@@ -570,15 +587,31 @@ class VMConfiguration(Pretty):
         ems = appl_db['ext_management_systems']
         vms = appl_db['vms']
         hws = appl_db['hardwares']
+        guest_devices = appl_db["guest_devices"]
+
         hw_data = appl_db.session.query(ems, vms, hws).filter(
             ems.name == self.vm.provider.name).filter(
             vms.ems_id == ems.id).filter(
             vms.name == self.vm.name).filter(
             hws.vm_or_template_id == vms.id
         ).first().hardwares
+
         self.hw = VMHardware(
             hw_data.cpu_cores_per_socket, hw_data.cpu_sockets, hw_data.memory_mb, 'MB')
         hw_id = hw_data.id
+
+        # Network adapter
+        from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+        if self.vm.provider.one_of(VMwareProvider):
+            guest_device_nw_filter = appl_db.session.query(ems, vms, hws, guest_devices).filter(
+                ems.name == self.vm.provider.name).filter(vms.ems_id == ems.id).filter(
+                vms.name == self.vm.name).filter(hws.vm_or_template_id == vms.id).filter(
+                guest_devices.hardware_id == hws.id).all()
+
+            self.network_adapters = [
+                NetworkAdapter(devices.guest_devices.device_name, None)
+                for devices in guest_device_nw_filter
+            ]
 
         # Disks
         disks = appl_db['disks']
@@ -586,6 +619,7 @@ class VMConfiguration(Pretty):
             disks.hardware_id == hw_id).filter(
             disks.device_type == 'disk'
         ).all()
+
         for disk_data in disks_data:
             # In DB stored in bytes, but UI default is GB
             size_gb = disk_data.size / (1024 ** 3)
@@ -606,6 +640,7 @@ class VMConfiguration(Pretty):
         # We can just make shallow copy here because disks can be only added or deleted, not edited
         config.disks = self.disks[:]
         config.vm = self.vm
+        config.network_adapters = self.network_adapters[:]
         return config
 
     def add_disk(self, size, size_unit='GB', type='thin', mode='persistent'):
@@ -657,6 +692,17 @@ class VMConfiguration(Pretty):
     def num_disks(self):
         return len(self.disks)
 
+    def add_network_adapter(self, name, vlan):
+        self.network_adapters.append(NetworkAdapter(name=name, vlan=vlan))
+
+    def remove_network_adapter(self, name):
+        network_adapter = next(nw for nw in self.network_adapters if nw.name == name)
+        self.network_adapters.remove(network_adapter)
+
+    @property
+    def num_network_adapters(self):
+        return len(self.network_adapters)
+
     def get_changes_to_fill(self, other_configuration):
         """ Returns changes to be applied to this config to reach the other config
 
@@ -665,15 +711,19 @@ class VMConfiguration(Pretty):
         """
         changes = {}
         changes['disks'] = []
+        changes['network_adapters'] = []
+
         for key in ['cores_per_socket', 'sockets']:
             if getattr(self.hw, key) != getattr(other_configuration.hw, key):
                 changes[key] = str(getattr(other_configuration.hw, key))
                 changes['cpu'] = True
+
         if (self.hw.mem_size != other_configuration.hw.mem_size or
                 self.hw.mem_size_unit != other_configuration.hw.mem_size_unit):
             changes['memory'] = True
             changes['mem_size'] = other_configuration.hw.mem_size
             changes['mem_size_unit'] = other_configuration.hw.mem_size_unit
+
         for disk in self.disks + other_configuration.disks:
             if disk in self.disks and disk not in other_configuration.disks:
                 changes['disks'].append({'action': 'delete', 'disk': disk, 'delete_backing': None})
@@ -686,6 +736,20 @@ class VMConfiguration(Pretty):
                     change = {"action": "resize", "disk": new_disk}
                     if change not in changes["disks"]:
                         changes["disks"].append(change)
+
+        # Network adapter changes
+        for adapter in self.network_adapters + other_configuration.network_adapters:
+            if (
+                adapter in self.network_adapters
+                and adapter not in other_configuration.network_adapters
+            ):
+                changes["network_adapters"].append({"action": "delete", "network_adapter": adapter})
+            elif (
+                adapter not in self.network_adapters
+                and adapter in other_configuration.network_adapters
+            ):
+                changes["network_adapters"].append({"action": "add", "network_adapter": adapter})
+
         return changes
 
 
@@ -1049,6 +1113,7 @@ class InfraVm(VM):
             changes.get("mem_size", "0"), changes.get("mem_size_unit", "MB")) if changes.get(
             "memory", False) else None
         disk_message = None
+        network_adapter_message = None
 
         for disk_change in changes['disks']:
             action, disk = disk_change['action'], disk_change['disk']
@@ -1092,7 +1157,30 @@ class InfraVm(VM):
                 disk_message = "Resize Disks"
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
-        message = ", ".join([_f for _f in [ram_message, cpu_message, disk_message] if _f])
+
+        for network_adapters_change in changes['network_adapters']:
+            action = network_adapters_change['action']
+            network_adapter = network_adapters_change['network_adapter']
+
+            if action == "add":
+                row = vm_recfg.network_adapters_table.click_add_network_adapter()
+                row.vlan.fill(network_adapter.vlan)
+                row.actions.widget.click()
+                network_adapter_message = "Add Network Adapters"
+            elif action == "delete":
+                row = vm_recfg.network_adapters_table.row(name=network_adapter.name)
+                # https://github.com/RedHatQE/widgetastic.core/issues/95
+                # second action button, delete, is column 4 on colspan
+                row[4].widget.click()
+                network_adapter_message = "Remove Network Adapters"
+            else:
+                raise ValueError(
+                    "Unknown network adapter change action; must be one of: add, delete"
+                )
+
+        message = ", ".join(
+            [_f for _f in [ram_message, cpu_message, disk_message, network_adapter_message] if _f]
+        )
 
         if cancel:
             vm_recfg.cancel_button.click()
