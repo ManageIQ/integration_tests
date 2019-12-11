@@ -1082,7 +1082,11 @@ class Replication(NavigatableMixin):
         if replication_type == 'remote':
             return view.is_displayed
         else:
-            return self._global_replication_row(host).is_displayed
+            is_host_present = self._global_replication_row(host).is_displayed
+            host_row = view.subscription_table.row(host=host)
+            wait_for(lambda: host_row.status.text == "replicating",
+                     fail_func=view.browser.refresh)
+            return is_host_present
 
     def get_global_replication_backlog(self, host=None):
         """ Get global replication backlog value
