@@ -117,10 +117,12 @@ def test_required_dialog_elements(appliance, catalog_item_local, service_dialog,
         assert not view.submit_button.disabled
 
 
-@pytest.mark.meta(coverage=[1692736])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1692736])
+@pytest.mark.customer_scenario
 @pytest.mark.tier(1)
-def test_validate_not_required_dialog_element():
+@pytest.mark.parametrize("file_name", ["bz_1692736.yml"], ids=["dialog"])
+def test_validate_not_required_dialog_element(appliance, file_name,
+                                              generic_catalog_item_with_imported_dialog):
     """
     Polarion:
         assignee: nansari
@@ -140,7 +142,40 @@ def test_validate_not_required_dialog_element():
     Bugzilla:
         1692736
     """
-    pass
+    catalog_item, sd, _ = generic_catalog_item_with_imported_dialog
+
+    service_catalog = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalog, "Order")
+
+    # inputs on page
+    required = view.fields("required").input
+    validated = view.fields("validate").input
+
+    def clean_inputs():
+        required.fill("")
+        validated.fill("")
+
+    # Check required
+    clean_inputs()
+    assert required.warning == "This field is required"
+    assert view.submit_button.disabled
+    required.fill(fauxfactory.gen_alphanumeric())
+    assert wait_for(lambda: not required.warning, timeout=15)
+    assert not view.submit_button.disabled
+
+    # Check validate
+    clean_inputs()
+    required.fill(fauxfactory.gen_alphanumeric())
+    validated.fill(fauxfactory.gen_alpha())
+    msg = (
+        "Entered text should match the format: "
+        "^(?:[1-9]|(?:[1-9][0-9])|(?:[1-9][0-9][0-9])|(?:900))$"
+    )
+    assert validated.warning == msg
+    assert view.submit_button.disabled
+    validated.fill("123")  # matching pattern
+    assert wait_for(lambda: not validated.warning, timeout=15)
+    assert not view.submit_button.disabled
 
 
 @pytest.mark.meta(coverage=[1696474])
@@ -195,7 +230,8 @@ def test_dialog_editor_modify_field(dialog):
             3.
             4. The UI should confirm that you want to exit without saving your dialog
     """
-    view = navigate_to(dialog, "Edit")
+    # As dialog created with rest sometime force nav required.
+    view = navigate_to(dialog, "Edit", force=True)
     view.description.fill(fauxfactory.gen_alpha())
     view.cancel_button.click(handle_alert=True)
     view = navigate_to(dialog, "Edit")
@@ -235,8 +271,8 @@ def test_specific_dates_and_time_in_timepicker():
 @pytest.mark.parametrize("import_data", [DatastoreImport("bz_1706693.zip", "bz_1706693", None)],
                          ids=["datastore"])
 @pytest.mark.parametrize("file_name", ["bz_1706693.yaml"], ids=["refresh_dialog"])
-def test_dynamic_field_on_refresh_button(request, appliance, import_datastore, import_data,
-                                         import_dialog, file_name, catalog):
+def test_dynamic_field_on_refresh_button(appliance, import_datastore, import_data, file_name,
+                                         generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1706693
@@ -257,19 +293,13 @@ def test_dynamic_field_on_refresh_button(request, appliance, import_datastore, i
             3.
             4. dynamic field shouldn't be blank
     """
-    sd, ele_label = import_dialog
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+
     # These are the labels(keys) and names(values) of widgets appeared while ordering catalog item.
     # We can not access these values from imported dialog. Hence created dict of these static values
     label_element_map = {'var_1 - copied': 'var_2', 'var_2 - copied': 'var_3',
                          'merged': 'var_2_var_3'}
-    catalog_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alpha(15, start="cat_item_"),
-        description=fauxfactory.gen_alpha(18, start="cat_item_desc_"),
-        display_in=True,
-        catalog=catalog,
-        dialog=sd)
-    request.addfinalizer(catalog_item.delete_if_exists)
+
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, "Order")
     for label, ele_name in label_element_map.items():
@@ -416,8 +446,8 @@ def test_service_dialog_date_datetime_picker_dynamic_dialog():
 @pytest.mark.parametrize("import_data", [DatastoreImport("bz_1684567.zip", "bz_1684567", None)],
                          ids=["datastore"])
 @pytest.mark.parametrize("file_name", ["bz_1684567.yml"], ids=["load-init"])
-def test_service_dd_dialog_load_values_on_init(request, appliance, import_datastore, import_data,
-                                  import_dialog, file_name, catalog):
+def test_service_dd_dialog_load_values_on_init(appliance, import_datastore, import_data, file_name,
+                                               generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1684567
@@ -439,16 +469,7 @@ def test_service_dd_dialog_load_values_on_init(request, appliance, import_datast
             4. The dialog elements should not be populated as the method
               should not have run as "load_values_on_init: false" is set in the element definition.
     """
-    sd, ele_label = import_dialog
-
-    catalog_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
-        display_in=True,
-        catalog=catalog,
-        dialog=sd)
-    request.addfinalizer(catalog_item.delete_if_exists)
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, "Order")
     # Dynamic textbox field should be empty
@@ -539,7 +560,8 @@ def test_copy_save_service_dialog_with_the_same_name():
 @pytest.mark.meta(automates=[1696697])
 @pytest.mark.customer_scenario
 @pytest.mark.parametrize("file_name", ["bz_1696697.yml"], ids=["sample_dialog"],)
-def test_request_details_page_tagcontrol_field(request, appliance, import_dialog, catalog):
+def test_request_details_page_tagcontrol_field(request, appliance, import_dialog,
+                                               generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1696697
@@ -563,16 +585,8 @@ def test_request_details_page_tagcontrol_field(request, appliance, import_dialog
             5. No error when go to on service request details page
 
     """
-    sd, ele_label = import_dialog
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
 
-    catalog_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
-        display_in=True,
-        catalog=catalog,
-        dialog=sd)
-    request.addfinalizer(catalog_item.delete_if_exists)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, "Order")
 
@@ -828,9 +842,9 @@ def test_service_service_vms_retires_archived():
 )
 @pytest.mark.parametrize("file_name", ["bz_1558926.yml"], ids=["dialog"])
 @pytest.mark.provider([RHEVMProvider], scope='function', selector=ONE)
-def test_service_dialog_expression_method(request, appliance, setup_provider, full_template_vm,
-                                          import_datastore, import_data, import_dialog, file_name,
-                                          catalog):
+def test_service_dialog_expression_method(appliance, setup_provider, full_template_vm,
+                                          import_datastore, import_data, file_name,
+                                          generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1558926
@@ -853,16 +867,7 @@ def test_service_dialog_expression_method(request, appliance, setup_provider, fu
             4.
             5. Expression method should work
     """
-    sd, ele_label = import_dialog
-    catalog_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
-        display_in=True,
-        catalog=catalog,
-        dialog=sd,
-    )
-    request.addfinalizer(catalog_item.delete_if_exists)
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
     service_catalogs = ServiceCatalogs(
         appliance, catalog=catalog_item.catalog, name=catalog_item.name
     )
@@ -962,7 +967,7 @@ def test_dialog_dropdown_integer_required():
 @pytest.mark.meta(automates=[1740899])
 @pytest.mark.customer_scenario
 @pytest.mark.parametrize("file_name", ["bz_1740899.yml"], ids=["sample_dialog"],)
-def test_dialog_dropdown_int_required(request, appliance, import_dialog, catalog):
+def test_dialog_dropdown_int_required(appliance, generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1740899
@@ -981,16 +986,8 @@ def test_dialog_dropdown_int_required(request, appliance, import_dialog, catalog
             2.
             3. The field should validate successfully
     """
-    sd, ele_label = import_dialog
+    catalog_item, _, ele_label = generic_catalog_item_with_imported_dialog
 
-    catalog_item = appliance.collections.catalog_items.create(
-        appliance.collections.catalog_items.GENERIC,
-        name=fauxfactory.gen_alpha(),
-        description=fauxfactory.gen_alpha(),
-        display_in=True,
-        catalog=catalog,
-        dialog=sd)
-    request.addfinalizer(catalog_item.delete_if_exists)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, "Order")
 
