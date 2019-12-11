@@ -410,3 +410,13 @@ class TestAzone:
             initialEstimate: 1/12h
         """
         generic_test_azone_rollup(appliance, provider, 'net_usage_rate_average')
+
+    def test_azone_disk_io(metrics_collection, appliance, provider):
+        """
+        Polarion:
+            assignee: nachandr
+            caseimportance: high
+            casecomponent: CandU
+            initialEstimate: 1/12h
+        """
+        generic_test_azone_rollup(appliance, provider, 'disk_usage_rate_average')
