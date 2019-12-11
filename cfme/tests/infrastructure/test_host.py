@@ -10,6 +10,7 @@ from cfme.base.credential import Credential
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import ProviderHostsCompareView
+from cfme.common.host_views import HostsEditView, HostEditView, HostsView, HostDetailsView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
@@ -539,10 +540,10 @@ def test_add_ipmi_refresh(appliance, setup_provider):
     view = navigate_to(host, "Edit")
     assert view.ipmi_address.read() == ipmi_address
 
+from datetime import datetime
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("num_hosts", [1, 2, 4])
-@pytest.mark.meta(blockers=[BZ(1634794, forced_streams=["5.10"])], automates=[1634794])
+@pytest.mark.parametrize("num_hosts", [1,])
 def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider, num_hosts):
     """
     Polarion:
@@ -552,17 +553,78 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
         initialEstimate: 1/6h
     Bugzilla:
         1634794
+
+    Just use multiple asserts.
+    Can't create, so start edit but nav away, update, cancel update, and delete. ?reset cases?
+    edit from details page? ****This is where we end up after an edit or cancel?
     """
+    # edit host
     my_slice = slice(0, num_hosts, None)
     hosts_view = navigate_to(provider.collections.hosts, "All")
     for h in hosts_view.entities.get_all(slice=my_slice):
+        hostname = h.name
         h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Edit Selected items',
                                                 handle_alert=False)
-    try:
-        hosts_view.navigation.select('Compute', 'Infrastructure', 'Providers', handle_alert=False)
-        final_view = provider.create_view(InfraProvidersView)
-        assert final_view.is_displayed
-    except UnexpectedAlertPresentException:
-        pytest.fail("Abandon changes alert displayed, but no changes made.")
-    # TODO add additional crud functionality.
+    edit_view = provider.create_view(HostEditView)
+    stamp = datetime.now()
+    edit_string = f'Edit host data. {stamp}'
+    edit_view.custom_ident.fill(edit_string)
+    edit_view.save_button.click()
+    # now verify the change is displayed.
+    host_view = provider.create_view(HostDetailsView)
+    host_view.flash.assert_success_message(f'Host / Node "{hostname}" was saved')
+    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
+    assert custom_id == edit_string
+    # cancel edit host
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    for h in hosts_view.entities.get_all(slice=my_slice):
+        hostname = h.name
+        h.ensure_checked()
+    hosts_view.toolbar.configuration.item_select('Edit Selected items',
+                                                 handle_alert=False)
+    edit_view = provider.create_view(HostEditView)
+    stamp = datetime.now()
+    cancel_string = f'Edit host data. {stamp}'
+    edit_view.custom_ident.fill(cancel_string)
+    edit_view.cancel_button.click()
+    # now verify the change is displayed.
+    host_view = provider.create_view(HostDetailsView)
+    host_view.flash.assert_success_message(f'Edit of Host / Node "{hostname}" was cancelled by '
+                                           f'the user')
+    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
+    assert custom_id == edit_string
+    # reset
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    for h in hosts_view.entities.get_all(slice=my_slice):
+        hostname = h.name
+        h.ensure_checked()
+    hosts_view.toolbar.configuration.item_select('Edit Selected items',
+                                                 handle_alert=False)
+    edit_view = provider.create_view(HostEditView)
+    stamp = datetime.now()
+    reset_string = f'Edit host data. {stamp}'
+    edit_view.custom_ident.fill(reset_string)
+    edit_view.reset_button.click()
+    # TODO check warning flash banner "All changes have been reset"
+    # update after reset and save
+    stamp = datetime.now()
+    reset_edit_string = f'Reset host data. {stamp}'
+    edit_view.custom_ident.fill(reset_edit_string)
+    edit_view.save_button.click()
+    # now verify the change is displayed.
+    host_view = provider.create_view(HostDetailsView)
+    host_view.flash.assert_success_message(f'Host / Node "{hostname}" was saved')
+    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
+    assert custom_id == reset_edit_string
+    # delete
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    for h in hosts_view.entities.get_all(slice=my_slice):
+        # note the host name so I can verify the deletion.
+        h.ensure_checked()
+    hosts_view.toolbar.configuration.item_select('Remove items from Inventory',
+                                                 handle_alert=True)
+    host_view.flash.assert_success_message(f'Delete initiated for 1 Host / Node from the CFME '
+                                           f'Database')
+    # TODO create and check displayed view.
+    # TODO verify host is deleted and not shown in view. and number of hosts has decremented.
