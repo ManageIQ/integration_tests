@@ -318,7 +318,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     manager.quit()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
-    assert appl1.is_embedded_ansible_running
+    appl1.wait_for_embedded_ansible()
     repositories = appl1.collections.ansible_repositories
     try:
         repository = repositories.create(
