@@ -150,10 +150,9 @@ def test_suspend_vm_service_details(context):
 
 @pytest.mark.meta(automates=[1677744])
 @pytest.mark.customer_scenario
-@pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
-def test_no_error_while_fetching_the_service(
-        request, appliance, user_self_service_role, generic_catalog_item):
+def test_no_error_while_fetching_the_service(request, appliance, user_self_service_role,
+                                             generic_catalog_item):
     """
 
     Bugzilla:
@@ -161,7 +160,7 @@ def test_no_error_while_fetching_the_service(
 
     Polarion:
         assignee: nansari
-        startsin: 5.11
+        startsin: 5.10
         casecomponent: SelfServiceUI
         initialEstimate: 1/6h
         testSteps:
