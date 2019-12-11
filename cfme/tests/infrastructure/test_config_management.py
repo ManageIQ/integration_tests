@@ -133,9 +133,6 @@ def test_config_system_tag(config_system, tag):
 
 @pytest.mark.tier(3)
 @pytest.mark.provider([AnsibleTowerProvider], scope='module')
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(SatelliteProvider),
-                         reason='Only Ansible Tower is valid for this test')
 def test_ansible_tower_job_templates_tag(request, provider, tag):
     """
     Polarion:
@@ -164,9 +161,6 @@ def test_ansible_tower_job_templates_tag(request, provider, tag):
 @pytest.mark.tier(3)
 @pytest.mark.provider([AnsibleTowerProvider], scope='module')
 @pytest.mark.parametrize('template_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(SatelliteProvider),
-                         reason='Only Ansible Tower is valid for this test')
 def test_ansible_tower_service_dialog_creation_from_template(provider, template_type):
     """
     Polarion:
@@ -194,9 +188,7 @@ def test_ansible_tower_service_dialog_creation_from_template(provider, template_
 @pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(SatelliteProvider),
-                         reason='Only Ansible Tower is valid for this test')
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_add_multiple_times_ansible_tower_243():
     """
     Try to add same Tower manager twice (use the same IP/hostname). It
@@ -216,9 +208,7 @@ def test_config_manager_add_multiple_times_ansible_tower_243():
 @pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(SatelliteProvider),
-                         reason='Only Ansible Tower is valid for this test')
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_job_template_refresh():
     """
     After first Tower refresh, go to Tower UI and change name of 1 job
@@ -236,9 +226,7 @@ def test_config_manager_job_template_refresh():
 @pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(SatelliteProvider),
-                         reason='Only Ansible tower is valid for this test')
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_accordion_tree():
     """
     Make sure there is accordion tree, once Tower is added to the UI.
@@ -259,9 +247,7 @@ def test_config_manager_accordion_tree():
 @pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(SatelliteProvider),
-                         reason='Only Ansible tower is valid for this test')
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_remove_objects_ansible_tower_310():
     """
     1) Add Configuration manager
@@ -283,9 +269,7 @@ def test_config_manager_remove_objects_ansible_tower_310():
 @pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.uncollectif(lambda provider:
-                         provider.one_of(SatelliteProvider),
-                         reason='Only Ansible tower is valid for this test')
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_change_zone():
     """
     Add Ansible Tower in multi appliance, add it to appliance with UI. Try
