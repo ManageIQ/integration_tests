@@ -310,3 +310,23 @@ def user_self_service_role(appliance):
         user.delete_if_exists()
         user_self_service_gp.delete_if_exists()
         user_self_service_role.delete_if_exists()
+
+
+@pytest.fixture()
+def generic_catalog_item_with_imported_dialog(request, appliance, import_dialog, catalog):
+    sd, ele_label = import_dialog
+    cat = _service_templates(
+        request, appliance, service_dialog=sd, service_catalog=catalog, num=1
+    )[0]
+
+    catalog_item = appliance.collections.catalog_items.instantiate(
+        appliance.collections.catalog_items.GENERIC,
+        name=cat.name,
+        description=cat.description,
+        display_in=True,
+        catalog=catalog,
+        dialog=sd,
+    )
+    yield catalog_item, sd, ele_label
+    if cat.exists:
+        cat.action.delete()
