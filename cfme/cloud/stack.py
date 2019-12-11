@@ -7,11 +7,11 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
-from cfme.exceptions import CandidateNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep

@@ -1,9 +1,9 @@
 import pytest
+from widgetastic_patternfly import CandidateNotFound
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.stack import StackOutputsDetails
-from cfme.exceptions import CandidateNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
