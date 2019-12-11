@@ -218,6 +218,7 @@ def test_config_manager_job_template_refresh():
     Polarion:
         assignee: nachandr
         casecomponent: Ansible
+        caseimportance: low
         initialEstimate: 1/2h
     """
     pass
