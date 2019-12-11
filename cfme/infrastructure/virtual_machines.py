@@ -567,7 +567,7 @@ class VMConfiguration(Pretty):
         self.hw = VMHardware()
         self.disks = []
         self.vm = vm
-        self.nw_adapters = []
+        self.network_adapters = []
         self._load()
 
     def __eq__(self, other):
@@ -575,7 +575,7 @@ class VMConfiguration(Pretty):
             self.hw == other.hw
             and self.num_disks == other.num_disks
             and all(disk in other.disks for disk in self.disks)
-            and self.num_nw_adapters == other.num_nw_adapters
+            and self.num_network_adapters == other.num_network_adapters
         )
 
     def _load(self):
@@ -608,7 +608,7 @@ class VMConfiguration(Pretty):
                 vms.name == self.vm.name).filter(hws.vm_or_template_id == vms.id).filter(
                 guest_devices.hardware_id == hws.id).all()
 
-            self.nw_adapters = [
+            self.network_adapters = [
                 NetworkAdapter(devices.guest_devices.device_name, None)
                 for devices in guest_device_nw_filter
             ]
@@ -640,7 +640,7 @@ class VMConfiguration(Pretty):
         # We can just make shallow copy here because disks can be only added or deleted, not edited
         config.disks = self.disks[:]
         config.vm = self.vm
-        config.nw_adapters = self.nw_adapters[:]
+        config.network_adapters = self.network_adapters[:]
         return config
 
     def add_disk(self, size, size_unit='GB', type='thin', mode='persistent'):
@@ -692,16 +692,16 @@ class VMConfiguration(Pretty):
     def num_disks(self):
         return len(self.disks)
 
-    def add_nw_adapter(self, name, vlan):
-        self.nw_adapters.append(NetworkAdapter(name=name, vlan=vlan))
+    def add_network_adapter(self, name, vlan):
+        self.network_adapters.append(NetworkAdapter(name=name, vlan=vlan))
 
-    def remove_nw_adapter(self, name):
-        nw_adapter = next(nw for nw in self.nw_adapters if nw.name == name)
-        self.nw_adapters.remove(nw_adapter)
+    def remove_network_adapter(self, name):
+        network_adapter = next(nw for nw in self.network_adapters if nw.name == name)
+        self.network_adapters.remove(network_adapter)
 
     @property
-    def num_nw_adapters(self):
-        return len(self.nw_adapters)
+    def num_network_adapters(self):
+        return len(self.network_adapters)
 
     def get_changes_to_fill(self, other_configuration):
         """ Returns changes to be applied to this config to reach the other config
@@ -711,7 +711,7 @@ class VMConfiguration(Pretty):
         """
         changes = {}
         changes['disks'] = []
-        changes['nw_adapters'] = []
+        changes['network_adapters'] = []
 
         for key in ['cores_per_socket', 'sockets']:
             if getattr(self.hw, key) != getattr(other_configuration.hw, key):
@@ -738,11 +738,17 @@ class VMConfiguration(Pretty):
                         changes["disks"].append(change)
 
         # Network adapter changes
-        for adapter in self.nw_adapters + other_configuration.nw_adapters:
-            if adapter in self.nw_adapters and adapter not in other_configuration.nw_adapters:
-                changes['nw_adapters'].append({'action': 'delete', 'nw_adapter': adapter})
-            elif adapter not in self.nw_adapters and adapter in other_configuration.nw_adapters:
-                changes['nw_adapters'].append({'action': 'add', 'nw_adapter': adapter})
+        for adapter in self.network_adapters + other_configuration.network_adapters:
+            if (
+                adapter in self.network_adapters
+                and adapter not in other_configuration.network_adapters
+            ):
+                changes["network_adapters"].append({"action": "delete", "network_adapter": adapter})
+            elif (
+                adapter not in self.network_adapters
+                and adapter in other_configuration.network_adapters
+            ):
+                changes["network_adapters"].append({"action": "add", "network_adapter": adapter})
 
         return changes
 
@@ -1107,7 +1113,7 @@ class InfraVm(VM):
             changes.get("mem_size", "0"), changes.get("mem_size_unit", "MB")) if changes.get(
             "memory", False) else None
         disk_message = None
-        nw_adapter_message = None
+        network_adapter_message = None
 
         for disk_change in changes['disks']:
             action, disk = disk_change['action'], disk_change['disk']
@@ -1152,27 +1158,28 @@ class InfraVm(VM):
             else:
                 raise ValueError("Unknown disk change action; must be one of: add, delete")
 
-        for nw_adapters_change in changes['nw_adapters']:
-            action, nw_adapter = nw_adapters_change['action'], nw_adapters_change['nw_adapter']
+        for network_adapters_change in changes['network_adapters']:
+            action = network_adapters_change['action']
+            network_adapter = network_adapters_change['network_adapter']
 
             if action == "add":
-                row = vm_recfg.network_adapters_table.click_add_nw_adapter()
-                row.vlan.fill(nw_adapter.vlan)
+                row = vm_recfg.network_adapters_table.click_add_network_adapter()
+                row.vlan.fill(network_adapter.vlan)
                 row.actions.widget.click()
-                nw_adapter_message = "Add Network Adapters"
+                network_adapter_message = "Add Network Adapters"
             elif action == "delete":
-                row = vm_recfg.network_adapters_table.row(name=nw_adapter.name)
+                row = vm_recfg.network_adapters_table.row(name=network_adapter.name)
                 # https://github.com/RedHatQE/widgetastic.core/issues/95
                 # second action button, delete, is column 4 on colspan
                 row[4].widget.click()
-                nw_adapter_message = "Remove Network Adapters"
+                network_adapter_message = "Remove Network Adapters"
             else:
                 raise ValueError(
-                    "Unknown newtwork adapter change action; must be one of: add, delete"
+                    "Unknown network adapter change action; must be one of: add, delete"
                 )
 
         message = ", ".join(
-            [_f for _f in [ram_message, cpu_message, disk_message, nw_adapter_message] if _f]
+            [_f for _f in [ram_message, cpu_message, disk_message, network_adapter_message] if _f]
         )
 
         if cancel:

@@ -38,13 +38,13 @@ class NetworkAdaptersTable(VanillaTable):
     add_nw_btn = DisksButton("contains", "Add Network", classes=[Button.PRIMARY])
     cancel_add_nw_btn = DisksButton("contains", "Cancel Add", classes=[Button.DEFAULT])
 
-    def click_add_nw_adapter(self):
+    def click_add_network_adapter(self):
         """Clicks the 'Add Network' button attached to the table and
         returns the new editable row
         """
         self.add_nw_btn.click()
         return self[-1]
 
-    def click_cancel_add_nw_adapter(self):
+    def click_cancel_add_network_adapter(self):
         """Clicks the 'Cancel Add' button to cancel adding a new row"""
         self.cancel_add_nw_btn.click()

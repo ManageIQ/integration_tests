@@ -390,8 +390,8 @@ def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm
 
     # Create new configuration with new network adapter
     new_config = orig_config.copy()
-    new_config.add_nw_adapter(
-        f"Network adapter {orig_config.num_nw_adapters + 1}", vlan=adapters_type
+    new_config.add_network_adapter(
+        f"Network adapter {orig_config.num_network_adapters + 1}", vlan=adapters_type
     )
     add_adapter_request = full_vm.reconfigure(new_config)
     add_adapter_request.wait_for_request(method="ui")
@@ -399,7 +399,7 @@ def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm
 
     # Verify network adapter added or not
     wait_for(
-        lambda: full_vm.configuration.num_nw_adapters == new_config.num_nw_adapters,
+        lambda: full_vm.configuration.num_network_adapters == new_config.num_network_adapters,
         timeout=120,
         delay=10,
         fail_func=full_vm.refresh_relationships,
@@ -413,7 +413,7 @@ def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm
 
     # Verify network adapter removed or not
     wait_for(
-        lambda: full_vm.configuration.num_nw_adapters == orig_config.num_nw_adapters,
+        lambda: full_vm.configuration.num_network_adapters == orig_config.num_network_adapters,
         timeout=120,
         delay=10,
         fail_func=full_vm.refresh_relationships,
