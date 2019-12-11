@@ -20,6 +20,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
+from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import CheckboxSelect
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import MultiBoxSelect
@@ -71,6 +72,9 @@ class ActionFormCommon(ControlExplorerView):
     })
     remove_tag = CheckboxSelect("action_options_div")
     run_ansible_playbook = View.nested(RunAnsiblePlaybookFromView)
+    automation_message = Input("object_message")
+    automation_request = Input("object_request")
+    attribute_value_pair = AttributeValueForm('attribute_', 'value_')
     cancel_button = Button("Cancel")
 
 
@@ -165,6 +169,9 @@ class Action(BaseEntity, Updateable, Pretty):
         self.tag = action_values.get("tag")
         self.remove_tag = action_values.get("remove_tag")
         self.run_ansible_playbook = action_values.get("run_ansible_playbook")
+        self.automation_messsage = action_values.get('message')
+        self.automation_request = action_values.get('request')
+        self.attribute_value_pair = action_values.get('attribute_value_pair')
 
     def __str__(self):
         return str(self.description)
@@ -253,7 +260,10 @@ class ActionCollection(BaseCollection):
             "vcenter_attr_value": action_values.get("vcenter_attr_value"),
             "tag": action_values.get("tag"),
             "remove_tag": action_values.get("remove_tag"),
-            "run_ansible_playbook": action_values.get("run_ansible_playbook")
+            "run_ansible_playbook": action_values.get("run_ansible_playbook"),
+            "automation_message": action_values.get('message'),
+            "automation_request": action_values.get('request'),
+            "attribute_value_pair": action_values.get('attribute_value_pair')
         })
         # todo: check whether we can remove ensure_page_safe later
         self.browser.plugin.ensure_page_safe()

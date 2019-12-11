@@ -5,6 +5,7 @@ from . import user_list_hash_data
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.base.ui import AutomateSimulationView
+from cfme.control.explorer.actions import ActionDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
@@ -231,3 +232,54 @@ def test_attribute_value_message(custom_instance):
             request="call_instance_with_message",
             execute_methods=True,
         )
+
+
+@pytest.mark.meta(automates=[1672007])
+def test_action_invoke_custom_automation(request, appliance):
+    """
+    Bugzilla:
+        1672007
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        testSteps:
+            1. Navigate to Control > explorer > actions
+            2. Select 'add a new action' from configuration dropdown
+            3. Add description and select 'Action Type' - Invoke custom automation
+            4. Fill attribute value pairs and click on add
+            5. Edit the created action and add new attribute value pair
+            6. Remove that newly added attribute value pair before clicking on save and then click
+               on save
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Save button should enabled
+            6. Action should be saved successfully
+    """
+    attr_val = [
+        {f"attribute_{num}": fauxfactory.gen_alpha() for num in range(1, 6)} for _ in range(2)
+    ]
+
+    automation_action = appliance.collections.actions.create(
+        fauxfactory.gen_alphanumeric(),
+        "Invoke a Custom Automation",
+        dict(
+            message=fauxfactory.gen_alpha(),
+            request=fauxfactory.gen_alpha(),
+            attribute_value_pair=attr_val[0]
+        )
+    )
+    request.addfinalizer(automation_action.delete_if_exists)
+
+    view = navigate_to(automation_action, "Edit")
+    view.attribute_value_pair.fill(attr_val[1])
+    assert view.save_button.is_enabled
+    view.attribute_value_pair.clear()
+    view.save_button.click()
+    view = automation_action.create_view(ActionDetailsView, wait="10s")
+    view.flash.assert_success_message(f'Action "{automation_action.description}" was saved')
