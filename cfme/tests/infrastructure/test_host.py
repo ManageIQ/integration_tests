@@ -551,8 +551,6 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/6h
-    Bugzilla:
-        1634794
     """
     # edit host from provider hosts view
     my_slice = slice(0, num_hosts, None)
