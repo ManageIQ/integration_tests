@@ -1,17 +1,17 @@
 import random
 import socket
+from datetime import datetime
 
 import pytest
-from datetime import datetime
 from wait_for import TimedOutError
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.common.host_views import HostDetailsView
+from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
-from cfme.common.host_views import ProviderHostsCompareView
-from cfme.common.host_views import HostsEditView, HostEditView, HostsView, HostDetailsView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
