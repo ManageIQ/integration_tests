@@ -553,10 +553,6 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
         initialEstimate: 1/6h
     Bugzilla:
         1634794
-
-    Just use multiple asserts.
-    Can't create, so start edit but nav away, update, cancel update, and delete. ?reset cases?
-    edit from details page? ****This is where we end up after an edit or cancel?
     """
     # edit host from provider hosts view
     my_slice = slice(0, num_hosts, None)
@@ -577,7 +573,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
     assert custom_id == edit_string
     # edit host from host detail view
-    hosts_view.toolbar.configuration.item_select('Edit This item',
+    hosts_view.toolbar.configuration.item_select('Edit this item',
                                                  handle_alert=False)
     edit_view = provider.create_view(HostEditView)
     stamp = datetime.now()
@@ -633,12 +629,10 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     # delete
     hosts_view = navigate_to(provider.collections.hosts, "All")
     for h in hosts_view.entities.get_all(slice=my_slice):
-        # note the host name so I can verify the deletion.
         h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Remove items from Inventory',
                                                  handle_alert=True)
-    host_view.flash.assert_success_message(f'Delete initiated for 1 Host / Node from the CFME '
+    host_view.flash.assert_success_message(f'Delete initiated for 1 Hosts / Nodes from the CFME '
                                            f'Database')
-    # TODO create and check displayed view.
-    # TODO verify host is deleted and not shown in view. and number of hosts has decremented.
     # TODO add appliance host cases
+
