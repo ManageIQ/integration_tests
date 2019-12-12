@@ -2,12 +2,18 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
 
 
-pytestmark = [test_requirements.rest]
+pytestmark = [
+    test_requirements.rest,
+    pytest.mark.provider([InfraProvider], selector=ONE, scope="module"),
+    pytest.mark.usefixtures('setup_provider'),
+]
 
 
 @pytest.fixture(params=[True, False], ids=["global", "local"])

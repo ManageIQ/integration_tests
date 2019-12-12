@@ -215,6 +215,9 @@ class TestAuthenticationsRESTAPI(object):
         assert_response(appliance)
 
 
+# Keep this a function scoped fixture, otherwise it will fail for parametrized tests
+# where one something destructive is performed on the config_manager_ob by one of the tests.
+# e.g. test_config_manager_delete_rest
 @pytest.fixture
 def config_manager_rest(provider):
     """Creates provider using REST API."""
