@@ -280,8 +280,14 @@ class BaseVM(
 
         view = navigate_to(self, 'Details')
 
-        # Click console button given by type
-        view.toolbar.access.item_select(console, handle_alert=invokes_alert)
+        # dismiss_any_alerts() call closed subsequent alerts needed for vmrc
+        # below code is needed to fix such issue
+        try:
+            view.browser.IGNORE_SUBSEQUENT_ALERTS = True
+            # Click console button given by type
+            view.toolbar.access.item_select(console, handle_alert=invokes_alert)
+        finally:
+            view.browser.IGNORE_SUBSEQUENT_ALERTS = False
         self.vm_console
 
     def open_details(self, properties=None):

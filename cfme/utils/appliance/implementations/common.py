@@ -9,6 +9,7 @@ from cfme.utils.wait import wait_for
 
 
 class HandleModalsMixin(object):
+    IGNORE_SUBSEQUENT_ALERTS = False
     @property
     def _modal_alert(self):
         return Modal(parent=self)
@@ -92,7 +93,8 @@ class HandleModalsMixin(object):
                 self.logger.info('  accepting')
                 popup.accept()
             # Should any problematic "double" alerts appear here, we don't care, just blow'em away.
-            self.dismiss_any_alerts()
+            if not self.IGNORE_SUBSEQUENT_ALERTS:
+                self.dismiss_any_alerts()
             return True
         except TimedOutError:
             # we waited (or didn't), and there was no alert
