@@ -306,6 +306,10 @@ def check_evm_log_no_errors():
                 evm_tail.start_monitoring()
             self.log_validators.append(evm_tail)
 
+        def multimonitor(self, appliances):
+            for a in appliances:
+                self.monitor(a)
+
         def stop_monitoring(self):
             failed = False
             for validator in self.log_validators:
