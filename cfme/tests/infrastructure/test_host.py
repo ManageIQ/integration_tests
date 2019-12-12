@@ -558,7 +558,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     Can't create, so start edit but nav away, update, cancel update, and delete. ?reset cases?
     edit from details page? ****This is where we end up after an edit or cancel?
     """
-    # edit host
+    # edit host from provider hosts view
     my_slice = slice(0, num_hosts, None)
     hosts_view = navigate_to(provider.collections.hosts, "All")
     for h in hosts_view.entities.get_all(slice=my_slice):
@@ -566,6 +566,19 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
         h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Edit Selected items',
                                                 handle_alert=False)
+    edit_view = provider.create_view(HostEditView)
+    stamp = datetime.now()
+    edit_string = f'Edit host data. {stamp}'
+    edit_view.custom_ident.fill(edit_string)
+    edit_view.save_button.click()
+    # now verify the change is displayed.
+    host_view = provider.create_view(HostDetailsView)
+    host_view.flash.assert_success_message(f'Host / Node "{hostname}" was saved')
+    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
+    assert custom_id == edit_string
+    # edit host from host detail view
+    hosts_view.toolbar.configuration.item_select('Edit This item',
+                                                 handle_alert=False)
     edit_view = provider.create_view(HostEditView)
     stamp = datetime.now()
     edit_string = f'Edit host data. {stamp}'
@@ -606,7 +619,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     reset_string = f'Edit host data. {stamp}'
     edit_view.custom_ident.fill(reset_string)
     edit_view.reset_button.click()
-    # TODO check warning flash banner "All changes have been reset"
+    edit_view.flash.assert_message(f'All changes have been reset')
     # update after reset and save
     stamp = datetime.now()
     reset_edit_string = f'Reset host data. {stamp}'
@@ -628,3 +641,4 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
                                            f'Database')
     # TODO create and check displayed view.
     # TODO verify host is deleted and not shown in view. and number of hosts has decremented.
+    # TODO add appliance host cases
