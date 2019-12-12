@@ -8,6 +8,7 @@ from widgetastic.exceptions import UnexpectedAlertPresentException
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsCompareView
+from cfme.common.host_views import HostDetailsView
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import InfraProvidersView
@@ -589,4 +590,21 @@ def test_incomplete_edit_multi_infrastructure_hosts(appliance, setup_provider_mi
         assert final_view.is_displayed
     except UnexpectedAlertPresentException:
         pytest.fail("Abandon changes alert displayed, but no changes made.")
-    # TODO multi edit and cancel (This works).
+    # select 2 hosts, click edit button, and cancel.
+
+    hosts_view = navigate_to(provider.collections.hosts, "All")
+    for h in hosts_view.entities.get_all(slice=my_slice):
+        h.ensure_checked()
+    hosts_view.toolbar.configuration.item_select('Edit Selected items',
+                                                handle_alert=False)
+                                                
+    edit_view = provider.create_view(HostsEditView)
+    edit_string = f'usertest.'
+    edit_view.endpoints.default.username.fill(edit_string)
+    edit_view.cancel_button.click()
+    # now verify the change is displayed.
+    host_view = provider.create_view(HostDetailsView)
+    if provider.type == 'rhevm':
+        host_view.flash.assert_success_message(f'Edit of credentials for selected Hosts / Nodes was '
+                                           f'cancelled by the user')
+
