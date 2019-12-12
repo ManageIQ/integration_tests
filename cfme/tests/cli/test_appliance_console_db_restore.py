@@ -99,7 +99,7 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
 
 
 @pytest.fixture
-def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
+def get_ha_appliances_with_providers(unconfigured_appliances, app_creds, check_evm_log_no_errors):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
@@ -132,6 +132,8 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
 
     """
     appl1, appl2, appl3 = unconfigured_appliances
+    check_evm_log_no_errors.multimonitor(unconfigured_appliances)
+
     app0_ip = appl1.hostname
     app1_ip = appl2.hostname
     pwd = app_creds['password']
@@ -301,7 +303,9 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansible):
+def test_appliance_console_restore_pg_basebackup_ansible(
+        get_appliance_with_ansible,
+        check_evm_log_no_errors):
     """
     Polarion:
         assignee: jhenner
@@ -310,6 +314,8 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
         initialEstimate: 1/2h
     """
     appl1 = get_appliance_with_ansible
+    check_evm_log_no_errors.monitor(appl1)
+
     # Restore DB on the second appliance
     appl1.evmserverd.stop()
     appl1.db_service.restart()
@@ -339,7 +345,8 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_pg_basebackup_replicated(
-        request, temp_appliances_unconfig_funcscope_rhevm):
+        request, temp_appliances_unconfig_funcscope_rhevm,
+        check_evm_log_no_errors):
     """
     Polarion:
         assignee: jhenner
@@ -351,6 +358,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
     appl1.db.backup()
     appl2.db.backup()
+
+    check_evm_log_no_errors.multimonitor(temp_appliances_unconfig_funcscope_rhevm)
 
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
@@ -384,7 +393,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-def test_appliance_console_restore_db_external(request, get_ext_appliances_with_providers):
+def test_appliance_console_restore_db_external(request, get_ext_appliances_with_providers,
+                                               check_evm_log_no_errors):
     """Configure ext environment with providers, run backup/restore on configuration,
     Confirm that providers still exist after restore and provisioning works.
 
@@ -395,6 +405,8 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
         initialEstimate: 1h
     """
     appl1, appl2 = get_ext_appliances_with_providers
+    check_evm_log_no_errors.multimonitor(get_ext_appliances_with_providers)
+
     # Restore DB on the second appliance
     providers_before_restore = set(appl1.managed_provider_names)
     appl2.evmserverd.stop()
@@ -426,7 +438,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_replicated(
-        request, temp_appliances_unconfig_funcscope_rhevm):
+        request, temp_appliances_unconfig_funcscope_rhevm, check_evm_log_no_errors):
     """
     Polarion:
         assignee: jhenner
@@ -435,6 +447,8 @@ def test_appliance_console_restore_db_replicated(
         initialEstimate: 1h
     """
     appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
+    check_evm_log_no_errors.multimonitor(temp_appliances_unconfig_funcscope_rhevm)
+
     appl1.db.backup()
     appl2.db.backup()
     providers_before_restore = set(appl1.managed_provider_names)
