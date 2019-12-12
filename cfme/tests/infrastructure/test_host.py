@@ -494,6 +494,7 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         initialEstimate: 1/3h
     Bugzilla:
         1747545
+
     """
     h_coll = locals()[hosts_collection].collections.hosts
     hosts_view = h_coll.compare_entities(provider, entities_list=h_coll.all()[:num_hosts])
@@ -541,6 +542,8 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/6h
+    Bugzilla:
+        1634794
     """
     host = appliance.collections.hosts.all()[0]
     if crud_action != 'remove':
