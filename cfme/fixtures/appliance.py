@@ -296,7 +296,7 @@ def check_evm_log_no_errors():
     class AppliancesMonitor(object):
         log_validators = attr.ib(factory=list)
         EVM_LOG_PATH = '/var/www/miq/vmdb/log/evm.log'
-        EVM_LOG_FAILURE_PATTERNS = ['.*ERROR.*']
+        EVM_LOG_FAILURE_PATTERNS = ['.* ERROR -- :.*']
 
         def monitor(self, appliance):
             # TODO don't push to the stack. Do it other way
