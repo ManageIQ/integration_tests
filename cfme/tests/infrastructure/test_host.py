@@ -543,8 +543,6 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/6h
-    Bugzilla:
-        1634794
     """
     host = appliance.collections.hosts.all()[0]
     if crud_action != 'remove':
