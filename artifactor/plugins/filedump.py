@@ -97,9 +97,11 @@ class Filedump(ArtifactorBasePlugin):
         if not dont_write:
             if os.path.isfile(os_filename):
                 os.remove(os_filename)
+            if contents_base64:
+                contents = base64.b64decode(contents)
+            if isinstance(contents, bytes):
+                mode = 'wb'
             with open(os_filename, mode) as f:
-                if contents_base64:
-                    contents = base64.b64decode(contents)
                 f.write(contents)
 
         return None, {"artifacts": {test_ident: {"files": artifacts}}}
