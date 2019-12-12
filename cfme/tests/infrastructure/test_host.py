@@ -563,10 +563,10 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
 
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("num_hosts", [2,])
+@pytest.mark.parametrize("num_hosts", [2, ])
 @pytest.mark.meta(blockers=[BZ(1634794, forced_streams=["5.10"])], automates=[1634794])
 def test_incomplete_edit_multi_infrastructure_hosts(appliance, setup_provider_min_hosts,
-                                                     provider, num_hosts):
+                                                    provider, num_hosts):
     """
     Polarion:
         assignee: prichard
