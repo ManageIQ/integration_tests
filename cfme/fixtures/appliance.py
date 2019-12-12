@@ -12,11 +12,14 @@ For tests that require multiple unconfigured appliances (e.g. replication testin
 """
 from contextlib import contextmanager
 
+import attr
 import pytest
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
 from cfme.utils.log import logger
+from cfme.utils.log_validator import FailPatternMatchError
+from cfme.utils.log_validator import LogValidator
 
 
 @contextmanager
@@ -285,3 +288,35 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     app.db.extend_partition()
     app.evmserverd.start()
     return app
+
+
+@pytest.fixture(scope="function")
+def check_evm_log_no_errors():
+    @attr.s
+    class AppliancesMonitor(object):
+        log_validators = attr.ib(factory=list)
+        EVM_LOG_PATH = '/var/www/miq/vmdb/log/evm.log'
+        EVM_LOG_FAILURE_PATTERNS = ['.*ERROR.*']
+
+        def monitor(self, appliance):
+            # TODO don't push to the stack. Do it other way
+            with appliance:
+                evm_tail = LogValidator(self.EVM_LOG_PATH,
+                                        failure_patterns=self.EVM_LOG_FAILURE_PATTERNS)
+                evm_tail.start_monitoring()
+            self.log_validators.append(evm_tail)
+
+        def stop_monitoring(self):
+            failed = False
+            for validator in self.log_validators:
+                try:
+                    validator.validate()
+                except FailPatternMatchError as e:
+                    failed = True
+                    logger.error("Found ERROR in evm.log: %s", e)
+            if failed:
+                pytest.fail("There were errors in the evm.log of monitored appliances.")
+
+    am = AppliancesMonitor()
+    yield am
+    am.stop_monitoring()

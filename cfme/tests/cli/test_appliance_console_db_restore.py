@@ -543,7 +543,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_providers,
-                                          utility_vm, utility_vm_nfs_ip):
+                                          utility_vm, utility_vm_nfs_ip, check_evm_log_no_errors):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -554,6 +554,9 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
         initialEstimate: 1h
     """
     appl1, appl2 = two_appliances_one_with_providers
+    check_evm_log_no_errors.monitor(appl1)
+    check_evm_log_no_errors.monitor(appl2)
+
     vm, _, data = utility_vm
     host = utility_vm_nfs_ip
     loc = data['network_share']['nfs']['path']
@@ -610,7 +613,8 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_samba(request, two_appliances_one_with_providers,
-                                            utility_vm, utility_vm_samba_ip):
+                                            utility_vm, utility_vm_samba_ip,
+                                            check_evm_log_no_errors):
     """ Test single appliance backup and restore through smb, configures appliance with providers,
         backs up database, restores it to fresh appliance and checks for matching providers.
 
@@ -621,6 +625,8 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
         initialEstimate: 1h
     """
     appl1, appl2 = two_appliances_one_with_providers
+    check_evm_log_no_errors.monitor(appl1)
+    check_evm_log_no_errors.monitor(appl2)
     _, _, data = utility_vm
     host = utility_vm_samba_ip
     loc = data['network_share']['smb']['path']
