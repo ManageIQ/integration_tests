@@ -185,9 +185,10 @@ def test_ansible_tower_service_dialog_creation_from_template(provider, template_
     dialog.delete_if_exists()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.tier(1)
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_add_multiple_times_ansible_tower_243():
     """
     Try to add same Tower manager twice (use the same IP/hostname). It
@@ -204,8 +205,10 @@ def test_config_manager_add_multiple_times_ansible_tower_243():
     pass
 
 
+@pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_job_template_refresh():
     """
     After first Tower refresh, go to Tower UI and change name of 1 job
@@ -215,13 +218,16 @@ def test_config_manager_job_template_refresh():
     Polarion:
         assignee: nachandr
         casecomponent: Ansible
+        caseimportance: low
         initialEstimate: 1/2h
     """
     pass
 
 
+@pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_accordion_tree():
     """
     Make sure there is accordion tree, once Tower is added to the UI.
@@ -239,9 +245,10 @@ def test_config_manager_accordion_tree():
     pass
 
 
+@pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.tier(1)
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_remove_objects_ansible_tower_310():
     """
     1) Add Configuration manager
@@ -260,9 +267,10 @@ def test_config_manager_remove_objects_ansible_tower_310():
     pass
 
 
+@pytest.mark.tier(3)
 @pytest.mark.manual
 @test_requirements.tower
-@pytest.mark.tier(1)
+@pytest.mark.provider([AnsibleTowerProvider], scope='module')
 def test_config_manager_change_zone():
     """
     Add Ansible Tower in multi appliance, add it to appliance with UI. Try
