@@ -2,6 +2,7 @@ import random
 import socket
 
 import pytest
+from datetime import datetime
 from wait_for import TimedOutError
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
@@ -540,10 +541,9 @@ def test_add_ipmi_refresh(appliance, setup_provider):
     view = navigate_to(host, "Edit")
     assert view.ipmi_address.read() == ipmi_address
 
-from datetime import datetime
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("num_hosts", [1,])
+@pytest.mark.parametrize("num_hosts", [1, ])
 def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider, num_hosts):
     """
     Polarion:
@@ -635,4 +635,3 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     host_view.flash.assert_success_message(f'Delete initiated for 1 Hosts / Nodes from the CFME '
                                            f'Database')
     # TODO add appliance host cases
-
