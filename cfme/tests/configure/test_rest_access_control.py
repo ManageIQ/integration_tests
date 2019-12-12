@@ -872,7 +872,6 @@ FEATURES_511 = COMMON_FEATURES + [
     "User Settings",
     "All VM and Instance Access Rules",
     "Main Configuration",
-    "Red Hat Cloud",
 ]
 
 FEATURES_510 = COMMON_FEATURES + [
