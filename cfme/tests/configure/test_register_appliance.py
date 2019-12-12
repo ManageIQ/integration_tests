@@ -136,7 +136,8 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
 
 @pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
-def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, proxy_creds):
+def test_rh_registration(
+        temp_appliance_preconfig_funcscope, request, reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether an appliance can be registered against RHSM and SAT6
 
     Polarion:
@@ -160,42 +161,45 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         proxy_url = None
         proxy_username = None
         proxy_password = None
-    red_hat_updates = RedHatUpdates(
-        service=reg_method,
-        url=reg_data['url'],
-        username=conf.credentials[reg_method]['username'],
-        password=conf.credentials[reg_method]['password'],
-        repo_name=repo,
-        organization=reg_data.get('organization'),
-        use_proxy=use_proxy,
-        proxy_url=proxy_url,
-        proxy_username=proxy_username,
-        proxy_password=proxy_password,
-        set_default_repository=set_default_repo
-    )
-    red_hat_updates.update_registration(validate=False if reg_method != 'sat6' else True)
 
-    used_repo_or_channel = red_hat_updates.get_repository_names()
+    with temp_appliance_preconfig_funcscope as appliance:
+        red_hat_updates = RedHatUpdates(
+            service=reg_method,
+            url=reg_data['url'],
+            username=conf.credentials[reg_method]['username'],
+            password=conf.credentials[reg_method]['password'],
+            repo_name=repo,
+            organization=reg_data.get('organization'),
+            use_proxy=use_proxy,
+            proxy_url=proxy_url,
+            proxy_username=proxy_username,
+            proxy_password=proxy_password,
+            set_default_repository=set_default_repo
+        )
 
-    # FIXME workaround BZ 1532201 (An exception to the rule as it waits for backend config)
-    time.sleep(15)
-    request.addfinalizer(appliance.unregister)
-    red_hat_updates.register_appliances()  # Register all
+        red_hat_updates.update_registration(validate=False if reg_method != 'sat6' else True)
 
-    wait_for(
-        func=red_hat_updates.is_registering,
-        func_args=[appliance.server.name],
-        delay=10,
-        num_sec=240,
-        fail_func=red_hat_updates.refresh
-    )
+        used_repo_or_channel = red_hat_updates.get_repository_names()
 
-    wait_for(
-        func=appliance.is_registration_complete,
-        func_args=[used_repo_or_channel],
-        delay=20,
-        num_sec=400
-    )
+        # FIXME workaround BZ 1532201 (An exception to the rule as it waits for backend config)
+        time.sleep(15)
+        request.addfinalizer(appliance.unregister)
+        red_hat_updates.register_appliances()  # Register all
+
+        wait_for(
+            func=red_hat_updates.is_registering,
+            func_args=[appliance.server.name],
+            delay=10,
+            num_sec=240,
+            fail_func=red_hat_updates.refresh
+        )
+
+        wait_for(
+            func=appliance.is_registration_complete,
+            func_args=[used_repo_or_channel],
+            delay=20,
+            num_sec=400
+        )
 
 
 @pytest.mark.rhel_testing
