@@ -2108,9 +2108,10 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth
     assert user.exists, 'User record for "{}" should exist after login'.format(user.name)
 
 
-def test_view_key_pair(provider, appliance):
+@pytest.mark.meta(automates=[BZ(1741635)])
+def test_view_key_pair(provider, appliance, keypairs):
     """
-    Child tenants can see MIQ AE namespaces of parent tenants.
+    Child tenants can key pairs of parent tenants.
 
     Polarion:
         assignee: nachandr
@@ -2119,12 +2120,9 @@ def test_view_key_pair(provider, appliance):
         tags: cfme_tenancy
         initialEstimate: 1/4h
     """
-    key_pair = provider.appliance.collections.cloud_keypairs.all()[0]
-    user = appliance.rest_api.collections.users.get(userid='admin')
-    data = {
-        "owner": {"href": user.href}
-    }
-    key_pair.set_ownership(**data)
+    view = navigate_to(keypairs, 'All')
+    key_pair = view.entities.get_first_entity().data['name']
+    key_pair.set_ownership("Administrator", "EvmGroup-administrator")
 
 
 @pytest.mark.manual

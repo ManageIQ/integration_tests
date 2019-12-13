@@ -185,7 +185,7 @@ class KeyPair(BaseEntity, Taggable):
         view.toolbar.configuration.item_select('Download private key')
         view.flash.assert_no_error()
 
-    def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
+    def set_ownership(self, owner=None, group=None, click_cancel=False, click_reset=False):
         """Set instance ownership
 
         Args:
@@ -196,8 +196,8 @@ class KeyPair(BaseEntity, Taggable):
         """
         view = navigate_to(self, 'SetOwnership', wait_for_view=0)
         fill_result = view.form.fill({
-            'user_name': user.name if user else None,
-            'group_name': group.description if group else group})
+            'user_name': owner if owner else None,
+            'group_name': group if group else None})
         if not fill_result:
             view.form.cancel_button.click()
             view = self.create_view(navigator.get_class(self, 'Details').VIEW)
@@ -218,8 +218,7 @@ class KeyPair(BaseEntity, Taggable):
             # save the form
             view.form.save_button.click()
             view = self.create_view(navigator.get_class(self, 'Details').VIEW)
-            view.flash.assert_success_message('Ownership saved for selected {}'
-                                              .format(self.name))
+            view.flash.assert_success_message('Ownership saved for selected Key Pair')
 
 
 @attr.s
