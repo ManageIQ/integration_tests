@@ -215,9 +215,8 @@ def test_replication_remote_to_global_by_ip_pglogical(setup_replication):
     assert provider.name in global_app.managed_provider_names, "Provider name not found"
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_appliance_set_type_global_ui():
+def test_replication_appliance_set_type_global_ui(configured_appliance, unconfigured_appliance):
     """
     Set appliance replication type to "Global" and add subscription in the
     UI
@@ -236,7 +235,35 @@ def test_replication_appliance_set_type_global_ui():
             1.
             2. No error, appliance subscribed.
     """
-    pass
+    remote_app, global_app = configured_appliance, unconfigured_appliance
+    app_params = dict(
+        region=99,
+        dbhostname='localhost',
+        username=credentials["database"]["username"],
+        password=credentials["database"]["password"],
+        dbname='vmdb_production',
+        dbdisk=global_app.unpartitioned_disks[0],
+        fetch_key=remote_app.hostname,
+        sshlogin=credentials["ssh"]["username"],
+        sshpass=credentials["ssh"]["password"],
+    )
+
+    global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
+    global_app.evmserverd.wait_for_running()
+    global_app.wait_for_web_ui()
+
+    # Making configured app to Remote Appliance using UI
+    remote_region = remote_app.collections.regions.instantiate()
+    remote_region.replication.set_replication(replication_type="remote")
+
+    # Adding Remote Appliance into Global appliance using UI
+    global_region = global_app.collections.regions.instantiate(number=99)
+    global_region.replication.set_replication(
+        replication_type="global", updates={"host": remote_app.hostname}, validate=True)
+
+    # Validating replication
+    assert global_region.replication.get_replication_status(
+        host=remote_app.hostname), "Replication is not started."
 
 
 @pytest.mark.tier(2)
