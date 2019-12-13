@@ -141,3 +141,6 @@ class SproutClient(object):
 
     def destroy_pool(self, pool_id):
         self.call_method('destroy_pool', id=pool_id)
+
+    def prolong_pool(self, pool_id, minutes):
+        self.call_method('prolong_appliance_pool_lease', id=pool_id, minutes=minutes)
