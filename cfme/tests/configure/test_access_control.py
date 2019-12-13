@@ -124,11 +124,13 @@ def tenant_role(appliance, request):
     with update(tenant_role):
         if appliance.version < '5.11':
             tenant_role.product_features = [
-                (['Everything', 'Settings', 'Configuration', 'Settings'], True)
+                (['Everything', 'Settings', 'Configuration', 'Settings'], True),
+                (['Everything', 'Compute', 'Clouds', 'Auth Key Pairs'], True)
             ]
         else:
             tenant_role.product_features = [
-                (['Everything', 'Main Configuration', 'Settings'], True)
+                (['Everything', 'Main Configuration', 'Settings'], True),
+                (['Everything', 'Compute', 'Clouds', 'Auth Key Pairs'], True)
             ]
     yield tenant_role
     tenant_role.delete_if_exists()
@@ -2104,6 +2106,25 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth
 
     appliance.server.login_admin()
     assert user.exists, 'User record for "{}" should exist after login'.format(user.name)
+
+
+def test_view_key_pair(provider, appliance):
+    """
+    Child tenants can see MIQ AE namespaces of parent tenants.
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+    """
+    key_pair = provider.appliance.collections.cloud_keypairs.all()[0]
+    user = appliance.rest_api.collections.users.get(userid='admin')
+    data = {
+        "owner": {"href": user.href}
+    }
+    key_pair.set_ownership(**data)
 
 
 @pytest.mark.manual
