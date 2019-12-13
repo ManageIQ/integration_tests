@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+from wait_for import wait_for
 from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
@@ -9,6 +10,7 @@ from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
+from cfme.utils.log import logger
 
 pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
@@ -27,6 +29,24 @@ def create_vm(provider, vm_name):
     )
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm
+
+
+def is_dicts_same(dict1, dict2):
+    logger.info(f"Comparing two dictionaries dict1: {dict1}\n dict2:{dict2}")
+    dict1_keys = dict1.keys()
+    dict2_keys = dict2.keys()
+    if not len(dict1_keys) == len(dict2_keys):
+        return False
+    for key in dict1_keys:
+        if key in dict2_keys:
+            if not len(dict1[key]) == len(dict2[key]):
+                return False
+            for value in dict1[key]:
+                if not (value in dict2[key]):
+                    return False
+        else:
+            return False
+    return True
 
 
 @pytest.fixture
@@ -324,9 +344,8 @@ def test_replication_network_dropped_packets():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_global_region_dashboard():
+def test_replication_global_region_dashboard(setup_replication):
     """
     Global dashboard show remote data
 
@@ -342,7 +361,57 @@ def test_replication_global_region_dashboard():
             1.
             2. Dashboard on the Global displays data from the Remote region
     """
-    pass
+    remote_app, global_app = setup_replication
+    remote_provider = provider_app_crud(RHEVMProvider, remote_app)
+    remote_provider.setup()
+    assert remote_provider.name in remote_app.managed_provider_names, "Provider is not available."
+
+    new_vm_name = fauxfactory.gen_alphanumeric(start="test_rep_dashboard", length=25).lower()
+    vm = create_vm(provider=remote_provider, vm_name=new_vm_name)
+    data_items = ('EVM: Recently Discovered Hosts', 'EVM: Recently Discovered VMs',
+                  'Top Storage Consumers')
+
+    remote_dashboard = remote_app.collections.dashboards.instantiate(name="Default Dashboard")
+    remote_view = navigate_to(remote_app.server, "Dashboard")
+    remote_view.browser.refresh()
+    remote_dashboard = remote_view.dashboards("Default Dashboard")
+    remote_app_data = global_app_data = {}
+
+    def get_tabel_data(widget):
+        return [row.name.text for row in widget.contents]
+
+    for table in data_items:
+        remote_widget = remote_dashboard.widgets(table)
+        wait_for(
+            lambda: bool(get_tabel_data(remote_widget)), delay=10, num_sec=900,
+            fail_func=remote_view.browser.refresh,
+            message=f"Waiting for data item of {table} table."
+        )
+        chart_data = get_tabel_data(remote_widget)
+        remote_app_data[table] = chart_data
+
+    global_view = navigate_to(global_app.server, "Dashboard")
+    global_view.browser.refresh()
+    global_dashboard = global_view.dashboards("Default Dashboard")
+    global_app_data = {}
+    for table in data_items:
+        global_widget = global_dashboard.widgets(table)
+        wait_for(
+            lambda: bool(get_tabel_data(global_widget)), delay=10, num_sec=900,
+            fail_func=global_view.browser.refresh,
+            message=f"Waiting for data item of {table} table."
+        )
+        chart_data = get_tabel_data(global_widget)
+        global_app_data[table] = chart_data
+
+    # TODO(ndhandre): Widget not implemented so some widget not checking in this test case
+    #  'Vendor and Guest OS Chart', 'Top Memory Consumers (weekly)', 'Top CPU Consumers (weekly)',
+    #  'Virtual Infrastructure Platforms', 'Guest OS Information'
+
+    assert is_dicts_same(remote_app_data, global_app_data), "Dashboard is not same."
+
+    # CleanUp
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.tier(1)
