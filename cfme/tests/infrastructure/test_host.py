@@ -597,7 +597,6 @@ def test_incomplete_edit_multi_infrastructure_hosts(appliance, setup_provider_mi
         h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Edit Selected items',
                                                 handle_alert=False)
-                                                
     edit_view = provider.create_view(HostsEditView)
     edit_string = f'usertest.'
     edit_view.endpoints.default.username.fill(edit_string)
@@ -605,6 +604,5 @@ def test_incomplete_edit_multi_infrastructure_hosts(appliance, setup_provider_mi
     # now verify the change is displayed.
     host_view = provider.create_view(HostDetailsView)
     if provider.type == 'rhevm':
-        host_view.flash.assert_success_message(f'Edit of credentials for selected Hosts / Nodes was '
-                                           f'cancelled by the user')
-
+        host_view.flash.assert_success_message(f'Edit of credentials for selected Hosts / Nodes '
+                                               f'was cancelled by the user')
