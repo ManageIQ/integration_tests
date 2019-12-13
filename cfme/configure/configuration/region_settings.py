@@ -1038,7 +1038,7 @@ class Replication(NavigatableMixin):
                 'password': (
                     updates.get('password') if updates.get('password') else db_creds.password)
             })
-        else:
+        elif replication_type == 'remote':
             view = navigate_to(self, 'RemoteAdd')
             # TODO fill remote settings will be done after widget added
         if reset:
@@ -1046,12 +1046,11 @@ class Replication(NavigatableMixin):
             view.flash.assert_message('All changes have been reset')
         else:
             try:
-                if validate:
-                    view.action_dropdown.item_select("Validate")
-                    view.flash.assert_success_message(
-                        "Subscription Credentials validated successfully"
-                    )
-                view.accept_button.click()
+                if replication_type == 'global':
+                    if validate:
+                        view.action_dropdown.item_select("Validate")
+                        view.flash.assert_no_error()
+                    view.accept_button.click()
                 view.save_button.click()
             except Exception:
                 logger.warning('Nothing was updated, please check the data')
