@@ -2,77 +2,24 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.conf import cfme_data
-from cfme.utils.conf import credentials
-from cfme.utils.generators import random_vm_name
-from cfme.utils.log import logger
-from cfme.utils.net import find_pingable
-from cfme.utils.ssh import SSHClient
-from cfme.utils.virtual_machines import deploy_template
-from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.provider([AzureProvider, GCEProvider], scope='module'),
+    pytest.mark.provider([AzureProvider, GCEProvider, EC2Provider], scope='module'),
     pytest.mark.usefixtures('setup_provider_modscope'),
     test_requirements.appliance
 ]
 
 
-@pytest.fixture(scope='module')
-def proxy_machine():
-    """ Deploy vm for proxy test
-
-    This fixture uses for deploy vm on provider from yaml and then receive it's ip
-    After test run vm deletes from provider
-    """
-    try:
-        data = cfme_data.proxy_template
-        proxy_port = data.port
-        vm = deploy_template(
-            data.provider,
-            random_vm_name('proxy'),
-            template_name=data.template_name
-        )
-    except AttributeError:
-        msg = 'Missing data in cfme_data.yaml, cannot deploy proxy'
-        logger.exception(msg)
-        pytest.skip(msg)
-
-    try:
-        found_ip, _ = wait_for(
-            find_pingable,
-            func_args=[vm],
-            fail_condition=None,
-            delay=5,
-            num_sec=300
-        )
-    except TimedOutError:
-        msg = 'Timed out waiting for reachable proxy VM IP'
-        logger.exception(msg)
-        pytest.skip(msg)
-
-    yield found_ip, proxy_port
-    vm.delete()
-
-
-@pytest.fixture(scope='module')
-def proxy_ssh(proxy_machine):
-    proxy_ip, __ = proxy_machine
-    with SSHClient(
-            hostname=proxy_ip,
-            **credentials['proxy_vm']) as ssh_client:
-        yield ssh_client
-
-
-def validate_proxy_logs(provider, proxy_ssh, appliance_ip):
+def validate_proxy_logs(provider, utility_vm_ssh, appliance_ip):
 
     def _is_ip_in_log():
         provider.refresh_provider_relationships()
-        return proxy_ssh.run_command(
+        return utility_vm_ssh.run_command(
             "grep {} /var/log/squid/access.log".format(appliance_ip)).success
 
     # need to wait until requests will occur in access.log or check if its empty after some time
@@ -81,25 +28,25 @@ def validate_proxy_logs(provider, proxy_ssh, appliance_ip):
 
 
 @pytest.fixture(scope="function")
-def prepare_proxy_specific(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, proxy_port = proxy_machine
+def prepare_proxy_specific(utility_vm_ssh, provider, appliance, utility_vm_proxy_data):
+    proxy_ip, proxy_port = utility_vm_proxy_data
     prov_type = provider.type
     # 192.0.2.1 is from TEST-NET-1 which doesn't exist on the internet (RFC5737).
     appliance.set_proxy('192.0.2.1', proxy_port, prov_type='default')
     appliance.set_proxy(proxy_ip, proxy_port, prov_type=prov_type)
-    proxy_ssh.run_command('echo "" > /var/log/squid/access.log')
+    utility_vm_ssh.run_command('echo "" > /var/log/squid/access.log')
     yield
     appliance.reset_proxy(prov_type)
     appliance.reset_proxy()
 
 
 @pytest.fixture(scope="function")
-def prepare_proxy_default(proxy_ssh, provider, appliance, proxy_machine):
-    proxy_ip, proxy_port = proxy_machine
+def prepare_proxy_default(utility_vm_ssh, provider, appliance, utility_vm_proxy_data):
+    proxy_ip, proxy_port = utility_vm_proxy_data
     prov_type = provider.type
     appliance.set_proxy(proxy_ip, proxy_port, prov_type='default')
     appliance.reset_proxy(prov_type)
-    proxy_ssh.run_command('echo "" > /var/log/squid/access.log')
+    utility_vm_ssh.run_command('echo "" > /var/log/squid/access.log')
     yield
     appliance.reset_proxy()
     appliance.reset_proxy(prov_type)
@@ -116,7 +63,7 @@ def prepare_proxy_invalid(provider, appliance):
     appliance.reset_proxy()
 
 
-def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default, provider):
+def test_proxy_valid(appliance, utility_vm_ssh, prepare_proxy_default, provider):
     """ Check whether valid proxy settings works.
 
     Bugzilla:
@@ -132,7 +79,7 @@ def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default,
             3. Chceck whether the provider is accessed trough proxy by chceking the proxy logs.
     """
     provider.refresh_provider_relationships()
-    validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
+    validate_proxy_logs(provider, utility_vm_ssh, appliance.hostname)
     wait_for(
         provider.is_refreshed,
         func_kwargs={"refresh_delta": 120},
@@ -142,7 +89,7 @@ def test_proxy_valid(appliance, proxy_machine, proxy_ssh, prepare_proxy_default,
     )
 
 
-def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
+def test_proxy_override(appliance, utility_vm_ssh, prepare_proxy_specific, provider):
     """ Check whether invalid default and valid specific provider proxy settings
     results in provider refresh working.
 
@@ -160,7 +107,7 @@ def test_proxy_override(appliance, proxy_ssh, prepare_proxy_specific, provider):
             4. Wait for the provider refresh to complete to check the settings worked.
     """
     provider.refresh_provider_relationships()
-    validate_proxy_logs(provider, proxy_ssh, appliance.hostname)
+    validate_proxy_logs(provider, utility_vm_ssh, appliance.hostname)
     wait_for(
         provider.is_refreshed,
         func_kwargs={"refresh_delta": 120},
@@ -192,7 +139,9 @@ def test_proxy_invalid(appliance, prepare_proxy_invalid, provider):
 
     def last_refresh_failed():
         view.toolbar.reload.click()
-        return 'Timed out connecting to server' in (
+        refresh_failed_msg = ('execution expired' if provider.one_of(EC2Provider) else
+                              'Timed out connecting to server')
+        return refresh_failed_msg in (
             view.entities.summary('Status').get_text_of('Last Refresh'))
 
     wait_for(last_refresh_failed,
@@ -257,318 +206,5 @@ def test_proxy_remove_azure():
                server to be absolutely sure.
         startsin: 5.7
         upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_override_gce():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  For this test you want to create a
-    bogus setting for the default entry and a correct entry for ec2 so
-    that you can make sure it is switching to ec2 correctly.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        setup: Make sure you create a bad proxy for default and a correct proxy for
-               ec2 so that you are certain we grab the right entry.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_override_ec2():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  For this test you want to create a
-    bogus setting for the default entry and a correct entry for ec2 so
-    that you can make sure it is switching to ec2 correctly.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/8h
-        setup: Make sure you create a bad proxy for default and a correct proxy for
-               ec2 so that you are certain we grab the right entry.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_override_azure():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  For this test you want to create a
-    bogus setting for the default entry and a correct entry for azure so
-    that you can make sure it is switch to azure correctly.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: Setup the azure proxy correct and the default proxy incorrectly and
-               make sure azure uses the correct entry.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_azure():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/2h
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_gce():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/8h
-        setup: The only thing different you need to do for this is enter some wrong
-               information and Refresh Relationships.  Wait two minutes and refresh
-               the page.  You"ll definitely get an error if any of the values are
-               wrong.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_default():
-    """
-    With 5.7 there is a new feature that allows users to specify a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the default proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/2h
-        setup: The mojo page has all the information you will need.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_invalid_ec2():
-    """
-    With 5.7 there is a new feature that allows users to specify a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  You just need to fill in the
-    appropriate information, only screw up a few of the values to make
-    sure it reports a connection error.
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/4h
-        setup: Follow the instructions in the mojo document.
-        startsin: 5.7
-        teardown: You should probably reset or delete the changes.
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_gce():
-    """
-    With 5.7.1 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/4h
-        setup: Configure advanced settings for GCE proxy.
-               Add gce provider
-               Probably need to check the packets to make sure they are vectoring
-               through the proxy server, or just check the proxy server log.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_default():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Follow the instructions in the mojo doc above.
-        startsin: 5.7
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_azure():
-    """
-    With 5.7 there is a new feature that allows users to specific a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the azure proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Configure advanced settings for Azure proxy.
-               Add azure provider
-               Probably need to check the packets to make sure they are vectoring
-               through the proxy server, or just check the proxy server log.
-        startsin: 5.7
-        upstream: yes
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_proxy_valid_ec2():
-    """
-    With 5.7 there is a new feature that allows users to specify a
-    specific set of proxy settings for each cloud provider.  The way you
-    enable this is to go to Configuration/Advanced Settings and scroll
-    down to the ec2 proxy settings.  You just need to fill in the
-    appropriate information
-    Here are the proxy instructions:
-    https://mojo.redhat.com/docs/DOC-1103999
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Cloud
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup: Follow the instructions in the mojo doc above as it is easier to
-               change in one place.
-        startsin: 5.7
-    """
-    pass
-
-
-@test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_proxy():
-    """
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1/2h
-        caseimportance: high
-        testSteps:
-            1. Go to Configuration -> Advanced Settings
-            2. Find:
-            :http_proxy:
-            :ec2:
-            :host:
-            :password:
-            :port:
-            :user:
-            and fill in squid proxy credentials
-            3. Add an ec2 provider
-        expectedResults:
-            1.
-            2.
-            3. Check whether traffic goes through squid proxy
-            Check whether ec2 provider was refreshed successfully
     """
     pass

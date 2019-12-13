@@ -149,7 +149,7 @@ def is_pingable(ip_addr):
         if status == 0:
             logger.info('IP: %s is RESPONDING !', ip_addr)
             return True
-        logger.info('IP: %s is UNREACHABLE !', ip_addr)
+        logger.info('ping exit status: %d, IP: %s is UNREACHABLE !', status, ip_addr)
         return False
     except Exception as e:
         logger.exception(e)

@@ -1,0 +1,10 @@
+#cloud-config
+
+debug: True
+ssh_pwauth: True
+disable_root: false
+chpasswd:
+  list: |
+    root:changeme
+    cloud-user:changeme
+  expire: false
