@@ -1222,10 +1222,16 @@ def test_permissions_role_crud(appliance):
         casecomponent: Configuration
         tags: rbac
     """
-    single_task_permission_test(appliance,
-                                [['Everything', 'Settings', 'Configuration'],
-                                 ['Everything', 'Services', 'Catalogs Explorer']],
-                                {'Role CRUD': test_role_crud})
+    configuration = (
+        ["Everything", "Settings", "Configuration"]
+        if appliance.version < "5.11"
+        else ["Everything", "Main Configuration"]
+    )
+    single_task_permission_test(
+        appliance,
+        [configuration, ['Everything', 'Services', 'Catalogs Explorer']],
+        {'Role CRUD': test_role_crud}
+    )
 
 
 @pytest.mark.tier(3)
@@ -1241,8 +1247,7 @@ def test_permissions_vm_provisioning(appliance, provider, setup_provider):
     """
     features = [
         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-         'Provision VMs']
+        ['Everything', ACCESS_RULES_VMS, 'VM Access Rules', 'Modify', 'Provision VMs']
     ]
 
     single_task_permission_test(
