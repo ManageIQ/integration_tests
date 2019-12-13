@@ -94,8 +94,11 @@ class OrderServiceCatalogView(OrderForm):
 
 
 @MiqImplementationContext.external_for(ServiceCatalogs.order, ViaUI)
-def order(self):
-    view = navigate_to(self, 'Order')
+def order(self, **kwargs):
+    # If dynamic dialog attached then it will take execution time as per respected method.
+    wait_for_view = kwargs.get("wait_for_view", 10)
+
+    view = navigate_to(self, 'Order', wait_for_view=wait_for_view)
     if self.stack_data:
         view.fill(self.stack_data)
     if self.dialog_values:
