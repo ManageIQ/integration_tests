@@ -15,8 +15,8 @@ from cfme.common.provider_views import ProviderDetailsView
 from cfme.common.provider_views import ProviderTimelinesView
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.datastore import ProviderAllDatastoresView
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider import ProviderClustersView
 from cfme.infrastructure.provider import ProviderTemplatesView
 from cfme.infrastructure.provider import ProviderVmsView
@@ -27,8 +27,8 @@ from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.log_validator import LogValidator
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 
@@ -530,7 +530,7 @@ def test_provider_details_page_refresh_after_clear_cookies(
 
 
 @pytest.mark.tier(1)
-@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize("option", ALL_OPTIONS)
 def test_infrastructure_provider_left_panel_titles(
     setup_provider, provider, option, soft_assert
@@ -570,7 +570,7 @@ def test_infrastructure_provider_left_panel_titles(
         )
         if not accordion.tree.is_disabled(partial_match(panel)):
             accordion.tree.select(partial_match(panel))
-            test_view = provider.create_view(ALL_OPTIONS[option][panel], wait="40s")
+            test_view = provider.create_view(ALL_OPTIONS[option][panel], wait="60s")
             soft_assert(test_view.is_displayed, f"{test_view} not displayed.")
         else:
             logger.info(f"'{panel}' was not tested, it did not enable.")
