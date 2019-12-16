@@ -62,8 +62,10 @@ class Filedump(ArtifactorBasePlugin):
         if not slaveid:
             slaveid = "Master"
             if slaveid not in self.store:
-                self.store[slaveid] = {"test_location": test_location or "",
-                                       "test_name": test_name or ""}
+                self.store[slaveid] = {
+                    "test_location": test_location or "",
+                    "test_name": test_name or ""
+                }
         test_ident = "{}/{}".format(
             self.store[slaveid]["test_location"], self.store[slaveid]["test_name"]
         )
@@ -100,7 +102,7 @@ class Filedump(ArtifactorBasePlugin):
             if contents_base64:
                 contents = base64.b64decode(contents)
             if isinstance(contents, bytes):
-                mode = 'wb'
+                mode = "wb"
             with open(os_filename, mode) as f:
                 f.write(contents)
 
