@@ -53,6 +53,9 @@ def pytest_configure(config):
         appliances = [
             DummyAppliance.from_config(config) for _ in range(config.getoption('--num-dummies'))
         ]
+        if not config.option.collectonly:
+            config.option.collectonly = True
+
         reporter.write_line('Retrieved Dummy Appliance', red=True)
     elif stack.top:
         appliances = [stack.top]
