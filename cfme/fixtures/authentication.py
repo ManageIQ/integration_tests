@@ -31,16 +31,16 @@ def openldap_auth_provider():
 
 
 @pytest.fixture(scope='function')
-def setup_ipa_auth_provider(temp_appliance_preconfig_long, ipa_auth_provider):
+def setup_ipa_auth_provider(temp_appliance_preconfig_modscope_rhevm, ipa_auth_provider):
     """Add/Remove IPA auth provider"""
-    original_config = temp_appliance_preconfig_long.server.authentication.auth_settings
-    temp_appliance_preconfig_long.server.authentication.configure(auth_mode='external',
+    original_config = temp_appliance_preconfig_modscope_rhevm.server.authentication.auth_settings
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.configure(auth_mode='external',
                                               auth_provider=ipa_auth_provider)
     yield
 
-    temp_appliance_preconfig_long.server.authentication.auth_settings = original_config
-    temp_appliance_preconfig_long.server.login_admin()
-    temp_appliance_preconfig_long.server.authentication.configure(auth_mode='database')
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.auth_settings = original_config
+    temp_appliance_preconfig_modscope_rhevm.server.login_admin()
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.configure(auth_mode='database')
 
 
 @pytest.fixture(scope='function')
@@ -67,17 +67,17 @@ def setup_ldap_auth_provider(appliance, ldap_auth_provider):
 
 
 @pytest.fixture(scope='module')
-def setup_aws_auth_provider(temp_appliance_preconfig_long, amazon_auth_provider):
+def setup_aws_auth_provider(temp_appliance_preconfig_modscope_rhevm, amazon_auth_provider):
     """Configure AWS IAM authentication mode"""
-    original_config = temp_appliance_preconfig_long.server.authentication.auth_settings
-    temp_appliance_preconfig_long.server.authentication.configure(auth_mode='amazon',
+    original_config = temp_appliance_preconfig_modscope_rhevm.server.authentication.auth_settings
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.configure(auth_mode='amazon',
                                               auth_provider=amazon_auth_provider)
     sleep(60)  # wait for MIQ to update, no trigger to look for, but if you try too soon it fails
     yield
 
-    temp_appliance_preconfig_long.server.authentication.auth_settings = original_config
-    temp_appliance_preconfig_long.server.login_admin()
-    temp_appliance_preconfig_long.server.authentication.configure(auth_mode='database')
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.auth_settings = original_config
+    temp_appliance_preconfig_modscope_rhevm.server.login_admin()
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.configure(auth_mode='database')
 
 
 @pytest.fixture(scope='module')
@@ -101,17 +101,18 @@ def auth_provider(prov_key):
 
 
 @pytest.fixture(scope='module')
-def ensure_resolvable_hostname(temp_appliance_preconfig_long):
+def ensure_resolvable_hostname(temp_appliance_preconfig_modscope_rhevm):
     """
     Intended for use with freeipa configuration, ensures a resolvable hostname on the appliance
 
     Tries to resolve the appliance hostname property and skips the test if it can't
     """
-    assert temp_appliance_preconfig_long.set_resolvable_hostname()
+    assert temp_appliance_preconfig_modscope_rhevm.set_resolvable_hostname()
 
 
 @pytest.fixture(scope='function')
-def configure_auth(temp_appliance_preconfig_long, auth_mode, auth_provider, user_type, request):
+def configure_auth(temp_appliance_preconfig_modscope_rhevm, auth_mode,
+                   auth_provider, user_type, request):
     """Given auth_mode, auth_provider, user_type parametrization, configure auth for login
     testing.
 
@@ -120,31 +121,31 @@ def configure_auth(temp_appliance_preconfig_long, auth_mode, auth_provider, user
     Separate freeipa / openldap config methods and finalizers
     Restores original auth settings after yielding
     """
-    original_config = temp_appliance_preconfig_long.server.authentication.auth_settings
+    original_config = temp_appliance_preconfig_modscope_rhevm.server.authentication.auth_settings
     logger.debug('Original auth settings before configure_auth fixture: %r', original_config)
     if auth_mode.lower() != 'external':
-        temp_appliance_preconfig_long.server.authentication.configure(auth_mode=auth_mode,
+        temp_appliance_preconfig_modscope_rhevm.server.authentication.configure(auth_mode=auth_mode,
                                                   auth_provider=auth_provider,
                                                   user_type=user_type)
     elif auth_mode.lower() == 'external':  # extra explicit
         if auth_provider.auth_type == 'freeipa':
-            temp_appliance_preconfig_long.configure_freeipa(auth_provider)
-            request.addfinalizer(temp_appliance_preconfig_long.disable_freeipa)
+            temp_appliance_preconfig_modscope_rhevm.configure_freeipa(auth_provider)
+            request.addfinalizer(temp_appliance_preconfig_modscope_rhevm.disable_freeipa)
         elif auth_provider.auth_type == 'openldaps':
-            temp_appliance_preconfig_long.configure_openldap(auth_provider)
-            request.addfinalizer(temp_appliance_preconfig_long.disable_openldap)
+            temp_appliance_preconfig_modscope_rhevm.configure_openldap(auth_provider)
+            request.addfinalizer(temp_appliance_preconfig_modscope_rhevm.disable_openldap)
 
     # Auth reconfigure is super buggy and sensitive to timing
     # Just waiting on sssd to be running, or an httpd restart isn't sufficient
     sleep(30)
     yield
     # return to original auth config
-    temp_appliance_preconfig_long.server.authentication.auth_settings = original_config
-    temp_appliance_preconfig_long.evmserverd.restart()
-    temp_appliance_preconfig_long.wait_for_web_ui()
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.auth_settings = original_config
+    temp_appliance_preconfig_modscope_rhevm.evmserverd.restart()
+    temp_appliance_preconfig_modscope_rhevm.wait_for_web_ui()
     # after waiting for web ui to reappear we are greeted with an API logout message
     # and stuck on the login screen without the login widgets having loaded
     sleep(30)
     # After evmserverd restart, we need to logout from the appliance in the UI.
     # Otherwise the UI would be in a bad state and produce errors while testing.
-    temp_appliance_preconfig_long.server.logout()
+    temp_appliance_preconfig_modscope_rhevm.server.logout()
