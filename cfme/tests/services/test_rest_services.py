@@ -2499,3 +2499,94 @@ def test_service_refresh_dialog_fields_default_values(
         expected_tag_0_function == response["tag_0_function"]["values"],
         "Default values for 'tag_0_function' did not match.",
     )
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1702479])
+@pytest.mark.customer_scenario
+@test_requirements.rest
+def test_crud_service_template_with_picture(appliance, request, service_catalog_obj, dialog):
+    """
+    Bugzilla:
+        1702479
+        1683723
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Create a service catalog and service dialog.
+        testSteps:
+            1. Create a service template via REST with picture.
+            2. Note the picture md5 by querying `picture` attribute of the service template.
+            3. Edit the service template via REST for a different picture.
+            4. Note the picture md5 by querying `picture` attribute of the service template.
+            5. Compare both the md5 from testStep 2 and 4.
+        expectedResults:
+            1. Service template created successfully without any error.
+            2.
+            3. Service template edited successfully without any error.
+            4.
+            5. Both the md5 values must be different.
+    """
+    data = {
+        "name": fauxfactory.gen_alpha(start="Name_"),
+        "prov_type": "generic",
+        "service_template_catalog_id": service_catalog_obj.rest_api_entity.id,
+        "config_info": {
+            "retirement": {
+                "fqname": "/Service/Retirement/StateMachines/ServiceRetirement/Default",
+                "dialog_id": dialog.rest_api_entity.id,
+            },
+            "provision": {
+                "fqname": (
+                    "/Service/Provisioning/StateMachines/ServiceProvision_Template/"
+                    "CatalogItemInitialization"
+                ),
+                "dialog_id": dialog.rest_api_entity.id,
+            },
+        },
+        "service_type": "atomic",
+        "display": True,
+        "description": fauxfactory.gen_alpha(start="Description ", length=25),
+        "picture": {
+            "content": (
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6Jg"
+                "AAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACXBIWXMAAAsTAAALEwEAmpwYAAABWWlUWHRY"
+                "TUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bX"
+                "B0az0iWE1QIENvcmUgNS40LjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3Jn"
+                "LzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD"
+                "0iIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyI+CiAg"
+                "ICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgIDwvcmRmOkRlc2"
+                "NyaXB0aW9uPgogICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgpMwidZAAAADUlEQVQIHWNgYGCwBQAAQgA+"
+                "3N0+xQAAAABJRU5ErkJggg=="
+            ),
+            "extension": "jpg",
+        },
+    }
+    service_template = appliance.rest_api.collections.service_templates.action.create(**data)[0]
+    assert_response(appliance)
+    request.addfinalizer(service_template.action.delete)
+
+    picture_1_md5 = appliance.rest_api.get(f"{service_template._href}?attributes=picture")[
+        "picture"
+    ]["md5"]
+
+    updated_data = {
+        "picture": {
+            "content": (
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUl"
+                "EQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            ),
+            "extension": "jpg",
+        }
+    }
+    service_template.action.edit(**updated_data)
+    assert_response(appliance)
+
+    picture_2_md5 = appliance.rest_api.get(f"{service_template._href}?attributes=picture")[
+        "picture"
+    ]["md5"]
+
+    assert picture_1_md5 != picture_2_md5
