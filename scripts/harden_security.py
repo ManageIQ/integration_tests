@@ -77,6 +77,9 @@ def main():
     def update_db_yaml(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
             client.run_command('cd /var/www/miq/vmdb')
+            # TODO Issue 8595, MiqPassword alias/gem will go away
+            # IPAppliance.password_gem property version picks the gem name
+            # We only have an address here, will have to look for the gem.
             result = client.run_rails_command(
                 '\'puts MiqPassword.encrypt("smartvm");\'')
             if result.failed:
