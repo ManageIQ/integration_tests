@@ -569,12 +569,20 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf',
                 ensure_host=True)
 
+    @cached_property
+    def password_gem(self):
+        return VersionPicker({
+            Version.lowest(): 'MiqPassword',
+            '5.11': 'ManageIQ::Password'
+        }).pick(self.version)
+
     def _encrypt_string(self, string):
         try:
             # Let's not log passwords
             logging.disable(logging.CRITICAL)
             result = self.ssh_client.run_rails_command(
-                "\"puts MiqPassword.encrypt('{}')\"".format(string))
+                f'"puts {self.password_gem}.encrypt(\'{string}\')"'
+            )
             return result.output.strip()
         finally:
             logging.disable(logging.NOTSET)

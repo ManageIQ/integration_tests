@@ -129,7 +129,7 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1720432])
-def test_miq_password_decrypt(klass):
+def test_miq_password_decrypt(appliance, klass):
     """
     Polarion:
         assignee: ghubale
@@ -142,9 +142,9 @@ def test_miq_password_decrypt(klass):
     # Ruby script for decrypting password
     script = (
         'require "manageiq-password"\n'
-        'root_password = MiqPassword.encrypt("abc")\n'
+        f'root_password = {appliance.password_gem}.encrypt("abc")\n'
         '$evm.log("info", "Root Password is #{root_password}")\n'
-        'root_password_decrypted = MiqPassword.decrypt(root_password)\n'
+        f'root_password_decrypted = {appliance.password_gem}.decrypt(root_password)\n'
         '$evm.log("info", "Decrypted password is #{root_password_decrypted}")'
     )
 
