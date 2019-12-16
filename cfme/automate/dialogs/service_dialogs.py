@@ -9,6 +9,7 @@ from cfme.automate.dialogs import AddDialogView
 from cfme.automate.dialogs import AutomateCustomizationView
 from cfme.automate.dialogs import EditDialogView
 from cfme.automate.dialogs.dialog_tab import TabCollection
+from cfme.exceptions import RestLookupError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -88,6 +89,15 @@ class Dialog(BaseEntity, Fillable):
         view.flash.assert_no_error()
         view.flash.assert_success_message(
             'Dialog "{}": Delete successful'.format(self.label))
+
+    @property
+    def rest_api_entity(self):
+        try:
+            return self.appliance.rest_api.collections.service_dialogs.get(label=self.label)
+        except ValueError:
+            raise RestLookupError(
+                f"No service dialog rest entity found matching label {self.label}"
+            )
 
 
 @attr.s
