@@ -372,10 +372,11 @@ def test_replication_global_to_remote_new_vm_from_template(request, setup_replic
     new_vm_name = fauxfactory.gen_alphanumeric(start="test_replication_", length=25).lower()
     global_provider = provider_app_crud(RHEVMProvider, global_app)
     vm = create_vm(provider=global_provider, vm_name=new_vm_name)
-    remote_provider.refresh_provider_relationships()
-    assert new_vm_name in [vm.name for vm in remote_app.collections.infra_vms.filter
-    ({"provider": remote_provider}).all()], f"{new_vm_name} vm is not found in Remote Appliance"
     request.addfinalizer(vm.cleanup_on_provider)
+    remote_provider.refresh_provider_relationships()
+    assert (remote_app.collections.infra_vms.instantiate(new_vm_name, remote_provider).exists), (
+        f"{new_vm_name} vm is not found in Remote Appliance"
+    )
 
 
 @pytest.mark.tier(1)
