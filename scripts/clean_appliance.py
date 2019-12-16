@@ -14,7 +14,6 @@ import argparse
 import subprocess
 import sys
 
-from cfme.utils.appliance import RegularAppliance
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
 from cfme.utils.ssh import SSHClient
@@ -41,12 +40,6 @@ def main():
     }
     if args.hostname is not None:
         ssh_kwargs['hostname'] = args.hostname
-        appliance = RegularAppliance(args.hostname)
-        if appliance.version < '5.9':
-            # Running evm:db:reset on CFME 5.8 sometimes leaves it in a state
-            # where it is unable to start again
-            print('EXITING: This script does not work reliably for CFME 5.8')
-            return 1
 
     with SSHClient(stream_output=not args.quiet, **ssh_kwargs) as ssh_client:
         # Graceful stop is done here even though it is slower than killing ruby processes.

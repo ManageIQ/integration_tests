@@ -22,7 +22,6 @@ def _param_check(metafunc, argnames, argvalues):
         * ``True`` if this test should be parametrized
         * ``False`` if it shouldn't be parametrized
         * ``None`` if the test will be uncollected
-
     """
     assert isinstance(argvalues, list), "iterators break pytest expectations"
     # If no parametrized args were named, don't parametrize
@@ -41,8 +40,8 @@ def _param_check(metafunc, argnames, argvalues):
         funcname = metafunc.function.__name__
 
         test_name = '.'.join([_f for _f in (modname, classname, funcname) if _f])
-        uncollect_msg = 'Parametrization for {} yielded no values,'\
-            ' marked for uncollection'.format(test_name)
+        uncollect_msg = (f'Parametrization for {test_name} yielded no values, '
+                         f'marked for uncollection')
         logger.warning(uncollect_msg)
 
         # apply the mark

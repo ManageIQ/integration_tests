@@ -12,7 +12,7 @@ unsupported, hilarity may ensue.
 import argparse
 import sys
 
-from cfme.utils.appliance import RegularAppliance
+from cfme.utils.appliance import DefaultAppliance
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     args = parser.parse_args()
 
     print('Initializing Appliance Internal DB')
-    ip_a = RegularAppliance(args.address)
+    ip_a = DefaultAppliance(args.address)
     status, out = ip_a.db.enable_internal(args.region)
 
     if status != 0:

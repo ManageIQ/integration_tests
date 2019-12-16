@@ -1,7 +1,9 @@
 import pytest
 
 from cfme.infrastructure.provider import InfraProvider
-from cfme.utils.testgen import ALL, ONE
+from cfme.utils.testgen import ALL
+from cfme.utils.testgen import ONE
+
 
 pytestmark = [
     pytest.mark.provider([InfraProvider], scope='module', selector=ONE),
@@ -9,7 +11,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.appliance(['regular'], scope='function')
+@pytest.mark.appliance(['default'], scope='function')
 def test_one_app_type(appliance, provider):
     pass
 
