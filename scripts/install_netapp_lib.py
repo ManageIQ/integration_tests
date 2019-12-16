@@ -3,8 +3,8 @@
 """
 import argparse
 
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.appliance import get_or_create_current_appliance
-from cfme.utils.appliance import RegularAppliance
 from cfme.utils.conf import cfme_data
 
 
@@ -30,7 +30,7 @@ def main():
     if not args.address:
         appliance = get_or_create_current_appliance()
     else:
-        appliance = RegularAppliance(hostname=args.address)
+        appliance = DefaultAppliance(hostname=args.address)
     print('Address: {}'.format(appliance.hostname))
     print('SDK URL: {}'.format(args.sdk_url))
     print('Restart: {}'.format(args.restart))

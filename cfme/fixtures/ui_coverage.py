@@ -124,8 +124,8 @@ class CoverageManager(object):
     def collection_appliance(self):
         # if parallelized, this is decided in sessionstart and written to the conf
         if store.parallelizer_role == 'slave':
-            from cfme.utils.appliance import RegularAppliance
-            return RegularAppliance.from_url(conf['.ui-coverage']['collection_appliance'])
+            from cfme.utils.appliance import DefaultAppliance
+            return DefaultAppliance.from_url(conf['.ui-coverage']['collection_appliance'])
         else:
             # otherwise, coverage only happens on one appliance
             return store.current_appliance

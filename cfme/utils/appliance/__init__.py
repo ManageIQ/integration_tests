@@ -103,11 +103,39 @@ class ApplianceException(Exception):
 
 
 class BaseAppliance(object):
+    """ Represents base appliance class intended to hold base properties existing in every appliance
     """
-        Represents base appliance class intended to hold base properties existing in every appliance
+    type = None
+    CONFIG_MAPPING = {
+        'hostname': 'hostname',
+        'ui_protocol': 'ui_protocol',
+        'ui_port': 'ui_port',
+        'browser_steal': 'browser_steal',
+        'container': 'container',
+        'pod': 'container',
+        'openshift_creds': 'openshift_creds',
+        'is_dev': 'is_dev',
+        'db_host': 'db_host',
+        'db_port': 'db_port',
+        'ssh_port': 'ssh_port',
+        'project': 'project',
+        'version': 'version',
+        'type': 'type'
+    }
+    CONFIG_NONGLOBAL = {'hostname'}
 
-    """
-    pass
+    @property
+    def as_json(self):
+        """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
+        def _version_tostr(x):
+            if isinstance(x, Version):
+                return str(x)
+            else:
+                return x
+        return json.dumps({
+            k: _version_tostr(getattr(self, k))
+            for k in set(self.CONFIG_MAPPING.values())
+            if hasattr(self, k) and k != "collections"})
 
 
 class IPAppliance(BaseAppliance):
@@ -151,23 +179,6 @@ class IPAppliance(BaseAppliance):
     supervisord = SystemdService.declare(unit_name='supervisord')
     type = None
 
-    CONFIG_MAPPING = {
-        'hostname': 'hostname',
-        'ui_protocol': 'ui_protocol',
-        'ui_port': 'ui_port',
-        'browser_steal': 'browser_steal',
-        'container': 'container',
-        'pod': 'container',
-        'openshift_creds': 'openshift_creds',
-        'is_dev': 'is_dev',
-        'db_host': 'db_host',
-        'db_port': 'db_port',
-        'ssh_port': 'ssh_port',
-        'project': 'project',
-        'version': 'version',
-        'type': 'type'
-    }
-    CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
     CONF_FILES = {
         'upstream_templates': '/var/www/miq/system/TEMPLATE',
@@ -2623,9 +2634,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self. _switch_migration_ui(False)
 
 
-class RegularAppliance(IPAppliance):
+class DefaultAppliance(IPAppliance):
     # TODO: make everything use regular appliance
-    type = 'regular'
+    type = 'default'
 
 
 class PodAppliance(IPAppliance):
@@ -2651,7 +2662,6 @@ class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
 
     **DO NOT INSTANTIATE DIRECTLY - USE :py:meth:`from_provider`**
-
     """
 
     _default_name = 'EVM'
@@ -3080,15 +3090,15 @@ def collections_for_appliance(appliance):
 @attr.s
 class DummyAppliance(BaseAppliance):
     """a dummy with minimal attribute set"""
-    hostname = 'DummyApplianceHostname'
-    browser_steal = False
+    hostname = attr.ib(default='DummyApplianceHostname')
+    browser_steal = attr.ib(default=False)
     version = attr.ib(default=Version('5.11.0'), converter=_version_for_version_or_stream)
-    is_pod = False
-    is_dev = False
-    build = 'dummyappliance'
-    managed_known_providers = []
+    is_pod = attr.ib(default=False)
+    is_dev = attr.ib(default=False)
+    build = attr.ib(default='dummyappliance')
+    managed_known_providers = attr.ib(default=[])
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
-    url = 'http://dummies.r.us'
+    url = attr.ib(default='http://dummies.r.us')
     is_dummy = attr.ib(default=True)
     type = 'dummy'
 
@@ -3108,19 +3118,6 @@ class DummyAppliance(BaseAppliance):
     @classmethod
     def from_json(cls, json_string):
         return cls(**json.loads(json_string))
-
-    @property
-    def as_json(self):
-        """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
-        def _version_tostr(x):
-            if isinstance(x, Version):
-                return str(x)
-            else:
-                return x
-
-        return json.dumps({
-            k: _version_tostr(getattr(self, k))
-            for k in self.__dict__ if k != "collections"})
 
     def set_session_timeout(self, *k):
         pass
@@ -3267,9 +3264,10 @@ class MiqImplementationContext(sentaku.ImplementationContext):
     pass
 
 
-DEFAULT_APP_TYPE = RegularAppliance.type
-APP_TYPES = {RegularAppliance.type: RegularAppliance,
+DEFAULT_APP_TYPE = DefaultAppliance.type
+APP_TYPES = {DefaultAppliance.type: DefaultAppliance,
              PodAppliance.type: PodAppliance,
              DevAppliance.type: DevAppliance,
              UpgradedAppliance.type: UpgradedAppliance,
-             MultiRegionAppliance.type: MultiRegionAppliance}
+             MultiRegionAppliance.type: MultiRegionAppliance,
+             DummyAppliance.type: DummyAppliance}

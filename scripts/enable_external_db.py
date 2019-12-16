@@ -16,7 +16,7 @@ Example usage:
 import argparse
 import sys
 
-from cfme.utils.appliance import RegularAppliance
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.conf import credentials
 
 
@@ -38,7 +38,7 @@ def main():
     args = parser.parse_args()
 
     print('Initializing Appliance External DB')
-    ip_a = RegularAppliance(hostname=args.address)
+    ip_a = DefaultAppliance(hostname=args.address)
     status, out = ip_a.db.enable_external(args.db_address, args.region, args.database,
         args.username, args.password)
 

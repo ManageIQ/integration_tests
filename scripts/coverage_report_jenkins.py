@@ -15,7 +15,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.utils.appliance import RegularAppliance
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.conf import credentials
 from cfme.utils.conf import env
 from cfme.utils.log import add_stdout_handler
@@ -886,7 +886,7 @@ def coverage_report_jenkins(jenkins_url, jenkins_jobs, jenkins_user, jenkins_tok
             appliance_ip = result['appliances'][0]['ip_address']
             logger.info('Received an appliance with IP address: %s', appliance_ip)
 
-            with RegularAppliance(hostname=appliance_ip) as appliance:
+            with DefaultAppliance(hostname=appliance_ip) as appliance:
                 exit(aggregate_coverage(
                     appliance,
                     jenkins_url,
@@ -900,7 +900,7 @@ def coverage_report_jenkins(jenkins_url, jenkins_jobs, jenkins_user, jenkins_tok
                 sprout.destroy_pool(pool_id)
     else:
         # Use and existing appliance.
-        with RegularAppliance(hostname=appliance_ip) as appliance:
+        with DefaultAppliance(hostname=appliance_ip) as appliance:
             exit(aggregate_coverage(
                 appliance,
                 jenkins_url,

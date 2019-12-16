@@ -15,7 +15,7 @@ from cfme.test_framework.appliance import PLUGIN_KEY
 from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils import trackerbot
-from cfme.utils.appliance import RegularAppliance
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.appliance import stack
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
@@ -230,7 +230,7 @@ def temp_extdb_pod_appliance(appliance, provider, extdb_template, template_tags,
             except Exception:
                 pass
 
-        with RegularAppliance(**params) as appliance:
+        with DefaultAppliance(**params) as appliance:
             # framework will try work with default appliance if browser restarts w/o this
             # workaround
             appliance.is_pod = True
@@ -300,7 +300,7 @@ def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
             params['project'] = project
             params['hostname'] = provider.mgmt.get_appliance_url(project)
             # create instance of appliance
-            with RegularAppliance(**params) as appliance:
+            with DefaultAppliance(**params) as appliance:
                 # framework will try work with default appliance if browser restarts w/o this
                 # workaround
                 holder = store.config.pluginmanager.get_plugin(PLUGIN_KEY)

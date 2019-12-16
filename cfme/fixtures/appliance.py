@@ -328,8 +328,7 @@ def _walk_to_obj_parent(obj):
 
 @pytest.mark.hookwrapper
 def pytest_fixture_setup(fixturedef, request):
-    # pytest caches appliance results. so, we need to
-
+    # this hack is necessary for dynamic scope
     if hasattr(_walk_to_obj_parent(request).function, 'appliance'):
         marks = _walk_to_obj_parent(request).function.provider._marks
 

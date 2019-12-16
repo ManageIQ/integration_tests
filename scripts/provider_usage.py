@@ -23,7 +23,7 @@ def process_vm(vm, mgmt, user, prov):
         return
     ip = vm.ip
     if ip:
-        with appliance.RegularAppliance(hostname=ip) as app:
+        with appliance.DefaultAppliance(hostname=ip) as app:
             try:
                 ver = app.version
                 assert ver

@@ -1,5 +1,3 @@
-import random
-
 import pytest
 
 from cfme.markers.env import EnvironmentMarker
@@ -13,14 +11,12 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
     """parametrize wrapper that calls :py:func:`_param_check`, and only parametrizes when needed
 
     This can be used in any place where conditional parametrization is used.
-
     """
     if _param_check(metafunc, argnames, argvalues):
         metafunc.parametrize(argnames, argvalues, *args, **kwargs)
-    # if param check failed and the test was supposed to be parametrized around a provider
     elif 'appliance' in metafunc.fixturenames:
         try:
-            # hack to pass trough in case of a failed param_check
+            # hack to pass through in case of a failed param_check
             # where it sets a custom message
             metafunc.function.uncollect
         except AttributeError:
@@ -58,14 +54,14 @@ def appliances(metafunc, app_types, fixture_name='appliance'):
         else:
             msg = (f'No appliance of such type available. needed {app_type}, '
                    f'exists {current_appliance.type}')
-            argvalues.append(pytest.param(None, marks=pytest.mark.skip(reason=msg)))
+            argvalues.append(pytest.param(None, marks=pytest.mark.uncollect(reason=msg)))
     return argnames, argvalues, idlist
 
 
 class ApplianceEnvironmentMarker(EnvironmentMarker):
     NAME = 'appliance'
-    DEFAULT = 'regular'
-    CHOICES = ['regular', 'multi-region', 'dummy', 'dev', 'pod', 'upgraded']
+    DEFAULT = 'default'
+    CHOICES = ['default', 'multi-region', 'dummy', 'dev', 'pod', 'upgraded']
 
     def process_env_mark(self, metafunc):
 
@@ -74,7 +70,11 @@ class ApplianceEnvironmentMarker(EnvironmentMarker):
         marks_by_fixture = self.get_closest_kwarg_markers(metafunc.definition)
         if marks_by_fixture is None:
             # let's add appliance marker if it's absent
-            marks_by_fixture = {self.DEFAULT: pytest.mark.appliance([self.DEFAULT], scope='module')}
+
+            # dummy is added here in order to be collected/uncollected in order to test
+            # collection and integrity
+            marks_by_fixture = {self.DEFAULT: pytest.mark.appliance([self.DEFAULT, 'dummy'],
+                                                                    scope='module')}
         # process each mark, defaulting fixture_name
         for fixture_name, mark in marks_by_fixture.items():
 
@@ -87,16 +87,16 @@ class ApplianceEnvironmentMarker(EnvironmentMarker):
             filter_unused = kwargs.pop('filter_unused', True)
             gen_func = kwargs.pop('gen_func', appliances)
 
-            mark_param = args[0] if args else self.DEFAULT
+            mark_choice = args[0] if args else self.DEFAULT
 
             app_types = []
-            if isinstance(mark_param, (list, tuple)):
-                app_types = mark_param
-            elif mark_param == testgen.ALL:
+            if isinstance(mark_choice, (list, tuple)):
+                app_types = mark_choice
+            elif mark_choice == testgen.ALL:
                 app_types = self.CHOICES
-            elif mark_param == testgen.ONE:
-                app_types.append(random.choice(self.CHOICES))
-            elif mark_param == testgen.NONE:
+            elif mark_choice == testgen.ONE:
+                app_types.append(self.DEFAULT)
+            elif mark_choice == testgen.NONE:
                 return
             else:
                 app_types.append(self.DEFAULT)

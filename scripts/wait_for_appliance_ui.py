@@ -7,7 +7,7 @@ Specifically, it will block until the specified URL returns status code 200.
 import argparse
 import sys
 
-from cfme.utils.appliance import RegularAppliance
+from cfme.utils.appliance import DefaultAppliance
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
         help='Maximum number of seconds to wait before giving up, default 600 (10 minutes)')
 
     args = parser.parse_args()
-    ip_a = RegularAppliance.from_url(args.url)
+    ip_a = DefaultAppliance.from_url(args.url)
     result = ip_a.wait_for_web_ui(timeout=args.num_sec)
 
     if not result:

@@ -236,6 +236,9 @@ if __name__ == '__main__':
     slave_log = cfme.utils.log.logger
 
     try:
+        # remote obtains serialized appliance in args.appliance and deserializes it below
+        # remote is given only one appliance
+        slave_log.info(args.appliance)
         appliance = load_appliances([json.loads(args.appliance)], {})[0]
         if isinstance(appliance, DummyAppliance):
             slave_log.info("Loading dummy appliance...")
