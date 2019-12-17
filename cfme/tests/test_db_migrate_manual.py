@@ -340,7 +340,7 @@ def test_rh_registration_proxy_crud():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1721596])
+@pytest.mark.meta(coverage=[1721596, 1668800])
 def test_upgrade_multi_replication_inplace():
     """
     test_upgrade_multi_replication_inplace

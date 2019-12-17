@@ -135,7 +135,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(automates=[1678223])
+@pytest.mark.meta(automates=[1678223, 1643106])
 def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance):
     """ Test scheduled one-type backup on given machines using smb/nfs
 
@@ -215,6 +215,10 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
         # Find files no more than 5 minutes old, count them and remove newline
         file_check_cmd = "find {}/* -cmin -5 | wc -l | tr -d '\n' ".format(full_path)
 
+        # Note that this check is not sufficient. It seems the file may be
+        # present, but there is no check whether it is sane backup. For example
+        # it can be zero sized in some circumstances:
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1703278#c24
         wait_for(
             lambda: ssh_client.run_command(file_check_cmd, ensure_user=True).output == '1',
             delay=5,
