@@ -1,6 +1,6 @@
 """Library for event testing.
 """
-from collections import Iterable
+from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
 from numbers import Number
