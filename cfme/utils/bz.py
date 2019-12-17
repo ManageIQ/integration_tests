@@ -1,5 +1,5 @@
 import re
-from collections import Sequence
+from collections.abc import Sequence
 
 from bugzilla import Bugzilla as _Bugzilla
 from cached_property import cached_property

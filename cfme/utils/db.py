@@ -1,4 +1,4 @@
-from collections import Mapping
+from collections.abc import Mapping
 from contextlib import contextmanager
 
 from cached_property import cached_property

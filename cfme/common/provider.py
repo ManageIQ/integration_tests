@@ -1,6 +1,6 @@
 import datetime
 from collections import defaultdict
-from collections import Iterable
+from collections.abc import Iterable
 
 import attr
 from manageiq_client.api import APIException
