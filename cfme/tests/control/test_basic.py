@@ -24,7 +24,7 @@ from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
-    test_requirements.control
+    test_requirements.control,
 ]
 
 EXPRESSIONS_TO_TEST = [
