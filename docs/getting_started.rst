@@ -11,6 +11,10 @@ carefully read this page from beginning to the end. That will make you familiari
 and will minimize the chance of doing it wrong. Then you can proceed the shortest way using the
 setup and execution scripts.
 
+Please note most of the contributors use Fedora (29+) as our local dev/test environment, and
+this is our official supported platform.  That said, we (and the scripts for setup) also have some
+support for Debian/Ubuntu, and the framework is easy to run in a container on any platform.
+
 
 Obtaining what you need (Project Setup)
 ----------------------------------------
