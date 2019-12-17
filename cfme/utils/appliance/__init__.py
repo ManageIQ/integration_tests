@@ -1371,6 +1371,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         except socket.timeout:
             logger.error(f"SSH timed out while updating appliance: {result.output}")
 
+        # clear cached properties for DB instances, in case of schema change during upgrade
+        del self.db.__dict__['client']  # client DB instance caches tables/rows/columns
+        del self.__dict__['db_service']  # service name might change, depends on self.db
+
         # May be chance to update kernel with all update.
         if reboot or not cfme_only:
             self.reboot()
