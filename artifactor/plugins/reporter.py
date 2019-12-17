@@ -284,7 +284,7 @@ class ReporterBase(object):
 
             # If 'name' is an attribute then we are looking at a test (leaf).
             if "name" in v:
-                pretty_time = str(datetime.timedelta(seconds=math.ceil(v["duration"])))
+                pretty_time = str(datetime.timedelta(seconds=math.ceil(v.get("duration", 0))))
                 teststring = '<span name="mod_lev" class="label label-primary">T</span>'
                 label = '<span class="label label-{}">{}</span>'.format(
                     bimdict[v["outcomes"]["overall"]], v["outcomes"]["overall"].upper()
@@ -319,7 +319,7 @@ class ReporterBase(object):
                         bimdict[level], percen
                     )
                 modstring = '<span name="mod_lev" class="label label-primary">M</span>'
-                pretty_time = str(datetime.timedelta(seconds=math.ceil(v["_duration"])))
+                pretty_time = str(datetime.timedelta(seconds=math.ceil(v.get("_duration", 0))))
                 list_string += (
                     "<li>{} {}<span>&nbsp;</span>"
                     '{}{}<span style="color:#888888">&nbsp;<em>[{}]'
