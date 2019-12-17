@@ -188,12 +188,11 @@ def test_download_private_key(keypair):
     keypair.download_private_key()
 
 
-@pytest.mark.meta(automates=[BZ(1741635)])
+@pytest.mark.meta(automates=[1741635, 1747179])
 @test_requirements.multi_tenancy
 def test_view_keypair(appliance, new_tenant_admin):
-
     """
-    Child tenants can see key pairs of parent tenants.
+    Test to verify that child tenants can see key pairs of parent tenants.
 
     Polarion:
         assignee: nachandr
