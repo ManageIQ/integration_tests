@@ -59,6 +59,7 @@ pytest_plugins = [
     "cfme.fixtures.maximized",
     "cfme.fixtures.model_collections",
     "cfme.fixtures.multi_region",
+    "cfme.fixtures.multi_tenancy",
     "cfme.fixtures.nelson",
     "cfme.fixtures.networks",
     "cfme.fixtures.nuage",

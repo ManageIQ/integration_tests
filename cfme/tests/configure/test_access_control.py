@@ -2108,23 +2108,6 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth
     assert user.exists, 'User record for "{}" should exist after login'.format(user.name)
 
 
-@pytest.mark.meta(automates=[BZ(1741635)])
-def test_view_key_pair(provider, appliance, keypairs):
-    """
-    Child tenants can key pairs of parent tenants.
-
-    Polarion:
-        assignee: nachandr
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/4h
-    """
-    view = navigate_to(keypairs, 'All')
-    key_pair = view.entities.get_first_entity().data['name']
-    key_pair.set_ownership("Administrator", "EvmGroup-administrator")
-
-
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)

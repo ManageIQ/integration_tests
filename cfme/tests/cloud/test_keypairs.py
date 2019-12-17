@@ -11,6 +11,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 pytestmark = [
+    pytest.mark.tier(3),
     test_requirements.cloud,
     pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module")
@@ -29,7 +30,6 @@ def keypair(appliance, provider):
 
 @pytest.mark.meta(blockers=[BZ(1718833, forced_streams=["5.10", "5.11"],
                                unblock=lambda provider: provider.one_of(OpenStackProvider))])
-@pytest.mark.tier(3)
 def test_keypair_crud(appliance, provider):
     """ This will test whether it will create new Keypair and then deletes it.
     Polarion:
@@ -52,7 +52,6 @@ def test_keypair_crud(appliance, provider):
     assert not keypair.exists
 
 
-@pytest.mark.tier(3)
 def test_keypair_crud_with_key(provider, appliance):
     """ This will test whether it will create new Keypair and then deletes it.
     Polarion:
@@ -78,7 +77,6 @@ def test_keypair_crud_with_key(provider, appliance):
     assert not keypair.exists
 
 
-@pytest.mark.tier(3)
 def test_keypair_create_cancel(provider, appliance):
     """ This will test cancelling on adding a keypair
     Polarion:
@@ -97,7 +95,6 @@ def test_keypair_create_cancel(provider, appliance):
     assert not keypair.exists
 
 
-@pytest.mark.tier(3)
 def test_keypair_create_name_validation(provider, appliance):
     """ This will test validating that key pair without name cannot be created.
     Polarion:
@@ -126,7 +123,6 @@ def test_keypair_create_name_validation(provider, appliance):
                                   'Keypair name contains unsafe characters'.format(keypair_name))
 
 
-@pytest.mark.tier(3)
 def test_keypair_create_invalid_key_validation(provider, appliance):
     """ This will test validating that key pair with invalid public key cannot be created.
     Polarion:
@@ -190,3 +186,26 @@ def test_download_private_key(keypair):
         initialEstimate: 1/4h
     """
     keypair.download_private_key()
+
+
+@pytest.mark.meta(automates=[BZ(1741635)])
+@test_requirements.multi_tenancy
+def test_view_keypair(appliance, new_tenant_admin):
+
+    """
+    Child tenants can see key pairs of parent tenants.
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+    """
+    view = navigate_to(appliance.collections.cloud_keypairs, 'All')
+    key_pair = view.entities.get_first_entity().data['name']
+    key_pair_obj = appliance.collections.cloud_keypairs.instantiate(key_pair)
+    key_pair_obj.set_ownership("", new_tenant_admin.groups[0].description)
+
+    with new_tenant_admin:
+        assert key_pair_obj.exists
