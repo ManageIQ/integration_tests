@@ -64,7 +64,7 @@ class Filedump(ArtifactorBasePlugin):
             if slaveid not in self.store:
                 self.store[slaveid] = {
                     "test_location": test_location or "",
-                    "test_name": test_name or ""
+                    "test_name": test_name or "",
                 }
         test_ident = "{}/{}".format(
             self.store[slaveid]["test_location"], self.store[slaveid]["test_name"]
