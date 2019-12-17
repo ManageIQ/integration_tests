@@ -8,13 +8,12 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
-from cfme.utils.blockers import GH
 from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     test_requirements.quota,
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.long_running,
     pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module",
                          required_fields=[["provisioning", "template"]], selector=ONE_PER_TYPE)
@@ -79,7 +78,7 @@ def new_child(appliance, new_tenant):
 def new_group(appliance, new_child, new_tenant):
     collection = appliance.collections.groups
     group = collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
-                              role='EvmRole-super_administrator',
+                              role='EvmRole-administrator',
                               tenant='My Company/{}/{}'.format(new_tenant.name, new_child.name))
     yield group
     if group.exists:
@@ -102,9 +101,6 @@ def new_user(appliance, new_group, new_credential):
 
 
 @pytest.mark.rhv3
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7385',
-    unblock=lambda provider, appliance_version:
-    not provider.one_of(RHEVMProvider))])
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
