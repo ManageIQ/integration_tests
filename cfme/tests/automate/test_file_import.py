@@ -210,16 +210,16 @@ def local_domain(appliance):
     """This fixture used to create automate domain - Datastore/Domain"""
     # Domain name should be static to match with name of domain imported using rake command
     domain = appliance.collections.domains.create(
-        name="bz_1753860",
-        description=fauxfactory.gen_alpha(),
-        enabled=True)
+        name="bz_1753860", description=fauxfactory.gen_alpha(), enabled=True
+    )
     yield domain
-    domain.delete_if_exists()
+    if domain.rest_api_entity.exists:
+        domain.rest_api_entity.action.delete()
 
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1753860])
-@pytest.mark.parametrize("file_name", ["bz_1753860.zip"])
+@pytest.mark.parametrize("file_name", ["bz_1753860.zip"], ids=[''])
 def test_overwrite_import_domain(local_domain, appliance, file_name):
     """
     Bugzilla:
@@ -230,19 +230,18 @@ def test_overwrite_import_domain(local_domain, appliance, file_name):
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
-        testSteps:
+        setup:
             1. Create custom domain, namespace, class, instance, method. Do not delete this domain.
             2. Navigate to automation > automate > import/export and export all classes and
                instances to a file
             3. Extract the file and update __domain__.yaml file of custom domain as below:
                >> description: test_desc
                >> enabled: false
-            4. Compress this domain file and import it via UI.
+               Note: These steps needs to perform manually
+        testSteps:
+            1. Compress this domain file and import it via UI.
         expectedResults:
-            1.
-            2.
-            3.
-            4. Description and enabled status of existing domain should update.
+            1. Description and enabled status of existing domain should update.
     """
     file = FTPClientWrapper(cfme_data.ftpserver.entities.datastores).get_file(file_name)
     file_path = os.path.join("/tmp", file.name)
@@ -254,7 +253,7 @@ def test_overwrite_import_domain(local_domain, appliance, file_name):
     cmd = [(
         f"evm:automate:import PREVIEW=false DOMAIN=bz_1753860 IMPORT_AS=bz_1753860 "
         f"ZIP_FILE={file_path} SYSTEM=false ENABLED={enable} OVERWRITE=true"
-    ) for enable, file_path in [{file_path, 'false'}, {file_path, 'true'}]]
+    ) for enable in ['false', 'true']]
 
     appliance.ssh_client.run_rake_command(cmd[0])
     view = navigate_to(local_domain.parent, "All")
@@ -263,9 +262,7 @@ def test_overwrite_import_domain(local_domain, appliance, file_name):
     view.browser.refresh()
 
     # Checking domain's enabled status on all page
-    for domain in view.domains.read():
-        if domain['Name'] == f"{local_domain.name} (Disabled)":
-            assert domain['Enabled'] == "false"
+    assert view.domains.row(name__contains=local_domain.name)["Enabled"].text == "false"
 
     appliance.ssh_client.run_rake_command(cmd[1])
 
@@ -273,6 +270,4 @@ def test_overwrite_import_domain(local_domain, appliance, file_name):
     view.browser.refresh()
 
     # Checking domain's enabled status on all page
-    for domain in view.domains.read():
-        if domain['Name'] == local_domain.name:
-            assert domain['Enabled'] == "true"
+    assert view.domains.row(name__contains=local_domain.name)["Enabled"].text == "true"
