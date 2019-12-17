@@ -111,7 +111,6 @@ def test_vm_filter_with_user_input(
     assert vm in vm_view.entities.entity_names, "Could not find VM {} after filtering!".format(vm)
 
 
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_vm_filter_with_user_input_and_cancellation(vm_view, vms, subset_of_vms,
                                                     expression_for_vms_subset):
     """
