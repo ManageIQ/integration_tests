@@ -9,8 +9,8 @@ dict and will provide you with whatever you ask for with no limitations.
 The main clue to know what is limited by the filters and what isn't is the 'filters' parameter.
 """
 import operator
-from collections import Mapping
 from collections import OrderedDict
+from collections.abc import Mapping
 from copy import copy
 
 from cfme.common.provider import all_types
