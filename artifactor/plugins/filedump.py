@@ -62,7 +62,10 @@ class Filedump(ArtifactorBasePlugin):
         if not slaveid:
             slaveid = "Master"
             if slaveid not in self.store:
-                self.store[slaveid] = {}
+                self.store[slaveid] = {
+                    "test_location": test_location or "",
+                    "test_name": test_name or "",
+                }
         test_ident = "{}/{}".format(
             self.store[slaveid]["test_location"], self.store[slaveid]["test_name"]
         )
@@ -70,7 +73,7 @@ class Filedump(ArtifactorBasePlugin):
         if os_filename is None:
             safe_name = re.sub(r"\s+", "_", normalize_text(safe_string(description)))
             os_filename = self.ident + "-" + safe_name
-            os_filename = os.path.join(self.store[slaveid]["artifact_path"], os_filename)
+            os_filename = os.path.join(self.store[slaveid].get("artifact_path", ""), os_filename)
             if file_type is not None and "screenshot" in file_type:
                 os_filename = os_filename + ".png"
             elif file_type is not None and (
@@ -96,9 +99,11 @@ class Filedump(ArtifactorBasePlugin):
         if not dont_write:
             if os.path.isfile(os_filename):
                 os.remove(os_filename)
+            if contents_base64:
+                contents = base64.b64decode(contents)
+            if isinstance(contents, bytes):
+                mode = "wb"
             with open(os_filename, mode) as f:
-                if contents_base64:
-                    contents = base64.b64decode(contents)
                 f.write(contents)
 
         return None, {"artifacts": {test_ident: {"files": artifacts}}}
