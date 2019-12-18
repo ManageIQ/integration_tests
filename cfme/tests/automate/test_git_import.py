@@ -525,3 +525,26 @@ def test_automate_git_import_deleted_tag(appliance, imported_domain):
     view = navigate_to(imported_domain, "Refresh")
     view.branch_or_tag.fill("Tag")
     assert view.git_tags.read() == "0.1"
+
+
+@pytest.mark.tier(1)
+def test_git_refresh_with_renamed_yaml():
+    """
+    Bugzilla:
+        1716443
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        startsin: 5.10
+        casecomponent: Automate
+        testSteps:
+            1. Have a git backed Automate Domain
+            2. Delete (or rename) a .rb/.yaml pair, commit, push to repo
+            3. Refresh Domain in CF ui
+        expectedResults:
+            1.
+            2.
+            3. Domain should refresh successfully and renamed method appears
+    """
+    pass
