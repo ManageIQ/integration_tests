@@ -148,11 +148,11 @@ def test_suspend_vm_service_details(context):
     pass
 
 
-@pytest.mark.meta(coverage=[1677744])
-@pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
+@pytest.mark.meta(automates=[1677744])
+@pytest.mark.customer_scenario
 @pytest.mark.tier(2)
-def test_no_error_while_fetching_the_service():
+def test_no_error_while_fetching_the_service(request, appliance, user_self_service_role,
+                                             generic_catalog_item):
     """
 
     Bugzilla:
@@ -160,7 +160,7 @@ def test_no_error_while_fetching_the_service():
 
     Polarion:
         assignee: nansari
-        startsin: 5.11
+        startsin: 5.10
         casecomponent: SelfServiceUI
         initialEstimate: 1/6h
         testSteps:
@@ -170,7 +170,41 @@ def test_no_error_while_fetching_the_service():
             1.
             2. In SUI click on provisioned service
     """
-    pass
+    user, _ = user_self_service_role
+
+    # login with user having self service role
+    with user:
+        with appliance.context.use(ViaUI):
+            appliance.server.login(user)
+
+            # Order service from catalog item
+            serv_cat = ServiceCatalogs(
+                appliance,
+                catalog=generic_catalog_item.catalog,
+                name=generic_catalog_item.name,
+            )
+            provision_request = serv_cat.order()
+            provision_request.wait_for_request()
+
+            # Check service with user
+            service = MyService(appliance, generic_catalog_item.dialog.label)
+            assert service.exists
+
+    @request.addfinalizer
+    def _clear_service():
+        if service.exists:
+            service.delete()
+
+    # Delete user
+    # Note: before deleting user need to clean respected user requests
+    provision_request.remove_request(method="rest")
+    user.delete()
+    assert not user.exists
+
+    # Check service exist without user or not
+    for context in [ViaUI, ViaSSUI]:
+        with appliance.context.use(context):
+            assert service.exists
 
 
 @pytest.mark.meta(automates=[1628520])
