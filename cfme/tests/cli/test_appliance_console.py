@@ -820,9 +820,8 @@ def test_appliance_console_evm_stop():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_evm_start():
+def test_appliance_console_evm_start(request, appliance):
     """
     test starting the evm server process
 
@@ -844,7 +843,16 @@ def test_appliance_console_evm_start():
             4. Confirm EVM service is being started.
             5. Confirm replication is working correctly
     """
-    pass
+    appliance.evmserverd.stop()
+    wait_for(lambda: appliance.is_web_ui_running(), delay=30, num_sec=10, fail_condition=True)
+
+    # Actual testcase starting from here
+    start_evm_command = ("ap", RETURN, "17", "Y", RETURN, RETURN, "21")
+    appliance.appliance_console.run_commands(start_evm_command, timeout=300)
+    wait_for(lambda: appliance.is_web_ui_running(), delay=30, num_sec=10)
+    logged_in_page = appliance.server.login()
+    request.addfinalizer(appliance.server.logout)
+    assert logged_in_page.is_displayed, "UI is not working after starting the EVM service."
 
 
 @pytest.mark.tier(1)
