@@ -307,7 +307,6 @@ def test_vm_noquads(appliance, request, set_vm_quad):
     assert 'topRight' not in view.entities.get_first_entity().data.get('quad', {})
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
 def test_template_noquads(appliance, set_template_quad):
     """
         This test checks that Template Quadrant when switched off from Mysetting page under

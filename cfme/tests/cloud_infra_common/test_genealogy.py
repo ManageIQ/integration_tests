@@ -31,7 +31,6 @@ def vm_crud(provider, small_template):
 
 
 # uncollected above in pytest_generate_tests
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:473"])
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
 @test_requirements.genealogy
 @pytest.mark.uncollectif(lambda provider, from_edit:
