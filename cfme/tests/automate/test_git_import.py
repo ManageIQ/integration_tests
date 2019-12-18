@@ -491,3 +491,37 @@ def test_automate_git_verify_ssl(appliance, setup_datastore, imported_domain):
     check_verify_ssl()
     imported_domain.rest_api_entity.action.refresh_from_source()
     check_verify_ssl()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1394194])
+def test_automate_git_import_deleted_tag(appliance, imported_domain):
+    """
+    Note: This test case checks tags available on GitHub repository. But we can not delete or add
+    tags in GitHub repository using automation.
+
+    Bugzilla:
+        1394194
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/12h
+        tags: automate
+        startsin: 5.7
+        setup:
+            1. Create a github-hosted repository containing a correctly formatted automate domain.
+               This repository should contain tagged commits.
+            2. Import the git-hosted domain into automate.
+        testSteps:
+            1. In automate explorer, click on the domain and click Configuration -> Refresh with a
+               new branch or tag -> Select Branch/Tag - 'Tag'
+            2. Observe the list of available tags to import from
+        expectedResults:
+            1.
+            2. The available tags should be displayed
+    """
+    view = navigate_to(imported_domain, "Refresh")
+    view.branch_or_tag.fill("Tag")
+    assert view.git_tags.read() == "0.1"
