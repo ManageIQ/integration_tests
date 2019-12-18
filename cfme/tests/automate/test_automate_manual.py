@@ -109,39 +109,6 @@ def test_automate_check_quota_regression():
     pass
 
 
-@pytest.mark.tier(3)
-def test_automate_git_import_deleted_tag():
-    """
-
-    Polarion:
-        assignee: ghubale
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/12h
-        tags: automate
-        startsin: 5.7
-        testSteps:
-            1. Create a github-hosted repository containing a correctly formatted automate domain.
-               This repository should contain two or more tagged commits.
-            2. Import the git-hosted domain into automate. Note that the tags are visible to select
-               from in the import dialog
-            3. Delete the most recent tagged commit and tag from the source github repository
-            4. In automate explorer, click on the domain and click Configuration -> Refresh with a
-               new branch or tag
-            5. Observe the list of available tags to import from
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. The deleted tag should no longer be visible in the list of tags to refresh from
-
-    Bugzilla:
-        1394194
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_button_can_trigger_events():
     """

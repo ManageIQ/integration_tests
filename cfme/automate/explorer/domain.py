@@ -35,6 +35,7 @@ class DomainRefreshView(AutomateExplorerView):
     title = Text("#explorer_title_text")
     branch_or_tag = BootstrapSelect(id="branch_or_tag_select")
     git_branches = BootstrapSelect(id="git_branches")
+    git_tags = BootstrapSelect(id="git_tags")
 
     save_button = Button("Save")
     cancel_button = Button("Cancel")
