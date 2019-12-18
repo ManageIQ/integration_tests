@@ -429,35 +429,6 @@ def test_automate_task_schedule():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1753860])
-def test_overwrite_import_domain():
-    """
-    Bugzilla:
-        1753860
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        testSteps:
-            1. Create custom domain, namespace, class, instance, method. Do not delete this domain.
-            2. Navigate to automation > automate > import/export and export all classes and
-               instances to a file
-            3. Extract the file and update __domain__.yaml file of custom domain as below:
-               >> description: test_desc
-               >> enabled: false
-            4. Compress this domain file and import it via UI.
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Description and enabled status of existing domain should update.
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1743227])
 def test_queue_up_schedule_run_now():
     """

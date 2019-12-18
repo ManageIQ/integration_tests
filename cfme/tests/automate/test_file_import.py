@@ -1,3 +1,5 @@
+import os
+
 import fauxfactory
 import pytest
 
@@ -201,3 +203,71 @@ def test_automate_import_attributes_updated(setup_automate_model, import_datasto
     assert view.description.read() == "test_name_desc_updated"
     view = navigate_to(klass, "Edit")
     assert view.description.read() == "test_class_desc"
+
+
+@pytest.fixture(scope='module')
+def local_domain(appliance):
+    """This fixture used to create automate domain - Datastore/Domain"""
+    # Domain name should be static to match with name of domain imported using rake command
+    domain = appliance.collections.domains.create(
+        name="bz_1753860", description=fauxfactory.gen_alpha(), enabled=True
+    )
+    yield domain
+    # Tree path of a domain is decided on the basis of it's enabled status, so we are assigning
+    # the current value of enabled to make sure the domain is deleted
+    domain.enabled = domain.rest_api_entity.enabled
+    domain.delete_if_exists()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1753860])
+@pytest.mark.parametrize("file_name", ["bz_1753860.zip"], ids=[''])
+def test_overwrite_import_domain(local_domain, appliance, file_name):
+    """
+    Note: This PR automates this scenario via rake commands. But this RFE is not yet fixed as it has
+    bug to apply this scenario via UI.
+
+    Bugzilla:
+        1753860
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup:
+            1. Create custom domain, namespace, class, instance, method. Do not delete this domain.
+            2. Navigate to automation > automate > import/export and export all classes and
+               instances to a file
+            3. Extract the file and update __domain__.yaml file of custom domain as below:
+               >> description: test_desc
+               >> enabled: false
+               Note: These steps needs to perform manually
+        testSteps:
+            1. Compress this domain file and import it via UI.
+        expectedResults:
+            1. Description and enabled status of existing domain should update.
+    """
+    datastore_file = FTPClientWrapper(cfme_data.ftpserver.entities.datastores).get_file(file_name)
+    file_path = os.path.join("/tmp", datastore_file.name)
+
+    # Download the datastore file on appliance
+    assert appliance.ssh_client.run_command(
+        f"curl -o {file_path} ftp://{datastore_file.link}"
+    ).success
+
+    # Rake command to update domain
+    rake_cmd = {enable: (
+        f"evm:automate:import PREVIEW=false DOMAIN=bz_1753860 IMPORT_AS=bz_1753860 "
+        f"ZIP_FILE={file_path} SYSTEM=false ENABLED={enable} OVERWRITE=true"
+    ) for enable in ['false', 'true']}
+
+    for status, cmd in rake_cmd.items():
+        appliance.ssh_client.run_rake_command(cmd)
+        view = navigate_to(local_domain.parent, "All")
+
+        # Need to refresh domain to get updates after performing rake command
+        view.browser.refresh()
+
+        # Checking domain's enabled status on all page
+        assert view.domains.row(name__contains=local_domain.name)["Enabled"].text == status
