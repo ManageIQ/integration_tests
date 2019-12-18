@@ -2434,3 +2434,68 @@ def test_embedded_ansible_cat_item_edit_rest(appliance, request, ansible_catalog
     service_template.reload()
     assert service_template.name == new_data["name"]
     assert service_template.description == new_data["description"]
+
+
+@pytest.mark.meta(automates=[1730813])
+@test_requirements.rest
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["testgear-dialog.yaml"], ids=[''])
+def test_service_refresh_dialog_fields_default_values(
+    appliance, request, file_name, import_dialog, soft_assert
+):
+    """
+    Bugzilla:
+        1730813
+        1731977
+
+    Polarion:
+        assignee: pvala
+        caseimportance: high
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        setup:
+            1. Import dialog `RTP Testgear Client Provision` from the BZ attachments and create
+                a service_template and service catalog to attach it.
+        testSteps:
+            1. Perform action `refresh_dialog_fields` by sending a request
+                POST /api/service_catalogs/<:id>/sevice_templates/<:id>
+                    {
+                    "action": "refresh_dialog_fields",
+                    "resource": {
+                        "fields": [
+                            "tag_1_region",
+                            "tag_0_function"
+                            ]
+                        }
+                    }
+        expectedResults:
+            1. Request must be successful and evm must have the default values
+                for the fields mentioned in testStep 1.
+    """
+    dialog, _ = import_dialog
+    service_template = _service_templates(
+        request, appliance, service_dialog=dialog.rest_api_entity, num=1
+    )[0]
+
+    # We cannot directly call `refresh_dialog_fields` action from service_template, it has to be
+    # accessed via service_catalog.
+    service_catalog = appliance.rest_api.collections.service_catalogs.get(
+        id=service_template.service_template_catalog_id
+    )
+    service_catalog.service_templates.get(id=service_template.id).action.refresh_dialog_fields(
+        **{"fields": ["tag_1_region", "tag_0_function"]}
+    )
+    assert_response(appliance)
+
+    response = appliance.rest_api.response.json()["result"]
+    expected_tag_1_region = [["rtp", "rtp-vaas-vc.cisco.com"]]
+    expected_tag_0_function = [["ixia", "IXIA"]]
+
+    soft_assert(
+        expected_tag_1_region == response["tag_1_region"]["values"],
+        "Default values for 'tag_1_region' did not match.",
+    )
+    soft_assert(
+        expected_tag_0_function == response["tag_0_function"]["values"],
+        "Default values for 'tag_0_function' did not match.",
+    )
