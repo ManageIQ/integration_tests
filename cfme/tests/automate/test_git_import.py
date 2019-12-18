@@ -528,8 +528,14 @@ def test_automate_git_import_deleted_tag(appliance, imported_domain):
 
 
 @pytest.mark.tier(1)
-def test_git_refresh_with_renamed_yaml():
+@pytest.mark.meta(automates=[1716443])
+def test_git_refresh_with_renamed_yaml(appliance):
     """
+    Note: In this test case, we are checking that datastore with broken __domain__.yml should not
+    get imported. But this BZ says, automate namespace, class, instance, method under domain should
+    be refreshed even if you broke the __domain__.yml once it imported(This could be only tested
+    manually)
+
     Bugzilla:
         1716443
 
@@ -538,13 +544,18 @@ def test_git_refresh_with_renamed_yaml():
         initialEstimate: 1/8h
         startsin: 5.10
         casecomponent: Automate
-        testSteps:
+        setup:
             1. Have a git backed Automate Domain
             2. Delete (or rename) a .rb/.yaml pair, commit, push to repo
-            3. Refresh Domain in CF ui
+        testSteps:
+            1. Import datastore via git
         expectedResults:
-            1.
-            2.
-            3. Domain should refresh successfully and renamed method appears
+            1. Domain should not get imported
     """
-    pass
+    repo = appliance.collections.automate_import_exports.instantiate(
+        import_type="git", url="https://github.com/ganeshhubale/ManageIQ-automate-git.git"
+    )
+    with pytest.raises(AssertionError, match=(
+            "Error: import failed: Selected branch or tag does not contain a valid domain"
+    )):
+        repo.import_domain_from(branch="origin/brok-yml")
