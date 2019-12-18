@@ -114,12 +114,15 @@ def download_and_migrate_db(app, db_url):
 
 @pytest.mark.ignore_stream('upstream')
 @pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1734076])
 def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     """
     Polarion:
         assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Appliance
+    Bugzilla:
+        1734076
     """
     download_and_migrate_db(temp_appliance_extended_db, db_url)
 
@@ -210,3 +213,34 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
     appliance_preupdate.wait_for_web_ui()
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version
+
+
+@pytest.mark.manual
+@test_requirements.update
+@test_requirements.db_migration
+@pytest.mark.meta(coverage=[1749694, 1735114])
+def test_upgrade_single_sidebyside():
+    """ Test whether an upgrade procedure from CFME 5.x to CFME 5.11 results in
+    working environment.
+
+    Note that only the sidebyside upgrade to to CFME 5.11 is supported.
+
+    Note this test is quite similar test_db_migrate and perhaps can be removed
+    after the zone checking and ansible checking is implemented there.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Appliance
+        caseimportance: critical
+        initialEstimate: 1/3h
+        startsin: 5.11
+        testSteps:
+            1. Get CFME VMs of preupdate and target version.
+            2. Make sure the ansible is enabled and create an ansible playbook
+               service (for testing the 1735114).
+            2. Turn off the evmserverd processes on both.
+            3. Dump the DB of the preupdate appliance.
+            4. Restore it on the target version appliance.
+            5. Check that a zone exists on the target appliance (as there was a bug 1749694)
+            6. Check that the service provisioning tab shows fine.
+    """

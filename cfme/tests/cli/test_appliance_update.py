@@ -137,6 +137,27 @@ def test_update_yum(appliance_preupdate, appliance):
     assert result.output in appliance.version
 
 
+@pytest.mark.manual()
+@pytest.mark.meta(coverage=[1674055])
+def test_update_yum_no_errors(old_version):
+    """ Test that the yum update doesn't spill any erros or warnings.
+
+    Polarion:
+        assignee: jhenner
+        caseimportance: high
+        casecomponent: Appliance
+        initialEstimate: 1/4h
+        testSteps:
+            1. Boot preupdate CFME
+            2. Add repos to update to.
+            3. Do the yum update, check there are no errors in the stderr and
+               perhaps also in stdout.
+
+    Bugzilla:
+        1674055
+    """
+
+
 @pytest.mark.ignore_stream("upstream")
 def test_update_webui(appliance_with_providers, appliance, request, old_version):
     """ Tests updating an appliance with providers, also confirms that the
