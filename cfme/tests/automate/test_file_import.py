@@ -213,8 +213,10 @@ def local_domain(appliance):
         name="bz_1753860", description=fauxfactory.gen_alpha(), enabled=True
     )
     yield domain
-    if domain.rest_api_entity.exists:
-        domain.rest_api_entity.action.delete()
+    # Tree path of a domain is decided on the basis of it's enabled status, so we are assigning
+    # the current value of enabled to make sure the domain is deleted
+    domain.enabled = domain.rest_api_entity.enabled
+    domain.delete_if_exists()
 
 
 @pytest.mark.tier(2)
@@ -222,6 +224,9 @@ def local_domain(appliance):
 @pytest.mark.parametrize("file_name", ["bz_1753860.zip"], ids=[''])
 def test_overwrite_import_domain(local_domain, appliance, file_name):
     """
+    Note: This PR automates this scenario via rake commands. But this RFE is not yet fixed as it has
+    bug to apply this scenario via UI.
+
     Bugzilla:
         1753860
 
