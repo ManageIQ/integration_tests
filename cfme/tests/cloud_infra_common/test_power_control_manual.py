@@ -291,32 +291,6 @@ def test_check_compliance_policy_option_on_vm_summery_page():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("5.10")
-def test_power_states_with_respective_provider():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/12h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.11
-        casecomponent: Control
-        tags: power
-        testSteps:
-            1. Provision Azure Instance
-            2. In Instance detail page, select Resume from Lifecycle menu
-        expectedResults:
-            1.
-            2. Should not have Resume button there or disable button upon provider
-
-    Bugzilla:
-        1541447
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1740285])
 def test_power_operations_on_paused_provider():
     """

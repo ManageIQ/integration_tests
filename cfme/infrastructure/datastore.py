@@ -17,6 +17,7 @@ from cfme.common.host_views import HostsView
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import MenuItemNotFound
+from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
@@ -125,6 +126,19 @@ class ProviderAllDatastoresView(DatastoresView):
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ["Compute", "Infrastructure", "Providers"] and
             self.entities.title.text == msg
+        )
+
+
+class DatastoreManagedVMsView(VmsTemplatesAllView):
+    """
+    This view represents All VMs and Templates page for datastores
+    """
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.entities.title.text == f'{self.context["object"].name} (All VMs and Instances)'
         )
 
 
@@ -448,3 +462,12 @@ class Utilization(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select("Utilization")
+
+
+@navigator.register(Datastore)
+class ManagedVMs(CFMENavigateStep):
+    VIEW = DatastoreManagedVMsView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.relationships.click_at('Managed VMs')
