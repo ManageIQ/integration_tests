@@ -6,11 +6,27 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 
-
 pytestmark = [test_requirements.replication, pytest.mark.long_running]
+
+
+def create_vm(provider, vm_name):
+    collection = provider.appliance.provider_based_collection(provider)
+    try:
+        template_name = provider.data['templates']['full_template']['name']
+    except KeyError:
+        pytest.skip('Unable to identify full_template for provider: {}'.format(provider))
+
+    vm = collection.instantiate(
+        vm_name,
+        provider,
+        template_name=template_name
+    )
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    return vm
 
 
 @pytest.fixture
@@ -329,9 +345,8 @@ def test_replication_global_region_dashboard():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_global_to_remote_new_vm_from_template():
+def test_replication_global_to_remote_new_vm_from_template(request, setup_replication):
     """
     Create a new VM from template in remote region from global region
 
@@ -349,7 +364,19 @@ def test_replication_global_to_remote_new_vm_from_template():
             2.
             3. VM created in the Remote, no errors.
     """
-    pass
+    remote_app, global_app = setup_replication
+    remote_provider = provider_app_crud(RHEVMProvider, remote_app)
+    remote_provider.setup()
+    assert remote_provider.name in remote_app.managed_provider_names, "Provider is not available."
+
+    new_vm_name = fauxfactory.gen_alphanumeric(start="test_replication_", length=25).lower()
+    global_provider = provider_app_crud(RHEVMProvider, global_app)
+    vm = create_vm(provider=global_provider, vm_name=new_vm_name)
+    request.addfinalizer(vm.cleanup_on_provider)
+    remote_provider.refresh_provider_relationships()
+    assert (remote_app.collections.infra_vms.instantiate(new_vm_name, remote_provider).exists), (
+        f"{new_vm_name} vm is not found in Remote Appliance"
+    )
 
 
 @pytest.mark.tier(1)
