@@ -248,31 +248,26 @@ def test_overwrite_import_domain(local_domain, appliance, file_name):
         expectedResults:
             1. Description and enabled status of existing domain should update.
     """
-    file = FTPClientWrapper(cfme_data.ftpserver.entities.datastores).get_file(file_name)
-    file_path = os.path.join("/tmp", file.name)
+    datastore_file = FTPClientWrapper(cfme_data.ftpserver.entities.datastores).get_file(file_name)
+    file_path = os.path.join("/tmp", datastore_file.name)
 
     # Download the datastore file on appliance
-    assert appliance.ssh_client.run_command(f"curl -o {file_path} ftp://{file.link}").success
+    assert appliance.ssh_client.run_command(
+        f"curl -o {file_path} ftp://{datastore_file.link}"
+    ).success
 
     # Rake command to update domain
-    cmd = [(
+    rake_cmd = {enable: (
         f"evm:automate:import PREVIEW=false DOMAIN=bz_1753860 IMPORT_AS=bz_1753860 "
         f"ZIP_FILE={file_path} SYSTEM=false ENABLED={enable} OVERWRITE=true"
-    ) for enable in ['false', 'true']]
+    ) for enable in ['false', 'true']}
 
-    appliance.ssh_client.run_rake_command(cmd[0])
-    view = navigate_to(local_domain.parent, "All")
+    for status, cmd in rake_cmd.items():
+        appliance.ssh_client.run_rake_command(cmd)
+        view = navigate_to(local_domain.parent, "All")
 
-    # Need to refresh domain to get updates after performing rake command
-    view.browser.refresh()
+        # Need to refresh domain to get updates after performing rake command
+        view.browser.refresh()
 
-    # Checking domain's enabled status on all page
-    assert view.domains.row(name__contains=local_domain.name)["Enabled"].text == "false"
-
-    appliance.ssh_client.run_rake_command(cmd[1])
-
-    # Need to refresh domain to get updates after performing rake command
-    view.browser.refresh()
-
-    # Checking domain's enabled status on all page
-    assert view.domains.row(name__contains=local_domain.name)["Enabled"].text == "true"
+        # Checking domain's enabled status on all page
+        assert view.domains.row(name__contains=local_domain.name)["Enabled"].text == status
