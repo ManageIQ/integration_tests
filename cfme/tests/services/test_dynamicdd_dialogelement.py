@@ -6,6 +6,7 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.fixtures.automate import DatastoreImport
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 
@@ -265,29 +266,45 @@ def test_dynamic_field_on_textbox(request, appliance, import_datastore, import_d
     wait_for(lambda: view.fields("name_validation").read() == 'indice_1', timeout=7)
 
 
-@pytest.mark.manual
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1559999])
 @pytest.mark.tier(3)
-def test_when_clicking_refresh_for_text_field_2_only_text_field_2_should_refreshed():
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1559999.zip", "bz_1559999", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1559999.yml"], ids=["refresh_dialog"])
+def test_dialog_dynamic_field_refresh_in_log(appliance, import_datastore, import_data,
+                                             generic_catalog_item_with_imported_dialog):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-        testSteps:
-            1.  create a dialog with two text fields with no refresh relation between them
-                showing their refresh buttons.
-            2. associate each to a different method that just logs "Refreshing X"
-            3. associating the dialog to a catalog item
-            4. tail -f log/automation.log | grep "Refreshing"
-            5. load the dialog
-            6. click "refresh" for field 2
     Bugzilla:
         1559999
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/16h
+        setup:
+            1. Import Datastore and dialog
+        testSteps:
+            1. Add service catalog with above imported dialog
+            2. Navigate to order page of service
+            3. In service Order page
+            4. Click on "refresh" for field 2
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Only text Field2 should be refreshed in automation log
     """
-    pass
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=['.*Refreshing field : RefreshField2.*'],
+            failure_patterns=[".*Refreshing field : RefreshField1.*"]).waiting(timeout=120):
+        view.fields('Refresh2').refresh.click()
 
 
 @pytest.mark.manual
