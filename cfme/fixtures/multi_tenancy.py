@@ -8,21 +8,6 @@ from cfme.base.credential import Credential
 from cfme.utils.update import update
 
 
-def new_user(appliance, groups, name=None, credential=None):
-    name = name or fauxfactory.gen_alphanumeric(start="user_")
-    credential = credential or Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
-                    secret='redhat')
-
-    user = appliance.collections.users.create(
-        name=name,
-        credential=credential,
-        email='xyz@redhat.com',
-        groups=groups,
-        cost_center='Workload',
-        value_assign='Database')
-    return user
-
-
 @pytest.fixture(scope='module')
 def child_tenant(appliance):
     child_tenant = appliance.collections.tenants.create(
@@ -57,11 +42,19 @@ def tenant_role(appliance, request):
 
 @pytest.fixture(scope='module')
 def new_tenant_admin(appliance, request, child_tenant, tenant_role):
+    credential = Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                    secret='redhat')
     group = appliance.collections.groups.create(
         description=fauxfactory.gen_alphanumeric(15, start="tenant_grp_"), role=tenant_role.name,
         tenant=f'My Company/{child_tenant.name}')
 
-    tenant_admin = new_user(appliance, group, name='tenant_admin_user')
+    tenant_admin = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(start='tenant_admin_user'),
+        credential=credential,
+        email='xyz@redhat.com',
+        groups=group,
+        cost_center='Workload',
+        value_assign='Database')
     yield tenant_admin
     tenant_admin.delete_if_exists()
     group.delete_if_exists()

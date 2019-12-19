@@ -185,7 +185,7 @@ class KeyPair(BaseEntity, Taggable):
         view.toolbar.configuration.item_select('Download private key')
         view.flash.assert_no_error()
 
-    def set_ownership(self, owner=None, group=None, click_cancel=False, click_reset=False):
+    def set_ownership(self, owner=None, group=None, cancel=False, reset=False):
         """Set instance ownership
 
         Args:
@@ -205,13 +205,13 @@ class KeyPair(BaseEntity, Taggable):
             return
 
         # Only if the form changed
-        if click_reset:
+        if reset:
             view.form.reset_button.click()
             view.flash.assert_message('All changes have been reset', 'warning')
             # Cancel after reset
             assert view.form.is_displayed
             view.form.cancel_button.click()
-        elif click_cancel:
+        elif cancel:
             view.form.cancel_button.click()
             view.flash.assert_success_message('Set Ownership was cancelled by the user')
         else:

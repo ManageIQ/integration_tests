@@ -13,7 +13,7 @@ from cfme.utils.blockers import BZ
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.cloud,
-    pytest.mark.usefixtures('setup_provider_modscope'),
+    pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module")
 ]
 
@@ -190,7 +190,7 @@ def test_download_private_key(keypair):
 
 @pytest.mark.meta(automates=[1741635, 1747179])
 @test_requirements.multi_tenancy
-def test_view_keypair(appliance, new_tenant_admin):
+def test_tenantadmin_view_keypair(appliance, new_tenant_admin):
     """
     Test to verify that child tenants can see key pairs of parent tenants.
 
@@ -204,7 +204,7 @@ def test_view_keypair(appliance, new_tenant_admin):
     view = navigate_to(appliance.collections.cloud_keypairs, 'All')
     key_pair = view.entities.get_first_entity().data['name']
     key_pair_obj = appliance.collections.cloud_keypairs.instantiate(key_pair)
-    key_pair_obj.set_ownership("", new_tenant_admin.groups[0].description)
+    key_pair_obj.set_ownership(group=new_tenant_admin.groups[0].description)
 
     with new_tenant_admin:
         assert key_pair_obj.exists
