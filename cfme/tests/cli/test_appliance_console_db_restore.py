@@ -458,7 +458,8 @@ def test_appliance_console_restore_db_replicated(
     # reconfigure replication between appliances which switches to "disabled"
     # during restore
     appl2.set_pglogical_replication(replication_type=':none')
-    assert not appl2.managed_provider_names
+    expected_providers = [] if appl2.version < '5.11' else ['Embedded Ansible']
+    assert appl2.managed_provider_names == expected_providers
 
     # Start the replication again
     appl2.set_pglogical_replication(replication_type=':global')
