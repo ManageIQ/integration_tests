@@ -847,9 +847,8 @@ def test_appliance_console_evm_start():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_check_default_ip():
+def test_appliance_console_check_default_ip(appliance):
     """
     test ip settings, checking all the defaults are what is expected.
 
@@ -865,7 +864,10 @@ def test_appliance_console_check_default_ip():
             1. See all default values related to IP
             2. Cross-check default vaules via commandline.
     """
-    pass
+    result = appliance.ssh_client.run_command("appliance_console")
+    assert (appliance.hostname in result.output), (
+        "ip address is not found on appliance conmsole output."
+    )
 
 
 @pytest.mark.manual
