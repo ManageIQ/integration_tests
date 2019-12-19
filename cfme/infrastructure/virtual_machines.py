@@ -1051,11 +1051,11 @@ class InfraVm(VM):
             view.form.cancel_button.click()
             return rel
 
-        def set_relationship(self, server_name, server_id, click_cancel=False):
+        def set_relationship(self, server_name, server_id, cancel=False):
             view = self.navigate()
             view.form.fill({'server': '{} ({})'.format(server_name, server_id)})
 
-            if click_cancel:
+            if cancel:
                 view.form.cancel_button.click()
             else:
                 view.form.save_button.click()
