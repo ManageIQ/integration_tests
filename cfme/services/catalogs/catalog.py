@@ -9,6 +9,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
 from cfme.common import Taggable
+from cfme.exceptions import RestLookupError
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.services.catalogs import ServicesCatalogView
@@ -126,6 +127,13 @@ class Catalog(BaseEntity, Updateable, Pretty, Taggable):
         view.configuration.item_select('Remove Catalog', handle_alert=True)
         view = self.create_view(CatalogsView, wait='10s')
         view.flash.assert_no_error()
+
+    @property
+    def rest_api_entity(self):
+        try:
+            return self.appliance.rest_api.collections.service_catalogs.get(name=self.name)
+        except ValueError:
+            raise RestLookupError(f'No service catalog rest entity found matching name {self.name}')
 
 
 @attr.s
