@@ -398,17 +398,32 @@ def test_child_dialog_should_update_with_new_options_based_on_option_of_parent_d
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_value_input_into_service_dialog_element():
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1364407])
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1364407.zip", "bz_1364407", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1364407.yml"], ids=["dynamic_dialog"])
+def test_update_dynamic_field_on_refresh(appliance, import_datastore, import_data,
+                                         generic_catalog_item_with_imported_dialog):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/16h
-        startsin: 5.5
     Bugzilla:
         1364407
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/16h
     """
-    pass
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    # Choose "Configure with reboot" radio button
+    view.fields('Configuration Type Required').radiogroup.select('Configure with reboot')
+    # Dynamic fields should update after selecting the radio button
+    wait_for(
+        lambda: view.fields("dynamic_1").read() == 'reboot' and
+        view.fields("dynamic_2").read() == 'reboot', timeout=7
+    )
