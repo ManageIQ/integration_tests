@@ -290,24 +290,32 @@ def test_when_clicking_refresh_for_text_field_2_only_text_field_2_should_refresh
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_second_dialog_dynamic_element_should_be_able_to_read_the_previous_textbox_element():
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1576107, 1704695])
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1576107.zip", "bz_1576107", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1576107.yml"], ids=["dynamic_dialog"])
+def test_read_dynamic_textbox_dialog_element(appliance, import_datastore, import_data,
+                                             generic_catalog_item_with_imported_dialog):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        tags: service
-        testSteps:
-            1. import example automate domain
-            2. import example service dialog
-            3. create a generic catalog item with the dialog service dialog provided
     Bugzilla:
         1576107
+        1704695
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/16h
     """
-    pass
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    view.fields('DYNAMIC TXTBOX2').refresh.click()
+    # Second Dynamic textbox should read first textbox value
+    wait_for(lambda: view.fields("dyna_txtbox2").read() == 'YES', timeout=7)
 
 
 @pytest.mark.manual
