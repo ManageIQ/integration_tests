@@ -20,10 +20,21 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.update import update
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
+
 
 pytestmark = [
     test_requirements.rbac
 ]
+
+ACCESS_RULES_VMS = VersionPicker(
+    {
+        LOWEST: 'Access Rules for all Virtual Machines',
+        "5.11": 'All VM and Instance Access Rules'
+    }
+)
+SETTINGS = VersionPicker({LOWEST: "Settings", "5.11": "User Settings"})
 
 
 def new_credential():
@@ -1027,7 +1038,7 @@ def _test_vm_removal(appliance, provider):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'product_features', [
-        [['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'View'],
+        [['Everything', ACCESS_RULES_VMS, 'VM Access Rules', 'View'],
          ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions']]])
 def test_permission_edit(appliance, request, product_features):
     """
@@ -1065,7 +1076,7 @@ def test_permission_edit(appliance, request, product_features):
                                      [(k, False) for k in product_features]
                  })
     with user:
-        with pytest.raises(Exception, match='Permissions have not been updated'):
+        with pytest.raises(Exception, match='Could not find an element'):
             navigate_to(appliance.collections.infra_vms, 'VMsOnly')
 
     @request.addfinalizer
@@ -1104,7 +1115,7 @@ def _go_to(cls_or_obj, dest='All'):
         [  # Param Set 1
             [  # product_features
                 [['Everything'], False],  # minimal permission
-                [['Everything', 'Settings', 'Tasks'], True]
+                [['Everything', SETTINGS, 'Tasks'], True]
             ],
             {  # allowed_actions
                 'tasks':
@@ -1211,10 +1222,16 @@ def test_permissions_role_crud(appliance):
         casecomponent: Configuration
         tags: rbac
     """
-    single_task_permission_test(appliance,
-                                [['Everything', 'Settings', 'Configuration'],
-                                 ['Everything', 'Services', 'Catalogs Explorer']],
-                                {'Role CRUD': test_role_crud})
+    configuration = (
+        ["Everything", "Settings", "Configuration"]
+        if appliance.version < "5.11"
+        else ["Everything", "Main Configuration"]
+    )
+    single_task_permission_test(
+        appliance,
+        [configuration, ['Everything', 'Services', 'Catalogs Explorer']],
+        {'Role CRUD': test_role_crud}
+    )
 
 
 @pytest.mark.tier(3)
@@ -1230,8 +1247,7 @@ def test_permissions_vm_provisioning(appliance, provider, setup_provider):
     """
     features = [
         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-         'Provision VMs']
+        ['Everything', ACCESS_RULES_VMS, 'VM Access Rules', 'Modify', 'Provision VMs']
     ]
 
     single_task_permission_test(
