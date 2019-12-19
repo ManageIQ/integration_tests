@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -31,20 +32,12 @@ def create_vm(provider, vm_name):
     return vm
 
 
-def is_dicts_same(dict1, dict2):
-    logger.info(f"Comparing two dictionaries dict1: {dict1}\n dict2:{dict2}")
-    dict1_keys = dict1.keys()
-    dict2_keys = dict2.keys()
-    if not len(dict1_keys) == len(dict2_keys):
+def are_dicts_same(dict1, dict2):
+    logger.info("Comparing two dictionaries dict1: {%s}\n dict2:{%s}" % (dict1, dict2))
+    if set(dict1) != set(dict2):
         return False
-    for key in dict1_keys:
-        if key in dict2_keys:
-            if not len(dict1[key]) == len(dict2[key]):
-                return False
-            for value in dict1[key]:
-                if not (value in dict2[key]):
-                    return False
-        else:
+    for key in dict1.keys():
+        if set(dict1[key]) != set(dict2[key]):
             return False
     return True
 
@@ -332,7 +325,7 @@ def test_replication_appliance_add_multi_subscription(request, setup_multi_regio
 
 
 @pytest.mark.tier(1)
-def test_replication_global_region_dashboard(setup_replication):
+def test_replication_global_region_dashboard(request, setup_replication):
     """
     Global dashboard show remote data
 
@@ -349,56 +342,53 @@ def test_replication_global_region_dashboard(setup_replication):
             2. Dashboard on the Global displays data from the Remote region
     """
     remote_app, global_app = setup_replication
-    remote_provider = provider_app_crud(RHEVMProvider, remote_app)
+    remote_provider = provider_app_crud(InfraProvider, remote_app)
     remote_provider.setup()
     assert remote_provider.name in remote_app.managed_provider_names, "Provider is not available."
 
     new_vm_name = fauxfactory.gen_alphanumeric(start="test_rep_dashboard", length=25).lower()
     vm = create_vm(provider=remote_provider, vm_name=new_vm_name)
+    request.addfinalizer(vm.cleanup_on_provider)
     data_items = ('EVM: Recently Discovered Hosts', 'EVM: Recently Discovered VMs',
                   'Top Storage Consumers')
-
-    remote_dashboard = remote_app.collections.dashboards.instantiate(name="Default Dashboard")
-    remote_view = navigate_to(remote_app.server, "Dashboard")
-    remote_view.browser.refresh()
-    remote_dashboard = remote_view.dashboards("Default Dashboard")
-    remote_app_data = global_app_data = {}
+    remote_app_data, global_app_data = {}, {}
 
     def get_tabel_data(widget):
-        return [row.name.text for row in widget.contents]
+        ret = [row.name.text for row in widget.contents]
+        logger.info("Widget text data:{%s}" % ret)
+        return ret
 
-    for table in data_items:
-        remote_widget = remote_dashboard.widgets(table)
+    def data_check(view, table):
+        return bool(get_tabel_data(view.dashboards("Default Dashboard").widgets(table)))
+
+    view = navigate_to(remote_app.server, "Dashboard")
+    for table_name in data_items:
+        logger.info("Table name:{%s}" % table_name)
         wait_for(
-            lambda: bool(get_tabel_data(remote_widget)), delay=10, num_sec=900,
-            fail_func=remote_view.browser.refresh,
-            message=f"Waiting for data item of {table} table."
+            data_check, func_args=[view, table_name], delay=20, num_sec=600,
+            fail_func=view.dashboards("Default Dashboard").browser.refresh,
+            message=f"Waiting for table data item: {table_name} "
         )
-        chart_data = get_tabel_data(remote_widget)
-        remote_app_data[table] = chart_data
+        remote_app_data[table_name] = get_tabel_data(view.dashboards(
+            "Default Dashboard").widgets(table_name))
 
-    global_view = navigate_to(global_app.server, "Dashboard")
-    global_view.browser.refresh()
-    global_dashboard = global_view.dashboards("Default Dashboard")
-    global_app_data = {}
-    for table in data_items:
-        global_widget = global_dashboard.widgets(table)
+    view = navigate_to(global_app.server, "Dashboard")
+    for table_name in data_items:
+        logger.info("Table name:{%s}" % table_name)
         wait_for(
-            lambda: bool(get_tabel_data(global_widget)), delay=10, num_sec=900,
-            fail_func=global_view.browser.refresh,
-            message=f"Waiting for data item of {table} table."
+            data_check, func_args=[view, table_name], delay=20, num_sec=600,
+            fail_func=view.dashboards("Default Dashboard").browser.refresh,
+            message=f"Waiting for table data item: {table_name}"
         )
-        chart_data = get_tabel_data(global_widget)
-        global_app_data[table] = chart_data
 
-    # TODO(ndhandre): Widget not implemented so some widget not checking in this test case
+        global_app_data[table_name] = get_tabel_data(view.dashboards(
+            "Default Dashboard").widgets(table_name))
+
+    # TODO(ndhandre): Widget not implemented so some widget not checking in this test case they are
     #  'Vendor and Guest OS Chart', 'Top Memory Consumers (weekly)', 'Top CPU Consumers (weekly)',
     #  'Virtual Infrastructure Platforms', 'Guest OS Information'
 
-    assert is_dicts_same(remote_app_data, global_app_data), "Dashboard is not same."
-
-    # CleanUp
-    vm.cleanup_on_provider()
+    assert are_dicts_same(remote_app_data, global_app_data), "Dashboard is not same of both app."
 
 
 @pytest.mark.tier(1)
