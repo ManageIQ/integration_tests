@@ -164,9 +164,9 @@ def test_form_button_validation(user1, vm_crud):
         initialEstimate: 1/4h
     """
     # Reset button test
-    vm_crud.set_ownership(user=user1, click_reset=True)
+    vm_crud.set_ownership(user=user1, reset=True)
     # Cancel button test
-    vm_crud.set_ownership(user=user1, click_cancel=True)
+    vm_crud.set_ownership(user=user1, cancel=True)
     # Save button test
     vm_crud.set_ownership(user=user1)
     # Unset the ownership

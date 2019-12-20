@@ -426,14 +426,14 @@ class BaseVM(
         if load_details:
             navigate_to(self, "Details", use_resetter=False)
 
-    def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
+    def set_ownership(self, user=None, group=None, cancel=False, reset=False):
         """Set instance ownership
 
         Args:
             user (User): user object for ownership
             group (Group): group object for ownership
-            click_cancel (bool): Whether to cancel form submission
-            click_reset (bool): Whether to reset form after filling
+            cancel (bool): Whether to cancel form submission
+            reset (bool): Whether to reset form after filling
         """
         view = navigate_to(self, 'SetOwnership', wait_for_view=0)
         fill_result = view.form.fill({
@@ -446,13 +446,13 @@ class BaseVM(
             return
 
         # Only if the form changed
-        if click_reset:
+        if reset:
             view.form.reset_button.click()
             view.flash.assert_message('All changes have been reset', 'warning')
             # Cancel after reset
             assert view.form.is_displayed
             view.form.cancel_button.click()
-        elif click_cancel:
+        elif cancel:
             view.form.cancel_button.click()
             view.flash.assert_success_message('Set Ownership was cancelled by the user')
         else:
