@@ -336,3 +336,28 @@ def test_subscription_region_unavailable():
             7. Replication tab is being opened for long time and finally displays 502 error alert
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.settings
+@pytest.mark.meta(coverage=[1715633])
+def test_memory_thresholds_advanced_config():
+    """
+    Test whether change made to thresholds in Advanced Config shows on the
+    workers page.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: high
+        initialEstimate: 1/4h
+        testSteps:
+            1. Settings > Advanced
+            2. Change web_services worker to 1.5.gigabytes or 2.gigabytes
+
+        expectedResults:
+            1.
+            2.
+            3.  UI shows 1.5GB or 2GB for the web_services worker.
+    """
+    pass
