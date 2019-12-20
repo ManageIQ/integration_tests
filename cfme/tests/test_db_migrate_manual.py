@@ -588,3 +588,60 @@ def test_update_webui_replication():
         testtype: functional
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.update
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1678337])
+def test_upgrade_embedded_ansible_role():
+    """ Check Embedded ansible role start successfully after upgrade
+
+    Bugzilla:
+        1678337
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1h
+        testSteps:
+            1. Provision appliance
+            2. Subscribe to target version channels and update the packages
+            3. Run rake db:migrate command and wait for it complete
+            4. check the status of embedded ansible role.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Embedded ansible role should start successfully
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.update
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1678614])
+def test_upgrade_embedded_ansible_extra_repos():
+    """ Check no non-Red Hat repos gets added after enabling embedded ansible role post upgrade
+
+    Bugzilla:
+        1678614
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1h
+        testSteps:
+            1. Provision appliance that doesn't have the Embedded Ansible server role enabled
+            2. Upgrade appliance
+            3. Enable the Embedded Ansible server role
+            4. Perform a 'yum repolist'.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. No additional repositories should be added
+    """
+    pass
