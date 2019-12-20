@@ -238,9 +238,17 @@ def test_upgrade_single_sidebyside():
             1. Get CFME VMs of preupdate and target version.
             2. Make sure the ansible is enabled and create an ansible playbook
                service (for testing the 1735114).
-            2. Turn off the evmserverd processes on both.
-            3. Dump the DB of the preupdate appliance.
-            4. Restore it on the target version appliance.
-            5. Check that a zone exists on the target appliance (as there was a bug 1749694)
-            6. Check that the service provisioning tab shows fine.
+            3. Turn off the evmserverd processes on both.
+            4. Dump the DB of the preupdate appliance.
+            5. Restore it on the target version appliance.
+            6. Check that a zone exists on the target appliance (as there was a bug 1749694)
+            7. Check that the service provisioning tab doesn't
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Zone exists on the target appliance.
+            7. An empty section or a friendly message such as "No Output available"
     """
