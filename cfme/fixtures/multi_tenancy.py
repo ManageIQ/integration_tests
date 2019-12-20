@@ -10,7 +10,7 @@ from cfme.utils.update import update
 
 @pytest.fixture(scope='module')
 def child_tenant(appliance):
-    """Fixture to create a child tenant"""
+    """Fixture to create a child tenant with 'My Company' as its parent"""
     child_tenant = appliance.collections.tenants.create(
         name=fauxfactory.gen_alphanumeric(15, start="child_tenant_"),
         description='tenant description',
