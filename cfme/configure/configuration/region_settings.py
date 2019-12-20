@@ -6,6 +6,7 @@ from navmazing import NavigateToSibling
 from widgetastic.exceptions import RowNotFound
 from widgetastic.exceptions import UnexpectedAlertPresentException
 from widgetastic.widget import Checkbox
+from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapSwitch
@@ -553,10 +554,8 @@ class RedHatUpdatesEditView(RegionView):
     proxy_url = Input(id='proxy_address')
     proxy_username = Input(id='proxy_userid')
     proxy_password = Input(id='proxy_password')
-    proxy_password_verify = Input(id='proxy_password2')
     username = Input(id='customer_userid')
     password = Input(id='customer_password')
-    password_verify = Input(id='customer_password2')
 
     repo_default_name = Button(id='repo_default_name')
     rhn_default_url = Button(id='rhn_default_button')
@@ -565,6 +564,7 @@ class RedHatUpdatesEditView(RegionView):
     reset_button = Button('Reset')
     save_button = Button('Save')
     cancel_button = Button('Cancel')
+    organization = Select(id='customer_org')
 
     @property
     def is_displayed(self):
@@ -583,15 +583,12 @@ class RedHatUpdates(Navigatable, Pretty):
         url: Service server URL address.
         username: Username to use for registration.
         password: Password to use for registration.
-        password_verify: 2nd entry of password for verification. Same as 'password' if None.
         repo_name: Repository/channel to enable.
         organization: Organization (sat6 only).
         use_proxy: `True` if proxy should be used, `False` otherwise (default `False`).
         proxy_url: Address of the proxy server.
         proxy_username: Username for the proxy server.
         proxy_password: Password for the proxy server.
-        proxy_password_verify: 2nd entry of proxy server password for verification.
-            Same as 'proxy_password' if None.
         set_default_rhsm_address: Click the Default button connected to
             the RHSM (only) address if `True`
         set_default_repository: Click the Default button connected to the repo/channel if `True`
@@ -608,23 +605,20 @@ class RedHatUpdates(Navigatable, Pretty):
         'sat6': 'Red Hat Satellite 6'
     }
 
-    def __init__(self, service, url, username, password, password_verify=None, repo_name=None,
+    def __init__(self, service, url, username, password, repo_name=None,
                  organization=None, use_proxy=False, proxy_url=None, proxy_username=None,
-                 proxy_password=None, proxy_password_verify=None,
-                 set_default_rhsm_address=False,
+                 proxy_password=None, set_default_rhsm_address=False,
                  set_default_repository=False, appliance=None):
         self.service = service
         self.url = url
         self.username = username
         self.password = password
-        self.password_verify = password_verify
         self.repo_name = repo_name
         self.organization = organization
         self.use_proxy = use_proxy
         self.proxy_url = proxy_url
         self.proxy_username = proxy_username
         self.proxy_password = proxy_password
-        self.proxy_password_verify = proxy_password_verify
         self.set_default_rhsm_address = set_default_rhsm_address
         self.set_default_repository = set_default_repository
         Navigatable.__init__(self, appliance=appliance)
@@ -642,22 +636,17 @@ class RedHatUpdates(Navigatable, Pretty):
             self.service)
         service_value = self.service_types[self.service]
 
-        password_verify = self.password_verify or self.password
-        proxy_password_verify = self.proxy_password_verify or self.proxy_password
-
         view = navigate_to(self, 'Edit')
         details = {
             'register_to': service_value,
             'url': self.url,
             'username': self.username,
             'password': self.password,
-            'password_verify': password_verify,
             'repo_name': self.repo_name,
             'use_proxy': self.use_proxy,
             'proxy_url': self.proxy_url,
             'proxy_username': self.proxy_username,
             'proxy_password': self.proxy_password,
-            'proxy_password_verify': proxy_password_verify
         }
 
         view.fill(details)
@@ -670,6 +659,9 @@ class RedHatUpdates(Navigatable, Pretty):
 
         if validate:
             view.validate_button.click()
+
+        if self.organization:
+            view.fill({'organization': self.organization})
 
         if cancel:
             view.cancel_button.click()
