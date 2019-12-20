@@ -1,6 +1,3 @@
-# TO DO - remove sleep when BZ 1496233 is fixed
-import time
-
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import Select
@@ -19,9 +16,6 @@ from cfme.utils.appliance.implementations.ssui import navigate_to
 from cfme.utils.appliance.implementations.ssui import navigator
 from cfme.utils.appliance.implementations.ssui import SSUINavigateStep
 from cfme.utils.appliance.implementations.ssui import ViaSSUI
-from cfme.utils.version import LOWEST
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Notification
 from widgetastic_manageiq import SSUIAppendToBodyDropdown
@@ -65,9 +59,7 @@ class DetailsMyServiceView(MyServicesView):
 
     notification = Notification()
     policy = SSUIDropdown('Policy')
-    power_operations = VersionPicker(
-        {LOWEST: SSUIDropdown("Power Operations"), "5.10": Kebab()}
-    )
+    power_operations = Kebab()
     access_dropdown = SSUIAppendToBodyDropdown('Access')
     remove_service = Button("Remove Service")
     configuration = SSUIDropdown('Configuration')
@@ -159,23 +151,15 @@ class RemoveServiceView(MyServicesView):
 class RetireServiceView(MyServicesView):
     title = Text(locator='//h4[@class="modal-title"]')
 
-    retire = VersionPicker({
-        Version.lowest(): Button('Yes, Retire Service Now'),
-        "5.10": Button('OK')
-    })
+    retire = Button('OK')
     cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
-        title = VersionPicker(
-            {
-                LOWEST: "Retire Service Now",
-                '5.10': "Retire Services"
-            }
-        ).pick(self.extra.appliance.version)
         return (
             self.retire.is_displayed and
-            self.title.text == title)
+            self.title.text == "Retire Services"
+        )
 
 
 class MyServiceVMDetailsView(MyServicesView):
@@ -206,10 +190,10 @@ def update(self, updates):
     view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
     view.flash.assert_no_error()
     view = self.create_view(DetailsMyServiceView, override=updates)
-    # TODO - remove sleep when BZ 1518954 is fixed
-    time.sleep(10)
-    assert view.notification.assert_message(
-        "{} was edited.".format(self.name))
+    message_present, _ = wait_for(view.notification.assert_message,
+                                  func_args=[f'{self.name} was edited.'],
+                                  timeout=10)
+    assert message_present
 
 
 @MiqImplementationContext.external_for(MyService.set_ownership, ViaSSUI)
@@ -220,13 +204,10 @@ def set_ownership(self, owner, group):
     view.save_button.click()
     view = self.create_view(DetailsMyServiceView)
     assert view.is_displayed
-    # TODO - remove sleep when BZ 1518954 is fixed
-    time.sleep(10)
-    if self.appliance.version >= "5.8":
-        assert view.notification.assert_message("Setting ownership.")
-    else:
-        assert view.notification.assert_message("{} ownership was saved."
-                                                .format(self.name))
+    message_present, _ = wait_for(view.notification.assert_message,
+                                  func_args=['Setting ownership.'],
+                                  timeout=10)
+    assert message_present
     view.browser.refresh()  # WA until ManageIQ/integration_tests:7157 is solved
 
 
@@ -239,9 +220,10 @@ def edit_tags(self, tag, value):
     view.save.click()
     view = self.create_view(DetailsMyServiceView)
     assert view.is_displayed
-    # TODO - remove sleep when BZ 1518954 is fixed
-    time.sleep(10)
-    assert view.notification.assert_message("Tagging successful.")
+    message_present, _ = wait_for(view.notification.assert_message,
+                                  func_args=["Tagging successful."],
+                                  timeout=10)
+    assert message_present
 
 
 @MiqImplementationContext.external_for(MyService.delete, ViaSSUI)
@@ -254,9 +236,10 @@ def delete(self):
     view = self.create_view(RemoveServiceView)
     view.remove.click()
     view = self.create_view(MyServicesView, wait=300)
-    # TODO - remove sleep when BZ 1518954 is fixed
-    time.sleep(10)
-    assert view.notification.assert_message("{} was removed.".format(self.name))
+    message_present, _ = wait_for(view.notification.assert_message,
+                                  func_args=[f"{self.name} was removed."],
+                                  timeout=10)
+    assert message_present
 
 
 @MiqImplementationContext.external_for(MyService.launch_vm_console, ViaSSUI)
