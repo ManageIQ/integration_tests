@@ -1321,3 +1321,30 @@ def test_appliance_console_negative():
             1. Check info screen is blank with Network information.
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1753687])
+def test_ap_failed_dbconfig_status():
+    """ Test failed DB config command returns non-zero status.
+
+    Bugzilla:
+        1753687
+    Polarion:
+        assignee: mnadeem
+        casecomponent: Appliance
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+        testSteps:
+            1. Logged in into AP
+            2. Make the command to fail "opt/rh/cfme-gemset/bin/appliance_console_cli -i -b /dev/sdb
+               -S -d ${db_name} -U ${db_root} -p '${db_pass}'"
+            3. Check command execution status "echo $?".
+        expectedResults:
+            1.
+            2.
+            3. The command "echo $?" should be non-zero
+    """
+    pass
