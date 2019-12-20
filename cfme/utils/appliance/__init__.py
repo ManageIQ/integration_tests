@@ -242,12 +242,7 @@ class IPAppliance(object):
     def is_registration_complete(self, used_repo_or_channel):
         """ Checks if an appliance has the correct repos enabled with RHSM or SAT6 """
         result = self.ssh_client.run_command('yum repolist enabled')
-        # Check that the specified (or default) repo (can be multiple, separated by a space)
-        # is enabled and that there are packages available
-        for repo in used_repo_or_channel.split(' '):
-            if (repo not in result.output) or (not re.search(r'repolist: [^0]', result.output)):
-                return False
-        return True
+        return all(repo in result.output for repo in used_repo_or_channel.split(' '))
 
     @property
     def default_zone(self):
