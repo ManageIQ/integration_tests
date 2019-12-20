@@ -16,6 +16,7 @@ from cfme.common import Taggable
 from cfme.common import TimelinesView
 from cfme.common.candu_views import ClusterInfraUtilizationView
 from cfme.exceptions import ItemNotFound
+from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -141,6 +142,14 @@ class ClusterDetailsView(ClusterView):
     toolbar = View.nested(ClusterDetailsToolbar)
     sidebar = View.nested(ClusterDetailsAccordion)
     entities = View.nested(ClusterDetailsEntities)
+
+
+class ClusterAllVMsView(VmsTemplatesAllView):
+    """The page shows all VMs and instances in cluster"""
+
+    @property
+    def is_displayed(self):
+        return self.entities.title.text == f"{self.context['object'].name} (All VMs and Instances)"
 
 
 class ClusterTimelinesView(TimelinesView, ClusterView):
@@ -383,6 +392,15 @@ class Details(CFMENavigateStep):
             entity = self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                                 surf_pages=True)
         entity.click()
+
+
+@navigator.register(Cluster, 'AllVMs')
+class AllVMs(CFMENavigateStep):
+    VIEW = ClusterAllVMsView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.relationships.click_at('All VMs')
 
 
 @navigator.register(Cluster, 'Timelines')

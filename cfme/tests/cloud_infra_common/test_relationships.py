@@ -470,12 +470,22 @@ def test_datastore_relationships(setup_provider, testing_vm):
     view.flash.assert_no_error()
 
 
+@pytest.fixture(scope="function")
+def cluster(provider):
+    collection = provider.appliance.collections.clusters
+    cluster_name = provider.data["cap_and_util"]["cluster"]
+    return collection.instantiate(name=cluster_name, provider=provider)
+
+
 @test_requirements.relationships
-@pytest.mark.manual
 @pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1732370])
-def test_ssa_cluster_relationships():
+@pytest.mark.meta(automates=[1732370])
+@pytest.mark.provider([RHEVMProvider], selector=ONE)
+def test_ssa_cluster_relationships(appliance, setup_provider, cluster, testing_vm):
     """
+    Bugzilla:
+        1732370
+
     Polarion:
         assignee: ghubale
         casecomponent: Infra
@@ -485,22 +495,33 @@ def test_ssa_cluster_relationships():
         setup:
             1. Setup SSA
         testSteps:
-            1. Add infra provider(e.g. vsphere65, scvmm etc)
-            2. Go to provider details page
-            3. Click on 'Cluster' from 'Relationships' table
-            4. Click on cluster available and go to it's details page
-            5. Click on 'All VMs' from 'Relationships' table
-            6. Select any vm and click on options like 'Refresh Relationships and Power states' or
+            1. Add infra provider
+            2. Go to it's details page
+            3. Click on 'All VMs' from 'Relationships' table
+            4. Select any vm and click on options like 'Refresh Relationships and Power states' or
               'perform smartstate analysis' and 'Extract running processes' from 'configuration'
         expectedResults:
             1.
             2.
             3.
-            4.
-            5.
-            6. Operations should be performed successfully. It should not give unexpected error.
-
-    Bugzilla:
-        1732370
+            4. Operations should be performed successfully. It should not give unexpected error.
     """
-    pass
+    view = navigate_to(cluster, "AllVMs")
+    view.entities.get_entity(name=testing_vm.name).check()
+
+    view.toolbar.configuration.item_select("Refresh Relationships and Power States",
+                                           handle_alert=True)
+    view.flash.assert_success_message(
+        "Refresh Provider initiated for 1 VM and Instance from the CFME Database"
+    )
+    view.flash.dismiss()
+
+    view.toolbar.configuration.item_select('Perform SmartState Analysis',
+                                           handle_alert=True)
+    view.flash.assert_success_message(
+        "Analysis initiated for 1 VM and Instance from the CFME Database"
+    )
+    view.flash.dismiss()
+
+    view.toolbar.configuration.item_select('Extract Running Processes', handle_alert=True)
+    view.flash.assert_no_error()
