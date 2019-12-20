@@ -384,7 +384,7 @@ def copy_domains(original_request_class, domain):
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.meta(blockers=[BZ(1713632)])
+@pytest.mark.meta(automates=[BZ(1713632)])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.provider([OpenStackProvider], required_fields=[['provisioning', 'image']])
 def test_cloud_provision_from_template_with_attached_disks(
@@ -400,6 +400,9 @@ def test_cloud_provision_from_template_with_attached_disks(
         caseimportance: high
         casecomponent: Provisioning
         initialEstimate: 1/4h
+
+    Bugzilla:
+        1713632
     """
     vm_name, inst_args = instance_args
     # Modify availiability_zone for Azure provider
