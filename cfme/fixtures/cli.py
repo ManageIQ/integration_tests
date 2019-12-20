@@ -12,6 +12,7 @@ from lxml import etree
 import cfme.utils.auth as authutil
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.configure.configuration.region_settings import RedHatUpdates
+from cfme.fixtures.appliance import call_collect_logs_hook
 from cfme.fixtures.appliance import sprout_appliances
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
@@ -31,7 +32,7 @@ TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
 
 
 @pytest.fixture()
-def unconfigured_appliance(appliance, pytestconfig):
+def unconfigured_appliance(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=False,
@@ -40,10 +41,11 @@ def unconfigured_appliance(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps[0]
+        call_collect_logs_hook(request.config, apps)
 
 
 @pytest.fixture()
-def unconfigured_appliance_secondary(appliance, pytestconfig):
+def unconfigured_appliance_secondary(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=False,
@@ -52,10 +54,11 @@ def unconfigured_appliance_secondary(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps[0]
+        call_collect_logs_hook(request.config, apps)
 
 
 @pytest.fixture()
-def unconfigured_appliances(appliance, pytestconfig):
+def unconfigured_appliances(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=False,
@@ -64,10 +67,11 @@ def unconfigured_appliances(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps
+        call_collect_logs_hook(request.config, apps)
 
 
 @pytest.fixture()
-def configured_appliance(appliance, pytestconfig):
+def configured_appliance(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=True,
@@ -76,6 +80,7 @@ def configured_appliance(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps[0]
+        call_collect_logs_hook(request.config, apps)
 
 
 @pytest.fixture(scope="function")
