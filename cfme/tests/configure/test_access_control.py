@@ -1532,7 +1532,8 @@ def test_superadmin_tenant_admin_crud(appliance):
 
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
-def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
+def test_tenantadmin_group_crud(child_tenant_admin_user, tenant_role, child_tenant, request,
+        appliance):
     """
     Perform CRUD operations on groups as Tenant administrator.
 
@@ -1547,9 +1548,9 @@ def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, req
             1. Create new tenant admin user and assign user to group EvmGroup-tenant_administrator
             2. As Tenant administrator, create new group, update group and delete group.
     """
-    with new_tenant_admin:
+    with child_tenant_admin_user:
         navigate_to(appliance.server, 'LoggedIn')
-        assert appliance.server.current_full_name() == new_tenant_admin.name
+        assert appliance.server.current_full_name() == child_tenant_admin_user.name
 
         group_collection = appliance.collections.groups
         group = group_collection.create(
@@ -1599,7 +1600,8 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
 
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
-def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
+def test_tenantadmin_user_crud(child_tenant_admin_user, tenant_role, child_tenant, request,
+        appliance):
     """
     As a Tenant Admin, I want to be able to create users in my tenant.
     Polarion:
@@ -1623,11 +1625,11 @@ def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, requ
             must be created by superadministrator. In 5.5.0.13 after giving additional permissions
             to tenant_admin,able to create new roles
     """
-    with new_tenant_admin:
+    with child_tenant_admin_user:
         navigate_to(appliance.server, 'LoggedIn')
-        assert appliance.server.current_full_name() == new_tenant_admin.name
+        assert appliance.server.current_full_name() == child_tenant_admin_user.name
 
-        user = new_user(appliance, new_tenant_admin.groups[0])
+        user = new_user(appliance, child_tenant_admin_user.groups[0])
         request.addfinalizer(user.delete_if_exists)
         assert user.exists
 

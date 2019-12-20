@@ -186,7 +186,7 @@ class KeyPair(BaseEntity, Taggable):
         view.flash.assert_no_error()
 
     def set_ownership(self, owner=None, group=None, cancel=False, reset=False):
-        """Set instance ownership
+        """Set keypair ownership
 
         Args:
             user (User): user object for ownership
@@ -196,8 +196,8 @@ class KeyPair(BaseEntity, Taggable):
         """
         view = navigate_to(self, 'SetOwnership', wait_for_view=0)
         fill_result = view.form.fill({
-            'user_name': owner if owner else None,
-            'group_name': group if group else None})
+            'user_name': owner.name if owner else None,
+            'group_name': group.description if group else None})
         if not fill_result:
             view.form.cancel_button.click()
             view = self.create_view(navigator.get_class(self, 'Details').VIEW)
@@ -213,12 +213,12 @@ class KeyPair(BaseEntity, Taggable):
             view.form.cancel_button.click()
         elif cancel:
             view.form.cancel_button.click()
-            view.flash.assert_success_message('Set Ownership was cancelled by the user')
+            view.flash.assert_no_error()
         else:
             # save the form
             view.form.save_button.click()
             view = self.create_view(navigator.get_class(self, 'Details').VIEW)
-            view.flash.assert_success_message('Ownership saved for selected Key Pair')
+            view.flash.assert_no_error()
 
 
 @attr.s

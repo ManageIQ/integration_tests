@@ -10,6 +10,7 @@ from cfme.utils.update import update
 
 @pytest.fixture(scope='module')
 def child_tenant(appliance):
+    """Fixture to create a child tenant"""
     child_tenant = appliance.collections.tenants.create(
         name=fauxfactory.gen_alphanumeric(15, start="child_tenant_"),
         description='tenant description',
@@ -21,6 +22,7 @@ def child_tenant(appliance):
 
 @pytest.fixture(scope='module')
 def tenant_role(appliance, request):
+    """Fixture to create a tenant_administrator role with additional product features"""
     role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
     tenant_role = role.copy()
 
@@ -41,20 +43,21 @@ def tenant_role(appliance, request):
 
 
 @pytest.fixture(scope='module')
-def new_tenant_admin(appliance, request, child_tenant, tenant_role):
+def child_tenant_admin_user(appliance, request, child_tenant, tenant_role):
+    """Fixture to create a tenant admin user"""
     credential = Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
                     secret='redhat')
     group = appliance.collections.groups.create(
         description=fauxfactory.gen_alphanumeric(15, start="tenant_grp_"), role=tenant_role.name,
         tenant=f'My Company/{child_tenant.name}')
 
-    tenant_admin = appliance.collections.users.create(
+    tenant_admin_user = appliance.collections.users.create(
         name=fauxfactory.gen_alphanumeric(start='tenant_admin_user'),
         credential=credential,
         email='xyz@redhat.com',
         groups=group,
         cost_center='Workload',
         value_assign='Database')
-    yield tenant_admin
-    tenant_admin.delete_if_exists()
+    yield tenant_admin_user
+    tenant_admin_user.delete_if_exists()
     group.delete_if_exists()
