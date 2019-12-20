@@ -253,7 +253,7 @@ def test_retire_owned_service(request, appliance, context, user_self_service_rol
             )
 
 
-@pytest.mark.customer_stories
+@test_requirements.customer_stories
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1695804])
 @pytest.mark.tier(2)
