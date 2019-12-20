@@ -9,6 +9,7 @@ Options in env.yaml will define what files to collect, will default to the set b
             - /var/www/miq/vmdb/log/evm.log
             - /var/www/miq/vmdb/log/production.log
             - /var/www/miq/vmdb/log/automation.log
+            - /var/www/miq/vmdb/log/appliance_console.log
 
 Log files will be tarred and written to log_path
 """
@@ -21,7 +22,8 @@ from cfme.utils.path import log_path
 
 DEFAULT_FILES = ['/var/www/miq/vmdb/log/evm.log',
                  '/var/www/miq/vmdb/log/production.log',
-                 '/var/www/miq/vmdb/log/automation.log']
+                 '/var/www/miq/vmdb/log/automation.log',
+                 '/var/www/miq/vmdb/log/appliance_console.log']
 
 DEFAULT_LOCAL = log_path
 

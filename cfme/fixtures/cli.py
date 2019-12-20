@@ -189,7 +189,7 @@ def get_puddle_cfme_version(repo_file_path):
 
 
 @contextmanager
-def get_apps(appliance, old_version, count, preconfigured, pytest_config):
+def get_apps(requests, appliance, old_version, count, preconfigured, pytest_config):
     """Requests appliance from sprout based on old_versions, edits partitions and adds
         repo file for update"""
     series = appliance.version.series()
@@ -227,6 +227,7 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
         logger.exception(msg)
         pytest.skip(msg)
     finally:
+        call_collect_logs_hook(pytest_config, apps)
         for app in apps:
             app.ssh_client.close()
         if pool_id:
@@ -236,7 +237,7 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
 @pytest.fixture
 def appliance_preupdate(appliance, old_version, request):
     """Requests single appliance from sprout."""
-    with get_apps(appliance, old_version, count=1, preconfigured=True,
+    with get_apps(request, appliance, old_version, count=1, preconfigured=True,
                   pytest_config=request.config) as apps:
         yield apps[0]
 
@@ -244,7 +245,7 @@ def appliance_preupdate(appliance, old_version, request):
 @pytest.fixture
 def multiple_preupdate_appliances(appliance, old_version, request):
     """Requests multiple appliances from sprout."""
-    with get_apps(appliance, old_version, count=2, preconfigured=False,
+    with get_apps(request, appliance, old_version, count=2, preconfigured=False,
                   pytest_config=request.config) as apps:
         yield apps
 
@@ -252,7 +253,7 @@ def multiple_preupdate_appliances(appliance, old_version, request):
 @pytest.fixture
 def ha_multiple_preupdate_appliances(appliance, old_version, request):
     """Requests multiple appliances from sprout."""
-    with get_apps(appliance, old_version, count=3, preconfigured=False,
+    with get_apps(request, appliance, old_version, count=3, preconfigured=False,
                   pytest_config=request.config) as apps:
         yield apps
 
