@@ -1,5 +1,3 @@
-import time
-
 import pytest
 
 from cfme import test_requirements
@@ -136,6 +134,7 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
 
 @pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(automates=[1532201])
 def test_rh_registration(
         temp_appliance_preconfig_funcscope, request, reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether an appliance can be registered against RHSM and SAT6
@@ -145,6 +144,9 @@ def test_rh_registration(
         caseimportance: high
         casecomponent: Configuration
         initialEstimate: 1/12h
+
+    Bugzilla:
+        1532201
     """
     repo = reg_data.get('enable_repo')
     if not repo:
@@ -181,10 +183,8 @@ def test_rh_registration(
 
         used_repo_or_channel = red_hat_updates.get_repository_names()
 
-        # FIXME workaround BZ 1532201 (An exception to the rule as it waits for backend config)
-        time.sleep(15)
-        request.addfinalizer(appliance.unregister)
         red_hat_updates.register_appliances()  # Register all
+        request.addfinalizer(appliance.unregister)
 
         wait_for(
             func=red_hat_updates.is_registering,
