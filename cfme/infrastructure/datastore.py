@@ -14,10 +14,10 @@ from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common.candu_views import DatastoreInfraUtilizationView
 from cfme.common.host_views import HostsView
+from cfme.common.vm_views import VMEntities
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import MenuItemNotFound
-from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils import ParamClassName
@@ -29,11 +29,13 @@ from cfme.utils.providers import get_crud_by_name
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import CompareToolBarActionsView
 from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import JSBaseEntity
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import Table
 
 
 class DatastoreToolBar(View):
@@ -129,16 +131,20 @@ class ProviderAllDatastoresView(DatastoresView):
         )
 
 
-class DatastoreManagedVMsView(VmsTemplatesAllView):
+class DatastoreManagedVMsView(BaseLoggedInPage):
     """
     This view represents All VMs and Templates page for datastores
     """
+    toolbar = View.nested(DatastoreToolBar)
+    including_entities = View.include(VMEntities, use_parent=True)
 
     @property
     def is_displayed(self):
         return (
-            self.logged_in_as_current_user and
-            self.entities.title.text == f'{self.context["object"].name} (All VMs and Instances)'
+            super(BaseLoggedInPage, self).is_displayed
+            and self.navigation.currently_selected == ["Compute", "Infrastructure", "Datastores"]
+            and self.entities.title.text == f'{self.context["object"].name} (All VMs and Instances)'
+            and self.breadcrumb.active_location == self.context["object"].name
         )
 
 
@@ -174,6 +180,26 @@ class RegisteredHostsView(HostsView):
     represents Hosts related to some datastore
     """
     is_displayed = displayed_not_implemented
+
+
+class DatastoresCompareView(BaseLoggedInPage):
+    """Compare VM / Template page."""
+    # TODO: Add more widgets once BZ 1733120 is fixed.
+    table = Table('//*[@id="compare-grid"]/table')
+
+    @View.nested
+    class toolbar(View):
+        actions = View.nested(CompareToolBarActionsView)
+        download = Dropdown(text="Download")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user
+            and self.entities.title.text == "Compare VM or Template"
+            and self.navigation.currently_selected == ["Compute", "Infrastructure", "Datastores"]
+            and self.toolbar.is_displayed
+        )
 
 
 @attr.s
@@ -241,15 +267,13 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
             view.entities.relationships.click_at('VMs')
         else:
             view.entities.relationships.click_at('Managed VMs')
-        # todo: to replace with correct view
-        vms_view = view.browser.create_view(DatastoresView)
-        return [vm.name for vm in vms_view.entities.get_all()]
+        vms_view = view.browser.create_view(DatastoreManagedVMsView)
+        return vms_view.entities.all_entity_names
 
     def delete_all_attached_vms(self):
         view = navigate_to(self, 'Details')
         view.entities.relationships.click_at('Managed VMs')
-        # todo: to replace with correct view
-        vms_view = view.browser.create_view(DatastoresView)
+        vms_view = view.browser.create_view(DatastoreManagedVMsView)
         for entity in vms_view.entities.get_all():
             entity.ensure_checked()
         view.toolbar.configuration.item_select('Remove selected items from Inventory',
