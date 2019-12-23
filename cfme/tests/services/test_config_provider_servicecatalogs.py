@@ -14,8 +14,9 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2),
     pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
-        'textarea_survey'],
-        ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
+        'textarea_survey', 'multiselect_survey'],
+        ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job',
+             'multiselect_survey'],
         scope='module'),
     pytest.mark.ignore_stream('upstream'),
 ]
@@ -40,7 +41,8 @@ def catalog_item(appliance, request, provider, ansible_tower_dialog, catalog, jo
 
 
 @pytest.mark.meta(automates=[BZ(1717500)])
-# The 'textarea_survey' job type automates BZ 1717500
+# The 'textarea_survey' job type automates BZ 1717500.
+# The 'multiselect_survey' job type automates BZ 1761581.
 def test_order_tower_catalog_item(appliance, provider, catalog_item, request, job_type):
     """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
