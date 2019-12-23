@@ -5,8 +5,13 @@ from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.intelligence.reports.dashboards import DefaultDashboard
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
+from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import ViaUI
+from cfme.utils.blockers import BZ
+from cfme.utils.rest import assert_response
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 
 @pytest.fixture(scope="module")
@@ -21,58 +26,73 @@ def dashboard(default_widgets):
 
 
 @pytest.fixture(scope="function")
-def custom_widgets(appliance):
-    collection = appliance.collections.dashboard_report_widgets
-    ws = [
-        collection.create(
-            collection.MENU,
-            fauxfactory.gen_alphanumeric(),
-            description=fauxfactory.gen_alphanumeric(),
-            active=True,
-            shortcuts={
-                "Services / Catalogs": fauxfactory.gen_alphanumeric(),
-                "Compute / Clouds / Providers": fauxfactory.gen_alphanumeric(),
-            },
-            visibility="<To All Users>"),
-        collection.create(
-            collection.REPORT,
-            fauxfactory.gen_alphanumeric(),
-            description=fauxfactory.gen_alphanumeric(),
-            active=True,
-            filter=["Events", "Operations", "Operations VMs Powered On/Off for Last Week"],
-            columns=["VM Name", "Message"],
-            rows="10",
-            timer={"run": "Hourly", "hours": "Hour"},
-            visibility="<To All Users>"),
-        collection.create(
-            collection.CHART,
-            fauxfactory.gen_alphanumeric(),
-            description=fauxfactory.gen_alphanumeric(),
-            active=True,
-            filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
-            timer={"run": "Hourly", "hours": "Hour"},
-            visibility="<To All Users>"),
-    ]
+def create_custom_widgets(appliance, request):
+    def _create_widget(widget_type="all"):
+        collection = appliance.collections.dashboard_report_widgets
+        widget_dict = {
+            "menu": dict(
+                widget_class=collection.MENU,
+                title=fauxfactory.gen_alphanumeric(),
+                description=fauxfactory.gen_alphanumeric(),
+                active=True,
+                shortcuts={
+                    "Services / Catalogs": fauxfactory.gen_alphanumeric(),
+                    "Compute / Clouds / Providers": fauxfactory.gen_alphanumeric(),
+                },
+                visibility="<To All Users>",
+            ),
+            "report": dict(
+                widget_class=collection.REPORT,
+                title=fauxfactory.gen_alphanumeric(),
+                description=fauxfactory.gen_alphanumeric(),
+                active=True,
+                filter=["Events", "Operations", "Operations VMs Powered On/Off for Last Week"],
+                columns=["VM Name", "Message"],
+                rows="10",
+                timer={"run": "Hourly", "hours": "Hour"},
+                visibility="<To All Users>",
+            ),
+            "chart": dict(
+                widget_class=collection.CHART,
+                title=fauxfactory.gen_alphanumeric(),
+                description=fauxfactory.gen_alphanumeric(),
+                active=True,
+                filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
+                timer={"run": "Hourly", "hours": "Hour"},
+                visibility="<To All Users>",
+            ),
+        }
+        # RSS Removed in 5.11 (BZ 1728328)
+        if appliance.version < "5.11":
+            widget_dict["rss"] = dict(
+                widget_class=collection.RSS,
+                title=fauxfactory.gen_alphanumeric(),
+                description=fauxfactory.gen_alphanumeric(),
+                active=True,
+                type="Internal",
+                feed="Administrative Events",
+                rows="8",
+                visibility="<To All Users>",
+            )
 
-    # RSS Removed in 5.11 (BZ 1728328)
-    if appliance.version < '5.11':
-        ws.append(collection.create(
-            collection.RSS,
-            fauxfactory.gen_alphanumeric(),
-            description=fauxfactory.gen_alphanumeric(),
-            active=True,
-            type="Internal",
-            feed="Administrative Events",
-            rows="8",
-            visibility="<To All Users>"))
-    yield ws
-    map(lambda w: w.delete(), ws)
+        if widget_type == "all":
+            ws = []
+            for data in widget_dict.values():
+                w = collection.create(**data)
+                request.addfinalizer(w.delete)
+                ws.append(w)
+        else:
+            ws = collection.create(**widget_dict[widget_type])
+            request.addfinalizer(ws.delete)
+        return ws
+
+    return _create_widget
 
 
 @test_requirements.dashboard
 @pytest.mark.tier(3)
 def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
-                              custom_widgets, soft_assert):
+                              create_custom_widgets, soft_assert):
     """
     Polarion:
         assignee: jhenner
@@ -80,6 +100,7 @@ def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
         caseimportance: medium
         initialEstimate: 1/12h
     """
+    custom_widgets = create_custom_widgets()
     with update(dashboard):
         dashboard.widgets = map(lambda w: w.title, custom_widgets)
 
@@ -221,3 +242,80 @@ def test_generate_widget_content_by_automate(request, appliance, klass, namespac
     widget.refresh()
     current_update = view.last_run_time.read().split(' ')[4]
     assert old_update != current_update
+
+
+@pytest.mark.meta(
+    automates=[1761836, 1753682], blockers=[BZ(1761836, unblock=lambda context: context != ViaREST)]
+)
+@pytest.mark.tier(3)
+@test_requirements.rest
+@pytest.mark.parametrize("context", [ViaUI, ViaREST])
+def test_widget_generate_content_via_rest(
+    context, appliance, request, create_custom_widgets, dashboard, default_widgets
+):
+    """
+    Bugzilla:
+       1761836
+       1623607
+       1753682
+
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        testSteps:
+            1. Depending on the implementation -
+                i. GET /api/widgtes/:id and note the `last_generated_content_on`.
+                ii. Navigate to Dashboard and note the `last_generated_content_on` for the widget.
+            2. POST /api/widgets/:id
+                {
+                    "action": "generate_content"
+                }
+            3. Wait until the task completes.
+            4. Depending on the implementation
+                i. GET /api/widgets/:id and compare the value of `last_generated_content_on`
+                    with the value noted in step 1.
+                ii.  Navigate to the dashboard and check if the value was updated for the widget.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Both values must be different, value must be updated.
+    """
+    widget = create_custom_widgets("report")
+
+    if context == ViaUI:
+        with update(dashboard):
+            dashboard.widgets = widget.title
+
+        @request.addfinalizer
+        def _finalize():
+            with update(dashboard):
+                dashboard.widgets = default_widgets
+
+        view = navigate_to(appliance.server, "Dashboard")
+        view.reset_widgets()
+
+        widget_ui = view.dashboards("Default Dashboard").widgets(widget.title)
+        last_update = widget_ui.read()
+
+        widget.rest_api_entity.action.generate_content()
+        assert_response(appliance)
+
+        view.browser.refresh()
+        wait_for(lambda: widget_ui.is_displayed)
+
+        assert last_update["footer"].split(" | ")[0] < widget_ui.read()["footer"].split(" | ")[0]
+    else:
+        last_update = widget.rest_api_entity.last_generated_content_on
+
+        widget.rest_api_entity.action.generate_content()
+        assert_response(appliance)
+
+        assert wait_for(
+            lambda: last_update < widget.rest_api_entity.last_generated_content_on,
+            fail_func=widget.rest_api_entity.reload,
+            timeout=30,
+            message="Wait for the widget to update",
+        )
