@@ -47,10 +47,10 @@ tzs = [
     TZ('UTC', ('11',))
 ]
 RETURN = ''
-IPv6_REGEX = r'(IPv6 Address:\s*)(\w+:\w+:\w+:\w+:\w+:\w+:\w+:\w+)/'
-IPv4_REGEX = r'(IPv4 Address:\s*)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-CTRL_C = "\x03"
 
+IPv4_REGEX = r'(IPv4 Address:\s*)(?P<ipv4>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+IPv6_REGEX = r'(IPv6 Address:\s*)(?P<ipv6>(?<![:.\w])(?:[a-f0-9]{1,4}:){7}[a-f0-9]{1,4}(?![:.\w]))'
+CTRL_C = "\x03"
 ext_auth_options = [
     LoginOption('sso', 'sso_enabled', '1'),
     LoginOption('saml', 'saml_enabled', '2'),
@@ -1026,9 +1026,8 @@ def test_appliance_console_cancel(appliance):
         ), f"Unable to go back from {menu_number} menu number."
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_network_conf():
+def test_appliance_console_network_conf(temp_appliance_preconfig_long, soft_assert):
     """
     test network configuration
 
@@ -1060,7 +1059,74 @@ def test_appliance_console_network_conf():
             9.
             10. Check IP and hostname values matches in Summary Information.
     """
-    pass
+    appliance = temp_appliance_preconfig_long
+    command_set = (TimedCommand("ap", 20), RETURN)
+    old_result = appliance.appliance_console.run_commands(command_set)
+    logger.info('"ap" command output before test run:%s', old_result)
+
+    ipv4 = re.search(IPv4_REGEX, old_result[0]).group("ipv4")
+    soft_assert(ipv4)
+    command_set = (TimedCommand("ap", 30), RETURN, app_con_menu["config_net"], "2", ipv4, RETURN,
+                   RETURN, RETURN, RETURN, RETURN, TimedCommand("Y", 30))
+    output = appliance.appliance_console.run_commands(command_set, timeout=15)
+    soft_assert("failed" not in output[-1])
+
+    ipv6 = re.search(IPv6_REGEX, old_result[0]).group("ipv6")
+    soft_assert(ipv6)
+    command_set = ("ap", RETURN, app_con_menu["config_net"], "3", ipv6, RETURN, RETURN, RETURN,
+                   RETURN, RETURN, TimedCommand("Y", 30))
+    output = appliance.appliance_console.run_commands(command_set, timeout=15)
+    soft_assert("failed" not in output[-1])
+
+    hostname = fauxfactory.gen_alphanumeric(start="test", length=20).lower()
+    command_set = (TimedCommand("ap", 30), RETURN, app_con_menu["config_net"], "5",
+                   hostname, RETURN)
+    appliance.appliance_console.run_commands(command_set, timeout=15)
+
+    appliance.evmserverd.restart()
+
+    command_set = ("ap", RETURN)
+    new_result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    logger.info('"ap" command output after restart EVM service:%s', new_result)
+
+    command_set = "ip a"
+    ip_a_ret = appliance.ssh_client.run_command(command_set)
+    soft_assert(ip_a_ret.success)
+    ip_a_output = ip_a_ret.output.split("\n")
+    logger.info('"ip a" command output:%s', ip_a_output)
+
+    soft_assert(
+        re.search(f"IPv4 Address: +{ipv4}", new_result[0]),
+        (f"New {ipv4} IPV4 is not found on console appliance "),
+    )
+    soft_assert(
+        [True for line in ip_a_output if ipv4 in line and "dynamic" not in line],
+        (f'New {ipv4} IPV4 Changes are not reflected in "ip a" output.'),
+    )
+
+    soft_assert(
+        re.search(f"IPv6 Address: +{ipv6}", new_result[0]),
+        (f"New {ipv6} IPV6 is not found on console appliance"),
+    )
+
+    soft_assert(
+        [True for line in ip_a_output if ipv6 in line and "dynamic" not in line],
+        (f'New {ipv6} IPV6 Changes are not reflected in "ip a" output'),
+    )
+
+    soft_assert(
+        [True for line in new_result[0].split("\n") if hostname in line],
+        (f"New {hostname} hostname is not found on console appliance"),
+    )
+
+    # Testing hostname and ipv4
+    command_set = (TimedCommand("ap", 30), RETURN, app_con_menu["config_net"], "4", hostname)
+    out = appliance.appliance_console.run_commands(command_set, timeout=15)
+    soft_assert("Success!" in out[-1], f"Unable to verify {hostname} Hostname")
+
+    command_set = (TimedCommand("ap", 30), RETURN, app_con_menu["config_net"], "4", ipv4)
+    out = appliance.appliance_console.run_commands(command_set, timeout=15)
+    soft_assert("Success!" in out[-1], f"Unable to verify {ipv4} ipv4 ip")
 
 
 @pytest.mark.tier(1)
