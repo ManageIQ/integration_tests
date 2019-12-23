@@ -62,7 +62,7 @@ def test_replication_powertoggle(request, provider, setup_replication, small_tem
     power toggle from global to remote
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/12h
@@ -123,7 +123,7 @@ def test_replication_appliance_add_single_subscription(setup_replication):
     Add one remote subscription to global region
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/12h
@@ -146,7 +146,7 @@ def test_replication_re_add_deleted_remote(setup_replication):
     Re-add deleted remote region
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         initialEstimate: 1/12h
         testSteps:
@@ -182,7 +182,7 @@ def test_replication_delete_remote_from_global(setup_replication):
     Delete remote subscription from global region
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/5h
@@ -209,7 +209,7 @@ def test_replication_remote_to_global_by_ip_pglogical(setup_replication):
     (provider,event,etc)
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/4h
@@ -238,7 +238,7 @@ def test_replication_appliance_set_type_global_ui(configured_appliance, unconfig
     UI
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/6h
@@ -291,7 +291,7 @@ def test_replication_appliance_add_multi_subscription(request, setup_multi_regio
     add two or more subscriptions to global
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         initialEstimate: 1/4h
         startsin: 5.7
@@ -317,7 +317,7 @@ def test_replication_network_dropped_packets():
     10% dropped packets
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         initialEstimate: 1/4h
     """
@@ -331,7 +331,7 @@ def test_replication_global_region_dashboard():
     Global dashboard show remote data
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         initialEstimate: 1/4h
         testSteps:
@@ -351,7 +351,7 @@ def test_replication_global_to_remote_new_vm_from_template(request, setup_replic
     Create a new VM from template in remote region from global region
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         caseimportance: critical
         initialEstimate: 1/6h
@@ -387,7 +387,7 @@ def test_replication_subscription_revalidation_pglogical(configured_appliance,
     have been validated and successfully saved.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Replication
         caseimportance: medium
         initialEstimate: 1/12h

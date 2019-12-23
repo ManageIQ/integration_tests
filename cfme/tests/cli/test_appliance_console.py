@@ -55,7 +55,7 @@ def test_appliance_console(appliance):
     """'ap | tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/12h
@@ -82,7 +82,7 @@ def test_appliance_console_set_hostname(configured_appliance):
     5. 'hostname' sets new hostname.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/6h
@@ -115,7 +115,7 @@ def test_appliance_console_set_timezone(timezone, temp_appliance_preconfig_modsc
     7. RETURN finish.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/6h
@@ -133,7 +133,7 @@ def test_appliance_console_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console and check result
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/6h
@@ -171,7 +171,7 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     11. RETURN finish.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/4h
@@ -196,7 +196,7 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     7. RETURN continue
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/4h
@@ -225,7 +225,7 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     10. RETURN finish.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/3h
@@ -342,7 +342,7 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
     15. RETURN finish.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/2h
@@ -379,7 +379,7 @@ def test_appliance_console_external_db_create(
     14. RETURN finish.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/3h
@@ -405,7 +405,7 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     6. RETURN complete.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/4h
@@ -426,7 +426,7 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
     4. RETURN finish.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Auth
         initialEstimate: 1/4h
@@ -457,7 +457,7 @@ def test_appliance_console_external_auth(auth_type, ipa_crud, configured_applian
     5. '4' apply changes.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Auth
         initialEstimate: 1/4h
@@ -492,7 +492,7 @@ def test_appliance_console_external_auth_all(configured_appliance):
     5. '5' apply changes.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Auth
         initialEstimate: 1/4h
@@ -533,7 +533,7 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     4. RETURN complete.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/3h
@@ -589,7 +589,7 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     7. Check the changes persist after reboot.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/6h
@@ -622,7 +622,7 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
     12. Check the static ipv4 persist after reboot to cover the BZ #1766939 #1755398.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/6h
@@ -653,7 +653,7 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
     12. Check the static ipv6 persist after reboot.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/4h
@@ -733,7 +733,7 @@ def test_appliance_console_restart():
     test restarting the appliance
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
@@ -800,7 +800,7 @@ def test_appliance_console_evm_stop():
     test stopping the evm server process
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
@@ -827,7 +827,7 @@ def test_appliance_console_evm_start():
     test starting the evm server process
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
@@ -853,7 +853,7 @@ def test_appliance_console_check_default_ip(appliance):
     test ip settings, checking all the defaults are what is expected.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
@@ -880,7 +880,7 @@ def test_appliance_ssl():
         1482697
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
@@ -925,7 +925,7 @@ def test_appliance_console_cancel():
         1438844
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
@@ -940,7 +940,7 @@ def test_appliance_console_network_conf():
     test network configuration
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
@@ -977,7 +977,7 @@ def test_appliance_console_network_conf_negative():
     test network configuration error with invalid settings
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         caseposneg: negative
@@ -1012,7 +1012,7 @@ def test_appliance_console_vmdb_httpd():
         1337525
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
@@ -1028,7 +1028,7 @@ def test_appliance_console_shutdown():
     test shutting down the appliance
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
@@ -1055,7 +1055,7 @@ def test_appliance_console_static_ip_negative():
     test error on invalid static ip
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         caseposneg: negative
@@ -1113,7 +1113,7 @@ def test_appliance_console_logfile():
     Test configuring new log file disk volume.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/6h
@@ -1141,7 +1141,7 @@ def test_appliance_console_restore_db_network_negative():
     test restoring database with invalid connection settings
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         caseposneg: negative
@@ -1170,7 +1170,7 @@ def test_appliance_console_cli_rh_registration():
     within the ui
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
@@ -1191,7 +1191,7 @@ def test_appliance_console_extend_storage_negative():
     test extending storage with no additional partition
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         caseposneg: negative
@@ -1218,7 +1218,7 @@ def test_appliance_console_static_dns():
         1439348
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: low
         caseposneg: negative
@@ -1234,7 +1234,7 @@ def test_appliance_console_apache_reload_log_rotate():
     Check that apache is not reloaded twice after log rotations.
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         initialEstimate: 1/12h
         startsin: 5.10
@@ -1250,7 +1250,7 @@ def test_appliance_console_datetime_negative():
     test setting invalid date/time
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         caseposneg: negative
@@ -1276,7 +1276,7 @@ def test_appliance_console_key_fetch_negative():
     test fetching key from fake remote host
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         caseposneg: negative
@@ -1309,7 +1309,7 @@ def test_appliance_console_negative():
         1439345
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: low
         caseposneg: negative

@@ -41,7 +41,7 @@ def test_vm_migrate(appliance, new_vm, provider):
         test_flag: migrate, provision
 
     Polarion:
-        assignee: mnadeem
+        assignee: dgaikwad
         casecomponent: Provisioning
         initialEstimate: 1/4h
     """
@@ -68,7 +68,7 @@ def test_vm_migrate(appliance, new_vm, provider):
 def test_vm_migrate_should_create_notifications_when_migrations_fail():
     """
     Polarion:
-        assignee: mdnadeem
+        assignee: dgaikwad
         casecomponent: WebUI
         testtype: functional
         initialEstimate: 1/4h
