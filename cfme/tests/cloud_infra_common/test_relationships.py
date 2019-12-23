@@ -384,10 +384,15 @@ def test_inventory_refresh_westindia_azure():
 
 
 @test_requirements.relationships
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1524443])
 @pytest.mark.tier(1)
-def test_change_network_security_groups_per_page_items():
+@pytest.mark.provider([AzureProvider], scope='function',
+                      required_fields=[["provisioning", "image"]])
+def test_change_network_security_groups_per_page_items(setup_provider, appliance, provider):
     """
+    Bugzilla:
+        1524443
+
     Polarion:
         assignee: ghubale
         casecomponent: Cloud
@@ -399,11 +404,12 @@ def test_change_network_security_groups_per_page_items():
             2.Open Azure Network Manager
             3.Select Network Security Groups
             4.Change items per page
-
-    Bugzilla:
-        1524443
     """
-    pass
+    view = navigate_to(provider, "NetworkSecurityGroup")
+    view.toolbar.view_selector.select('List View')
+    for item_count in [10, 20, 50]:
+        view.paginator.set_items_per_page(item_count)
+        assert view.paginator.items_per_page == len(view.entities.get_all())
 
 
 @pytest.fixture(scope="function")
