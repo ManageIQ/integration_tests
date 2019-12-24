@@ -14,6 +14,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
+from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
@@ -121,14 +122,13 @@ def test_service_start(appliance, setup_provider, context,
             my_service.delete()
 
 
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1670373, 1704226])
 @test_requirements.ssui
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_suspend_vm_service_details(context):
+def test_suspend_vm_service_details(context, appliance, setup_provider, service_vm):
     """
     Test suspending VM from SSUI service details page.
-
     Polarion:
         assignee: apagac
         casecomponent: Infra
@@ -144,8 +144,28 @@ def test_suspend_vm_service_details(context):
             2. VM is suspended; VM is NOT in Unknown Power State
     Bugzilla:
         1670373
+        1704226
     """
-    pass
+    service, vm = service_vm
+    # Note: 1704226 bugzilla added as RFE over 1670373
+    suspend_state = "Unknown" if BZ(1704226, forced_streams=["5.11"]).blocks else "Suspended"
+
+    with appliance.context.use(context):
+        view = ssui_nav(service, "Details")
+        assert view.resource_power_status.power_status == "On"
+
+        view.power_operations.select("Suspend")
+
+        wait_for(
+            lambda: view.resource_power_status.power_status == suspend_state,
+            fail_func=view.browser.refresh, delay=10, timeout=300
+        )
+
+        view.power_operations.select("Start")
+        wait_for(
+            lambda: view.resource_power_status.power_status == "On",
+            fail_func=view.browser.refresh, delay=10, timeout=300
+        )
 
 
 @pytest.mark.meta(automates=[1677744])
