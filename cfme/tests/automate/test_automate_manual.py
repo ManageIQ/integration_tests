@@ -278,27 +278,6 @@ def test_vm_naming_number_padding():
 
 
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream("5.10")
-def test_vm_name_automate_method():
-    """This test case will check redesign of vm_name automated method
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.11
-        casecomponent: Automate
-        tags: automate
-
-    Bugzilla:
-        1677573
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_git_refresh_with_renamed_yaml():
     """
     Polarion:

@@ -23,6 +23,7 @@ from cfme.infrastructure.cluster import ProviderAllClustersView
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.infrastructure.datastore import ProviderAllDatastoresView
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import HostTemplatesOnlyAllView
 from cfme.infrastructure.virtual_machines import ProviderTemplatesOnlyAllView
@@ -34,7 +35,10 @@ from cfme.networks.views import ProviderSecurityGroupAllView
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
+
 
 HOST_RELATIONSHIPS = [
     ("Infrastructure Provider", InfraProviderDetailsView),
@@ -402,12 +406,28 @@ def test_change_network_security_groups_per_page_items():
     pass
 
 
+@pytest.fixture(scope="function")
+def testing_vm(appliance, provider):
+    """Fixture to provision vm"""
+    vm_name = random_vm_name('pwr-c')
+    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
+
+    if not provider.mgmt.does_vm_exist(vm.name):
+        logger.info("deploying %s on provider %s", vm.name, provider.key)
+        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
+    yield vm
+    vm.cleanup_on_provider()
+
+
 @test_requirements.relationships
-@pytest.mark.manual
 @pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1729953])
-def test_datastore_relationships():
+@pytest.mark.meta(automates=[1729953], blockers=[BZ(1729953)])
+@pytest.mark.provider([RHEVMProvider], selector=ONE)
+def test_datastore_relationships(setup_provider, testing_vm):
     """
+    Bugzilla:
+        1729953
+
     Polarion:
         assignee: ghubale
         casecomponent: Infra
@@ -428,11 +448,26 @@ def test_datastore_relationships():
             1.
             2.
             3. Operations should be performed successfully. It should not give unexpected error.
-
-    Bugzilla:
-        1729953
     """
-    pass
+    view = navigate_to(testing_vm.datastore, "ManagedVMs")
+    view.entities.get_entity(name=testing_vm.name).check()
+
+    view.toolbar.configuration.item_select("Refresh Relationships and Power States",
+                                           handle_alert=True)
+    view.flash.assert_success_message(
+        "Refresh Provider initiated for 1 VM and Instance from the CFME Database"
+    )
+    view.flash.dismiss()
+
+    view.toolbar.configuration.item_select('Perform SmartState Analysis',
+                                           handle_alert=True)
+    view.flash.assert_success_message(
+        "Analysis initiated for 1 VM and Instance from the CFME Database"
+    )
+    view.flash.dismiss()
+
+    view.toolbar.configuration.item_select('Extract Running Processes', handle_alert=True)
+    view.flash.assert_no_error()
 
 
 @test_requirements.relationships
