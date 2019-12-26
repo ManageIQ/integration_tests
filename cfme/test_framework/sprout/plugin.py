@@ -159,12 +159,11 @@ def mangle_in_sprout_appliances(config):
     except AuthException:
         log.exception('Sprout client not authenticated, please provide env vars or sprout_user_key')
         raise
-    config.option.appliances[:] = []
-    appliances = config.option.appliances
+    appliances = []
     log.info("Appliances were provided:")
     for appliance in requested_appliances:
 
-        appliance_args = {'hostname': appliance['url']}
+        appliance_args = {'hostname': appliance['url'], "type": config.option.app_type}
         provider_data = conf.cfme_data['management_systems'].get(appliance['provider'])
         if provider_data and provider_data['type'] == 'openshift':
             ocp_creds = conf.credentials[provider_data['credentials']]
@@ -193,8 +192,8 @@ def mangle_in_sprout_appliances(config):
     with project_path.join('.appliance_template').open('w') as template_file:
         template_file.write(f'export appliance_template="{template_name}"')
     log.info("Sprout setup finished.")
-
     config.pluginmanager.register(ShutdownPlugin())
+    return appliances
 
 
 @attr.s
@@ -220,8 +219,8 @@ class SproutProvisioningRequest:
     def from_config(cls, config):
         return cls(
             group=config.option.sprout_group,
-            count=config.option.sprout_appliances,
-            version=config.option.sprout_version,
+            count=config.option.app_num or config.option.sprout_appliances,
+            version=config.option.app_version or config.option.sprout_version,
             provider=config.option.sprout_provider,
             provider_type=config.option.sprout_provider_type,
             template_type=config.option.sprout_template_type,

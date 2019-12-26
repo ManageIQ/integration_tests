@@ -50,8 +50,7 @@ def get_report(directory):
         "--use-provider", "complete",
         "--long-running",
         "--use-template-cache",
-        "--collect-only",
-        "--dummy-appliance",
+        "--app-type=dummy",
         "--include-manual",
         "-q",
         "--generate-bz-report", directory

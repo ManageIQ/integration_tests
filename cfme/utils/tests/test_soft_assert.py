@@ -34,7 +34,7 @@ def test_soft_assert_call_hook(testdir, monkeypatch):
     monkeypatch.setattr(artifactor_plugin, 'UNDER_TEST', True)
     # create and run the pytest
     pyfile = testdir.makepyfile(test_file)
-    result = testdir.runpytest_subprocess('--dummy-appliance')
+    result = testdir.runpytest_subprocess('--app-type=dummy')
     # replace the testfile name in the expected output names,
     # then check filename and lineno are correct in the failure output
     result.stdout.fnmatch_lines(
