@@ -1,3 +1,5 @@
+import pytest
+
 from cfme.utils.log import logger
 from cfme.utils.providers import global_filters
 from cfme.utils.providers import list_providers
@@ -11,6 +13,7 @@ def pytest_addoption(parser):
         help="list of provider keys or provider tags to include in test")
 
 
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     """ Filters the list of providers as part of pytest configuration
 

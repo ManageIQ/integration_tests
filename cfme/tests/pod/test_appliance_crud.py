@@ -11,7 +11,7 @@ from wrapanapi.systems.container.rhopenshift import ApiException
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.fixtures.appliance import sprout_appliances
 from cfme.fixtures.pytest_store import store
-from cfme.test_framework.appliance import PLUGIN_KEY
+from cfme.test_framework.appliance.holder import PLUGIN_KEY
 from cfme.utils import conf
 from cfme.utils import ssh
 from cfme.utils import trackerbot

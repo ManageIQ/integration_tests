@@ -18,14 +18,14 @@ def test_ipappliance_from_url():
     assert ip_a.hostname == address
 
 
-@pytest.mark.skipif(lambda request: request.config.getoption('--dummy-appliance', default=False),
-                    reason="infra_provider cant support dummy instance")
+@pytest.mark.skipif(lambda request: request.config.getoption('--app-type',
+                    default=False) == 'dummy', reason="infra_provider cant support dummy instance")
 def test_ipappliance_managed_providers(appliance, infra_provider):
     assert infra_provider in appliance.managed_known_providers
 
 
-@pytest.mark.skipif(lambda request: request.config.getoption('--dummy-appliance', default=False),
-                    reason="infra_provider cant support dummy instance")
+@pytest.mark.skipif(lambda request: request.config.getoption('--app-type',
+                    default=False) == 'dummy', reason="infra_provider cant support dummy instance")
 def test_context_hack(monkeypatch):
 
     ip_a = RegularAppliance.from_url('http://127.0.0.2/')

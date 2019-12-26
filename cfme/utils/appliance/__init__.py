@@ -3083,7 +3083,7 @@ class DummyAppliance(BaseAppliance):
 
     @classmethod
     def from_config(cls, pytest_config):
-        version = pytest_config.getoption('--dummy-appliance-version')
+        version = pytest_config.getoption('--app-version')
         return cls(version=(version or attr.NOTHING))
 
     @classmethod
@@ -3108,7 +3108,7 @@ def find_appliance(obj, require=True):
         return obj.appliance
     # duck type - either is the config of pytest, or holds it
     config = getattr(obj, 'config', obj)
-    from cfme.test_framework.appliance import PLUGIN_KEY
+    from cfme.test_framework.appliance.holder import PLUGIN_KEY
     holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
     if holder or require:
         assert holder
