@@ -2,19 +2,23 @@ from textwrap import dedent
 
 import fauxfactory
 import pytest
+from widgetastic.utils import partial_match
+from wrapanapi.utils.random import random_name
 
 from cfme import test_requirements
 from cfme.automate.dialog_import_export import DialogImportExport
 from cfme.base.credential import Credential
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
-
 
 pytestmark = [test_requirements.automate]
 
@@ -458,3 +462,184 @@ def test_retire_vm_now(setup_provider, create_vm, new_user):
             create_vm.retire()
             assert create_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
                                                       from_details=True)
+
+
+@pytest.fixture
+def custom_prov_data(request, provisioning):
+    prov_data = {
+        "catalog": {'vm_name': random_name(prefix="test_")},
+        "environment": {'automatic_placement': True},
+        "network": {'vlan': partial_match(provisioning['vlan'])}
+    }
+    prov_data.update(request.param)
+    prov_data['catalog']['catalog_name'] = {'name': provisioning["template"]}
+    return prov_data
+
+
+@pytest.fixture(scope='function')
+def domain_setup(domain):
+    """This fixture used to setup the domain structure"""
+    # Instantiating class 'QuotaMethods'
+    klass = (
+        domain.parent.instantiate(name="ManageIQ")
+        .namespaces.instantiate(name="System")
+        .namespaces.instantiate(name="CommonMethods")
+        .classes.instantiate(name="QuotaMethods")
+    )
+
+    # Instantiating method 'requested' and copying it to new domain
+    klass.methods.instantiate(name="requested").copy_to(domain.name)
+
+    method = (
+        domain.parent.instantiate(name=f"{domain.name}")
+        .namespaces.instantiate(name="System")
+        .namespaces.instantiate(name="CommonMethods")
+        .classes.instantiate(name="QuotaMethods")
+        .methods.instantiate(name="requested")
+    )
+    yield
+    method.delete_if_exists()
+
+
+@pytest.fixture(scope='module')
+def tenants_setup(appliance):
+    """This fixture creates two parent tenants"""
+    parent_tenant = appliance.collections.tenants.create(
+        name=fauxfactory.gen_alphanumeric(18, start="test_parent_"),
+        description=fauxfactory.gen_alphanumeric(18, start="parent_desc_"),
+        parent=appliance.collections.tenants.get_root_tenant()
+    )
+    child_tenant = appliance.collections.tenants.create(
+        name=fauxfactory.gen_alphanumeric(18, start="test_parent_"),
+        description=fauxfactory.gen_alphanumeric(18, start="parent_desc_"),
+        parent=parent_tenant
+    )
+    return parent_tenant, child_tenant
+
+
+@pytest.fixture
+def set_child_tenant_quota(request, appliance, tenants_setup):
+    parent_tenant, child_tenant = tenants_setup
+    field_value = request.param
+    tenant_quota_data = {}
+    for field, value in field_value:
+        tenant_quota_data.update({f"{field}_cb": True, field: value})
+    child_tenant.set_quota(**tenant_quota_data)
+    yield
+    appliance.server.login_admin()
+    for field, value in field_value:
+        tenant_quota_data.update({f"{field}_cb": False})
+        tenant_quota_data.pop(field)
+    child_tenant.set_quota(**tenant_quota_data)
+
+
+@pytest.fixture(scope="module")
+def new_group_tenant(appliance, tenants_setup):
+    """This fixture creates new group and assigned by new project"""
+    parent_tenant, child_tenant = tenants_setup
+    role = appliance.collections.roles.instantiate(name="EvmRole-user_self_service")
+    user_role = role.copy(
+        name=fauxfactory.gen_alphanumeric(25, "self_service_role_"),
+        vm_restriction="None"
+    )
+
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(start="group_"),
+        role=user_role.name,
+        tenant=f"My Company/{child_tenant.parent_tenant.name}/{child_tenant.name}",
+    )
+    yield group
+    group.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def new_child_tenant_user(appliance, new_group_tenant):
+    """This fixture creates new user which is assigned to new group and project"""
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                              secret=fauxfactory.gen_alphanumeric(start="pwd")),
+        email=fauxfactory.gen_email(),
+        groups=new_group_tenant,
+        cost_center="Workload",
+        value_assign="Database",
+    )
+    yield user
+    user.delete_if_exists()
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1492158])
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
+@pytest.mark.parametrize("file_name", ["bz_1492158.yml"], ids=["dialog"])
+@pytest.mark.parametrize(
+    ['set_child_tenant_quota', 'custom_prov_data'],
+    [
+        [(('cpu', '2'), ('storage', '0.01'), ('memory', '2')),
+         ({'hardware': {'num_sockets': '8', 'memory': '4096'}})]
+    ],
+    indirect=['set_child_tenant_quota', 'custom_prov_data'],
+    ids=['max_cpu_storage_memory']
+)
+@pytest.mark.provider([RHEVMProvider], scope="module")
+def test_quota_calculation_using_service_dialog_overrides(
+        request, appliance, setup_provider, provider, domain_setup, set_child_tenant_quota, context,
+        custom_prov_data, import_dialog, file_name, catalog, new_child_tenant_user):
+    """
+    This test case is to check Quota calculation using service dialog overrides.
+    Bugzilla:
+        1492158
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/6h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: Infra
+        tags: quota
+        testSteps:
+            1. create a new domain quota_test
+            2. Using the Automate Explorer, copy the
+               ManageIQ/System/CommonMethods/QuotaMethods/requested method
+               to the quota_test domain.
+            3. Import the attached dialog. create catalog and catalog
+               item using this dialog
+            4. create a child tenant and set quota. create new group and
+               user for this tenant.
+            5. login with this user and provision by overriding values
+            6. Also test the same for user and group quota source type
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Quota should be denied with reason for quota exceeded message
+            6. Quota should be denied with reason for quota exceeded message
+    """
+    sd, ele_label = import_dialog
+    prov_data = custom_prov_data
+    catalog_item = appliance.collections.catalog_items.create(
+        provider.catalog_item_type,
+        name=fauxfactory.gen_alphanumeric(start="test_"),
+        description=fauxfactory.gen_alphanumeric(start="desc_"),
+        display_in=True,
+        catalog=catalog,
+        dialog=sd,
+        prov_data=prov_data
+    )
+    request.addfinalizer(catalog_item.delete_if_exists)
+    with new_child_tenant_user:
+        with appliance.context.use(context):
+            appliance.server.login(new_child_tenant_user)
+            service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+            if context is ViaSSUI:
+                service_catalogs.add_to_shopping_cart()
+            service_catalogs.order()
+    # nav to requests page to check quota validation
+    request_description = f'Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]'
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
