@@ -603,7 +603,7 @@ def new_tenants(request, appliance):
 @pytest.fixture(scope='module')
 def new_project(appliance, new_tenants):
     """This fixture create project under parent tenant1"""
-    tenant1, tenant2 = new_tenants
+    tenant1, _ = new_tenants
     collection = appliance.collections.projects
     project = collection.create(name=fauxfactory.gen_alphanumeric(15, start="project_"),
                                 description=fauxfactory.gen_alphanumeric(15, start="project_desc_"),
@@ -620,7 +620,6 @@ def set_project_quota(request, appliance, new_project):
         tenant_quota_data.update({f"{field}_cb": True, field: value})
     new_project.set_quota(**tenant_quota_data)
     yield
-    appliance.server.login_admin()
     for field, value in field_value:
         tenant_quota_data.update({f"{field}_cb": False})
         tenant_quota_data.pop(field)
