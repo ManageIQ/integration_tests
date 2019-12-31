@@ -1,6 +1,7 @@
 import tempfile
 from collections import namedtuple
 
+import fauxfactory
 import lxml.etree
 import pytest
 import yaml
@@ -46,6 +47,34 @@ ext_auth_options = [
     LoginOption('saml', 'saml_enabled', '2'),
     LoginOption('local_login', 'local_login_disabled', '4')
 ]
+
+
+def parseIPV6(ap_ipv6_line):
+    """This function will accept IPV6 line from appliance console as a string and will return
+     IPV6 address from that line as a string
+    input
+        - string
+            Example: "IPv6 Address:            2620:52:0:8c4:21a:4aff:fe42:1b27/64"
+    return:
+        - string
+            Example "2620:52:0:8c4:21a:4aff:fe42:1b27"
+
+    """
+    return ap_ipv6_line.strip().split()[-1].split("/")[0] if ap_ipv6_line != "" else False
+
+
+def parseIPV4(ap_ipv4_line):
+    """This function will accept IPV4 line from appliance console as a string and will return
+       IPV4 address from that line as a string
+      input
+          - string
+              Example: "IPv4 Address:            10.8.196.252/255.255.252.0"
+      return:
+          - string
+              Example "10.8.196.252"
+
+      """
+    return ap_ipv4_line.strip().split()[-1].split("/")[0] if ap_ipv4_line != "" else False
 
 
 @pytest.mark.rhel_testing
@@ -978,9 +1007,8 @@ def test_appliance_console_network_conf():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_network_conf_negative():
+def test_appliance_console_network_conf_negative(temp_appliance_preconfig_modscope):
     """
     test network configuration error with invalid settings
 
@@ -1007,7 +1035,42 @@ def test_appliance_console_network_conf_negative():
             6.
             7. Check network failure with IPv6.
     """
-    pass
+    appliance = temp_appliance_preconfig_modscope
+    old_config_file = fauxfactory.gen_alphanumeric(start="test_", length=10)
+    command_set = (f"ap | tee -a /tmp/{old_config_file}", RETURN)
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+    old_data = appliance.ssh_client.run_command(f"cat /tmp/{old_config_file}")
+    assert old_data.success
+    old_data = old_data.output.split("\n")
+    logger.info(f"\'ap\' command's output before test run:{old_data}")
+
+    original_ipv4 = parseIPV4("".join([i for i in old_data if "IPv4 Address:" in i]))
+    invalid_ipv4 = original_ipv4 + ".0"
+    command_set = ("ap", RETURN, "1", "2", invalid_ipv4)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    assert "Please provide a valid IP Address." in result[-1]
+
+    original_ipv6 = parseIPV6("".join([i for i in old_data if "IPv6 Address:" in i]))
+    assert original_ipv6
+    invalid_ipv6 = original_ipv6 + ":11"
+    command_set = ("ap", RETURN, "1", "3", invalid_ipv6)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    assert "Please provide a valid IP Address." in result[-1]
+
+    new_config_file = fauxfactory.gen_alphanumeric(start="test_", length=10)
+    command_set = (f"ap | tee -a /tmp/{new_config_file}", RETURN)
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+    command_set = (f"cat /tmp/{new_config_file}")
+    new_data = appliance.ssh_client.run_command(command_set)
+    assert new_data.success
+    new_data = new_data.output.split("\n")
+    logger.info(f"\'ap\' command's output after test:{new_data}")
+
+    assert [i for i in new_data if "IPv4 Address:" in i and original_ipv4 in i] != [], (
+        f"old {original_ipv4} IPV4 is not found on console appliance ")
+
+    assert [i for i in new_data if "IPv6 Address:" in i and original_ipv6 in i] != [], (
+        f"old {original_ipv6} IPV6 is not found on console appliance")
 
 
 @pytest.mark.manual
