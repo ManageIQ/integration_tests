@@ -881,10 +881,14 @@ def test_service_dialog_expression_method(appliance, setup_provider, full_templa
     ]
 
 
-@pytest.mark.meta(coverage=[1729379, 1749650])
-@pytest.mark.manual
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1729379, 1749650])
 @pytest.mark.tier(2)
-def test_service_dynamic_dialog_tagcontrol():
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1729379.zip", "bz_1729379", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1729379.yml"], ids=["load-tag"])
+def test_service_dynamic_dialog_tagcontrol(appliance, import_datastore, import_data,
+                                           generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1729379
@@ -908,7 +912,21 @@ def test_service_dynamic_dialog_tagcontrol():
             4.
             5. Tag control drop down should show correct values
     """
-    pass
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+
+    view.fields('tag_control_1').dropdown.fill("London")
+    wait_for(
+        lambda: view.fields("tag_control_1").read() == "London" and
+        view.fields('text_box_1').read() == "Tag: 'London'", timeout=7
+    )
+
+    view.fields('tag_control_1').dropdown.fill("New York")
+    wait_for(
+        lambda: view.fields("tag_control_1").read() == "New York" and
+        view.fields('text_box_1').read() == "Tag: 'New York'", timeout=7
+    )
 
 
 @pytest.mark.meta(coverage=[1744413])
