@@ -9,22 +9,6 @@ pytestmark = [
 ]
 
 
-def test_ssa_groups_scvmm2k12_windows2012r2_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Groups.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_groups_azure_ubuntu():
     """
     1. Add Azure provider
@@ -35,22 +19,6 @@ def test_ssa_groups_azure_ubuntu():
         assignee: sbulage
         casecomponent: SmartState
         initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_scvmm2k12_centos_xfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on CentOS VM.
-    Check whether Groups retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
         startsin: 5.6
         tags: smartstate
     """
@@ -73,22 +41,6 @@ def test_ssa_groups_azure_rhel():
     pass
 
 
-def test_ssa_groups_scvmm2k12_rhel74():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Groups retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_groups_azure_windows2012r2_ntfs():
     """
     1. Add Azure provider
@@ -99,54 +51,6 @@ def test_ssa_groups_azure_windows2012r2_ntfs():
         assignee: sbulage
         casecomponent: SmartState
         initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_scvmm2k16_centos_xfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on CentOS VM.
-    Check whether Groups retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_scvmm2k16_rhel74():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Groups retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_scvmm2k16_windows2012r2_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Groups.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
         startsin: 5.6
         tags: smartstate
     """
@@ -212,38 +116,6 @@ def test_ssa_groups_ec2_windows2012r2_ntfs():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_scvmm2k16_windows2016_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Groups.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_scvmm2k12_windows2016_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Groups.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -328,21 +200,6 @@ def test_ssa_vm_azure_windows2016_ntfs():
     pass
 
 
-def test_ssa_vm_scvmm2k16_centos_xfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on CentOS VM.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_azure_multiple_vms():
     """
     Perform SSA on multiple VMs.
@@ -352,54 +209,6 @@ def test_ssa_vm_azure_multiple_vms():
         casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_windows2016_disk_fileshare():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2016 server R2 VM having disk located on
-    Fileshare.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_windows2016_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_windows2016_refs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server R2 VM having ReFS filesystem.
-    It should fail-->  Unable to mount filesystem. Reason:[ReFS is Not
-    Supported]
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -420,23 +229,6 @@ def test_ssa_vm_azure_windows2012r2_ntfs():
     pass
 
 
-def test_ssa_vm_scvmm2k16_windows2012r2_refs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2012 server R2 VM having ReFS filesystem.
-    It should fail-->  Unable to mount filesystem. Reason:[ReFS is Not
-    Supported]
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_ec2_customer_scenario():
     """
     This test case should be checked after each CFME release.(which
@@ -449,38 +241,6 @@ def test_ssa_vm_ec2_customer_scenario():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_schedule():
-    """
-    Trigger SmartState Analysis via schedule on VM.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.3
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_second_disk_refs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2012 server R2 VM having
-    NTFS as Primary Disk filesystem and secondary disk ReFS filesystem.
-    It should pass without any error.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -516,7 +276,7 @@ def test_ssa_vm_azure_compliance_policy():
     pass
 
 
-def test_ssa_vm_vsphere6_nested_wimdows7_xfs_ssui():
+def test_ssa_vm_vsphere6_nested_windows7_xfs_ssui():
     """
     1. Provision service with Windows 7 VM
     2. Perform SSA on it.
@@ -533,37 +293,6 @@ def test_ssa_vm_vsphere6_nested_wimdows7_xfs_ssui():
     pass
 
 
-def test_ssa_vm_scvmm2k12_compliance_policy():
-    """
-    Checks compliance condition on VM/Instance which triggers Smartstate
-    Analysis on VM/Instance.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.3
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_multiple_vms():
-    """
-    Perform SSA on multiple VMs.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.3
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_azure_schedule():
     """
     Trigger SmartState Analysis via schedule on VM.
@@ -573,21 +302,6 @@ def test_ssa_vm_azure_schedule():
         casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/4h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_windows2012r2_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -657,7 +371,7 @@ def test_ssa_vm_azure_rhel():
     pass
 
 
-def test_ssa_vm_azure_wimdows2016_ssui():
+def test_ssa_vm_azure_windows2016_ssui():
     """
     1. Provision service with Windows 2016 VM
     2. Perform SSA on it.
@@ -718,35 +432,6 @@ def test_ssa_vm_azure_windows2016_refs():
     pass
 
 
-def test_ssa_vm_scvmm2k12_multiple_vms():
-    """
-    Perform SSA on multiple VMs.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_centos_xfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on CentOS VM.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_azure_region():
     """
     1. Add an Azure Instance in one region and assign it to a Resource
@@ -760,38 +445,6 @@ def test_ssa_vm_azure_region():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_windows2016_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_windows2016_refs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2016 server R2 VM having ReFS filesystem.
-    It should fail-->  Unable to mount filesystem. Reason:[ReFS is Not
-    Supported]
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -814,7 +467,7 @@ def test_ssa_vm_ec2_ubuntu_ssui():
     pass
 
 
-def test_ssa_vm_azure_wimdows2012_ssui():
+def test_ssa_vm_azure_windows2012_ssui():
     """
     1. Provision service with Windows 2012 VM
     2. Perform SSA on it.
@@ -954,38 +607,6 @@ def test_ssa_vm_azure_ubuntu():
     pass
 
 
-def test_ssa_vm_scvmm2k12_windows2012r2_refs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2012 server R2 VM having ReFS filesystem.
-    It should fail-->  Unable to mount filesystem. Reason:[ReFS is Not
-    Supported]
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_windows2012r2_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_azure_non_managed_disk():
     """
     Perform SSA on non-managed (blod) disk on Azure provider.
@@ -994,37 +615,6 @@ def test_ssa_vm_azure_non_managed_disk():
         assignee: sbulage
         casecomponent: SmartState
         initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_windows2016_disk_fileshare():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server R2 VM having disk located on
-    Fileshare..
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_rhel74():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on RHEL 7.4 VM.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -1042,37 +632,6 @@ def test_ssa_vm_azure_ubuntu_ssui():
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_second_disk_refs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server R2 VM having
-    NTFS as Primary Disk filesystem and secondary disk ReFS filesystem.
-    It should pass without any error.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_schedule():
-    """
-    Trigger SmartState Analysis via schedule on VM.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
         tags: smartstate
     """
     pass
@@ -1126,37 +685,6 @@ def test_ssa_vm_cancel_task():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k12_rhel74():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on RHEL 7.4 VM.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_scvmm2k16_compliance_policy():
-    """
-    Checks compliance condition on VM/Instance which triggers Smartstate
-    Analysis on VM/Instance.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.3
         tags: smartstate
     """
     pass
@@ -1231,70 +759,6 @@ def test_ssa_users_azure_rhel():
     pass
 
 
-def test_ssa_users_scvmm2k16_centos_xfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on CentOS VM.
-    Check whether Users retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_scvmm2k12_windows2016_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Users.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_scvmm2k16_windows2016_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Users.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_scvmm2k12_centos_xfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on CentOS VM.
-    Check whether Users retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_users_ec2_ubuntu():
     """
     Add EC-2 provider.
@@ -1306,22 +770,6 @@ def test_ssa_users_ec2_ubuntu():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_scvmm2k12_rhel74():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Users retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -1354,54 +802,6 @@ def test_ssa_users_ec2_fedora():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_scvmm2k16_rhel74():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Users retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_scvmm2k16_windows2012r2_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Users.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_scvmm2k12_windows2012r2_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Users.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -1471,22 +871,6 @@ def test_ssa_packages_ec2_ubuntu():
     pass
 
 
-def test_ssa_packages_scvmm2k12_rhel74():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Packages retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_packages_ec2_fedora():
     """
     Add EC-2 provider.
@@ -1503,22 +887,6 @@ def test_ssa_packages_ec2_fedora():
     pass
 
 
-def test_ssa_packages_scvmm2k16_centos_xfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on CentOS VM.
-    Check whether Packages retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_packages_ec2_rhel():
     """
     Add EC-2 provider.
@@ -1530,22 +898,6 @@ def test_ssa_packages_ec2_rhel():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_packages_scvmm2k12_windows2016_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Applications.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -1583,54 +935,6 @@ def test_ssa_packages_azure_windows2016_ntfs():
     pass
 
 
-def test_ssa_packages_scvmm2k12_windows2012r2_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Applications.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_packages_scvmm2k16_rhel74():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Packages retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_packages_scvmm2k16_windows2012r2_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Applications.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_packages_ec2_windows2012r2_ntfs():
     """
     Add EC-2 provider.
@@ -1642,22 +946,6 @@ def test_ssa_packages_ec2_windows2012r2_ntfs():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_packages_scvmm2k16_windows2016_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Applications.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -1695,45 +983,6 @@ def test_ssa_packages_azure_windows2012r2_ntfs():
     pass
 
 
-def test_ssa_packages_scvmm2k12_centos_xfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on CentOS VM.
-    Check whether Packages retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_with_snapshot_scvmm2():
-    """
-    Needed to verify this bug -
-    https://bugzilla.redhat.com/show_bug.cgi?id=1376172
-    There is a vm called LocalSSATest33 that is preconfigured for this
-    test.
-    I"ll do these one off tests for a while.
-
-    Bugzilla:
-        1376172
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1h
-        startsin: 5.6.1
-        upstream: yes
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_host_os_info():
     """
     Checks the host's OS name and version
@@ -1743,22 +992,6 @@ def test_ssa_host_os_info():
         casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_scvmm2k12_centos_xfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on CentOS VM.
-    Check whether Files retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -1774,22 +1007,6 @@ def test_ssa_files_azure_windows2016_ntfs():
         assignee: sbulage
         casecomponent: SmartState
         initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_scvmm2k12_windows2016_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Files.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
         startsin: 5.6
         tags: smartstate
     """
@@ -1844,86 +1061,6 @@ def test_ssa_files_ec2_fedora():
     pass
 
 
-def test_ssa_files_scvmm2k12_rhel74():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Files retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_scvmm2k16_centos_xfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on CentOS VM.
-    Check whether Files retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_scvmm2k16_rhel74():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on RHEL 7.4 VM.
-    Check whether Files retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_scvmm2k16_windows2012r2_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Files.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_scvmm2k12_windows2012r2_ntfs():
-    """
-    Add SCVMM-2012 provider.
-    Perform SSA on Windows 2012 server R2 VM having NTFS filesystem.
-    Check whether it retrieves Files.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_files_ec2_ubuntu():
     """
     Add EC-2 provider.
@@ -1935,22 +1072,6 @@ def test_ssa_files_ec2_ubuntu():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_scvmm2k16_windows2016_ntfs():
-    """
-    Add SCVMM-2016 provider.
-    Perform SSA on Windows 2016 server VM having NTFS filesystem.
-    Check whether it retrieves Files.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
         tags: smartstate
     """
     pass
