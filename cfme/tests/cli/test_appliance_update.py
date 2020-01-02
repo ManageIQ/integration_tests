@@ -351,7 +351,11 @@ def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, req
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
 
-    assert ha_appliances_with_providers[2].evm_failover_monitor.running
+    with LogValidator(evm_log,
+                      matched_patterns=['Starting database failover monitor'],
+                      hostname=ha_appliances_with_providers[2].hostname).waiting(wait=60):
+        ha_appliances_with_providers[2].evm_failover_monitor.restart()
+        assert ha_appliances_with_providers[2].evm_failover_monitor.running
 
     with LogValidator(evm_log,
                       matched_patterns=['Starting to execute failover'],
