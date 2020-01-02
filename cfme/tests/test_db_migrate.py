@@ -220,7 +220,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
 @pytest.mark.manual
 @test_requirements.update
 @test_requirements.db_migration
-@pytest.mark.meta(coverage=[1749694, 1735114])
+@pytest.mark.meta(coverage=[1749694, 1735114, 1655794])
 def test_upgrade_single_sidebyside():
     """ Test whether an upgrade procedure from CFME 5.x to CFME 5.11 results in
     working environment.
@@ -237,21 +237,27 @@ def test_upgrade_single_sidebyside():
         initialEstimate: 1/3h
         startsin: 5.11
         testSteps:
-            1. Get CFME VMs of preupdate and target version.
+            1. Get CFME VMs of preupgrade and target version.
             2. Make sure the ansible is enabled and create an ansible playbook
                service (for testing the 1735114).
             3. Turn off the evmserverd processes on both.
-            4. Dump the DB of the preupdate appliance.
+            4. Dump the DB of the preupgrade appliance.
             5. Restore it on the target version appliance.
-            6. Check that a zone exists on the target appliance (as there was a bug 1749694)
-            7. Check that the service provisioning tab doesn't
+            6. Migrate the database.
+            7. Check that a zone exists on the target appliance (as there was a bug 1749694)
+            8. Check that the service provisioning tab doesn't
         expectedResults:
             1.
             2.
             3.
             4.
             5.
-            6. Zone exists on the target appliance.
-            7. An empty section or a friendly message such as "No Output available"
+            6.
+            7. Zone exists on the target appliance.
+            8. An empty section or a friendly message such as "No Output available"
+    Bugzila:
+        1749694
+        1735114
+        1655794
     """
     pass
