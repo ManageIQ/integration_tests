@@ -334,9 +334,13 @@ class FTPClient(object):
             fields = re.split(r"\s+", line, maxsplit=8)
             # This is because how informations in LIST are presented
             # Nov 11 12:34 filename (from the end)
-            date = strptime(str(datetime.now().year) + " " + fields[-4] + " " + fields[-3] + " " +
-                            fields[-2],
-                            "%Y %b %d %H:%M")
+            try:
+                date = strptime(
+                    f"{datetime.now().year} {fields[-4]} {fields[-3]} {fields[-2]}",
+                    "%Y %b %d %H:%M",
+                )
+            except ValueError:
+                date = strptime(f"{datetime.now().year} {fields[-4]} {fields[-3]}", "%Y %b %d")
             # convert time.struct_time into datetime
             date = datetime.fromtimestamp(mktime(date))
             result.append((is_dir, fields[-1], date))
