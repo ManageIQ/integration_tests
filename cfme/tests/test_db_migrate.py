@@ -18,7 +18,9 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    if metafunc.function in {test_upgrade_single_inplace, test_db_migrate_replication}:
+    if metafunc.function in {test_upgrade_single_inplace,
+                             test_db_migrate_replication,
+                             test_upgrade_single_sidebyside}:
         return
 
     argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
