@@ -3,6 +3,7 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
@@ -582,3 +583,132 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, fu
 
         # Remove disk UI verification
         assert full_template_vm.configuration.num_disks == orig_config.num_disks
+
+
+@pytest.fixture(scope='module')
+def new_tenants(request, appliance):
+    """This fixture creates two parent tenants"""
+    tenants = []
+    for _ in range(2):
+        tenant = appliance.collections.tenants.create(
+            name=fauxfactory.gen_alphanumeric(18, start="test_parent_"),
+            description=fauxfactory.gen_alphanumeric(18, start="parent_desc_"),
+            parent=appliance.collections.tenants.get_root_tenant()
+        )
+        tenants.append(tenant)
+        request.addfinalizer(tenant.delete_if_exists)
+    return tenants
+
+
+@pytest.fixture(scope='module')
+def new_project(appliance, new_tenants):
+    """This fixture create project under parent tenant1"""
+    tenant1, _ = new_tenants
+    collection = appliance.collections.projects
+    project = collection.create(name=fauxfactory.gen_alphanumeric(15, start="project_"),
+                                description=fauxfactory.gen_alphanumeric(15, start="project_desc_"),
+                                parent=tenant1)
+    yield project
+    project.delete_if_exists()
+
+
+@pytest.fixture
+def set_project_quota(request, appliance, new_project):
+    field_value = request.param
+    tenant_quota_data = {}
+    for field, value in field_value:
+        tenant_quota_data.update({f"{field}_cb": True, field: value})
+    new_project.set_quota(**tenant_quota_data)
+    yield
+    for field, value in field_value:
+        tenant_quota_data.update({f"{field}_cb": False})
+        tenant_quota_data.pop(field)
+    new_project.set_quota(**tenant_quota_data)
+
+
+@pytest.fixture(scope="module")
+def new_group_project(appliance, new_project):
+    """This fixture creates new group and assigned by new project"""
+    role = appliance.collections.roles.instantiate(name="EvmRole-user_self_service")
+    user_role = role.copy(
+        name=fauxfactory.gen_alphanumeric(25, "self_service_role_"),
+        vm_restriction="None"
+    )
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(start="group_"),
+        role=user_role.name,
+        tenant=f"My Company/{new_project.parent_tenant.name}/{new_project.name}",
+    )
+    yield group
+    group.delete_if_exists()
+    user_role.delete_if_exists()
+
+
+@pytest.fixture(scope="module")
+def new_user_project(appliance, new_group_project):
+    """This fixture creates new user which is assigned to new group and project"""
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                              secret=fauxfactory.gen_alphanumeric(start="pwd")),
+        email=fauxfactory.gen_email(),
+        groups=new_group_project,
+        cost_center="Workload",
+        value_assign="Database",
+    )
+    yield user
+    user.delete_if_exists()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1456819, 1401251])
+@pytest.mark.parametrize(
+    ['set_project_quota', 'custom_prov_data', 'set_default'],
+    [
+        [(('cpu', '2'), ('storage', '0.01'), ('memory', '2')),
+         ({'hardware': {'num_sockets': '8', 'memory': '4096'}}), False]
+    ],
+    indirect=['set_project_quota', 'custom_prov_data', 'set_default'],
+    ids=['max_cpu_storage_memory']
+)
+@pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
+@pytest.mark.provider([RHEVMProvider], scope='function')
+def test_simultaneous_tenant_quota(request, appliance, context, new_project, new_user_project,
+                                   set_project_quota, custom_prov_data, catalog_item, set_default):
+    """
+    Bugzilla:
+        1456819
+        1401251
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/6h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: Provisioning
+        tags: quota
+        setup:
+            1. Create tenant1 and tenant2.
+            2. Create a project under tenant1 or tenant2
+            3. Enable quota for cpu, memory or storage etc
+            4. Create a group and add role super_administrator
+            5. Create a user and add it to the group
+        testSteps:
+            1. Login with the newly created user in the service portal. Take multiple items which go
+               over the allocated quota
+        expectedResults:
+            1. CFME should deny request with quota exceeded reason
+    """
+    with new_user_project:
+        with appliance.context.use(context):
+            appliance.server.login(new_user_project)
+            service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+            if context is ViaSSUI:
+                service_catalogs.add_to_shopping_cart()
+            provision_request = service_catalogs.order()
+
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"

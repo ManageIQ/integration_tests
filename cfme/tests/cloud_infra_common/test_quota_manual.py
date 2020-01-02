@@ -225,45 +225,6 @@ def test_quota_with_invalid_service_request():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1456819, 1401251])
-def test_simultaneous_tenant_quota():
-    """
-    Test multiple tenant quotas simultaneously
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/6h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.8
-        casecomponent: Provisioning
-        tags: quota
-        testSteps:
-            1. Create tenant1 and tenant2.
-            2. Create a project under tenant1 or tenant2
-            3. Enable quota for cpu, memory or storage etc
-            4. Create a group and add role super_administrator
-            5. Create a user and add it to the group
-            6. Login with the newly created user in the service portal. Take multiple items which go
-               over the allocated quota
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5.
-            6. CFME should cancel or notify that multiple items which are above assigned quota
-               are cancelled
-
-    Bugzilla:
-        1456819
-        1401251
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_notification_show_notification_when_quota_is_exceed():
     """
     This test case is to check when quota is exceeded, CFME should notify with reason.
