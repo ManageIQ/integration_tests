@@ -641,6 +641,7 @@ def new_group_project(appliance, new_project):
     )
     yield group
     group.delete_if_exists()
+    user_role.delete_if_exists()
 
 
 @pytest.fixture(scope="module")
@@ -706,10 +707,8 @@ def test_simultaneous_tenant_quota(request, appliance, context, new_project, new
             service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
             if context is ViaSSUI:
                 service_catalogs.add_to_shopping_cart()
-            service_catalogs.order()
-    # nav to requests page to check quota validation
-    request_description = f'Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]'
-    provision_request = appliance.collections.requests.instantiate(request_description)
+            provision_request = service_catalogs.order()
+
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"

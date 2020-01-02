@@ -659,7 +659,7 @@ class Group(BaseEntity, Taggable):
         """
         view = navigate_to(self, 'Details')
         if not view.toolbar.configuration.is_enabled:
-            raise RBACOperationBlocked(f"Configuration action 'Edit this Group' is not enabled")
+            raise RBACOperationBlocked("Configuration action 'Edit this Group' is not enabled")
 
         view = navigate_to(self, 'Edit')
 
