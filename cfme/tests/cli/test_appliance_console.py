@@ -1,3 +1,4 @@
+import re
 import tempfile
 from collections import namedtuple
 
@@ -40,6 +41,8 @@ tzs = [
     TZ('UTC', ('11',))
 ]
 RETURN = ''
+IPv6_REGEX = r'(IPv6 Address:\s*)(\w+:\w+:\w+:\w+:\w+:\w+:\w+:\w+)/'
+IPv4_REGEX = r'(IPv4 Address:\s*)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
 
 ext_auth_options = [
     LoginOption('sso', 'sso_enabled', '1'),
@@ -1062,9 +1065,8 @@ def test_appliance_console_shutdown(temp_appliance_preconfig_modscope):
              delay=5)
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_static_ip_negative():
+def test_appliance_console_static_ip_negative(temp_appliance_preconfig_modscope):
     """
     test error on invalid static ip
 
@@ -1080,14 +1082,48 @@ def test_appliance_console_static_ip_negative():
             3. '1' configure network.
             4. '2' configure static IPv4.
             5. Set invalid IPv4 address.
+            6. '3' Set IPv6 Static Network Configuration
+            7. Set invalid IPv6 address.
         expectedResults:
             1.
             2.
             3.
             4.
             5. Confirm network failure.
+            6.
+            7. Confirm network failure.
     """
-    pass
+    appliance = temp_appliance_preconfig_modscope
+    command_set = ("ap", RETURN)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    logger.info('"ap" command output before test run:%s' % result)
+    first_console_screen = result[0].split("\n")
+    original_ipv4 = re.match(IPv4_REGEX, "".join([i for i in first_console_screen
+                                                  if "IPv4 Address:" in i]).strip()).group(2)
+    assert original_ipv4
+    invalid_ipv4 = original_ipv4 + ".0"
+    command_set = ("ap", RETURN, "1", "2", invalid_ipv4)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    assert "Please provide a valid IP Address." in result[-1]
+
+    original_ipv6 = re.match(IPv6_REGEX, "".join([i for i in first_console_screen
+                                                  if "IPv6 Address:" in i]).strip()).group(2)
+    assert original_ipv6
+    invalid_ipv6 = original_ipv6 + ":11"
+    command_set = ("ap", RETURN, "1", "3", invalid_ipv6)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    assert "Please provide a valid IP Address." in result[-1]
+
+    command_set = ("ap", RETURN)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    logger.info('"ap" command output after test:%s' % result)
+    first_console_screen = result[0].split("\n")
+
+    assert [i for i in first_console_screen if "IPv4 Address:" in i and original_ipv4 in i] != [], (
+        f"old {original_ipv4} IPV4 is not found on console appliance ")
+
+    assert [i for i in first_console_screen if "IPv6 Address:" in i and original_ipv6 in i] != [], (
+        f"old {original_ipv6} IPV6 is not found on console appliance")
 
 
 @pytest.mark.manual
