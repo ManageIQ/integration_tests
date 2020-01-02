@@ -473,7 +473,11 @@ def test_datastore_relationships(setup_provider, testing_vm):
 @pytest.fixture(scope="function")
 def cluster(provider):
     collection = provider.appliance.collections.clusters
-    cluster_name = provider.data["cap_and_util"]["cluster"]
+    try:
+        cluster_name = provider.data["cap_and_util"]["cluster"]
+    except KeyError:
+        pytest.skip(f"Unable to identify cluster for provider: {provider}")
+
     return collection.instantiate(name=cluster_name, provider=provider)
 
 
