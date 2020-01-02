@@ -252,3 +252,4 @@ def test_upgrade_single_sidebyside():
             6. Zone exists on the target appliance.
             7. An empty section or a friendly message such as "No Output available"
     """
+    pass

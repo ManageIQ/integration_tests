@@ -353,11 +353,13 @@ def test_memory_thresholds_advanced_config():
         initialEstimate: 1/4h
         testSteps:
             1. Settings > Advanced
-            2. Change web_services worker to 1.5.gigabytes or 2.gigabytes
-
+            2. Change web_services worker to 1.5.gigabytes
+            3  Change the web_services worker to 2.gigabytes
         expectedResults:
             1.
-            2.
-            3.  UI shows 1.5GB or 2GB for the web_services worker.
+            2.  UI shows 1.5GB for the web_services worker.
+            3.  UI shows 2GB for the web_services worker.
+    Bugzilla:
+        1715633
     """
     pass

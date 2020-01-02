@@ -155,7 +155,7 @@ def test_update_yum_no_errors(old_version):
         expectedResults:
             1.
             2.
-            3. no erros in the stderr and stout, yum exit status is 0
+            3. No erros in the stderr and stdout, yum exit status is 0
 
     Bugzilla:
         1674055
