@@ -341,7 +341,7 @@ def test_subscription_region_unavailable():
 @pytest.mark.manual
 @test_requirements.settings
 @pytest.mark.meta(coverage=[1715633])
-def test_memory_thresholds_advanced_config():
+def test_memory_thresholds_in_advanced_config():
     """
     Test whether change made to thresholds in Advanced Config shows on the
     workers page.
@@ -354,13 +354,45 @@ def test_memory_thresholds_advanced_config():
         testSteps:
             1. Settings > Advanced
             2. Change web_services worker to 1.5.gigabytes
-            3  Change the web_services worker to 2.gigabytes
+            3. Change the web_services worker to 2.gigabytes
         expectedResults:
             1.
-            2.  UI shows 1.5GB for the web_services worker.
-            3.  UI shows 2GB for the web_services worker.
+            2.  UI shows 1.5GB for the web_services in the Workers tab.
+            3.  UI shows 2GB for the web_services in the Workers tab.
     Bugzilla:
         1715633
+    """
+    pass
+
+
+@pytest.mark.manual
+@test_requirements.settings
+@pytest.mark.meta(coverage=[1658373])
+@pytest.mark.meta(blocker=[1787350])
+def test_memory_thresholds_workers_tab():
+    """
+    Test whether change made to thresholds in the Workers tab affect the values in
+    the advanced config
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: high
+        initialEstimate: 1/4h
+        testSteps:
+            1. Settings > [pick server in zone] > Workers
+            2. Change Generic workers to 1.1 GB
+            3. Change the Priority Workers to 1.1 GB
+        expectedResults:
+            1.
+            2.  The memory_threshold field for the generic_worker shows value
+                1181116006.4 which is 1.1 * (1024**3)
+                (BZ 1787350)
+            3.  The memory_threshold field for the priority_worker shows value
+                1181116006.4 which is 1.1 * (1024**3)
+                (BZ 1787350)
+    Bugzilla:
+        1658373
     """
     pass
 
