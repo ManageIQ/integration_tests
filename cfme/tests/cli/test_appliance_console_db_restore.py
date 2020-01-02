@@ -509,6 +509,7 @@ def test_appliance_console_restore_db_replicated(
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
+@pytest.mark.meta(automates=[1740515])
 def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_creds):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
@@ -518,6 +519,8 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1/4h
+    Bugzilla:
+        1740515
     """
     pwd = app_creds["password"]
     appl1, appl2, appl3 = configure_appliances_ha(unconfigured_appliances, pwd)
