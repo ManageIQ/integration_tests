@@ -357,9 +357,7 @@ def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, req
                       matched_patterns=['Starting to execute failover'],
                       hostname=ha_appliances_with_providers[2].hostname).waiting(wait=450):
         # Cause failover to occur
-        result = ha_appliances_with_providers[0].ssh_client.run_command(
-            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+        ha_appliances_with_providers[0].db_service.stop()
 
     ha_appliances_with_providers[2].evmserverd.wait_for_running()
     ha_appliances_with_providers[2].wait_for_web_ui()
