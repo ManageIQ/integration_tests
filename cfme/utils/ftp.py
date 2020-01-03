@@ -332,15 +332,12 @@ class FTPClient(object):
             is_dir = line.upper().startswith("D")
             # Max 8, then the final is file which can contain something blank
             fields = re.split(r"\s+", line, maxsplit=8)
-            # This is because how informations in LIST are presented
-            # Nov 11 12:34 filename (from the end)
-            try:
-                date = strptime(
-                    f"{datetime.now().year} {fields[-4]} {fields[-3]} {fields[-2]}",
-                    "%Y %b %d %H:%M",
-                )
-            except ValueError:
-                date = strptime(f"{datetime.now().year} {fields[-4]} {fields[-3]}", "%Y %b %d")
+            # This is because how information in LIST are presented
+            # `Nov 11 12:34 filename (from the end)` for current year files
+            # `Nov 11 2019 filename (from the end)` for back year files
+            yr = datetime.now().year if ":" in fields[-2] else fields[-2]
+            time = fields[-2] if ":" in fields[-2] else "00:00"
+            date = strptime(f"{yr} {fields[-4]} {fields[-3]} {time}", "%Y %b %d %H:%M")
             # convert time.struct_time into datetime
             date = datetime.fromtimestamp(mktime(date))
             result.append((is_dir, fields[-1], date))
