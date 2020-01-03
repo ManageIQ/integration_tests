@@ -482,66 +482,61 @@ def schedule_ssa(appliance, ssa_vm, wait_for_task_result=True):
 
 
 @pytest.fixture
-def compare_linux_vm_data(soft_assert):
+def compare_vm_data(soft_assert):
 
-    def _compare_linux_vm_data(ssa_vm):
-        expected_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
-        expected_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-        expected_packages = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['package-number']).output.strip('\n')
-        expected_services = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['services-number']).output.strip('\n')
+    def _compare_vm_data(ssa_vm):
+        if ssa_vm.system_type != WINDOWS:
+            expected_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
+            expected_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
+            expected_packages = ssa_vm.ssh.run_command(
+                ssa_vm.system_type['package-number']).output.strip('\n')
+            expected_services = ssa_vm.ssh.run_command(
+                ssa_vm.system_type['services-number']).output.strip('\n')
 
-        view = navigate_to(ssa_vm, 'Details')
-        current_users = view.entities.summary('Security').get_text_of('Users')
-        current_groups = view.entities.summary('Security').get_text_of('Groups')
-        current_packages = view.entities.summary('Configuration').get_text_of('Packages')
-        current_services = view.entities.summary('Configuration').get_text_of('Init Processes')
+            view = navigate_to(ssa_vm, 'Details')
+            current_users = view.entities.summary('Security').get_text_of('Users')
+            current_groups = view.entities.summary('Security').get_text_of('Groups')
+            current_packages = view.entities.summary('Configuration').get_text_of('Packages')
+            current_services = view.entities.summary('Configuration').get_text_of('Init Processes')
 
-        soft_assert(current_users == expected_users,
-                    "users: '{}' != '{}'".format(current_users, expected_users))
-        soft_assert(current_groups == expected_groups,
-                    "groups: '{}' != '{}'".format(current_groups, expected_groups))
-        soft_assert(current_packages == expected_packages,
-                    "packages: '{}' != '{}'".format(current_packages, expected_packages))
-        soft_assert(current_services == expected_services,
-                    "services: '{}' != '{}'".format(current_services, expected_services))
+            soft_assert(current_users == expected_users,
+                        f"users: '{current_users}' != '{expected_users}'")
+            soft_assert(current_groups == expected_groups,
+                        f"groups: '{current_groups}' != '{expected_groups}'")
+            soft_assert(current_packages == expected_packages,
+                        f"packages: '{current_packages}' != '{expected_packages}'")
+            soft_assert(current_services == expected_services,
+                        f"services: '{current_services}' != '{expected_services}'")
+        else:
+            # Make sure windows-specific data is not empty
+            """Make sure windows-specific data is not empty"""
+            view = navigate_to(ssa_vm, 'Details')
+            current_patches = view.entities.summary('Security').get_text_of('Patches')
+            current_applications = view.entities.summary('Configuration')\
+                .get_text_of('Applications')
+            current_win32_services = view.entities.summary('Configuration')\
+                .get_text_of('Win32 Services')
+            current_kernel_drivers = view.entities.summary('Configuration')\
+                .get_text_of('Kernel Drivers')
+            current_fs_drivers = view.entities.summary('Configuration')\
+                .get_text_of('File System Drivers')
 
-    return _compare_linux_vm_data
+            soft_assert(current_patches != '0', f"patches: '{current_patches}' != '0'")
+            soft_assert(current_applications != '0',
+                        f"applications: '{current_applications}' != '0'")
+            soft_assert(current_win32_services != '0',
+                        f"win32 services: '{current_win32_services}' != '0'")
+            soft_assert(current_kernel_drivers != '0',
+                        f"kernel drivers: '{current_kernel_drivers}' != '0'")
+            soft_assert(current_fs_drivers != '0', f"fs drivers: '{current_fs_drivers}' != '0'")
 
-
-@pytest.fixture
-def compare_windows_vm_data(soft_assert):
-
-    def _compare_windows_vm_data(ssa_vm):
-        """Make sure windows-specific data is not empty"""
-        view = navigate_to(ssa_vm, 'Details')
-        current_patches = view.entities.summary('Security').get_text_of('Patches')
-        current_applications = view.entities.summary('Configuration')\
-            .get_text_of('Applications')
-        current_win32_services = view.entities.summary('Configuration')\
-            .get_text_of('Win32 Services')
-        current_kernel_drivers = view.entities.summary('Configuration')\
-            .get_text_of('Kernel Drivers')
-        current_fs_drivers = view.entities.summary('Configuration')\
-            .get_text_of('File System Drivers')
-
-        soft_assert(current_patches != '0', "patches: '{}' != '0'".format(current_patches))
-        soft_assert(current_applications != '0', "applications: '{}' != '0'".format(
-            current_applications))
-        soft_assert(current_win32_services != '0',
-                    "win32 services: '{}' != '0'".format(current_win32_services))
-        soft_assert(current_kernel_drivers != '0',
-                    "kernel drivers: '{}' != '0'".format(current_kernel_drivers))
-        soft_assert(current_fs_drivers != '0', "fs drivers: '{}' != '0'".format(current_fs_drivers))
-
-    return _compare_windows_vm_data
+    return _compare_vm_data
 
 
 @pytest.mark.rhv2
 @pytest.mark.tier(1)
 def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
-                      appliance, ssa_vm, compare_windows_vm_data):
+                      appliance, ssa_vm, compare_vm_data):
     """ Tests SSA can be performed on a template
 
     Metadata:
@@ -582,12 +577,12 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         soft_assert(c_packages != '0', "packages: '{}' != '0'".format(c_packages))
     else:
         # Make sure windows-specific data is not empty
-        compare_windows_vm_data(ssa_vm)
+        compare_vm_data(ssa_vm)
 
 
 @pytest.mark.tier(2)
 def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
-                        soft_assert, appliance, vm_system_type):
+                        soft_assert, appliance, vm_system_type, compare_vm_data):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -617,16 +612,12 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
     soft_assert(vm_system_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
 
-    if ssa_vm.system_type != WINDOWS:
-        compare_linux_vm_data(ssa_vm)
-    else:
-        # Make sure windows-specific data is not empty
-        compare_windows_vm_data(ssa_vm)
+    compare_vm_data(ssa_vm)
 
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
-def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
+def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type, compare_vm_data):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -654,16 +645,12 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
     soft_assert(vm_system_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
 
-    if ssa_vm.system_type != WINDOWS:
-        compare_linux_vm_data(ssa_vm)
-    else:
-        # Make sure windows-specific data is not empty
-        compare_windows_vm_data(ssa_vm)
+    compare_vm_data(ssa_vm)
 
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type):
+def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type, compare_vm_data):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -691,11 +678,7 @@ def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type):
     soft_assert(vm_system_type in quadicon_os_icon.lower(),
                 "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
 
-    if ssa_vm.system_type != WINDOWS:
-        compare_linux_vm_data(ssa_vm)
-    else:
-        # Make sure windows-specific data is not empty
-        compare_windows_vm_data(ssa_vm)
+    compare_vm_data(ssa_vm)
 
 
 @pytest.mark.rhv3
