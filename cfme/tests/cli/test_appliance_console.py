@@ -1029,9 +1029,8 @@ def test_appliance_console_vmdb_httpd():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_shutdown():
+def test_appliance_console_shutdown(temp_appliance_preconfig_modscope):
     """
     test shutting down the appliance
 
@@ -1053,7 +1052,14 @@ def test_appliance_console_shutdown():
             4.
             5. You will be logged out from SSH.
     """
-    pass
+    appliance = temp_appliance_preconfig_modscope
+    command_set = ("ap", RETURN, "19", "Y")
+    appliance.appliance_console.run_commands(command_set, timeout=40)
+    wait_for(lambda: appliance.ssh_client.connected,
+             timeout=600,
+             fail_condition=True,
+             message='Wait for shutdown',
+             delay=5)
 
 
 @pytest.mark.manual
