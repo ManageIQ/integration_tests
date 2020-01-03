@@ -573,6 +573,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
+@pytest.mark.meta(automates=[1633573])
 def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_providers,
                                           utility_vm, utility_vm_nfs_ip):
     """ Test single appliance backup and restore through nfs, configures appliance with providers,
@@ -583,6 +584,9 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
         casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1h
+
+    Bugzilla:
+        1633573
     """
     appl1, appl2 = two_appliances_one_with_providers
     vm, _, data = utility_vm
