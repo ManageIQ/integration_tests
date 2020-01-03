@@ -587,7 +587,8 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
 
 @pytest.mark.tier(2)
 def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
-                        soft_assert, appliance, vm_system_type):
+                        soft_assert, appliance, vm_system_type,
+                        compare_linux_vm_data, compare_windows_vm_data):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -626,7 +627,8 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
-def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
+def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type,
+                      compare_linux_vm_data, compare_windows_vm_data):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -663,7 +665,8 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type):
 
 @pytest.mark.rhv1
 @pytest.mark.tier(2)
-def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type):
+def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type,
+                compare_linux_vm_data, compare_windows_vm_data):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
