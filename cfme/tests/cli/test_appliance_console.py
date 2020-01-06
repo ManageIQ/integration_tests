@@ -1,6 +1,7 @@
 import tempfile
 from collections import namedtuple
 
+import fauxfactory
 import lxml.etree
 import pytest
 import yaml
@@ -978,9 +979,8 @@ def test_appliance_console_network_conf():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_network_conf_negative():
+def test_appliance_console_network_conf_negative(temp_appliance_preconfig_modscope):
     """
     test network configuration error with invalid settings
 
@@ -994,20 +994,56 @@ def test_appliance_console_network_conf_negative():
             1. 'ap' launches appliance_console.
             2. RETURN clears info screen.
             3. '1' configure network.
-            4. '2' configure static IPv4.
-            5. Set invalid IPv4 address.
-            6. '3' configure static IPv6.
-            7. Set invalid IPv6 address.
+            4.  '1' Set DHCP Network Configuration
+            5. provide invalid input for IPv4 network
+            6. provide invalid input for IPv6 network
+            7. 4) Test Network Configuration
+            8. enter invalid ipv4
+            9. enter invalid hostname
+            10. 5) Set Hostname
+            11. enter incorrect hostname
         expectedResults:
             1.
             2.
             3.
             4.
-            5. Check network failure with IPv4.
-            6.
-            7. Check network failure with IPv6.
+            5. verify response
+            6. verify response
+            7.
+            8. verify response
+            9. verify response
+            10.
+            11. verify response
     """
-    pass
+    appliance = temp_appliance_preconfig_modscope
+    dhcp_invalid_input = "jdn3e3"
+    command_set = ("ap", RETURN, "1", "1", dhcp_invalid_input)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    assert 'Please enter "yes" or "no".' in result[-1], (
+        "Not getting error message for invalid error for dhcp IPV4")
+
+    command_set = ("ap", RETURN, "1", "1", "Y", dhcp_invalid_input)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    assert 'Please enter "yes" or "no".' in result[-1], (
+        "Not getting error message for invalid error for dhcp IPV6")
+
+    invalid_hostname = fauxfactory.gen_alphanumeric(start="1test_", length=10)
+    # TODO(BZ-1785257) remove this condition once this BZ got fixed
+    if not BZ(1785257, forced_streams=['5.10', "5.11"]).blocks:
+        command_set = ("ap", RETURN, "1", "4", invalid_hostname)
+        result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+        assert "Please provide a valid Hostname or IP Address." in result[-1], (
+            "Not getting error message for invalid error for IPV6")
+
+        command_set = ("ap", RETURN, "1", "5", invalid_hostname)
+        appliance.appliance_console.run_commands(command_set, timeout=30)
+
+        command_set = ("ap", RETURN)
+        result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+        logger.info('"ap" command output:%s' % result)
+
+        assert [i for i in result if invalid_hostname in result] == [], (
+            "Should not able to set incorrect hostname")
 
 
 @pytest.mark.manual
