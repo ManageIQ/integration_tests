@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.control.explorer.policies import VMControlPolicy
+from cfme.fixtures.ansible_fixtures import CredsHostsDialogView
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -25,7 +26,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.meta(blockers=[BZ(1677548, forced_streams=["5.11"])]),
     test_requirements.ansible,
 ]
 
@@ -43,18 +43,6 @@ CREDENTIALS = [
     ("Red Hat Virtualization", "host", "get_vms_facts_rhv.yaml"),
     ("Azure", "", "get_resourcegroup_facts_azure.yml"),
 ]
-
-
-@pytest.fixture(scope="function")
-def delete_old_request(appliance, ansible_catalog_item):
-    """ This fixture will delete any duplicate request present before test setup run
-    """
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-
-    if service_request.exists():
-        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
 
 
 @pytest.fixture(scope="function")
@@ -319,11 +307,9 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(2)
 def test_service_ansible_playbook_provision_in_requests(
-    appliance, ansible_service_catalog, delete_old_request, ansible_service_funcscope,
-    ansible_service_request_funcscope, request
+    appliance, ansible_catalog_item, ansible_service, ansible_service_request, request
 ):
     """Tests if ansible playbook service provisioning is shown in service requests.
-
     Polarion:
         assignee: sbulage
         casecomponent: Ansible
@@ -331,10 +317,24 @@ def test_service_ansible_playbook_provision_in_requests(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service_catalog.order()
-    ansible_service_request_funcscope.wait_for_request()
+    ansible_service.order()
+    ansible_service_request.wait_for_request()
+    cat_item_name = ansible_catalog_item.name
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
-    assert ansible_service_request_funcscope.exists()
+    @request.addfinalizer
+    def _finalize():
+        service = MyService(appliance, cat_item_name)
+        if service_request.exists():
+            service_request.wait_for_request()
+            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
+        if service.exists:
+            service.delete()
+
+    assert service_request.exists()
 
 
 @pytest.mark.tier(2)
@@ -435,10 +435,9 @@ def test_service_ansible_playbook_order_retire(
     request,
     appliance,
     ansible_catalog_item,
-    delete_old_request,
     ansible_service_catalog,
     ansible_service_request,
-    ansible_service_funcscope,
+    ansible_service,
     host_type,
     order_value,
     result,
@@ -455,24 +454,36 @@ def test_service_ansible_playbook_order_retire(
         tags: ansible_embed
     """
     ansible_service_catalog.ansible_dialog_values = {"hosts": order_value}
+    view = navigate_to(ansible_service_catalog, "Order")
+    dialog_view = view.browser.create_view(CredsHostsDialogView, wait="20s")
+    dialog_view.fill({"hosts": order_value})
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
-
-    def _clear_retire_request():
-        if retire_request.exists():
-            retire_request.remove_request()
+    # By default service request is not being deleted as Delete option is not visible.
+    cat_item_name = ansible_catalog_item.name
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
     if action == "retirement":
-        retire_request = ansible_service_funcscope.retire()
-        request.addfinalizer(_clear_retire_request)
+        retire_request = ansible_service.retire()
+        retire_request.wait_for_request()
+        if retire_request.exists():
+            retire_request.remove_request(method="rest")
 
-    view = navigate_to(ansible_service_funcscope, "Details")
+    @request.addfinalizer
+    def _finalize():
+        if service_request.exists():
+            service_request.wait_for_request()
+            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+
+    view = navigate_to(ansible_service, "Details")
     assert result == view.provisioning.details.get_text_of("Hosts")
 
 
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_plays_table(
-    ansible_service_request, ansible_service, soft_assert
+    ansible_service_request, ansible_service, soft_assert, request
 ):
     """Plays table in provisioned and retired service should contain at least one row.
 
@@ -483,8 +494,14 @@ def test_service_ansible_playbook_plays_table(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service.order()
+    provision_request = ansible_service.order()
     ansible_service_request.wait_for_request()
+
+    @request.addfinalizer
+    def _finalize():
+        if provision_request.exists():
+            provision_request.remove_request(method="rest")
+
     view = navigate_to(ansible_service, "Details")
     soft_assert(view.provisioning.plays.row_count > 1, "Plays table in provisioning tab is empty")
     ansible_service.retire()
