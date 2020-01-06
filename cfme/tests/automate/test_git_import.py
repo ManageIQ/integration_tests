@@ -17,7 +17,7 @@ pytestmark = [
     pytest.mark.meta(server_roles="+git_owner"),
 ]
 
-GIT_REPO_URL = "https://github.com/RedHatQE/ManageIQ-automate-git.git"
+GIT_REPO_URL = cfme_data.automate_links.datastore_repositories.manageiq_automate
 
 
 @pytest.fixture
@@ -78,17 +78,16 @@ def test_automate_git_domain_displayed_in_service(appliance):
         initialEstimate: 1/20h
         tags: automate
     """
-    url = cfme_data.ansible_links.playbook_repositories.automate_domain
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=url, verify_ssl=True
+        import_type="git", url=GIT_REPO_URL, verify_ssl=True
     )
-    imported_domain = repo.import_domain_from(branch="origin/master")
+    imported_domain = repo.import_domain_from(branch="origin/domain-display")
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.GENERIC, "test")
     view = navigate_to(cat_item, "Add")
     path = (
         "Datastore",
-        "{0} ({1}) ({0}) (Locked)".format(imported_domain.name, "origin/master"),
+        "{0} ({1}) ({0}) (Locked)".format(imported_domain.name, "origin/domain-display"),
         "Service",
         "Generic",
         "StateMachines",
@@ -123,13 +122,12 @@ def test_automate_git_import_multiple_domains(request, appliance):
             2.
             3. Import of multiple domains from a single git repo is not allowed
     """
-    url = "https://github.com/ganeshhubale/ManageIQ-automate-git"
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=url, verify_ssl=True
+        import_type="git", url=GIT_REPO_URL, verify_ssl=True
     )
     with pytest.raises(AssertionError,
                        match="Selected branch or tag contains more than one domain"):
-        domain = repo.import_domain_from(branch="origin/master")
+        domain = repo.import_domain_from(branch="origin/multi-domains")
         request.addfinalizer(domain.delete_if_exists)
         assert not domain.exists
 
@@ -137,38 +135,32 @@ def test_automate_git_import_multiple_domains(request, appliance):
 @pytest.mark.meta(automates=[BZ(1714493)])
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
-    ("url", "param_type", "param_value", "verify_ssl"),
+    ("param_type", "param_value", "verify_ssl"),
     [
         (
-            'https://github.com/ramrexx/CloudForms_Essentials.git',
             'branch',
-            'origin/cf4.1',
+            'origin/testbranch',
             True
         ),
         (
-            'https://github.com/RedHatQE/ManageIQ-automate-git.git',
             'tag',
             '0.1',
             False
         ),
         (
-            "https://github.com/RedHatQE/ManageIQ-automate-git.git",
             "branch",
             "origin/master",
             False,
         ),
         (
-            "https://github.com/ganeshhubale/ManageIQ-automate-git.git",
             "branch",
-            "origin/test",
+            "origin/without-top-level",
             False,
         ),
     ],
     ids=["with_branch", "with_tag", "with_top_level_domain", "without_top_level_domain"],
 )
-def test_domain_import_git(
-    request, appliance, url, param_type, param_value, verify_ssl
-):
+def test_domain_import_git(request, appliance, param_type, param_value, verify_ssl):
     """This test case Verifies that a domain can be imported from git and Importing domain from git
        should work with or without the top level domain directory.
 
@@ -195,7 +187,7 @@ def test_domain_import_git(
         1389823
     """
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=url, verify_ssl=verify_ssl
+        import_type="git", url=GIT_REPO_URL, verify_ssl=verify_ssl
     )
     domain = repo.import_domain_from(**{param_type: param_value})
     request.addfinalizer(domain.delete)
@@ -340,7 +332,7 @@ def test_automate_git_import_case_insensitive(request, appliance):
     """
     appliance.ssh_client.run_rake_command(
         "evm:automate:import PREVIEW=false "
-        "GIT_URL=https://github.com/RedHatQE/ManageIQ-automate-git REF=TestBranch"
+        f"GIT_URL={GIT_REPO_URL}"
     )
     domain = appliance.collections.domains.instantiate(name="testdomain")
     request.addfinalizer(domain.delete_if_exists)
@@ -553,9 +545,9 @@ def test_git_refresh_with_renamed_yaml(appliance):
             1. Domain should not get imported
     """
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url="https://github.com/ganeshhubale/ManageIQ-automate-git.git"
+        import_type="git", url=GIT_REPO_URL
     )
     with pytest.raises(AssertionError, match=(
             "Error: import failed: Selected branch or tag does not contain a valid domain"
     )):
-        repo.import_domain_from(branch="origin/brok-yml")
+        repo.import_domain_from(branch="origin/broken-yaml")
