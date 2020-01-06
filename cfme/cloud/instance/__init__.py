@@ -318,7 +318,7 @@ class Instance(VM):
                 raise ItemNotFound(
                     'Failed to find instance in table: {}'.format(self.name)
                 )
-            row.check()
+            row.ensure_checked()
 
         # cancel is the kwarg, when true we want item_select to dismiss the alert, flip the bool
         view.toolbar.power.item_select(kwargs.get('option'),
