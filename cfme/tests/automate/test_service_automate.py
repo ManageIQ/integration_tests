@@ -514,7 +514,9 @@ def tenants_setup(appliance):
         description=fauxfactory.gen_alphanumeric(18, start="parent_desc_"),
         parent=parent_tenant
     )
-    return parent_tenant, child_tenant
+    yield parent_tenant, child_tenant
+    child_tenant.delete_if_exists()
+    parent_tenant.delete_if_exists()
 
 
 @pytest.fixture
@@ -526,7 +528,6 @@ def set_child_tenant_quota(request, appliance, tenants_setup):
         tenant_quota_data.update({f"{field}_cb": True, field: value})
     child_tenant.set_quota(**tenant_quota_data)
     yield
-    appliance.server.login_admin()
     for field, value in field_value:
         tenant_quota_data.update({f"{field}_cb": False})
         tenant_quota_data.pop(field)
