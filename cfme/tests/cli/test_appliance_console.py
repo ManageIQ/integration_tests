@@ -15,12 +15,13 @@ from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
 from cfme.utils import os
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.net import net_check
 from cfme.utils.version import LOWEST
-
 
 pytestmark = [
     test_requirements.app_console,
@@ -759,9 +760,8 @@ def test_appliance_console_ha_setup_dc():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_restart():
+def test_appliance_console_restart(temp_appliance_preconfig_funcscope):
     """
     test restarting the appliance
 
@@ -773,27 +773,28 @@ def test_appliance_console_restart():
         testSteps:
             1. 'ap' launches appliance_console.
             2. RETURN clears info screen.
-            3. '16' Stop EVM Server Processes.
-            4. 'Y' Stop CFME Server Gracefully.
-            5. Wait for some time.
-            6. '17' Start EVM Server Processes.
-            7. 'Y' to Start CFME server.
-            8. Wait for some time.
-            9. '21' Quit from appliance_console menu.
-            10. Open appliance IP into Browser.
+            3. '18' restart appliance.
+            4. '1' Restart.
+            5. Verify UI (Open appliance IP into Browser.)
         expectedResults:
             1.
             2.
             3.
             4.
-            5. Cross-check service stopped.
-            6.
-            7.
-            8. Cross-check service started.
-            9.
-            10. Confirm that Appliance is running into browser.
+            5. Confirm that Appliance is running into browser.
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+    restart_appliance_cmd = ("ap", RETURN, app_con_menu["restart_app"], "1", TimedCommand("Y", 0))
+    appliance.appliance_console.run_commands(restart_appliance_cmd, timeout=30)
+
+    wait_for(
+        net_check, num_sec=180, func_args=["22", appliance.hostname, True, 3],
+        message='waiting to shutdown machine',
+        fail_condition=True
+    )
+
+    appliance.wait_for_web_ui()
+    navigate_to(appliance.server, "LoggedIn")
 
 
 @pytest.mark.manual

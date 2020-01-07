@@ -58,7 +58,7 @@ def ip_echo_socket(port=32123):
             conn.close()
 
 
-def net_check(port, addr=None, force=False):
+def net_check(port, addr=None, force=False, timeout=10):
     """Checks the availablility of a port"""
     port = int(port)
     if not addr:
@@ -71,7 +71,7 @@ def net_check(port, addr=None, force=False):
             addr = sockaddr[0]
             # Then try to connect to the port
             try:
-                socket.create_connection((addr, port), timeout=10).close()  # immediately close
+                socket.create_connection((addr, port), timeout=timeout).close()  # immediately close
             except socket.error:
                 _ports[addr][port] = False
             else:
