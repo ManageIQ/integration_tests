@@ -14,6 +14,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.ftp import FTPException
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 
@@ -172,6 +173,19 @@ def create_po_user_and_group(request, appliance):
     )
     _users(request, appliance, group=group.description, userid="pouser")
 
+
+@pytest.fixture
+def setup_vm(configure_fleecing, appliance, provider):
+    vm = appliance.collections.infra_vms.instantiate(
+        name=random_vm_name(context="report", max_length=20),
+        provider=provider,
+        template_name="env-rhel7-20-percent-full-disk-tpl",
+    )
+    vm.create_on_provider(allow_skip="default", find_in_cfme=True)
+    vm.smartstate_scan(wait_for_task_result=True)
+    yield vm
+
+    vm.cleanup_on_provider()
 
 # =========================================== Tests ===============================================
 
@@ -537,9 +551,12 @@ def test_reports_filter_expression_editor_disk_size(appliance, request, get_repo
     report_name = "test_filter_report"
     report = get_report("filter_report.yaml", report_name)
     report.update(
-        {"filter": {"primary_filter": (
-            "fill_field(VM and Instance : Allocated Disk Storage, > , 1)")
-        }, "title": report_name}
+        {
+            "filter": {
+                "primary_filter": ("fill_field(VM and Instance : Allocated Disk Storage, > , 1)")
+            },
+            "title": report_name,
+        }
     )
 
     generated_report = appliance.collections.reports.instantiate(
@@ -669,3 +686,52 @@ def test_import_report_preserve_owner(preserve_owner, create_po_user_and_group, 
 
     assert view.report_info.user.text == user
     assert view.report_info.group.text == group
+
+
+@pytest.mark.tier(1)
+@pytest.mark.long_running
+@pytest.mark.customer_scenario
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.meta(automates=[1686281], server_roles=["+smartstate", "+smartproxy"])
+def test_vm_volume_free_space_less_than_20_percent(
+    appliance, setup_provider, provider, setup_vm, soft_assert
+):
+    """
+    Bugzilla:
+        1686281
+        1696420
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/3h
+        setup:
+            1. Create a VM with <=20% free volume space.
+            2. Enable SSA role.
+            3. Perform SSA on the newly created VM and a few other VMs.
+        testSteps:
+            1. Queue the report
+                [Configuration Management, Virtual Machines, VMs with Volume Free Space <= 20%]
+        expectedResults:
+            1. Recently created VM must be present in the report.
+    """
+    saved_report = appliance.collections.reports.instantiate(
+        menu_name="VMs with Volume Free Space <= 20%",
+        type="Configuration Management",
+        subtype="Virtual Machines",
+    ).queue(wait_for_finish=True)
+    view = navigate_to(saved_report, "Details")
+
+    rows = [
+        row["Volume Free Space Percent"].text.strip("%")
+        for row in view.table.rows(name=setup_vm.name)
+    ]
+
+    # This will assert that not all the column["Volume Free Space Percent"] values are empty.
+    assert any(rows)
+
+    # This will assert that all the column values are <= 20
+    assert all(
+        [float(row) <= 20.0 for row in rows if row]
+    ), "Volume Free Space Percent is greater than 20%"

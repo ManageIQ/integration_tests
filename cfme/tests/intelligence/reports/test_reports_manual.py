@@ -33,34 +33,6 @@ def test_reports_generate_custom_conditional_filter_report():
         expectedResults:
             1. Report must be generated successfully.
     """
-    pass
-
-
-@test_requirements.report
-@pytest.mark.tier(1)
-@pytest.mark.customer_scenario
-@pytest.mark.meta(coverage=[1686281])
-def test_vm_volume_free_space_less_than_20_percent():
-    """
-    Bugzilla:
-        1686281
-        1696420
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/3h
-        setup:
-            1. Go to Cloud Intel -> Reports -> All Reports
-        testSteps:
-            1. Queue the report
-                [Configuration Management, Virtual Machines, VMs with Volume Free Space <= 20%]
-        expectedResults:
-            1. It should report only those VMs which has volume free space less than
-                or equal to 20%.
-    """
-    pass
 
 
 @test_requirements.report
