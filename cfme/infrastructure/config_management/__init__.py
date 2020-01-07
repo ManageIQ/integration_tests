@@ -389,7 +389,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
             return
         view = navigate_to(self, 'AllOfType')
         provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)
-        provider_entity[0].check()
+        provider_entity[0].ensure_checked()
         remove_item = 'Remove selected items from Inventory'
         view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
@@ -480,7 +480,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         view = navigate_to(self, 'AllOfType')
         view.toolbar.view_selector.select('List View')
         provider_entity = view.entities.get_entities_by_keys(provider_name=self.ui_name)[0]
-        provider_entity.check()
+        provider_entity.ensure_checked()
         if view.toolbar.configuration.item_enabled('Refresh Relationships and Power states'):
             view.toolbar.configuration.item_select('Refresh Relationships and Power states',
                                                    handle_alert=not cancel)

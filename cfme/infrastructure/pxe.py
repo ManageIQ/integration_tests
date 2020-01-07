@@ -1128,5 +1128,5 @@ def remove_all_pxe_servers():
     view = navigate_to(PXEServer, 'All')
     if view.entities.is_displayed:
         for entity in view.entities.rows():
-            entity[0].check()
+            entity[0].ensure_checked()
         view.toolbar.configuration.item_select('Remove PXE Servers', handle_alert=True)

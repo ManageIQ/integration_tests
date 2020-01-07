@@ -413,7 +413,7 @@ def test_no_template_power_control(provider, soft_assert):
     # Check the power button with checking the quadicon
     view = navigate_to(selected_template, 'AllForProvider', use_resetter=False)
     entity = view.entities.get_entity(name=selected_template.name, surf_pages=True)
-    entity.check()
+    entity.ensure_checked()
     for action in view.toolbar.power.items:
         # Performing power actions on template
         view.toolbar.power.item_select(action, handle_alert=True)
@@ -648,7 +648,7 @@ def test_retire_vm_with_vm_user_role(new_user, appliance, testing_vm):
     # Log in with new user to retire the vm
     with new_user:
         view = navigate_to(testing_vm.parent, "All")
-        view.entities.get_entity(name=testing_vm.name, surf_pages=True).check()
+        view.entities.get_entity(name=testing_vm.name, surf_pages=True).ensure_checked()
         assert view.toolbar.lifecycle.item_enabled("Retire selected items")
         testing_vm.retire()
         assert testing_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,

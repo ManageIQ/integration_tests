@@ -142,7 +142,8 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToAttribute('definition', 'Instances')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   surf_pages=True).ensure_checked()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
