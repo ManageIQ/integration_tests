@@ -1254,9 +1254,8 @@ def test_appliance_console_restore_db_network_negative(temp_appliance_preconfig_
     assert "Database restore failed." in result[-1]
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_extend_storage_negative():
+def test_appliance_console_extend_storage_negative(appliance):
     """
     test extending storage with no additional partition
 
@@ -1275,7 +1274,9 @@ def test_appliance_console_extend_storage_negative():
             2.
             3. Check there is no extra disk present.
     """
-    pass
+    command_set = ("ap", RETURN, "11")
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert "/dev/vd" not in result[-1], ("extra disks are not present.")
 
 
 @pytest.mark.manual
