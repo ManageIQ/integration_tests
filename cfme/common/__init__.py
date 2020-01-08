@@ -316,7 +316,7 @@ class PolicyProfileAssignable(object):
         view.paginator.set_items_per_page(1000)
 
         # check the entity's on collection ALL view
-        view.entities.apply(func=lambda e: e.check(), conditions=conditions)
+        view.entities.apply(func=lambda e: e.ensure_checked(), conditions=conditions)
 
         wait_for(lambda: view.toolbar.policy.is_enabled, num_sec=5,
                  message='Policy drop down menu is disabled after checking some entities')
