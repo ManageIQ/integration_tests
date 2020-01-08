@@ -637,10 +637,13 @@ def test_regex_validation_should_work():
     pass
 
 
-@pytest.mark.meta(coverage=[1696474])
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_dynamic_dialogs():
+@pytest.mark.meta(automates=[1696474])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1696474.zip", "bz_1696474", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1696474.yml"], ids=["sample_dialog"],)
+def test_dynamic_dialogs(appliance, import_datastore, generic_catalog_item_with_imported_dialog):
     """
 
     Bugzilla:
@@ -662,7 +665,26 @@ def test_dynamic_dialogs():
             3.
             4. All dynamic dialog functionality should work
     """
-    pass
+    catalog_item, _, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+
+    data_value = fauxfactory.gen_alphanumeric()
+    view.fields(ele_label).fill(data_value)
+
+    #  'limit', 'param_vm_name', 'param_database' and 'dialog_hostname_master_appliance'
+    #  Fields are coming from imported dialog.
+    wait_for(
+        lambda: view.fields("limit").read() == data_value and
+        view.fields("param_vm_name").read() == data_value, timeout=7
+    )
+
+    # TextBox should read the appliance IP address
+    view.fields("dialog_hostname_master_appliance").read() == appliance.hostname
+
+    # Checkbox must be checked for database field
+    assert view.fields("param_database").checkbox.read()
 
 
 @pytest.mark.meta(coverage=[1706600])
