@@ -1260,7 +1260,7 @@ def test_public_images_enable_disable(setup_provider, request, appliance, provid
             5. Refresh should be successful and public images uncollected
     """
     # enable
-    request.finalizer(lambda: appliance.set_public_images(False, provider))
+    request.addfinalizer(lambda: appliance.set_public_images(False, provider))
     provider_images = 20000 if provider.one_of(AzureProvider) else 40000
     print(provider)
     images = set_public_images_and_refresh(appliance, provider, enable=True)
@@ -1360,9 +1360,9 @@ def test_deploy_instance_with_ssh_addition_template(setup_provider,
 
 
 @pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
+@pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.ec2
-def test_add_provider_with_instance_without_name(has_no_cloud_providers, provider,
-                                                 ec2_instance_without_name):
+def test_add_provider_with_instance_without_name(provider, ec2_instance_without_name):
     """
     Polarion:
         assignee: mmojzis
