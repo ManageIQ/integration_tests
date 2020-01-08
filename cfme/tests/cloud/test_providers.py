@@ -200,6 +200,17 @@ def instance_with_ssh_addition_template(appliance, provider):
 
 
 @pytest.fixture
+def stack_without_parameters(provider):
+    stack = provider.mgmt.create_stack(name=fauxfactory.gen_alpha(10),
+        template_url=provider.data.provisioning.stack_provisioning.template_without_parameters,
+        capabilities=["CAPABILITY_IAM"])
+    wait_for(lambda: stack.status_active, delay=15, timeout=900)
+
+    yield stack
+    stack.delete()
+
+
+@pytest.fixture
 def ec2_provider_with_sts_creds(appliance):
     collection = appliance.collections.cloud_providers
     prov = collection.instantiate(
@@ -1170,8 +1181,9 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
 
 
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_refresh_with_stack_without_parameters():
+@pytest.mark.usefixtures('has_no_cloud_providers')
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
+def test_refresh_with_stack_without_parameters(provider, request, stack_without_parameters):
     """
     Polarion:
         assignee: mmojzis
@@ -1187,7 +1199,10 @@ def test_ec2_refresh_with_stack_without_parameters():
             1.
             2. Wait for refresh - it should be refreshed successfully without errors
     """
-    pass
+    provider.create()
+    request.addfinalizer(provider.delete_if_exists)
+    provider.refresh_provider_relationships()
+    provider.validate_stats(ui=True)
 
 
 @test_requirements.ec2
