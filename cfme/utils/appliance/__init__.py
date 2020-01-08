@@ -464,8 +464,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         on_gce = kwargs.pop('on_gce', False)
         on_openstack = kwargs.pop('on_openstack', False)
         rails_deprecations = kwargs.pop('rails_deprecations', ':log')
+        ssh_timeout = kwargs.pop('timeout', 600)
         with self as ipapp:
-            ipapp.wait_for_ssh()
+            ipapp.wait_for_ssh(timeout=ssh_timeout)
 
             # Debugging - ifcfg-eth0 overwritten by unknown process
             # Rules are permanent and will be reloade after machine reboot
