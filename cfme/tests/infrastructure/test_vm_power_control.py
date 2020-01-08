@@ -700,12 +700,12 @@ def test_power_options_on_archived_orphaned_vms_all_page(appliance, archive_orph
         view = navigate_to(infra_vms, 'ArchivedAll')
 
         # Selecting particular archived vm
-        testing_vm.find_quadicon(from_archived_all=True).check()
+        testing_vm.find_quadicon(from_archived_all=True).ensure_checked()
     else:
         view = navigate_to(infra_vms, 'OrphanedAll')
 
         # Selecting particular orphaned vm
-        testing_vm.find_quadicon(from_orphaned_all=True).check()
+        testing_vm.find_quadicon(from_orphaned_all=True).ensure_checked()
 
     # After selecting particular archived/orphaned vm; 'Power' drop down gets enabled.
     # Reading all the options available in 'power' drop down

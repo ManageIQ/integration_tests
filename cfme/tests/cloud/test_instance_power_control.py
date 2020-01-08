@@ -795,7 +795,7 @@ def test_power_options_on_archived_instance_all_page(testing_instance):
     view = navigate_to(cloud_instance, 'ArchivedAll')
 
     # Selecting particular archived instance
-    testing_instance.find_quadicon(from_archived_all=True).check()
+    testing_instance.find_quadicon(from_archived_all=True).ensure_checked()
 
     # After selecting particular archived instance; 'Power' drop down gets enabled.
     # Reading all the options available in 'power' drop down
