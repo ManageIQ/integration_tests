@@ -274,7 +274,6 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         if from_manager:
             view = navigate_to(self.parent.manager, 'Volumes')
             view.entities.get_entity(surf_pages=True, name=self.name).ensure_checked()
-            _
             view.toolbar.configuration.item_select('Edit selected Cloud Volume')
             view = view.browser.create_view(VolumeEditView, additional_context={'object': self})
         else:
