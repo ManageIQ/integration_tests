@@ -144,7 +144,7 @@ class DatastoreManagedVMsView(BaseLoggedInPage):
             super(BaseLoggedInPage, self).is_displayed
             and self.navigation.currently_selected == ["Compute", "Infrastructure", "Datastores"]
             and self.entities.title.text == f'{self.context["object"].name} (All VMs and Instances)'
-            and self.breadcrumb.active_location == self.context["object"].name
+            and self.context["object"].name in self.breadcrumb.active_location
         )
 
 
@@ -184,8 +184,9 @@ class RegisteredHostsView(HostsView):
 
 class DatastoresCompareView(BaseLoggedInPage):
     """Compare VM / Template page."""
-    # TODO: Add more widgets once BZ 1733120 is fixed.
+    # TODO: This table doesn't read properly, fix it.
     table = Table('//*[@id="compare-grid"]/table')
+    title = Text('//*[@id="main-content"]//h1')
 
     @View.nested
     class toolbar(View):
@@ -196,7 +197,7 @@ class DatastoresCompareView(BaseLoggedInPage):
     def is_displayed(self):
         return (
             self.logged_in_as_current_user
-            and self.entities.title.text == "Compare VM or Template"
+            and self.title.text == "Compare VM or Template"
             and self.navigation.currently_selected == ["Compute", "Infrastructure", "Datastores"]
             and self.toolbar.is_displayed
         )

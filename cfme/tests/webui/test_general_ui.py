@@ -19,8 +19,8 @@ from cfme.common.provider_views import ProviderTimelinesView
 from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
-from cfme.infrastructure.datastore import ProviderAllDatastoresView
 from cfme.infrastructure.datastore import DatastoresCompareView
+from cfme.infrastructure.datastore import ProviderAllDatastoresView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider import ProviderClustersView
 from cfme.infrastructure.provider import ProviderTemplatesView
@@ -540,7 +540,10 @@ def test_provider_details_page_refresh_after_clear_cookies(
 
     # When the test runs a second time for cloud provider, it raises an error,
     # this finalizer is workaround for it.
-    request.addfinalizer(appliance.server.logout)
+    @request.addfinalizer
+    def _finalize():
+        appliance.server.login()
+        appliance.server.logout()
 
     with LogValidator(
         "/var/www/miq/vmdb/log/production.log", failure_patterns=[r".*FATAL.*"]
