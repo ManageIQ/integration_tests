@@ -225,8 +225,8 @@ class ApplianceDB(AppliancePlugin):
         self.logger.info('Starting DB setup')
         is_pod = kwargs.pop('is_pod', False)
 
-        if is_pod:
-            self.enable_external(db_address=db_address, **kwargs)
+        if is_pod or db_address:
+            self.enable_external(db_address, key_address=key_address, **kwargs)
         else:
             self.enable_internal(key_address=key_address, **kwargs)
 
@@ -426,7 +426,7 @@ class ApplianceDB(AppliancePlugin):
         Note:
             If key_address is None, a new encryption key is generated for the appliance.
         """
-        # self.logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
+        self.logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.address = self.appliance.hostname
         clear_property_cache(self, 'client')
 
@@ -504,7 +504,7 @@ class ApplianceDB(AppliancePlugin):
         return result.rc, result.output
 
     def enable_external(self, db_address, region=0, db_name=None, db_username=None,
-                        db_password=None):
+                        db_password=None, key_address=None):
         """Enables external database
 
         Args:
@@ -513,43 +513,39 @@ class ApplianceDB(AppliancePlugin):
             db_name: Name of the external DB
             db_username: Username to access the external DB
             db_password: Password to access the external DB
+            key_address: Address of the host from which to get the key
 
         Returns a tuple of (exitstatus, script_output) for reporting, if desired
         """
         self.logger.info('Enabling external DB (db_address {}, region {}) on {}.'
-            .format(db_address, region, self.address))
-        # reset the db address and clear the cached db object if we have one
-        self.address = db_address
-        clear_property_cache(self, 'client')
+            .format(db_address, region, self.appliance.hostname))
 
         # default
         db_name = db_name or 'vmdb_production'
         db_username = db_username or conf.credentials['database']['username']
         db_password = db_password or conf.credentials['database']['password']
 
-        client = self.ssh_client
+        appliance_client = self.appliance.ssh_client
 
         if self.appliance.has_cli:
 
-            if not client.is_pod:
+            if not appliance_client.is_pod:
                 # copy v2 key
-                master_client = client(hostname=self.address)
                 rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
+                master_client = appliance_client(hostname=key_address)
                 master_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
-                client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
+                appliance_client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
 
             # enable external DB with cli
-            result = client.run_command(
-                'appliance_console_cli '
-                '--hostname {0} --region {1} --dbname {2} --username {3} --password {4}'.format(
-                    self.address, region, db_name, db_username, db_password
-                )
-            )
+            cmd = (f'appliance_console_cli --hostname {db_address}'
+                   f' --dbname {db_name} --username {db_username} --password {db_password}')
+            result = appliance_client.run_command(cmd)
         else:
             # no cli, use the enable external db script
+            # TODO: add key_address
             rbt_repl = {
                 'miq_lib': '/var/www/miq/lib',
-                'host': self.address,
+                'host': db_address,
                 'region': region,
                 'database': db_name,
                 'username': db_username,
@@ -562,11 +558,11 @@ class ApplianceDB(AppliancePlugin):
 
             # Init SSH client and sent rb file over to /tmp
             remote_file = '/tmp/{}'.format(fauxfactory.gen_alphanumeric())
-            client.put_file(rb.name, remote_file)
+            appliance_client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
-            result = client.run_command('ruby {}'.format(remote_file))
-            client.run_command('rm {}'.format(remote_file))
+            result = appliance_client.run_command('ruby {}'.format(remote_file))
+            appliance_client.run_command('rm {}'.format(remote_file))
 
         if result.failed:
             self.logger.error('error enabling external db')

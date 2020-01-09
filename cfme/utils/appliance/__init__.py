@@ -494,6 +494,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 self.db.create_db_lvm()
             if on_openstack:
                 self.set_resolvable_hostname(log_callback=log_callback)
+            if db_address:
+                self.db_host = db_address
 
             self.db.setup(region=region, key_address=key_address,
                           db_address=db_address, is_pod=self.is_pod)
