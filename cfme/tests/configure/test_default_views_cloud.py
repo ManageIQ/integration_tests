@@ -93,7 +93,8 @@ def test_cloud_compare_view(appliance, expected_view):
     old_default = default_views.get_default_view(group_name)
     default_views.set_default_view(group_name, expected_view)
     inst_view = navigate_to(appliance.collections.cloud_instances, 'All')
-    [e.check() for e in inst_view.entities.get_all()[:2]]
+    e_slice = slice(0, 2, None)
+    [e.ensure_checked() for e in inst_view.entities.get_all(slice=e_slice)]
     inst_view.toolbar.configuration.item_select('Compare Selected items')
     selected_view = getattr(inst_view.actions, selector_type).selected
     assert expected_view == selected_view, '{} setting failed'.format(expected_view)
