@@ -189,6 +189,16 @@ def vm_ip(cfme_vhd, pwsh_ssh):
 
 
 @pytest.fixture
+def instance_with_ssh_addition_template(appliance, provider):
+    form_values = {'customize': {'custom_template': {'name': "SSH key addition template"}}}
+    instance = appliance.collections.cloud_instances.create(random_vm_name('prov'), provider,
+                                                            form_values=form_values)
+
+    yield instance
+    instance.delete()
+
+
+@pytest.fixture
 def ec2_provider_with_sts_creds(appliance):
     collection = appliance.collections.cloud_providers
     prov = collection.instantiate(
@@ -1271,8 +1281,9 @@ def test_ec2_add_delete_add_provider():
 
 
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_deploy_instance_with_ssh_addition_template():
+@pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
+def test_deploy_instance_with_ssh_addition_template(setup_provider,
+                                                    instance_with_ssh_addition_template):
     """
     Requirement: EC2 provider
 
@@ -1292,7 +1303,8 @@ def test_ec2_deploy_instance_with_ssh_addition_template():
             3.
             4. Instance should be provisioned without any errors
     """
-    pass
+    if not instance_with_ssh_addition_template.exists:
+        pytest.fail('Instance with ssh addition template was not created successfully!')
 
 
 @test_requirements.ec2
