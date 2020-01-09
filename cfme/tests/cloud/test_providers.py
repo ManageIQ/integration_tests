@@ -208,6 +208,17 @@ def ec2_provider_with_sts_creds(appliance):
     prov.delete()
 
 
+@pytest.fixture
+def instance_without_name(provider):
+    template_id = provider.mgmt.get_template(
+        provider.data.templates.get('small_template').name).uuid
+    instance = provider.mgmt.create_vm(template_id)
+    wait_for(lambda: instance.state == VmState.RUNNING, delay=15, timeout=900)
+
+    yield instance
+    instance.cleanup()
+
+
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_add_cancelled_validation_cloud(request, appliance):
@@ -1296,8 +1307,9 @@ def test_ec2_deploy_instance_with_ssh_addition_template():
 
 
 @test_requirements.ec2
-@pytest.mark.manual
-def test_add_ec2_provider_with_instance_without_name():
+@pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
+@pytest.mark.usefixtures('has_no_cloud_providers')
+def test_add_provider_with_instance_without_name(provider, request, instance_without_name):
     """
     Polarion:
         assignee: mmojzis
@@ -1311,7 +1323,9 @@ def test_add_ec2_provider_with_instance_without_name():
             1.
             2. Refresh should complete without errors
     """
-    pass
+    provider.create()
+    request.addfinalizer(provider.delete_if_exists)
+    provider.validate_stats(ui=True)
 
 
 @test_requirements.ec2
