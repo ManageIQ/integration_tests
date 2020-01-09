@@ -50,7 +50,17 @@ class LogValidator(object):
                                   failure_patterns=['.*ERROR.*'],
                                   matched_patterns=['PARTICULAR_INFO'])
           evm_tail.start_monitoring()
+          do_some_stuff()
           evm_tail.validate()       # evm_tail.validate(wait="30s")
+
+        or
+
+        .. code-block:: python
+          with LogValidator('/var/www/miq/vmdb/log/evm.log',
+                            skip_patterns=['PARTICULAR_ERROR'],
+                            failure_patterns=['.*ERROR.*'],
+                            matched_patterns=['PARTICULAR_INFO']):
+              do_some_stuff()
     """
 
     def __init__(self, remote_filename, **kwargs):
@@ -134,3 +144,8 @@ class LogValidator(object):
         self.start_monitoring()
         yield
         self.validate(**kwargs)
+
+    __enter__ = start_monitoring
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.validate()
