@@ -140,7 +140,8 @@ def test_infra_compare_view(appliance, expected_view):
     old_default = default_views.get_default_view(group_name)
     default_views.set_default_view(group_name, expected_view)
     vm_view = navigate_to(appliance.collections.infra_vms, 'All')
-    [e.check() for e in vm_view.entities.get_all()[:2]]
+    e_slice = slice(0, 2, None)
+    [e.ensure_checked() for e in vm_view.entities.get_all(slice=e_slice)]
     vm_view.toolbar.configuration.item_select('Compare Selected items')
     selected_view = getattr(vm_view.actions, selector_type).selected
     assert expected_view == selected_view, '{} setting failed'.format(expected_view)
