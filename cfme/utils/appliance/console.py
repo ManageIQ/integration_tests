@@ -33,7 +33,7 @@ class ApplianceConsole(AppliancePlugin):
             pass
         logger.debug(result)
 
-    def run_commands(self, commands, autoreturn=True, timeout=10, channel=None, output=False):
+    def run_commands(self, commands, autoreturn=True, timeout=10, channel=None):
         stdout = []
         if not channel:
             channel = self.appliance.ssh_client.invoke_shell()
@@ -50,17 +50,16 @@ class ApplianceConsole(AppliancePlugin):
             result = ''
             try:
                 while True:
-                    result += channel.recv(1).decode("ascii")
+                    result += channel.recv(1).decode("ascii", "backslashreplace")
                     if "Press any key to continue" in result or channel.closed:
                         break
             except socket.timeout:
                 logger.warning("socket.timeout exception raised for command: %s, "
                                "timeout value: %s" % (cmd, timeout))
             stdout.append(result)
-            logger.debug(result)
-        if output:
-            logger.info("commands output: %s" % result)
-            return stdout
+            logger.info("current command's output: %s" % result)
+        logger.info("All commands output: %s" % stdout)
+        return stdout
 
     def scap_harden_appliance(self):
         """Commands:
