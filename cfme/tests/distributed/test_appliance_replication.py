@@ -2,22 +2,18 @@ from time import sleep
 from urllib.parse import urlparse
 
 import pytest
+from wrapanapi import VmState
 
 from cfme import test_requirements
-from cfme.base.ui import ServerView
-from cfme.utils.appliance import provision_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.ssh import SSHClient
-from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
     test_requirements.distributed,
-    # TODO: refactor to use appliance fixtures that use sprout
-    pytest.mark.uncollect(reason="test framework broke browser_steal"),
 ]
 
 
@@ -33,58 +29,35 @@ def get_ssh_client(hostname):
     return SSHClient(**connect_kwargs)
 
 
-def get_replication_appliances(appliance):
-    """Returns two database-owning appliances configured
-       with unique region numbers.
+def configure_replication_appliances(appliances):
+    """Configures two database-owning appliances, with unique region numbers,
+    then sets up database replication between them.
     """
-    ver_to_prov = str(appliance.version)
-    # FIXME: refactor to use appliance fixtures that use sprout, or pass provider name
-    appl1 = provision_appliance(ver_to_prov, 'long-test_repl_A')
-    appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
-    appl1.configure(region=1)
-    appl1.ipapp.wait_for_web_ui()
-    appl2.update_guid()
-    appl2.configure(region=2, key_address=appl1.hostname)
-    appl2.ipapp.wait_for_web_ui()
-    return appl1, appl2
+    remote_app, global_app = appliances
+
+    remote_app.configure(region=0)
+    remote_app.wait_for_web_ui()
+
+    global_app.configure(region=99, key_address=remote_app.hostname)
+    global_app.wait_for_web_ui()
+
+    remote_app.set_pglogical_replication(replication_type=':remote')
+    global_app.set_pglogical_replication(replication_type=':global')
+    global_app.add_pglogical_replication_subscription(remote_app.hostname)
 
 
-def get_distributed_appliances(appliance):
-    """Returns one database-owning appliance, and a second appliance
+def configure_distributed_appliances(appliances):
+    """Configures one database-owning appliance, and a second appliance
        that connects to the database of the first.
     """
-    ver_to_prov = str(appliance.version)
-    appl1 = provision_appliance(ver_to_prov, 'long-test_childDB_A')
-    appl2 = provision_appliance(ver_to_prov, 'long-test_childDB_B')
+    appl1, appl2 = appliances
     appl1.configure(region=1)
-    appl1.ipapp.wait_for_web_ui()
+    appl1.wait_for_web_ui()
     appl2.configure(region=1, key_address=appl1.hostname, db_address=appl1.hostname)
-    appl2.ipapp.wait_for_web_ui()
-    return appl1, appl2
+    appl2.wait_for_web_ui()
 
 
-def configure_db_replication(db_address, appliance):
-    """Enables the sync role and configures the appliance to replicate to
-       the db_address specified. Then, it waits for the UI to show the replication
-       as active and the backlog as empty.
-    """
-    replication_conf = appliance.server.zone.region.replication
-    replication_conf.set_replication(
-        {'host': db_address}, 'global')
-    view = appliance.server.browser.create_view(ServerView)
-    view.flash.assert_message("Configuration settings saved for CFME Server")  # may be partial
-    appliance.server.settings.enable_server_roles('database_synchronization')
-    rep_status, _ = wait_for(replication_conf.get_replication_status, fail_condition=False,
-                             num_sec=360, delay=10,
-                             fail_func=appliance.server.browser.refresh,
-                             message="get_replication_status")
-    assert rep_status
-    wait_for(lambda: replication_conf.get_global_replication_backlog == 0, fail_condition=False,
-             num_sec=120, delay=10,
-             fail_func=appliance.server.browser.refresh, message="get_replication_backlog")
-
-
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_obj(virtualcenter_provider):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm_name = random_vm_name('distpwr')
@@ -96,13 +69,18 @@ def vm_obj(virtualcenter_provider):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     else:
         logger.info("recycling deployed vm %r on provider %r", vm_name, virtualcenter_provider.key)
+
+    vm.mgmt.ensure_state(VmState.RUNNING)
+
     yield vm
+
     vm.cleanup_on_provider()
 
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_between_regions(request, virtualcenter_provider):
+def test_appliance_replicate_between_regions(
+        virtualcenter_provider, temp_appliances_unconfig_funcscope_rhevm):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.
 
@@ -114,142 +92,52 @@ def test_appliance_replicate_between_regions(request, virtualcenter_provider):
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    appl1, appl2 = get_replication_appliances()
+    configure_replication_appliances(temp_appliances_unconfig_funcscope_rhevm)
+    remote_app, global_app = temp_appliances_unconfig_funcscope_rhevm
 
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-    appl1.ipapp.browser_steal = True
-    with appl1.ipapp:
-        configure_db_replication(appl2.hostname)
+    remote_app.browser_steal = True
+    with remote_app:
+        virtualcenter_provider.create()
+        remote_app.collections.infra_providers.wait_for_a_provider()
+
+    global_app.browser_steal = True
+    with global_app:
+        global_app.collections.infra_providers.wait_for_a_provider()
+        assert virtualcenter_provider.exists
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+def test_external_database_appliance(
+        virtualcenter_provider, temp_appliances_unconfig_funcscope_rhevm):
+    """Tests that one appliance can be configured to connect to the database of another appliance.
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    configure_distributed_appliances(temp_appliances_unconfig_funcscope_rhevm)
+
+    appl1, appl2 = temp_appliances_unconfig_funcscope_rhevm
+    appl1.browser_steal = True
+    with appl1:
         virtualcenter_provider.create()
         appl1.collections.infra_providers.wait_for_a_provider()
 
-    appl2.ipapp.browser_steal = True
-    with appl2.ipapp:
+    appl2.browser_steal = True
+    with appl2:
         appl2.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_external_database_appliance(request, virtualcenter_provider, appliance):
-    """Tests that one appliance can externally
-       connect to the database of another appliance.
-
-    Metadata:
-        test_flag: replication
-
-    Polarion:
-        assignee: tpapaioa
-        initialEstimate: 1/4h
-        casecomponent: Appliance
-    """
-    appl1, appl2 = get_distributed_appliances(appliance)
-
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-    appl1.ipapp.browser_steal = True
-    with appl1.ipapp:
-        virtualcenter_provider.create()
-        appl1.collections.infra_providers.wait_for_a_provider()
-
-    appl2.ipapp.browser_steal = True
-    with appl2.ipapp:
-        appl2.collections.infra_providers.wait_for_a_provider()
-        assert virtualcenter_provider.exists
-
-
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, appliance):
-    """Tests that a role change is replicated
-
-    Metadata:
-        test_flag: replication
-
-    Polarion:
-        assignee: tpapaioa
-        initialEstimate: 1/4h
-        casecomponent: Appliance
-    """
-    appl1, appl2 = get_replication_appliances()
-    replication_conf = appliance.server.zone.region.replication
-
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-    appl1.ipapp.browser_steal = True
-    with appl1.ipapp:
-        server_settings = appliance.server.settings
-        configure_db_replication(appl2.hostname)
-        # Replication is up and running, now disable DB sync role
-        server_settings.disable_server_roles('database_synchronization')
-        wait_for(replication_conf.get_replication_status, fail_condition=True, num_sec=360,
-                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        server_settings.enable_server_roles('database_synchronization')
-        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
-                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        assert replication_conf.get_replication_status()
-        virtualcenter_provider.create()
-        appl1.collections.infra_providers.wait_for_a_provider()
-
-    appl2.ipapp.browser_steal = True
-    with appl2.ipapp:
-        appl2.collections.infra_providers.wait_for_a_provider()
-        assert virtualcenter_provider.exists
-
-
-@pytest.mark.rhel_testing
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcenter_provider,
-                                                           appliance):
-    """Tests that a role change is replicated with backlog
-
-    Metadata:
-        test_flag: replication
-
-    Polarion:
-        assignee: tpapaioa
-        initialEstimate: 1/4h
-        casecomponent: Appliance
-    """
-    appl1, appl2 = get_replication_appliances()
-    replication_conf = appliance.server.zone.region.replication
-
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-    appl1.ipapp.browser_steal = True
-    with appl1.ipapp:
-        server_settings = appliance.server.settings
-        configure_db_replication(appl2.hostname)
-        # Replication is up and running, now disable DB sync role
-        virtualcenter_provider.create()
-        server_settings.disable_server_roles('database_synchronization')
-        wait_for(replication_conf.get_replication_status, fail_condition=True, num_sec=360,
-                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        server_settings.enable_server_roles('database_synchronization')
-        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
-                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        assert replication_conf.get_replication_status()
-        appl1.collections.infra_providers.wait_for_a_provider()
-
-    appl2.ipapp.browser_steal = True
-    with appl2.ipapp:
-        appl2.collections.infra_providers.wait_for_a_provider()
-        assert virtualcenter_provider.exists
-
-
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_appliance_replicate_database_disconnection(request, virtualcenter_provider, appliance):
+def test_appliance_replicate_database_disconnection(
+        virtualcenter_provider, temp_appliances_unconfig_funcscope_rhevm):
     """Tests a database disconnection
 
     Metadata:
@@ -260,36 +148,28 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    appl1, appl2 = get_replication_appliances()
-    replication_conf = appliance.server.zone.region.replication
+    configure_replication_appliances(temp_appliances_unconfig_funcscope_rhevm)
+    remote_app, global_app = temp_appliances_unconfig_funcscope_rhevm
 
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-    appl1.ipapp.browser_steal = True
-    with appl1.ipapp:
-        configure_db_replication(appl2.hostname)
-        # Replication is up and running, now stop the DB on the replication parent
-        appl2.db_service.stop()
-        sleep(60)
-        appl2.db_service.start()
-        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
-                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        assert replication_conf.get_replication_status()
+    global_app.db_service.stop()
+    sleep(60)
+    global_app.db_service.start()
+
+    remote_app.browser_steal = True
+    with remote_app:
         virtualcenter_provider.create()
-        appl1.collections.infra_providers.wait_for_a_provider()
+        remote_app.collections.infra_providers.wait_for_a_provider()
 
-    appl2.ipapp.browser_steal = True
-    with appl2.ipapp:
-        appl2.collections.infra_providers.wait_for_a_provider()
+    global_app.browser_steal = True
+    with global_app:
+        global_app.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_appliance_replicate_database_disconnection_with_backlog(request, virtualcenter_provider,
-                                                                 appliance):
+@pytest.mark.ignore_stream("upstream")
+def test_appliance_replicate_database_disconnection_with_backlog(
+        virtualcenter_provider, temp_appliances_unconfig_funcscope_rhevm):
     """Tests a database disconnection with backlog
 
     Metadata:
@@ -300,37 +180,30 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    appl1, appl2 = get_replication_appliances()
-    replication_conf = appliance.server.zone.region.replication
+    configure_replication_appliances(temp_appliances_unconfig_funcscope_rhevm)
+    remote_app, global_app = temp_appliances_unconfig_funcscope_rhevm
 
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-    appl1.ipapp.browser_steal = True
-    with appl1.ipapp:
-        configure_db_replication(appl2.hostname)
+    remote_app.browser_steal = True
+    with remote_app:
         # Replication is up and running, now stop the DB on the replication parent
         virtualcenter_provider.create()
-        appl2.db_service.stop()
+        global_app.db_service.stop()
         sleep(60)
-        appl2.db_service.start()
-        wait_for(replication_conf.get_replication_status, fail_condition=False, num_sec=360,
-                 delay=10, fail_func=appl1.server.browser.refresh, message="get_replication_status")
-        assert replication_conf.get_replication_status()
-        appl1.collections.infra_providers.wait_for_a_provider()
+        global_app.db_service.start()
+        remote_app.collections.infra_providers.wait_for_a_provider()
 
-    appl2.ipapp.browser_steal = True
-    with appl2.ipapp:
-        appl2.collections.infra_providers.wait_for_a_provider()
+    global_app.browser_steal = True
+    with global_app:
+        global_app.collections.infra_providers.wait_for_a_provider()
         assert virtualcenter_provider.exists
 
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_distributed_vm_power_control(request, vm_obj, virtualcenter_provider, ensure_vm_running,
-                                      register_event, soft_assert):
+@pytest.mark.ignore_stream("upstream")
+def test_distributed_vm_power_control(
+        vm_obj, virtualcenter_provider, register_event, soft_assert,
+        temp_appliances_unconfig_funcscope_rhevm):
     """Tests that a replication parent appliance can control the power state of a
     VM being managed by a replication child appliance.
 
@@ -342,21 +215,16 @@ def test_distributed_vm_power_control(request, vm_obj, virtualcenter_provider, e
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    appl1, appl2 = get_replication_appliances()
+    configure_replication_appliances(temp_appliances_unconfig_funcscope_rhevm)
+    remote_app, global_app = temp_appliances_unconfig_funcscope_rhevm
 
-    def finalize():
-        appl1.destroy()
-        appl2.destroy()
-    request.addfinalizer(finalize)
-    appl1.ipapp.browser_steal = True
-    with appl1.ipapp:
-        configure_db_replication(appl2.hostname)
+    remote_app.browser_steal = True
+    with remote_app:
         virtualcenter_provider.create()
-        appl1.collections.infra_providers.wait_for_a_provider()
+        remote_app.collections.infra_providers.wait_for_a_provider()
 
-    appl2.ipapp.browser_steal = True
-
-    with appl2.ipapp:
+    global_app.browser_steal = True
+    with global_app:
         register_event(target_type='VmOrTemplate', target_name=vm_obj.name,
                        event_type='request_vm_poweroff')
         register_event(target_type='VmOrTemplate', target_name=vm_obj.name,
