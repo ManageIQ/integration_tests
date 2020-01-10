@@ -451,8 +451,10 @@ def test_retire_vm_now(setup_provider, create_vm, new_user):
             2. No errors in evm logs
     """
     with new_user:
-        with LogValidator("/var/www/miq/vmdb/log/evm.log",
-                          failure_patterns=[".*ERROR.*"]).waiting(timeout=720):
+        with LogValidator(
+                "/var/www/miq/vmdb/log/evm.log",
+                failure_patterns=[".*ERROR.*NoMethodError]: undefined method `tenant_id'.*"]
+        ).waiting(timeout=720):
             create_vm.retire()
             assert create_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
-                        from_details=True)
+                                                      from_details=True)
