@@ -5,6 +5,7 @@ import fauxfactory
 import pytest
 from dateutil.relativedelta import relativedelta
 
+from cfme import test_requirements
 from cfme.utils import conf
 from cfme.utils import testgen
 from cfme.utils.log_validator import LogValidator
@@ -230,3 +231,30 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
         )
 
     # ----
+
+
+@pytest.mark.manual
+@test_requirements.configuration
+@pytest.mark.meta(coverage=[1703278])
+def test_scheduled_backup_handles_big_db():
+    """ Tests whether the scheduled db backups handle big DB. It should write
+    directly to the target endpoint -- it should not be writing to, for
+    example, /tmp.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: high
+        initialEstimate: 1/2h
+        startsin: 5.11
+        testSteps:
+            1. Get a big dump of big DB. It needs to be bigger than a free
+               space on /tmp of the appliance.
+            2. Schedule the backup
+        expectedResults:
+            1. After scheduled time, backup should be on the target share. No
+               ERROR in the log.
+    Bugzila:
+        1703278
+    """
+    pass
