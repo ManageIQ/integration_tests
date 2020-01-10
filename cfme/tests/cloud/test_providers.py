@@ -1250,8 +1250,8 @@ def test_ec2_create_sns_topic():
 
 
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_add_delete_add_provider():
+@pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
+def test_add_delete_add_provider(setup_provider, provider, request):
     """
     Polarion:
         assignee: mmojzis
@@ -1267,7 +1267,11 @@ def test_ec2_add_delete_add_provider():
             2.
             3. Ec2 provider should be successfully added again without any issues
     """
-    pass
+    provider.delete()
+    provider.create()
+    request.addfinalizer(provider.delete_if_exists)
+    provider.refresh_provider_relationships()
+    provider.validate_stats(ui=True)
 
 
 @test_requirements.ec2
