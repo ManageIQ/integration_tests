@@ -158,7 +158,7 @@ def download_and_migrate_db(app, db_url):
 
 @pytest.mark.ignore_stream('upstream')
 @pytest.mark.tier(2)
-@pytest.mark.meta(automates=[1734076])
+@pytest.mark.meta(automates=[1734076, 1755553])
 @pytest.mark.uncollectif(
     lambda appliance, db_version: appliance.version >= '5.10' and Version(db_version) < '5.6',
     reason='upgrade from CFME<5.6 to >=5.10 not supported: BZ#1765549')
@@ -170,6 +170,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
         casecomponent: Appliance
     Bugzilla:
         1734076
+        1755553
     """
     download_and_migrate_db(temp_appliance_extended_db, db_url)
 
