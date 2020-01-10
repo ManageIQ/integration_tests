@@ -409,7 +409,7 @@ def test_change_network_security_groups_per_page_items(setup_provider, appliance
     view.toolbar.view_selector.select('List View')
     for item_count in [10, 20, 50]:
         view.paginator.set_items_per_page(item_count)
-        assert view.paginator.items_per_page == len(view.entities.get_all())
+        assert len(view.entities.get_all()) <= view.paginator.items_per_page
 
 
 @pytest.fixture(scope="function")
