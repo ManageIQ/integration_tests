@@ -10,21 +10,6 @@ pytestmark = [
 
 
 @pytest.mark.tier(3)
-def test_embed_tower_retire_service_with_instances_ec2():
-    """
-    Retire Service+instances which were deployed by playbook from CFME UI.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_embed_tower_exec_play_against_machine_multi_appliance():
     """
     User/Admin is able to execute playbook without creating Job Temaplate
