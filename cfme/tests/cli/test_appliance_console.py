@@ -1329,11 +1329,17 @@ def test_appliance_console_apache_reload_log_rotate():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_datetime_negative():
+@pytest.mark.automates([1790311])
+@pytest.mark.meta(blockers=[BZ(1745895)])
+@pytest.mark.parametrize("invalid", ["invalid_date", "invalid_time"])
+def test_appliance_console_datetime_negative(appliance, invalid):
     """
     test setting invalid date/time
+
+    Note: Raised BZ(1790311) for invalid_date ( date example 2020-13-40 ) but
+     they marked as WON'T FIX,
+    TODO(BZ-1790311): Please add invalid date if BZ got fixed.
 
     Polarion:
         assignee: dgaikwad
@@ -1352,7 +1358,19 @@ def test_appliance_console_datetime_negative():
             3.
             4. Invalid date/time should not be applied, check for failure there.
     """
-    pass
+
+    if invalid == "invalid_date":
+        invalid_dates = ['202020-12-3', '2020-13-3']
+        cmd_sets = [("ap", RETURN, "3", "Y", date) for date in invalid_dates]
+    else:
+        invalid_times = ['25:13:01', '22:61:01', '24:11:61']
+        cmd_sets = [("ap", RETURN, "3", "Y", str(fauxfactory.gen_date()), time)
+                    for time in invalid_times]
+
+    for cmd in cmd_sets:
+        result = appliance.appliance_console.run_commands(cmd, timeout=30)
+        assert ("Please provide in the specified format" in result[-1]
+                ), ("Should not able to set %s." % invalid)
 
 
 @pytest.mark.manual
