@@ -71,13 +71,36 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="function")
-def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
-    """Requests appliance from sprout and configures rpms for crud update"""
+def appliance_preupdate(temp_appliance_preconfig_funcscope):
+    """Requests appliance from sprout and configures rpms for crud update
+
+    To create the required repo (fresh-new (clean) CFME appliance required).
+
+    register and attach the system to RHN
+    # SERVER=...redhat.com
+    # yum --downloadonly --downloaddir /therepo install -y rpm-build
+    # yum install -y rpm-build createrepo
+    # rpmbuild  --rebuild http://$SERVER/~jhenner/rpmrebuild/rpmrebuild-2.14-1.src.rpm
+    # cp rpmbuild/RPMS/noarch/rpmrebuild-2.14-1.noarch.rpm /therepo
+    # createrepo /therepo
+
+    # curl 'http://$SERVER/~jhenner/rpmrebuild_repo/5.XX/rpmrebuild.repo' \
+        -o /therepo/rpmrebuild.repo
+    # vim /therepo/rpmrebuild.repo
+    # rsync -avP /therepo/ jhenner@$SERVER:public_html/rpmrebuild_repo/5.XX
+    """
+    appliance = temp_appliance_preconfig_funcscope
+
     try:
-        url = cfme_data['basic_info']['rpmrebuild_59']
+        url = VersionPicker(
+            {'5.10': cfme_data['basic_info']['rpmrebuild_510'],
+             '5.11': cfme_data['basic_info']['rpmrebuild_511']}).pick(appliance.version)
     except (KeyError, AttributeError):
-        pytest.skip('Failed looking up rpmrebuild_59 in cfme_data.basic_info')
-    run = temp_appliance_preconfig_funcscope.ssh_client.run_command
+        pytest.skip('Failed looking up rpmrebuild in cfme_data.basic_info')
+
+    def run(c):
+        assert appliance.ssh_client.run_command(c).success
+
     run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
     run('yum install rpmrebuild createrepo -y')
     run('mkdir /myrepo')
@@ -87,7 +110,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     run('echo '
         '"[local-repo]\nname=Internal repository\nbaseurl=file:///myrepo/\nenabled=1\ngpgcheck=0"'
         ' > /etc/yum.repos.d/local.repo')
-    yield temp_appliance_preconfig_funcscope
+    yield appliance
 
 
 @pytest.mark.rhel_testing
