@@ -353,7 +353,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
 
 
 def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smtp_test,
-        full_template_vm, setup_for_alerts, provider):
+        full_template_vm, setup_for_alerts):
     """Tests alert based on "Hardware Reconfigured" evaluation.
 
     According https://bugzilla.redhat.com/show_bug.cgi?id=1396544 Hardware Reconfigured alerts
@@ -404,7 +404,9 @@ def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smt
 
     for i in range(1, 3):
         do_scan(vm, rediscover=False)
-        vm.reconfigure(changes={"cpu": True, "sockets": str(sockets_count + i), "disks": ()})
+        vm.reconfigure(
+            new_configuration={"cpu": True, "sockets": str(sockets_count + i), "disks": ()}
+        )
         service_request = appliance.collections.requests.instantiate(
             description=service_request_desc.format(vm.name, sockets_count + i))
         service_request.wait_for_request(method="ui", num_sec=300, delay=10)
