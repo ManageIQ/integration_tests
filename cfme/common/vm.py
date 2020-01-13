@@ -67,6 +67,93 @@ def all_types(template=False):
     return all_types
 
 
+class RetirementMixin(object):
+
+    def post_set_retirement(self):
+        raise NotImplementedError('Implement post_set_retirement.')
+
+    def navigate_to_set_retirement(self, **kwargs):
+        raise NotImplementedError('Implement navigate_to_set_retirement.')
+
+    def set_retirement_date(self, **kwargs):
+        """Common method for setting retirement date in the UI.
+
+        Kwargs:
+            when: :py:class:`datetime.datetime` object, when to retire (date in future).
+            offset: :py:class:`dict` with months, weeks, days, hours keys. Other keys ignored
+            warn: :py:class:`str` value to select from Retirement Warning dropdown.
+
+        If when and offset are both None, then the retirement date will be removed.
+
+        Examples:
+            # To set a specific retirement date 2 days from today:
+            two_days_later = datetime.date.today() + datetime.timedelta(days=2)
+            vm.set_retirement_date(when=two_days_later)
+
+            # To set a retirement by offset 2 weeks from now:
+            vm.set_retirement_date(offset={weeks=2})
+
+        offset is a dictionary instead of a timedelta/datetime instance because:
+            1.) timedelta supports creation with a value for weeks, but not one for months.
+            2.) timedelta supports a days attribute, but none for weeks or months.
+            3.) timedelta's days attribute returns a total summary, not the value of the days
+                component that was originally passed to it.
+
+        TODO: Enhance cfme.utils.timeutil by extending timedelta and use that instead of offset.
+        """
+        when = kwargs.get('when', None)
+        offset = kwargs.get('offset', None)
+        warn = kwargs.get('warn', None)
+
+        changed = False
+        fill_date = None
+        fill_offset = None
+
+        if when and offset:
+            raise ValueError("set_retirement_date takes 'when' or 'offset', but not both.")
+        if when and not isinstance(when, (datetime, date)):
+            raise ValueError("'when' argument must be a datetime object.")
+
+        if offset:
+            fill_offset = {k: v
+                          for k, v in offset.items()
+                          if k in ['months', 'weeks', 'days', 'hours']}
+        elif when:
+            # Format the date using 4-digit year for form fill
+            fill_date = when.strftime('%m/%d/%Y %H:%M')
+        else:
+            # Clear the retirement date with a space in the TextInput widget.
+            # Using a space here because an empty string does not clear the date correctly.
+            fill_date = ' '
+
+        # Navigate to the Set/Remove Retirement Date view for entity.
+        view = self.navigate_to_set_retirement(**kwargs)
+
+        view.form.fill({
+            'retirement_mode': (
+                'Time Delay from Now' if fill_offset else 'Specific Date and Time')})
+        view.flush_widget_cache()  # since retirement_date is conditional widget
+
+        if fill_date:
+            changed_date = view.form.fill({
+                'retirement_date': {'datetime_select': fill_date}})
+            # Close the datetime selector widget to unblock the Retirement Warning widget.
+            view.title.click()
+            changed_warn = view.form.fill({'retirement_warning': warn})
+            changed = changed_date or changed_warn
+        elif fill_offset:
+            changed = view.form.fill({
+                'retirement_date': fill_offset, 'retirement_warning': warn})
+
+        if changed:
+            view.form.save.click()
+        else:
+            logger.info("No changes made to Set/Remote Retirement Date form, clicking cancel.")
+            view.form.cancel.click()
+
+        self.post_set_retirement()
+
+
 class _TemplateMixin(object):
     pass
 
@@ -695,7 +782,7 @@ class BaseVMCollection(BaseCollection):
 
 
 @attr.s
-class VM(BaseVM):
+class VM(BaseVM, RetirementMixin):
     template_name = attr.ib(default=None)
 
     TO_RETIRE = None
@@ -716,6 +803,14 @@ class VM(BaseVM):
     @property
     def exists_on_provider(self):
         return self.provider.mgmt.does_vm_exist(self.name)
+
+    def navigate_to_set_retirement(self, **kwargs):
+        return navigate_to(self, 'SetRetirement')
+
+    def post_set_retirement(self):
+        if self.DETAILS_VIEW_CLASS:
+            view = self.create_view(self.DETAILS_VIEW_CLASS, wait='5s')
+        view.flash.assert_no_error()
 
     def retire(self):
         """Navigate to VM's | Instance's Details page and retire it by selecting
@@ -871,81 +966,6 @@ class VM(BaseVM):
         else:
             logger.debug('cleanup_on_provider: entity "%s" does not exist', self.name)
 
-    def set_retirement_date(self, when=None, offset=None, warn=None):
-        """Overriding common method to use widgetastic views/widgets properly
-
-        Args:
-            when: :py:class:`datetime.datetime` object, when to retire (date in future)
-            offset: :py:class:`dict` with months, weeks, days, hours keys. other keys ignored
-            warn: When to warn, fills the select in the form in case the ``when`` is specified.
-
-        If when and offset are both None, this removes retirement date
-
-        Examples:
-            # To set a specific retirement date 2 days from today
-            two_days_later = datetime.date.today() + datetime.timedelta(days=2)
-            vm.set_retirement_date(when=two_days_later)
-
-            # To set a retirement offset 2 weeks from now
-            vm.set_retirement_date(offset={weeks=2})
-
-        Offset is dict to remove ambiguity between timedelta/datetime and months/weeks/days/hours
-        timedelta supports creation with weeks, but not months
-        timedelta supports days attr, but not weeks or months
-        timedelta days attr will report a total summary, not the component that was passed to it
-        For these reasons timedelta isn't appropriate for offset
-        An enhancement to cfme.utils.timeutil extending timedelta would be great for making this a
-        bit cleaner
-        """
-        changed = False
-        fill_date = None
-        fill_offset = None
-
-        if when and offset:
-            raise ValueError("set_retirement_date takes 'when' or 'offset', but not both")
-        if when and not isinstance(when, (datetime, date)):
-            raise ValueError("'when' argument must be a datetime object")
-
-        if offset:
-            fill_offset = {k: v
-                           for k, v in offset.items()
-                           if k in ['months', 'weeks', 'days', 'hours']}
-        elif when:
-            # format using 4-digit year for form fill
-            fill_date = when.strftime('%m/%d/%Y %H:%M')
-        else:
-            # Clear retirement date with a space in TextInput widget.
-            # Using space here because empty string does not clear date correctly
-            fill_date = ' '
-
-        # navigate to VM's Details page and set retirement date
-        view = navigate_to(self, 'SetRetirement')
-        view.form.fill({
-            'retirement_mode': 'Time Delay from Now' if fill_offset else 'Specific Date and Time'})
-        view.flush_widget_cache()  # since retirement_date is conditional widget
-
-        if fill_date:
-            # two-part fill. widget seems to block warn selection when open.
-            changed_date = view.form.fill({
-                'retirement_date': {'datetime_select': fill_date}})
-            view.title.click()  # close datetime widget
-            changed_warn = view.form.fill({'retirement_warning': warn})
-            changed = changed_date or changed_warn
-        elif fill_offset:
-            changed = view.form.fill({
-                'retirement_date': fill_offset, 'retirement_warning': warn})
-
-        if changed:
-            view.form.save.click()
-        else:
-            logger.info("No form changes for setting retirement, clicking cancel")
-            view.form.cancel.click()
-
-        if self.DETAILS_VIEW_CLASS:
-            view = self.create_view(self.DETAILS_VIEW_CLASS, wait='5s')
-
-        view.flash.assert_no_error()
-
     def equal_drift_results(self, drift_section, section, *indexes):
         """Compares drift analysis results of a row specified by it's title text.
 
@@ -990,18 +1010,21 @@ class VM(BaseVM):
 
 
 @attr.s
-class VMCollection(BaseVMCollection):
+class VMCollection(BaseVMCollection, RetirementMixin):
     ENTITY = VM
 
-    def retire(self, entities):
+    def retire(self, **kwargs):
         """Select and then retire one or more VMs|Instances from the All VMs|Instances page.
 
-        Args:
-            entities (list): List of one or more InfraVM | Instance objects. This method
+        Kwargs:
+            entities: :py:class:`list` List of one or more VM instances This method
                 is intended to be called from either an InfraVMCollection instance (with a list
-                of InfraVM objects, or an InstanceCollection instance (with a list of Instance
+                of InfraVM objects), or an InstanceCollection instance (with a list of Instance
                 objects).
         """
+        entities = kwargs.get('entities', None)
+        if not entities:
+            raise ValueError("retire requires a list of VMs.")
         view = navigate_to(self, 'All')
         if view.paginator.is_displayed:
             view.paginator.set_items_per_page(1000)
@@ -1012,39 +1035,17 @@ class VMCollection(BaseVMCollection):
         view = self.create_view(RequestsView)
         view.flash.assert_no_error()
 
-    def set_retirement_date(self, entities, when=None, offset=None, warn=None):
-        """Select and then set the retirement date for one or more VMs|Instances from
-        the All VMs|Instances page.
+    def navigate_to_set_retirement(self, **kwargs):
+        """Navigate to the Set/Remove Retirement Date form for one or more VMs/Instances
+        from the All VMs / All Instances page.
 
-        Args:
-            entities: :py:class:`list` of one or more InfraVM | Instance objects. This method
-                is intended to be called from either an InfraVMCollection instance (with a list
-                of InfraVM objects, or an InstanceCollection instance (with a list of Instance
-                objects).
-            The other arguments are the same as in the :py:class:`VM` method.
+        Kwargs:
+            entities: :py:class:`list` of VMs / Instances to select.
         """
-        changed = False
-        fill_date = None
-        fill_offset = None
+        entities = kwargs.get('entities', None)
+        if not entities:
+            raise ValueError("navigate_to_set_retirement requires a list of VMs.")
 
-        if when and offset:
-            raise ValueError("set_retirement_date takes 'when' or 'offset', but not both")
-        if when and not isinstance(when, (datetime, date)):
-            raise ValueError("'when' argument must be a datetime object")
-
-        if offset:
-            fill_offset = {k: v
-                           for k, v in offset.items()
-                           if k in ['months', 'weeks', 'days', 'hours']}
-        elif when:
-            # format using 4-digit year for form fill
-            fill_date = when.strftime('%m/%d/%Y %H:%M')
-        else:
-            # Clear retirement date with a space in TextInput widget.
-            # Using space here because empty string does not clear date correctly
-            fill_date = ' '
-
-        # set retirement date from All VMs page
         view = navigate_to(self, 'All')
         if view.paginator.is_displayed:
             view.paginator.set_items_per_page(1000)
@@ -1052,28 +1053,9 @@ class VMCollection(BaseVMCollection):
             view.entities.get_entity(surf_pages=True, name=e.name).ensure_checked()
         view.toolbar.lifecycle.item_select('Set Retirement Dates')
 
-        view = self.create_view(RetirementViewWithOffset)
-        view.form.fill({
-            'retirement_mode': 'Time Delay from Now' if fill_offset else 'Specific Date and Time'})
-        view.flush_widget_cache()  # since retirement_date is conditional widget
+        return self.create_view(RetirementViewWithOffset)
 
-        if fill_date:
-            # two-part fill. widget seems to block warn selection when open.
-            changed_date = view.form.fill({
-                'retirement_date': {'datetime_select': fill_date}})
-            view.title.click()  # close datetime widget
-            changed_warn = view.form.fill({'retirement_warning': warn})
-            changed = changed_date or changed_warn
-        elif fill_offset:
-            changed = view.form.fill({
-                'retirement_date': fill_offset, 'retirement_warning': warn})
-
-        if changed:
-            view.form.save.click()
-        else:
-            logger.info("No form changes for setting retirement, clicking cancel")
-            view.form.cancel.click()
-
+    def post_set_retirement(self):
         view = self.create_view(navigator.get_class(self, 'All').VIEW, wait='5s')
         view.flash.assert_no_error()
 

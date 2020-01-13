@@ -58,7 +58,7 @@ def msg_date_range(expected_dates):
 def create_vms(template_name, provider, num_vms=1, **deploy_args):
     collection = provider.appliance.provider_based_collection(provider)
     vms = []
-    for num in range(num_vms):
+    for _ in range(num_vms):
         vm = collection.instantiate(random_vm_name('retire'),
                                     provider,
                                     template_name=template_name)
@@ -90,8 +90,8 @@ def retire_vm_pair(small_template, provider):
     """
     vms = create_vms(small_template.name, provider, 2)
     yield vms
-    for num in range(2):
-        vms[num].cleanup_on_provider()
+    for vm in vms:
+        vm.cleanup_on_provider()
 
 
 @pytest.fixture(scope="function")
@@ -132,7 +132,7 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
         expected_date: a string, datetime, or a dict datetime dates with 'start' and 'end' keys.
     """
     if isinstance(expected_date, dict):
-        # convert to a parsetime object for comparsion, function depends on version
+        # convert to a parsetime object for comparison, function depends on version
         if 'UTC' in retire_vm.RETIRE_DATE_FMT:
             convert_func = parsetime.from_american_minutes_with_utc
         elif retire_vm.RETIRE_DATE_FMT.endswith('+0000'):
@@ -219,7 +219,7 @@ def test_retirement_now_multiple(retire_vm_pair, provider):
 
     # Retire from All VMs/Instances page
     collection = retire_vm_pair[0].parent
-    collection.retire(retire_vm_pair)
+    collection.retire(entities=retire_vm_pair)
 
     # Verify flash message
     view = collection.create_view(RequestsView)
@@ -227,13 +227,13 @@ def test_retirement_now_multiple(retire_vm_pair, provider):
     view.flash.assert_success_message(
         "Retirement initiated for 2 VMs and Instances from the CFME Database")
 
-    verify_retirement_state(retire_vm_pair[0])
-    verify_retirement_state(retire_vm_pair[1])
+    for vm in retire_vm_pair:
+        verify_retirement_state(vm)
 
     retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
 
-    verify_retirement_date(retire_vm_pair[0], expected_date=retire_times)
-    verify_retirement_date(retire_vm_pair[1], expected_date=retire_times)
+    for vm in retire_vm_pair:
+        verify_retirement_date(vm, expected_date=retire_times)
 
 
 @pytest.mark.provider(gen_func=providers,
@@ -316,7 +316,7 @@ def test_set_retirement_date_multiple(retire_vm_pair, provider, warn):
 
     # Set retirement date from All VMs/Instances page
     collection = retire_vm_pair[0].parent
-    collection.set_retirement_date(retire_vm_pair, when=retire_date, warn=warn.string)
+    collection.set_retirement_date(when=retire_date, warn=warn.string, entities=retire_vm_pair)
 
     # Verify flash message
     view = collection.create_view(navigator.get_class(collection, 'All').VIEW, wait='5s')
@@ -324,8 +324,8 @@ def test_set_retirement_date_multiple(retire_vm_pair, provider, warn):
     msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
     view.flash.assert_success_message(f"Retirement dates set to {msg_date}")
 
-    verify_retirement_date(retire_vm_pair[0], expected_date=retire_date)
-    verify_retirement_date(retire_vm_pair[1], expected_date=retire_date)
+    for vm in retire_vm_pair:
+        verify_retirement_date(vm, expected_date=retire_date)
 
 
 @pytest.mark.tier(2)
@@ -381,7 +381,7 @@ def test_set_retirement_offset_multiple(retire_vm_pair, provider, warn):
     expected_dates = {'start': datetime.utcnow() + timedelta(seconds=-60, **timedelta_offset)}
 
     collection = retire_vm_pair[0].parent
-    collection.set_retirement_date(retire_vm_pair, offset=retire_offset, warn=warn.string)
+    collection.set_retirement_date(offset=retire_offset, warn=warn.string, entities=retire_vm_pair)
 
     # pad post-retire timestamp by 60s
     expected_dates['end'] = datetime.utcnow() + timedelta(seconds=60, **timedelta_offset)
@@ -393,8 +393,8 @@ def test_set_retirement_offset_multiple(retire_vm_pair, provider, warn):
     flash_regex = re.compile(f"^Retirement dates set to ({msg_dates})$")
     view.flash.assert_success_message(flash_regex)
 
-    verify_retirement_date(retire_vm_pair[0], expected_date=expected_dates)
-    verify_retirement_date(retire_vm_pair[1], expected_date=expected_dates)
+    for vm in retire_vm_pair:
+        verify_retirement_date(vm, expected_date=expected_dates)
 
 
 @pytest.mark.rhv3
