@@ -825,7 +825,7 @@ def test_ansible_service_order_vault_credentials(
     request,
     local_ansible_catalog_item,
     ansible_service_catalog,
-    ansible_service_request_funcscope,
+    ansible_service_request,
     ansible_service,
 ):
     """
@@ -849,6 +849,9 @@ def test_ansible_service_order_vault_credentials(
             "vault_credential": vault_creds.name,
         }
 
+    provision_request = ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+
     @request.addfinalizer
     def _revert():
         with update(local_ansible_catalog_item):
@@ -859,8 +862,8 @@ def test_ansible_service_order_vault_credentials(
 
         vault_creds.delete_if_exists()
 
-    ansible_service_catalog.order()
-    ansible_service_request_funcscope.wait_for_request()
+        if provision_request.exists:
+            provision_request.delete()
 
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
@@ -871,7 +874,7 @@ def test_ansible_service_order_vault_credentials(
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1734904)])
 def test_ansible_service_ansible_galaxy_role(appliance, request, ansible_catalog_item,
-ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope):
+ansible_service_catalog, ansible_service_funcscope, ansible_service_request):
     """Check Role is fetched from Ansible Galaxy by using roles/requirements.yml file
     from playbook.
 
@@ -890,13 +893,16 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
             "playbook": "ansible_galaxy_role_users.yaml"
         }
 
+    service_request = ansible_service_catalog.order()
+    service_request.wait_for_request(num_sec=300, delay=20)
+
     @request.addfinalizer
     def _revert():
         with update(local_ansible_catalog_item):
             local_ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
 
-    service_request = ansible_service_catalog.order()
-    service_request.wait_for_request(num_sec=300, delay=20)
+        if service_request.exists:
+            service_request.delete()
 
     view = navigate_to(ansible_service_funcscope, "Details")
     expected = 'successful' if appliance.version < '5.11' else 'Finished'
@@ -972,6 +978,8 @@ ansible_service_request_funcscope):
 
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
+    if service_request.exists:
+        service_request.delete()
 
     view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.credentials.get_text_of("Cloud") == provider_credentials.name
