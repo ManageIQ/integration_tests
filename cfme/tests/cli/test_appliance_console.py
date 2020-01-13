@@ -10,6 +10,7 @@ from wait_for import TimedOutError
 from wait_for import wait_for
 
 from cfme import test_requirements
+from cfme.utils import conf
 from cfme.utils import os
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.blockers import BZ
@@ -1355,9 +1356,8 @@ def test_appliance_console_datetime_negative():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_key_fetch_negative():
+def test_appliance_console_key_fetch_negative(temp_appliance_preconfig_funcscope):
     """
     test fetching key from fake remote host
 
@@ -1382,7 +1382,14 @@ def test_appliance_console_key_fetch_negative():
             5.
             6. Check Encryption Key fetch failure.
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+    invalid_ip = fauxfactory.gen_ipaddr()
+    command_set = ("ap", RETURN, "14", "Y", "2", invalid_ip,
+                   conf.credentials['default']['username'], conf.credentials['default']['password'],
+                   TimedCommand(RETURN, 180))
+    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    assert "Failed to fetch key" in result[-1], (
+        "Overriding Encryption Key should fail when we enter invalid IP address")
 
 
 @pytest.mark.manual
