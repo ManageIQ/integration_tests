@@ -404,9 +404,11 @@ def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smt
 
     for i in range(1, 3):
         do_scan(vm, rediscover=False)
-        vm.reconfigure(
-            new_configuration={"cpu": True, "sockets": str(sockets_count + i), "disks": ()}
-        )
+        vm.reconfigure(changes={
+            "cpu": True, "sockets": str(sockets_count + i),
+            "disks": (),
+            "network_adapters": ()
+        })
         service_request = appliance.collections.requests.instantiate(
             description=service_request_desc.format(vm.name, sockets_count + i))
         service_request.wait_for_request(method="ui", num_sec=300, delay=10)
