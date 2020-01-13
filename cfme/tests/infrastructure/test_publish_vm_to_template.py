@@ -12,6 +12,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.virtual_machines import deploy_template
 
 pytestmark = [
+    pytest.mark.usefixtures('setup_provider_modscope', 'uses_infra_providers'),
     pytest.mark.provider(gen_func=providers,
                          filters=[ProviderFilter(classes=[RHEVMProvider, VMwareProvider],
                                                  required_fields=[
@@ -47,7 +48,7 @@ def vm_crud(provider):
 
 
 @pytest.mark.rhv2
-def test_publish_vm_to_template(request, setup_provider, vm_crud):
+def test_publish_vm_to_template(request, vm_crud):
     """ Try to publish VM to template.
     Steps:
         1) Deploy a VM and make sure it is stopped, otherwise Publish button isn't available
