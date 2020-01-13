@@ -1409,14 +1409,11 @@ def test_appliance_console_negative():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1753687])
-def test_ap_failed_dbconfig_status():
+@pytest.mark.meta(automates=[BZ(1753687)])
+def test_ap_failed_dbconfig_status(temp_appliance_preconfig_funcscope):
     """ Test failed DB config command returns non-zero status.
 
-    Bugzilla:
-        1753687
     Polarion:
         assignee: mnadeem
         casecomponent: Appliance
@@ -1433,4 +1430,9 @@ def test_ap_failed_dbconfig_status():
             2.
             3. The command "echo $?" should be non-zero
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+    command = ("/opt/rh/cfme-gemset/bin/appliance_console_cli -i -b /dev/sdz -S"
+               " -d ${db_name} -U ${db_root} -p '${db_pass}'")
+    result = appliance.ssh_client.run_command(command, timeout=30)
+    assert not result.success, ('DB configuration should fail because used disk "/dev/sdz" '
+                                'which will not be available')
