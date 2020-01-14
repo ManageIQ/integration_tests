@@ -60,7 +60,7 @@ def test_vm_genealogy_detected(
         test_flag: genealogy, provision
 
     Polarion:
-        assignee: spusater
+        assignee: spusaterr
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
