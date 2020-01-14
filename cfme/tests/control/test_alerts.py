@@ -151,16 +151,16 @@ def setup_candu(appliance):
 
 
 @pytest.fixture(scope="function")
-def wait_candu(full_template_vm):
-    full_template_vm.wait_candu_data_available(timeout=20 * 60)
+def wait_candu(create_vm):
+    create_vm.wait_candu_data_available(timeout=20 * 60)
 
 
 @pytest.fixture(scope="function")
-def ssh(provider, full_template, full_template_vm):
+def ssh(provider, full_template, create_vm):
     with SSHClient(
             username=credentials[full_template.creds]['username'],
             password=credentials[full_template.creds]['password'],
-            hostname=full_template_vm.mgmt.ip) as ssh_client:
+            hostname=create_vm.mgmt.ip) as ssh_client:
         yield ssh_client
 
 
@@ -174,9 +174,10 @@ def setup_snmp(appliance):
 
 
 @pytest.mark.rhv3
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
-    request, appliance, provider, full_template_vm, smtp_test, setup_for_alerts
+    request, appliance, provider, create_vm, smtp_test, setup_for_alerts
 ):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
@@ -188,7 +189,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         casecomponent: Control
         initialEstimate: 1/4h
     """
-    vm = full_template_vm
+    vm = create_vm
     alert = appliance.collections.alerts.instantiate("VM Power On > 2 in last 15 min")
     with update(alert):
         alert.active = True
@@ -212,7 +213,8 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     wait_for_alert(smtp_test, alert, delay=16 * 60)
 
 
-def test_alert_rtp(request, appliance, full_template_vm, smtp_test, provider,
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_alert_rtp(request, appliance, create_vm, smtp_test, provider,
         setup_candu, wait_candu, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available.
@@ -246,10 +248,11 @@ def test_alert_rtp(request, appliance, full_template_vm, smtp_test, provider,
 
     setup_for_alerts(request, [alert])
     wait_for_alert(smtp_test, alert, delay=30 * 60, additional_checks={
-        "text": full_template_vm.name, "from_address": email})
+        "text": create_vm.name, "from_address": email})
 
 
-def test_alert_timeline_cpu(request, appliance, full_template_vm,
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_alert_timeline_cpu(request, appliance, create_vm,
         set_performance_capture_threshold, provider, ssh, setup_candu, wait_candu,
         setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
@@ -281,10 +284,10 @@ def test_alert_timeline_cpu(request, appliance, full_template_vm,
     )
     request.addfinalizer(alert.delete)
 
-    setup_for_alerts(request, [alert], vm_name=full_template_vm.name)
+    setup_for_alerts(request, [alert], vm_name=create_vm.name)
     # Generate a 100% CPU spike for 15 minutes, that should be noticed by CFME.
     ssh.cpu_spike(seconds=60 * 15, cpus=2, ensure_user=True)
-    timeline = full_template_vm.open_timelines()
+    timeline = create_vm.open_timelines()
     timeline.filter.fill({
         "event_category": "Alarm/Status Change/Errors",
         "time_range": "Weeks",
@@ -299,7 +302,8 @@ def test_alert_timeline_cpu(request, appliance, full_template_vm,
         pytest.fail("The event has not been found on the timeline. Event list: {}".format(events))
 
 
-def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_template_vm,
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, create_vm,
         wait_candu, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
@@ -352,8 +356,9 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, full_
     wait_for(_snmp_arrived, timeout="30m", delay=60, message="SNMP trap arrived.")
 
 
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smtp_test,
-        full_template_vm, setup_for_alerts):
+        create_vm, setup_for_alerts):
     """Tests alert based on "Hardware Reconfigured" evaluation.
 
     According https://bugzilla.redhat.com/show_bug.cgi?id=1396544 Hardware Reconfigured alerts
@@ -379,7 +384,7 @@ def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smt
         casecomponent: Control
         initialEstimate: 1/4h
     """
-    vm = full_template_vm
+    vm = create_vm
     email = fauxfactory.gen_email()
     service_request_desc = ("VM Reconfigure for: {0} - Processor Sockets: {1}, "
         "Processor Cores Per Socket: 1, Total Processors: {1}")

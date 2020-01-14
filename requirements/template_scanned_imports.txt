@@ -39,6 +39,7 @@ pycryptodome
 pygal
 pytesseract
 pytest
+pytest-polarion-collect
 python-bugzilla
 python-keycloak
 pytz

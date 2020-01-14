@@ -352,7 +352,8 @@ def test_tls_openssl_verify_mode(temp_appliance_preconfig, request):
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1733207])
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
-def test_vm_right_size_recommendation_back_button(setup_provider, full_template_vm):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_vm_right_size_recommendation_back_button(appliance, setup_provider, create_vm):
     """
     Bugzilla:
         1733207
@@ -369,9 +370,9 @@ def test_vm_right_size_recommendation_back_button(setup_provider, full_template_
             2. From `Configuration` dropdown, select `Right Size Recommendations`.
             3. Click on `Back` button and check if you're brought to Details Page.
     """
-    view = navigate_to(full_template_vm, "RightSize")
+    view = navigate_to(create_vm, "RightSize")
     view.back_button.click()
-    view = full_template_vm.create_view(InfraVmDetailsView)
+    view = create_vm.create_view(InfraVmDetailsView)
     assert view.is_displayed
 
 

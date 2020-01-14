@@ -108,10 +108,10 @@ def alert(appliance, management_event_instance):
 
 
 @pytest.fixture
-def alert_profile(appliance, alert, full_template_vm_modscope):
+def alert_profile(appliance, alert, create_vm_modscope):
     _alert_profile = appliance.collections.alert_profiles.create(
         alert_profiles.VMInstanceAlertProfile,
-        "Alert profile for {}".format(full_template_vm_modscope.name),
+        "Alert profile for {}".format(create_vm_modscope.name),
         alerts=[alert]
     )
     _alert_profile.assign_to("The Enterprise")
@@ -217,7 +217,8 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     assert not button.exists
 
 
-def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, custom_vm_button,
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
+def test_embedded_ansible_custom_button_localhost(create_vm_modscope, custom_vm_button,
         appliance, ansible_service_request, ansible_service, ansible_catalog_item):
     """
     Polarion:
@@ -227,7 +228,7 @@ def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, cus
     """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Localhost"
-    view = navigate_to(full_template_vm_modscope, "Details")
+    view = navigate_to(create_vm_modscope, "Details")
     view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
     order_dialog_view = appliance.browser.create_view(OrderServiceCatalogView)
     order_dialog_view.submit_button.wait_displayed()
@@ -241,7 +242,8 @@ def test_embedded_ansible_custom_button_localhost(full_template_vm_modscope, cus
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
-def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope, custom_vm_button,
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
+def test_embedded_ansible_custom_button_target_machine(create_vm_modscope, custom_vm_button,
         ansible_credential, appliance, ansible_service_request, ansible_service):
     """
     Polarion:
@@ -251,7 +253,7 @@ def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope
     """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Target Machine"
-    view = navigate_to(full_template_vm_modscope, "Details")
+    view = navigate_to(create_vm_modscope, "Details")
     view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
     order_dialog_view = appliance.browser.create_view(OrderServiceCatalogView)
     order_dialog_view.submit_button.wait_displayed()
@@ -261,11 +263,12 @@ def test_embedded_ansible_custom_button_target_machine(full_template_vm_modscope
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
-    assert hosts == full_template_vm_modscope.ip_address
+    assert hosts == create_vm_modscope.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
-def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope, custom_vm_button,
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
+def test_embedded_ansible_custom_button_specific_hosts(create_vm_modscope, custom_vm_button,
         ansible_credential, appliance, ansible_service_request, ansible_service):
     """
     Polarion:
@@ -275,8 +278,8 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
     """
     with update(custom_vm_button):
         custom_vm_button.inventory = "Specific Hosts"
-        custom_vm_button.hosts = full_template_vm_modscope.ip_address
-    view = navigate_to(full_template_vm_modscope, "Details")
+        custom_vm_button.hosts = create_vm_modscope.ip_address
+    view = navigate_to(create_vm_modscope, "Details")
     view.toolbar.custom_button(custom_vm_button.group.text).item_select(custom_vm_button.text)
     order_dialog_view = appliance.browser.create_view(OrderServiceCatalogView)
     order_dialog_view.submit_button.wait_displayed()
@@ -286,12 +289,13 @@ def test_embedded_ansible_custom_button_specific_hosts(full_template_vm_modscope
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
-    assert hosts == full_template_vm_modscope.ip_address
+    assert hosts == create_vm_modscope.ip_address
     assert view.provisioning.results.get_text_of("Status") == "successful"
 
 
 @test_requirements.alert
-def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, request, appliance):
+@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
+def test_alert_run_ansible_playbook(create_vm_modscope, alert_profile, request, appliance):
     """Tests execution of an ansible playbook method by triggering a management event from an
     alert.
 
@@ -300,8 +304,8 @@ def test_alert_run_ansible_playbook(full_template_vm_modscope, alert_profile, re
         casecomponent: Control
         initialEstimate: 1/6h
     """
-    added_tag = full_template_vm_modscope.add_tag()
-    full_template_vm_modscope.remove_tag(added_tag)
+    added_tag = create_vm_modscope.add_tag()
+    create_vm_modscope.remove_tag(added_tag)
     request.addfinalizer(lambda: appliance.ssh_client.run_command(
         '[[ -f "/var/tmp/modified-release" ]] && rm -f "/var/tmp/modified-release"'))
     try:
