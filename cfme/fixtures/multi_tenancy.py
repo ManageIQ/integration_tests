@@ -54,7 +54,7 @@ def child_tenant_admin_user(appliance, request, child_tenant, tenant_role):
     tenant_admin_user = appliance.collections.users.create(
         name=fauxfactory.gen_alphanumeric(start='tenant_admin_user'),
         credential=credential,
-        email='xyz@redhat.com',
+        email=fauxfactory.gen_email(),
         groups=group,
         cost_center='Workload',
         value_assign='Database')
