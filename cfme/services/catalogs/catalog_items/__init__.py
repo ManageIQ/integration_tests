@@ -35,9 +35,11 @@ from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import EntryPoint
+from widgetastic_manageiq import FileInput
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
 from widgetastic_manageiq import WaitTab
 from widgetastic_manageiq.expression_editor import ExpressionEditor
@@ -153,6 +155,11 @@ class AllCatalogItemView(ServicesCatalogView):
         )
 
 
+class DetailsEntitiesCatalogItemView(View):
+    custom_image = FileInput("upload_image")
+    smart_management = SummaryTable("Smart Management")
+
+
 class DetailsCatalogItemView(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
@@ -163,6 +170,8 @@ class DetailsCatalogItemView(ServicesCatalogView):
             self.catalog_items.is_opened and
             self.title.text == 'Service Catalog Item "{}"'.format(self.context['object'].name)
         )
+
+    entities = View.nested(DetailsEntitiesCatalogItemView)
 
 
 class ChooseCatalogItemTypeView(ServicesCatalogView):
