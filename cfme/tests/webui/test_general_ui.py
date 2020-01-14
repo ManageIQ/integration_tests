@@ -25,12 +25,11 @@ from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
-
 
 pytestmark = [test_requirements.general_ui]
 
@@ -126,6 +125,11 @@ def create_20k_vms(appliance):
     appliance.ssh_client.run_rails_command("'{}'".format(rails_create_command))
     yield
     appliance.ssh_client.run_rails_command("'{}'".format(rails_cleanup_command))
+
+
+@pytest.fixture
+def vm(request, provider, appliance):
+    return _vm(request, provider, appliance)
 
 
 @pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
@@ -533,7 +537,7 @@ def test_provider_details_page_refresh_after_clear_cookies(
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize("option", ALL_OPTIONS)
 def test_infrastructure_provider_left_panel_titles(
-    setup_provider, provider, option, soft_assert
+    setup_provider, provider, option, soft_assert, vm
 ):
     """
     Polarion:
@@ -557,23 +561,9 @@ def test_infrastructure_provider_left_panel_titles(
     accordion = getattr(view.entities.sidebar, option)
 
     for panel in ALL_OPTIONS[option]:
-        # Sometimes the panel doesn't enable immediately,
-        # using wait_for to give it some time to enable
-        wait_for(
-            lambda: not accordion.tree.is_disabled(partial_match(panel)),
-            fail_func=view.browser.refresh,
-            num=40,
-            delay=2,
-            message="Wait until the panel enables",
-            handle_exception=True,
-            silent_failure=True
-        )
-        if not accordion.tree.is_disabled(partial_match(panel)):
-            accordion.tree.select(partial_match(panel))
-            test_view = provider.create_view(ALL_OPTIONS[option][panel], wait="60s")
-            soft_assert(test_view.is_displayed, f"{test_view} not displayed.")
-        else:
-            logger.info(f"'{panel}' was not tested, it did not enable.")
+        accordion.tree.select(partial_match(panel))
+        test_view = provider.create_view(ALL_OPTIONS[option][panel])
+        soft_assert(test_view.is_displayed, f"{test_view} not displayed.")
 
 
 @pytest.mark.manual
