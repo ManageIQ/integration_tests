@@ -318,7 +318,7 @@ class Instance(VM):
                 raise ItemNotFound(
                     'Failed to find instance in table: {}'.format(self.name)
                 )
-            row.check()
+            row.ensure_checked()
 
         # cancel is the kwarg, when true we want item_select to dismiss the alert, flip the bool
         view.toolbar.power.item_select(kwargs.get('option'),
@@ -643,7 +643,8 @@ class PolicySimulationOnCollection(CFMENavigateStep):
     def step(self, *args, **kwargs):
         # click the checkbox of every object in the filtered collection
         for entity in self.obj.all():
-            self.prerequisite_view.entities.get_entity(name=entity.name, surf_pages=True).check()
+            self.prerequisite_view.entities.get_entity(name=entity.name,
+                                                       surf_pages=True).ensure_checked()
         self.prerequisite_view.toolbar.policy.item_select("Policy Simulation")
 
 

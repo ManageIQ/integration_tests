@@ -744,7 +744,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         if from_list_view:
             view = navigate_to(self, 'All')
             entity = view.entities.get_entity(name=self.name, surf_pages=True)
-            entity.check()
+            entity.ensure_checked()
 
         else:
             view = navigate_to(self, 'Details')
