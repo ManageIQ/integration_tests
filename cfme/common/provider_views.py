@@ -58,6 +58,19 @@ class ProviderDetailsToolBar(View):
     view_selector = View.nested(DetailsToolBarViewSelector)
 
 
+class SummaryAccordionView(View):
+
+    @View.nested
+    class properties(Accordion):    # noqa
+        ACCORDION_NAME = "Properties"
+        tree = BootstrapNav(locator='//div[@id="ems_prop"]//ul')
+
+    @View.nested
+    class relationships(Accordion):    # noqa
+        ACCORDION_NAME = "Relationships"
+        tree = BootstrapNav(locator='//div[@id="ems_rel"]//ul')
+
+
 class ProviderDetailsView(BaseLoggedInPage):
     """
      main Details page
@@ -75,6 +88,7 @@ class ProviderDetailsView(BaseLoggedInPage):
         represents Details page when it is switched to Summary aka Tables view
         """
         summary = ParametrizedSummaryTable()
+        sidebar = View.nested(SummaryAccordionView)
 
     @entities.register('Dashboard View')
     class ProviderDetailsDashboardView(View):

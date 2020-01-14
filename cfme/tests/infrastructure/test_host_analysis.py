@@ -101,7 +101,7 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
     elif host_type in ('esx', 'esxi'):
         soft_assert(view.entities.summary('Configuration').get_text_of('Advanced Settings') != '0',
                     'No advanced settings found in host detail')
-        view.security_accordion.navigation.select(partial_match('Firewall Rules'))
+        view.sidebar.security.tree.select(partial_match('Firewall Rules'))
         # Page get updated if rules value is not 0, and title is update
         soft_assert("(Firewall Rules)" in view.title.text, (
             "No firewall rules found in host detail"))

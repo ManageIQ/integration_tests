@@ -45,11 +45,11 @@ class ResourcePoolDetailsAccordion(View):
     """The accordian on the details page"""
     @View.nested
     class properties(Accordion):  # noqa
-        tree = ManageIQTree()
+        tree = BootstrapNav(locator='//div[@id="resource_pool_prop"]//ul')
 
     @View.nested
     class relationships(Accordion):  # noqa
-        tree = ManageIQTree()
+        tree = BootstrapNav(locator='//div[@id="resource_pool_rel"]//ul')
 
 
 class ResourcePoolDetailsEntities(View):

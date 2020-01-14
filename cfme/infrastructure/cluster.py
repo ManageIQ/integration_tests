@@ -15,6 +15,7 @@ from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common import TimelinesView
 from cfme.common.candu_views import ClusterInfraUtilizationView
+from cfme.common.provider_views import SummaryAccordionView
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.modeling.base import BaseCollection
@@ -55,21 +56,6 @@ class ClusterDetailsToolbar(View):
     policy = Dropdown('Policy')
     monitoring = Dropdown('Monitoring')
     download = Button('Print or export summary')
-
-
-class ClusterDetailsAccordion(View):
-    """The accordion on the details page"""
-    @View.nested
-    class cluster(Accordion):           # noqa
-        pass
-
-    @View.nested
-    class properties(Accordion):        # noqa
-        tree = ManageIQTree()
-
-    @View.nested
-    class relationships(Accordion):     # noqa
-        tree = ManageIQTree()
 
 
 class ClusterDetailsEntities(View):
@@ -140,7 +126,7 @@ class ClusterDetailsView(ClusterView):
         )
 
     toolbar = View.nested(ClusterDetailsToolbar)
-    sidebar = View.nested(ClusterDetailsAccordion)
+    sidebar = View.nested(SummaryAccordionView)
     entities = View.nested(ClusterDetailsEntities)
 
 
