@@ -330,8 +330,8 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
         view = navigate_to(testing_instance.parent, 'All')
         view.toolbar.view_selector.select('Grid View')
         view.paginator.set_items_per_page(1000)
-        view.entities.get_entity(name=testing_instance.name).check()
-        view.entities.get_entity(name=testing_instance2.name).check()
+        view.entities.get_entity(name=testing_instance.name).ensure_checked()
+        view.entities.get_entity(name=testing_instance2.name).ensure_checked()
         return view
 
     # Power 2 instances off

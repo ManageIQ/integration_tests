@@ -90,7 +90,7 @@ def navigate_and_select_quads(provider):
         view: the provider nodes view, quadicons already selected"""
     hosts_view = navigate_to(provider, 'ProviderNodes')
     assert hosts_view.is_displayed
-    [h.check() for h in hosts_view.entities.get_all()]
+    [h.ensure_checked() for h in hosts_view.entities.get_all()]
 
     hosts_view.toolbar.configuration.item_select('Edit Selected items')
     edit_view = provider.create_view(HostsEditView)

@@ -971,7 +971,7 @@ def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linu
     view.toolbar.view_selector.select('List View')
     view.paginator.set_items_per_page(1000)
     for ssa_vm in ssa_multiple_vms:
-        view.entities.get_entity(name=ssa_vm.name, surf_pages=True).check()
+        view.entities.get_entity(name=ssa_vm.name, surf_pages=True).ensure_checked()
     # run SSA for all created vms
     view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
     view.flash.assert_message('Analysis initiated for 3 VMs and Instances from the CFME Database')
