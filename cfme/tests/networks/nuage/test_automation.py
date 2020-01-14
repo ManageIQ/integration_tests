@@ -47,6 +47,7 @@ def test_embedded_ansible_executed_with_data_upon_event(request,
     ansible_links:
       playbook_repositories:
         embedded_ansible: https://github.com/xlab-si/integration-tests-nuage-automation.git
+
     """
     ae_instance = copy_ae_instance_to_new_domain
     ae_class = ae_instance.klass

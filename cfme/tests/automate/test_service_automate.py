@@ -428,7 +428,8 @@ def new_user(appliance):
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1747159])
 @pytest.mark.provider([VMwareProvider], scope='function', selector=ONE)
-def test_retire_vm_now(setup_provider, full_template_vm, new_user):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_retire_vm_now(setup_provider, create_vm, new_user):
     """
     Bugzilla:
         1747159
@@ -452,6 +453,6 @@ def test_retire_vm_now(setup_provider, full_template_vm, new_user):
     with new_user:
         with LogValidator("/var/www/miq/vmdb/log/evm.log",
                           failure_patterns=[".*ERROR.*"]).waiting(timeout=720):
-            full_template_vm.retire()
-            assert full_template_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
-                                                             from_details=True)
+            create_vm.retire()
+            assert create_vm.wait_for_vm_state_change(desired_state="retired", timeout=720,
+                        from_details=True)
