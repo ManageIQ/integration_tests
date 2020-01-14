@@ -128,8 +128,7 @@ def test_storage_manager_navigation_from_cloudprovider(manager, provider):
     assert manager_count > 0
     view.entities.summary("Relationships").click_at("Storage Managers")
     storage_view = view.browser.create_view(ProviderStorageManagerAllView)
-    assert storage_view.entities.table.row_count == manager_count
-    storage_view.paginator.find_row_on_pages(storage_view.entities.table,
-                                             Name=manager.name).click()
+    assert storage_view.table.row_count == manager_count
+    storage_view.paginator.find_row_on_pages(storage_view.table, Name=manager.name).click()
     storage_detail_view = storage_view.browser.create_view(StorageManagerDetailsView)
     assert storage_detail_view.title.text == "{} (Summary)".format(manager.name)
