@@ -293,6 +293,8 @@ def test_widget_generate_content_via_rest(
         def _finalize():
             with update(dashboard):
                 dashboard.widgets = default_widgets
+            view = navigate_to(appliance.server, "Dashboard")
+            view.reset_widgets()
 
         view = navigate_to(appliance.server, "Dashboard")
         view.reset_widgets()
@@ -302,10 +304,13 @@ def test_widget_generate_content_via_rest(
 
         widget.rest_api_entity.action.generate_content()
         assert_response(appliance)
+        task = appliance.rest_api.collections.tasks.get(
+            id=appliance.rest_api.response.json()["task_id"]
+        )
+        wait_for(lambda: task.state == "Finished", timeout=60, fail_func=task.reload)
 
         view.browser.refresh()
-        wait_for(lambda: widget_ui.is_displayed)
-
+        wait_for(lambda: widget_ui.is_displayed, timeout=20)
         assert last_update["footer"].split(" | ")[0] < widget_ui.read()["footer"].split(" | ")[0]
     else:
         last_update = widget.rest_api_entity.last_generated_content_on
