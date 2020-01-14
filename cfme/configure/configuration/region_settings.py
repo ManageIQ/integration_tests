@@ -744,7 +744,7 @@ class RedHatUpdates(Navigatable, Pretty):
             appliance_names: Names of appliances to check; will check all if empty
         """
         for row in self.get_appliance_rows(*appliance_names):
-            if row.update_status.text.lower() in {'not registered', 'unsubscribed'}:
+            if row.update_status.text.lower() != 'subscribed':
                 return False
         return True
 

@@ -157,7 +157,7 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
 
 @pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(automates=[1532201])
+@pytest.mark.meta(automates=[1532201, 1673136])
 def test_rh_registration(
         temp_appliance_preconfig_funcscope, request, reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether an appliance can be registered against RHSM and SAT6
@@ -217,12 +217,16 @@ def test_rh_registration(
             fail_func=red_hat_updates.refresh
         )
 
+        # This bit automates BZ#1673136
         wait_for(
-            func=appliance.is_registration_complete,
-            func_args=[used_repo_or_channel],
-            delay=20,
-            num_sec=400
+            func=red_hat_updates.is_subscribed,
+            func_args=[appliance.server.name],
+            delay=10,
+            num_sec=600,
+            fail_func=red_hat_updates.refresh
         )
+
+        assert appliance.is_registration_complete(used_repo_or_channel)
 
 
 @pytest.mark.rhel_testing
