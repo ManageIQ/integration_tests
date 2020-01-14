@@ -26,6 +26,8 @@ from cfme.common.provider_views import ProviderEditView
 from cfme.common.vm_views import VMEntities
 from cfme.common.vm_views import VMToolbar
 from cfme.modeling.base import BaseCollection
+from cfme.networks.views import NetworkProviderDetailsView
+from cfme.networks.views import SecurityGroupView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -35,6 +37,7 @@ from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_manageiq import PaginationPane
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -83,6 +86,27 @@ class CloudProviderImagesView(BaseLoggedInPage):
     breadcrumb = BreadCrumb()
     toolbar = View.nested(CloudProviderImagesToolbar)
     including_entities = View.include(VMEntities, use_parent=True)
+
+
+class NetworkManagerDetailsView(NetworkProviderDetailsView):
+    """Network Manager view from provider's details page"""
+    @property
+    def is_displayed(self):
+        return self.title.text == f"{self.context['object'].name} Network Manager (Summary)"
+
+
+class NetworkSecurityGroupAllView(SecurityGroupView):
+    """Security Groups All View from Network Manager page"""
+    paginator = PaginationPane()
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.entities.title.text == (
+                f'{self.context["object"].name} Network Manager (All Security Groups)'
+            )
+        )
 
 
 @attr.s(eq=False)
@@ -258,6 +282,26 @@ class Details(CFMENavigateStep):
         view_selector = self.view.toolbar.view_selector
         if view_selector.is_displayed and view_selector.selected != 'Summary View':
             view_selector.select('Summary View')
+
+
+@navigator.register(CloudProvider, "NetworkManager")
+class NetworkManager(CFMENavigateStep):
+    """Nav class for all view of network managers"""
+    VIEW = NetworkManagerDetailsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary("Relationships").click_at('Network Manager')
+
+
+@navigator.register(CloudProvider, "NetworkSecurityGroup")
+class NetworkSecurityGroup(CFMENavigateStep):
+    """Nav class for all view of network manager's security groups"""
+    VIEW = NetworkSecurityGroupAllView
+    prerequisite = NavigateToSibling('NetworkManager')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary("Relationships").click_at('Security Groups')
 
 
 @navigator.register(CloudProvider, 'Edit')
