@@ -23,6 +23,8 @@ from cfme.utils.log_validator import LogValidator
 from cfme.utils.net import net_check
 from cfme.utils.version import LOWEST
 
+SECONDARY_DNS_REGEX = r'(Secondary DNS:\s*)(?P<secondary_dns>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+
 pytestmark = [
     test_requirements.app_console,
     pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
@@ -57,6 +59,15 @@ ext_auth_options = [
     LoginOption('saml', 'saml_enabled', '2'),
     LoginOption('local_login', 'local_login_disabled', '4')
 ]
+
+
+@pytest.fixture
+def secondary_dns(temp_appliance_preconfig_long):
+    command_set = ("ap", RETURN)
+    result = temp_appliance_preconfig_long.appliance_console.run_commands(command_set, timeout=30)
+    secondary_dns = re.search(SECONDARY_DNS_REGEX, result[0]).group("secondary_dns")
+    assert secondary_dns, "Secondary DNS not found"
+    return secondary_dns
 
 
 @pytest.mark.rhel_testing
@@ -1392,9 +1403,11 @@ def test_appliance_console_extend_storage_negative(appliance):
     assert "/dev/vd" not in result[-1], ("extra disks are not present.")
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_static_dns():
+@pytest.mark.meta(automates=[1439348])
+@pytest.mark.parametrize("ip_version_menu", [("2"), ("3")], ids=["ipv4", "ipv6"])
+def test_appliance_console_static_dns(temp_appliance_preconfig_long, secondary_dns,
+                                      ip_version_menu):
     """
     test setting secondary dns and check it"s saved as the new default
 
@@ -1407,8 +1420,46 @@ def test_appliance_console_static_dns():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/6h
+        testSteps:
+            1. configure static ipv4
+            2. stop and start EVM service
+            3. reconfigure static ipv4
+            4. configure static ipv6
+            5. stop and start EVM service
+            6. reconfigure static ipv6
+        expectedResults:
+            1.
+            2.  check evm service status while stop and start
+            3. check default secondary DNS is listed or not while entering  DNS
+            4.
+            5. check evm service status while stop and start
+            6. check default secondary DNS is listed or not while entering  DNS
     """
-    pass
+    appliance = temp_appliance_preconfig_long
+    command_set = ("ap", RETURN, app_con_menu["config_net"], ip_version_menu, RETURN, RETURN,
+                   RETURN, RETURN, secondary_dns, RETURN, TimedCommand("Y", 120))
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+
+    def _stop_start_evmserverd(appliance):
+        command_set = ("ap", RETURN, app_con_menu["stop_evm"], "Y")
+        appliance.appliance_console.run_commands(command_set, timeout=30)
+        wait_for(lambda: appliance.evmserverd.running,
+                 delay=10,
+                 timeout=300,
+                 fail_condition=True,
+                 message='Waiting to stop EVM services',
+                 fail_func=appliance.evmserverd.running
+                 )
+
+        command_set = ("ap", RETURN, app_con_menu["start_evm"], "Y")
+        appliance.appliance_console.run_commands(command_set, timeout=30)
+        appliance.evmserverd.wait_for_running()
+
+    _stop_start_evmserverd(appliance)
+    command_set = ("ap", RETURN, app_con_menu["config_net"], ip_version_menu, RETURN,
+                   RETURN, RETURN, RETURN)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert secondary_dns in result[-1], "Default secondary DNS not found while re-configuring IP"
 
 
 @pytest.mark.manual
