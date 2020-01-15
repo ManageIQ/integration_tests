@@ -14,6 +14,11 @@ from cfme.utils.log_validator import LogValidator
 from cfme.utils.ssh_expect import SSHExpect
 from cfme.utils.wait import wait_for
 
+from cfme.utils.version import Version, VersionPicker
+
+
+AP_WELCOME_SCREEN_TIMEOUT = 30
+
 
 class ApplianceConsole(AppliancePlugin):
     """ApplianceConsole is used for navigating and running appliance_console commands against an
@@ -168,8 +173,11 @@ class ApplianceConsole(AppliancePlugin):
             interaction.answer('Enter the appliance SSH password: ', pwd)
             interaction.answer(re.escape('Enter the path of remote encryption key: '
                                     '|/var/www/miq/vmdb/certs/v2_key| '), '')
-            interaction.answer(re.escape('Choose the standby database disk: '),
-                               '1' if self.appliance.version < '5.10' else '2')
+            if self.appliance.version < '5.11.2.0':
+                interaction.answer(re.escape('Choose the standby database disk: '),
+                                '1' if self.appliance.version < '5.10' else '2')
+            else:
+                interaction.answer(re.escape('Choose the standby database disk: |1| '), '')
             answer_cluster_related_questions(interaction, node_uid='2',
                 db_name='', db_username='', db_password=pwd)
             interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
@@ -196,10 +204,11 @@ class ApplianceConsole(AppliancePlugin):
             # Would you like to remove the existing database before configuring as a standby server?
             # WARNING: This is destructive. This will remove all previous data from this server
             interaction.answer(re.escape('Continue? (Y/N): '), 'y')
-            interaction.answer(
-                # Don't partition the disk
-                re.escape('Choose the standby database disk: |1| '),
-                '1' if self.appliance.version < '5.10' else '2')
+            if self.appliance.version < '5.11.2.0':
+                interaction.answer(
+                    # Don't partition the disk
+                    re.escape('Choose the standby database disk: |1| '),
+                    '1' if self.appliance.version < '5.10' else '2')
             interaction.answer(re.escape(
                 "Are you sure you don't want to partition the Standby "
                 "database disk? (Y/N): "), 'y')
@@ -300,8 +309,12 @@ def configure_appliances_ha(appliances, pwd):
         #    1) /dev/sr0: 0 MB
         #    2) /dev/vdb: 4768 MB
         #    3) Don't partition the disk
-        interaction.answer(re.escape('Choose the database disk: '),
-                          '1' if apps0.version < '5.10' else '2')
+        if apps0.version < '5.11.2.0':
+            interaction.answer(re.escape('Choose the database disk: '),
+                            '1' if apps0.version < '5.10' else '2')
+        else:
+            interaction.answer(re.escape('Choose the database disk: |1| '), '')
+
         # Should this appliance run as a standalone database server?
         interaction.answer(re.escape('? (Y/N): |N| '), 'y')
         interaction.answer('Enter the database password on localhost: ', pwd)
