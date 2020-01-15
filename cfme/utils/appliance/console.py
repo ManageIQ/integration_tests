@@ -74,9 +74,9 @@ class ApplianceConsole(AppliancePlugin):
         4. '' complete."""
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             interaction.answer('Choose the advanced setting: ', '15')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
 
     def scap_check_rules(self):
         """Check that rules have been applied correctly."""
@@ -123,7 +123,7 @@ class ApplianceConsole(AppliancePlugin):
         # Configure primary replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             # 6/8 for Configure Database Replication
             interaction.answer('Choose the advanced setting: ',
                                '6' if self.appliance.version < '5.10' else '8')
@@ -140,7 +140,7 @@ class ApplianceConsole(AppliancePlugin):
         # Configure primary replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             interaction.answer('Choose the advanced setting: ',
                                '6' if self.appliance.version < '5.10' else '8')
             # 6/8 for Configure Database Replication
@@ -160,7 +160,7 @@ class ApplianceConsole(AppliancePlugin):
         # Configure secondary (standby) replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             interaction.answer('Choose the advanced setting: ',
                                '6' if self.appliance.version < '5.10' else '8')
             # 6/8 for Configure Database Replication
@@ -228,13 +228,13 @@ class ApplianceConsole(AppliancePlugin):
             interaction.answer(re.escape('Continue with configuration? (Y/N): '), 'y')
             interaction.answer(
                 re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
 
     def configure_automatic_failover(self, primary_ip):
         # Configure automatic failover on EVM appliance
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             interaction.expect('Choose the advanced setting: ')
 
             with waiting_for_ha_monitor_started(self.appliance, primary_ip, timeout=300):
@@ -297,7 +297,7 @@ def configure_appliances_ha(appliances, pwd):
     # Configure first appliance as dedicated database
     with SSHExpect(apps0) as interaction:
         interaction.send('ap')
-        interaction.answer('Press any key to continue.', '', timeout=20)
+        interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
         interaction.answer('Choose the advanced setting: ',
                            '5' if apps0.version < '5.10' else '7')  # Configure Database
         interaction.answer(re.escape('Choose the encryption key: |1| '), '1')
@@ -327,7 +327,7 @@ def configure_appliances_ha(appliances, pwd):
     # Configure EVM webui appliance with create region in dedicated database
     with SSHExpect(apps2) as interaction:
         interaction.send('ap')
-        interaction.answer('Press any key to continue.', '', timeout=20)
+        interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
         interaction.answer('Choose the advanced setting: ',
                            '5' if apps2.version < '5.10' else '7')  # Configure Database
         interaction.answer(re.escape('Choose the encryption key: |1| '), '2')
