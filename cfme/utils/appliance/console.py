@@ -1,20 +1,18 @@
-import os
 import re
 import socket
-import tempfile
 from contextlib import contextmanager
 
 import lxml
 import yaml
 
 from cfme.utils.appliance.plugin import AppliancePlugin
-from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.path import scripts_path
 from cfme.utils.ssh_expect import SSHExpect
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
-
-from cfme.utils.version import Version, VersionPicker
 
 
 AP_WELCOME_SCREEN_TIMEOUT = 30
@@ -70,7 +68,7 @@ class ApplianceConsole(AppliancePlugin):
         """Commands:
         1. 'ap' launches appliance_console,
         2. '' clears info screen,
-        3. '14' Hardens appliance using SCAP configuration,
+        3. '15' Hardens appliance using SCAP configuration,
         4. '' complete."""
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
@@ -81,18 +79,22 @@ class ApplianceConsole(AppliancePlugin):
     def scap_check_rules(self):
         """Check that rules have been applied correctly."""
         rules_failures = []
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(hidden['scap.rb'])
-            f.flush()
-            os.fsync(f.fileno())
-            self.appliance.ssh_client.put_file(
-                f.name, '/tmp/scap.rb')
+
+        self.appliance.ssh_client.put_file(scripts_path.join('scap.rb'), '/tmp/scap.rb')
+
         if self.appliance.version >= "5.8":
             rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
         else:
             rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
-        self.appliance.ssh_client.run_command(
-            'cd /tmp/ && ruby scap.rb --rulesfile={rules}'.format(rules=rules))
+
+        ssg_path = VersionPicker({
+            Version.lowest(): "/usr/share/xml/scap/ssg/content/ssg-rhel7-ds.xml",
+            '5.11': "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
+        }).pick(self.appliance.version)
+
+        assert self.appliance.ssh_client.run_command('gem install optimist').success
+        assert self.appliance.ssh_client.run_command(
+            f'cd /tmp/ && ruby scap.rb --rulesfile={rules} --ssg-path={ssg_path}')
         self.appliance.ssh_client.get_file(
             '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
         self.appliance.ssh_client.get_file(
