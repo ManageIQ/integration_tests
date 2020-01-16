@@ -45,7 +45,7 @@ class ApplianceConsole(AppliancePlugin):
                 cmd, timeout = command
             channel.settimeout(timeout)
             cmd = "{}\n".format(cmd) if autoreturn else "{}".format(cmd)
-            logger.info("Executing sub-command: %s" % cmd)
+            logger.info("Executing sub-command: %s, timeout:%s" % (cmd, timeout))
             channel.send(cmd)
             result = ''
             try:
