@@ -598,3 +598,40 @@ def test_session_timeout():
         initialEstimate: 1/6h
     """
     pass
+
+
+@pytest.mark.manaul
+@pytest.mark.meta(coverage=[1784145])
+def test_openid_auth_provider():
+    """
+    Test setting up CFME with OpenID Auth Provider
+
+    Polarion:
+        assignee: jdupuy
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testSteps:
+            1. Create client for appliance in keycloak server (rhsso73),
+                - https://github.com/ManageIQ/manageiq_docs/blob/master/auth/openid_connect.adoc
+                - NOTE: the "Client ID" cannot have "https://" in the string
+                - Note: Set the root URL to "https://<FQDN of the appliance>", base URL as "/"
+                - make note of the client secret in the "Credentials" tab of the client's details
+            2. Create mappers (in keycloak) for client, "Client Host", "Client ID",
+                "Client IP Address", "groups"
+            3. Create OpenID test user and group if none available
+            4. SSH into appliance and run:
+                appliance_console_cli --oidc-config
+                    --oidc-url=
+                    <keycloak-server>:8080/auth/realms/CFME-OpenID/.well-known/openid-configuration
+                    --oidc-client-id <appliance-fqdn>
+                    --oidc-client-secret <client-secret>
+            5. Login to appliance with OpenID user (clicking "Login to Corporate Account")
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Command should complete successfully
+            5. User should be logged in with appropriate permissions
+    """
+    pass
