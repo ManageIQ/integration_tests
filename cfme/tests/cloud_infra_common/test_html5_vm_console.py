@@ -10,24 +10,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.generators import random_vm_name
-
-
-@pytest.fixture(scope="function")
-def vm_obj(request, provider, setup_provider, console_template):
-    """
-    Create a VM on the provider with the given template, and return the vm_obj.
-
-    Cleanup VM when done
-    """
-    collection = provider.appliance.provider_based_collection(provider)
-    vm_obj = collection.instantiate(random_vm_name('html5-con'),
-                                    provider,
-                                    template_name=console_template.name)
-
-    request.addfinalizer(lambda: vm_obj.cleanup_on_provider())
-    vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
-    return vm_obj
 
 
 @pytest.mark.tier(2)
@@ -56,7 +38,8 @@ def test_html5_console_ports_present(appliance, setup_provider, provider):
 @pytest.mark.rhv1
 @test_requirements.html5
 @pytest.mark.provider([CloudProvider, InfraProvider], required_flags=['html5_console'])
-def test_html5_vm_console(appliance, setup_provider, provider, configure_websocket, vm_obj,
+@pytest.mark.parametrize('create_vm', ['console_template'], indirect=True)
+def test_html5_vm_console(appliance, setup_provider, provider, configure_websocket, create_vm,
         configure_console_vnc, take_screenshot):
     """
     Test the HTML5 console support for a particular provider.
@@ -88,9 +71,9 @@ def test_html5_vm_console(appliance, setup_provider, provider, configure_websock
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    vm_obj.open_console(console='VM Console')
-    assert vm_obj.vm_console, 'VMConsole object should be created'
-    vm_console = vm_obj.vm_console
+    create_vm.open_console(console='VM Console')
+    assert create_vm.vm_console, 'VMConsole object should be created'
+    vm_console = create_vm.vm_console
     try:
         # If the banner/connection-status element exists we can get
         # the connection status text and if the console is healthy, it should connect.

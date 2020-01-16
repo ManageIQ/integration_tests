@@ -9,7 +9,6 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -24,26 +23,10 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope='function')
-def new_instance(appliance, provider):
-    inst = appliance.collections.cloud_instances.instantiate(
-        random_vm_name('cloud-timeline', max_length=20), provider)
-    logger.debug('Fixture new_instance set up! Name: %r Provider: %r',
-                 inst.name, inst.provider.name)
-    inst.create_on_provider(allow_skip="default", find_in_cfme=True)
-    yield inst
-    logger.debug('Fixture new_instance teardown! Name: %r Provider: %r',
-                 inst.name, inst.provider.name)
-    try:
-        inst.mgmt.cleanup()
-    except NotFoundError:
-        pass
-
-
 @pytest.fixture(scope="function")
-def mark_vm_as_appliance(new_instance, appliance):
+def mark_vm_as_appliance(create_vm, appliance):
     # set diagnostics vm
-    relations_view = navigate_to(new_instance, 'EditManagementEngineRelationship', wait_for_view=0)
+    relations_view = navigate_to(create_vm, 'EditManagementEngineRelationship', wait_for_view=0)
     relations_view.form.server.select_by_visible_text(
         "{name} ({sid})".format(
             name=appliance.server.name,
@@ -54,7 +37,7 @@ def mark_vm_as_appliance(new_instance, appliance):
 
 
 @pytest.fixture(scope='function')
-def control_policy(appliance, new_instance):
+def control_policy(appliance, create_vm):
     action = appliance.collections.actions.create(fauxfactory.gen_alpha(), "Tag",
             dict(tag=("My Company Tags", "Environment", "Development")))
     policy = appliance.collections.policies.create(VMControlPolicy, fauxfactory.gen_alpha())
@@ -64,19 +47,19 @@ def control_policy(appliance, new_instance):
     profile = appliance.collections.policy_profiles.create(fauxfactory.gen_alpha(),
                                                            policies=[policy])
 
-    yield new_instance.assign_policy_profiles(profile.description)
+    yield create_vm.assign_policy_profiles(profile.description)
     for obj in [profile, policy, action]:
         if obj.exists:
             obj.delete()
 
 
 @pytest.fixture(scope='function')
-def azone(new_instance, appliance):
-    zone_id = new_instance.rest_api_entity.availability_zone_id
-    rest_zones = new_instance.appliance.rest_api.collections.availability_zones
+def azone(create_vm, appliance):
+    zone_id = create_vm.rest_api_entity.availability_zone_id
+    rest_zones = create_vm.appliance.rest_api.collections.availability_zones
     zone_name = next(zone.name for zone in rest_zones if zone.id == zone_id)
     inst_zone = appliance.collections.cloud_av_zones.instantiate(name=zone_name,
-                                                                 provider=new_instance.provider)
+                                                                 provider=create_vm.provider)
     return inst_zone
 
 
@@ -262,7 +245,8 @@ class InstEvent(object):
                     evt=self.event, tgt=target))
 
 
-def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_cloud_timeline_create_event(create_vm, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
@@ -273,17 +257,18 @@ def test_cloud_timeline_create_event(new_instance, soft_assert, azone):
         casecomponent: Events
     """
     if BZ(1670550).blocks:
-        targets = (new_instance, )
+        targets = (create_vm, )
     else:
-        targets = (new_instance, new_instance.provider, azone)
+        targets = (create_vm, create_vm.provider, azone)
     event = 'create'
-    inst_event = InstEvent(new_instance, event)
-    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    inst_event = InstEvent(create_vm, event)
+    logger.info('Will generate event %r on machine %r', event, create_vm.name)
     wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_cloud_timeline_policy_event(create_vm, control_policy, soft_assert):
     """
     Metadata:
         test_flag: timelines, events
@@ -296,16 +281,17 @@ def test_cloud_timeline_policy_event(new_instance, control_policy, soft_assert):
     event = 'policy'
     # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
-        targets = (new_instance, )
+        targets = (create_vm, )
     else:
-        targets = (new_instance, new_instance.provider)
-    inst_event = InstEvent(new_instance, event)
-    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+        targets = (create_vm, create_vm.provider)
+    inst_event = InstEvent(create_vm, event)
+    logger.info('Will generate event %r on machine %r', event, create_vm.name)
     wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets, policy_events=True)
 
 
-def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_cloud_timeline_stop_event(create_vm, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
@@ -317,17 +303,18 @@ def test_cloud_timeline_stop_event(new_instance, soft_assert, azone):
     """
     # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
-        targets = (new_instance, )
+        targets = (create_vm, )
     else:
-        targets = (new_instance, new_instance.provider, azone)
+        targets = (create_vm, create_vm.provider, azone)
     event = 'stop'
-    inst_event = InstEvent(new_instance, event)
-    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    inst_event = InstEvent(create_vm, event)
+    logger.info('Will generate event %r on machine %r', event, create_vm.name)
     wait_for(inst_event.emit, timeout='7m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_cloud_timeline_start_event(create_vm, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
@@ -339,17 +326,18 @@ def test_cloud_timeline_start_event(new_instance, soft_assert, azone):
     """
     # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
-        targets = (new_instance, )
+        targets = (create_vm, )
     else:
-        targets = (new_instance, new_instance.provider, azone)
+        targets = (create_vm, create_vm.provider, azone)
     event = 'start'
-    inst_event = InstEvent(new_instance, 'start')
-    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    inst_event = InstEvent(create_vm, 'start')
+    logger.info('Will generate event %r on machine %r', event, create_vm.name)
     wait_for(inst_event.emit, timeout='7m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_assert):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_cloud_timeline_diagnostic(create_vm, mark_vm_as_appliance, soft_assert):
     """Check Configuration/diagnostic/timelines.
 
     Metadata:
@@ -361,14 +349,15 @@ def test_cloud_timeline_diagnostic(new_instance, mark_vm_as_appliance, soft_asse
         casecomponent: Events
     """
     event = 'create'
-    targets = (new_instance.appliance.server,)
-    inst_event = InstEvent(new_instance, event)
-    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+    targets = (create_vm.appliance.server,)
+    inst_event = InstEvent(create_vm, event)
+    logger.info('Will generate event %r on machine %r', event, create_vm.name)
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
 @pytest.mark.provider([EC2Provider], scope='function')
-def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_cloud_timeline_rename_event(create_vm, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
@@ -381,11 +370,11 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
     event = 'rename'
     # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
-        targets = (new_instance, )
+        targets = (create_vm, )
     else:
-        targets = (new_instance, new_instance.provider, azone)
-    inst_event = InstEvent(new_instance, event)
-    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+        targets = (create_vm, create_vm.provider, azone)
+    inst_event = InstEvent(create_vm, event)
+    logger.info('Will generate event %r on machine %r', event, create_vm.name)
     wait_for(inst_event.emit, timeout='12m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets)
 
@@ -395,7 +384,8 @@ def test_cloud_timeline_rename_event(new_instance, soft_assert, azone):
        forced_streams=["5.11"],
        unblock=lambda provider: not provider.one_of(AzureProvider))
 ])
-def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_cloud_timeline_delete_event(create_vm, soft_assert, azone):
     """
     Metadata:
         test_flag: timelines, events
@@ -411,10 +401,10 @@ def test_cloud_timeline_delete_event(new_instance, soft_assert, azone):
     event = 'delete'
     # accordions on azone and provider's page are not displayed in 5.10
     if BZ(1670550).blocks:
-        targets = (new_instance, )
+        targets = (create_vm, )
     else:
-        targets = (new_instance, new_instance.provider, azone)
-    inst_event = InstEvent(new_instance, event)
-    logger.info('Will generate event %r on machine %r', event, new_instance.name)
+        targets = (create_vm, create_vm.provider, azone)
+    inst_event = InstEvent(create_vm, event)
+    logger.info('Will generate event %r on machine %r', event, create_vm.name)
     wait_for(inst_event.emit, timeout='9m', message='Event {} did timeout'.format(event))
     inst_event.catch_in_timelines(soft_assert, targets)

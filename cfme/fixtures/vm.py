@@ -8,6 +8,7 @@ from wrapanapi import VmState
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import CFMEException
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 
 
 def pytest_addoption(parser):
@@ -83,10 +84,15 @@ def _get_vm_name(request):
     can try to look up it in the test function itself. There is one restriction for it. We cannot
     get the test function mark from module scoped fixtures.
     """
-    req = [mark.args[0] for mark in request.module.pytestmark if mark.name == "requirement"]
+    try:
+        req = [mark.args[0] for mark in request.module.pytestmark if mark.name == "requirement"]
+    except AttributeError:
+        req = None
+        logger.debug("Could not get the requirement from pytestmark")
     if not req and request.scope == "function":
         try:
-            req = request.function.requirement.args
+            req = [mark.args for mark in request.function.pytestmark
+            if mark.name == 'requirement'][0]
         except AttributeError:
             raise CFMEException("VM name can not be obtained")
     return random_vm_name(req[0])

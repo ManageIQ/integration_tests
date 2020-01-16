@@ -7,7 +7,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
@@ -19,25 +18,18 @@ pytestmark = [
         filters=[ProviderFilter(classes=[BaseProvider]),
                  ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)],
         scope='module'),
+    test_requirements.genealogy
 ]
-
-
-@pytest.fixture(scope="function")
-def vm_crud(provider, small_template):
-    collection = provider.appliance.provider_based_collection(provider)
-    return collection.instantiate(random_vm_name(context='genealogy'),
-                                  provider,
-                                  template_name=small_template.name)
 
 
 # uncollected above in pytest_generate_tests
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
-@test_requirements.genealogy
 @pytest.mark.uncollectif(lambda provider, from_edit:
                          provider.one_of(CloudProvider) and not from_edit,
                          reason='Cloud provider genealogy only shown on edit')
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
 def test_vm_genealogy_detected(
-        request, setup_provider, provider, small_template, soft_assert, from_edit, vm_crud):
+        request, setup_provider, provider, small_template, soft_assert, from_edit, create_vm):
     """Tests vm genealogy from what CFME can detect.
 
     Prerequisities:
@@ -64,30 +56,25 @@ def test_vm_genealogy_detected(
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
-
-    request.addfinalizer(lambda: vm_crud.cleanup_on_provider())
-    vm_crud.mgmt.wait_for_steady_state()
 
     if from_edit:
-        vm_crud.open_edit()
-        view = navigate_to(vm_crud, 'Edit')
+        create_vm.open_edit()
+        view = navigate_to(create_vm, 'Edit')
         opt = view.form.parent_vm.all_selected_options[0]
         parent = opt.strip()
         assert parent.startswith(small_template.name), "The parent template not detected!"
     else:
         try:
-            vm_crud_ancestors = vm_crud.genealogy.ancestors
+            vm_crud_ancestors = create_vm.genealogy.ancestors
         except NameError:
             logger.exception("The parent template not detected!")
             raise pytest.fail("The parent template not detected!")
         assert small_template.name in vm_crud_ancestors, \
-            "{} is not in {}'s ancestors".format(small_template.name, vm_crud.name)
+            "{} is not in {}'s ancestors".format(small_template.name, create_vm.name)
 
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-@test_requirements.genealogy
 def test_compare_button_enabled():
     """
     Test that compare button is enabled
@@ -130,7 +117,6 @@ def test_compare_button_enabled():
 
 
 @pytest.mark.manual
-@test_requirements.genealogy
 @pytest.mark.tier(2)
 def test_cloud_infra_genealogy():
     """

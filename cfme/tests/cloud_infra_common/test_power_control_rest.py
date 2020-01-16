@@ -8,7 +8,6 @@ from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
-from cfme.utils.generators import random_vm_name
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
@@ -23,26 +22,16 @@ pytestmark = [
 
 
 @pytest.fixture(scope='function')
-def vm_name():
-    return random_vm_name('pwrctl')
+def vm_name(create_vm):
+    return create_vm.name
 
 
-@pytest.fixture(scope="function")
-def vm_obj(provider, setup_provider, small_template, vm_name):
-    collection = provider.appliance.provider_based_collection(provider)
-    vm_obj = collection.instantiate(vm_name, provider, template_name=small_template.name)
-
-    vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
-    yield vm_obj
-    vm_obj.cleanup_on_provider()
-
-
-def wait_for_vm_state_change(vm_obj, state):
-    if vm_obj.provider.one_of(GCEProvider, EC2Provider, SCVMMProvider):
+def wait_for_vm_state_change(create_vm, state):
+    if create_vm.provider.one_of(GCEProvider, EC2Provider, SCVMMProvider):
         num_sec = 4000  # extra time for slow providers
     else:
         num_sec = 1200
-    vm_obj.wait_for_power_state_change_rest(desired_state=state, timeout=num_sec)
+    create_vm.wait_for_power_state_change_rest(desired_state=state, timeout=num_sec)
 
 
 def verify_vm_power_state(vm, state):
@@ -63,7 +52,8 @@ def verify_action_result(rest_api, assert_success=True):
 
 
 @pytest.mark.rhv2
-def test_stop_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from_detail):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_stop_vm_rest(appliance, create_vm, ensure_vm_running, soft_assert, from_detail):
     """Test stop of vm
 
     Prerequisities:
@@ -87,20 +77,21 @@ def test_stop_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from_de
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
-    vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
-    vm = rest_api.collections.vms.get(name=vm_obj.name)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON)
+    vm = rest_api.collections.vms.get(name=create_vm.name)
 
     if from_detail:
         vm.action.stop()
     else:
         rest_api.collections.vms.action.stop(vm)
     verify_action_result(rest_api)
-    wait_for_vm_state_change(vm_obj, vm_obj.STATE_OFF)
-    soft_assert(not verify_vm_power_state(vm, vm_obj.STATE_ON), "vm still running")
+    wait_for_vm_state_change(create_vm, create_vm.STATE_OFF)
+    soft_assert(not verify_vm_power_state(vm, create_vm.STATE_ON), "vm still running")
 
 
 @pytest.mark.rhv2
-def test_start_vm_rest(appliance, vm_obj, ensure_vm_stopped, soft_assert, from_detail):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_start_vm_rest(appliance, create_vm, ensure_vm_stopped, soft_assert, from_detail):
     """Test start vm
 
     Prerequisities:
@@ -124,20 +115,21 @@ def test_start_vm_rest(appliance, vm_obj, ensure_vm_stopped, soft_assert, from_d
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
-    vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_OFF, timeout=1200)
-    vm = rest_api.collections.vms.get(name=vm_obj.name)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF, timeout=1200)
+    vm = rest_api.collections.vms.get(name=create_vm.name)
 
     if from_detail:
         vm.action.start()
     else:
         rest_api.collections.vms.action.start(vm)
     verify_action_result(rest_api)
-    wait_for_vm_state_change(vm_obj, vm_obj.STATE_ON)
-    soft_assert(verify_vm_power_state(vm, vm_obj.STATE_ON), "vm not running")
+    wait_for_vm_state_change(create_vm, create_vm.STATE_ON)
+    soft_assert(verify_vm_power_state(vm, create_vm.STATE_ON), "vm not running")
 
 
 @pytest.mark.rhv2
-def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from_detail):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_suspend_vm_rest(appliance, create_vm, ensure_vm_running, soft_assert, from_detail):
     """Test suspend vm
 
     Prerequisities:
@@ -161,21 +153,21 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
-    vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
-    vm = rest_api.collections.vms.get(name=vm_obj.name)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON)
+    vm = rest_api.collections.vms.get(name=create_vm.name)
 
     if from_detail:
         vm.action.suspend()
     else:
         rest_api.collections.vms.action.suspend(vm)
     success, message = verify_action_result(rest_api, assert_success=False)
-    if vm_obj.provider.one_of(GCEProvider, EC2Provider):
+    if create_vm.provider.one_of(GCEProvider, EC2Provider):
         assert success is False
         assert "not available" in message
     else:
         assert success
-        wait_for_vm_state_change(vm_obj, vm_obj.STATE_SUSPENDED)
-        soft_assert(verify_vm_power_state(vm, vm_obj.STATE_SUSPENDED), "vm not suspended")
+        wait_for_vm_state_change(create_vm, create_vm.STATE_SUSPENDED)
+        soft_assert(verify_vm_power_state(vm, create_vm.STATE_SUSPENDED), "vm not suspended")
 
 
 @pytest.mark.provider(
@@ -183,7 +175,8 @@ def test_suspend_vm_rest(appliance, vm_obj, ensure_vm_running, soft_assert, from
     filters=[ProviderFilter([BaseProvider]),
              ProviderFilter([RHEVMProvider, AzureProvider], inverted=True)],
 )
-def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance, provider):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_reset_vm_rest(create_vm, ensure_vm_running, from_detail, appliance, provider):
     """
     Test reset vm
 
@@ -208,8 +201,8 @@ def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance, provid
         initialEstimate: 1/4h
     """
     rest_api = appliance.rest_api
-    vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
-    vm = rest_api.collections.vms.get(name=vm_obj.name)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON)
+    vm = rest_api.collections.vms.get(name=create_vm.name)
 
     old_date = vm.updated_on
     if from_detail:
@@ -221,7 +214,7 @@ def test_reset_vm_rest(vm_obj, ensure_vm_running, from_detail, appliance, provid
         unsupported_providers = (GCEProvider, EC2Provider, SCVMMProvider)
     else:
         unsupported_providers = (GCEProvider, EC2Provider)
-    if vm_obj.provider.one_of(*unsupported_providers):
+    if create_vm.provider.one_of(*unsupported_providers):
         assert success is False
         assert "not available" in message
     else:
