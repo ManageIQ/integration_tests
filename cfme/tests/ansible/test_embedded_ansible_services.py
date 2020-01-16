@@ -15,7 +15,6 @@ from cfme.services.myservice import MyService
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -77,14 +76,14 @@ def local_ansible_catalog_item(appliance, ansible_repository):
 
 
 @pytest.fixture()
-def ansible_linked_vm_action(appliance, local_ansible_catalog_item, new_vm):
+def ansible_linked_vm_action(appliance, local_ansible_catalog_item, create_vm):
     with update(local_ansible_catalog_item):
         local_ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
 
     action_values = {
         "run_ansible_playbook": {
             "playbook_catalog_item": local_ansible_catalog_item.name,
-            "inventory": {"specific_hosts": True, "hosts": new_vm.ip_address},
+            "inventory": {"specific_hosts": True, "hosts": create_vm.ip_address},
         }
     }
 
@@ -99,25 +98,11 @@ def ansible_linked_vm_action(appliance, local_ansible_catalog_item, new_vm):
 
 
 @pytest.fixture()
-def new_vm(provider, big_template):
-    vm_collection = provider.appliance.provider_based_collection(provider)
-    vm = vm_collection.instantiate(random_vm_name(context='ansible'),
-                                  provider,
-                                  template_name=big_template.name)
-    vm.create_on_provider(find_in_cfme=True)
-    logger.debug(
-        "Fixture new_vm set up! Name: %r Provider: %r", vm.name, vm.provider.name
-    )
-    yield vm
-    vm.cleanup_on_provider()
-
-
-@pytest.fixture()
-def ansible_policy_linked_vm(appliance, new_vm, ansible_linked_vm_action):
+def ansible_policy_linked_vm(appliance, create_vm, ansible_linked_vm_action):
     policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha(15, start="policy_"),
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(new_vm.name),
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(create_vm.name),
     )
     policy.assign_actions_to_event(
         "Tag Complete", [ansible_linked_vm_action.description]
@@ -125,7 +110,7 @@ def ansible_policy_linked_vm(appliance, new_vm, ansible_linked_vm_action):
     policy_profile = appliance.collections.policy_profiles.create(
         fauxfactory.gen_alpha(15, start="profile_"), policies=[policy]
     )
-    new_vm.assign_policy_profiles(policy_profile.description)
+    create_vm.assign_policy_profiles(policy_profile.description)
     yield
 
     policy_profile.delete_if_exists()
@@ -808,10 +793,11 @@ def test_service_ansible_verbosity(
 @pytest.mark.tier(3)
 @pytest.mark.provider([VMwareProvider])
 @pytest.mark.usefixtures("setup_provider")
+@pytest.mark.parametrize('create_vm', ['big_template'], indirect=True)
 @pytest.mark.meta(automates=[BZ(1448918)])
 def test_ansible_service_linked_vm(
     appliance,
-    new_vm,
+    create_vm,
     ansible_policy_linked_vm,
     ansible_service_request,
     ansible_service,
@@ -828,12 +814,12 @@ def test_ansible_service_linked_vm(
         initialEstimate: 1/3h
         tags: ansible_embed
     """
-    new_vm.add_tag()
+    create_vm.add_tag()
     wait_for(ansible_service_request.exists, num_sec=600)
     ansible_service_request.wait_for_request()
 
     view = navigate_to(ansible_service, "Details")
-    assert new_vm.name in view.entities.vms.all_entity_names
+    assert create_vm.name in view.entities.vms.all_entity_names
 
 
 @pytest.mark.tier(1)
