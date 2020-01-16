@@ -390,3 +390,67 @@ def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
 
     wait_for(lambda: _check, fail_func=view.browser.refresh, timeout=600, delay=5,
              message="Waiting for vm folder name to appear")
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1574444])
+@pytest.mark.provider([VMwareProvider], selector=ONE)
+def test_list_of_diff_vm_storages_via_rails(appliance, setup_provider, provider, testing_vm,
+                                            custom_instance):
+    """
+    Bugzilla:
+        1574444
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/8h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.9
+        casecomponent: Automate
+        testSteps:
+            1. vmware = $evm.vmdb('ems').find_by_name('vmware 6.5 (nested)') ;
+            2. vm = vmware.vms.select { |v| v.name == 'ghubale-cfme510' }.first ;
+            3. vm.storage
+            4. vm.storages
+        expectedResults:
+            1.
+            2.
+            3. Returns only one storage
+            4. Returns available storages
+    """
+    list_storages = dedent(
+        f'vmware = $evm.vmdb("ems").find_by_name("{provider.name}")\n'
+        'vm = vmware.vms.select {|v| v.name == '
+        f'"{testing_vm.name}"'
+        '}.first\n'
+        'storage = vm.storage\n'
+        'storage_name = storage.name\n'
+        '$evm.log(:info, "storage name: #{storage_name}")\n'
+        'storages = vm.storages\n'
+        'storage_name = storages[0].name\n'
+        '$evm.log(:info, "storages name: #{storage_name}")\n'
+    )
+    instance = custom_instance(ruby_code=list_storages)
+
+    with LogValidator(
+            "/var/www/miq/vmdb/log/automation.log",
+            matched_patterns=[
+                f".*storage name: {testing_vm.datastore.name}.*",
+                f".*storages name: {testing_vm.datastore.name}.*",
+            ],
+    ).waiting(timeout=120):
+
+        # Executing automate method using simulation
+        simulate(
+            appliance=appliance,
+            message="create",
+            request="Call_Instance",
+            execute_methods=True,
+            attributes_values={
+                "namespace": instance.klass.namespace.name,
+                "class": instance.klass.name,
+                "instance": instance.name,
+            },
+        )

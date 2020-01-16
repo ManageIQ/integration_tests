@@ -224,35 +224,6 @@ def test_automate_buttons_requests():
 
 
 @pytest.mark.tier(1)
-def test_list_of_diff_vm_storages_via_rails():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.9
-        casecomponent: Automate
-        tags: automate
-        testSteps:
-            1. vmware = $evm.vmdb('ems').find_by_name('vmware 6.5 (nested)') ;
-            2. vm = vmware.vms.select { |v| v.name == 'ghubale-cfme510' }.first ;
-            3. vm.storage
-            4. vm.storages
-        expectedResults:
-            1.
-            2.
-            3. Returns only one storage
-            4. Returns available storages
-
-    Bugzilla:
-        1574444
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_vm_naming_number_padding():
     """
     Polarion:
