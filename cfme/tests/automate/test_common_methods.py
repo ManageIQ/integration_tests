@@ -34,22 +34,6 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="function")
-def testing_vm(request, setup_provider, provider, provisioning):
-    collection = provider.appliance.provider_based_collection(provider)
-    vm_name = random_vm_name('ae-methods')
-    vm_obj = collection.instantiate(vm_name, provider, provisioning["template"])
-
-    def _finalize():
-        try:
-            vm_obj.cleanup_on_provider()
-        except Exception:
-            logger.warning('Failed deleting VM from provider: %s', vm_name)
-    request.addfinalizer(_finalize)
-    vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
-    return vm_obj
-
-
 def generate_retirement_date(delta=None):
     gen_date = date.today()
     if delta:
@@ -59,7 +43,8 @@ def generate_retirement_date(delta=None):
 
 @pytest.mark.rhv3
 @pytest.mark.tier(3)
-def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_vm_retire_extend(appliance, request, create_vm, soft_assert):
     """ Tests extending a retirement using an AE method.
 
     Polarion:
@@ -80,12 +65,12 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
         1627758
     """
     num_days = 5
-    soft_assert(testing_vm.retirement_date == 'Never', "The retirement date is not 'Never'!")
+    soft_assert(create_vm.retirement_date == 'Never', "The retirement date is not 'Never'!")
     retirement_date = generate_retirement_date(delta=num_days)
-    testing_vm.set_retirement_date(retirement_date)
-    wait_for(lambda: testing_vm.retirement_date != 'Never', message="retirement date set")
-    set_date = testing_vm.retirement_date
-    vm_retire_date_fmt = testing_vm.RETIRE_DATE_FMT
+    create_vm.set_retirement_date(retirement_date)
+    wait_for(lambda: create_vm.retirement_date != 'Never', message="retirement date set")
+    set_date = create_vm.retirement_date
+    vm_retire_date_fmt = create_vm.RETIRE_DATE_FMT
 
     soft_assert(set_date == retirement_date.strftime(vm_retire_date_fmt),
                 "The retirement date '{}' did not match expected date '{}'"
@@ -108,7 +93,7 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
     )
     request.addfinalizer(lambda: button.delete_if_exists())
 
-    navigate_to(testing_vm, 'Details')
+    navigate_to(create_vm, 'Details')
 
     class TestDropdownView(InfraVmSummaryView):
         group = Dropdown(grp.text)
@@ -122,7 +107,7 @@ def test_vm_retire_extend(appliance, request, testing_vm, soft_assert):
 
     # Check that the WebUI updates with the correct date
     wait_for(
-        lambda: testing_vm.retirement_date >= extended_retirement_date.strftime(vm_retire_date_fmt),
+        lambda: create_vm.retirement_date >= extended_retirement_date.strftime(vm_retire_date_fmt),
         num_sec=60,
         message="Check for extension of the VM retirement date by {} days".format(
             extend_duration_days)
@@ -339,7 +324,8 @@ def vm_folder(provider):
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.provider([VMwareProvider], selector=ONE)
 @pytest.mark.meta(automates=[1716858])
-def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_move_vm_into_folder(appliance, vm_folder, create_vm, custom_instance):
     """
      Bugzilla:
          1716858
@@ -352,14 +338,14 @@ def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
     """
     script = dedent(
         f"""
-        vm = $evm.vmdb('vm').find_by_name('{testing_vm.name}')
+        vm = $evm.vmdb('vm').find_by_name('{create_vm.name}')
         folder = $evm.vmdb('EmsFolder').find_by(:name => '{vm_folder.name}')
         vm.move_into_folder(folder) unless folder.nil?
         """
     )
     instance = custom_instance(ruby_code=script)
 
-    view = navigate_to(testing_vm, "Details")
+    view = navigate_to(create_vm, "Details")
     tree_path = view.sidebar.vmstemplates.tree.currently_selected
 
     simulate(
@@ -378,7 +364,7 @@ def test_move_vm_into_folder(appliance, vm_folder, testing_vm, custom_instance):
     tree_path.append(vm_folder.name)
 
     # Navigating to Vms details page and checking folder of the Vm in accordion of CFME UI
-    view = navigate_to(testing_vm, "Details")
+    view = navigate_to(create_vm, "Details")
 
     # Checking new folder appeared
     def _check():
