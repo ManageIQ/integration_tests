@@ -18,14 +18,19 @@ pytestmark = [
     )
 ]
 
+DELAY = 15
+TIMEOUT = 1500
+
 
 def wait_for_power_state(vms_collection, instance_name, power_state):
     wait_for(lambda: vms_collection.get(name=instance_name)["power_state"] == power_state, delay=15,
-             timeout=900, handle_exception=True)
+             timeout=TIMEOUT, handle_exception=True)
+
 
 def wait_for_deleted(collection, entity_name):
     wait_for(lambda: all([False if e.name == entity_name else True for e in collection.all]),
-             delay=15, timeout=900, handle_exception=True)
+             delay=15, timeout=TIMEOUT, handle_exception=True)
+
 
 def cleanup_if_exists(entity):
     try:
@@ -72,7 +77,7 @@ def test_targeted_refresh_instance(appliance, provider, request):
     instance.rename(random_vm_name('refr'))
     instance.change_type('t1.small')
     wait_for(lambda: flavors_collection.get(id=vms_collection.get(name=instance.name)["flavor_id"])
-        ["name"] == instance.type, delay=15, timeout=900, handle_exception=True)
+        ["name"] == instance.type, delay=15, timeout=TIMEOUT, handle_exception=True)
 
     # start
     instance.start()
@@ -107,7 +112,7 @@ def test_ec2_targeted_refresh_floating_ip():
     pass
 
 
-def test_ec2_targeted_refresh_network(appliance, provider, request):
+def test_targeted_refresh_network(appliance, provider, request):
     """
     AWS naming is VPC
 
@@ -122,7 +127,24 @@ def test_ec2_targeted_refresh_network(appliance, provider, request):
             2. Network UPDATE
             3. Network DELETE
     """
-    pass
+    # create
+    network = provider.mgmt.create_network()
+    if not network:
+        pytest.fail("Network wasn't successfully created using API!")
+    request.addfinalizer(lambda: cleanup_if_exists(network))
+    network_collection = appliance.rest_api.collections.cloud_networks
+    wait_for(lambda: network_collection.get(ems_ref=network.uuid), delay=15, timeout=TIMEOUT,
+             handle_exception=True)
+
+    # update - change name
+    new_name = fauxfactory.gen_alpha()
+    network.rename(new_name)
+    wait_for(lambda: network_collection.get(name=new_name), delay=15, timeout=TIMEOUT,
+             handle_exception=True)
+
+    # delete
+    network.delete()
+    wait_for_deleted(network_collection, new_name)
 
 
 @pytest.mark.manual
@@ -174,7 +196,6 @@ def test_ec2_targeted_refresh_stack():
         caseimportance: medium
         initialEstimate: 1/2h
         startsin: 5.9
-
         testSteps:
             1. Stack CREATE
             2. Stack DELETE
@@ -212,31 +233,31 @@ def test_targeted_refresh_volume(appliance, provider, request):
     if not volume:
         pytest.fail("Volume wasn't successfully created using API!")
     request.addfinalizer(lambda: cleanup_if_exists(volume))
-    wait_for(lambda: volume_collection.get(name=volume_name), delay=15, timeout=900,
+    wait_for(lambda: volume_collection.get(name=volume_name), delay=15, timeout=TIMEOUT,
              handle_exception=True)
     # update name
     new_volume_name = fauxfactory.gen_alpha()
     volume.rename(new_volume_name)
-    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=900,
+    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
              handle_exception=True)
     # update size
     if not BZ(1754874, forced_streams=["5.10", "5.11"]).blocks:
         new_size = 20
         volume.resize(new_size)
         wait_for(lambda: volume_collection.get(name=new_volume_name).size ==
-                        (new_size * 1024 * 1024 * 1024), delay=15, timeout=900,
-                handle_exception=True)
+                (new_size * 1024 * 1024 * 1024), delay=15, timeout=TIMEOUT, handle_exception=True)
     # attach
     volume.attach(instance.uuid)
-    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=900,
+    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
              handle_exception=True)
-    #detach
+    # detach
     volume.detach(instance.uuid)
-    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=900,
+    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
              handle_exception=True)
     # delete
-    wait_for(lambda: volume.cleanup(), delay=15, timeout=300, handle_exception=True)
+    wait_for(lambda: volume.cleanup(), delay=15, timeout=TIMEOUT, handle_exception=True)
     wait_for_deleted(volume_collection, new_volume_name)
+
 
 @pytest.mark.manual
 def test_ec2_targeted_refresh_subnet():
@@ -295,14 +316,13 @@ def test_ec2_targeted_refresh_security_group():
 @pytest.mark.manual
 def test_targeted_refresh_template():
     """
+    AWS naming is AMI
     Polarion:
         assignee: mmojzis
         casecomponent: Cloud
         caseimportance: high
         initialEstimate: 2/3h
         startsin: 5.9
-
-        # AWS naming is AMI
         testSteps:
             1. Template CREATE
             2. Template UPDATE
