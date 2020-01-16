@@ -244,12 +244,12 @@ def test_rest_plan_create(request, appliance, get_clusters, get_datastores, get_
     Tests migration plan create via API
 
     Polarion:
-    assignee: sshveta
-    casecomponent: V2V
-    testtype: functional
-    initialEstimate: 1/8h
-    startsin: 5.9
-    tags: V2V
+        assignee: sshveta
+        casecomponent: V2V
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.9
+        tags: V2V
     """
     transformation_mappings = appliance.rest_api.collections.transformation_mappings.action.create(
         name=fauxfactory.gen_alphanumeric(),
