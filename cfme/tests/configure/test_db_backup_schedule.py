@@ -5,8 +5,10 @@ import fauxfactory
 import pytest
 from dateutil.relativedelta import relativedelta
 
+from cfme import test_requirements
 from cfme.utils import conf
 from cfme.utils import testgen
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.pretty import Pretty
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
@@ -135,7 +137,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(automates=[1678223, 1643106])
+@pytest.mark.meta(automates=[1678223, 1643106, 1732417])
 def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance):
     """ Test scheduled one-type backup on given machines using smb/nfs
 
@@ -196,16 +198,18 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
     request.addfinalizer(delete_sched_and_files)
     # ----
 
-    # ---- Wait for schedule to run
-    # check last date at schedule's table
-    wait_for(
-        lambda: sched.last_run_date != '',
-        num_sec=600,
-        delay=30,
-        fail_func=sched.browser.refresh,
-        message='Schedule failed to run in 10mins from being set up'
-    )
-    # ----
+    with LogValidator("/var/www/miq/vmdb/log/evm.log",
+                      failure_patterns=[f'ERROR']):
+        # ---- Wait for schedule to run
+        # check last date at schedule's table
+        wait_for(
+            lambda: sched.last_run_date != '',
+            num_sec=600,
+            delay=30,
+            fail_func=sched.browser.refresh,
+            message='Schedule failed to run in 10mins from being set up'
+        )
+        # ----
 
     # ---- Check if the db backup file exists
     with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
@@ -227,3 +231,30 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
         )
 
     # ----
+
+
+@pytest.mark.manual
+@test_requirements.configuration
+@pytest.mark.meta(coverage=[1703278])
+def test_scheduled_backup_handles_big_db():
+    """ Tests whether the scheduled db backups handle big DB. It should write
+    directly to the target endpoint -- it should not be writing to, for
+    example, /tmp.
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        caseimportance: high
+        initialEstimate: 1/2h
+        startsin: 5.11
+        testSteps:
+            1. Get a big dump of big DB. It needs to be bigger than a free
+               space on /tmp of the appliance.
+            2. Schedule the backup
+        expectedResults:
+            1. After scheduled time, backup should be on the target share. No
+               ERROR in the log.
+    Bugzila:
+        1703278
+    """
+    pass
