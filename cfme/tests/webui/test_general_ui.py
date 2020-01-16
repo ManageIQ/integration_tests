@@ -285,7 +285,7 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
 
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.tier(2)
-def test_welcoming_page(appliance, has_no_providers):
+def test_welcoming_page(temp_appliance_preconfig):
     """This test case checks the new welcoming page when there is no provider in the appliance
 
     Polarion:
@@ -297,6 +297,7 @@ def test_welcoming_page(appliance, has_no_providers):
     Bugzilla:
         1678190
     """
+    appliance = temp_appliance_preconfig
     appliance.server.login()
     view = appliance.server.create_view(InfraProvidersView)
     assert view.add_button.is_displayed
