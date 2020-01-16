@@ -201,7 +201,7 @@ class KeyPair(BaseEntity, Taggable):
         if not fill_result:
             view.form.cancel_button.click()
             view = self.create_view(navigator.get_class(self, 'Details').VIEW)
-            view.flash.assert_success_message('Set Ownership was cancelled by the user')
+            view.flash.assert_no_error()
             return
 
         # Only if the form changed

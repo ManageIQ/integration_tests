@@ -28,8 +28,7 @@ def keypair(appliance, provider):
     yield key
 
 
-@pytest.mark.meta(blockers=[BZ(1718833, forced_streams=["5.10", "5.11"],
-                               unblock=lambda provider: provider.one_of(OpenStackProvider))])
+@pytest.mark.meta(automates=[BZ(1718833)])
 def test_keypair_crud(appliance, provider):
     """ This will test whether it will create new Keypair and then deletes it.
     Polarion:
