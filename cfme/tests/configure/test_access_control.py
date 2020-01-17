@@ -115,48 +115,6 @@ def setup_openldap_user_group(appliance, two_child_tenants, openldap_auth_provid
         group.delete_if_exists()
 
 
-@pytest.fixture(scope='module')
-def child_tenant(appliance):
-    child_tenant = appliance.collections.tenants.create(
-        name=fauxfactory.gen_alphanumeric(15, start="child_tenant_"),
-        description='tenant description',
-        parent=appliance.collections.tenants.get_root_tenant()
-    )
-    yield child_tenant
-    child_tenant.delete_if_exists()
-
-
-@pytest.fixture(scope='module')
-def tenant_role(appliance, request):
-    role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
-    tenant_role = role.copy()
-
-    # Note: BZ 1278484 - tenant admin role has no permissions to create new roles
-    with update(tenant_role):
-        if appliance.version < '5.11':
-            tenant_role.product_features = [
-                (['Everything', 'Settings', 'Configuration', 'Settings'], True)
-            ]
-        else:
-            tenant_role.product_features = [
-                (['Everything', 'Main Configuration', 'Settings'], True)
-            ]
-    yield tenant_role
-    tenant_role.delete_if_exists()
-
-
-@pytest.fixture(scope='module')
-def new_tenant_admin(appliance, request, child_tenant, tenant_role):
-    group = appliance.collections.groups.create(
-        description=fauxfactory.gen_alphanumeric(15, start="tenant_grp_"), role=tenant_role.name,
-        tenant=f'My Company/{child_tenant.name}')
-
-    tenant_admin = new_user(appliance, group, name='tenant_admin_user')
-    yield tenant_admin
-    tenant_admin.delete_if_exists()
-    group.delete_if_exists()
-
-
 @pytest.fixture(scope='function')
 def check_item_visibility(tag):
     def _check_item_visibility(item, user_restricted):
@@ -1590,7 +1548,8 @@ def test_superadmin_tenant_admin_crud(appliance):
 
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
-def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
+def test_tenantadmin_group_crud(child_tenant_admin_user, tenant_role, child_tenant, request,
+        appliance):
     """
     Perform CRUD operations on groups as Tenant administrator.
 
@@ -1605,9 +1564,9 @@ def test_tenantadmin_group_crud(new_tenant_admin, tenant_role, child_tenant, req
             1. Create new tenant admin user and assign user to group EvmGroup-tenant_administrator
             2. As Tenant administrator, create new group, update group and delete group.
     """
-    with new_tenant_admin:
+    with child_tenant_admin_user:
         navigate_to(appliance.server, 'LoggedIn')
-        assert appliance.server.current_full_name() == new_tenant_admin.name
+        assert appliance.server.current_full_name() == child_tenant_admin_user.name
 
         group_collection = appliance.collections.groups
         group = group_collection.create(
@@ -1657,7 +1616,8 @@ def test_tenant_unique_catalog(appliance, request, catalog_obj):
 
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
-def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, request, appliance):
+def test_tenantadmin_user_crud(child_tenant_admin_user, tenant_role, child_tenant, request,
+        appliance):
     """
     As a Tenant Admin, I want to be able to create users in my tenant.
     Polarion:
@@ -1681,11 +1641,11 @@ def test_tenantadmin_user_crud(new_tenant_admin, tenant_role, child_tenant, requ
             must be created by superadministrator. In 5.5.0.13 after giving additional permissions
             to tenant_admin,able to create new roles
     """
-    with new_tenant_admin:
+    with child_tenant_admin_user:
         navigate_to(appliance.server, 'LoggedIn')
-        assert appliance.server.current_full_name() == new_tenant_admin.name
+        assert appliance.server.current_full_name() == child_tenant_admin_user.name
 
-        user = new_user(appliance, new_tenant_admin.groups[0])
+        user = new_user(appliance, child_tenant_admin_user.groups[0])
         request.addfinalizer(user.delete_if_exists)
         assert user.exists
 

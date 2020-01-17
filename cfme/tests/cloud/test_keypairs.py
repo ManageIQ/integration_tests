@@ -11,8 +11,9 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 pytestmark = [
+    pytest.mark.tier(3),
     test_requirements.cloud,
-    pytest.mark.usefixtures('setup_provider_modscope'),
+    pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     pytest.mark.provider([EC2Provider, OpenStackProvider], scope="module")
 ]
 
@@ -27,9 +28,7 @@ def keypair(appliance, provider):
     yield key
 
 
-@pytest.mark.meta(blockers=[BZ(1718833, forced_streams=["5.10", "5.11"],
-                               unblock=lambda provider: provider.one_of(OpenStackProvider))])
-@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[BZ(1718833)])
 def test_keypair_crud(appliance, provider):
     """ This will test whether it will create new Keypair and then deletes it.
     Polarion:
@@ -52,7 +51,6 @@ def test_keypair_crud(appliance, provider):
     assert not keypair.exists
 
 
-@pytest.mark.tier(3)
 def test_keypair_crud_with_key(provider, appliance):
     """ This will test whether it will create new Keypair and then deletes it.
     Polarion:
@@ -78,7 +76,6 @@ def test_keypair_crud_with_key(provider, appliance):
     assert not keypair.exists
 
 
-@pytest.mark.tier(3)
 def test_keypair_create_cancel(provider, appliance):
     """ This will test cancelling on adding a keypair
     Polarion:
@@ -97,7 +94,6 @@ def test_keypair_create_cancel(provider, appliance):
     assert not keypair.exists
 
 
-@pytest.mark.tier(3)
 def test_keypair_create_name_validation(provider, appliance):
     """ This will test validating that key pair without name cannot be created.
     Polarion:
@@ -126,7 +122,6 @@ def test_keypair_create_name_validation(provider, appliance):
                                   'Keypair name contains unsafe characters'.format(keypair_name))
 
 
-@pytest.mark.tier(3)
 def test_keypair_create_invalid_key_validation(provider, appliance):
     """ This will test validating that key pair with invalid public key cannot be created.
     Polarion:
@@ -190,3 +185,35 @@ def test_download_private_key(keypair):
         initialEstimate: 1/4h
     """
     keypair.download_private_key()
+
+
+@pytest.mark.meta(automates=[1741635, 1747179])
+@test_requirements.multi_tenancy
+def test_keypair_visibility_in_tenants(appliance, child_tenant_admin_user):
+    """
+    Test to verify key pair visibility in tenants based on key pair ownership
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: Configuration
+        caseimportance: high
+        tags: cfme_tenancy
+        initialEstimate: 1/4h
+        testSteps:
+            1. Copy the EvmRole_tenant_admin role to a new role (Since this role does not have the
+               Auth Key Pairs feature enabled).
+            2. Enable the Auth Key Pairs feature for the new role.
+            3. Add either new or existing group to the newly created tenant admin role.
+               (Steps 1-3 are done through fixtures)
+            4. If the added group belongs to a child tenant, then the key pair is only visible to
+               users in that group/child tenant and also users from groups that belong to parent
+               tenants.
+    """
+    view = navigate_to(appliance.collections.cloud_keypairs, 'All')
+    key_pair = view.entities.get_first_entity().data['name']
+    key_pair_obj = appliance.collections.cloud_keypairs.instantiate(key_pair)
+    key_pair_obj.set_ownership(group=child_tenant_admin_user.groups[0])
+    view.flash.assert_success_message('Ownership saved for selected Key Pair')
+
+    with child_tenant_admin_user:
+        assert key_pair_obj.exists
