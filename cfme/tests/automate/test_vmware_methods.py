@@ -9,7 +9,6 @@ from widgetastic_patternfly import Dropdown
 from cfme import test_requirements
 from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -47,28 +46,9 @@ def testing_group(appliance):
     group.delete_if_exists()
 
 
-@pytest.fixture(scope="function")
-def testing_vm(setup_provider, provider):
-    collection = provider.appliance.provider_based_collection(provider)
-    try:
-        template_name = provider.data['templates']['full_template']['name']
-    except KeyError:
-        pytest.skip('Unable to identify full_template for provider: {}'.format(provider))
-
-    vm = collection.instantiate(
-        random_vm_name("ae-hd"),
-        provider,
-        template_name=template_name
-    )
-    try:
-        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        yield vm
-    finally:
-        vm.cleanup_on_provider()
-
-
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_vmware_vimapi_hotadd_disk(
-        appliance, request, testing_group, testing_vm, domain, cls):
+        appliance, request, testing_group, create_vm, domain, cls):
     """Tests hot adding a disk to vmware vm. This test exercises the `VMware_HotAdd_Disk` method,
        located in `/Integration/VMware/VimApi`
 
@@ -121,7 +101,7 @@ def test_vmware_vimapi_hotadd_disk(
     request.addfinalizer(button.delete_if_exists)
 
     def _get_disk_capacity():
-        view = testing_vm.load_details(refresh=True)
+        view = create_vm.load_details(refresh=True)
         return view.entities.summary('Datastore Allocation Summary').get_text_of('Total Allocation')
 
     original_disk_capacity = _get_disk_capacity()

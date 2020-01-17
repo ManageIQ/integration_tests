@@ -88,7 +88,8 @@ def test_manage_nsg_group(appliance, provider, register_event):
 
 
 @pytest.mark.meta(blockers=[BZ(1724312), BZ(1733383)], automates=[1724312, 1733383])
-def test_vm_capture(appliance, request, provider, register_event):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_vm_capture(appliance, request, create_vm, provider, register_event):
     """
     tests that generalize and capture vm azure events are received and parsed by CFME
 
@@ -106,23 +107,13 @@ def test_vm_capture(appliance, request, provider, register_event):
         caseimportance: medium
     """
 
-    vm = appliance.collections.cloud_instances.instantiate(
-        random_vm_name(context='capture'), provider)
-
-    if not vm.exists_on_provider:
-        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        vm.refresh_relationships()
-
-    # # deferred delete vm
-    request.addfinalizer(vm.cleanup_on_provider)
-
     def cmp_function(_, data):
         """ comparison function, data is expected to be a dictionary containing the keys below """
         if appliance.version < '5.10':
-            compare = (data['resourceId'].endswith(vm.name) and
+            compare = (data['resourceId'].endswith(create_vm.name) and
                        data['status']['value'] == 'Succeeded')
         else:
-            compare = data['resourceId'].endswith(vm.name)
+            compare = data['resourceId'].endswith(create_vm.name)
 
         return compare
 
@@ -136,11 +127,12 @@ def test_vm_capture(appliance, request, provider, register_event):
     register_event(full_data_attr, source='AZURE', event_type='virtualMachines_capture_EndRequest')
 
     # capture vm
-    vm.mgmt.capture(container='templates', image_name=vm.name)
+    create_vm.mgmt.capture(container='templates', image_name=create_vm.name)
 
     # delete remaining image
     # removing both json and vhd files, find_templates returns blob objects
-    blob_images = provider.mgmt.find_templates(container='system', name=vm.name, only_vhd=False)
+    blob_images = provider.mgmt.find_templates(container='system',
+        name=create_vm.name, only_vhd=False)
     logger.info('Found blobs on system container: %s', blob_images)
     for blob in blob_images:
         logger.info('Deleting blob %s', blob)
