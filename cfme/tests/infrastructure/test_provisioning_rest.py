@@ -7,8 +7,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import query_resource_attributes
-from cfme.utils.version import LOWEST
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 
@@ -196,10 +194,14 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
         initialEstimate: 1/4h
     """
     def check_one_approval_mail_received():
-        return len(smtp_test.get_emails(subject_like=VersionPicker({
-            LOWEST: "%%Your Virtual Machine configuration was Approved%%",
-            "5.10": "%%Your Virtual Machine Request was Approved%%"
-        }).pick())) == 1
+        return (
+            len(
+                smtp_test.get_emails(
+                    subject_like="%%Your Virtual Machine Request was Approved%%"
+                )
+            )
+            == 1
+        )
 
     def check_one_completed_mail_received():
         return len(smtp_test.get_emails(
@@ -208,8 +210,9 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
     request.addfinalizer(lambda: clean_vm(appliance, provider, vm_name))
 
     vm_name = provision_data["vm_fields"]["vm_name"]
-    memory = int(provision_data["vm_fields"]["vm_memory"])
-    provision_data["vm_fields"]["vm_memory"] = str(memory / 2)
+    if not provider.one_of(RHEVMProvider):
+        memory = int(provision_data["vm_fields"]["vm_memory"])
+        provision_data["vm_fields"]["vm_memory"] = str(memory / 2)
     provision_data["vm_fields"]["number_of_cpus"] += 1
 
     appliance.rest_api.collections.provision_requests.action.create(**provision_data)

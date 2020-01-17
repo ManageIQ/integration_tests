@@ -10,7 +10,6 @@ from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.ftp import FTPException
@@ -512,18 +511,12 @@ def test_reports_online_vms(appliance, setup_provider, provider, request, vm):
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.uncollectif(
-    lambda case_sensitive: not case_sensitive and BZ("1741588", forced_streams=["5.11"]).blocks,
-    reason="Case Insensitive filtering is still a WIP",
-)
-@pytest.mark.parametrize(
-    "case_sensitive", [True, False], ids=["case-sensitive", "case-insensitive"]
-)
-@pytest.mark.meta(automates=[1678150, 1741588])
-def test_reports_filter_content(case_sensitive, set_and_get_tenant_quota, tenant_report):
+@pytest.mark.meta(automates=[1678150])
+def test_reports_filter_content(set_and_get_tenant_quota, tenant_report):
     """
     Bugzilla:
         1678150
+        1741588
 
     Polarion:
         assignee: pvala
@@ -540,7 +533,7 @@ def test_reports_filter_content(case_sensitive, set_and_get_tenant_quota, tenant
             1.
             2. Content must be filtered.
     """
-    search_term = "in GB" if case_sensitive else "in gb"
+    search_term = "in GB"
     table = tenant_report.filter_report_content(field="Quota Name", search_term=search_term)
     expected = ["Allocated Memory in GB", "Allocated Storage in GB"]
     got = [row["Quota Name"].text for row in table.rows()]
