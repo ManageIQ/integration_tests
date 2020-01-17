@@ -136,11 +136,13 @@ class ConfigManagementCollectionView(BaseLoggedInPage):
     @property
     def in_config(self):
         """Determine if we're in the config section"""
-        object_type = getattr(self.context['object'], 'type', None)
+        object_type = getattr(self.context['object'], 'type_name', None)
         if object_type == 'ansible_tower':
             nav_chain = ['Automation', 'Ansible Tower', 'Explorer']
-        else:
+        elif object_type == "satellite":
             nav_chain = ['Configuration', 'Management']
+        else:
+            nav_chain = []
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == nav_chain
@@ -153,11 +155,13 @@ class ConfigManagementView(BaseLoggedInPage):
     @property
     def in_config(self):
         """Determine if we're in the config section"""
-        object_type = getattr(self.context['object'], 'type', None)
+        object_type = getattr(self.context['object'], 'type_name', None)
         if object_type == 'ansible_tower':
             nav_chain = ['Automation', 'Ansible Tower', 'Explorer']
-        else:
+        elif object_type == "satellite":
             nav_chain = ['Configuration', 'Management']
+        else:
+            nav_chain = []
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == nav_chain

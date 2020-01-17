@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
+from widgetastic.widget import Text
 
 from cfme import test_requirements
 from cfme.base.ui import LoginPage
@@ -13,6 +14,7 @@ from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.common.provider_views import ProviderDetailsView
 from cfme.common.provider_views import ProviderTimelinesView
+from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
 from cfme.infrastructure.datastore import ProviderAllDatastoresView
@@ -25,6 +27,8 @@ from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.networks.provider import NetworkProvider
+from cfme.physical.provider import PhysicalProvider
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -42,6 +46,16 @@ ALL_OPTIONS = {
         "VMs (": ProviderVmsView,
         "Templates (": ProviderTemplatesView,
     },
+}
+
+PROVIDERS = {
+    AnsibleTowerProvider: "automation_management_providers",
+    SatelliteProvider: "configuration_management_providers",
+    NetworkProvider: "network_providers",
+    InfraProvider: "infrastructure_providers",
+    CloudProvider: "cloud_providers",
+    PhysicalProvider: "infrastructure_providers",
+    ContainersProvider: "containers_providers",
 }
 
 
@@ -565,6 +579,67 @@ def test_infrastructure_provider_left_panel_titles(
         accordion.tree.select(partial_match(panel))
         test_view = provider.create_view(ALL_OPTIONS[option][panel])
         soft_assert(test_view.is_displayed, f"{test_view} not displayed.")
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize("provider", PROVIDERS)
+@pytest.mark.meta(automates=[1741030, 1783208])
+def test_provider_documentation(has_no_providers, provider, request):
+    """
+    Bugzilla:
+        1741030
+        1783208
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/18h
+        startsin: 5.11
+        setup:
+            1. Take a fresh appliance with no provider
+        testSteps:
+            1. Log into the appliance, navigate to the provider All page
+                and check where the anchor link provided in
+                `Learn more about this in the documentation.` points to.
+        expectedResults:
+            1. Link must point to downstream documentation and not upstream.
+    """
+    url = (
+        "https://access.redhat.com/documentation/en-us/red_hat_cloudforms/5.0/html"
+        f"/managing_providers/{PROVIDERS[provider]}"
+    )
+    destination = "AllOfType" if provider in (AnsibleTowerProvider, SatelliteProvider) else "All"
+
+    view = navigate_to(provider, destination)
+
+    initial_count = len(view.browser.window_handles)
+    main_window = view.browser.current_window_handle
+
+    href = Text(
+        view, locator='//*[@id="main_div"]//a[contains(normalize-space(.), "in the documentation")]'
+    )
+    href.click()
+    wait_for(
+        lambda: len(view.browser.window_handles) > initial_count,
+        timeout=30,
+        message="Check for window open",
+    )
+    open_url_window = (set(view.browser.window_handles) - {main_window}).pop()
+    view.browser.switch_to_window(open_url_window)
+
+    @request.addfinalizer
+    def _reset_window():
+        view.browser.close_window(open_url_window)
+        view.browser.switch_to_window(main_window)
+
+    # TODO: Remove this once `ensure_page_safe()` is equipped to handle WebDriverException
+    # When a new window opens, URL takes time to load, this will act as a workaround.
+    import time
+    time.sleep(5)
+
+    assert url in view.browser.url
 
 
 @pytest.mark.manual
