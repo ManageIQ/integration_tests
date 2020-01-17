@@ -153,6 +153,12 @@ containers = pytest.mark.requirement(
     assignee_id='juwatts',
 )
 
+cockpit = pytest.mark.requirement(
+    "Cockpit",
+    description='Cockpit web console for VMs',
+    assignee_id='nansari'
+)
+
 custom_button = pytest.mark.requirement(
     "Custom Buttons",
     description='Custom Buttons and Custom Groups',
