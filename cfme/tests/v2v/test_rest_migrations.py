@@ -4,6 +4,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.fixtures.templates import Templates
+from cfme.fixtures.v2v_fixtures import get_vm
 from cfme.fixtures.v2v_fixtures import set_conversion_host_api
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -225,3 +227,54 @@ def test_rest_conversion_host_crud(appliance, source_provider, provider, transfo
             delay=3,
             message="Waiting for conversion host configuration task to be deleted")
     assert not conversion_collection.all
+
+
+@pytest.mark.provider([RHEVMProvider], selector=ONE_PER_VERSION,
+                      required_flags=["v2v"], scope='module')
+@pytest.mark.parametrize(
+    "source_type, dest_type, template_type",
+    [
+        ["nfs", "iscsi", Templates.RHEL7_MINIMAL]
+    ]
+)
+def test_rest_plan_create(request, appliance, get_clusters, get_datastores, get_networks,
+                          source_type, dest_type, template_type, source_provider
+                          ):
+    """
+    Tests migration plan create via API
+
+    Polarion:
+        assignee: sshveta
+        casecomponent: V2V
+        testtype: functional
+        initialEstimate: 1/8h
+        startsin: 5.9
+        tags: V2V
+    """
+    transformation_mappings = appliance.rest_api.collections.transformation_mappings.action.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        state="draft",
+        transformation_mapping_items=[get_clusters, get_datastores, get_networks])[0]
+
+    vm_obj = get_vm(request, appliance, source_provider, Templates.RHEL7_MINIMAL)
+    vm = appliance.rest_api.collections.vms.get(name=vm_obj.name)
+
+    migration_plan = appliance.rest_api.collections.service_templates.action.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        prov_type="generic_transformation_plan",
+        config_info={"transformation_mapping_id": transformation_mappings.id,
+                     "pre_service_id": "",
+                     "post_service_id": "",
+                     "actions": [{"vm_id": vm.id,
+                                  "post_service": "false",
+                                  "pre_service": "false",
+                                  }]})[0]
+
+    @request.addfinalizer
+    def _cleanup():
+        if migration_plan.exists:
+            migration_plan.action.delete()
+
+    assert migration_plan.exists
