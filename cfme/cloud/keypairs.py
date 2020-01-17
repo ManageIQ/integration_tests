@@ -10,6 +10,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import Taggable
+from cfme.common.vm_views import SetOwnershipView
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import KeyPairNotFound
 from cfme.modeling.base import BaseCollection
@@ -184,6 +185,41 @@ class KeyPair(BaseEntity, Taggable):
         view.toolbar.configuration.item_select('Download private key')
         view.flash.assert_no_error()
 
+    def set_ownership(self, owner=None, group=None, cancel=False, reset=False):
+        """Set keypair ownership
+
+        Args:
+            user (User): user object for ownership
+            group (Group): group object for ownership
+            click_cancel (bool): Whether to cancel form submission
+            click_reset (bool): Whether to reset form after filling
+        """
+        view = navigate_to(self, 'SetOwnership', wait_for_view=0)
+        fill_result = view.form.fill({
+            'user_name': owner.name if owner else None,
+            'group_name': group.description if group else None})
+        if not fill_result:
+            view.form.cancel_button.click()
+            view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+            view.flash.assert_no_error()
+            return
+
+        # Only if the form changed
+        if reset:
+            view.form.reset_button.click()
+            view.flash.assert_message('All changes have been reset', 'warning')
+            # Cancel after reset
+            assert view.form.is_displayed
+            view.form.cancel_button.click()
+        elif cancel:
+            view.form.cancel_button.click()
+            view.flash.assert_no_error()
+        else:
+            # save the form
+            view.form.save_button.click()
+            view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+            view.flash.assert_no_error()
+
 
 @attr.s
 class KeyPairCollection(BaseCollection):
@@ -251,6 +287,15 @@ class Details(CFMENavigateStep):
             raise KeyPairNotFound
 
         item.click()
+
+
+@navigator.register(KeyPair, 'SetOwnership')
+class SetOwnership(CFMENavigateStep):
+    VIEW = SetOwnershipView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
 
 
 @navigator.register(KeyPairCollection, 'Add')
