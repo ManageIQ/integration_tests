@@ -1,5 +1,3 @@
-from random import sample
-
 import fauxfactory
 import pytest
 from widgetastic.utils import partial_match
