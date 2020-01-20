@@ -501,17 +501,40 @@ def test_appliance_console_external_auth_all(configured_appliance):
         caseimportance: high
         casecomponent: Auth
         initialEstimate: 1/4h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. RETURN clears info screen.
+            3. press "13" to "Update External Authentication Options"
+            4. Press "1" to "Enable Single Sign-On"
+            5. Press "2" to "Enable SAML"
+            6. press "4" to "Disable Local Login for SAML or OIDC"
+            7. press "5" to "Apply updates"
+            8. Press "1" to "Disable Single Sign-On"
+            9. Press "2" to "Disable SAML"
+            10. press "4" to "Enable Local Login for SAML or OIDC"
+            11. press "5" to "Apply updates"
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7. Verify log messages
+            8.
+            9.
+            10.
+            11. Verify log messages
     """
-
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*sso_enabled to true.*',
                                               '.*saml_enabled to true.*',
                                               '.*local_login_disabled to true.*'],
                             hostname=configured_appliance.hostname)
     evm_tail.start_monitoring()
-    command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),
+    command_set = ('ap', RETURN, TimedCommand('13', 40), '1', '2', '4', TimedCommand('5', 40),
                    RETURN, RETURN)
-    configured_appliance.appliance_console.run_commands(command_set)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     assert evm_tail.validate("30s")
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
@@ -521,9 +544,9 @@ def test_appliance_console_external_auth_all(configured_appliance):
                             hostname=configured_appliance.hostname)
 
     evm_tail.start_monitoring()
-    command_set = ('ap', RETURN, TimedCommand('13', 20), '1', '2', TimedCommand('5', 20),
+    command_set = ('ap', RETURN, TimedCommand('13', 40), '1', '2', '4', TimedCommand('5', 40),
                    RETURN, RETURN)
-    configured_appliance.appliance_console.run_commands(command_set)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     assert evm_tail.validate(wait="30s")
 
 
