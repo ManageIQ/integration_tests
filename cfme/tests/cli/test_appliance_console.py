@@ -1250,28 +1250,6 @@ def test_appliance_console_restore_db_network_negative():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_cli_rh_registration():
-    """
-    Test RHSM registration through cli and check if changes are made
-    within the ui
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-        testSteps:
-            1. Provision appliace
-            2. SSH to it and run "subscription-manager register"
-        expectedResults:
-            1.
-            2. Check changes within the ui
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_appliance_console_extend_storage_negative():
     """
@@ -1392,7 +1370,7 @@ def test_appliance_console_key_fetch_negative(temp_appliance_preconfig_funcscope
         "Overriding Encryption Key should fail when we enter invalid IP address")
 
 
-@pytest.mark.manual
+@pytest.mark.manual("manualonly")
 @pytest.mark.tier(1)
 def test_appliance_console_negative():
     """
