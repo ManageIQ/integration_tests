@@ -32,11 +32,19 @@ def create_vm(provider, vm_name):
 
 
 def is_dicts_same(dict1, dict2):
-    logger.info("Comparing two dictionaries dict1: {%s}\n dict2:{%s}" % (dict1, dict2))
-    if set(dict1) != set(dict2):
+    logger.info(f"Comparing two dictionaries dict1: {dict1}\n dict2:{dict2}")
+    dict1_keys = dict1.keys()
+    dict2_keys = dict2.keys()
+    if not len(dict1_keys) == len(dict2_keys):
         return False
-    for key in dict1.keys():
-        if set(dict1[key]) != set(dict2[key]):
+    for key in dict1_keys:
+        if key in dict2_keys:
+            if not len(dict1[key]) == len(dict2[key]):
+                return False
+            for value in dict1[key]:
+                if not (value in dict2[key]):
+                    return False
+        else:
             return False
     return True
 
@@ -337,7 +345,7 @@ def test_replication_network_dropped_packets():
 
 
 @pytest.mark.tier(1)
-def test_replication_global_region_dashboard(request, setup_replication):
+def test_replication_global_region_dashboard(setup_replication):
     """
     Global dashboard show remote data
 
@@ -360,25 +368,22 @@ def test_replication_global_region_dashboard(request, setup_replication):
 
     new_vm_name = fauxfactory.gen_alphanumeric(start="test_rep_dashboard", length=25).lower()
     vm = create_vm(provider=remote_provider, vm_name=new_vm_name)
-    request.addfinalizer(vm.cleanup_on_provider)
     data_items = ('EVM: Recently Discovered Hosts', 'EVM: Recently Discovered VMs',
                   'Top Storage Consumers')
 
     remote_dashboard = remote_app.collections.dashboards.instantiate(name="Default Dashboard")
     remote_view = navigate_to(remote_app.server, "Dashboard")
+    remote_view.browser.refresh()
     remote_dashboard = remote_view.dashboards("Default Dashboard")
     remote_app_data = global_app_data = {}
 
     def get_tabel_data(widget):
         return [row.name.text for row in widget.contents]
 
-    def data_check(widget):
-        return bool(get_tabel_data(widget))
-
     for table in data_items:
         remote_widget = remote_dashboard.widgets(table)
         wait_for(
-            data_check, func_args=[remote_widget], delay=10, num_sec=900,
+            lambda: bool(get_tabel_data(remote_widget)), delay=10, num_sec=900,
             fail_func=remote_view.browser.refresh,
             message=f"Waiting for data item of {table} table."
         )
@@ -386,22 +391,27 @@ def test_replication_global_region_dashboard(request, setup_replication):
         remote_app_data[table] = chart_data
 
     global_view = navigate_to(global_app.server, "Dashboard")
+    global_view.browser.refresh()
     global_dashboard = global_view.dashboards("Default Dashboard")
+    global_app_data = {}
     for table in data_items:
         global_widget = global_dashboard.widgets(table)
         wait_for(
-            data_check, func_args=[global_widget], delay=10, num_sec=900,
+            lambda: bool(get_tabel_data(global_widget)), delay=10, num_sec=900,
             fail_func=global_view.browser.refresh,
             message=f"Waiting for data item of {table} table."
         )
         chart_data = get_tabel_data(global_widget)
         global_app_data[table] = chart_data
 
-    # TODO(ndhandre): Widget not implemented so some widget not checking in this test case they are
+    # TODO(ndhandre): Widget not implemented so some widget not checking in this test case
     #  'Vendor and Guest OS Chart', 'Top Memory Consumers (weekly)', 'Top CPU Consumers (weekly)',
     #  'Virtual Infrastructure Platforms', 'Guest OS Information'
 
     assert is_dicts_same(remote_app_data, global_app_data), "Dashboard is not same."
+
+    # CleanUp
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.tier(1)
