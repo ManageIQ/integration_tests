@@ -475,10 +475,7 @@ class InfraVmGenealogyView(InfraVmView):
     toolbar = View.nested(InfraVmGenealogyToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     title = Text('#explorer_title_text')
-    tree = CheckableBootstrapTreeview(''
-                                      ''
-                                      ''
-                                      ' logy_treebox')
+    tree = CheckableBootstrapTreeview('genealogy_treebox')
 
     @property
     def is_displayed(self):

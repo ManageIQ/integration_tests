@@ -23,7 +23,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_crud(provider, small_template):
     collection = provider.appliance.provider_based_collection(provider)
     return collection.instantiate(random_vm_name(context='genealogy'),
@@ -60,7 +60,7 @@ def test_vm_genealogy_detected(
         test_flag: genealogy, provision
 
     Polarion:
-        assignee: spusaterr
+        assignee: spusater
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -89,7 +89,7 @@ def test_vm_genealogy_detected(
 @pytest.mark.manual
 @pytest.mark.tier(1)
 @test_requirements.genealogy
-def test_compare_button_enabled(provider, appliance, vm_crud):
+def test_compare_button_enabled():
     """
     Test that compare button is enabled
 
@@ -114,7 +114,6 @@ def test_compare_button_enabled(provider, appliance, vm_crud):
     """
 
 
-####################################################
     # setup provider
     vm_crud.cleanup_on_provider(find_in_cfme=True, allow_skip="default")
 
@@ -125,7 +124,6 @@ def test_compare_button_enabled(provider, appliance, vm_crud):
     # navigate to VM summary page
 
     # Check 2 boxes from tree
-
     # Verify: Genealogy is set(not null?)
     # Verify: Genealogy summary is displayed
     # Verify: Compare button is enabled

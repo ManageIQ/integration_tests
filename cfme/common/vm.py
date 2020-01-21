@@ -661,7 +661,6 @@ class BaseVMCollection(BaseCollection):
 
 
 @attr.s
-
 class VM(BaseVM):
     template_name = attr.ib(default=None)
 
