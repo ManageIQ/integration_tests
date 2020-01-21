@@ -798,9 +798,8 @@ def test_appliance_console_ha_dc_re_establish():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_evm_stop():
+def test_appliance_console_evm_stop(temp_appliance_preconfig_funcscope):
     """
     test stopping the evm server process
 
@@ -822,7 +821,11 @@ def test_appliance_console_evm_stop():
             4.
             5. Cross-check service stopped.
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+    command_set = ("ap", RETURN, "16", TimedCommand("Y", 60))
+    appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    wait_for(lambda: appliance.is_web_ui_running(), delay=10, timeout=300, fail_condition=True,
+             message='Waiting to stop EVM service')
 
 
 @pytest.mark.tier(2)
