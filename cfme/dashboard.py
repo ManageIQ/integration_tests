@@ -150,7 +150,7 @@ class DashboardView(BaseLoggedInPage):
             CHART = './div/div/div[starts-with(@id, "miq_widgetchart_")]'
             RSS = './div/div[contains(@class, "rss_widget")]'
             RSS_TABLE = './div[./div[contains(@class, "rss_widget")]]/div/table'
-            TABLE = './div/table|./div/div/table|.//*/table[contains(@class, "table")]'
+            TABLE = './div/table|./div/div/table'
             MC = (
                 './/div[contains(@class, "mc")]/*[1]|.//div[starts-with(@id, "dd_w") '
                 'and contains(@id, "_box")]/*[1]')

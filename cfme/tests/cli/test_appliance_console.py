@@ -823,9 +823,14 @@ def test_appliance_console_evm_stop(temp_appliance_preconfig_funcscope):
     """
     appliance = temp_appliance_preconfig_funcscope
     command_set = ("ap", RETURN, "16", TimedCommand("Y", 60))
-    appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
-    wait_for(lambda: appliance.is_web_ui_running(), delay=10, timeout=300, fail_condition=True,
-             message='Waiting to stop EVM service')
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+    wait_for(lambda: appliance.evmserverd.running,
+             delay=10,
+             timeout=300,
+             fail_condition=True,
+             message='Waiting to stop EVM service',
+             fail_func=appliance.evmserverd.running
+             )
 
 
 @pytest.mark.tier(2)
