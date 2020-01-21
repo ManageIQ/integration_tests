@@ -19,7 +19,10 @@ from widgetastic_manageiq import V2VFlashMessages
 
 
 class AutomateImportExportBaseView(BaseLoggedInPage):
-    flash = FlashMessages("div.import-flash-message")
+    @View.nested
+    class flash(FlashMessages):
+        ROOT = 'div.import-flash-message'
+
     title = Text('.//div[@id="main-content"]//h1')
 
     @property
@@ -36,7 +39,9 @@ class AutomateImportExportBaseView(BaseLoggedInPage):
 
 
 class AutomateImportExportView(AutomateImportExportBaseView):
-    flash = V2VFlashMessages(locator="div.import-flash-message")
+    @View.nested
+    class flash(V2VFlashMessages):
+        ROOT = 'div.import-flash-message'
 
     @View.nested
     class import_file(View):  # noqa
@@ -71,7 +76,10 @@ class AutomateImportExportView(AutomateImportExportBaseView):
 
 
 class FileImportSelectorView(AutomateImportExportBaseView):
-    flash = V2VFlashMessages(locator="div.import-flash-message")
+    @View.nested
+    class flash(V2VFlashMessages):
+        ROOT = 'div.import-flash-message'
+
     import_into = BootstrapSelect(id="selected_domain_to_import_to")
     import_from = BootstrapSelect(
         locator=".//div[contains(@class, 'bootstrap-select importing-domains')]"

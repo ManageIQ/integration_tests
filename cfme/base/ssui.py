@@ -40,7 +40,7 @@ class SSUIBaseLoggedInPage(View):
     """This page should be subclassed by any page that models any other page that is available as
     logged in.
     """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    flash = View.nested(FlashMessages)
     # TODO don't use `help` here, its a built-in
     help = SSUIHelpNavDropdown()
     navigation = SSUIVerticalNavigation('//ul[@class="list-group"]')
@@ -90,7 +90,7 @@ class SSUIBaseLoggedInPage(View):
 
 
 class LoginPage(View):
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    flash = View.nested(FlashMessages)
     username = Input(id='inputUsername')
     password = Input(id='inputPassword')
     login = Button('Log In')

@@ -705,7 +705,7 @@ class BaseVMCollection(BaseCollection):
 
             view = vm.appliance.browser.create_view(RequestsView)
             if not BZ(1608967, forced_streams=['5.10']).blocks:
-                wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
+                wait_for(lambda: view.flash.read(), fail_condition=[], timeout=10, delay=2,
                         message='wait for Flash Success')
             view.flash.assert_no_error()
             if wait:

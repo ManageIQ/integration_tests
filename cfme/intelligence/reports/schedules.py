@@ -62,7 +62,7 @@ class BootstrapSelectRetry(BootstrapSelect):
 
 
 class SchedulesFormCommon(CloudIntelReportsView):
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    flash = View.nested(FlashMessages)
     # Basic Information
     title = Text("#explorer_title_text")
     name = TextInput(name="name")

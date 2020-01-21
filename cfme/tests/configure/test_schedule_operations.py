@@ -115,9 +115,8 @@ def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
     )
     request.addfinalizer(schedule.delete)
     view = appliance.browser.create_view(BaseLoggedInPage)
-    assert (
-        "Warning: This 'Run Once' timer is in the past and will never"
-        " run as currently configured" in [message.text for message in view.flash.messages]
+    view.flash.assert_message(
+        "Warning: This 'Run Once' timer is in the past and will never run as currently configured"
     )
 
 
