@@ -568,6 +568,10 @@ def test_service_ansible_execution_ttl(
             "max_ttl": 200
         }
 
+    provision_request = ansible_service_catalog.order()
+    ansible_service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
+
+    @request.addfinalizer
     def _revert():
         with update(local_ansible_catalog_item):
             local_ansible_catalog_item.provisioning = {
@@ -575,9 +579,9 @@ def test_service_ansible_execution_ttl(
                 "max_ttl": "",
             }
 
-    request.addfinalizer(_revert)
-    ansible_service_catalog.order()
-    ansible_service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
+        if provision_request.exists:
+            provision_request.remove_request(method="rest")
+
     view = navigate_to(ansible_service, "Details")
     expected = 'successful' if appliance.version < '5.11' else 'Finished'
     assert view.provisioning.results.get_text_of("Status") == expected
@@ -692,6 +696,11 @@ def test_embed_tower_exec_play_against(
             "cloud_credential": provider_credentials.name,
         }
 
+    service_request = ansible_service_catalog.order()
+    service_request.wait_for_request(num_sec=300, delay=20)
+    if service_request.exists():
+        service_request.remove_request(method="rest")
+
     @request.addfinalizer
     def _revert():
         with update(local_ansible_catalog_item):
@@ -700,14 +709,8 @@ def test_embed_tower_exec_play_against(
                 "cloud_type": "<Choose>",
             }
 
-        service = MyService(appliance, local_ansible_catalog_item.name)
-        if service.exists:
-            service.delete()
-
-    service_request = ansible_service_catalog.order()
-    service_request.wait_for_request(num_sec=300, delay=20)
-    if service_request.exists():
-        service_request.wait_for_request()
+        if service_request.exists():
+            service_request.wait_for_request()
 
     view = navigate_to(ansible_service, "Details")
     expected = 'successful' if appliance.version < '5.11' else 'Finished'
@@ -863,7 +866,7 @@ def test_ansible_service_order_vault_credentials(
         vault_creds.delete_if_exists()
 
         if provision_request.exists:
-            provision_request.delete()
+            provision_request.remove_request(method="rest")
 
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
@@ -902,7 +905,7 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request):
             local_ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
 
         if service_request.exists:
-            service_request.delete()
+            service_request.remove_request(method="rest")
 
     view = navigate_to(ansible_service_funcscope, "Details")
     expected = 'successful' if appliance.version < '5.11' else 'Finished'
