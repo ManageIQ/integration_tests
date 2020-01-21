@@ -100,11 +100,11 @@ def get_prs(release, old_release, gh):
             pr_nums_without_label.append(pr.number)
 
     if pr_nums_without_label:
-        click.echo(
-            "ERROR: The following PRs don't have any of recognized labels: \n",
-            "\n".join(pr_nums_without_label),
-        )
-        click.echo("Recognized labels:", ", ".join(VALID_LABELS))
+        pr_list = '\n'.join(str(p) for p in pr_nums_without_label)
+        click.echo(f'The following PRs are missing correct labels:\n{pr_list}',
+                   err=True)
+        label_list = ', '.join(VALID_LABELS)
+        click.echo(f"Recognized labels:\n {label_list}")
         sys.exit(1)
     return prs
 
