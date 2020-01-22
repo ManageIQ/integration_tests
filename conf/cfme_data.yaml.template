@@ -677,3 +677,6 @@ vm_console:
         city: Durham
         organization: CFME
         organizational_unit: QE
+automate_links:
+    datastore_repositories:
+        manageiq_automate: https://github.com/RedHatQE/ManageIQ-automate-git.git
