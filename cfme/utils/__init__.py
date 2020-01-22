@@ -2,8 +2,6 @@ import atexit
 import os
 import re
 import subprocess
-import threading
-from contextlib import contextmanager
 from functools import partial
 
 import diaper
@@ -389,25 +387,3 @@ class ParamClassName(object):
             return getattr(instance, self.instance_attr)
         else:
             return getattr(owner, self.class_attr)
-
-
-@contextmanager
-def periodic_call(period_seconds, call, args=None, kwargs=None):
-    timer = None
-    args = args or []
-    kwargs = kwargs or {}
-
-    def timer_event():
-        call(*args, **kwargs)
-        reschedule()
-
-    def reschedule():
-        nonlocal timer
-        timer = threading.Timer(period_seconds, timer_event)
-        timer.start()
-
-    reschedule()
-    try:
-        yield
-    finally:
-        timer.cancel()

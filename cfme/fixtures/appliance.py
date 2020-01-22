@@ -16,7 +16,6 @@ import pytest
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
-from cfme.utils import periodic_call
 from cfme.utils.log import logger
 
 
@@ -39,7 +38,7 @@ def sprout_appliances(
         config: pytestconfig object to lookup sprout_user_key
         count: Number of appliances
         preconfigured: True if the appliance should be already configured, False otherwise
-        lease_time: Lease time in minutes (2 hours by default)
+        lease_time: Lease time in minutes (3 hours by default)
         stream: defaults to appliance stream
         provider_type: no default, sprout chooses, string type otherwise
         version: defaults to appliance version, string type otherwise
@@ -72,10 +71,7 @@ def sprout_appliances(
             logger.info("Appliance update finished on temp appliance...")
 
     try:
-        # Renew in half the lease time interval which is number of minutes.
-        with periodic_call(lease_time * 60 / 2.,
-                           sprout_client.prolong_pool, (request_id, lease_time)):
-            yield apps
+        yield apps
     finally:
         sprout_client.destroy_pool(request_id)
 
