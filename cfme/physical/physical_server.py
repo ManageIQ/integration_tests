@@ -293,7 +293,7 @@ class PhysicalServerCollection(BaseCollection):
         view = navigate_to(self, 'All')
 
         for physical_server in physical_servers:
-            view.entities.get_entity(name=physical_server.name, surf_pages=True).check()
+            view.entities.get_entity(name=physical_server.name, surf_pages=True).ensure_checked()
             checked_physical_servers.append(physical_server)
         return view
 

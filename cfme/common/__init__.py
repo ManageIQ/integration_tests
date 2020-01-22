@@ -360,7 +360,8 @@ class ManagePolicies(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   surf_pages=True).ensure_checked()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
@@ -671,7 +672,7 @@ class TaggableCollection(TaggableCommonBase):
                                  entity_filter_key)
                 raise
             # checkbox for given entity
-            view.entities.get_entity(surf_pages=True, **entity_kwargs).check()
+            view.entities.get_entity(surf_pages=True, **entity_kwargs).ensure_checked()
         view = self._open_edit_tag_page(view)
         added_tag, updated = self._assign_tag_action(view, tag)
         # In case if field is not updated cancel the edition
@@ -714,7 +715,7 @@ class TaggableCollection(TaggableCommonBase):
                                  entity_filter_key)
                 raise
             # checkbox for given entity
-            view.entities.get_entity(surf_pages=True, **entity_kwargs).check()
+            view.entities.get_entity(surf_pages=True, **entity_kwargs).ensure_checked()
         view = self._open_edit_tag_page(view)
         self._unassign_tag_action(view, tag)
         self._tags_action(view, cancel, reset)
@@ -772,9 +773,10 @@ class EditTagsFromListCollection(CFMENavigateStep):
             for entity in args:
                 name = entity.name if isinstance(entity, BaseEntity) else entity
                 self.prerequisite_view.entities.get_entity(
-                    surf_pages=True, name=name).check()
+                    surf_pages=True, name=name).ensure_checked()
         else:
-            self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
+            self.prerequisite_view.entities.get_entity(surf_pages=True,
+                                                       name=self.obj.name).ensure_checked()
         # not for all entities we have select like 'Edit Tags',
         # users, groups, tenants have specific dropdown title
         try:

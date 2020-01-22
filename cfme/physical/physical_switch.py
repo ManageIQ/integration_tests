@@ -167,7 +167,7 @@ class PhysicalSwitchCollection(BaseCollection):
         view = navigate_to(self, 'All')
 
         for physical_switch in physical_switches:
-            view.entities.get_entity(name=physical_switch.name, surf_pages=True).check()
+            view.entities.get_entity(name=physical_switch.name, surf_pages=True).ensure_checked()
             checked_physical_switches.append(physical_switch)
         return view
 

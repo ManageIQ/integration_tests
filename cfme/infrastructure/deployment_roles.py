@@ -226,7 +226,7 @@ class DeploymentRoleCollection(BaseCollection):
         if view.entities.get_all(surf_pages=True) and roles:
             for role in roles:
                 try:
-                    view.entities.get_entity(name=role.name).check()
+                    view.entities.get_entity(name=role.name).ensure_checked()
                 except ItemNotFound:
                     raise ItemNotFound("Deployment role {} not found".format(role.name))
 

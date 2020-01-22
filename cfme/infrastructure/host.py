@@ -476,7 +476,7 @@ class HostsCollection(BaseCollection):
 
         for host in hosts:
             try:
-                view.entities.get_entity(name=host.name, surf_pages=True).check()
+                view.entities.get_entity(name=host.name, surf_pages=True).ensure_checked()
                 checked_hosts.append(host)
             except ItemNotFound:
                 raise ItemNotFound('Could not find host {} in the UI'.format(host.name))

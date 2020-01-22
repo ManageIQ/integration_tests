@@ -363,7 +363,8 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   surf_pages=True).ensure_checked()
         self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Network Provider')
 
 
