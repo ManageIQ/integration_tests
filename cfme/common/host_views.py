@@ -331,6 +331,18 @@ class HostsCompareView(ComputeInfrastructureHostsView):
                 )
 
 
+class ProviderHostsCompareView(ComputeInfrastructureHostsView):
+    """Compare Host / Node page, but for a specific provider."""
+
+    @property
+    def is_displayed(self):
+        title = "Compare Host / Node"
+        return (self.logged_in_as_current_user and
+                self.title.text == title and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']
+                )
+
+
 class ProviderAllHostsView(HostsView):
     """
     This view is used in Provider and HostCollection contexts
