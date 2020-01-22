@@ -585,7 +585,7 @@ def test_infrastructure_provider_left_panel_titles(
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.parametrize("provider", PROVIDERS)
 @pytest.mark.meta(automates=[1741030, 1783208])
-def test_provider_documentation(has_no_providers, provider, request):
+def test_provider_documentation(temp_appliance_preconfig, provider, request):
     """
     Bugzilla:
         1741030
