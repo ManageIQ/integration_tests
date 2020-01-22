@@ -167,7 +167,7 @@ class PhysicalRackCollection(BaseCollection):
         view = navigate_to(self, 'All')
 
         for physical_rack in physical_racks:
-            view.entities.get_entity(name=physical_rack.name, surf_pages=True).check()
+            view.entities.get_entity(name=physical_rack.name, surf_pages=True).ensure_checked()
             checked_physical_racks.append(physical_rack)
         return view
 

@@ -173,7 +173,7 @@ class PhysicalStorageCollection(BaseCollection):
         view = navigate_to(self, 'All')
 
         for physical_storage in physical_storages:
-            view.entities.get_entity(name=physical_storage.name, surf_pages=True).check()
+            view.entities.get_entity(name=physical_storage.name, surf_pages=True).ensure_checked()
 
     def all(self):
         """returning all physical_storages objects"""

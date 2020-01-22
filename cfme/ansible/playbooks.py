@@ -128,5 +128,6 @@ class EditTagsFromListCollection(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "AnsiblePlaybooks")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.get_entity(surf_pages=True, name=self.obj.name).check()
+        self.prerequisite_view.entities.get_entity(surf_pages=True,
+                                                   name=self.obj.name).ensure_checked()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
