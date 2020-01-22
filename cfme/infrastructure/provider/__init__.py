@@ -366,7 +366,8 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   surf_pages=True).ensure_checked()
         try:
             self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
         except MoveTargetOutOfBoundsException:
@@ -380,7 +381,8 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   surf_pages=True).ensure_checked()
         try:
             self.prerequisite_view.toolbar.configuration.item_select(
                 'Edit Selected Infrastructure Providers')

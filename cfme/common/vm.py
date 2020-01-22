@@ -184,7 +184,7 @@ class BaseVM(
                                                    handle_alert=not cancel)
         else:
             view = navigate_to(self.parent, 'All')
-            self.find_quadicon().check()
+            self.find_quadicon().ensure_checked()
             view.toolbar.configuration.item_select(self.REMOVE_SELECTED, handle_alert=not cancel)
 
     @property
@@ -360,7 +360,7 @@ class BaseVM(
             view = navigate_to(self, 'Details', use_resetter=False)
         else:
             view = navigate_to(self.parent, 'All')
-            self.find_quadicon(from_any_provider=from_any_provider).check()
+            self.find_quadicon(from_any_provider=from_any_provider).ensure_checked()
         view.toolbar.configuration.item_select("Refresh Relationships and Power States",
                                                handle_alert=not cancel)
 
@@ -385,7 +385,7 @@ class BaseVM(
             view = navigate_to(self, 'Details', use_resetter=False)
         else:
             view = navigate_to(self.parent, 'All')
-            self.find_quadicon().check()
+            self.find_quadicon().ensure_checked()
         view.toolbar.configuration.item_select('Perform SmartState Analysis',
                                                handle_alert=not cancel)
         if wait_for_task_result:
@@ -833,7 +833,7 @@ class VM(BaseVM):
         else:
             view = navigate_to(self.parent, "All")
             entity = self.find_quadicon()
-            entity.check()
+            entity.ensure_checked()
         if view.toolbar.power.has_item(option):
             return view.toolbar.power.item_enabled(option)
         else:

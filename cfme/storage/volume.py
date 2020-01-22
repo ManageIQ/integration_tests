@@ -273,7 +273,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         """Edit cloud volume"""
         if from_manager:
             view = navigate_to(self.parent.manager, 'Volumes')
-            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).ensure_checked()
             view.toolbar.configuration.item_select('Edit selected Cloud Volume')
             view = view.browser.create_view(VolumeEditView, additional_context={'object': self})
         else:
@@ -292,7 +292,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         """Delete the Volume"""
         if from_manager:
             view = navigate_to(self.parent.manager, 'Volumes')
-            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).ensure_checked()
             view.toolbar.configuration.item_select(
                 'Delete selected Cloud Volumes', handle_alert=True)
         else:
@@ -329,7 +329,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         snapshot_collection = self.appliance.collections.volume_snapshots
         if from_manager:
             view = navigate_to(self.parent.manager, 'Volumes')
-            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).ensure_checked()
             view.toolbar.configuration.item_select('Create a Snapshot of selected Cloud Volume')
             view = view.browser.create_view(VolumeSnapshotView, additional_context={'object': self})
         else:
@@ -355,7 +355,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
                         from_manager=None):
         if from_manager:
             view = navigate_to(self.parent.manager, 'Volumes')
-            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).ensure_checked()
             view.toolbar.configuration.item_select('Attach selected Cloud Volume to an Instance')
             view = view.browser.create_view(AttachInstanceView, additional_context={'object': self})
         else:
@@ -380,7 +380,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
     def detach_instance(self, name, cancel=False, from_manager=None):
         if from_manager:
             view = navigate_to(self.parent.manager, 'Volumes')
-            view.entities.get_entity(surf_pages=True, name=self.name).check()
+            view.entities.get_entity(surf_pages=True, name=self.name).ensure_checked()
             view.toolbar.configuration.item_select('Detach selected Cloud Volume from an Instance')
             view = view.browser.create_view(DetachInstanceView, additional_context={'object': self})
         else:
@@ -529,7 +529,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
         if view.entities.get_all():
             for volume in volumes:
                 try:
-                    view.entities.get_entity(name=volume.name).check()
+                    view.entities.get_entity(name=volume.name).ensure_checked()
                 except ItemNotFound:
                     raise ItemNotFound("Volume {} not found".format(volume.name))
 
