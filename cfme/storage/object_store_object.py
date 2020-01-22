@@ -163,7 +163,7 @@ class ObjectStoreObjectCollection(BaseCollection):
 
         for obj in objects:
             try:
-                view.entities.get_entity(key=obj.key, surf_pages=True).check()
+                view.entities.get_entity(key=obj.key, surf_pages=True).ensure_checked()
             except ItemNotFound:
                 raise ItemNotFound('Could not locate object {}'.format(obj.key))
 

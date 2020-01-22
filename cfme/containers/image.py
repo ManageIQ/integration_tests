@@ -226,7 +226,8 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
         conditions = []
         for image_entity in image_entities:
             conditions.append({'id': image_entity.id})
-        entities = images_view.entities.apply(func=lambda e: e.check(), conditions=conditions)
+        entities = images_view.entities.apply(func=lambda e: e.ensure_checked(),
+                                              conditions=conditions)
         return entities
 
     def perform_smartstate_analysis_multiple_images(

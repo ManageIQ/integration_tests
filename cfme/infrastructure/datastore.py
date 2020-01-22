@@ -251,7 +251,7 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         # todo: to replace with correct view
         vms_view = view.browser.create_view(DatastoresView)
         for entity in vms_view.entities.get_all():
-            entity.check()
+            entity.ensure_checked()
         view.toolbar.configuration.item_select('Remove selected items from Inventory',
                                                handle_alert=True)
 
@@ -264,7 +264,7 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         view.entities.relationships.click_at('Hosts')
         hosts_view = view.browser.create_view(RegisteredHostsView)
         for entity in hosts_view.entities.get_all():
-            entity.check()
+            entity.ensure_checked()
         view.toolbar.configuration.item_select('Remove items from Inventory',
                                                handle_alert=True)
 
@@ -381,7 +381,7 @@ class DatastoreCollection(BaseCollection):
 
         for datastore in datastores:
             try:
-                view.entities.get_entity(name=datastore.name, surf_pages=True).check()
+                view.entities.get_entity(name=datastore.name, surf_pages=True).ensure_checked()
                 checked_datastores.append(datastore)
             except ItemNotFound:
                 raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
@@ -404,7 +404,7 @@ class DatastoreCollection(BaseCollection):
 
         for datastore in datastores:
             try:
-                view.entities.get_entity(name=datastore.name, surf_pages=True).check()
+                view.entities.get_entity(name=datastore.name, surf_pages=True).ensure_checked()
                 checked_datastores.append(datastore)
             except ItemNotFound:
                 raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))

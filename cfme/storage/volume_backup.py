@@ -241,7 +241,7 @@ class VolumeBackupCollection(BaseCollection):
         if view.entities.get_all():
             for backup in backups:
                 try:
-                    view.entities.get_entity(name=backup.name).check()
+                    view.entities.get_entity(name=backup.name).ensure_checked()
                 except ItemNotFound:
                     raise ItemNotFound("Volume backup {} not found".format(backup.name))
 
