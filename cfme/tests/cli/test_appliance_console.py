@@ -883,11 +883,11 @@ def test_appliance_console_check_default_ip(appliance):
     )
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_ssl():
+@pytest.mark.meta(automates=[1482697])
+def test_appliance_ssl(appliance):
     """
-    Test ssl connections to postgres database from other appliances.
+    Testing SSL is enabled or not by default
 
     Bugzilla:
         1482697
@@ -897,8 +897,36 @@ def test_appliance_ssl():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
+        testSteps:
+                1. 'cat /opt/rh/cfme-appliance/COPY/etc/manageiq/postgresql.conf.d/
+                01_miq_overrides.conf' run above command and grep to "ssl = on" string
+                2. find the content "hostssl all         all   all     md5" if version > 5.10 in
+                '/opt/rh/cfme-appliance/TEMPLATE/var/lib/pgsql/data/pg_hba.conf' if version  5.11
+                 and use '/opt/rh/cfme-appliance/TEMPLATE/var/opt/rh/rh-postgresql95/lib/pgsql/
+                 data/pg_hba.con' if version 5.10
+        expectedResults:
+                1. Confirm the contents
+                2. Confirm the contents
     """
-    pass
+    command = ('cat /opt/rh/cfme-appliance/COPY/etc/manageiq/postgresql.conf.d/01_miq_overrides'
+               '.conf')
+    result = appliance.ssh_client.run_command(command)
+    assert result.success, "SSL check command failed"
+    assert "ssl = on" in result.output, "ssl entry not found"
+
+    if appliance.version >= 5.11:
+        command = 'cat /opt/rh/cfme-appliance/TEMPLATE/var/lib/pgsql/data/pg_hba.conf'
+        result = appliance.ssh_client.run_command(command)
+        assert result.success
+        assert "hostssl all         all   all     md5" in result.output, (
+            "hostssl entry not found")
+    else:
+        command = ('cat /opt/rh/cfme-appliance/TEMPLATE/var/opt/rh/rh-postgresql95/lib/pgsql/'
+                   'data/pg_hba.con')
+        result = appliance.ssh_client.run_command(command)
+        assert result.success
+        assert "hostssl all         all   all     md5" in result.output, (
+            "hostssl entry not found")
 
 
 @pytest.mark.manual
