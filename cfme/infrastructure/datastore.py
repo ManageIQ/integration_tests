@@ -199,7 +199,6 @@ class DatastoresCompareView(BaseLoggedInPage):
             self.logged_in_as_current_user
             and self.title.text == "Compare VM or Template"
             and self.navigation.currently_selected == ["Compute", "Infrastructure", "Datastores"]
-            and self.toolbar.is_displayed
         )
 
 
@@ -272,15 +271,13 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         return vms_view.entities.all_entity_names
 
     def delete_all_attached_vms(self):
-        view = navigate_to(self, 'Details')
-        view.entities.relationships.click_at('Managed VMs')
-        vms_view = view.browser.create_view(DatastoreManagedVMsView)
-        for entity in vms_view.entities.get_all():
-            entity.ensure_checked()
+        view = navigate_to(self, 'ManagedVMs')
+        for entity in view.entities.get_all():
+            entity.check()
         view.toolbar.configuration.item_select('Remove selected items from Inventory',
                                                handle_alert=True)
 
-        wait_for(lambda: bool(len(vms_view.entities.get_all())), fail_condition=True,
+        wait_for(lambda: bool(len(view.entities.get_all())), fail_condition=True,
                  message="Wait datastore vms to disappear", num_sec=1000,
                  fail_func=self.browser.refresh)
 

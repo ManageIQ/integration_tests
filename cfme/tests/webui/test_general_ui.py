@@ -539,10 +539,7 @@ def test_provider_details_page_refresh_after_clear_cookies(
 
     # When the test runs a second time for cloud provider, it raises an error,
     # this finalizer is workaround for it.
-    @request.addfinalizer
-    def _finalize():
-        appliance.server.login()
-        appliance.server.logout()
+    request.addfinalizer(lambda: navigate_to(appliance.server, "LoggedIn"))
 
     with LogValidator(
         "/var/www/miq/vmdb/log/production.log", failure_patterns=[r".*FATAL.*"]
