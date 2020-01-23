@@ -11,6 +11,7 @@ from wait_for import wait_for
 from widgetastic.utils import VersionPick
 
 from cfme import test_requirements
+from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
 from cfme.utils import os
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
@@ -19,6 +20,7 @@ from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.version import LOWEST
+
 
 pytestmark = [
     test_requirements.app_console,
@@ -1128,9 +1130,9 @@ def test_appliance_console_network_conf_negative(temp_appliance_preconfig_modsco
             "Should not able to set incorrect hostname")
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_vmdb_httpd():
+@pytest.mark.meta(automates=[1337525])
+def test_appliance_console_vmdb_httpd(temp_appliance_preconfig_funcscope):
     """
     check that httpd starts after restarting vmdb
 
@@ -1143,8 +1145,40 @@ def test_appliance_console_vmdb_httpd():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
+        testSteps:
+            1. Stop the EVM service
+            2. press "ap"
+            3. press any key to continue
+            4. Press "7" for "Configure Database"
+            5. Press "4" for "Reset Configured Database"
+            6. Press "Y" for confirmation
+            7. Enter Region Number
+            8. Start EVM service
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7. Check "Database reset successfully" message
+            8. UI should be up and running
+
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+
+    # Stopping the EVM service
+    command_set = ("ap", RETURN, app_con_menu["stop_evm"], TimedCommand("Y", 120))
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+
+    command_set = ("ap", RETURN, app_con_menu["config_db"], "4", "Y", TimedCommand("99", 300))
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert "Database reset successfully" in result[-1], "DB reset failed"
+
+    # Starting the EVM service
+    command_set = ("ap", RETURN, app_con_menu["start_evm"], TimedCommand("Y", 120))
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+    appliance.wait_for_web_ui()
 
 
 @pytest.mark.tier(2)
