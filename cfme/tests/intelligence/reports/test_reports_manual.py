@@ -10,32 +10,6 @@ pytestmark = [pytest.mark.manual]
 
 
 @test_requirements.report
-@pytest.mark.tier(1)
-def test_reports_generate_custom_conditional_filter_report():
-    """
-    Bugzilla:
-        1521167
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/6h
-        startsin: 5.8
-        setup:
-            1. Create a service with one of the above naming conventions (vm-test,My-Test)
-            2. Have at least one VM in the service so the reporting will parse it
-            3. Create a report with a conditional filter in it, such as:
-               conditions: !ruby/object:MiqExpression exp: and: - IS NOT NULL: field:
-               Vm.service-name - IS NOT NULL: field: Vm-ems_cluster_name.
-        testSteps:
-            1. Queue the report.
-        expectedResults:
-            1. Report must be generated successfully.
-    """
-
-
-@test_requirements.report
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("5.10")
 def test_reports_timezone():
