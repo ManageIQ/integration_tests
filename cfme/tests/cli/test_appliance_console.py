@@ -1022,12 +1022,12 @@ def test_appliance_console_network_conf_negative(temp_appliance_preconfig_modsco
     appliance = temp_appliance_preconfig_modscope
     dhcp_invalid_input = "jdn3e3"
     command_set = ("ap", RETURN, "1", "1", dhcp_invalid_input)
-    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
     assert 'Please enter "yes" or "no".' in result[-1], (
         "Not getting error message for invalid error for dhcp IPV4")
 
     command_set = ("ap", RETURN, "1", "1", "Y", dhcp_invalid_input)
-    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
     assert 'Please enter "yes" or "no".' in result[-1], (
         "Not getting error message for invalid error for dhcp IPV6")
 
@@ -1035,7 +1035,7 @@ def test_appliance_console_network_conf_negative(temp_appliance_preconfig_modsco
     # TODO(BZ-1785257) remove this condition once this BZ got fixed
     if not BZ(1785257, forced_streams=['5.10', "5.11"]).blocks:
         command_set = ("ap", RETURN, "1", "4", invalid_hostname)
-        result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+        result = appliance.appliance_console.run_commands(command_set, timeout=30)
         assert "Please provide a valid Hostname or IP Address." in result[-1], (
             "Not getting error message for invalid error for IPV6")
 
@@ -1043,7 +1043,7 @@ def test_appliance_console_network_conf_negative(temp_appliance_preconfig_modsco
         appliance.appliance_console.run_commands(command_set, timeout=30)
 
         command_set = ("ap", RETURN)
-        result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+        result = appliance.appliance_console.run_commands(command_set, timeout=30)
         logger.info('"ap" command output:%s' % result)
 
         assert [i for i in result if invalid_hostname in result] == [], (
@@ -1132,7 +1132,7 @@ def test_appliance_console_static_ip_negative(temp_appliance_preconfig_modscope)
     """
     appliance = temp_appliance_preconfig_modscope
     command_set = ("ap", RETURN)
-    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
     logger.info('"ap" command output before test run:%s' % result)
     first_console_screen = result[0].split("\n")
     original_ipv4 = re.match(IPv4_REGEX, "".join([i for i in first_console_screen
@@ -1140,7 +1140,7 @@ def test_appliance_console_static_ip_negative(temp_appliance_preconfig_modscope)
     assert original_ipv4
     invalid_ipv4 = original_ipv4 + ".0"
     command_set = ("ap", RETURN, "1", "2", invalid_ipv4)
-    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
     assert "Please provide a valid IP Address." in result[-1]
 
     original_ipv6 = re.match(IPv6_REGEX, "".join([i for i in first_console_screen
@@ -1148,11 +1148,11 @@ def test_appliance_console_static_ip_negative(temp_appliance_preconfig_modscope)
     assert original_ipv6
     invalid_ipv6 = original_ipv6 + ":11"
     command_set = ("ap", RETURN, "1", "3", invalid_ipv6)
-    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
     assert "Please provide a valid IP Address." in result[-1]
 
     command_set = ("ap", RETURN)
-    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
     logger.info('"ap" command output after test:%s' % result)
     first_console_screen = result[0].split("\n")
 
@@ -1221,9 +1221,8 @@ def test_appliance_console_logfile():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_restore_db_network_negative():
+def test_appliance_console_restore_db_network_negative(temp_appliance_preconfig_funcscope):
     """
     test restoring database with invalid connection settings
 
@@ -1246,7 +1245,13 @@ def test_appliance_console_restore_db_network_negative():
             4.
             5. Confirm DB restore fails.
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+    stop_evm_command = ("ap", RETURN, "16", "Y", RETURN)
+    appliance.appliance_console.run_commands(stop_evm_command, timeout=30)
+    invalid_db_restore_location = "nfs://host.mydomain.com/exported/my_exported_folder/db.backup"
+    command_set = ("ap", RETURN, "6", "2", invalid_db_restore_location, "Y")
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert "Database restore failed." in result[-1]
 
 
 @pytest.mark.manual
@@ -1365,7 +1370,7 @@ def test_appliance_console_key_fetch_negative(temp_appliance_preconfig_funcscope
     command_set = ("ap", RETURN, "14", "Y", "2", invalid_ip,
                    conf.credentials['default']['username'], conf.credentials['default']['password'],
                    TimedCommand(RETURN, 180))
-    result = appliance.appliance_console.run_commands(command_set, timeout=30, output=True)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
     assert "Failed to fetch key" in result[-1], (
         "Overriding Encryption Key should fail when we enter invalid IP address")
 
