@@ -789,3 +789,51 @@ def test_under_group_multiple_button_crud(appliance, obj_type, button_group, dia
         view.flash.assert_message(f'Button "{button.hover}": Delete successful')
         assert not button.exists
         assert button_group.exists
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1770300])
+def test_custom_button_service_dialog_link(request, appliance, dialog):
+    """Test service dialog linked with custom button should not raise FATAL Error; if custom button
+    delete before service dialog
+
+    Bugzilla:
+        1770300
+
+
+    Polarion:
+        assignee: ndhandre
+        initialEstimate: 1/10h
+        caseimportance: high
+        startsin: 5.9
+        casecomponent: CustomButton
+        tags: custom_button
+        testSteps:
+            1. Create a service dialog
+            2. Creating a new custom button and associating it to a service dialog.
+            3. Delete a custom button before service dialog deletion
+            4. Delete service dialog and check production log
+    """
+    unassigned_gp = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]",
+        hover="Unassigned Buttons",
+        type="Provider"
+    )
+    btn = unassigned_gp.buttons.create(
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
+        dialog=dialog,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(btn.delete_if_exists)
+
+    # Delete custom button before deleting service dialog deletion
+    with LogValidator(
+            "/var/www/miq/vmdb/log/production.log", failure_patterns=[".*FATAL.*"]
+    ).waiting(timeout=120):
+        btn.delete()
+        assert not btn.exists
+
+        dialog.delete()
+        assert not dialog.exists
