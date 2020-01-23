@@ -511,6 +511,7 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
 
 
 @pytest.mark.parametrize("min_templates", [2, 4])
+@pytest.mark.meta(blockers=[BZ(1784180, forced_streams=["5.10"])], automates=[1784180])
 def test_compare_provider_templates(appliance, setup_provider_min_templates, provider,
                                     min_templates):
     """
@@ -521,7 +522,6 @@ def test_compare_provider_templates(appliance, setup_provider_min_templates, pro
         initialEstimate: 1/6h
     Bugzilla:
         1746449
-    Consider parameterizing for say 3, 7, and all
     """
     my_slice = slice(0, min_templates, None)
     view = navigate_to(provider, 'ProviderTemplates')
