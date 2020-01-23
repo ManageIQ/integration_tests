@@ -43,6 +43,7 @@ class SambaProtocolEntities(View):
     samba_password = Input(id='log_password')
     samba_confirm_password = Input(id='log_verify')
 
+
 class AWSS3ProtocolEntities(View):
     """ AWS S3 Protocol fields on the shedule configuration page"""
     aws_region = BootstrapSelect(id='log_aws_region')
@@ -53,13 +54,14 @@ class AWSS3ProtocolEntities(View):
 
 class OpenstackSwiftProtocolEntities(View):
     """ Openstack Swift Protocol fields on the shedule configuration page"""
-    openstack_keystone_version = BootstrapSelect(data_id='keystone_api_version')
+    openstack_keystone_version = BootstrapSelect(id='keystone_api_version')
     openstack_region = Input('openstack_region')
-    openstack_security_protocol = BootstrapSelect(data_id='security_protocol')
+    openstack_security_protocol = BootstrapSelect(id='security_protocol')
     openstack_api_port = Input('swift_api_port')
     openstack_username = Input(id='log_userid')
     openstack_password = Input(id='log_password')
     openstack_confirm_password = Input(id='log_verify')
+
 
 class DatabaseBackupEntities(View):
     """ Database Backup fields on the shedule configuration page """

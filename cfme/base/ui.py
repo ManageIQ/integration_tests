@@ -1187,10 +1187,50 @@ class RegionDiagnosticsView(ConfigurationView):
         )
 
 
+class SambaProtocolEntities(View):
+    """ Samba Protocol fields on the shedule configuration page """
+    samba_username = Input(id='log_userid')
+    samba_password = Input(id='log_password')
+    samba_confirm_password = Input(id='log_verify')
+
+
+class AWSS3ProtocolEntities(View):
+    """ AWS S3 Protocol fields on the shedule configuration page"""
+    aws_region = BootstrapSelect(id='log_aws_region')
+    aws_username = Input(id='log_userid')
+    aws_password = Input(id='log_password')
+    aws_confirm_password = Input(id='log_verify')
+
+
+class OpenstackSwiftProtocolEntities(View):
+    """ Openstack Swift Protocol fields on the shedule configuration page"""
+    openstack_keystone_version = BootstrapSelect(id='keystone_api_version')
+    openstack_region = Input('openstack_region')
+    openstack_security_protocol = BootstrapSelect(id='security_protocol')
+    openstack_api_port = Input('swift_api_port')
+    openstack_username = Input(id='log_userid')
+    openstack_password = Input(id='log_password')
+    openstack_confirm_password = Input(id='log_verify')
+
+
+class RegionDiagnosticsDatabaseBackupEntities(View):
+    """ Database Backup fields on the shedule configuration page """
+    backup_type = BootstrapSelect('log_protocol')
+    depot_name = Input(id='depot_name')
+    uri = Input(id='uri')
+
+    samba_protocol = View.nested(SambaProtocolEntities)
+    aws_s3_protocol = View.nested(AWSS3ProtocolEntities)
+    openstack_swift_protocol = View.nested(OpenstackSwiftProtocolEntities)
+
+
 class RegionDiagnosticsDatabaseView(RegionDiagnosticsView):
 
-    db_backup_settings_type = BootstrapSelect(id='log_protocol')
+    db_backup_settings = View.nested(RegionDiagnosticsDatabaseBackupEntities)
     submit_db_garbage_collection_button = Button(alt="Run Database Garbage Collection Now")
+
+    depot_name = Input(id='depot_name')
+    uri = Input(id='uri')
 
     @property
     def is_displayed(self):
