@@ -580,11 +580,10 @@ class ContainerProviderEditView(ProviderEditView):
 
 class TemplatesCompareView(InfraProvidersView):
     """Compare Templates page."""
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
 
     @property
     def is_displayed(self):
-        title = "Compare Templates"
-        return (self.logged_in_as_current_user and
-                # self.navigation.currently_selected == ['Compute', 'Infrastructure',
-                #                                       'Hosts', 'Compare Host / Node'] and
-                self.title.text == title)
+        title = "Compare VM Template and Image"
+        return (self.logged_in_as_current_user and self.navigation.currently_selected == [
+                'Compute', 'Infrastructure', 'Providers'] and self.title.text == title)

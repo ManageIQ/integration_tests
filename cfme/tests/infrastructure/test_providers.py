@@ -510,8 +510,7 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
     setup_or_skip(request, provider)
 
 
-@pytest.mark.parametrize("min_templates", [1, 2, 4])
-@pytest.mark.meta(blockers=[BZ(1746449, forced_streams=["5.10"])], automates=[1746449])
+@pytest.mark.parametrize("min_templates", [2, 4])
 def test_compare_provider_templates(appliance, setup_provider_min_templates, provider,
                                     min_templates):
     """
