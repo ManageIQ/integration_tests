@@ -17,6 +17,8 @@ from cfme.utils.ftp import FTPException
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
+from cfme.utils.update import update
+
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
@@ -189,11 +191,11 @@ def setup_vm(configure_fleecing, appliance, provider):
 
 
 @pytest.fixture
-def edit_service_name(service_vm, request):
+def edit_service_name(service_vm):
     service, vm = service_vm
     new_name = f"vm-test_{service.name}"
-    service.update({"name": new_name})
-    service.name = new_name
+    with update(service):
+        service.name = new_name
     return service, vm
 
 # =========================================== Tests ===============================================

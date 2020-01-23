@@ -232,7 +232,6 @@ def generic_service(appliance, generic_catalog_item):
 
     service = MyService(appliance, generic_catalog_item.dialog.label)
     yield service, generic_catalog_item
-
     if service.exists:
         service.delete()
     if provision_request.exists:

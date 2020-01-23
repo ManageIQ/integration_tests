@@ -9,7 +9,6 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Dropdown
-from widgetastic_patternfly import Input
 
 from cfme.common import BaseLoggedInPage
 from cfme.common import TagPageView
@@ -32,6 +31,7 @@ from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import JSBaseEntity
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import ParametrizedSummaryTable
+from widgetastic_manageiq import ReactTextInput
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
 
@@ -91,8 +91,8 @@ class ServiceRetirementForm(MyServicesView):
 class ServiceEditForm(MyServicesView):
     title = Text('#explorer_title_text')
 
-    name = Input(name='name')
-    description = Input(name='description')
+    name = ReactTextInput(name='name')
+    description = ReactTextInput(name='description')
 
 
 class SetOwnershipForm(MyServicesView):
