@@ -1,12 +1,20 @@
+from random import choice
+
 import fauxfactory
 import pytest
+from dateparser import parse
 
 from cfme import test_requirements
 from cfme.automate.simulation import simulate
 from cfme.intelligence.reports.dashboards import DefaultDashboard
 from cfme.intelligence.reports.widgets import AllDashboardWidgetsView
+from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import ViaUI
+from cfme.utils.blockers import BZ
+from cfme.utils.rest import assert_response
 from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 
 @pytest.fixture(scope="module")
@@ -221,3 +229,75 @@ def test_generate_widget_content_by_automate(request, appliance, klass, namespac
     widget.refresh()
     current_update = view.last_run_time.read().split(' ')[4]
     assert old_update != current_update
+
+
+@pytest.mark.meta(
+    automates=[1761836, 1753682],
+    blockers=[BZ(1761836, unblock=lambda context: context != ViaREST)],
+)
+@pytest.mark.tier(3)
+@test_requirements.rest
+@pytest.mark.parametrize("context", [ViaUI, ViaREST])
+def test_widget_generate_content_via_rest(context, appliance):
+    """
+    Bugzilla:
+       1761836
+       1623607
+       1753682
+
+    Polarion:
+        assignee: pvala
+        caseimportance: medium
+        casecomponent: Rest
+        initialEstimate: 1/4h
+        testSteps:
+            1. Depending on the implementation -
+                i. GET /api/widgtes/:id and note the `last_generated_content_on`.
+                ii. Navigate to Dashboard and note the `last_generated_content_on` for the widget.
+            2. POST /api/widgets/:id
+                {
+                    "action": "generate_content"
+                }
+            3. Wait until the task completes.
+            4. Depending on the implementation
+                i. GET /api/widgets/:id and compare the value of `last_generated_content_on`
+                    with the value noted in step 1.
+                ii.  Navigate to the dashboard and check if the value was updated for the widget.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Both values must be different, value must be updated.
+    """
+    view = navigate_to(appliance.server, "Dashboard")
+    view.reset_widgets()
+
+    # Randomly select a widget from the dashboard and obtain it's REST entity with the widget_id
+    ui_widget = choice(view.dashboards("Default Dashboard").widgets)
+    rest_widget = appliance.rest_api.collections.widgets.get(id=ui_widget.widget_id)
+
+    if context == ViaUI:
+        last_update = ui_widget.footer.text
+        rest_widget.action.generate_content()
+        assert_response(appliance)
+
+        assert wait_for(
+            lambda: parse(ui_widget.footer.text.split(" | ")[0].strip("Updated "))
+            > parse(last_update.split(" | ")[0].strip("Updated ")),
+            fail_func=view.browser.refresh,
+            timeout=10,
+            delay=2,
+        )
+
+    else:
+        last_update = rest_widget.last_generated_content_on
+
+        rest_widget.rest_api_entity.generate_content()
+        assert_response(appliance)
+
+        assert wait_for(
+            lambda: rest_widget.last_generated_content_on > last_update,
+            fail_func=rest_widget.reload,
+            timeout=30,
+            message="Wait for the widget to update",
+        )
