@@ -2,6 +2,7 @@ import random
 import socket
 from datetime import datetime
 
+import fauxfactory
 import pytest
 from wait_for import TimedOutError
 from widgetastic.exceptions import UnexpectedAlertPresentException
@@ -561,7 +562,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     hosts_view.toolbar.configuration.item_select('Edit Selected items',
                                                 handle_alert=False)
     edit_view = provider.create_view(HostEditView)
-    stamp = datetime.now()
+    stamp = fauxfactory.gen_alphanumeric()
     edit_string = f'Edit host data. {stamp}'
     edit_view.custom_ident.fill(edit_string)
     edit_view.save_button.click()
