@@ -7,6 +7,7 @@ from wrapanapi import VmState
 
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.exceptions import CFMEException
+from cfme.fixtures.templates import _get_template
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 
@@ -30,37 +31,18 @@ def pytest_collection_finish(session):
         process_json_data(session, session.items)
 
 
-def _create_vm(request, template, provider, vm_name):
-    if not request.config.getoption('--no-assignee-vm-name'):
-        if isinstance(request.node, pytest.Function):
-            assignee = get_parsed_docstring(request.node,
-                request.session._docstrings_cache).get('assignee', '')
-        else:
-            # Fetch list of tests in the module object
-            test_list = [
-                item
-                for item in dir(request.module)
-                if item.startswith('test_') and not ('test_requirements' == item)
-            ]
-            # Find out assignee for each test in test_list
-            assignee_list = list()
-            for test in test_list:
-                nodeid = f'{request.node.fspath.strpath}::{test}'
-                try:
-                    assignee_list.append(request.session._docstrings_cache[nodeid]['assignee'])
-                except KeyError:
-                    continue
-            # If all tests have same assignee, set length will be 1, else set assignee='module'
-            assignee = assignee_list[0] if len(set(assignee_list)) == 1 else 'module'
-        vm_name = f'{vm_name}-{assignee}'
+def _create_vm(request, template_type, provider, vm_name):
+    """Look up template in provider yaml based on the template_type,
+    and provision a VM/Instance from it on the provider.
+    """
+    if template_type:
+        template = _get_template(provider, template_type)
+        template_name = template.name
+    else:
+        template_name = None
+
     collection = provider.appliance.provider_based_collection(provider)
-    try:
-        vm_obj = collection.instantiate(
-            vm_name, provider,
-            template_name=provider.data['templates'][template].name
-        )
-    except (KeyError, AttributeError):
-        pytest.skip('No appropriate template was passed to the fixture.')
+    vm_obj = collection.instantiate(vm_name, provider, template_name=template_name)
     vm_obj.create_on_provider(allow_skip='default')
 
     @request.addfinalizer
@@ -95,23 +77,130 @@ def _get_vm_name(request):
             if mark.name == 'requirement'][0]
         except AttributeError:
             raise CFMEException("VM name can not be obtained")
-    return random_vm_name(req[0])
+
+    vm_name = random_vm_name(req[0])
+
+    if not request.config.getoption('--no-assignee-vm-name'):
+        if isinstance(request.node, pytest.Function):
+            assignee = get_parsed_docstring(request.node,
+                request.session._docstrings_cache).get('assignee', '')
+        else:
+            # Fetch list of tests in the module object
+            test_list = [
+                item
+                for item in dir(request.module)
+                if item.startswith('test_') and not ('test_requirements' == item)
+            ]
+            # Find out assignee for each test in test_list
+            assignee_list = list()
+            for test in test_list:
+                nodeid = f'{request.node.fspath.strpath}::{test}'
+                try:
+                    assignee_list.append(request.session._docstrings_cache[nodeid]['assignee'])
+                except KeyError:
+                    continue
+            # If all tests have same assignee, set length will be 1, else set assignee='module'
+            assignee = assignee_list[0] if len(set(assignee_list)) == 1 else 'module'
+        vm_name = f'{vm_name}-{assignee}'
+
+    return vm_name
 
 
 @pytest.fixture(scope="module")
 def create_vm_modscope(setup_provider_modscope, request, provider):
-    # If no template parameter is passed, then use 'small_template'.
+    """Create a VM/Instance on the provider.
+    If a :py:class:`str` is passed to the fixture, it will be used to look up the corresponding
+    template in the provider YAML. E.g.,
+
+    @pytest.mark.parametrize('create_vm_modscope', ['big_template'], indirect=True)
+    def test_big_template(create_vm_modscope):
+        pass
+
+    will create a VM on the provider using the 'big_template' template. If no parameter has been
+    passed, then the default is 'small_template'.
+    """
     template_type = getattr(request, 'param', 'small_template')
+    if not isinstance(template_type, str):
+        pytest.skip('VM/Instance template type must be a string.')
+
     vm_name = _get_vm_name(request)
     return _create_vm(request, template_type, provider, vm_name)
 
 
 @pytest.fixture(scope="function")
 def create_vm(setup_provider, request, provider):
-    # If no template parameter is passed, then use 'small_template'.
+    """Create a VM/Instance on the provider. See create_vm_modscope for usage."""
     template_type = getattr(request, 'param', 'small_template')
+    if not isinstance(template_type, str):
+        pytest.skip('VM/Instance template type must be a string.')
+
     vm_name = _get_vm_name(request)
     return _create_vm(request, template_type, provider, vm_name)
+
+
+@pytest.fixture(scope="module")
+def create_vms_modscope(setup_provider_modscope, request, provider):
+    """Create two or more VMs/Instances on the provider.
+
+    If a :py:class:`dict` parameter is passed to the fixture, it will be used to specify the
+    template to look up in the provider YAML as well as the number of VMs to provision, e.g.,
+
+    param = {'template_type': 'big_template', 'num_vms': 3}
+
+    @pytest.mark.parametrize('create_vms_modscope',
+                             [{'template_type': 'big_template', 'num': 3}],
+                             indirect=True)
+    def test_big_template(create_vms_modscope):
+        pass
+
+    If no template_type is passed, then default is 'small_template'.
+    If no value is passed for num_vms, then the default is 2.
+    """
+    template_type = 'small_template'
+    num_vms = 2
+    param = getattr(request, 'param', None)
+    if param:
+        if not isinstance(param, dict):
+            pytest.skip("create_vms_modscope did not receive valid parameters.")
+
+        template_type = param.get('template_type', 'small_template')
+        num_vms = param.get('num_vms', 2)
+
+        # Check for invalid template_type or num_vms parameters.
+        if not isinstance(template_type, str) or not isinstance(num_vms, int) or num_vms < 2:
+            pytest.skip("create_vms_modscope did not receive valid parameters.")
+
+    vms = []
+    for _ in range(num_vms):
+        vm_name = _get_vm_name(request)
+        vm = _create_vm(request, template_type, provider, vm_name)
+        vms.append(vm)
+    return vms
+
+
+@pytest.fixture(scope="function")
+def create_vms(setup_provider, request, provider):
+    """Create two or more VMs/Instances on the provider. See create_vms_modscope for usage."""
+    template_type = 'small_template'
+    num_vms = 2
+    param = getattr(request, 'param', None)
+    if param:
+        if not isinstance(param, dict):
+            pytest.skip("create_vms_modscope did not receive valid parameters.")
+
+        template_type = param.get('template_type', 'small_template')
+        num_vms = param.get('num_vms', 2)
+
+        # Check for invalid template_type or num_vms parameters.
+        if not isinstance(template_type, str) or not isinstance(num_vms, int) or num_vms < 2:
+            pytest.skip("create_vms_modscope did not receive valid parameters.")
+
+    vms = []
+    for _ in range(num_vms):
+        vm_name = _get_vm_name(request)
+        vm = _create_vm(request, template_type, provider, vm_name)
+        vms.append(vm)
+    return vms
 
 
 def _create_instance(appliance, provider, template_name):
