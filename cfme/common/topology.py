@@ -119,6 +119,16 @@ class BaseTopologyView(BaseLoggedInPage):
                 result.append((name, type_))
             return result
 
+    @property
+    def is_displayed(self):
+        obj = self.context["object"]
+        return (
+            self.logged_in_as_current_user
+            and self.toolbar.is_displayed
+            and self.navigation.currently_selected
+            == ["Compute", "Clouds" if obj.string_name == "Cloud" else obj.string_name, "Topology"]
+        )
+
 
 @attr.s
 class BaseTopologyElement(BaseEntity):

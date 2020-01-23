@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.base.ui import LoginPage
 from cfme.cloud.provider import CloudProvider
 from cfme.common.host_views import ProviderAllHostsView
+from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import CloudProviderAddView
 from cfme.common.provider_views import ContainerProviderAddView
 from cfme.common.provider_views import InfraProviderAddView
@@ -14,6 +15,7 @@ from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import PhysicalProviderAddView
 from cfme.common.provider_views import ProviderDetailsView
 from cfme.common.provider_views import ProviderTimelinesView
+from cfme.common.topology import BaseTopologyView
 from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
@@ -685,3 +687,31 @@ def test_ui_notification_icon():
             4. Check in UI whether notification icon was displayed
     """
     pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1532404])
+@pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY)
+def test_provider_summary_topology(setup_provider, provider):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/2h
+        setup:
+            1. Add a provider.
+        testSteps:
+            1. Navigate to provider's summary page.
+            2. Click on topology.
+        expectedResults:
+            1.
+            2. Provider Topology must be displayed.
+
+    Bugzilla:
+        1532404
+    """
+    view = navigate_to(provider, "Details")
+    view.entities.summary("Overview").click_at("Topology")
+    topology_view = provider.create_view(BaseTopologyView)
+    assert topology_view.is_displayed
