@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+from dateutil.parser import parse
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -511,3 +512,28 @@ def test_embed_tower_repo_add_new_zone(appliance, ansible_repository, new_zone, 
     )
     request.addfinalizer(repository.delete_if_exists)
     assert repository.exists
+
+
+@pytest.mark.tier(3)
+@pytest.mark.rhel_testing
+def test_embedded_ansible_repository_refresh(ansible_repository):
+    """
+    Test if ansible playbooks list is updated in the UI when "Refresh this
+    Repository"
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    view = navigate_to(ansible_repository, "Details")
+    view.toolbar.configuration.item_select('Refresh this Repository', handle_alert=True)
+
+    wait_for(view.toolbar.refresh.click, delay=2, timeout=5)
+    # Get the values of Repo create date and update date
+    create_date = parse(view.entities.summary("Properties").get_text_of("Created On"))
+    updated_date = parse(view.entities.summary("Properties").get_text_of("Updated On"))
+
+    assert create_date < updated_date
