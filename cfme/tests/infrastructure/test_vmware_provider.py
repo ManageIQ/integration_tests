@@ -137,6 +137,7 @@ def test_vmware_vds_ui_display(soft_assert, appliance, provider):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10", "5.11")
 @pytest.mark.meta(blockers=[BZ(1650441, forced_streams=['5.10', '5.11'])])
 @pytest.mark.provider([VMwareProvider],
     required_fields=filter_fields + [(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
@@ -179,7 +180,7 @@ def test_vmware_reconfigure_vm_controller_type(appliance, provider):
 
 @pytest.mark.tier(1)
 @pytest.mark.provider([VMwareProvider], selector=ONE, scope="module")
-def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
+def test_vmware_vds_ui_tagging(request, appliance, provider, soft_assert):
     """
     Virtual Distributed Switch port groups are displayed for VMs assigned
     to vds port groups. Check to see if you can navigate to DSwitch and tag it.
@@ -209,8 +210,12 @@ def test_vmware_vds_ui_tagging(appliance, provider, soft_assert):
     except IndexError:
         pytest.skip("There are no DSwitches for provider %s", provider)
     owner_tag = appliance.collections.categories.instantiate(
-        display_name='Owner').collections.tags.instantiate(display_name='Production Linux Team')
+        display_name='Department').collections.tags.instantiate(display_name='Accounting')
     switch.add_tag(owner_tag)
+
+    @request.addfinalizer
+    def _cleanup():
+        switch.remove_tag(owner_tag)
     assert owner_tag in switch.get_tags(), "Failed to retrieve correct tags"
 
 
