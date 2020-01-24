@@ -89,31 +89,6 @@ def test_pdf_summary_provider(provider):
 
 
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1741030])
-def test_provider_documentation():
-    """
-    Bugzilla:
-        1741030
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/18h
-        startsin: 5.11
-        setup:
-            1. Take a fresh appliance with no provider
-        testSteps:
-            1. Log into the appliance and check where the link provided
-                in `Learn more about this in the documentation.` points to.
-        expectedResults:
-            1. Link must point to downstream documentation and not upstream.
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1733120])
 def test_compare_vm_from_datastore_relationships():
     """
