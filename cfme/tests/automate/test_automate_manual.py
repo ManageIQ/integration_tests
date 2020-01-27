@@ -166,7 +166,6 @@ def test_automate_requests_tab_exposed():
             4. Did not allow user to see Requests under Automate.
             5. Enabled all the Service => Request role features.
             6. This allows user to see the Automate => Requests.
-
         expectedResults:
             1.
             2.
@@ -183,6 +182,7 @@ def test_automate_requests_tab_exposed():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.manual('manualonly')
 def test_automate_git_credentials_changed():
     """
     Polarion:
@@ -248,30 +248,8 @@ def test_vm_naming_number_padding():
     pass
 
 
-@pytest.mark.tier(1)
-def test_git_refresh_with_renamed_yaml():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/8h
-        startsin: 5.10
-        casecomponent: Automate
-        testSteps:
-            1. Have a git backed Automate Domain
-            2. Delete (or rename) a .rb/.yaml pair, commit, push to repo
-            3. Refresh Domain in CF ui
-        expectedResults:
-            1.
-            2.
-            3. Domain should refresh successfully and renamed method appears
-
-    Bugzilla:
-        1716443
-    """
-    pass
-
-
 @pytest.mark.tier(2)
+@pytest.mark.manual('manualonly')
 def test_git_refresh_with_rapid_updates():
     """
     Polarion:
@@ -376,6 +354,7 @@ def test_queue_up_schedule_run_now():
 
 
 @pytest.mark.tier(2)
+@pytest.mark.manual('manualonly')
 @pytest.mark.meta(coverage=[1741259])
 def test_copy_automate_method_without_edit():
     """
