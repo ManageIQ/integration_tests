@@ -363,8 +363,14 @@ def setup_provider_min_hosts(request, appliance, provider, num_hosts):
     setup_or_skip(request, provider)
 
 
+UNCOLLECT_REASON = "Not enough hosts on provider type."
+
+
 @test_requirements.infra_hosts
 @pytest.mark.parametrize("num_hosts", [1, 2, 4])
+@pytest.mark.uncollectif(
+    lambda provider, num_hosts: provider.one_of(RHEVMProvider, SCVMMProvider) and num_hosts > 2,
+    reason=UNCOLLECT_REASON)
 def test_infrastructure_hosts_refresh_multi(appliance, setup_provider_min_hosts, provider,
                                             num_hosts):
     """
