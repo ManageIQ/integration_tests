@@ -1435,14 +1435,14 @@ class Tenant(Updateable, BaseEntity, Taggable):
             'num_vms': 'Allocated Number of Virtual Machines',
             'templates': 'Allocated Number of Templates'
         }
-
+        # This table does not work normally because of colspan, this is workaround for that problem.
         for field in quotas:
-            item = view.table.row(name=quotas[field])
+            item = view.table.row((0, quotas[field]))
             quotas[field] = {
-                'total': item.total_quota.text,
-                'in_use': item.in_use.text,
-                'allocated': item.allocated.text,
-                'available': item.available.text
+                'total': item[item.total_quota.position - 1].text,
+                'in_use': item[item.in_use.position - 1].text,
+                'allocated': item[item.allocated.position - 1].text,
+                'available': item[item.available.position - 1].text
             }
 
         return quotas

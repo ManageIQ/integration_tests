@@ -4,9 +4,11 @@ from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -145,6 +147,14 @@ def check_hosts(small_vm, provider):
         return hosts[0]
     else:
         pytest.skip("There is only one host in the provider")
+
+
+@pytest.fixture
+def quota_limit(request, roottenant):
+    in_use_storage = int(float(roottenant.quota["storage"]["in_use"].strip(" GB")))
+    roottenant.set_quota(**{"storage_cb": True, "storage": in_use_storage + 3})
+    request.addfinalizer(lambda: roottenant.set_quota(**{"storage_cb": False}))
+    return int(float(roottenant.quota["storage"]["available"].strip(" GB")))
 
 
 @pytest.mark.rhv2
@@ -713,3 +723,42 @@ def test_simultaneous_tenant_quota(request, appliance, context, new_project, new
     provision_request.wait_for_request(method='ui')
     request.addfinalizer(provision_request.remove_request)
     assert provision_request.row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.tier(1)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1533263])
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY, scope="module")
+def test_quota_with_reconfigure_resize_disks(small_vm, quota_limit):
+    """Test that Quota gets checked against the resize of the disk of VMs.
+
+    Polarion:
+        assignee: ghubale
+        casecomponent: Infra
+        initialEstimate: 1/6h
+        testSteps:
+            1. Add an infra provider
+            2. Provision a VM
+            3. Set tenant quota limit for storage
+            4. Resize the disk of the VM over quota limit
+        expectedResults:
+            1.
+            2.
+            3.
+            4. VM reconfiguration request for resizing the disk should be denied with reason quota
+               exceeded.
+
+    Bugzilla:
+        1533263
+    """
+    config = small_vm.configuration.copy()
+    disk = config.disks[0]
+
+    # set the resize value to a little more than the quota limit
+    resize_value = disk.size + quota_limit + 3
+    config.resize_disk(resize_value, disk.filename)
+
+    request = small_vm.reconfigure(config)
+    request.wait_for_request()
+    assert request.status == "Denied"
+    assert "Request exceeds maximum allowed for the following" in request.message
