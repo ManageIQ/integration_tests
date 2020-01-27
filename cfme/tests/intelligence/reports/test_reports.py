@@ -17,6 +17,8 @@ from cfme.utils.ftp import FTPException
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
+from cfme.utils.update import update
+
 
 pytestmark = [test_requirements.report, pytest.mark.tier(3), pytest.mark.sauce]
 
@@ -186,6 +188,15 @@ def setup_vm(configure_fleecing, appliance, provider):
     yield vm
 
     vm.cleanup_on_provider()
+
+
+@pytest.fixture
+def edit_service_name(service_vm):
+    service, vm = service_vm
+    new_name = f"vm-test_{service.name}"
+    with update(service):
+        service.name = new_name
+    return service, vm
 
 # =========================================== Tests ===============================================
 
@@ -735,3 +746,38 @@ def test_vm_volume_free_space_less_than_20_percent(
     assert all(
         [float(row) <= 20.0 for row in rows if row]
     ), "Volume Free Space Percent is greater than 20%"
+
+
+@pytest.mark.tier(1)
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1521167])
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+def test_reports_generate_custom_conditional_filter_report(
+    setup_provider, get_report, edit_service_name, provider
+):
+    """
+    Bugzilla:
+        1521167
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/6h
+        startsin: 5.8
+        setup:
+            1. Create or edit a service with one of the above naming conventions (vm-test, My-Test)
+            2. Have at least one VM in the service so the reporting will parse it
+            3. Create a report with a conditional filter in it, such as:
+               conditions: !ruby/object:MiqExpression exp: and: - IS NOT NULL: field:
+               Vm.service-name - IS NOT NULL: field: Vm-ems_cluster_name.
+        testSteps:
+            1. Queue the report.
+        expectedResults:
+            1. Report must be generated successfully.
+    """
+    service, vm = edit_service_name
+    report = get_report("vm_service_report", "VM Service")
+    saved_report = report.queue(wait_for_finish=True)
+    view = navigate_to(saved_report, "Details")
+    assert view.table.row(name__contains=vm.name)["Service Name"].text == service.name
