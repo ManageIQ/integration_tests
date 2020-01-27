@@ -112,13 +112,13 @@ def test_compare_button_enabled():
     Bugzilla:
         1694712
     """
-
+    pass
 
     # setup provider
-    vm_crud.cleanup_on_provider(find_in_cfme=True, allow_skip="default")
+    #vm_crud.cleanup_on_provider(find_in_cfme=True, allow_skip="default")
 
 
-
+    #TODO
     # establish relationship between VM's
 
     # navigate to VM summary page
