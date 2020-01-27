@@ -136,26 +136,3 @@ def test_optimization_reports():
             2. Reports must exist.
     """
     pass
-
-
-@pytest.mark.ignore_stream("5.10")
-@test_requirements.report
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1743651])
-def test_reports_timelines_tab():
-    """
-    Bugzilla:
-        1743651
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: low
-        initialEstimate: 1/2h
-        startsin: 5.11
-        testSteps:
-            1. Copy a report based on timeline and check if the Timelines tab is visible.
-        expectedResults:
-            1. Timelines tab must not be visible.
-    """
-    pass
