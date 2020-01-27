@@ -17,6 +17,7 @@ from cfme.common.provider_views import ProviderTimelinesView
 from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
+from cfme.infrastructure.datastore import DatastoresCompareView
 from cfme.infrastructure.datastore import ProviderAllDatastoresView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider import ProviderClustersView
@@ -282,7 +283,7 @@ def test_infrastructure_filter_20k_vms(appliance, create_20k_vms):
 
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.tier(2)
-def test_welcoming_page(appliance, has_no_providers):
+def test_welcoming_page(temp_appliance_preconfig):
     """This test case checks the new welcoming page when there is no provider in the appliance
 
     Polarion:
@@ -294,6 +295,7 @@ def test_welcoming_page(appliance, has_no_providers):
     Bugzilla:
         1678190
     """
+    appliance = temp_appliance_preconfig
     appliance.server.login()
     view = appliance.server.create_view(InfraProvidersView)
     assert view.add_button.is_displayed
@@ -537,7 +539,7 @@ def test_provider_details_page_refresh_after_clear_cookies(
 
     # When the test runs a second time for cloud provider, it raises an error,
     # this finalizer is workaround for it.
-    request.addfinalizer(appliance.server.logout)
+    request.addfinalizer(lambda: navigate_to(appliance.server, "LoggedIn"))
 
     with LogValidator(
         "/var/www/miq/vmdb/log/production.log", failure_patterns=[r".*FATAL.*"]
@@ -640,6 +642,46 @@ def test_provider_documentation(temp_appliance_preconfig, provider, request):
     time.sleep(5)
 
     assert url in view.browser.url
+
+
+@pytest.mark.tier(1)
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.meta(
+    automates=[1733120],
+    blockers=[BZ(1733120, forced_streams=["5.10"])],
+)
+def test_compare_vm_from_datastore_relationships(appliance, setup_provider, provider):
+    """
+    Bugzilla:
+        1733120
+        1784179
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/18h
+        setup:
+            1. Add an infra provider.
+        testSteps:
+            1. Select a datastore with at least 2 VMS, and navigate to a it's Details page.
+            2. Click on Managed VMs from the relationships table.
+            3. Select at least 2 VMs and click on `Configuration > Compare the selected items`
+        expectedResults:
+            1.
+            2.
+            3. Comparison page should be displayed, there should be no exception on the page.
+    """
+    datastore = appliance.collections.datastores.instantiate(
+        name=provider.data["provisioning"]["datastore"], provider=provider
+    )
+    view = navigate_to(datastore, "ManagedVMs")
+
+    # Check any 3 entities for comparison
+    [vm.ensure_checked() for vm in view.entities.get_all(slice=slice(0, 3))]
+
+    view.toolbar.configuration.item_select("Compare Selected items")
+    compare_view = datastore.create_view(DatastoresCompareView)
+    assert compare_view.is_displayed
 
 
 @pytest.mark.manual
