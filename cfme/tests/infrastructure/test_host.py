@@ -9,6 +9,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
+from cfme.common.host_views import ProviderHostsCompareView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
@@ -451,7 +452,7 @@ def test_infrastructure_hosts_navigation_after_download(
 
 @test_requirements.infra_hosts
 @pytest.mark.parametrize("num_hosts", [2, 4])
-@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214])
+@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214, 1784181])
 def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider,
                                               num_hosts):
     """
@@ -470,7 +471,7 @@ def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_host
         h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
-    compare_hosts_view = provider.create_view(HostsCompareView)
+    compare_hosts_view = provider.create_view(ProviderHostsCompareView)
     assert compare_hosts_view.is_displayed
 
 
