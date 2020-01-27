@@ -9,70 +9,6 @@ pytestmark = [
 ]
 
 
-def test_ssa_groups_azure_ubuntu():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Ubuntu instance.
-    3. Check Groups are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_azure_rhel():
-    """
-    1. Add Azure provider
-    2. Perform SSA on RHEL instance.
-    3. Check Groups  are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_azure_windows2012r2_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows server 2012 R2.
-    3. Check Groups are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_groups_azure_windows2016_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows2016 server.
-    3. Check Groups are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_groups_ec2_rhel():
     """
     Add EC-2 provider.
@@ -137,22 +73,6 @@ def test_ssa_groups_ec2_fedora():
     pass
 
 
-def test_ssa_patches_azure_windows2012r2_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows server 2012 R2.
-    3. Check Patches are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_patches_ec2_windows2012r2_ntfs():
     """
     Add EC-2 provider.
@@ -164,66 +84,6 @@ def test_ssa_patches_ec2_windows2012r2_ntfs():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_patches_azure_windows2016_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows2016 server.
-    3. Check Patches are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_windows2016_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows2016 server.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.8
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_multiple_vms():
-    """
-    Perform SSA on multiple VMs.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_windows2012r2_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows2012 R2 server Instance.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.8
         tags: smartstate
     """
     pass
@@ -261,21 +121,6 @@ def test_ssa_vm_ec2_fedora():
     pass
 
 
-def test_ssa_vm_azure_compliance_policy():
-    """
-    Checks compliance condition on VM/Instance which triggers Smartstate
-    Analysis on VM/Instance.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_vsphere6_nested_windows7_xfs_ssui():
     """
     1. Provision service with Windows 7 VM
@@ -288,33 +133,6 @@ def test_ssa_vm_vsphere6_nested_windows7_xfs_ssui():
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.8
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_schedule():
-    """
-    Trigger SmartState Analysis via schedule on VM.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: critical
-        initialEstimate: 1/4h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_managed_disk():
-    """
-    Perform SSA on Managed disk on Azure provider.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
         tags: smartstate
     """
     pass
@@ -352,104 +170,6 @@ def test_ssa_vm_ec2_windows2012r2_ntfs():
     pass
 
 
-def test_ssa_vm_azure_rhel():
-    """
-    Create or Use existing RHEL VM/Instance present in Azure.
-    Perform SSA on RHEL VM/Instance when
-    VM/Instance is Powered ON
-    VM/Instance is Powered OFF
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.6
-        upstream: no
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_windows2016_ssui():
-    """
-    1. Provision service with Windows 2016 VM
-    2. Perform SSA on it.
-    3. Check data populated on Provisioned Service in SSUI Dashboard.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.8
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_windows2016_refs():
-    """
-    This test is to verify that you get an error when trying to perform
-    SSA on a Windows2016 VM that has a ReFS formatted disk attached.  Here
-    is the before and after.
-    05/26/17 18:13:36 UTC
-    05/26/17 18:10:56 UTC
-    05/26/17 18:10:46 UTC
-    finished
-    Unable to mount filesystem. Reason:[ReFS is Not Supported]
-    Scan from Vm ReFS16on16a
-    admin
-    EVM
-    Scanning completed.
-    05/26/17 16:12:45 UTC
-    05/26/17 16:08:30 UTC
-    05/26/17 16:08:26 UTC
-    finished
-    Process completed successfully
-    Scan from Vm ReFS16on16a
-    admin
-    EVM
-    Synchronization complete
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/4h
-        setup: Need to create a windows 2016 instance and save it onto the ReFS disks
-               on Azure.
-               Add a second disk to the VM config.  Open VM, initialize disk and
-               format it as ReFS
-               Refresh you CFME appliance
-               Perform SSA on that VM.
-               Best to just use existing ReFS vms.
-        startsin: 5.6
-        upstream: yes
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_region():
-    """
-    1. Add an Azure Instance in one region and assign it to a Resource
-    Group from another region.
-
-    Bugzilla:
-        1503295
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_ec2_ubuntu_ssui():
     """
     1. Provision service with Ubuntu VM
@@ -462,23 +182,6 @@ def test_ssa_vm_ec2_ubuntu_ssui():
         caseimportance: medium
         initialEstimate: 1/3h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_windows2012_ssui():
-    """
-    1. Provision service with Windows 2012 VM
-    2. Perform SSA on it.
-    3. Check data populated on Provisioned Service in SSUI Dashboard.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.8
         tags: smartstate
     """
     pass
@@ -519,48 +222,6 @@ def test_ssa_vm_ec2_agent_tracker():
     pass
 
 
-def test_ssa_vm_azure_windows2012r2_refs():
-    """
-    This test is to verify that you get an error when trying to perform
-    SSA on a Windows2012 r2 instance that has a ReFS formatted disk
-    attached.  Here is the before and after.
-    05/26/17 18:13:36 UTC
-    05/26/17 18:10:56 UTC
-    05/26/17 18:10:46 UTC
-    finished
-    Unable to mount filesystem. Reason:[ReFS is Not Supported]
-    Scan from Vm ReFS16on16a
-    admin
-    EVM
-    Scanning completed.
-    05/26/17 16:12:45 UTC
-    05/26/17 16:08:30 UTC
-    05/26/17 16:08:26 UTC
-    finished
-    Process completed successfully
-    Scan from Vm ReFS16on16a
-    admin
-    EVM
-    Synchronization complete
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseposneg: negative
-        initialEstimate: 1/2h
-        setup: Need to create a windows 2012r2 instance and save it onto the ReFS
-               disks on Azure.
-               Add a second disk to the VM config.  Open VM, initialize disk and
-               format it as ReFS
-               Refresh you CFME appliance
-               Perform SSA on that VM.
-               Best to just use existing ReFS vms.
-        startsin: 5.8
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_ec2_ubuntu():
     """
     Add EC-2 provider.
@@ -579,50 +240,6 @@ def test_ssa_vm_ec2_ubuntu():
 def test_ssa_vm_vsphere6_nested_centos_xfs_ssui():
     """
     1. Provision service with CentOS VM
-    2. Perform SSA on it.
-    3. Check data populated on Provisioned Service in SSUI Dashboard.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        caseimportance: medium
-        initialEstimate: 1/3h
-        startsin: 5.8
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_ubuntu():
-    """
-    Perform SSA on Ubuntu VM
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_non_managed_disk():
-    """
-    Perform SSA on non-managed (blod) disk on Azure provider.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_vm_azure_ubuntu_ssui():
-    """
-    1. Provision service with Ubuntu VM
     2. Perform SSA on it.
     3. Check data populated on Provisioned Service in SSUI Dashboard.
 
@@ -690,22 +307,6 @@ def test_ssa_vm_cancel_task():
     pass
 
 
-def test_ssa_vm_azure():
-    """
-    Perform SSA on Instance on States:
-    1. Power ON
-    2. Power OFF.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/2h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_vm_ec2_vpc():
     """
     1. Create a VPC;
@@ -727,38 +328,6 @@ def test_ssa_vm_ec2_vpc():
     pass
 
 
-def test_ssa_users_azure_windows2016_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows2016 server.
-    3. Check Users are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_azure_rhel():
-    """
-    1. Add Azure provider
-    2. Perform SSA on RHEL instance.
-    3. Check Users  are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_users_ec2_ubuntu():
     """
     Add EC-2 provider.
@@ -770,22 +339,6 @@ def test_ssa_users_ec2_ubuntu():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_azure_ubuntu():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Ubuntu Instance.
-    3. Check Users are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -818,22 +371,6 @@ def test_ssa_users_ec2_rhel():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_users_azure_windows2012r2_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows server 2012 R2.
-    3. Check Users are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -903,38 +440,6 @@ def test_ssa_packages_ec2_rhel():
     pass
 
 
-def test_ssa_packages_azure_ubuntu():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Ubuntu Instance.
-    3. Check Packages are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_packages_azure_windows2016_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows2016 server.
-    3. Check Applications are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_packages_ec2_windows2012r2_ntfs():
     """
     Add EC-2 provider.
@@ -951,38 +456,6 @@ def test_ssa_packages_ec2_windows2012r2_ntfs():
     pass
 
 
-def test_ssa_packages_azure_rhel():
-    """
-    1. Add Azure provider
-    2. Perform SSA on RHEL instance.
-    3. Check Packages are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_packages_azure_windows2012r2_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows server 2012 R2.
-    3. Check Packages are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_host_os_info():
     """
     Checks the host's OS name and version
@@ -992,38 +465,6 @@ def test_ssa_host_os_info():
         casecomponent: SmartState
         caseimportance: medium
         initialEstimate: 1/2h
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_azure_windows2016_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows2016 server.
-    3. Check Files are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_azure_ubuntu():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Ubuntu instance.
-    3. Check Files are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
         tags: smartstate
     """
     pass
@@ -1077,22 +518,6 @@ def test_ssa_files_ec2_ubuntu():
     pass
 
 
-def test_ssa_files_azure_windows2012r2_ntfs():
-    """
-    1. Add Azure provider
-    2. Perform SSA on Windows server 2012 R2.
-    3. Check Files are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
-        tags: smartstate
-    """
-    pass
-
-
 def test_ssa_files_ec2_windows2012r2_ntfs():
     """
     Add EC-2 provider.
@@ -1104,22 +529,6 @@ def test_ssa_files_ec2_windows2012r2_ntfs():
         casecomponent: SmartState
         initialEstimate: 1/2h
         startsin: 5.9
-        tags: smartstate
-    """
-    pass
-
-
-def test_ssa_files_azure_rhel():
-    """
-    1. Add Azure provider
-    2. Perform SSA on RHEL instance.
-    3. Check Files are retrieved.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.6
         tags: smartstate
     """
     pass
