@@ -13,7 +13,11 @@ Options in env.yaml will define what files to collect, will default to the set b
 
 Log files will be tarred and written to log_path
 """
+import os.path
+import subprocess
+
 import pytest
+import scp
 
 from cfme.utils.conf import env
 from cfme.utils.log import logger
@@ -62,7 +66,7 @@ def pytest_collect_logs(config, appliances):
         try:
             collect_logs(app)
         except Exception as exc:
-            logger.error(f"Failed to collect logs: {exc}")
+            logger.exception(f"Failed to collect logs: {exc}")
 
 
 def collect_logs(app):
@@ -71,12 +75,12 @@ def collect_logs(app):
     try:
         log_files = env.log_collector.log_files
     except (AttributeError, KeyError):
-        logger.info('No log_collector.log_files in env, use default files: %s', log_files)
+        logger.info('No log_collector.log_files in env, using the default: %s', log_files)
         pass
     try:
         local_dir = log_path.join(env.log_collector.local_dir)
     except (AttributeError, KeyError):
-        logger.info('No log_collector.local_dir in env, use default local_dir: %s', local_dir)
+        logger.info('No log_collector.local_dir in env, using the default: %s', local_dir)
         pass
 
     # Handle local dir existing
@@ -84,21 +88,20 @@ def collect_logs(app):
 
     with app.ssh_client as ssh_client:
         logger.info(f'Starting log collection on appliance {app.hostname}')
-        tar_file = 'log-collector-{}.tar.gz'.format(
-            app.hostname)
-        logger.debug('Creating tar file on app %s:%s with log files %s',
-                    app, tar_file, ' '.join(log_files))
+        tarred_dir_name = 'log-collector-{}'.format(app.hostname)
         # wrap the files in ls, redirecting stderr, to ignore files that don't exist
-        tar_result = ssh_client.run_command(
-            'tar -czvf {tar} $(ls {files} 2>/dev/null)'
-            .format(tar=tar_file, files=' '.join(log_files)))
-        try:
-            assert tar_result.success
-        except AssertionError:
-            raise RuntimeError(
-                f'Tar command non-zero RC when collecting logs on {app}: {tar_result.output}')
-        ssh_client.get_file(tar_file, local_dir.strpath)
-        logger.info('Wrote the following file to %s: %s', local_dir.strpath, tar_file)
+        tar_dir_path = os.path.join(local_dir.strpath, tarred_dir_name)
+        tarball_path = f'{tar_dir_path}.tar.gz'
+        os.mkdir(tar_dir_path)
+        for f in log_files:
+            try:
+                ssh_client.get_file(f, tar_dir_path)
+            except scp.SCPException as ex:
+                logger.error("Failed to transfer file %s: %s", f, ex)
+        logger.debug('Creating tar file for appliance %s', app)
+        subprocess.run(['tar', '-C', local_dir, '-czvf', tarball_path, tarred_dir_name],
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        logger.info('Wrote the following file %s', tarball_path)
 
 
 class CollectLogsHookSpecs:
