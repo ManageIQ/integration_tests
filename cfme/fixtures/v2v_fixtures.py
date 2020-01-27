@@ -522,8 +522,10 @@ def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider,
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider,
-                                  source_type, dest_type, template_type):
+def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
+    source_type = ["VM Network", "DPortGroup"]
+    dest_type = ["ovirtmgmt", "Storage - VLAN 33"]
+
     vmware_nw = source_provider.data.get("vlans", [None])[0]
     rhvm_nw = provider.data.get("vlans", [None])[0]
     cluster = provider.data.get("clusters", [False])[0]
@@ -538,11 +540,13 @@ def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider,
                 network1=source_type, network2=dest_type),
             "networks": [
                 component_generator(
-                    "vlans", source_provider, provider, source_type, dest_type)
+                    "vlans", source_provider, provider, source_type[0], dest_type[0]),
+                component_generator(
+                    "vlans", source_provider, provider, source_type[1], dest_type[1])
             ]
         }
     )
-    vm_obj = get_vm(request, appliance, source_provider, template_type)
+    vm_obj = get_vm(request, appliance, source_provider, Templates.DUAL_NETWORK_TEMPLATE)
     return FormDataVmObj(infra_mapping_data=infra_mapping_data, vm_list=[vm_obj])
 
 
@@ -610,6 +614,7 @@ def component_generator(selector, source_provider, provider, source_type=None, t
         returns : InfraMapping.component(source_list, target_list) object
 
     """
+
     if selector not in ['clusters', 'datastores', 'vlans']:
         raise ValueError("Please specify cluster, datastore or network(vlans) selector!")
 

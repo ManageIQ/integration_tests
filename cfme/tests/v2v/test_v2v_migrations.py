@@ -192,21 +192,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, provider,
         soft_assert(src_vm.mac_address == migrated_vm.mac_address)
 
 
-@pytest.mark.parametrize(
-    "source_type, dest_type, template_type",
-    [
-        ["VM Network", "ovirtmgmt", Templates.DUAL_NETWORK_TEMPLATE],
-        ["DPortGroup", "Storage - VLAN 33", Templates.DUAL_NETWORK_TEMPLATE]
-    ],
-)
-@pytest.mark.uncollectif(
-    lambda source_provider, source_type:
-    source_provider.one_of(VMwareProvider) and source_provider.version != 6.5 and
-    "DPortGroup" in source_type,
-    reason='Dual network of DPortGroup only supported on source provider version 6.5'
-)
 def test_dual_nics_migration(request, appliance, provider,
-                             source_type, dest_type, template_type,
                              mapping_data_vm_obj_dual_nics):
     """
     Polarion:
