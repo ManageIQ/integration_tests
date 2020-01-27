@@ -585,5 +585,5 @@ class TemplatesCompareView(InfraProvidersView):
     @property
     def is_displayed(self):
         title = "Compare VM Template and Image"
-        return (self.logged_in_as_current_user and self.navigation.currently_selected == [
-                'Compute', 'Infrastructure', 'Providers'] and self.title.text == title)
+        return (self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']
+                and self.title.text == title)
