@@ -312,19 +312,6 @@ def test_replication_appliance_add_multi_subscription(request, setup_multi_regio
 
 
 @pytest.mark.manual
-def test_replication_network_dropped_packets():
-    """
-    10% dropped packets
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Replication
-        initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_replication_global_region_dashboard():
     """
