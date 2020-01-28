@@ -222,7 +222,7 @@ filtering = pytest.mark.requirement(
 genealogy = pytest.mark.requirement(
     "VM/Instance Genealogy",
     description='Genealogy of VMs/Instances in MIQ/CFME',
-    assignee_id='apagac',
+    assignee_id='spusater',
 )
 
 general_ui = pytest.mark.requirement(
@@ -276,7 +276,7 @@ multi_tenancy = pytest.mark.requirement(
 ownership = pytest.mark.requirement(
     "VM/Instance Ownership",
     description='Ownership settings for VM/Instances',
-    assignee_id='apagac',
+    assignee_id='spusater',
 )
 
 power = pytest.mark.requirement(
