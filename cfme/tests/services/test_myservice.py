@@ -5,7 +5,9 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import browser
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -184,11 +186,11 @@ def test_retire_on_date_for_multiple_service():
     pass
 
 
-@pytest.mark.meta(coverage=[1678123])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1678123])
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
-def test_service_state():
+@pytest.mark.parametrize("check", ["provisioned", "un_provisioned"])
+def test_service_state(request, appliance, provider, catalog_item, check):
     """
     Bugzilla:
         1678123
@@ -208,7 +210,28 @@ def test_service_state():
             3.
             4. Service State should be Provisioned or Failed
     """
-    pass
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    service = MyService(appliance, catalog_item.name)
+    service_request = service_catalogs.order()
+
+    @request.addfinalizer
+    def _finalize():
+        service.delete()
+
+    if check == "provisioned":
+        expected_state = "Provisioned"
+        service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
+    else:
+        expected_state = "Unprovisioned"
+        # Delete Provider while service is provisioning
+        provider.delete_rest()
+        provider.wait_for_delete()
+
+    view = navigate_to(service, "Details")
+    wait_for(lambda: view.entities.lifecycle.get_text_of("State") == expected_state,
+             fail_condition=0,
+             num_sec=300,
+             fail_func=view.browser.refresh)
 
 
 @pytest.mark.meta(coverage=[1727443])
