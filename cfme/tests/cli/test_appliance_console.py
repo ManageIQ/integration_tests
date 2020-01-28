@@ -1539,3 +1539,58 @@ def test_ap_failed_dbconfig_status(temp_appliance_preconfig_funcscope):
     result = appliance.ssh_client.run_command(command, timeout=30)
     assert not result.success, ('DB configuration should fail because used disk "/dev/sdz" '
                                 'which will not be available')
+
+
+@pytest.mark.tier(0)
+@pytest.mark.meta(automates=[1625377])
+def test_appliance_console_vmdb_log_negative(temp_appliance_preconfig_funcscope):
+    """
+      test to verify database configuration logs on failure
+
+    Bugzilla:
+      1625377
+
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Appliance
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. press any key to continue
+            3. press "7" to "Configure Database"
+            4. press "3" tp "Join Region in External Database"
+            5. enter the invalid DB hostname
+            6. enter the port number
+            7. enter the DB name
+            8. enter the user name
+            9. enter the password
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9. wait and verify "Validated failed with error" error message on appliance console
+             and "could not connect to serve" error message in the appliance_console.log file
+      """
+    appliance = temp_appliance_preconfig_funcscope
+    # Creating appliance_console.log file because initially it is not created by default
+    appliance.ssh_client.run_command("touch /var/www/miq/vmdb/log/appliance_console.log")
+
+    ap_console_tail = LogValidator('/var/www/miq/vmdb/log/appliance_console.log',
+                           matched_patterns=['.*ERROR.*could not connect to serve.*'],
+                           hostname=appliance.hostname)
+    ap_console_tail.start_monitoring()
+
+    command_set = ("ap", RETURN, app_con_menu["config_db"], "3", "XXX.XXX.XXX.XXX", RETURN,
+                   RETURN, RETURN, TimedCommand(conf.credentials['default']['password'], 300)
+                   )
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert "Validated failed with error" in result[-1], "Database Configuration is not failed"
+
+    ap_console_tail.validate(wait="60s")
