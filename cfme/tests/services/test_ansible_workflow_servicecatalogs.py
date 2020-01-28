@@ -14,7 +14,7 @@ pytestmark = [
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.parametrize('ansible_api_version', ['v1', 'v2']),
-    pytest.mark.ignore_stream('upstream'),
+    pytest.mark.ignore_stream('upstream')
 ]
 
 
