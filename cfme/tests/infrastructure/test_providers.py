@@ -503,7 +503,7 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
     if templates_yaml < min_templates:
         pytest.skip(f'Number of templates defined in yaml for {provider} does not meet minimum '
                     f'for test parameter {min_templates}, skipping and not setting up provider')
-    if len(provider.mgmt.list_host()) < min_templates:
+    if len(provider.mgmt.list_template()) < min_templates:
         pytest.skip(f'Number of templates on {provider} does not meet minimum '
                     f'for test parameter {min_templates}, skipping and not setting up provider')
     # Function-scoped fixture to set up a provider
