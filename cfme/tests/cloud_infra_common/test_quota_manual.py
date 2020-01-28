@@ -40,46 +40,6 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     pass
 
 
-@pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1492158])
-def test_quota_calculation_using_service_dialog_overrides():
-    """
-    This test case is to check Quota calculation using service dialog overrides.
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/6h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.8
-        casecomponent: Infra
-        tags: quota
-        testSteps:
-            1. create a new domain quota_test
-            2. Using the Automate Explorer, copy the
-               ManageIQ/System/CommonMethods/QuotaMethods/requested method
-               to the quota_test domain.
-            3. Import the attached dialog. create catalog and catalog
-               item using this dialog
-            4. create a child tenant and set quota. create new group and
-               user for this tenant.
-            5. login with this user and provision by overriding values
-            6. Also test the same for user and group quota source type
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Quota should be denied with reason for quota exceeded message
-            6. Quota should be denied with reason for quota exceeded message
-
-    Bugzilla:
-        1492158
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 @pytest.mark.meta(coverage=[1455844])
 def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dialog():
