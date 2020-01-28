@@ -1,8 +1,11 @@
 from datetime import datetime
 
+import fauxfactory
 import pytest
+from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
+from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
@@ -13,6 +16,7 @@ from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.browser import ensure_browser_open
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -317,10 +321,14 @@ def test_load_multiple_services():
     pass
 
 
-@pytest.mark.meta(coverage=[1737559])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1737559])
 @pytest.mark.tier(2)
-def test_load_service_with_button():
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1737559.zip", "bz_1737559", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1737559.yml"], ids=["load-button"])
+def test_load_service_with_button(request, appliance, generic_service, import_dialog,
+                                  import_datastore, import_data):
     """
     Bugzilla:
         1737559
@@ -347,4 +355,36 @@ def test_load_service_with_button():
             6.
             7. Service should load without an error in log
     """
-    pass
+    service, _ = generic_service
+    sd, ele_label = import_dialog
+
+    # Create button group
+    collection = appliance.collections.button_groups
+    button_gp = collection.create(
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
+        type=getattr(collection, "SERVICE"),
+    )
+    request.addfinalizer(button_gp.delete_if_exists)
+
+    # Create custom button under group
+    button = button_gp.buttons.create(
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
+        dialog=sd.label,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    # Navigate to Details page of service
+    view = navigate_to(service, "Details")
+
+    # Start log check
+    with LogValidator("/var/www/miq/vmdb/log/automation.log",
+                      failure_patterns=[r".*ERROR.*"]).waiting(timeout=60):
+
+        # Load service on custom button
+        custom_button_group = Dropdown(view, button_gp.text)
+        assert custom_button_group.is_displayed
+        custom_button_group.item_select(button.text)
