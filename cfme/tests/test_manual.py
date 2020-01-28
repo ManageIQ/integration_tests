@@ -388,17 +388,6 @@ def test_host_credentials_web():
 
 
 @pytest.mark.manual
-def test_group_quota_via_ssui():
-    """
-    Polarion:
-        assignee: sshveta
-        initialEstimate: 1/4h
-        casecomponent: SelfServiceUI
-    """
-    pass
-
-
-@pytest.mark.manual
 @test_requirements.service
 @pytest.mark.tier(3)
 def test_delete_orchestration_template_in_use():

@@ -583,11 +583,10 @@ def test_catalog_item_price_currency():
     pass
 
 
-@pytest.mark.meta(coverage=[1740399])
-@pytest.mark.manual
 @pytest.mark.ignore_stream('5.10')
+@pytest.mark.meta(blockers=[BZ(1740399, forced_streams=["5.11"])], automates=[1740399])
 @pytest.mark.tier(2)
-def test_copy_catalog_item_with_tags():
+def test_copy_catalog_item_with_tags(request, generic_catalog_item, tag):
     """
     Bugzilla:
         1740399
@@ -608,4 +607,11 @@ def test_copy_catalog_item_with_tags():
             3.
             4. Tags to be copied with catalog item
     """
-    pass
+    generic_catalog_item.add_tag(tag)
+    new_cat_item = generic_catalog_item.copy()
+    request.addfinalizer(new_cat_item.delete_if_exists)
+    assert all([
+        tag_available.category.display_name == tag.category.display_name and
+        tag_available.display_name == tag.display_name
+        for tag_available in new_cat_item.get_tags()
+    ]), 'Assigned tag was not found on the details page'
