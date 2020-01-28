@@ -628,7 +628,7 @@ def test_existing_domain_child_override(appliance, custom_domain, import_data):
             3. You should see flash message: "Error: Selected domain is locked"
             4.
             5. Selected domain imported successfully
-            6. You should see existing as well as imported namespace, class, instance or method
+            6. You should see imported namespace, class, instance or method
     """
     # Download datastore file from FTP server
     fs = FTPClientWrapper(cfme_data.ftpserver.entities.datastores)
