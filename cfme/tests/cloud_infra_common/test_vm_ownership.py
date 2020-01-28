@@ -158,7 +158,7 @@ def test_form_button_validation(user1, vm_crud):
         test_flag: rbac
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         caseimportance: medium
         casecomponent: Appliance
         initialEstimate: 1/4h
@@ -181,7 +181,7 @@ def test_user_ownership_crud(user1, vm_crud):
         test_flag: rbac
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         caseimportance: medium
         casecomponent: Appliance
         initialEstimate: 1/4h
@@ -203,7 +203,7 @@ def test_group_ownership_on_user_only_role(user2, vm_crud):
         test_flag: rbac
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         caseimportance: medium
         casecomponent: Appliance
         initialEstimate: 1/4h
@@ -226,7 +226,7 @@ def test_group_ownership_on_user_or_group_role(user3, vm_crud):
         test_flag: rbac
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         caseimportance: medium
         casecomponent: Appliance
         initialEstimate: 1/4h
@@ -251,7 +251,7 @@ def test_template_set_ownership(appliance, vm_crud):
     Tests BZ 1446801 in RHCF3-14353
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
@@ -284,7 +284,7 @@ def test_set_ownership_back_to_default():
     Set ownership back to default value.
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -312,7 +312,7 @@ def test_ownership_dropdown_values():
     Test that all values are displayed on ownership user and group dropdowns
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/8h
@@ -338,7 +338,7 @@ def test_duplicate_groups():
     Verify duplicat group names are not listed when selecting multiple vms and setting ownership.
 
     Polarion:
-        assignee: apagac
+        assignee: spusater
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
