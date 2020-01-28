@@ -13,10 +13,7 @@ pytestmark = [
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2),
-    pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
-        'textarea_survey'],
-        ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
-        scope='module'),
+    pytest.mark.parametrize('ansible_api_version', ['v1', 'v2']),
     pytest.mark.ignore_stream('upstream'),
 ]
 
@@ -39,9 +36,14 @@ def catalog_item(appliance, request, provider, ansible_tower_dialog, catalog, jo
     return catalog_item
 
 
+@pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
+        'textarea_survey'],
+        ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
+        scope='module')
 @pytest.mark.meta(automates=[BZ(1717500)])
 # The 'textarea_survey' job type automates BZ 1717500
-def test_order_tower_catalog_item(appliance, provider, catalog_item, request, job_type):
+def test_order_tower_catalog_item(appliance, provider, catalog_item, request, job_type,
+        ansible_api_version_change):
     """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision
@@ -74,7 +76,9 @@ def test_order_tower_catalog_item(appliance, provider, catalog_item, request, jo
                                                               'List View')
 
 
-def test_retire_ansible_service(appliance, catalog_item, request, job_type):
+@pytest.mark.parametrize('job_type', ['template'], ids=['template_job'])
+def test_retire_ansible_service(appliance, catalog_item, request, job_type,
+        ansible_api_version_change):
     """Tests retiring of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision

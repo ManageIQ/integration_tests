@@ -375,7 +375,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         else:
             view.entities.save.click()
             view.flash.assert_success_message(
-                '{} Provider "{}" was updated'.format(self.ui_type, updates['name'] or self.name))
+                '{} Provider "{}" was updated'.format(self.ui_type, self.name))
             self.__dict__.update(**updates)
 
     def delete(self, cancel=False, wait_deleted=True, force=False):
