@@ -8,6 +8,7 @@ import pytest
 import yaml
 from wait_for import TimedOutError
 from wait_for import wait_for
+from widgetastic.utils import VersionPick
 
 from cfme import test_requirements
 from cfme.utils import conf
@@ -17,6 +18,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.version import LOWEST
 
 pytestmark = [
     test_requirements.app_console,
@@ -914,11 +916,11 @@ def test_appliance_console_check_default_ip(appliance):
     )
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_ssl():
+@pytest.mark.meta(automates=[1482697])
+def test_appliance_ssl(appliance):
     """
-    Test ssl connections to postgres database from other appliances.
+    Testing SSL is enabled or not by default
 
     Bugzilla:
         1482697
@@ -928,8 +930,35 @@ def test_appliance_ssl():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/3h
+        testSteps:
+            1. 'cat /opt/rh/cfme-appliance/COPY/etc/manageiq/postgresql.conf.d/
+            01_miq_overrides.conf' run above command and grep to "ssl = on" string
+            2. run "cat /opt/rh/cfme-appliance/TEMPLATE/var/lib/pgsql/data/pg_hba.conf" on version
+             5.11 and "cat /opt/rh/cfme-appliance/TEMPLATE/var/opt/rh/rh-postgresql95/lib/pgsql/
+             data/pg_hba.conf" on 5.10 version
+        expectedResults:
+            1. confirm "ssl = on" text in 01_miq_overrides.conf file
+            2. confirm "hostssl all         all   all     md5" text in pg_hba.conf file
     """
-    pass
+    command = (
+        "cat /opt/rh/cfme-appliance/COPY/etc/manageiq/postgresql.conf.d/01_miq_overrides.conf"
+    )
+    result = appliance.ssh_client.run_command(command)
+    assert result.success, "SSL check command failed"
+    assert "ssl = on" in result.output, "ssl entry not found"
+
+    command = VersionPick(
+        {
+            LOWEST: (
+                "cat /opt/rh/cfme-appliance/TEMPLATE/var/opt/rh/rh-postgresql95/lib/pgsql/data/"
+                "pg_hba.conf"
+            ),
+            "5.11": ("cat /opt/rh/cfme-appliance/TEMPLATE/var/lib/pgsql/data/pg_hba.conf"),
+        }
+    ).pick(appliance.version)
+    result = appliance.ssh_client.run_command(command)
+    assert result.success
+    assert re.search("hostssl +all +all +all +md5", result.output), "hostssl entry not found"
 
 
 @pytest.mark.manual
