@@ -242,7 +242,7 @@ requests-ntlm==1.1.0
 requests-oauthlib==1.2.0
 requestsexceptions==1.4.0
 rfc3986==1.3.2
-riggerlib==3.1.5
+riggerlib==3.1.6
 rsa==4.0
 ruamel.yaml==0.15.100
 s3transfer==0.1.13
