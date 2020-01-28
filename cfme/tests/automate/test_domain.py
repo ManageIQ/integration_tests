@@ -645,8 +645,4 @@ def test_existing_domain_child_override(appliance, custom_domain, import_data):
     datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
     view.flash.assert_no_error()
     view = navigate_to(custom_domain, 'Details')
-    if not BZ(1752875).blocks:
-        assert (
-            view.datastore.tree.has_path('Datastore', f'{custom_domain.name}', 'System', 'Request')
-        )
     assert view.datastore.tree.has_path('Datastore', f'{custom_domain.name}', 'System', 'Process')
