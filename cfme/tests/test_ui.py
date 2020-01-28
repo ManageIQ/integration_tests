@@ -1,7 +1,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.fixtures.soft_assert import soft_assert
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -24,7 +23,7 @@ def traverse(dic, paths, path=None):
 
 
 @pytest.mark.meta(coverage=[1648338])
-def test_each_page(appliance):
+def test_each_page(appliance, soft_assert):
     """
     Bugzilla:
         1648338

@@ -58,7 +58,7 @@ def test_notification_window_can_be_closed_by_clicking_x():
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.manual("manualonly")
 @pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1651194, 1503213])
 @test_requirements.general_ui
