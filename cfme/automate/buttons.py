@@ -3,11 +3,9 @@ import re
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.utils import ParametrizedString
 from widgetastic.widget import Checkbox
 from widgetastic.widget import ColourInput
 from widgetastic.widget import ConditionalSwitchableView
-from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Select
 from widgetastic.widget import Table
 from widgetastic.widget import Text
@@ -28,6 +26,7 @@ from cfme.utils.log import logger
 from cfme.utils.update import Updateable
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import MultiBoxOrderedSelect
@@ -107,17 +106,7 @@ class ButtonFormCommon(AutomateCustomizationView):
         system = BootstrapSelect("instance_name")
         message = Input(name="object_message")
         request = Input(name="object_request")
-
-        @ParametrizedView.nested
-        class attribute(ParametrizedView):  # noqa
-            PARAMETERS = ("number",)
-            key = Input(name=ParametrizedString("attribute_{number}"))
-            value = Input(name=ParametrizedString("value_{number}"))
-
-            @classmethod
-            def all(cls, browser):
-                return [(i,) for i in range(1, 6)]
-
+        attributes = AttributeValueForm("attribute_", "value_")
         role_show = BootstrapSelect(id="visibility_typ")
         roles = RolesSelector(locator="//label[contains(text(),'User Roles')]/../div/table")
 
@@ -515,9 +504,8 @@ class ButtonCollection(BaseCollection):
 
         view.fill({"advanced": {"system": system, "request": request}})
 
-        if attributes is not None:
-            for i, attribute in enumerate(attributes, 1):
-                view.advanced.attribute(i).fill({"key": attribute[0], "value": attribute[1]})
+        if attributes:
+            view.advanced.attributes.fill(attributes)
 
         if roles:
             view.advanced.role_show.fill("<By Role>")

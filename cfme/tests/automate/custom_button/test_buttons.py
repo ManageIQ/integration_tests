@@ -223,18 +223,17 @@ def test_button_avp_displayed(appliance, dialog, request):
         1460774
     """
     # This is optional, our nav tree does not have unassigned button
-    buttongroup = appliance.collections.button_groups.create(
-        text=fauxfactory.gen_alphanumeric(start="grp_"),
-        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
-        type=appliance.collections.button_groups.VM_INSTANCE,
+    buttongroup = appliance.collections.button_groups.instantiate(
+        text="[Unassigned Buttons]",
+        hover="Unassigned buttons",
+        type=appliance.collections.button_groups.VM_INSTANCE
     )
-    request.addfinalizer(buttongroup.delete_if_exists)
     buttons_collection = appliance.collections.buttons
     buttons_collection.group = buttongroup
     view = navigate_to(buttons_collection, "Add")
     for n in range(1, 6):
-        assert view.advanced.attribute(n).key.is_displayed
-        assert view.advanced.attribute(n).value.is_displayed
+        assert view.advanced.attributes.fields(str(n)).attribute.is_displayed
+        assert view.advanced.attributes.fields(str(n)).value.is_displayed
     view.cancel_button.click()
 
 
@@ -634,12 +633,12 @@ def test_attribute_override(appliance, request, provider, setup_provider, obj_ty
     Bugzilla:
         1651099
     """
-    attributes = [
-        ("class", "Request"),
-        ("instance", "TestNotification"),
-        ("message", "digitronik_msg"),
-        ("namespace", "/System"),
-    ]
+    attributes = {
+        "class": "Request",
+        "instance": "TestNotification",
+        "message": "digitronik_msg",
+        "namespace": "/System",
+    }
     req = "call_instance_with_message"
     patterns = [
         "[miqaedb:/System/Request/TestNotification#create]",
@@ -738,10 +737,10 @@ def test_simulated_object_copy_on_button(appliance, provider, setup_provider, bu
     assert view.advanced.message.read() == "test_bz"
     assert view.advanced.request.read() == "InspectMe"
 
-    attributes_on_page = [kv for kv in view.advanced.attribute.read().values() if kv["key"] != ""]
+    attributes_on_page = view.advanced.attributes.read()
 
-    for attr in attributes_on_page:
-        assert attributes[attr["key"]] == attr["value"]
+    for key, value in attributes_on_page.items():
+        assert attributes[key] == value
 
 
 @pytest.mark.tier(1)
