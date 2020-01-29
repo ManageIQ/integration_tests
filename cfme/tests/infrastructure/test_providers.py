@@ -503,11 +503,24 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
     if templates_yaml < min_templates:
         pytest.skip(f'Number of templates defined in yaml for {provider} does not meet minimum '
                     f'for test parameter {min_templates}, skipping and not setting up provider')
-    if len(provider.mgmt.list_template()) < min_templates:
+    if len(provider.mgmt.list_templates()) < min_templates:
         pytest.skip(f'Number of templates on {provider} does not meet minimum '
                     f'for test parameter {min_templates}, skipping and not setting up provider')
     # Function-scoped fixture to set up a provider
     setup_or_skip(request, provider)
+
+
+def verify_checked_items_compared(checkedList, view):
+    for e in view.comparison_table.headers[1:-1]:
+            try:
+                checkedList.remove(e.split(' ')[0])
+            except ValueError:
+                pytest.fail(f"Entity {e.split(' ')[0]} is in compare view, but was not checked.")
+            except TypeError:
+                pytest.fail('No entities found in compare view.')
+    if len(checkedList) > 0:
+        pytest.fail(f'Some checked items did not appear in the compare view: {checkedList}.')
+    return True
 
 
 @pytest.mark.parametrize("min_templates", [2, 4])
@@ -523,10 +536,13 @@ def test_compare_provider_templates(appliance, setup_provider_min_templates, pro
     Bugzilla:
         1746449
     """
+    templateList = []
     my_slice = slice(0, min_templates, None)
     view = navigate_to(provider, 'ProviderTemplates')
     for t in view.entities.get_all(slice=my_slice):
         t.ensure_checked()
-    view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
+        templateList.append(t.name)
+    #view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
     compare_templates_view = provider.create_view(TemplatesCompareView)
     assert compare_templates_view.is_displayed
+    assert verify_checked_items_compared(templateList, compare_templates_view)
