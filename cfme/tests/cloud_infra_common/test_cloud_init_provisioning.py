@@ -1,6 +1,7 @@
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
 import pytest
+from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
@@ -95,6 +96,8 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
         floating_ip = mgmt_system.get_first_floating_ip(pool=ip_pool)
         provider.refresh_provider_relationships()
         inst_args['environment'] = {'public_ip_address': floating_ip}
+        inst_arg_props = inst_args.setdefault('properties', {})
+        inst_arg_props['instance_type'] = partial_match(provisioning['ci-flavor-name'])
     if provider.one_of(InfraProvider) and appliance.version > '5.9':
         inst_args['customize']['customize_type'] = 'Specification'
 
