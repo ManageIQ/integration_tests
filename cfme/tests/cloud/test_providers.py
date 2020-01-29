@@ -1504,7 +1504,9 @@ def test_add_second_provider(setup_provider, provider, request):
 @pytest.mark.ignore_stream("5.10")  # BZ 1710623 was not merged into 5.10
 def test_provider_compare_ec2_provider_and_backup_regions(appliance):
     """
-    Bugzilla: 1710599, 1710623
+    Bugzilla:
+        1710599
+        1710623
     Polarion:
         assignee: mmojzis
         casecomponent: Cloud
@@ -1549,3 +1551,14 @@ def test_provider_compare_ec2_provider_and_backup_regions(appliance):
 
     assert regions_provider_texts == regions_scheduled_backup_texts
     assert regions_provider_texts == regions_immediate_backup_texts
+
+
+@pytest.mark.provider([EC2Provider, OpenStackProvider], scope="function", override=True,
+                      selector=ONE)
+@test_requirements.cloud
+def test_cloud_provider_dashboard_after_block_storage_provider_delete(appliance, provider):
+    storage_manager = appliance.collections.block_managers.filter({'provider': provider}).all()[0]
+    storage_manager.delete()
+    view = navigate_to(provider, "Details")
+    view.toolbar.view_selector.select('Dashboard View')
+    view.flash.assert_no_error
