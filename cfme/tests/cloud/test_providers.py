@@ -1493,6 +1493,7 @@ def test_add_second_provider(setup_provider, provider, request):
 @pytest.mark.ignore_stream("5.10")  # BZ 1710623 was not merged into 5.10
 def test_provider_compare_ec2_provider_and_backup_regions(appliance):
     """
+    Bugzilla: 1710599, 1710623
     Polarion:
         assignee: mmojzis
         casecomponent: Cloud
@@ -1516,29 +1517,24 @@ def test_provider_compare_ec2_provider_and_backup_regions(appliance):
     """
     view = navigate_to(CloudProvider, 'Add')
     view.prov_type.fill("Amazon EC2")
-    regions_provider = view.region.all_options
-    # Delete option <Choose>
-    regions_provider.pop(0)
-    regions_provider_texts = [option.text for option in regions_provider]
+    regions_provider_texts = [option.text for option in view.region.all_options if
+                              option.text != "<Choose>"]
     regions_provider_texts.sort()
 
     view = navigate_to(appliance.collections.system_schedules, 'Add')
     view.form.action_type.fill("Database Backup")
     view.form.database_backup.backup_type.fill("AWS S3")
     regions_scheduled_backup = view.form.database_backup.aws_s3_protocol.aws_region.all_options
-    # Delete option <Choose>
-    regions_scheduled_backup.pop(0)
-    regions_scheduled_backup_texts = [option.text for option in regions_scheduled_backup]
+    regions_scheduled_backup_texts = [option.text for option in regions_scheduled_backup if
+                                      option.text != "<Choose>"]
     regions_scheduled_backup_texts.sort()
 
     view = navigate_to(appliance.server.zone.region, 'Database')
     view.db_backup_settings.backup_type.fill("AWS S3")
     regions_immediate_backup = view.db_backup_settings.aws_s3_protocol.aws_region.all_options
-    # Delete option <Choose>
-    regions_immediate_backup.pop(0)
-    regions_immediate_backup_texts = [option.text for option in regions_immediate_backup]
+    regions_immediate_backup_texts = [option.text for option in regions_immediate_backup if
+                                      option.text != "<Choose>"]
     regions_immediate_backup_texts.sort()
 
     assert regions_provider_texts == regions_scheduled_backup_texts
     assert regions_provider_texts == regions_immediate_backup_texts
-    assert regions_scheduled_backup_texts == regions_immediate_backup_texts
