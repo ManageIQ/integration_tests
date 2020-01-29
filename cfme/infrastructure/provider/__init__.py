@@ -29,6 +29,7 @@ from cfme.infrastructure.cluster import ClusterToolbar
 from cfme.infrastructure.cluster import ClusterView
 from cfme.infrastructure.host import HostsCollection
 from cfme.infrastructure.virtual_machines import InfraTemplate
+from cfme.infrastructure.virtual_machines import InfraTemplateCollection
 from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.modeling.base import BaseCollection
 from cfme.optimize.utilization import ProviderUtilizationTrendsView
@@ -104,7 +105,7 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
     end_ip = attr.ib(default=None)
     provider_data = attr.ib(default=None)
 
-    _collections = {'hosts': HostsCollection}
+    _collections = {'hosts': HostsCollection, 'templates': InfraTemplateCollection}
 
     def __attrs_post_init__(self):
         super().__attrs_post_init__()

@@ -8,6 +8,7 @@ from navmazing import NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
+from cfme.common import ComparableMixin
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
@@ -19,9 +20,11 @@ from cfme.common.host_views import HostDriftAnalysis
 from cfme.common.host_views import HostDriftHistory
 from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostNetworkDetailsView
+from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostTimelinesView
 from cfme.common.host_views import ProviderAllHostsView
+from cfme.common.host_views import ProviderHostsCompareView
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import RestLookupError
 from cfme.infrastructure.datastore import HostAllDatastoresView
@@ -41,9 +44,8 @@ from cfme.utils.wait import wait_for
 
 
 @attr.s
-class Host(
-    BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable, CustomButtonEventsMixin
-):
+class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
+           CustomButtonEventsMixin):
     """Model of an infrastructure host in cfme.
 
     Args:
@@ -476,10 +478,13 @@ class Host(
 
 
 @attr.s
-class HostsCollection(BaseCollection):
+class HostsCollection(ComparableMixin, BaseCollection):
     """Collection object for the :py:class:`cfme.infrastructure.host.Host`."""
 
     ENTITY = Host
+
+    COMPARE_VIEW_PROVIDER = ProviderHostsCompareView
+    COMPARE_VIEW_ALL = HostsCompareView
 
     def check_hosts(self, hosts):
         hosts = list(hosts)

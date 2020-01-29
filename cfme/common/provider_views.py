@@ -3,7 +3,6 @@ from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version
 from widgetastic.widget import ConditionalSwitchableView
-from widgetastic.widget import Table
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav
@@ -12,6 +11,7 @@ from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Dropdown
 
 from cfme.common import BaseLoggedInPage
+from cfme.common import CompareView
 from cfme.common import TimelinesView
 from cfme.common.host_views import HostEntitiesView
 from cfme.utils.version import VersionPicker
@@ -580,10 +580,8 @@ class ContainerProviderEditView(ProviderEditView):
                 getattr(self, widget).fill(values.get(widget))
 
 
-class TemplatesCompareView(InfraProvidersView):
+class TemplatesCompareView(CompareView):
     """Compare Templates page."""
-    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    comparison_table = Table(locator='//div[@id="compare-grid"]/table')
 
     @property
     def is_displayed(self):

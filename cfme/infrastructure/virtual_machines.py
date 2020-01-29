@@ -26,7 +26,9 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input as WInput
 
 from cfme.common import BaseLoggedInPage
+from cfme.common import ComparableMixin
 from cfme.common import TimelinesView
+from cfme.common.provider_views import TemplatesCompareView
 from cfme.common.vm import Template
 from cfme.common.vm import TemplateCollection
 from cfme.common.vm import VM
@@ -47,7 +49,9 @@ from cfme.common.vm_views import VMToolbar
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
+from cfme.infrastructure.provider import ProviderTemplatesView
 from cfme.services.requests import RequestsView
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -303,6 +307,17 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts'] and
             self.entities.title.text == title
         )
+
+
+class VmTemplatesCompareView(TemplatesCompareView):
+    """Compare Templates page."""
+
+    @property
+    def is_displayed(self):
+        title = "Compare VM Template and Image"
+        return (self.navigation.currently_selected ==
+                ['Compute', 'Infrastructure', 'Virtual Machines']
+                and self.title.text == title)
 
 
 class InfraVmSummaryView(VMDetailsEntities):
@@ -1339,8 +1354,18 @@ class InfraTemplate(Template):
 
 
 @attr.s
-class InfraTemplateCollection(TemplateCollection):
+class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     ENTITY = InfraTemplate
+
+    COMPARE_VIEW_PROVIDER = TemplatesCompareView
+    COMPARE_VIEW_ALL = VmTemplatesCompareView
+    DROPDOWN_TEXT = 'Compare Selected Templates'
+    NAV_STRING = 'TemplatesOnly'
+
+    @property
+    def name(self):
+        provider = self.filters.get('provider')
+        return provider.name if provider else None
 
     def all(self):
         """Return entities for all items in collection"""
@@ -1666,17 +1691,26 @@ class SetRetirement(CFMENavigateStep):
 
 @navigator.register(InfraTemplateCollection, 'TemplatesOnly')
 class TemplatesAll(CFMENavigateStep):
-    VIEW = TemplatesOnlyAllView
     prerequisite = NavigateToSibling('All')
 
+    @property
+    def VIEW(self):  # noqa
+        from cfme.infrastructure.provider import InfraProvider
+        if isinstance(self.obj.parent, InfraProvider):
+            return ProviderTemplatesView
+        elif isinstance(self.obj.parent, IPAppliance):
+            return TemplatesOnlyAllView
+
     def step(self, *args, **kwargs):
-        if 'filter_folder' not in kwargs:
-            self.view.sidebar.templates.tree.click_path('All Templates')
-        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            self.view.sidebar.templates.tree.click_path('All Templates', kwargs['filter_folder'],
-                                                        kwargs['filter_name'])
-        else:
-            raise DestinationNotFound("the destination isn't found")
+        if isinstance(self.obj.parent, IPAppliance):
+            if 'filter_folder' not in kwargs:
+                self.view.sidebar.templates.tree.click_path('All Templates')
+            elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+                self.view.sidebar.templates.tree.click_path('All Templates',
+                                                            kwargs['filter_folder'],
+                                                            kwargs['filter_name'])
+            else:
+                raise DestinationNotFound("the destination isn't found")
 
 
 @navigator.register(InfraVmCollection, 'Provision')

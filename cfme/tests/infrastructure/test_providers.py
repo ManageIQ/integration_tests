@@ -10,13 +10,13 @@ from cfme.base.credential import Credential
 from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersDiscoverView
 from cfme.common.provider_views import InfraProvidersView
-from cfme.common.provider_views import TemplatesCompareView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.virtual_machines import InfraTemplateCollection
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -502,9 +502,10 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
 
 @pytest.mark.provider([InfraProvider], selector=ONE, scope="function")
 @pytest.mark.parametrize("min_templates", [2, 4])
+@pytest.mark.parametrize("templates_collection", ["provider", "appliance"])
 @pytest.mark.meta(blockers=[BZ(1784180, forced_streams=["5.10"])], automates=[1784180])
-def test_compare_provider_templates(appliance, setup_provider_min_templates, provider,
-                                    min_templates):
+def test_compare_templates(appliance, setup_provider_min_templates, provider, min_templates,
+                           templates_collection):
     """
     Polarion:
         assignee: prichard
@@ -514,14 +515,19 @@ def test_compare_provider_templates(appliance, setup_provider_min_templates, pro
     Bugzilla:
         1746449
     """
-    templateList = []
-    my_slice = slice(0, min_templates, None)
-    view = navigate_to(provider, 'ProviderTemplates')
-    for t in view.entities.get_all(slice=my_slice):
-        t.ensure_checked()
-        templateList.append(t.name)
-    view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
-    compare_templates_view = provider.create_view(TemplatesCompareView)
-    assert compare_templates_view.is_displayed
-    assert compare_templates_view.verify_checked_items_compared(templateList,
-                                                                compare_templates_view)
+    if templates_collection == 'provider':
+        provider.collections.templates = InfraTemplateCollection(provider,
+                                                                 filters={'provider': provider})
+        t_coll = provider.collections.templates.all()[:min_templates]
+        compare_view = provider.collections.templates.compare_entities(provider,
+                                                                       entities_list=t_coll)
+    elif templates_collection == 'appliance':
+        appliance.collections.templates = InfraTemplateCollection(appliance)
+        t_coll = appliance.collections.templates.all()[:min_templates]
+        compare_view = appliance.collections.templates.compare_entities(provider,
+                                                                        entities_list=t_coll)
+    assert compare_view.is_displayed
+    t_list = []
+    for t in t_coll:
+        t_list.append(t.name)
+    assert compare_view.verify_checked_items_compared(t_list, compare_view)
