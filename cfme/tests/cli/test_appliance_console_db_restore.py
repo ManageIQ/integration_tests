@@ -19,6 +19,8 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.ssh_expect import SSHExpect
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 
 pytestmark = [
     test_requirements.restore
@@ -201,7 +203,10 @@ def restore_db(appl, location=''):
     with SSHExpect(appl) as interaction:
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=40)
-        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
         interaction.answer(re.escape('Choose the restore database file source: |1| '), '1')
         interaction.answer(re.escape('Enter the location of the local restore file: '
                                 '|/tmp/evm_db.backup| '), location)
@@ -276,7 +281,10 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
     with SSHExpect(appl2) as interaction:
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=40)
-        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
         interaction.answer(
             re.escape('Choose the restore database file source: |1| '), '')
         interaction.answer(
@@ -575,9 +583,13 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
 
     # Do the backup
     with SSHExpect(appl1) as interaction:
+        appl1.evmserverd.stop()
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=40)
-        interaction.answer('Choose the advanced setting: ', '4')
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '4',
+            '5.11.2.1': 2
+        }))
         interaction.answer(r'Choose the backup output file destination: \|1\| ', '2')
         interaction.answer(r'Enter the location to save the backup file to: \|.*\| ',
             nfs_dump_file_name)
@@ -596,7 +608,10 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     with SSHExpect(appl2) as interaction:
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=40)
-        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
         interaction.answer(r'Choose the restore database file source: \|1\| ', '2')
         # Enter the location of the remote backup file
         interaction.answer(
@@ -646,9 +661,13 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
 
     # Do the backup
     with SSHExpect(appl1) as interaction:
+        appl1.evmserverd.stop()
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=40)
-        interaction.answer('Choose the advanced setting: ', '4')
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '4',
+            '5.11.2.1': 2
+        }))
         interaction.answer(r'Choose the backup output file destination: \|1\| ', '3')
         interaction.answer(r'Enter the location to save the backup file to: \|.*\| ',
             smb_dump_file_name)
@@ -670,7 +689,10 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     with SSHExpect(appl2) as interaction:
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=40)
-        interaction.answer('Choose the advanced setting: ', '6')
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
         interaction.answer(r'Choose the restore database file source: \|1\| ', '3')
         # Enter the location of the remote backup file
         interaction.answer(

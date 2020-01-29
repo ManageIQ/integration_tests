@@ -191,7 +191,10 @@ class ApplianceDB(AppliancePlugin):
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
             interaction.answer(re.escape('Press any key to continue.'), '', timeout=40)
-            interaction.answer(re.escape('Choose the advanced setting: '), '4')
+            interaction.answer(re.escape('Choose the advanced setting: '), VersionPicker({
+                LOWEST: 4,
+                '5.11.2.1': 2
+            }))
             interaction.answer(re.escape('Choose the backup output file destination: |1| '), '1')
             interaction.answer(re.escape('Enter the location to save the backup file to: '
                                     '|/tmp/evm_db.backup| '), database_path)

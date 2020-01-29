@@ -10,6 +10,7 @@ from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.path import scripts_path
 from cfme.utils.ssh_expect import SSHExpect
+from cfme.utils.version import LOWEST
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
@@ -73,7 +74,10 @@ class ApplianceConsole(AppliancePlugin):
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
             interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
-            interaction.answer('Choose the advanced setting: ', '15')
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: 15,
+                '5.11.2.1': 13
+            }))
             interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
 
     def scap_check_rules(self):
@@ -127,8 +131,11 @@ class ApplianceConsole(AppliancePlugin):
             interaction.send('ap')
             interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             # 6/8 for Configure Database Replication
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: 6,
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             interaction.answer('Choose the database replication operation: ', '1')
             answer_cluster_related_questions(interaction, node_uid='1',
                 db_name='', db_username='', db_password=pwd)
@@ -143,8 +150,11 @@ class ApplianceConsole(AppliancePlugin):
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
             interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: '6',
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             # 6/8 for Configure Database Replication
 
             interaction.answer('Choose the database replication operation: ', '1')
@@ -163,8 +173,11 @@ class ApplianceConsole(AppliancePlugin):
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
             interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: '6',
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             # 6/8 for Configure Database Replication
 
             # Configure Server as Standby
@@ -197,8 +210,11 @@ class ApplianceConsole(AppliancePlugin):
             interaction.send('ap')
             # When reconfiguring, the ap command may hang for 60s even.
             interaction.answer('Press any key to continue.', '', timeout=120)
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: '6',
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             # 6/8 for Configure Database Replication
 
             # Configure Server as Standby
@@ -241,7 +257,12 @@ class ApplianceConsole(AppliancePlugin):
 
             with waiting_for_ha_monitor_started(self.appliance, primary_ip, timeout=300):
                 # Configure Application Database Failover Monitor
-                interaction.send('8' if self.appliance.version < '5.10' else '10')
+                interaction.send(VersionPicker({
+                    LOWEST: 8,
+                    '5.10': 10,
+                    '5.11.2.1': 8
+                }))
+
                 interaction.answer('Choose the failover monitor configuration: ', '1')
                 # Failover Monitor Service configured successfully
                 interaction.answer('Press any key to continue.', '')
@@ -300,8 +321,11 @@ def configure_appliances_ha(appliances, pwd):
     with SSHExpect(apps0) as interaction:
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
-        interaction.answer('Choose the advanced setting: ',
-                           '5' if apps0.version < '5.10' else '7')  # Configure Database
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: 5,
+            '5.10': 7,
+            '5.11.2.1': 5
+        }))  # Configure Database
         interaction.answer(re.escape('Choose the encryption key: |1| '), '1')
         interaction.answer('Choose the database operation: ', '1')
         # On 5.10, rhevm provider:
@@ -330,8 +354,11 @@ def configure_appliances_ha(appliances, pwd):
     with SSHExpect(apps2) as interaction:
         interaction.send('ap')
         interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
-        interaction.answer('Choose the advanced setting: ',
-                           '5' if apps2.version < '5.10' else '7')  # Configure Database
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: 5,
+            '5.10': 7,
+            '5.11.2.1': 5
+        }))  # Configure Database
         interaction.answer(re.escape('Choose the encryption key: |1| '), '2')
         interaction.send(app0_ip)
         interaction.answer(re.escape('Enter the appliance SSH login: |root| '), '')
