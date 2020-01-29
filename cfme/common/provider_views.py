@@ -13,7 +13,6 @@ from widgetastic_patternfly import Dropdown
 from cfme.common import BaseLoggedInPage
 from cfme.common import TimelinesView
 from cfme.common.host_views import HostEntitiesView
-
 from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
