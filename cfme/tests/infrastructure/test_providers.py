@@ -542,7 +542,7 @@ def test_compare_provider_templates(appliance, setup_provider_min_templates, pro
     for t in view.entities.get_all(slice=my_slice):
         t.ensure_checked()
         templateList.append(t.name)
-    #view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
+    view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
     compare_templates_view = provider.create_view(TemplatesCompareView)
     assert compare_templates_view.is_displayed
     assert verify_checked_items_compared(templateList, compare_templates_view)
