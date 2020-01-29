@@ -502,6 +502,31 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
     hosts_view.navigation.select("Compute")
     assert hosts_view.is_displayed
 
+# we need to handle appliance and provider nav, number of hosts, list of hosts??
+#
+#? view = navigate_to(self, 'All' if provider=None else 'AllForProvider') ?? is AllForProvider
+# the same as provider.collections and All same as appliance.collections??
+# set defaults and use a list of hosts or num hosts. Error if neither is passed.
+# host_list will not use get all, but will use other methods to get by name
+def compare_hosts(provider=None, num_hosts=2, host_list=None):
+    if num_hosts < 2:
+        pass #display error. OR just make = 2?
+    if host_list:
+        pass #add functionality
+    else:
+        ent_slice = slice(0, num_hosts, None)
+    if provider:
+        hosts_view = navigate_to(provider.collections.hosts, "All")
+    else:
+        hosts_view = navigate_to(appliance.collections.hosts, "All")# use different nav so don't
+        # need appliance
+    for h in hosts_view.entities.get_all(slice=ent_slice):
+        h.ensure_checked()
+    hosts_view.toolbar.configuration.item_select('Compare Selected items',
+                                                 handle_alert=True)
+
+
+
 
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
