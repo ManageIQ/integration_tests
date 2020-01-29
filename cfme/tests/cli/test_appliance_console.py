@@ -47,6 +47,7 @@ tzs = [
 RETURN = ''
 IPv6_REGEX = r'(IPv6 Address:\s*)(\w+:\w+:\w+:\w+:\w+:\w+:\w+:\w+)/'
 IPv4_REGEX = r'(IPv4 Address:\s*)(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+CTRL_C = "\x03"
 
 ext_auth_options = [
     LoginOption('sso', 'sso_enabled', '1'),
@@ -988,9 +989,9 @@ def test_appliance_console_restore_ha_standby_node():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_cancel():
+@pytest.mark.meta(automates=[1438844])
+def test_appliance_console_cancel(appliance):
     """
     Test option to navigate back from all submenus in appliance_console
 
@@ -1002,8 +1003,25 @@ def test_appliance_console_cancel():
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/12h
+        testSteps:
+            1. type "ap"
+            2. press any key to continue
+            3. press one menu number and enter key
+            4. press CTRL+C ("\x03")
+            5. repeat step 1 to step 4 for all menu number from 1 to 19
+        expectedResults:
+            1.
+            2.
+            3.
+            4. verify welcome console is displayed or not
+            5.
     """
-    pass
+    for menu_number in range(1, 20):
+        command_set = ("ap", RETURN, str(menu_number), CTRL_C)
+        result = appliance.appliance_console.run_commands(command_set, timeout=30)
+        assert (
+            "Welcome to the CFME Virtual Appliance" in result[0]
+        ), f"Unable to go back from {menu_number} menu number."
 
 
 @pytest.mark.manual
