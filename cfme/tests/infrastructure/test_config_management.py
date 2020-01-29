@@ -160,7 +160,8 @@ def test_ansible_tower_job_templates_tag(request, provider, tag):
 
 @pytest.mark.tier(3)
 @pytest.mark.provider([AnsibleTowerProvider], scope='module')
-@pytest.mark.parametrize('template_type', TEMPLATE_TYPE.values(), ids=list(TEMPLATE_TYPE.keys()))
+@pytest.mark.parametrize('template_type', list(TEMPLATE_TYPE.values()),
+        ids=list(TEMPLATE_TYPE.keys()))
 def test_ansible_tower_service_dialog_creation_from_template(provider, template_type):
     """
     Polarion:
