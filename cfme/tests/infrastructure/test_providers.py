@@ -512,12 +512,12 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
 
 def verify_checked_items_compared(checkedList, view):
     for e in view.comparison_table.headers[1:-1]:
-            try:
-                checkedList.remove(e.split(' ')[0])
-            except ValueError:
-                pytest.fail(f"Entity {e.split(' ')[0]} is in compare view, but was not checked.")
-            except TypeError:
-                pytest.fail('No entities found in compare view.')
+        try:
+            checkedList.remove(e.split(' ')[0])
+        except ValueError:
+            pytest.fail(f"Entity {e.split(' ')[0]} is in compare view, but was not checked.")
+        except TypeError:
+            pytest.fail('No entities found in compare view.')
     if len(checkedList) > 0:
         pytest.fail(f'Some checked items did not appear in the compare view: {checkedList}.')
     return True

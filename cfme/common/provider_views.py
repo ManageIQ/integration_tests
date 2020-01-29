@@ -16,7 +16,6 @@ from cfme.common.host_views import HostEntitiesView
 from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import Accordion
 from widgetastic_manageiq import BaseEntitiesView
-from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 from widgetastic_manageiq import Button
 from widgetastic_manageiq import Checkbox
 from widgetastic_manageiq import DetailsToolBarViewSelector
