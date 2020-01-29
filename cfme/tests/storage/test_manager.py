@@ -3,6 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.storage.manager import ObjectManagerCollection
 from cfme.storage.manager import ProviderStorageManagerAllView
 from cfme.storage.manager import StorageManagerDetailsView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -133,3 +134,41 @@ def test_storage_manager_navigation_from_cloudprovider(manager, provider):
                                              Name=manager.name).click()
     storage_detail_view = storage_view.browser.create_view(StorageManagerDetailsView)
     assert storage_detail_view.title.text == "{} (Summary)".format(manager.name)
+
+
+@pytest.mark.meta(automates=[1650086])
+def test_storage_manager_quadicon_numbers(manager, provider, provider_cleanup, request):
+    """ Test whether Storage Manager QuadIcon shows correct numbers
+    Bugzilla: 1650086
+
+    prerequisites:
+        * Storage provider
+
+    Polarion:
+        assignee: mmojzis
+        initialEstimate: 1/8h
+        casecomponent: Cloud
+        caseimportance: high
+        testSteps:
+            * Go to Cloud Provider List
+            * Check Quadicon
+            * Compare quadicon with provider's relationships
+    """
+    view = navigate_to(manager.parent, 'All')
+    view.toolbar.view_selector.select("Grid View")
+    quad_data = view.entities.get_entities_by_keys(name=manager.name)[0].data.get('quad', {})
+
+    if isinstance(manager.parent, ObjectManagerCollection):
+        quad_container_count = int(quad_data["topLeft"]["text"])
+        view = navigate_to(manager, 'Details')
+        container_count = int(view.entities.relationships.get_text_of(
+            "Cloud object store containers"))
+        assert quad_container_count == container_count
+    else:
+        quad_volume_count = int(quad_data["topLeft"]["text"])
+        quad_snapshot_count = int(quad_data["topRight"]["text"])
+        view = navigate_to(manager, 'Details')
+        volume_count = int(view.entities.relationships.get_text_of("Cloud Volumes"))
+        snapshot_count = int(view.entities.relationships.get_text_of("Cloud Volume Snapshots"))
+        assert quad_volume_count == volume_count
+        assert quad_snapshot_count == snapshot_count
