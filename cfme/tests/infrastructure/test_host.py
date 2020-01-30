@@ -452,6 +452,9 @@ def test_infrastructure_hosts_navigation_after_download(
 
 @test_requirements.infra_hosts
 @pytest.mark.parametrize("num_hosts", [2, 4])
+@pytest.mark.uncollectif(
+    lambda provider, num_hosts: provider.one_of(RHEVMProvider, SCVMMProvider) and num_hosts > 2,
+    reason=UNCOLLECT_REASON)
 @pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214, 1784181])
 def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider,
                                               num_hosts):
