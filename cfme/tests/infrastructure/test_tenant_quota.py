@@ -150,11 +150,14 @@ def check_hosts(small_vm, provider):
 
 
 @pytest.fixture
-def quota_limit(request, roottenant):
+def quota_limit(roottenant):
     in_use_storage = int(float(roottenant.quota["storage"]["in_use"].strip(" GB")))
+    # set storage quota limit to something more than the in_use_storage space
     roottenant.set_quota(**{"storage_cb": True, "storage": in_use_storage + 3})
-    request.addfinalizer(lambda: roottenant.set_quota(**{"storage_cb": False}))
-    return int(float(roottenant.quota["storage"]["available"].strip(" GB")))
+
+    yield int(float(roottenant.quota["storage"]["available"].strip(" GB")))
+
+    roottenant.set_quota(**{"storage_cb": False})
 
 
 @pytest.mark.rhv2
@@ -729,23 +732,22 @@ def test_simultaneous_tenant_quota(request, appliance, context, new_project, new
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(automates=[1533263])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY, scope="module")
-def test_quota_with_reconfigure_resize_disks(small_vm, quota_limit):
+def test_quota_with_reconfigure_resize_disks(setup_provider_modscope, small_vm, quota_limit):
     """Test that Quota gets checked against the resize of the disk of VMs.
 
     Polarion:
         assignee: ghubale
         casecomponent: Infra
         initialEstimate: 1/6h
-        testSteps:
+        setup:
             1. Add an infra provider
             2. Provision a VM
-            3. Set tenant quota limit for storage
-            4. Resize the disk of the VM over quota limit
+            3. Note the storage space in use and set the quota limit to something more than
+                the current in_use_storage space.
+        testSteps:
+            1. Resize the disk of the VM over quota limit.
         expectedResults:
-            1.
-            2.
-            3.
-            4. VM reconfiguration request for resizing the disk should be denied with reason quota
+            1. VM reconfiguration request for resizing the disk should be denied with reason quota
                exceeded.
 
     Bugzilla:
@@ -759,6 +761,6 @@ def test_quota_with_reconfigure_resize_disks(small_vm, quota_limit):
     config.resize_disk(resize_value, disk.filename)
 
     request = small_vm.reconfigure(config)
-    request.wait_for_request()
+    request.wait_for_request(method="ui")
     assert request.status == "Denied"
-    assert "Request exceeds maximum allowed for the following" in request.message
+    assert request.row.reason.text == "Quota Exceeded"
