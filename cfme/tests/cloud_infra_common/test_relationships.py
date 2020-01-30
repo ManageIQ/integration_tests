@@ -407,7 +407,7 @@ def test_change_network_security_groups_per_page_items(setup_provider, appliance
     """
     view = navigate_to(provider, "NetworkSecurityGroup")
     view.toolbar.view_selector.select('List View')
-    total_count = len(view.entities.get_all(surf_pages=True))
+    total_count = view.paginator.items_amount
     for item_count in [5, 10, 20, 50, 100, 200, 500, 1000]:
         if item_count <= total_count:
             view.paginator.set_items_per_page(item_count)
