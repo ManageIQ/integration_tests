@@ -511,11 +511,13 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
 
 
 def verify_checked_items_compared(checkedList, view):
-    for e in view.comparison_table.headers[1:-1]:
+    # The first and last header items do not contain template names, so are not iterated upon.
+    for header_with_template in view.comparison_table.headers[1:-1]:
         try:
-            checkedList.remove(e.split(' ')[0])
+            # Split and slice are used to remove extra characters in the header item
+            checkedList.remove(header_with_template.split(' ')[0])
         except ValueError:
-            pytest.fail(f"Entity {e.split(' ')[0]} is in compare view, but was not checked.")
+            pytest.fail(f"Entity {header_with_template.split(' ')[0]} is in compare view, but was not checked.")
         except TypeError:
             pytest.fail('No entities found in compare view.')
     if len(checkedList) > 0:
