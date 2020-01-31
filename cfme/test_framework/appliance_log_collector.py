@@ -14,6 +14,7 @@ Options in env.yaml will define what files to collect, will default to the set b
 Log files will be tarred and written to log_path
 """
 import os.path
+import shutil
 import subprocess
 
 import pytest
@@ -101,6 +102,7 @@ def collect_logs(app):
         logger.debug('Creating tar file for appliance %s', app)
         subprocess.run(['tar', '-C', local_dir, '-czvf', tarball_path, tarred_dir_name],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        shutil.rmtree(tar_dir_path)
         logger.info('Wrote the following file %s', tarball_path)
 
 
