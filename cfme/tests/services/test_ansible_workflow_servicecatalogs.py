@@ -13,9 +13,7 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.parametrize('workflow_type', ['multiple_job_workflow', 'inventory_sync_workflow'],
-        ids=['multiple_job_workflow', 'inventory_sync_workflow'],
-        scope='module'),
+    pytest.mark.parametrize('ansible_api_version', ['v1', 'v2']),
     pytest.mark.ignore_stream('upstream')
 ]
 
@@ -41,8 +39,11 @@ def ansible_workflow_catitem(appliance, provider, dialog, catalog, workflow_type
     catalog_item.delete_if_exists()
 
 
+@pytest.mark.parametrize('workflow_type', ['multiple_job_workflow', 'inventory_sync_workflow'],
+        ids=['multiple_job_workflow', 'inventory_sync_workflow'], scope='module')
 @pytest.mark.meta(automates=[BZ(1719051)])
-def test_tower_workflow_item(appliance, ansible_workflow_catitem):
+def test_tower_workflow_item(appliance, ansible_workflow_catitem, workflow_type,
+        ansible_api_version_change):
     """Tests ordering of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision
@@ -68,7 +69,9 @@ def test_tower_workflow_item(appliance, ansible_workflow_catitem):
     )
 
 
-def test_retire_ansible_workflow(appliance, ansible_workflow_catitem):
+@pytest.mark.parametrize('workflow_type', ['multiple_job_workflow'], ids=['multiple_job_workflow'])
+def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, workflow_type,
+        ansible_api_version_change):
     """Tests retiring of catalog items for Ansible Workflow templates
     Metadata:
         test_flag: provision

@@ -369,13 +369,14 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         if validate_credentials:
             view.entities.form.validate.click()
             view.flash.assert_success_message('Credential validation was successful')
-        if cancel:
+        if cancel or view.entities.save.disabled:
             view.entities.cancel.click()
             view.flash.assert_success_message('Edit of Provider was cancelled by the user')
         else:
             view.entities.save.click()
             view.flash.assert_success_message(
-                '{} Provider "{}" was updated'.format(self.ui_type, updates['name'] or self.name))
+                '{} Provider "{}" was updated'.format(self.ui_type,
+                    updates.get('name') or self.name))
             self.__dict__.update(**updates)
 
     def delete(self, cancel=False, wait_deleted=True, force=False):

@@ -1,8 +1,11 @@
+from urllib.parse import urlparse
+
 import fauxfactory
 import pytest
 
 from cfme.rest.gen_data import _creating_skeleton
 from cfme.utils.blockers import GH
+from cfme.utils.update import update
 
 
 def ansible_tower_dialog_rest(request, appliance):
@@ -124,3 +127,30 @@ def ansible_tower_dialog(request, appliance):
 
     if appliance.version < '5.11' or not GH(8836).blocks:
         service_dialog.delete_if_exists()
+
+
+@pytest.fixture
+def ansible_api_version_change(provider, ansible_api_version):
+    """
+    Fixture to update Tower url to /api/vx in the UI so that all supported versions of API
+    can be tested.
+
+    API version defaults to v1. So, if no version is specified, v1 is used except for things
+    which don't exist on v1.
+    If v2 is specified, v2 is used for everything.
+
+    Ansible Tower 3.4, 3.5 support both API v1 and v2.
+    API v1 has been fully deprecated in Ansible Tower 3.6 and Tower 3.6 supports API v2 only.
+
+    """
+    original_url = provider.url
+    parsed = urlparse(provider.url)
+
+    updated_url = f'{parsed.scheme}://{parsed.netloc}/api/{ansible_api_version}'
+    with update(provider, validate_credentials=True):
+        provider.url = updated_url
+
+    yield
+
+    with update(provider, validate_credentials=True):
+        provider.url = original_url
