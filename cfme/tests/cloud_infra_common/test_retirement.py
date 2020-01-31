@@ -15,7 +15,6 @@ from cfme.markers.env_markers.provider import providers
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.timeutil import parsetime
@@ -41,105 +40,61 @@ warnings = [
     RetirementWarning('30_day_warning', '30 Days before retirement')]
 
 
-def msg_date_range(expected_dates):
-    """Given the expected_dates dictionary, return a string of the form 'T_1|T_2|...|T_N', where
-    T_1 through T_N are datetime strings formatted with '%m/%d/%y %H:%M UTC', one for each unique
-    time between the start and end dates.
+def msg_date_range(start, end):
+    """Return a string of the form 'T_1|T_2|...|T_N', where T_1 through T_N are datetime strings,
+    one for each minute between the start and end times, inclusive.
     """
-    dates = []
-    num_min = int(math.ceil((expected_dates['end'] - expected_dates['start']).seconds / 60.0))
+    times = []
+    num_min = int(math.ceil((end - start).seconds / 60.0))
     for i in range(num_min):
-        next_date = expected_dates['start'] + timedelta(minutes=i)
-        next_date = next_date.strftime('%m/%d/%y %H:%M UTC')
-        dates.append(next_date)
-    return "|".join(dates)
+        s = (start + timedelta(minutes=i)).strftime('%m/%d/%y %H:%M UTC')
+        times.append(s)
+    return "|".join(times)
 
 
-def create_vms(template_name, provider, num_vms=1, **deploy_args):
-    collection = provider.appliance.provider_based_collection(provider)
-    vms = []
-    for _ in range(num_vms):
-        vm = collection.instantiate(random_vm_name('retire'),
-                                    provider,
-                                    template_name=template_name)
-        vm.create_on_provider(find_in_cfme=True, allow_skip="default", timeout=1200, **deploy_args)
-        vms.append(vm)
-    return vms
-
-
-@pytest.fixture(scope="function")
-def retire_vm(small_template, provider):
-    """Fixture for creating a generic vm/instance
+def verify_retirement_state(vm, *args):
+    """Verify the VM/Instance is in the 'retired' state in the UI, and assert its power state.
 
     Args:
-        small_template: small template fixture, template on provider
-        provider: provider crud object from fixture
+        vm: VM/Instance object
+      args: (optional) one or more :py:class:`str` corresponding to the Power State(s)
+            that the VM/Ibstance can have once retired. If not specified, then the default
+            value of 'retired' will be used.
     """
-    vm = create_vms(small_template.name, provider)[0]
-    yield vm
-    vm.cleanup_on_provider()
-
-
-@pytest.fixture(scope="function")
-def retire_vm_pair(small_template, provider):
-    """Fixture for creating a pair of generic vms/instances
-
-    Args:
-        small_template: small template fixture, template on provider
-        provider: provider crud object from fixture
-    """
-    vms = create_vms(small_template.name, provider, 2)
-    yield vms
-    for vm in vms:
-        vm.cleanup_on_provider()
-
-
-@pytest.fixture(scope="function")
-def retire_ec2_s3_vm(s3_template, provider):
-    """Fixture for creating an S3 backed paravirtual instance, template is a public ec2 AMI
-
-    Args:
-        provider: provider crud object from fixture
-    """
-    vm = create_vms(s3_template.name, provider, instance_type='m1.small')[0]
-    yield vm
-    vm.cleanup_on_provider()
-
-
-def verify_retirement_state(retire_vm, *args):
-    """Verify the vm/instance is in the 'retired' state in the UI and assert its power state
-
-    Args:
-        retire_vm: vm/instance object
-    """
-    # wait for the info block showing a date as retired date
-    # Use lambda for is_retired since its a property
-    view = navigate_to(retire_vm, 'Details')
+    # Wait for the info block showing a Retirement Date.
+    # Use lambda for is_retired since it's a property.
+    view = navigate_to(vm, 'Details')
     assert wait_for(
-        lambda: retire_vm.is_retired, delay=5, num_sec=15 * 60,
+        lambda: vm.is_retired, delay=5, num_sec=15 * 60,
         fail_func=view.toolbar.reload.click,
-        message=f"Wait for VM '{retire_vm.name}' to enter retired state"
+        message=f"Wait for VM '{vm.name}' to enter retired state"
     )
-    view = retire_vm.load_details()
+    view = vm.load_details()
     power_states = list(args) if args else ['retired']
     assert view.entities.summary('Power Management').get_text_of('Power State') in power_states
 
 
-def verify_retirement_date(retire_vm, expected_date='Never'):
-    """Verify the retirement date for a variety of situations
+def verify_retirement_date(vm, expected_date='Never'):
+    """Verify the retirement date for a variety of situations.
 
     Args:
-        expected_date: a string, datetime, or a dict datetime dates with 'start' and 'end' keys.
+        vm: VM/Instance object
+        expected_date: One of the following:
+                       :py:class:`str`: 'Never'
+                       :py:class:`datetime`, :py:class:`parsetime`, or :py:class:`date`
+                       :py:class:`dict`: {'start': datetime, 'end': datetime}
+                       (Default: 'Never').
     """
     if isinstance(expected_date, dict):
-        # convert to a parsetime object for comparison, function depends on version
-        if 'UTC' in retire_vm.RETIRE_DATE_FMT:
+        # Convert to a parsetime object for comparison.
+        # The function depends on version.
+        if 'UTC' in vm.RETIRE_DATE_FMT:
             convert_func = parsetime.from_american_minutes_with_utc
-        elif retire_vm.RETIRE_DATE_FMT.endswith('+0000'):
+        elif vm.RETIRE_DATE_FMT.endswith('+0000'):
             convert_func = parsetime.from_saved_report_title_format
         else:
             convert_func = parsetime.from_american_date_only
-        expected_date.update({'retire': convert_func(retire_vm.retirement_date)})
+        expected_date.update({'retire': convert_func(vm.retirement_date)})
         logger.info(f'Asserting retirement date "%s" is between "%s" and "%s"',  # noqa
                     expected_date['retire'],
                     expected_date['start'],
@@ -148,17 +103,19 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
         assert expected_date['start'] <= expected_date['retire'] <= expected_date['end']
 
     elif isinstance(expected_date, (parsetime, datetime, date)):
-        assert retire_vm.retirement_date == expected_date.strftime(retire_vm.RETIRE_DATE_FMT)
+        assert vm.retirement_date == expected_date.strftime(vm.RETIRE_DATE_FMT)
     else:
-        assert retire_vm.retirement_date == expected_date
+        assert vm.retirement_date == expected_date
 
 
-def generate_retirement_date(delta=None):
-    """Generate a retirement date that can be used by the VM.retire() method, adding delta
+def generate_retirement_date(delta=9):
+    """Generate a retirement date that can be used by the VM.retire() method, adding delta.
 
     Args:
         delta: a :py:class: `int` that specifies the number of days to be added to today's date
-    Returns: a :py:class: `datetime.date` object including delta as an offset from today
+
+    Returns:
+         a :py:class: `datetime.date` object including delta as an offset from today
     """
     gen_date = datetime.now().replace(second=0)
     if delta:
@@ -166,17 +123,10 @@ def generate_retirement_date(delta=None):
     return gen_date
 
 
-def generate_retirement_date_now():
-    """Generate a UTC datetime object for now
-    Returns: a :py:class: `datetime.datetime` object for the current UTC date + time
-    """
-    return datetime.utcnow()
-
-
 @pytest.mark.rhv1
 @pytest.mark.meta(automates=[1518926, 1565128])
-def test_retirement_now(retire_vm):
-    """Tests on-demand retirement of an instance/vm
+def test_retirement_now(create_vm):
+    """Test on-demand retirement of a VM/Instance.
 
     Polarion:
         assignee: tpapaioa
@@ -188,98 +138,102 @@ def test_retirement_now(retire_vm):
         1565128
     """
     # Assert the Retirement Date is within a window +/- 5 minutes surrounding the actual
-    # retirement. Too finicky to get it down to minute precision, nor is it really needed here.
-    retire_times = dict()
-    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
+    # retirement.
+    expected_date = {}
+    expected_date['start'] = datetime.utcnow() + timedelta(minutes=-5)
 
-    retire_vm.retire()
+    create_vm.retire()
 
     # Verify flash message
-    view = retire_vm.create_view(RequestsView)
+    view = create_vm.create_view(RequestsView)
     assert view.is_displayed
     view.flash.assert_success_message(
         "Retirement initiated for 1 VM and Instance from the CFME Database")
 
-    verify_retirement_state(retire_vm)
-    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
-    verify_retirement_date(retire_vm, expected_date=retire_times)
+    verify_retirement_state(create_vm)
+    expected_date['end'] = datetime.utcnow() + timedelta(minutes=5)
+    verify_retirement_date(create_vm, expected_date=expected_date)
 
 
 @pytest.mark.rhv1
-def test_retirement_now_multiple(retire_vm_pair, provider):
-    """Tests on-demand retirement of two instances/vms from All VMs page
+@pytest.mark.parametrize('create_vms',
+                         [{'template_type': 'small_template', 'num_vms': 2}],
+                         ids=['small_template-two_vms'],
+                         indirect=True)
+def test_retirement_now_multiple(create_vms, provider):
+    """Tests on-demand retirement of two VMs/Instances from All VMs or All Instances page.
 
     Polarion:
         assignee: tpapaioa
         casecomponent: Provisioning
         initialEstimate: 1/6h
     """
-    retire_times = {}
-    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
+    expected_date = {}
+    expected_date['start'] = datetime.utcnow() + timedelta(minutes=-5)
 
-    # Retire from All VMs/Instances page
-    collection = retire_vm_pair[0].parent
-    collection.retire(entities=retire_vm_pair)
+    # Retire from All VMs or All Instances page
+    collection = create_vms[0].parent
+    collection.retire(create_vms)
 
-    # Verify flash message
+    # Verify flash message.
     view = collection.create_view(RequestsView)
     assert view.is_displayed
     view.flash.assert_success_message(
         "Retirement initiated for 2 VMs and Instances from the CFME Database")
 
-    for vm in retire_vm_pair:
+    for vm in create_vms:
         verify_retirement_state(vm)
 
-    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
+    expected_date['end'] = datetime.utcnow() + timedelta(minutes=5)
 
-    for vm in retire_vm_pair:
-        verify_retirement_date(vm, expected_date=retire_times)
+    for vm in create_vms:
+        verify_retirement_date(vm, expected_date=expected_date)
 
 
 @pytest.mark.provider(gen_func=providers,
                       filters=[ProviderFilter(classes=[EC2Provider],
                                               required_flags=['provision', 'retire'])])
 @pytest.mark.parametrize('tagged', [True, False], ids=['tagged', 'untagged'])
-def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged, appliance):
-    """Tests on-demand retirement of an instance/vm
-
-    S3 (instance-backed) EC2 instances that aren't lifecycle tagged won't get shut down
+@pytest.mark.parametrize('create_vm', ['s3_template'], indirect=True)
+def test_retirement_now_ec2_instance_backed(create_vm, tagged, appliance):
+    """Test on-demand retirement of an S3 (instance-backed) EC2 instance.
+    Tagged instances should be removed from the provider and become Archived.
+    Untagged instances should not be removed from the provider.
 
     Polarion:
         assignee: tpapaioa
         casecomponent: Provisioning
         initialEstimate: 1/6h
     """
-    # Tag the VM with lifecycle for full retirement based on parameter
     if tagged:
         category = appliance.collections.categories.instantiate(display_name='LifeCycle')
         tag = category.collections.tags.instantiate(
             display_name='Fully retire VM and remove from Provider')
-        retire_ec2_s3_vm.add_tag(tag)
+        create_vm.add_tag(tag)
         power_states = ['archived']
     else:
         power_states = ['retired']
 
     # Capture two times to assert the retire time is within a window.
-    # Too finicky to get it down to minute precision, nor is it really needed here
-    retire_times = dict()
-    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
-    retire_ec2_s3_vm.retire()
+    expected_date = {}
+    expected_date['start'] = datetime.utcnow() + timedelta(minutes=-5)
 
-    # Verify flash message
-    view = retire_ec2_s3_vm.create_view(RequestsView)
+    create_vm.retire()
+
+    # Verify flash message.
+    view = create_vm.create_view(RequestsView)
     assert view.is_displayed
     view.flash.assert_success_message(
         "Retirement initiated for 1 VM and Instance from the CFME Database")
 
-    verify_retirement_state(retire_ec2_s3_vm, *power_states)
-    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
-    verify_retirement_date(retire_ec2_s3_vm, expected_date=retire_times)
+    verify_retirement_state(create_vm, *power_states)
+    expected_date['end'] = datetime.utcnow() + timedelta(minutes=5)
+    verify_retirement_date(create_vm, expected_date=expected_date)
 
 
 @pytest.mark.rhv3
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
-def test_set_retirement_date(retire_vm, warn):
+def test_set_retirement_date(create_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
 
     Polarion:
@@ -288,21 +242,26 @@ def test_set_retirement_date(retire_vm, warn):
         initialEstimate: 1/6h
     """
     num_days = 60
-    retire_date = generate_retirement_date(delta=num_days)
-    retire_vm.set_retirement_date(when=retire_date, warn=warn.string)
+    expected_date = generate_retirement_date(delta=num_days)
+
+    create_vm.set_retirement_date(when=expected_date, warn=warn.string)
 
     # Verify flash message
-    view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
+    view = create_vm.create_view(create_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
-    msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
+    msg_date = expected_date.strftime('%m/%d/%y %H:%M UTC')
     view.flash.assert_success_message(f"Retirement date set to {msg_date}")
 
-    verify_retirement_date(retire_vm, expected_date=retire_date)
+    verify_retirement_date(create_vm, expected_date=expected_date)
 
 
 @pytest.mark.rhv3
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
-def test_set_retirement_date_multiple(retire_vm_pair, provider, warn):
+@pytest.mark.parametrize('create_vms',
+                         [{'template_type': 'small_template', 'num_vms': 2}],
+                         ids=['small_template-two_vms'],
+                         indirect=True)
+def test_set_retirement_date_multiple(create_vms, provider, warn):
     """Tests setting retirement date of multiple VMs, verifies configured date is reflected in
     individual VM Details pages.
 
@@ -312,28 +271,27 @@ def test_set_retirement_date_multiple(retire_vm_pair, provider, warn):
         initialEstimate: 1/6h
     """
     num_days = 60
-    retire_date = generate_retirement_date(delta=num_days)
+    expected_date = generate_retirement_date(delta=num_days)
 
-    # Set retirement date from All VMs/Instances page
-    collection = retire_vm_pair[0].parent
-    collection.set_retirement_date(when=retire_date, warn=warn.string, entities=retire_vm_pair)
+    # Set retirement date from All VMs or All Instances page.
+    collection = create_vms[0].parent
+    collection.set_retirement_date(create_vms, when=expected_date, warn=warn.string)
 
-    # Verify flash message
+    # Verify flash message.
     view = collection.create_view(navigator.get_class(collection, 'All').VIEW, wait='5s')
     assert view.is_displayed
-    msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
+    msg_date = expected_date.strftime('%m/%d/%y %H:%M UTC')
     view.flash.assert_success_message(f"Retirement dates set to {msg_date}")
 
-    for vm in retire_vm_pair:
-        verify_retirement_date(vm, expected_date=retire_date)
+    for vm in create_vms:
+        verify_retirement_date(vm, expected_date=expected_date)
 
 
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
-def test_set_retirement_offset(retire_vm, warn):
-    """Tests setting the retirement by offset
-
-    Minimum is 1 hour, just testing that it is set like test_set_retirement_date
+def test_set_retirement_offset(create_vm, warn):
+    """Tests setting the retirement date with the 'Time Delay from Now' option.
+    Minimum is 1 hour, just testing that it is set like test_set_retirement_date.
 
     Polarion:
         assignee: tpapaioa
@@ -345,28 +303,33 @@ def test_set_retirement_offset(retire_vm, warn):
     timedelta_offset.pop('months')  # months not supported in timedelta
 
     # pad pre-retire timestamp by 60s
-    expected_dates = {'start': datetime.utcnow() + timedelta(seconds=-60, **timedelta_offset)}
+    expected_date = {'start': datetime.utcnow() + timedelta(seconds=-60, **timedelta_offset)}
 
-    retire_vm.set_retirement_date(offset=retire_offset, warn=warn.string)
+    create_vm.set_retirement_date(offset=retire_offset, warn=warn.string)
 
     # pad post-retire timestamp by 60s
-    expected_dates['end'] = datetime.utcnow() + timedelta(seconds=60, **timedelta_offset)
+    expected_date['end'] = datetime.utcnow() + timedelta(seconds=60, **timedelta_offset)
 
-    # Verify flash message
-    view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
+    # Verify flash message.
+    view = create_vm.create_view(create_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
-    msg_dates = msg_date_range(expected_dates)
+    msg_dates = msg_date_range(expected_date['start'], expected_date['end'])
     flash_regex = re.compile(f"^Retirement date set to ({msg_dates})$")
     view.flash.assert_success_message(flash_regex)
 
-    verify_retirement_date(retire_vm, expected_date=expected_dates)
+    verify_retirement_date(create_vm, expected_date=expected_date)
 
 
 @pytest.mark.rhv3
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
-def test_set_retirement_offset_multiple(retire_vm_pair, provider, warn):
-    """Tests setting retirement date of multiple VMs by offset.
-    Verifies configured date is reflected in individual VM Details pages.
+@pytest.mark.parametrize('create_vms',
+                         [{'template_type': 'small_template', 'num_vms': 2}],
+                         ids=['small_template-two_vms'],
+                         indirect=True)
+def test_set_retirement_offset_multiple(create_vms, provider, warn):
+    """Test setting the retirement date of multiple VMs/Instances using 'Time Delay from Now'
+    option. Verify the selected retirement date is reflected in each VM's/Instance's Details
+    page.
 
     Polarion:
         assignee: tpapaioa
@@ -378,27 +341,27 @@ def test_set_retirement_offset_multiple(retire_vm_pair, provider, warn):
     timedelta_offset.pop('months')  # months not supported in timedelta
 
     # pad pre-retire timestamp by 60s
-    expected_dates = {'start': datetime.utcnow() + timedelta(seconds=-60, **timedelta_offset)}
+    expected_date = {'start': datetime.utcnow() + timedelta(seconds=-60, **timedelta_offset)}
 
-    collection = retire_vm_pair[0].parent
-    collection.set_retirement_date(offset=retire_offset, warn=warn.string, entities=retire_vm_pair)
+    collection = create_vms[0].parent
+    collection.set_retirement_date(create_vms, offset=retire_offset, warn=warn.string)
 
     # pad post-retire timestamp by 60s
-    expected_dates['end'] = datetime.utcnow() + timedelta(seconds=60, **timedelta_offset)
+    expected_date['end'] = datetime.utcnow() + timedelta(seconds=60, **timedelta_offset)
 
     # Verify flash message
     view = collection.create_view(navigator.get_class(collection, 'All').VIEW, wait='5s')
     assert view.is_displayed
-    msg_dates = msg_date_range(expected_dates)
+    msg_dates = msg_date_range(expected_date['start'], expected_date['end'])
     flash_regex = re.compile(f"^Retirement dates set to ({msg_dates})$")
     view.flash.assert_success_message(flash_regex)
 
-    for vm in retire_vm_pair:
-        verify_retirement_date(vm, expected_date=expected_dates)
+    for vm in create_vms:
+        verify_retirement_date(vm, expected_date=expected_date)
 
 
 @pytest.mark.rhv3
-def test_unset_retirement_date(retire_vm):
+def test_unset_retirement_date(create_vm):
     """Tests cancelling a scheduled retirement by removing the set date
 
     Polarion:
@@ -408,30 +371,30 @@ def test_unset_retirement_date(retire_vm):
     """
     num_days = 3
     retire_date = generate_retirement_date(delta=num_days)
-    retire_vm.set_retirement_date(when=retire_date)
+    create_vm.set_retirement_date(when=retire_date)
 
     # Verify flash message
-    view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
+    view = create_vm.create_view(create_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
     msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
     view.flash.assert_success_message(f"Retirement date set to {msg_date}")
 
-    verify_retirement_date(retire_vm, expected_date=retire_date)
+    verify_retirement_date(create_vm, expected_date=retire_date)
 
-    retire_vm.set_retirement_date(when=None)
+    create_vm.set_retirement_date(when=None)
 
-    # Verify flash message
-    view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
+    # Verify flash message.
+    view = create_vm.create_view(create_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
     view.flash.assert_success_message("Retirement date removed")
 
-    verify_retirement_date(retire_vm, expected_date='Never')
+    verify_retirement_date(create_vm, expected_date='Never')
 
 
 @pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
-def test_resume_retired_instance(retire_vm, provider, remove_date):
+def test_resume_retired_instance(create_vm, provider, remove_date):
     """Test resuming a retired instance, should be supported for infra and cloud, though the
     actual recovery results may differ depending on state after retirement
 
@@ -446,21 +409,21 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     """
     num_days = 5
 
-    retire_vm.retire()
+    create_vm.retire()
 
-    # Verify flash message
-    view = retire_vm.create_view(RequestsView)
+    # Verify flash message.
+    view = create_vm.create_view(RequestsView)
     assert view.is_displayed
     view.flash.assert_success_message(
         "Retirement initiated for 1 VM and Instance from the CFME Database")
 
-    verify_retirement_state(retire_vm)
+    verify_retirement_state(create_vm)
 
     retire_date = None if remove_date else generate_retirement_date(delta=num_days)
-    retire_vm.set_retirement_date(when=retire_date)
+    create_vm.set_retirement_date(when=retire_date)
 
     # Verify flash message
-    view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
+    view = create_vm.create_view(create_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
     if retire_date:
         msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
@@ -468,8 +431,8 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     else:
         view.flash.assert_success_message("Retirement date removed")
 
-    verify_retirement_date(retire_vm, expected_date=retire_date if retire_date else 'Never')
-    assert not retire_vm.is_retired
+    verify_retirement_date(create_vm, expected_date=retire_date if retire_date else 'Never')
+    assert not create_vm.is_retired
 
 
 @pytest.mark.tier(2)
@@ -480,12 +443,12 @@ def test_vm_retirement_from_global_region(setup_multi_region_cluster,
                                           multi_region_cluster,
                                           activate_global_appliance,
                                           setup_remote_provider,
-                                          retire_vm):
+                                          create_vm):
     """
-    retire a vm via CA
+    Retire a VM via Centralized Administration
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         caseimportance: high
         casecomponent: Provisioning
         initialEstimate: 1/3h
@@ -498,12 +461,15 @@ def test_vm_retirement_from_global_region(setup_multi_region_cluster,
             2. VM transitions to Retired state in the Global and Remote region.
 
     """
-    retire_times = dict()
-    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
-    retire_vm.retire()
-    verify_retirement_state(retire_vm)
-    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
-    verify_retirement_date(retire_vm, expected_date=retire_times)
+    expected_date = {}
+    expected_date['start'] = datetime.utcnow() + timedelta(minutes=-5)
+
+    create_vm.retire()
+
+    verify_retirement_state(create_vm)
+
+    expected_date['end'] = datetime.utcnow() + timedelta(minutes=5)
+    verify_retirement_date(create_vm, expected_date=expected_date)
 
 
 @pytest.mark.manual
@@ -516,7 +482,7 @@ def test_vm_retirement_from_global_region_via_rest():
     retire a vm via CA
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         caseimportance: medium
         casecomponent: Provisioning
         initialEstimate: 1/3h
