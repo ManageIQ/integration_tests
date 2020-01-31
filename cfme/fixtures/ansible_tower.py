@@ -75,7 +75,7 @@ def ansible_tower_dialog_rest(request, appliance):
                                 "description": "",
                                 "display": "edit",
                                 "required": True,
-                                "default_value": "QE",
+                                "default_value": "[\"QE\", \"PM\"]",
                                 "values": [
                                     [
                                         "HR",
@@ -90,7 +90,9 @@ def ansible_tower_dialog_rest(request, appliance):
                                         "QE"
                                     ]
                                 ],
-                                "options": {},
+                                "options": {
+                                    "force_multi_value": True
+                                },
                                 "label": "Survey",
                                 "position": 0,
                                 "reconfigurable": True,
