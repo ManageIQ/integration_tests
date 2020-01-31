@@ -500,9 +500,6 @@ def test_infra_discovery_screen(appliance):
 @pytest.fixture
 def setup_provider_min_templates(request, appliance, provider, min_templates):
     templates_yaml = len(provider.data.get('templates', {}))
-    if templates_yaml < min_templates:
-        pytest.skip(f'Number of templates defined in yaml for {provider} does not meet minimum '
-                    f'for test parameter {min_templates}, skipping and not setting up provider')
     if len(provider.mgmt.list_templates()) < min_templates:
         pytest.skip(f'Number of templates on {provider} does not meet minimum '
                     f'for test parameter {min_templates}, skipping and not setting up provider')
