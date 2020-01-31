@@ -9,6 +9,7 @@ from cfme.utils.appliance import ApplianceException
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.version import Version
 
 pytestmark = [
     test_requirements.db_migration,
@@ -70,38 +71,79 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     return temp_appliance_preconfig_funcscope_upgrade
 
 
+def guess_the_db_format(basename):
+    if basename.endswith('dumpall'):
+        return 'pg_dumpall'
+    elif basename.endswith('backup') or basename.endswith('dump'):
+        return 'pg_dump'
+    else:
+        raise Exception("Couldn't guess the db format")
+
+
 def download_and_migrate_db(app, db_url):
+    def fetch(src, dst):
+        result = app.ssh_client.run_command(
+            f'curl  --fail -S -o "{dst}" "{src}"', timeout=15)
+        assert result.success, f"Failed to download {src}:\n{result.output}"
+
     # Download the database
     logger.info("Downloading database: {}".format(db_url))
     url_basename = os_path.basename(db_url)
     loc = "/tmp/"
-    result = app.ssh_client.run_command(
-        'curl -o "{}{}" "{}"'.format(loc, url_basename, db_url), timeout=30)
-    assert result.success, "Failed to download database: {}".format(result.output)
-    # The v2_key is potentially here
-    v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
+    v2key_url = os_path.join(os_path.dirname(db_url), "v2_key.bak")
+    database_yml_url = os_path.join(os_path.dirname(db_url), "database.yml")
+    db_format = guess_the_db_format(url_basename)
+
+    fetch(db_url, f'{loc}{url_basename}')
+
     # Stop EVM service and drop vmdb_production DB
     app.evmserverd.stop()
+    # Invalidate some of the cache
+    # as it was be causing problems
+    # when running more than one test with
+    # the same vm.
+    app.__dict__.pop('rest_api', None)
     app.db.drop()
     app.db.create()
     # restore new DB
-    result = app.ssh_client.run_command(
-        'pg_restore -v --dbname=vmdb_production {}{}'.format(loc, url_basename), timeout=600)
+    if db_format == "pg_dump":
+        result = app.ssh_client.run_command(
+            'pg_restore -v --dbname=vmdb_production {}{}'.format(loc, url_basename), timeout=600)
+    elif db_format == "pg_dumpall":
+        result = app.ssh_client.run_command(
+            'psql postgres < {}{}'.format(loc, url_basename), timeout=600)
+    else:
+        raise Exception(f'Unknown db format: {db_format}')
     assert result.success, "Failed to restore new database: {}".format(result.output)
-    app.db.migrate()
-    # fetch v2_key
+
+    # fetch the files needed for decrypt the db
     try:
-        result = app.ssh_client.run_command(
-            'curl "{}"'.format(v2key_url), timeout=15)
-        assert result.success, "Failed to download v2_key: {}".format(result.output)
-        assert ":key:" in result.output, "Not a v2_key file: {}".format(result.output)
-        result = app.ssh_client.run_command(
-            'curl -o "/var/www/miq/vmdb/certs/v2_key" "{}"'.format(v2key_url), timeout=15)
-        assert result.success, "Failed to download v2_key: {}".format(result.output)
-    # or change all invalid (now unavailable) passwords to 'invalid'
+        fetch(v2key_url, '/var/www/miq/vmdb/certs/v2_key')
+        v2_key_available = True
     except AssertionError:
+        v2_key_available = False
+        logger.info("Failed to download the v2_key. "
+                    "Will have to use the fix_auth tool.")
+    try:
+        fetch(database_yml_url, '/var/www/miq/vmdb/conf/database.yml')
+        database_yml_available = True
+    except AssertionError:
+        database_yml_available = False
+        logger.info("Failed to download the database_yml.")
+
+    if not v2_key_available:
         app.db.fix_auth_key()
-    app.db.fix_auth_dbyml()
+        app.db.fix_auth_dbyml()
+        # To migrate the keys to CFME 5.11 the migration
+        # needs to reencrypt them. This won't work when the fix_auth was
+        # used before as it resets the credentials needed to decrypt the
+        # ansible keys. See BZ 1755553.
+        app.db.migrate(env_vars=["HARDCODE_ANSIBLE_PASSWORD=bogus"])
+    else:
+        if not database_yml_available:
+            app.db.fix_auth_dbyml()
+        app.db.migrate()
+
     # start evmserverd, wait for web UI to start and try to log in
     try:
         app.evmserverd.start()
@@ -116,7 +158,10 @@ def download_and_migrate_db(app, db_url):
 
 @pytest.mark.ignore_stream('upstream')
 @pytest.mark.tier(2)
-@pytest.mark.meta(automates=[1734076])
+@pytest.mark.meta(automates=[1734076, 1755553])
+@pytest.mark.uncollectif(
+    lambda appliance, db_version: appliance.version >= '5.10' and Version(db_version) < '5.6',
+    reason='upgrade from CFME<5.6 to >=5.10 not supported: BZ#1765549')
 def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     """
     Polarion:
@@ -125,6 +170,7 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
         casecomponent: Appliance
     Bugzilla:
         1734076
+        1755553
     """
     download_and_migrate_db(temp_appliance_extended_db, db_url)
 
