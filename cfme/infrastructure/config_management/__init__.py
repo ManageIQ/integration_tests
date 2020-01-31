@@ -369,7 +369,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         if validate_credentials:
             view.entities.form.validate.click()
             view.flash.assert_success_message('Credential validation was successful')
-        if cancel:
+        if cancel or view.entities.save.disabled:
             view.entities.cancel.click()
             view.flash.assert_success_message('Edit of Provider was cancelled by the user')
         else:

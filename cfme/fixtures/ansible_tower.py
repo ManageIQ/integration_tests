@@ -131,10 +131,12 @@ def ansible_tower_dialog(request, appliance):
 
 @pytest.fixture
 def ansible_api_version_change(provider, ansible_api_version):
-    """Fixture to update Tower url to /api/v2 in the UI so that API v2 can be tested.
+    """
+    Fixture to update Tower url to /api/vx in the UI so that all supported versions of API
+    can be tested.
 
     API version defaults to v1. So, if no version is specified, v1 is used except for things
-      which don't exist on v1.
+    which don't exist on v1.
     If v2 is specified, v2 is used for everything.
 
     Ansible Tower 3.4, 3.5 support both API v1 and v2.
@@ -144,13 +146,11 @@ def ansible_api_version_change(provider, ansible_api_version):
     original_url = provider.url
     parsed = urlparse(provider.url)
 
-    if ansible_api_version == 'v2':
-        updated_url = f'{parsed.scheme}://{parsed.netloc}/api/{ansible_api_version}'
-        with update(provider, validate_credentials=True, cancel=True):
-            provider.url = updated_url
+    updated_url = f'{parsed.scheme}://{parsed.netloc}/api/{ansible_api_version}'
+    with update(provider, validate_credentials=True):
+        provider.url = updated_url
 
     yield
 
-    if ansible_api_version == 'v2':
-        with update(provider, validate_credentials=True, cancel=True):
-            provider.url = original_url
+    with update(provider, validate_credentials=True):
+        provider.url = original_url
