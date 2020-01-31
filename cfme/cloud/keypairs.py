@@ -60,6 +60,7 @@ class KeyPairDetailsEntities(View):
     title = Text('//div[@id="main-content"]//h1')
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
+    lifecycle = SummaryTable(title='Lifecycle')
     smart_management = SummaryTable(title='Smart Management')
 
 

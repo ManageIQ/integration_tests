@@ -217,3 +217,25 @@ def test_keypair_visibility_in_tenants(appliance, child_tenant_admin_user):
 
     with child_tenant_admin_user:
         assert key_pair_obj.exists
+
+
+@test_requirements.cloud
+@pytest.mark.meta(automates=[1713400])
+def test_keypair_ownership_association(appliance, keypair):
+    """
+    Bugzilla: 1713400
+
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    owner_name = 'Administrator'
+    group_name = 'EvmGroup-administrator'
+    owner = appliance.collections.users.instantiate(owner_name)
+    group = appliance.collections.groups.instantiate(group_name)
+    keypair.set_ownership(group=group, owner=owner)
+    view = navigate_to(keypair, 'Details')
+    assert owner_name == view.entities.lifecycle.get_text_of('Owner')
+    assert group_name == view.entities.lifecycle.get_text_of('Group')
