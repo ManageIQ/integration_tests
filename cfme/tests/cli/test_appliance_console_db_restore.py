@@ -581,6 +581,8 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
 
+    appl1_provider_names = set(appl1.managed_provider_names)
+
     # Do the backup
     with SSHExpect(appl1) as interaction:
         appl1.evmserverd.stop()
@@ -623,7 +625,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
-    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+    assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
     )
     # Verify that existing provider can detect new VMs on the second appliance
@@ -658,6 +660,8 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     usr = credentials[creds_key]['username']
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
+
+    appl1_provider_names = set(appl1.managed_provider_names)
 
     # Do the backup
     with SSHExpect(appl1) as interaction:
@@ -707,7 +711,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
-    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+    assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
     )
     # Verify that existing provider can detect new VMs on the second appliance
