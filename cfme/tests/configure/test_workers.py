@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import pytest
 
+from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 
@@ -23,6 +24,7 @@ DROPDOWNS = [
 ]
 
 
+@test_requirements.settings
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_restart_workers(appliance):
@@ -45,7 +47,10 @@ def test_restart_workers(appliance):
              message="Wait for all original workers are back online")
 
 
+@test_requirements.settings
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1658373])
+@pytest.mark.meta(blocker=[1787350])
 @pytest.mark.parametrize("dropdown", [x.dropdown for x in DROPDOWNS], ids=[x.id for x in DROPDOWNS])
 def test_set_memory_threshold_in_ui(appliance, dropdown):
     """
@@ -81,6 +86,20 @@ def test_set_memory_threshold_in_ui(appliance, dropdown):
 
     assert before != after
     assert after == change
+    # check if the value was also changed in advanced setting
+    for worker_type in ["priority", "generic"]:
+        if dropdown.startswith(worker_type):
+            change_val = float(change[:-3])
+            mem_threshold_real = (appliance.server.advanced_settings['workers']['worker_base']
+            ['queue_worker_base'][f'{worker_type}_worker']['memory_threshold'])
+            GB = 2 ** 30
+            MESSAGE = "memory threshold changed incorrectly in advanced settings"
+            if appliance.version >= "5.11":
+                assert mem_threshold_real == f"{change_val}.gigabytes", MESSAGE
+            else:
+                expected_value = change_val * GB
+                # this tests if memory threshold has changed and is approximately correct
+                assert abs(mem_threshold_real - expected_value) < expected_value * 0.01, MESSAGE
 
     # reset the mem threshold after the test
     view.workers.reset.click()

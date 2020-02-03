@@ -366,38 +366,6 @@ def test_memory_thresholds_in_advanced_config():
 
 
 @pytest.mark.manual
-@test_requirements.settings
-@pytest.mark.meta(coverage=[1658373])
-@pytest.mark.meta(blocker=[1787350])
-def test_memory_thresholds_workers_tab():
-    """
-    Test whether change made to thresholds in the Workers tab affect the values in
-    the advanced config
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
-        caseimportance: high
-        initialEstimate: 1/4h
-        testSteps:
-            1. Settings > [pick server in zone] > Workers
-            2. Change Generic workers to 1.1 GB
-            3. Change the Priority Workers to 1.1 GB
-        expectedResults:
-            1.
-            2.  The memory_threshold field for the generic_worker shows value
-                1181116006.4 which is 1.1 * (1024**3)
-                (BZ 1787350)
-            3.  The memory_threshold field for the priority_worker shows value
-                1181116006.4 which is 1.1 * (1024**3)
-                (BZ 1787350)
-    Bugzilla:
-        1658373
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.meta(coverage=[1625788])
 def test_default_miq_group_is_tenant_group():
     """
