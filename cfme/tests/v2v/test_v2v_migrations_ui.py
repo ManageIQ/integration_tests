@@ -322,6 +322,29 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
         pass
 
 
+@pytest.fixture
+def setup_user_for_v2v_migration(appliance, new_credential):
+    """
+    Fixture to set up user for v2v migration.
+
+    A new role is also created that initially  has access to all product features. The newly created
+    user has this role.
+
+    As part of the test, the role is updated so that the Migration tab is unavailable  in the UI to
+    users with this role.
+    """
+    role = new_role(appliance=appliance,
+                    product_features=[(['Everything'], True)])
+    group = new_group(appliance=appliance, role=role.name)
+    user = new_user(appliance=appliance, group=group, credential=new_credential)
+
+    yield user, role
+
+    user.delete_if_exists()
+    group.delete_if_exists()
+    role.delete_if_exists()
+
+
 @pytest.mark.provider(
     classes=[RHEVMProvider],
     selector=ONE_PER_VERSION,
@@ -335,9 +358,10 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
     required_flags=["v2v"],
     scope="module",
 )
-def test_v2v_rbac(appliance, new_credential):
+def test_v2v_rbac(appliance, setup_user_for_v2v_migration):
     """
-    Test migration with role-based access control
+    Test to verify that the Migration tab is available/unavailable in the UI with
+    role-based access control
 
     Polarion:
         assignee: sshveta
@@ -348,11 +372,7 @@ def test_v2v_rbac(appliance, new_credential):
         startsin: 5.10
         casecomponent: V2V
     """
-    role = new_role(appliance=appliance,
-                    product_features=[(['Everything'], True)])
-    group = new_group(appliance=appliance, role=role.name)
-    user = new_user(appliance=appliance, group=group, credential=new_credential)
-    pytest.set_trace()
+    user, role = setup_user_for_v2v_migration
     product_features = (
         [(['Everything', 'Compute', 'Migration'], False)]
         if appliance.version < "5.11"
@@ -362,8 +382,9 @@ def test_v2v_rbac(appliance, new_credential):
     with user:
         view = navigate_to(appliance.server, 'Dashboard')
         nav_tree = view.navigation.nav_item_tree()
+        nav_tree_for_migration = nav_tree['Compute'] if appliance.version < "5.11" else nav_tree
         # Checks migration option is disabled in navigation
-        assert 'Migration' not in nav_tree['Compute'], ('Migration found in nav tree, '
+        assert 'Migration' not in nav_tree_for_migration, ('Migration found in nav tree, '
                                                         'rbac should not allow this')
 
     product_features = [(['Everything'], True)]
@@ -371,8 +392,9 @@ def test_v2v_rbac(appliance, new_credential):
     with user:
         view = navigate_to(appliance.server, 'Dashboard', wait_for_view=15)
         nav_tree = view.navigation.nav_item_tree()
+        nav_tree_for_migration = nav_tree['Compute'] if appliance.version < "5.11" else nav_tree
         # Checks migration option is enabled in navigation
-        assert 'Migration' in nav_tree['Compute'], ('Migration not found in nav tree, '
+        assert 'Migration' in nav_tree_for_migration, ('Migration not found in nav tree, '
                                                     'rbac should allow this')
 
 
