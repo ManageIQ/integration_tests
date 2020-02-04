@@ -352,8 +352,12 @@ def test_v2v_rbac(appliance, new_credential):
                     product_features=[(['Everything'], True)])
     group = new_group(appliance=appliance, role=role.name)
     user = new_user(appliance=appliance, group=group, credential=new_credential)
-
-    product_features = [(['Everything', 'Compute', 'Migration'], False)]
+    pytest.set_trace()
+    product_features = (
+        [(['Everything', 'Compute', 'Migration'], False)]
+        if appliance.version < "5.11"
+        else [(['Everything', 'Migration'], False)]
+    )
     role.update({'product_features': product_features})
     with user:
         view = navigate_to(appliance.server, 'Dashboard')
