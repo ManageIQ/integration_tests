@@ -1,6 +1,5 @@
 import fauxfactory
 import pytest
-from dateutil.parser import parse
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -529,11 +528,13 @@ def test_embedded_ansible_repository_refresh(ansible_repository):
         tags: ansible_embed
     """
     view = navigate_to(ansible_repository, "Details")
-    view.toolbar.configuration.item_select('Refresh this Repository', handle_alert=True)
+    view.toolbar.configuration.item_select("Refresh this Repository", handle_alert=True)
 
-    wait_for(view.toolbar.refresh.click, delay=2, timeout=5)
-    # Get the values of Repo create date and update date
-    create_date = parse(view.entities.summary("Properties").get_text_of("Created On"))
-    updated_date = parse(view.entities.summary("Properties").get_text_of("Updated On"))
-
-    assert create_date < updated_date
+    # Initially values for both created and updated repository are same,
+    # hence comparing updated value with created after refreshing repository.
+    wait_for(
+        lambda: ansible_repository.created_date < ansible_repository.updated_date,
+        fail_func=view.toolbar.refresh.click,
+        delay=2,
+        timeout="5m",
+    )

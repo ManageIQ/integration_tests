@@ -1,5 +1,6 @@
 """Page model for Automation/Ansible/Repositories"""
 import attr
+from dateutil.parser import parse
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
@@ -156,6 +157,26 @@ class Repository(BaseEntity, Fillable, Taggable):
     def status(self):
         view = navigate_to(self, "Details")
         return view.entities.summary("Properties").get_text_of("Status")
+
+    @property
+    def created_date(self):
+        """Repository Creation date/time
+
+        Returns:
+            :py:class:`date` object return for repository create date/time.
+        """
+        view = navigate_to(self, 'Details')
+        return parse(view.entities.summary("Properties").get_text_of("Created On"))
+
+    @property
+    def updated_date(self):
+        """Repository Update date/time
+
+        Returns:
+            :py:class:`date` object return for repository udpate date/time.
+        """
+        view = navigate_to(self, 'Details')
+        return parse(view.entities.summary("Properties").get_text_of("Updated On"))
 
     def update(self, updates):
         """Update the repository in the UI.
