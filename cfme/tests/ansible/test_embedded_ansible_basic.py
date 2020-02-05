@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.ansible.playbooks import PlaybooksView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
@@ -471,13 +470,12 @@ def test_embedded_ansible_repository_playbook_sub_dir(ansible_repository):
         tags: ansible_embed
     """
     # Navigation to playbook view from Ansible Repository
-    view = navigate_to(ansible_repository, "Playbooks")
-    # Creating Playbook view which will locate the 'more_playbooks/hello_world.yml' playbook.
-    playbook_view = view.browser.create_view(PlaybooksView)
+    playbook_view = navigate_to(ansible_repository, "Playbooks")
     # 'more_playbooks/hello_world.yml' Playbook name is hardcoded in order to find specific
     # playbook in the Ansible testing repository.
     # Asserting the playbook is available.
-    assert playbook_view.entities.get_entity(name="more_playbooks/hello_world.yml", surf_pages=True)
+    all_playbooks = playbook_view.entities.all_entity_names
+    assert "more_playbooks/hello_world.yml" in all_playbooks
 
 
 @pytest.mark.tier(2)
