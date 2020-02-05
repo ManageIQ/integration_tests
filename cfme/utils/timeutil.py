@@ -1,10 +1,10 @@
 """ This module should contain all things associated with time or date that can be shared.
 
 """
-import pytz
 import time
 from datetime import datetime as _datetime
 
+import pytz
 import tzlocal
 
 local_tz = tzlocal.get_localzone()
@@ -23,8 +23,8 @@ class parsetime(_datetime):  # NOQA
     request_format = "%Y-%m-%d-%H-%M-%S"
     long_date_format = "%B %d, %Y %H:%M"
     saved_report_title_format = "%a, %d %b %Y %H:%M:%S"
-    american_with_dynamic_timezone_format = "%m/%d/%y %H:%M:%S"
-    iso_with_dynamic_timezone_format = "%Y-%m-%d %H:%M:%S"
+    american_format = "%m/%d/%y %H:%M:%S"
+    iso_format = "%Y-%m-%d %H:%M:%S"
 
     @classmethod
     def _parse(cls, fmt, time_string):
@@ -38,8 +38,17 @@ class parsetime(_datetime):  # NOQA
         )
 
     @classmethod
-    def from_american_with_dynamic_timezone(cls, time_string, timezone):
-        return cls._parse(f"{cls.american_with_dynamic_timezone_format} {timezone}", time_string)
+    def from_american(cls, time_string, timezone):
+        """ Convert the string representation of the time into parsetime()
+
+        CFME's format here is 'mm/dd/yy hh:mm:ss {timezone}'
+
+        Args:
+            time_string: String with time to parse
+            timezone: String indicating timezone
+        Returns: :py:class`utils.timeutil.datetime()` object
+        """
+        return cls._parse(f"{cls.american_format} {timezone}", time_string)
 
     @classmethod
     def from_american_with_utc(cls, time_string):
@@ -74,14 +83,16 @@ class parsetime(_datetime):  # NOQA
         """
         return cls._parse(cls.iso_with_utc_format, time_string)
 
-    def to_iso_with_dynamic_timezone(self, timezone):
-        """ Convert the this object to string representation in american with UTC.
+    def to_iso(self, timezone):
+        """ Convert the this object to string representation in american with
+        a specific timezone.
 
-        CFME's format here is 'mm-dd-yy hh:mm:ss UTC'
-
+        CFME's format here is 'mm-dd-yy hh:mm:ss {timezone}'
+        Args:
+             timezone: String which indicates the timezone.
         Returns: :py:class`str` object
         """
-        return self.strftime(f"{self.iso_with_dynamic_timezone_format} {timezone}")
+        return self.strftime(f"{self.iso_format} {timezone}")
 
     def to_iso_with_utc(self):
         """ Convert the this object to string representation in american with UTC.
@@ -226,14 +237,23 @@ class parsetime(_datetime):  # NOQA
 
                 Args:
                     time_string: String with time to parse
+                    area: String indicating a city obtained from
+                        appliance.rest_api.settings["display"]["timezone"]
+
                 Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(f"{cls.saved_report_title_format} {get_time_difference(area)}", time_string)
+        return cls._parse(
+            f"{cls.saved_report_title_format} {get_time_difference(area)}", time_string
+        )
 
     def to_saved_report_title_format(self, area="UTC"):
         """ Convert the this object to string representation in Saved Report title.
 
                 Format here is '%a, %d %b %Y %H:%M:%S +0000'
+
+                Args:
+                    area: String indicating a city obtained from
+                        appliance.rest_api.settings["display"]["timezone"]
 
                 Returns: :py:class`str` object
                 """
@@ -241,9 +261,18 @@ class parsetime(_datetime):  # NOQA
 
 
 def get_time_difference(area):
+    """ Get the time difference between a specific timezone and UTC
+        Note: This may not work in case the area is not found in pytz timezones.
+
+        Args:
+            area: String indicating a specific area
+            Returns: :py:class`str` object of format "+0000"
+    """
     for zone in pytz.all_timezones:
         if area in zone:
             return _datetime.now(pytz.timezone(zone)).strftime('%z')
+    else:
+        return _datetime.now(pytz.timezone("UTC")).strftime("%z")
 
 
 def nice_seconds(t_s):

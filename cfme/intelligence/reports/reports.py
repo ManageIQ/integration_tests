@@ -584,16 +584,18 @@ class SavedReport(Updateable, BaseEntity):
 
     @cached_property
     def queued_datetime_in_title(self):
+        # "display" key will not be available without clearing the cache
+        delattr(self.appliance, "rest_api")
         area = self.appliance.rest_api.settings["display"]["timezone"]
-        return parsetime.from_american_with_dynamic_timezone(
+        return parsetime.from_american(
             self.queued_datetime, self.report_timezone
         ).to_saved_report_title_format(area)
 
     @cached_property
     def datetime_in_tree(self):
-        return parsetime.from_american_with_dynamic_timezone(
+        return parsetime.from_american(
             self.run_datetime, self.report_timezone
-        ).to_iso_with_dynamic_timezone(self.report_timezone)
+        ).to_iso(self.report_timezone)
 
     @cached_property
     def data(self):
