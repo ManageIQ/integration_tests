@@ -15,8 +15,10 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 
@@ -365,3 +367,68 @@ def test_migration_restart(request, appliance, provider,
         cleanup_target(provider, migrated_vm)
 
     assert src_vm_obj.mac_address == migrated_vm.mac_address
+
+
+@pytest.mark.tier(2)
+def test_if_no_password_is_exposed_in_logs_during_migration(appliance, source_provider, provider,
+                                                            request, mapping_data_vm_obj_mini):
+    """
+    title: OSP: Test if no password is exposed in logs during migration
+
+    Polarion:
+        assignee: mnadeem
+        casecomponent: V2V
+        initialEstimate: 1/8h
+        startsin: 5.10
+        subcomponent: OSP
+        testSteps:
+            1. Create infrastructure mapping for Vmware to OSP/RHV
+            2. Create migration plan
+            3. Start migration
+        expectedResults:
+            1. Mapping created and visible in UI
+            2.
+            3. logs should not show password during migration
+    """
+    cred = []
+    ssh_key_name = source_provider.data['private-keys']['vmware-ssh-key']['credentials']
+    cred.append(credentials[source_provider.data.get("credentials")]["password"])
+    cred.append(credentials[ssh_key_name]["password"])
+    cred.append(credentials[provider.data.get("credentials")]["password"])
+    if provider.one_of(OpenStackProvider):
+        osp_key_name = provider.data['private-keys']['conversion_host_ssh_key']['credentials']
+        cred.append(credentials[osp_key_name]["password"])
+
+    automation_log = LogValidator("/var/www/miq/vmdb/log/automation.log", failure_patterns=cred,
+                           hostname=appliance.hostname)
+    evm_log = LogValidator("/var/www/miq/vmdb/log/evm.log", failure_patterns=cred,
+                           hostname=appliance.hostname)
+
+    automation_log.start_monitoring()
+    evm_log.start_monitoring()
+
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    migration_plan = migration_plan_collection.create(
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(start="plan_desc_"),
+        infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
+        vm_list=mapping_data_vm_obj_mini.vm_list,
+        target_provider=provider
+    )
+
+    assert migration_plan.wait_for_state("Started")
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
+
+    src_vm = mapping_data_vm_obj_mini.vm_list[0]
+    migrated_vm = get_migrated_vm(src_vm, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        cleanup_target(provider, migrated_vm)
+        migration_plan.delete_completed_plan()
+
+    # Check log files for any exposed password
+    assert automation_log.validate()
+    assert evm_log.validate()
