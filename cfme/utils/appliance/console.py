@@ -1,18 +1,22 @@
-import os
+import re
 import socket
-import tempfile
 from contextlib import contextmanager
-from re import escape as resc
 
 import lxml
 import yaml
 
 from cfme.utils.appliance.plugin import AppliancePlugin
-from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.path import scripts_path
 from cfme.utils.ssh_expect import SSHExpect
+from cfme.utils.version import LOWEST
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
+
+
+AP_WELCOME_SCREEN_TIMEOUT = 30
 
 
 class ApplianceConsole(AppliancePlugin):
@@ -65,26 +69,36 @@ class ApplianceConsole(AppliancePlugin):
         """Commands:
         1. 'ap' launches appliance_console,
         2. '' clears info screen,
-        3. '14' Hardens appliance using SCAP configuration,
+        3. '15' Hardens appliance using SCAP configuration,
         4. '' complete."""
-        command_set = ('ap', '', '13', '')
-        self.appliance.appliance_console.run_commands(command_set)
+        with SSHExpect(self.appliance) as interaction:
+            interaction.send('ap')
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: 15,
+                '5.11.2.1': 13
+            }))
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
 
     def scap_check_rules(self):
         """Check that rules have been applied correctly."""
         rules_failures = []
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(hidden['scap.rb'])
-            f.flush()
-            os.fsync(f.fileno())
-            self.appliance.ssh_client.put_file(
-                f.name, '/tmp/scap.rb')
+
+        self.appliance.ssh_client.put_file(scripts_path.join('scap.rb'), '/tmp/scap.rb')
+
         if self.appliance.version >= "5.8":
             rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
         else:
             rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
-        self.appliance.ssh_client.run_command(
-            'cd /tmp/ && ruby scap.rb --rulesfile={rules}'.format(rules=rules))
+
+        ssg_path = VersionPicker({
+            Version.lowest(): "/usr/share/xml/scap/ssg/content/ssg-rhel7-ds.xml",
+            '5.11': "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
+        }).pick(self.appliance.version)
+
+        assert self.appliance.ssh_client.run_command('gem install optimist').success
+        assert self.appliance.ssh_client.run_command(
+            f'cd /tmp/ && ruby scap.rb --rulesfile={rules} --ssg-path={ssg_path}')
         self.appliance.ssh_client.get_file(
             '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
         self.appliance.ssh_client.get_file(
@@ -115,25 +129,32 @@ class ApplianceConsole(AppliancePlugin):
         # Configure primary replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             # 6/8 for Configure Database Replication
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: 6,
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             interaction.answer('Choose the database replication operation: ', '1')
             answer_cluster_related_questions(interaction, node_uid='1',
                 db_name='', db_username='', db_password=pwd)
             interaction.answer(r'Enter the primary database hostname or IP address: \|.*\| ',
                                self.appliance.hostname)
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '')
 
     def reconfigure_primary_replication_node(self, pwd):
         # Configure primary replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: '6',
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             # 6/8 for Configure Database Replication
 
             interaction.answer('Choose the database replication operation: ', '1')
@@ -142,37 +163,45 @@ class ApplianceConsole(AppliancePlugin):
             interaction.answer(r'Enter the primary database hostname or IP address: \|.*\| ',
                                self.appliance.hostname)
             # Warning: File /etc/repmgr.conf exists. Replication is already configured
-            interaction.answer(resc('Continue with configuration? (Y/N): '), 'y')
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer(re.escape('Continue with configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '')
 
     def configure_standby_replication_node(self, pwd, primary_ip):
         # Configure secondary (standby) replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: '6',
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             # 6/8 for Configure Database Replication
 
             # Configure Server as Standby
             interaction.answer('Choose the database replication operation: ', '2')
-            interaction.answer(resc('Choose the encryption key: |1| '), '2')
+            interaction.answer(re.escape('Choose the encryption key: |1| '), '2')
             interaction.send(primary_ip)
-            interaction.answer(resc('Enter the appliance SSH login: |root| '), '')
+            interaction.answer(re.escape('Enter the appliance SSH login: |root| '), '')
             interaction.answer('Enter the appliance SSH password: ', pwd)
-            interaction.answer(resc('Enter the path of remote encryption key: '
+            interaction.answer(re.escape('Enter the path of remote encryption key: '
                                     '|/var/www/miq/vmdb/certs/v2_key| '), '')
-            interaction.answer(resc('Choose the standby database disk: '),
-                               '1' if self.appliance.version < '5.10' else '2')
+            if self.appliance.version < '5.11.2.0':
+                interaction.answer(re.escape('Choose the standby database disk: '),
+                                '1' if self.appliance.version < '5.10' else '2')
+            else:
+                interaction.answer(re.escape('Choose the standby database disk: |1| '), '')
             answer_cluster_related_questions(interaction, node_uid='2',
                 db_name='', db_username='', db_password=pwd)
             interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
             interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ',
                                self.appliance.hostname)
-            interaction.answer(resc('Configure Replication Manager (repmgrd) for automatic '
+            interaction.answer(re.escape('Configure Replication Manager (repmgrd) for automatic '
                                     r'failover? (Y/N): '), 'y')
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '', timeout=10 * 60)
 
     def reconfigure_standby_replication_node(self, pwd, primary_ip, repmgr_reconfigure=False):
@@ -181,49 +210,59 @@ class ApplianceConsole(AppliancePlugin):
             interaction.send('ap')
             # When reconfiguring, the ap command may hang for 60s even.
             interaction.answer('Press any key to continue.', '', timeout=120)
-            interaction.answer('Choose the advanced setting: ',
-                               '6' if self.appliance.version < '5.10' else '8')
+            interaction.answer('Choose the advanced setting: ', VersionPicker({
+                LOWEST: '6',
+                '5.10': 8,
+                '5.11.2.1': 6
+            }))
             # 6/8 for Configure Database Replication
 
             # Configure Server as Standby
             interaction.answer('Choose the database replication operation: ', '2')
             # Would you like to remove the existing database before configuring as a standby server?
             # WARNING: This is destructive. This will remove all previous data from this server
-            interaction.answer(resc('Continue? (Y/N): '), 'y')
-            interaction.answer(
-                # Don't partition the disk
-                resc('Choose the standby database disk: |1| '),
-                '1' if self.appliance.version < '5.10' else '2')
-            interaction.answer(resc(
+            interaction.answer(re.escape('Continue? (Y/N): '), 'y')
+            if self.appliance.version < '5.11.2.0':
+                interaction.answer(
+                    # Don't partition the disk
+                    re.escape('Choose the standby database disk: |1| '),
+                    '1' if self.appliance.version < '5.10' else '2')
+            interaction.answer(re.escape(
                 "Are you sure you don't want to partition the Standby "
                 "database disk? (Y/N): "), 'y')
             answer_cluster_related_questions(interaction, node_uid='2',
                 db_name='', db_username='', db_password=pwd)
             interaction.answer('Enter the primary database hostname or IP address: ', primary_ip)
             interaction.answer(r'Enter the Standby Server hostname or IP address: \|.*\| ', '')
-            interaction.answer(resc(
+            interaction.answer(re.escape(
                 'Configure Replication Manager (repmgrd) for automatic '
                 r'failover? (Y/N): '), 'y')
             # interaction.answer('An active standby node (10.8.198.223) with the node number 2
             # already exists\n')
             # 'Would you like to continue configuration by overwriting '
             # 'the existing node?
-            interaction.answer(resc('(Y/N): |N| '), 'y')
+            interaction.answer(re.escape('(Y/N): |N| '), 'y')
             # Warning: File /etc/repmgr.conf exists. Replication is already configured
-            interaction.answer(resc('Continue with configuration? (Y/N): '), 'y')
-            interaction.answer(resc('Apply this Replication Server Configuration? (Y/N): '), 'y')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer(re.escape('Continue with configuration? (Y/N): '), 'y')
+            interaction.answer(
+                re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
 
     def configure_automatic_failover(self, primary_ip):
         # Configure automatic failover on EVM appliance
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
-            interaction.answer('Press any key to continue.', '', timeout=20)
+            interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
             interaction.expect('Choose the advanced setting: ')
 
             with waiting_for_ha_monitor_started(self.appliance, primary_ip, timeout=300):
                 # Configure Application Database Failover Monitor
-                interaction.send('8' if self.appliance.version < '5.10' else '10')
+                interaction.send(VersionPicker({
+                    LOWEST: 8,
+                    '5.10': 10,
+                    '5.11.2.1': 8
+                }))
+
                 interaction.answer('Choose the failover monitor configuration: ', '1')
                 # Failover Monitor Service configured successfully
                 interaction.answer('Press any key to continue.', '')
@@ -281,10 +320,13 @@ def configure_appliances_ha(appliances, pwd):
     # Configure first appliance as dedicated database
     with SSHExpect(apps0) as interaction:
         interaction.send('ap')
-        interaction.answer('Press any key to continue.', '', timeout=20)
-        interaction.answer('Choose the advanced setting: ',
-                           '5' if apps0.version < '5.10' else '7')  # Configure Database
-        interaction.answer(resc('Choose the encryption key: |1| '), '1')
+        interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: 5,
+            '5.10': 7,
+            '5.11.2.1': 5
+        }))  # Configure Database
+        interaction.answer(re.escape('Choose the encryption key: |1| '), '1')
         interaction.answer('Choose the database operation: ', '1')
         # On 5.10, rhevm provider:
         #
@@ -293,10 +335,14 @@ def configure_appliances_ha(appliances, pwd):
         #    1) /dev/sr0: 0 MB
         #    2) /dev/vdb: 4768 MB
         #    3) Don't partition the disk
-        interaction.answer(resc('Choose the database disk: '),
-                          '1' if apps0.version < '5.10' else '2')
+        if apps0.version < '5.11.2.0':
+            interaction.answer(re.escape('Choose the database disk: '),
+                            '1' if apps0.version < '5.10' else '2')
+        else:
+            interaction.answer(re.escape('Choose the database disk: |1| '), '')
+
         # Should this appliance run as a standalone database server?
-        interaction.answer(resc('? (Y/N): |N| '), 'y')
+        interaction.answer(re.escape('? (Y/N): |N| '), 'y')
         interaction.answer('Enter the database password on localhost: ', pwd)
         interaction.answer('Enter the database password again: ', pwd)
         # Configuration activated successfully.
@@ -307,25 +353,28 @@ def configure_appliances_ha(appliances, pwd):
     # Configure EVM webui appliance with create region in dedicated database
     with SSHExpect(apps2) as interaction:
         interaction.send('ap')
-        interaction.answer('Press any key to continue.', '', timeout=20)
-        interaction.answer('Choose the advanced setting: ',
-                           '5' if apps2.version < '5.10' else '7')  # Configure Database
-        interaction.answer(resc('Choose the encryption key: |1| '), '2')
+        interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: 5,
+            '5.10': 7,
+            '5.11.2.1': 5
+        }))  # Configure Database
+        interaction.answer(re.escape('Choose the encryption key: |1| '), '2')
         interaction.send(app0_ip)
-        interaction.answer(resc('Enter the appliance SSH login: |root| '), '')
+        interaction.answer(re.escape('Enter the appliance SSH login: |root| '), '')
         interaction.answer('Enter the appliance SSH password: ', pwd)
         interaction.answer(
-            resc('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key| '),
+            re.escape('Enter the path of remote encryption key: |/var/www/miq/vmdb/certs/v2_key| '),
             '')
         interaction.answer('Choose the database operation: ', '2', timeout=30)
         interaction.answer('Enter the database region number: ', '0')
         # WARNING: Creating a database region will destroy any existing data and
         # cannot be undone.
-        interaction.answer(resc('Are you sure you want to continue? (Y/N):'), 'y')
+        interaction.answer(re.escape('Are you sure you want to continue? (Y/N):'), 'y')
         interaction.answer('Enter the database hostname or IP address: ', app0_ip)
-        interaction.answer(resc('Enter the port number: |5432| '), '')
+        interaction.answer(re.escape('Enter the port number: |5432| '), '')
         interaction.answer(r'Enter the name of the database on .*: \|vmdb_production\| ', '')
-        interaction.answer(resc('Enter the username: |root| '), '')
+        interaction.answer(re.escape('Enter the username: |root| '), '')
         interaction.answer('Enter the database password on .*: ', pwd)
         # Configuration activated successfully.
         interaction.answer('Press any key to continue.', '', timeout=360)
@@ -346,8 +395,10 @@ def answer_cluster_related_questions(interaction, node_uid, db_name,
     # This seems to happen when (re)configuring the standby replication node.
     interaction.answer('.* the number uniquely identifying '
                        'this node in the replication cluster: ', node_uid)
-    interaction.answer(resc('Enter the cluster database name: |vmdb_production| '), db_name)
-    interaction.answer(resc('Enter the cluster database username: |root| '), db_username)
+    interaction.answer(re.escape('Enter the cluster database name: |vmdb_production| '),
+                       db_name)
+    interaction.answer(re.escape('Enter the cluster database username: |root| '),
+                       db_username)
     interaction.answer('Enter the cluster database password: ', db_password)
     interaction.answer('Enter the cluster database password: ', db_password)
 
@@ -368,7 +419,7 @@ class ApplianceConsoleCli(AppliancePlugin):
             " --dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
             " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
                 password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass), timeout=300)
+                sshpass=sshpass), timeout=500)
 
     def configure_appliance_external_create(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):

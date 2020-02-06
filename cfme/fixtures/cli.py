@@ -261,9 +261,11 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     return ha_multiple_preupdate_appliances
 
 
-def replicated_appliances_with_providers(multiple_preupdate_appliances):
-    """Returns two database-owning appliances, configures with providers."""
-    appl1, appl2 = multiple_preupdate_appliances
+def replicated_appliances_with_providers(multiple_appliances):
+    """ Accpets two unconfigured appliance at least.
+    Configures them with different region and sets the Global/Remote kind of
+    replication on them. Configures first appliance with two providers. """
+    appl1, appl2 = multiple_appliances
     # configure appliances
     appl1.configure(region=0)
     appl1.wait_for_web_ui()
@@ -276,7 +278,7 @@ def replicated_appliances_with_providers(multiple_preupdate_appliances):
     # Add infra/cloud providers
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(EC2Provider, appl1).setup()
-    return multiple_preupdate_appliances
+    return multiple_appliances
 
 
 @pytest.fixture

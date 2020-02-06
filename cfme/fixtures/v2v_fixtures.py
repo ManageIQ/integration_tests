@@ -22,6 +22,7 @@ from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from cfme.v2v.infrastructure_mapping import InfrastructureMapping as InfraMapping
 
@@ -48,12 +49,16 @@ def _start_event_workers_for_osp(appliance, provider):
     endpoint_view.events.event_stream.select("AMQP")
     endpoint_view.events.event_stream.select("Ceilometer")
     provider_edit_view.save.click()
-    # Test if workers are enabled and running
-    worker_status = appliance.ssh_client.run_rake_command(
-        "evm:status | grep 'Openstack::Cloud::EventCatcher'")
+
+    def is_osp_worker_running():
+        return "started" in appliance.ssh_client.run_rake_command(
+            "evm:status | grep 'Openstack::Cloud::EventCatcher'"
+        ).output
+
+    # Wait for Eventcatcher workers to get started with in 60 sec
     try:
-        assert "started" in worker_status.output
-    except AssertionError:
+        wait_for(lambda: is_osp_worker_running, num_sec=60, delay=10)
+    except TimedOutError:
         pytest.skip("Openstack Eventcatcher workers are not running")
 
 
