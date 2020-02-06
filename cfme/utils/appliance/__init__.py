@@ -102,7 +102,43 @@ class ApplianceException(Exception):
     pass
 
 
-class IPAppliance(object):
+class BaseAppliance(object):
+    """ Represents base appliance class intended to hold base properties existing in every appliance
+    """
+    type = None
+    CONFIG_MAPPING = {
+        'hostname': 'hostname',
+        'ui_protocol': 'ui_protocol',
+        'ui_port': 'ui_port',
+        'browser_steal': 'browser_steal',
+        'container': 'container',
+        'pod': 'container',
+        'openshift_creds': 'openshift_creds',
+        'is_dev': 'is_dev',
+        'db_host': 'db_host',
+        'db_port': 'db_port',
+        'ssh_port': 'ssh_port',
+        'project': 'project',
+        'version': 'version',
+        'type': 'type'
+    }
+    CONFIG_NONGLOBAL = {'hostname'}
+
+    @property
+    def as_json(self):
+        """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
+        def _version_tostr(x):
+            if isinstance(x, Version):
+                return str(x)
+            else:
+                return x
+        return json.dumps({
+            k: _version_tostr(getattr(self, k))
+            for k in set(self.CONFIG_MAPPING.values())
+            if hasattr(self, k) and k != "collections"})
+
+
+class IPAppliance(BaseAppliance):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
     it knows both the provider, vm_name and can there for derive the IP address.
@@ -142,22 +178,6 @@ class IPAppliance(object):
     appliance_console = console.ApplianceConsole.declare()
     appliance_console_cli = console.ApplianceConsoleCli.declare()
 
-    CONFIG_MAPPING = {
-        'hostname': 'hostname',
-        'ui_protocol': 'ui_protocol',
-        'ui_port': 'ui_port',
-        'browser_steal': 'browser_steal',
-        'container': 'container',
-        'pod': 'container',
-        'openshift_creds': 'openshift_creds',
-        'is_dev': 'is_dev',
-        'db_host': 'db_host',
-        'db_port': 'db_port',
-        'ssh_port': 'ssh_port',
-        'project': 'project',
-        'version': 'version',
-    }
-    CONFIG_NONGLOBAL = {'hostname'}
     PROTOCOL_PORT_MAPPING = {'http': 80, 'https': 443}
     CONF_FILES = {
         'upstream_templates': '/var/www/miq/system/TEMPLATE',
@@ -173,19 +193,6 @@ class IPAppliance(object):
     def db_service(self):
         return SystemdService(self, unit_name=self.db.service_name)
 
-    @property
-    def as_json(self):
-        """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
-        def _version_tostr(x):
-            if isinstance(x, Version):
-                return str(x)
-            else:
-                return x
-        return json.dumps({
-            k: _version_tostr(getattr(self, k))
-            for k in set(self.CONFIG_MAPPING.values())
-            if k in self.__dict__})
-
     @classmethod
     def from_json(cls, json_string):
         return cls(**json.loads(json_string))
@@ -193,7 +200,7 @@ class IPAppliance(object):
     def __init__(
             self, hostname, ui_protocol='https', ui_port=None, browser_steal=False, project=None,
             container=None, openshift_creds=None, db_host=None, db_port=None, ssh_port=None,
-            is_dev=False, version=None,
+            is_dev=False, version=None, type=None
     ):
         if not isinstance(hostname, str):
             raise TypeError('Appliance\'s hostname must be a string!')
@@ -207,6 +214,7 @@ class IPAppliance(object):
         self.ssh_port = ssh_port or ports.SSH
         self.db_port = db_port or ports.DB
         self.db_host = db_host
+        self.type = type or self.type
         self.browser = ViaUI(owner=self)
         self.ssui = ViaSSUI(owner=self)
         self.rest_context = ViaREST(owner=self)
@@ -2602,11 +2610,34 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             self. _switch_migration_ui(False)
 
 
+class RegularAppliance(IPAppliance):
+    # TODO: make everything use regular appliance
+    type = 'default'
+
+
+class PodAppliance(IPAppliance):
+    type = 'pod'
+
+
+class DevAppliance(IPAppliance):
+    # TODO: move dev stuff here
+    type = 'dev'
+
+
+class UpgradedAppliance(IPAppliance):
+    # TODO: implement this
+    type = 'upgraded'
+
+
+class MultiRegionAppliance(BaseAppliance):
+    # TODO: implement this
+    type = 'multi-region'
+
+
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
 
     **DO NOT INSTANTIATE DIRECTLY - USE :py:meth:`from_provider`**
-
     """
 
     _default_name = 'EVM'
@@ -2996,7 +3027,11 @@ def load_appliances(appliance_list, global_kwargs):
                 raise ValueError(
                     "No valid IPAppliance kwargs found in config for appliance #{}".format(idx)
                 )
-            appliance = IPAppliance(**{mapping[k]: v for k, v in kwargs.items() if k in mapping})
+            appliance_type = kwargs.pop('type', DEFAULT_APP_TYPE)
+            appliance_class = APP_TYPES[appliance_type]
+
+            appliance = appliance_class(**{mapping[k]: v for k, v in kwargs.items()
+                                           if k in mapping})
 
             result.append(appliance)
     return result
@@ -3029,18 +3064,19 @@ def collections_for_appliance(appliance):
 
 
 @attr.s
-class DummyAppliance(object):
+class DummyAppliance(BaseAppliance):
     """a dummy with minimal attribute set"""
-    hostname = 'DummyApplianceHostname'
-    browser_steal = False
+    hostname = attr.ib(default='DummyApplianceHostname')
+    browser_steal = attr.ib(default=False)
     version = attr.ib(default=Version('5.11.0'), converter=_version_for_version_or_stream)
-    is_pod = False
-    is_dev = False
-    build = 'dummyappliance'
-    managed_known_providers = []
+    is_pod = attr.ib(default=False)
+    is_dev = attr.ib(default=False)
+    build = attr.ib(default='dummyappliance')
+    managed_known_providers = attr.ib(default=[])
     collections = attr.ib(default=attr.Factory(collections_for_appliance, takes_self=True))
-    url = 'http://dummies.r.us'
+    url = attr.ib(default='http://dummies.r.us')
     is_dummy = attr.ib(default=True)
+    type = 'dummy'
 
     @property
     def browser(self):
@@ -3052,25 +3088,12 @@ class DummyAppliance(object):
 
     @classmethod
     def from_config(cls, pytest_config):
-        version = pytest_config.getoption('--dummy-appliance-version')
+        version = pytest_config.getoption('--app-version')
         return cls(version=(version or attr.NOTHING))
 
     @classmethod
     def from_json(cls, json_string):
         return cls(**json.loads(json_string))
-
-    @property
-    def as_json(self):
-        """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
-        def _version_tostr(x):
-            if isinstance(x, Version):
-                return str(x)
-            else:
-                return x
-
-        return json.dumps({
-            k: _version_tostr(getattr(self, k))
-            for k in self.__dict__ if k != "collections"})
 
     def set_session_timeout(self, *k):
         pass
@@ -3090,7 +3113,7 @@ def find_appliance(obj, require=True):
         return obj.appliance
     # duck type - either is the config of pytest, or holds it
     config = getattr(obj, 'config', obj)
-    from cfme.test_framework.appliance import PLUGIN_KEY
+    from cfme.test_framework.appliance.holder import PLUGIN_KEY
     holder = config.pluginmanager.get_plugin(PLUGIN_KEY)
     if holder or require:
         assert holder
@@ -3215,3 +3238,12 @@ class Navigatable(NavigatableMixin):
 class MiqImplementationContext(sentaku.ImplementationContext):
     """ Our context for Sentaku"""
     pass
+
+
+DEFAULT_APP_TYPE = RegularAppliance.type
+APP_TYPES = {RegularAppliance.type: RegularAppliance,
+             PodAppliance.type: PodAppliance,
+             DevAppliance.type: DevAppliance,
+             UpgradedAppliance.type: UpgradedAppliance,
+             MultiRegionAppliance.type: MultiRegionAppliance,
+             DummyAppliance.type: DummyAppliance}

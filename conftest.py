@@ -35,7 +35,17 @@ pytest_plugins = [
     "cfme.test_framework.browser_isolation",
     "cfme.fixtures.ansible_fixtures",
     "cfme.fixtures.ansible_tower",
-    "cfme.fixtures.appliance",
+
+    # appliance plugins
+    "cfme.test_framework.appliance.holder",
+    "cfme.test_framework.appliance.dummy",
+    "cfme.test_framework.appliance.local",
+    "cfme.test_framework.appliance.default",
+    "cfme.test_framework.appliance.pod",
+    "cfme.test_framework.appliance.multi_region",
+    "cfme.test_framework.appliance.upgraded",
+    "cfme.test_framework.appliance.env",
+
     "cfme.fixtures.appliance_update",
     "cfme.fixtures.artifactor_plugin",
     "cfme.fixtures.authentication",

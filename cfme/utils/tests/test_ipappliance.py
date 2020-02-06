@@ -1,11 +1,11 @@
 import pytest
 
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import RegularAppliance
 
 
 def test_ipappliance_from_hostname():
     hostname = '1.2.3.4'
-    ip_a = IPAppliance(hostname=hostname)
+    ip_a = RegularAppliance(hostname=hostname)
     assert ip_a.hostname == hostname
     assert ip_a.url == 'https://{}/'.format(hostname)
 
@@ -13,22 +13,22 @@ def test_ipappliance_from_hostname():
 def test_ipappliance_from_url():
     address = '1.2.3.4'
     url = 'http://{}/'.format(address)
-    ip_a = IPAppliance.from_url(url)
+    ip_a = RegularAppliance.from_url(url)
     assert ip_a.url == url
     assert ip_a.hostname == address
 
 
-@pytest.mark.skipif(lambda request: request.config.getoption('--dummy-appliance', default=False),
-                    reason="infra_provider cant support dummy instance")
+@pytest.mark.skipif(lambda request: request.config.getoption('--app-type',
+                    default=False) == 'dummy', reason="infra_provider cant support dummy instance")
 def test_ipappliance_managed_providers(appliance, infra_provider):
     assert infra_provider in appliance.managed_known_providers
 
 
-@pytest.mark.skipif(lambda request: request.config.getoption('--dummy-appliance', default=False),
-                    reason="infra_provider cant support dummy instance")
+@pytest.mark.skipif(lambda request: request.config.getoption('--app-type',
+                    default=False) == 'dummy', reason="infra_provider cant support dummy instance")
 def test_context_hack(monkeypatch):
 
-    ip_a = IPAppliance.from_url('http://127.0.0.2/')
+    ip_a = RegularAppliance.from_url('http://127.0.0.2/')
 
     def not_good(*k):
         raise RuntimeError()

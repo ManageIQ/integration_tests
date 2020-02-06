@@ -14,7 +14,7 @@ import argparse
 import subprocess
 import sys
 
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import RegularAppliance
 from cfme.utils.conf import credentials
 from cfme.utils.path import scripts_path
 from cfme.utils.ssh import SSHClient
@@ -41,7 +41,7 @@ def main():
     }
     if args.hostname is not None:
         ssh_kwargs['hostname'] = args.hostname
-        appliance = IPAppliance(args.hostname)
+        appliance = RegularAppliance(args.hostname)
         if appliance.version < '5.9':
             # Running evm:db:reset on CFME 5.8 sometimes leaves it in a state
             # where it is unable to start again

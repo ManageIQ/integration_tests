@@ -17,11 +17,11 @@ from cfme.utils.conf import env
 
 def get_appliance(appliance_ip):
     """Checks an appliance is not None and if so, loads the appropriate things"""
-    from cfme.utils.appliance import IPAppliance, load_appliances_from_config, stack
+    from cfme.utils.appliance import RegularAppliance, load_appliances_from_config, stack
     if not appliance_ip:
         app = load_appliances_from_config(env)[0]
     else:
-        app = IPAppliance(hostname=appliance_ip)
+        app = RegularAppliance(hostname=appliance_ip)
     stack.push(app)  # ensure safety from bad code, phase out later
     return app
 
@@ -168,10 +168,10 @@ methods_to_install = [
 
 def fn(method, *args, **kwargs):
     """Helper to access the right properties"""
-    from cfme.utils.appliance import IPAppliance
+    from cfme.utils.appliance import RegularAppliance
     appliance_ip = kwargs.get('appliance_ip', None)
     app = get_appliance(appliance_ip)
-    descriptor = getattr(IPAppliance, method)
+    descriptor = getattr(RegularAppliance, method)
     if isinstance(descriptor, (cached_property, property)):
         out = getattr(app, method)
     else:

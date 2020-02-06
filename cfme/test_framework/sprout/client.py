@@ -5,7 +5,7 @@ import attr
 import requests
 from miq_version import LATEST_DOWN_STREAM
 
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import RegularAppliance
 from cfme.utils.conf import credentials
 from cfme.utils.conf import env
 from cfme.utils.log import logger
@@ -136,7 +136,7 @@ class SproutClient(object):
                         'project': appliance['project'],
                         'container': appliance['container'],
                         'db_host': appliance['db_host']}
-            appliances.append(IPAppliance(**app_args))
+            appliances.append(RegularAppliance(**app_args))
         return appliances, request_id
 
     def destroy_pool(self, pool_id):

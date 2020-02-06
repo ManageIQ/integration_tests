@@ -77,9 +77,9 @@ jobs:
         - cp conf/env.yaml.template conf/env.yaml
         - cp conf/credentials.yaml.template conf/credentials.yaml
       script:
-        - pytest cfme/utils/tests cfme/modeling/tests requirements --dummy-appliance
-        - pytest -p no:cfme cfme/tests/test_modules_importable.py --dummy-appliance --long-running
-        - pytest --dummy-appliance --collect-only --include-manual --long-running
+        - pytest cfme/utils/tests cfme/modeling/tests requirements --app-type=dummy
+        - pytest -p no:cfme cfme/tests/test_modules_importable.py --app-type=dummy --long-running
+        - pytest --app-type=dummy --include-manual --long-running
       after_success:
         - coveralls
 

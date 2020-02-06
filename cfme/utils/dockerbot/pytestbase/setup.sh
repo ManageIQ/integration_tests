@@ -260,7 +260,7 @@ set +e
 if [ "$USE_SPROUT" = "yes" ];
 then
     log "invoking complete collectonly with dummy instance before test"
-    gate "collectonly.txt" "py.test --collect-only --dummy-appliance --dummy-appliance-version $SPROUT_GROUP --use-provider complete"
+    gate "collectonly.txt" "py.test --app-type=dummy --app-version $SPROUT_GROUP --use-provider complete"
 
     run_n_log "miq sprout checkout --populate-yaml --user-key sprout" &
     sleep 5

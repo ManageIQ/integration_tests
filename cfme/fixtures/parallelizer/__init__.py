@@ -51,7 +51,7 @@ from deepdiff import DeepDiff
 from cfme.fixtures import terminalreporter
 from cfme.fixtures.parallelizer import remote
 from cfme.fixtures.pytest_store import store
-from cfme.test_framework.appliance import PLUGIN_KEY as APPLIANCE_PLUGIN
+from cfme.test_framework.appliance.holder import PLUGIN_KEY as APPLIANCE_PLUGIN
 from cfme.utils import at_exit
 from cfme.utils import conf
 from cfme.utils.log import create_sublogger
@@ -79,7 +79,7 @@ def pytest_configure(config):
     reporter = terminalreporter.reporter()
     holder = config.pluginmanager.get_plugin(APPLIANCE_PLUGIN)
 
-    appliances = holder.appliances
+    appliances = holder.pool
 
     if len(appliances) > 1:
         session = ParallelSession(config, appliances)
