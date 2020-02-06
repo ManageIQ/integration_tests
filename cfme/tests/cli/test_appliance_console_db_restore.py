@@ -19,6 +19,8 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.ssh_expect import SSHExpect
+from cfme.utils.version import LOWEST
+from cfme.utils.version import VersionPicker
 
 pytestmark = [
     test_requirements.restore
@@ -64,31 +66,16 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
 
 
 @pytest.fixture
-def get_replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
-    """Returns two database-owning appliances, configures first appliance with provider,
-    enables embedded ansible, takes a pg_backup and copys it to second appliance
-    prior to running tests.
-
-    """
-    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
-    appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
-    appl1.db.backup()
-    appl2.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
-    appl2.db.backup()
-    return temp_appliances_unconfig_funcscope_rhevm
-
-
-@pytest.fixture
 def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     """Returns database-owning appliance, enables embedded ansible,
-    takes a pg_backup prior to running tests.
-
+    waits for the ansbile to get ready, takes a backup prior to running
+    tests.
     """
     appl1 = temp_appliance_preconfig_funcscope
     # enable embedded ansible and create pg_basebackup
     appl1.enable_embedded_ansible_role()
     appl1.wait_for_embedded_ansible()
-    appl1.ssh_client.run_command("pg_basebackup -x -Ft -z -D /tmp/backup")
+    appl1.db.backup()
     return temp_appliance_preconfig_funcscope
 
 
@@ -162,8 +149,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
     # Configure primary replication node
-    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip,
-        TimedCommand('y', 60), '')
+    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip, TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
 
     # Configure secondary replication node
@@ -214,21 +200,21 @@ def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
 
 
 def restore_db(appl, location=''):
-    interaction = SSHExpect(appl)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('6')
-    interaction.expect('Choose the restore database file source: |1| ')
-    interaction.send('1')
-    interaction.expect('Enter the location of the local restore file: |/tmp/evm_db.backup| ')
-    interaction.send(location)
-    interaction.expect(r'Should this file be deleted after completing the restore\? \(Y\/N\): ')
-    interaction.send('N')
-    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
-    interaction.send('Y')
-    interaction.expect('Press any key to continue.', timeout=60)
+    with SSHExpect(appl) as interaction:
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
+        interaction.answer(re.escape('Choose the restore database file source: |1| '), '1')
+        interaction.answer(re.escape('Enter the location of the local restore file: '
+                                '|/tmp/evm_db.backup| '), location)
+        interaction.answer(re.escape('Should this file be deleted after completing the restore? '
+                                '(Y/N): '), 'N')
+        interaction.answer(re.escape(
+            'Are you sure you would like to restore the database? (Y/N): '), 'Y')
+        interaction.answer('Press any key to continue.', '', timeout=60)
 
 
 @pytest.mark.rhel_testing
@@ -281,18 +267,7 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
     appl1, appl2 = two_appliances_one_with_providers
     backup_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
 
-    interaction = SSHExpect(appl1)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('4')
-    interaction.expect(r'Choose the backup output file destination: \|1\| ')
-    interaction.send('')
-    interaction.expect(re.escape(
-        'Enter the location to save the backup file to: |/tmp/evm_db.backup| '))
-    interaction.send(backup_file_name)
-    interaction.expect('Press any key to continue.', timeout=120)
+    appl1.db.backup(backup_file_name)
 
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
@@ -303,25 +278,23 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
     appl2.db.drop()
     appl2.db.create()
 
-    interaction = SSHExpect(appl2)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('6')
-    interaction.expect(re.escape(
-        'Choose the restore database file source: |1| '))
-    interaction.send('')
-    interaction.expect(re.escape(
-        'Enter the location of the local restore file: |/tmp/evm_db.backup| '))
-    interaction.send(backup_file_name)
-    interaction.expect(re.escape(
-        'Should this file be deleted after completing the restore? (Y/N): '))
-    interaction.send('n')
-    interaction.expect(re.escape(
-        'Are you sure you would like to restore the database? (Y/N): '))
-    interaction.send('y')
-    interaction.expect('Press any key to continue.', timeout=80)
+    with SSHExpect(appl2) as interaction:
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
+        interaction.answer(
+            re.escape('Choose the restore database file source: |1| '), '')
+        interaction.answer(
+            re.escape('Enter the location of the local restore file: |/tmp/evm_db.backup| '),
+            backup_file_name)
+        interaction.answer(
+            re.escape('Should this file be deleted after completing the restore? (Y/N): '), 'n')
+        interaction.answer(
+            re.escape('Are you sure you would like to restore the database? (Y/N): '), 'y')
+        interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
@@ -349,15 +322,11 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     # Restore DB on the second appliance
     appl1.evmserverd.stop()
     appl1.db_service.restart()
-    restore_db(appl1, '/tmp/backup/base.tar.gz')
+    restore_db(appl1, '/tmp/evm_db.backup')
     manager.quit()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
-    appl1.reboot()
-    appl1.evmserverd.start()
-    appl1.wait_for_web_ui()
-    appl1.ssh_client.run_command(
-        'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
+    appl1.wait_for_embedded_ansible()
     repositories = appl1.collections.ansible_repositories
     try:
         repository = repositories.create(
@@ -379,7 +348,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_pg_basebackup_replicated(
-        request, get_replicated_appliances_with_providers):
+        request, temp_appliances_unconfig_funcscope_rhevm):
     """
     Polarion:
         assignee: jhenner
@@ -388,7 +357,10 @@ def test_appliance_console_restore_pg_basebackup_replicated(
         initialEstimate: 1/2h
         upstream: no
     """
-    appl1, appl2 = get_replicated_appliances_with_providers
+    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
+    appl1.db.backup()
+    appl2.db.backup()
+
     providers_before_restore = set(appl1.managed_provider_names)
     # Restore DB on the second appliance
     appl2.set_pglogical_replication(replication_type=':none')
@@ -397,8 +369,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     appl2.evmserverd.stop()
     appl1.db_service.restart()
     appl2.db_service.restart()
-    restore_db(appl1, '/tmp/backup/base.tar.gz')
-    restore_db(appl2, '/tmp/backup/base.tar.gz')
+    restore_db(appl1, '/tmp/evm_db.backup')
+    restore_db(appl2, '/tmp/evm_db.backup')
     appl1.evmserverd.start()
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
@@ -463,7 +435,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_replicated(
-        request, get_replicated_appliances_with_providers):
+        request, temp_appliances_unconfig_funcscope_rhevm):
     """
     Polarion:
         assignee: jhenner
@@ -471,12 +443,15 @@ def test_appliance_console_restore_db_replicated(
         casecomponent: Configuration
         initialEstimate: 1h
     """
-    appl1, appl2 = get_replicated_appliances_with_providers
+    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
+    appl1.db.backup()
+    appl2.db.backup()
     providers_before_restore = set(appl1.managed_provider_names)
+
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
-
     restore_db(appl2)
+
     # Restore db on first appliance
     appl1.set_pglogical_replication(replication_type=':none')
     appl1.evmserverd.stop()
@@ -487,17 +462,24 @@ def test_appliance_console_restore_db_replicated(
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.wait_for_web_ui()
-    # reconfigure replication between appliances, lost during restore
-    appl1.set_pglogical_replication(replication_type=':remote')
+
+    # reconfigure replication between appliances which switches to "disabled"
+    # during restore
+    appl2.set_pglogical_replication(replication_type=':none')
+    expected_providers = [] if appl2.version < '5.11' else ['Embedded Ansible']
+    assert appl2.managed_provider_names == expected_providers
+
+    # Start the replication again
     appl2.set_pglogical_replication(replication_type=':global')
     appl2.add_pglogical_replication_subscription(appl1.hostname)
+
     # Assert providers exist after restore and replicated to second appliances
-    assert providers_before_restore == set(appl1.managed_provider_names), (
-        'Restored DB is missing some providers'
+    assert providers_before_restore == set(appl1.managed_provider_names)
+    wait_for(
+        lambda: providers_before_restore == set(appl2.managed_provider_names),
+        timeout=20
     )
-    assert providers_before_restore == set(appl2.managed_provider_names), (
-        'Restored DB is missing some providers'
-    )
+
     # Verify that existing provider can detect new VMs on both apps
     virtual_crud_appl1 = provider_app_crud(VMwareProvider, appl1)
     virtual_crud_appl2 = provider_app_crud(VMwareProvider, appl2)
@@ -509,7 +491,7 @@ def test_appliance_console_restore_db_replicated(
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-@pytest.mark.meta(automates=[1740515])
+@pytest.mark.meta(automates=[1740515, 1693189])
 def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_creds):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
@@ -520,6 +502,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
         casecomponent: Appliance
         initialEstimate: 1/4h
     Bugzilla:
+        1693189
         1740515
     """
     pwd = app_creds["password"]
@@ -533,8 +516,8 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     providers_before_restore = set(appl3.managed_provider_names)
     # Restore DB on the second appliance
     appl3.evmserverd.stop()
-    appl1.rh_postgresql95_repmgr.stop()
-    appl2.rh_postgresql95_repmgr.stop()
+    appl1.repmgr.stop()
+    appl2.repmgr.stop()
     appl1.db.drop()
     appl1.db.create()
     fetch_v2key(appl3, appl1)
@@ -598,49 +581,51 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
 
+    appl1_provider_names = set(appl1.managed_provider_names)
+
     # Do the backup
-    interaction = SSHExpect(appl1)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('4')
-    interaction.expect(r'Choose the backup output file destination: \|1\| ')
-    interaction.send('2')
-    interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
-    interaction.send(nfs_dump_file_name)
-    # Enter the location to save the remote backup file to
-    interaction.expect(re.escape(
-        'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
-    interaction.send(nfs_restore_dir_path)
-    # Running Database backup to nfs://XX.XX.XX.XX/srv/export...
-    interaction.expect('Press any key to continue.', timeout=240)
+    with SSHExpect(appl1) as interaction:
+        appl1.evmserverd.stop()
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '4',
+            '5.11.2.1': 2
+        }))
+        interaction.answer(r'Choose the backup output file destination: \|1\| ', '2')
+        interaction.answer(r'Enter the location to save the backup file to: \|.*\| ',
+            nfs_dump_file_name)
+        # Enter the location to save the remote backup file to
+        interaction.answer(
+            re.escape('Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '),
+            nfs_restore_dir_path)
+        # Running Database backup to nfs://XX.XX.XX.XX/srv/export...
+        interaction.answer('Press any key to continue.', '', timeout=240)
 
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
 
-    interaction = SSHExpect(appl2)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('6')
-    interaction.expect(r'Choose the restore database file source: \|1\| ')
-    interaction.send('2')
-    # Enter the location of the remote backup file
-    interaction.expect(re.escape(
-        'Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '))
-    interaction.send(nfs_restore_file_path)
-    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
-    interaction.send('y')
-    interaction.expect('Press any key to continue.', timeout=60)
+    with SSHExpect(appl2) as interaction:
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
+        interaction.answer(r'Choose the restore database file source: \|1\| ', '2')
+        # Enter the location of the remote backup file
+        interaction.answer(
+            re.escape('Example: nfs://host.mydomain.com/exported/my_exported_folder/db.backup: '),
+            nfs_restore_file_path)
+        interaction.answer(r'Are you sure you would like to restore the database\? \(Y\/N\): ', 'y')
+        interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
-    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+    assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
     )
     # Verify that existing provider can detect new VMs on the second appliance
@@ -676,59 +661,57 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
 
+    appl1_provider_names = set(appl1.managed_provider_names)
+
     # Do the backup
-    interaction = SSHExpect(appl1)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('4')
-    interaction.expect(r'Choose the backup output file destination: \|1\| ')
-    interaction.send('3')
-    interaction.expect(r'Enter the location to save the backup file to: \|.*\| ')
-    interaction.send(smb_dump_file_name)
-    # Enter the location to save the remote backup file to
-    interaction.expect(re.escape(
-        'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
-    interaction.send(smb_restore_dir_path)
-    # Enter the username with access to this file.
-    interaction.expect(re.escape("Example: 'mydomain.com/user': "))
-    interaction.send(usr)
-    interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
-    interaction.send(pwd)
-    # Running Database backup to nfs://10.8.198.142/srv/export...
-    interaction.expect('Press any key to continue.', timeout=240)
+    with SSHExpect(appl1) as interaction:
+        appl1.evmserverd.stop()
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '4',
+            '5.11.2.1': 2
+        }))
+        interaction.answer(r'Choose the backup output file destination: \|1\| ', '3')
+        interaction.answer(r'Enter the location to save the backup file to: \|.*\| ',
+            smb_dump_file_name)
+        # Enter the location to save the remote backup file to
+        interaction.answer(
+            re.escape('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
+            smb_restore_dir_path)
+        # Enter the username with access to this file.
+        interaction.answer(re.escape("Example: 'mydomain.com/user': "), usr)
+        interaction.answer(re.escape('Enter the password for {}: '.format(usr)), pwd)
+        # Running Database backup to nfs://10.8.198.142/srv/export...
+        interaction.answer('Press any key to continue.', '', timeout=120)
 
     # Restore DB on the second appliance
     appl2.evmserverd.stop()
     appl2.db.drop()
     appl2.db.create()
 
-    interaction = SSHExpect(appl2)
-    interaction.send('ap')
-    interaction.expect('Press any key to continue.', timeout=40)
-    interaction.send('')
-    interaction.expect('Choose the advanced setting: ')
-    interaction.send('6')
-    interaction.expect(r'Choose the restore database file source: \|1\| ')
-    interaction.send('3')
-    # Enter the location of the remote backup file
-    interaction.expect(re.escape(
-        'Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '))
-    interaction.send(smb_restore_file_path)
-    # Enter the username with access to this file.
-    interaction.expect(re.escape("Example: 'mydomain.com/user': "))
-    interaction.send(usr)
-    interaction.expect(re.escape('Enter the password for {}: '.format(usr)))
-    interaction.send(pwd)
-    interaction.expect(r'Are you sure you would like to restore the database\? \(Y\/N\): ')
-    interaction.send('y')
-    interaction.expect('Press any key to continue.', timeout=80)
+    with SSHExpect(appl2) as interaction:
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=40)
+        interaction.answer('Choose the advanced setting: ', VersionPicker({
+            LOWEST: '6',
+            '5.11.2.1': 4
+        }))
+        interaction.answer(r'Choose the restore database file source: \|1\| ', '3')
+        # Enter the location of the remote backup file
+        interaction.answer(
+            re.escape('Example: smb://host.mydomain.com/my_share/daily_backup/db.backup: '),
+            smb_restore_file_path)
+        # Enter the username with access to this file.
+        interaction.answer(re.escape("Example: 'mydomain.com/user': "), usr)
+        interaction.answer(re.escape('Enter the password for {}: '.format(usr)), pwd)
+        interaction.answer(r'Are you sure you would like to restore the database\? \(Y\/N\): ', 'y')
+        interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
     # Assert providers on the second appliance
-    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+    assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
     )
     # Verify that existing provider can detect new VMs on the second appliance

@@ -6,6 +6,7 @@ import pytest
 from cfme.fixtures.cli import do_appliance_versions_match
 from cfme.fixtures.cli import provider_app_crud
 from cfme.fixtures.cli import provision_vm
+from cfme.fixtures.cli import replicated_appliances_with_providers
 from cfme.fixtures.cli import update_appliance
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
@@ -229,12 +230,12 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
         wait_for(do_appliance_versions_match, func_args=(appliance, enabled_embedded_appliance),
                 num_sec=900, delay=20, handle_exception=True,
                 message='Waiting for appliance to update')
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running,
-                    num_sec=180)
-    assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running,
-                    num_sec=60)
-    assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running,
-                    num_sec=60)
+        enabled_embedded_appliance.wait_for_embedded_ansible()
+        if enabled_embedded_appliance.version < '5.11':
+            assert wait_for(func=lambda: enabled_embedded_appliance.rabbitmq_server.running,
+                            num_sec=60)
+            assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running,
+                            num_sec=60)
     enabled_embedded_appliance.wait_for_web_ui()
 
     with enabled_embedded_appliance:
@@ -287,7 +288,7 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance,
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_update_replicated_webui(get_replicated_appliances_with_providers, appliance, request,
+def test_update_replicated_webui(multiple_preupdate_appliances, appliance, request,
                                  old_version, soft_assert):
     """ Tests updating an appliance with providers, also confirms that the
             provisioning continues to function correctly after the update has completed
@@ -298,29 +299,29 @@ def test_update_replicated_webui(get_replicated_appliances_with_providers, appli
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    replicated_appliances_with_providers = get_replicated_appliances_with_providers
-    providers_before_upgrade = set(replicated_appliances_with_providers[0].managed_provider_names)
-    update_appliance(replicated_appliances_with_providers[0])
-    update_appliance(replicated_appliances_with_providers[1])
+    preupdate_appls = replicated_appliances_with_providers(multiple_preupdate_appliances)
+    providers_before_upgrade = set(preupdate_appls[0].managed_provider_names)
+    update_appliance(preupdate_appls[0])
+    update_appliance(preupdate_appls[1])
     wait_for(do_appliance_versions_match,
-             func_args=(appliance, replicated_appliances_with_providers[0]),
+             func_args=(appliance, preupdate_appls[0]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
     wait_for(do_appliance_versions_match,
-             func_args=(appliance, replicated_appliances_with_providers[1]),
+             func_args=(appliance, preupdate_appls[1]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
-    replicated_appliances_with_providers[0].evmserverd.wait_for_running()
-    replicated_appliances_with_providers[1].evmserverd.wait_for_running()
-    replicated_appliances_with_providers[0].wait_for_web_ui()
-    replicated_appliances_with_providers[1].wait_for_web_ui()
+    preupdate_appls[0].evmserverd.wait_for_running()
+    preupdate_appls[1].evmserverd.wait_for_running()
+    preupdate_appls[0].wait_for_web_ui()
+    preupdate_appls[1].wait_for_web_ui()
 
-    # Assert providers exist after upgrade and replicated to second appliances
+    # Assert providers exist after upgrade and replicated to second preupdate_appls
     assert providers_before_upgrade == set(
-        replicated_appliances_with_providers[1].managed_provider_names), 'Providers are missing'
+        preupdate_appls[1].managed_provider_names), 'Providers are missing'
     # Verify that existing provider can detect new VMs on both apps
-    virtual_crud_appl1 = provider_app_crud(VMwareProvider, replicated_appliances_with_providers[0])
-    virtual_crud_appl2 = provider_app_crud(VMwareProvider, replicated_appliances_with_providers[1])
+    virtual_crud_appl1 = provider_app_crud(VMwareProvider, preupdate_appls[0])
+    virtual_crud_appl2 = provider_app_crud(VMwareProvider, preupdate_appls[1])
     vm1 = provision_vm(request, virtual_crud_appl1)
     vm2 = provision_vm(request, virtual_crud_appl2)
     soft_assert(vm1.provider.mgmt.does_vm_exist(vm1.name), "vm not provisioned")
@@ -349,15 +350,17 @@ def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, req
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
 
-    assert ha_appliances_with_providers[2].evm_failover_monitor.running
+    with LogValidator(evm_log,
+                      matched_patterns=['Starting database failover monitor'],
+                      hostname=ha_appliances_with_providers[2].hostname).waiting(wait=60):
+        ha_appliances_with_providers[2].evm_failover_monitor.restart()
+        assert ha_appliances_with_providers[2].evm_failover_monitor.running
 
     with LogValidator(evm_log,
                       matched_patterns=['Starting to execute failover'],
                       hostname=ha_appliances_with_providers[2].hostname).waiting(wait=450):
         # Cause failover to occur
-        result = ha_appliances_with_providers[0].ssh_client.run_command(
-            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+        ha_appliances_with_providers[0].db_service.stop()
 
     ha_appliances_with_providers[2].evmserverd.wait_for_running()
     ha_appliances_with_providers[2].wait_for_web_ui()
