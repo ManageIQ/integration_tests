@@ -11,7 +11,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
@@ -209,7 +208,7 @@ def test_cancel_migration_attachments(
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[BZ(1746592)], automates=[1755632])
+@pytest.mark.meta(automates=[1755632])
 def test_retry_migration_plan(cancel_migration_plan):
     """
     Test to cancel migration and then retry migration
