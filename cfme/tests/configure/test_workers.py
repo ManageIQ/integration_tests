@@ -1,27 +1,43 @@
 from collections import namedtuple
-from copy import deepcopy
 
 import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.rhel_testing]
 
-Worker = namedtuple('Worker', 'dropdown id advanced')
+# paths in advanced settings yaml where to put their memory_threshold
+# starting in worker_base and '*' means worker itself
+BASE_PATH = ['*']
+QUEUE_WORKER_PATH = ['queue_worker_base', '*']
+QUEUE_WORKER_DEFAULTS_PATH = QUEUE_WORKER_PATH + ['defaults']
+
+Worker = namedtuple('Worker', 'dropdown id advanced path')
 
 WORKERS = [
-    Worker('generic_worker_threshold', 'generic', 'generic_worker'),
-    Worker('cu_data_collector_worker_threshold', 'cu_data_coll', 'ems_metrics_collector_worker'),
-    Worker('event_monitor_worker_threshold', 'event_monitor', 'event_catcher'),
-    Worker('connection_broker_worker_threshold', 'conn_broker', 'vim_broker_worker'),
-    Worker('reporting_worker_threshold', 'reporting', 'reporting_worker'),
-    Worker('web_service_worker_threshold', 'web_service', 'web_service_worker'),
-    Worker('priority_worker_threshold', 'priority', 'priority_worker'),
-    Worker('cu_data_processor_worker_threshold', 'cu_data_proc', 'ems_metrics_processor_worker'),
-    Worker('refresh_worker_threshold', 'refresh', 'ems_refresh_worker'),
-    Worker('vm_analysis_collectors_worker_threshold', 'vm_analysis', 'smart_proxy_worker')
+    Worker('generic_worker_threshold', 'generic',
+           'generic_worker', QUEUE_WORKER_PATH),
+    Worker('cu_data_collector_worker_threshold', 'cu_data_coll',
+           'ems_metrics_collector_worker', QUEUE_WORKER_DEFAULTS_PATH),
+    Worker('event_monitor_worker_threshold', 'event_monitor',
+           'event_catcher', BASE_PATH),
+    Worker('connection_broker_worker_threshold', 'conn_broker',
+           'vim_broker_worker', BASE_PATH),
+    Worker('reporting_worker_threshold', 'reporting',
+           'reporting_worker', QUEUE_WORKER_PATH),
+    Worker('web_service_worker_threshold', 'web_service',
+           'web_service_worker', BASE_PATH),
+    Worker('priority_worker_threshold', 'priority',
+           'priority_worker', QUEUE_WORKER_PATH),
+    Worker('cu_data_processor_worker_threshold', 'cu_data_proc',
+           'ems_metrics_processor_worker', QUEUE_WORKER_PATH),
+    Worker('refresh_worker_threshold', 'refresh',
+           'ems_refresh_worker', QUEUE_WORKER_DEFAULTS_PATH),
+    Worker('vm_analysis_collectors_worker_threshold',
+           'vm_analysis', 'smart_proxy_worker', QUEUE_WORKER_PATH)
 ]
 
 
@@ -47,67 +63,65 @@ def test_restart_workers(appliance):
              message="Wait for all original workers are back online")
 
 
+v510 = {
+    "1.1.gigabytes": 1178599424,
+    1178599424: "1.1.gigabytes",
+    "1.2.gigabytes": 1283457024,
+    1283457024: "1.2.gigabytes"
+}
+
+
 @pytest.fixture(scope="module")
-def _workers_default_settings(appliance):
-    a = deepcopy(appliance.server.advanced_settings['workers'])
-    return a
+def _view(appliance):
+    return navigate_to(appliance.server, 'Workers')
 
 
-def set_memory_threshold_in_ui(appliance, worker, new_threshold, new_threshold_if_taken):
-    view = navigate_to(appliance.server, 'Workers')
-    view.browser.refresh()
-    mem_threshold = getattr(view.workers, worker.dropdown)
-    before = mem_threshold.selected_option
-    if before[:3] == new_threshold[:3]:
-        new_threshold = new_threshold_if_taken
+def set_memory_threshold_in_ui(appliance, worker, new_threshold, _view):
+    _view.browser.refresh()
+    mem_threshold = getattr(_view.workers, worker.dropdown)
+    if appliance.version < '5.11' and new_threshold in v510:
+        new_threshold = v510[new_threshold]
     mem_threshold.select_by_visible_text(new_threshold.replace('.gigabytes', ' GB'))
-    view.workers.save.click()
-    view.wait_displayed()
-    return before, new_threshold
+    _view.workers.save.click()
+    return new_threshold
 
 
-def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold,
-                                              new_threshold_if_taken):
-    worker_base = appliance.server.advanced_settings['workers']['worker_base']
-    workerro = worker_base.get(worker.advanced, None)
-    queue_worker = not workerro
-    if not workerro:
-        workerro = worker_base['queue_worker_base'][worker.advanced]
-        worker_base = worker_base['queue_worker_base']
-    before = workerro.get('memory_threshold', worker_base['defaults']['memory_threshold'])
-    if before[:3] == new_threshold[:3]:
-        new_threshold = new_threshold_if_taken
-    change_defaults = worker.advanced in ['ems_refresh_worker', 'ems_metrics_collector_worker']
-    if not change_defaults:
-        worker_base[worker.advanced]['memory_threshold'] = new_threshold
-    else:
-        worker_base[worker.advanced]['defaults']['memory_threshold'] = new_threshold
-    if queue_worker:
-        worker_base = {'queue_worker_base': worker_base}
-    patch = {
-        'workers': {
-            'worker_base': worker_base
-        }
-    }
-    # set worker threshold
+def get_memory_threshold_in_advanced_settings(appliance, worker):
+    worker_base = appliance.server.advanced_settings
+    loc = worker_base
+    steps = (['workers', 'worker_base'] +
+             [step if step != '*' else worker.advanced for step in worker.path])
+    for step in steps:
+        worker_base = loc
+        loc = loc.get(step)
+    return loc.get('memory_threshold', worker_base['defaults']['memory_threshold'])
+
+
+def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold, unused):
+    # this function is used as parameter for a test, and other function needs view param
+    steps = (['workers', 'worker_base'] +
+             [step if step != '*' else worker.advanced for step in worker.path])
+    patch = {'memory_threshold': new_threshold}
+    for step in steps[::-1]:
+        patch = {step: patch}
     appliance.server.update_advanced_settings(patch)
-    return before, new_threshold
-
-
-CHECK_UI = "ui"
-CHECK_ADVANCED_SETTINGS = "advanced"
+    if appliance.version < '5.11' and new_threshold in v510:
+        new_threshold = v510[new_threshold]
+    return new_threshold
 
 
 @test_requirements.settings
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1787350),
+                            BZ(1799443, unblock=lambda worker, set_memory_threshold:
+                            worker.path != QUEUE_WORKER_DEFAULTS_PATH or
+                            set_memory_threshold != set_memory_threshold_in_ui)],
+                  automates=[1658373, 1715633])
 @pytest.mark.parametrize("set_memory_threshold",
                          [set_memory_threshold_in_ui, set_memory_threshold_in_advanced_settings],
                          ids=["in_UI", "in_advanced_setting"])
-@pytest.mark.parametrize("threshold_change", ["1.1.gigabytes"])
 @pytest.mark.parametrize("worker", WORKERS, ids=[x.id for x in WORKERS])
-@pytest.mark.meta(blocker=[1787350], coverage=[1658373, 1715633])
-def test_set_memory_threshold(appliance, worker, set_memory_threshold, threshold_change,
-                              _workers_default_settings):
+def test_set_memory_threshold(appliance, worker, request, set_memory_threshold, _view):
     """
     Bugzilla:
         1656873
@@ -117,47 +131,36 @@ def test_set_memory_threshold(appliance, worker, set_memory_threshold, threshold
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/6h
-        testSteps:
-            1. Navigate to Configuration
-            2. Select the workers tab
-            3. Set memory threshold of any dropdown to a value above 1 GB
-            4. Hit save
-        expectedResults:
-            1.
-            2.
-            3.
-            4. the change should be reflected in the dropdown
     """
-    other = {
-        "1.1.gigabytes": "1.2.gigabytes",
-        "1.2.gigabytes": "1.1.gigabytes"
-    }
-    before, change = set_memory_threshold(appliance, worker, threshold_change,
-                                          other[threshold_change])
-    # check UI
-    view = navigate_to(appliance.server, 'Workers')
-    view.browser.refresh()
-    mem_threshold = getattr(view.workers, worker.dropdown)
-    after = mem_threshold.selected_option
-    assert after.startswith(change.replace(".gigabytes", " GB")), "failed UI check"
+    before = get_memory_threshold_in_advanced_settings(appliance, worker)
+    threshold_change = "1.1.gigabytes"
+    other_change = "1.2.gigabytes"
+    if set_memory_threshold == set_memory_threshold_in_advanced_settings:
+        threshold_change, other_change = other_change, threshold_change
+    if threshold_change in [before, v510.get(before)]:
+        threshold_change = other_change
+    if appliance.version < "5.11":
+        threshold_change = v510[threshold_change]
+    change = set_memory_threshold(appliance, worker, threshold_change, _view)
+    request.addfinalizer(
+        lambda: set_memory_threshold_in_advanced_settings(appliance, worker, before, None)
+    )
+
+    def _ui_check():
+        _view.browser.refresh()
+        mem_threshold = getattr(_view.workers, worker.dropdown)
+        after = mem_threshold.selected_option
+        return after.startswith(change.replace(".gigabytes", " GB"))
+    wait_for(_ui_check, delay=0, timeout=45)
+
     # check advanced settings
-    worker_type = worker.advanced
     change_val = float(change.replace('.gigabytes', ''))
-    try:
-        mem_threshold_real = (appliance.server.advanced_settings['workers']['worker_base']
-        ['queue_worker_base'][f'{worker_type}']['memory_threshold'])
-    except KeyError:
-        mem_threshold_real = (appliance.server.advanced_settings['workers']['worker_base']
-        [f'{worker_type}']['memory_threshold'])
-    GB = 2 ** 30
+    mem_threshold_real = get_memory_threshold_in_advanced_settings(appliance, worker)
     MESSAGE = "memory threshold have changed incorrectly in advanced settings"
     if appliance.version >= "5.11":
         assert mem_threshold_real == f"{change_val}.gigabytes", MESSAGE
     else:
+        GB = 2 ** 30
         expected_value = change_val * GB
         # this tests if memory threshold has changed and is approximately correct
         assert abs(mem_threshold_real - expected_value) < expected_value * 0.01, MESSAGE
-    # reset settings back to default
-    appliance.server.update_advanced_settings(
-        {'workers': _workers_default_settings}
-    )
