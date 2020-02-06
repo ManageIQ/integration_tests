@@ -339,33 +339,6 @@ def test_subscription_region_unavailable():
 
 
 @pytest.mark.manual
-@test_requirements.settings
-@pytest.mark.meta(coverage=[1715633])
-def test_memory_thresholds_in_advanced_config():
-    """
-    Test whether change made to thresholds in Advanced Config shows on the
-    workers page.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
-        caseimportance: high
-        initialEstimate: 1/4h
-        testSteps:
-            1. Settings > Advanced
-            2. Change web_services worker to 1.5.gigabytes
-            3. Change the web_services worker to 2.gigabytes
-        expectedResults:
-            1.
-            2.  UI shows 1.5GB for the web_services in the Workers tab.
-            3.  UI shows 2GB for the web_services in the Workers tab.
-    Bugzilla:
-        1715633
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.meta(coverage=[1625788])
 def test_default_miq_group_is_tenant_group():
     """
