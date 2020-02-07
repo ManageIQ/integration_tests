@@ -72,39 +72,6 @@ def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dial
     pass
 
 
-@pytest.mark.tier(3)
-@pytest.mark.meta(coverage=[1455844])
-def test_quota_enforcement_for_cloud_volumes():
-    """
-    This test case is to test quota enforcement for cloud volumes
-
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/4h
-        caseimportance: medium
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.8
-        casecomponent: Provisioning
-        tags: quota
-        testSteps:
-            1. Add openstack provider
-            2. Set quota for storage
-            3. While provisioning instance; add cloud volume with values
-            4. Submit the request and see the last message in request info row
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Last message should show requested storage value is equal to
-               instance type's default storage + volume storage value added while provisioning.
-
-    Bugzilla:
-        1455349
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 @pytest.mark.manual('manualonly')
 @pytest.mark.meta(coverage=[1531914, 1534589])
