@@ -171,35 +171,29 @@ def test_cancel_migration_attachments(
         target_provider=provider,
         vm_list=[vm_obj])
 
-    migration_plan.wait_for_state("Started")
+    migration_plan.wait_for_state("In_Progress")
     request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
     vm_detail = request_details_list.read()[0]
+    request_details_list.cancel_migration(vm_detail, confirmed=True)  # Cancel migration
 
-    def _get_plan_status_and_cancel():
-        migration_plan_in_progress_tracker = []
-        clock_reading1 = request_details_list.get_clock(vm_detail)
-        time.sleep(1)  # wait 1 sec to see if clock is ticking
-        if request_details_list.progress_percent(vm_detail) > 20:
-            request_details_list.cancel_migration(vm_detail, confirmed=True)
-        clock_reading2 = request_details_list.get_clock(vm_detail)
-        migration_plan_in_progress_tracker.append(
-            request_details_list.is_in_progress(vm_detail) and (clock_reading1 < clock_reading2))
-        return not any(migration_plan_in_progress_tracker)
+    def get_plan_status_and_cancel():
+        return not request_details_list.is_in_progress(vm_detail)
 
     wait_for(
-        func=_get_plan_status_and_cancel,
+        func=get_plan_status_and_cancel,
         delay=10,
-        num_sec=3600,
+        num_sec=600,
         message="migration plan is in progress, be patient please")
 
     soft_assert(request_details_list.is_cancelled(vm_detail))
     soft_assert(request_details_list.progress_percent(vm_detail) < 100.0 or
                 "Virtual machine migrated" not in request_details_list.get_message_text(vm_detail))
 
+    vm_on_dest = provider.mgmt.find_vms(name=vm_obj.name)
     # Test1: Check if instance is on openstack/rhevm provider
-    soft_assert(not provider.mgmt.find_vms(name=vm_obj.name))
+    soft_assert(not vm_on_dest)
 
-    if provider.one_of(OpenStackProvider):
+    if provider.one_of(OpenStackProvider) and vm_on_dest:
         # Test2: Check if instance has any volumes attached
         server = provider.mgmt.get_vm(name=vm_obj.name)
         soft_assert(not server.attached_volumes)

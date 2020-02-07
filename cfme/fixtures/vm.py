@@ -100,20 +100,16 @@ def _get_vm_name(request):
 
 @pytest.fixture(scope="module")
 def create_vm_modscope(setup_provider_modscope, request, provider):
-    if request.param:
-        template_type = request.param
-    else:
-        pytest.error('Any appropriate Template was not passed to the fixture.')
+    # If no template parameter is passed, then use 'small_template'.
+    template_type = getattr(request, 'param', 'small_template')
     vm_name = _get_vm_name(request)
     return _create_vm(request, template_type, provider, vm_name)
 
 
 @pytest.fixture(scope="function")
 def create_vm(setup_provider, request, provider):
-    if request.param:
-        template_type = request.param
-    else:
-        pytest.error('Any appropriate Template was not passed to the fixture.')
+    # If no template parameter is passed, then use 'small_template'.
+    template_type = getattr(request, 'param', 'small_template')
     vm_name = _get_vm_name(request)
     return _create_vm(request, template_type, provider, vm_name)
 

@@ -87,25 +87,28 @@ def temp_appliance_preconfig(temp_appliance_preconfig_modscope):
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_preconfig_modscope(appliance, pytestconfig):
+def temp_appliance_preconfig_modscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="class")
-def temp_appliance_preconfig_clsscope(appliance, pytestconfig):
+def temp_appliance_preconfig_clsscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_preconfig_funcscope(appliance, pytestconfig):
+def temp_appliance_preconfig_funcscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_preconfig_funcscope_upgrade(appliance, pytestconfig):
+def temp_appliance_preconfig_funcscope_upgrade(request, appliance, pytestconfig):
     split_version = (str(appliance.version).split("."))
     with sprout_appliances(
             appliance,
@@ -116,16 +119,18 @@ def temp_appliance_preconfig_funcscope_upgrade(appliance, pytestconfig):
             )  # n-1 stream for upgrade
     ) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_preconfig_long(appliance, pytestconfig):
+def temp_appliance_preconfig_long(request, appliance, pytestconfig):
     """ temp appliance with 24h lease for auth tests """
     with sprout_appliances(
             appliance, config=pytestconfig, preconfigured=True, lease_time=1440,
             provider_type='rhevm'
     ) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 # Single appliance, unconfigured
@@ -135,25 +140,28 @@ def temp_appliance_unconfig(temp_appliance_unconfig_modscope):
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_unconfig_modscope(appliance, pytestconfig):
+def temp_appliance_unconfig_modscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="class")
-def temp_appliance_unconfig_clsscope(appliance, pytestconfig):
+def temp_appliance_unconfig_clsscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_unconfig_funcscope(appliance, pytestconfig):
+def temp_appliance_unconfig_funcscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
-def temp_appliance_unconfig_funcscope_rhevm(appliance, pytestconfig):
+def temp_appliance_unconfig_funcscope_rhevm(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -161,6 +169,7 @@ def temp_appliance_unconfig_funcscope_rhevm(appliance, pytestconfig):
             provider_type='rhevm'
     ) as appliances:
         yield appliances[0]
+        _collect_logs(request.config, appliances)
 
 
 # Pair of appliances, unconfigured
@@ -170,7 +179,7 @@ def temp_appliances_unconfig(temp_appliances_unconfig_modscope):
 
 
 @pytest.fixture(scope="module")
-def temp_appliances_unconfig_modscope(appliance, pytestconfig):
+def temp_appliances_unconfig_modscope(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -178,10 +187,11 @@ def temp_appliances_unconfig_modscope(appliance, pytestconfig):
             preconfigured=False
     ) as appliances:
         yield appliances
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_unconfig_funcscope_rhevm(appliance, pytestconfig):
+def temp_appliances_unconfig_funcscope_rhevm(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -190,6 +200,7 @@ def temp_appliances_unconfig_funcscope_rhevm(appliance, pytestconfig):
             provider_type='rhevm'
     ) as appliances:
         yield appliances
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="module")
@@ -202,10 +213,11 @@ def temp_appliances_unconfig_modscope_rhevm(request, appliance, pytestconfig):
             provider_type='rhevm'
     ) as appliances:
         yield appliances
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_preconfig_funcscope(appliance, pytestconfig):
+def temp_appliances_preconfig_funcscope(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -213,10 +225,11 @@ def temp_appliances_preconfig_funcscope(appliance, pytestconfig):
             preconfigured=True
     ) as appliances:
         yield appliances
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="class")
-def temp_appliances_unconfig_clsscope(appliance, pytestconfig):
+def temp_appliances_unconfig_clsscope(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -224,10 +237,11 @@ def temp_appliances_unconfig_clsscope(appliance, pytestconfig):
             preconfigured=False
     ) as appliances:
         yield appliances
+        _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_unconfig_funcscope(appliance, pytestconfig):
+def temp_appliances_unconfig_funcscope(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -289,3 +303,11 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     app.db.extend_partition()
     app.evmserverd.start()
     return app
+
+
+def _collect_logs(config, appliances):
+    """ Wraps calling the pytest_collect_logs hook
+    This method is there currently just for saving the typing as the call is
+    made on many places.
+    """
+    config.pluginmanager.hook.pytest_collect_logs(config=config, appliances=appliances)

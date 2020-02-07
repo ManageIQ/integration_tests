@@ -511,3 +511,30 @@ def test_embed_tower_repo_add_new_zone(appliance, ansible_repository, new_zone, 
     )
     request.addfinalizer(repository.delete_if_exists)
     assert repository.exists
+
+
+@pytest.mark.tier(3)
+@pytest.mark.rhel_testing
+def test_embedded_ansible_repository_refresh(ansible_repository):
+    """
+    Test if ansible playbooks list is updated in the UI when "Refresh this
+    Repository"
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: critical
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    view = navigate_to(ansible_repository, "Details")
+    view.toolbar.configuration.item_select("Refresh this Repository", handle_alert=True)
+
+    # Initially values for both created and updated repository are same,
+    # hence comparing updated value with created after refreshing repository.
+    wait_for(
+        lambda: ansible_repository.created_date < ansible_repository.updated_date,
+        fail_func=view.toolbar.refresh.click,
+        delay=2,
+        timeout="5m",
+    )

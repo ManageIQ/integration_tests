@@ -12,6 +12,7 @@ from lxml import etree
 import cfme.utils.auth as authutil
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.configure.configuration.region_settings import RedHatUpdates
+from cfme.fixtures.appliance import _collect_logs
 from cfme.fixtures.appliance import sprout_appliances
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
@@ -31,7 +32,7 @@ TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
 
 
 @pytest.fixture()
-def unconfigured_appliance(appliance, pytestconfig):
+def unconfigured_appliance(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=False,
@@ -40,10 +41,11 @@ def unconfigured_appliance(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps[0]
+        _collect_logs(request.config, apps)
 
 
 @pytest.fixture()
-def unconfigured_appliance_secondary(appliance, pytestconfig):
+def unconfigured_appliance_secondary(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=False,
@@ -52,10 +54,11 @@ def unconfigured_appliance_secondary(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps[0]
+        _collect_logs(request.config, apps)
 
 
 @pytest.fixture()
-def unconfigured_appliances(appliance, pytestconfig):
+def unconfigured_appliances(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=False,
@@ -64,10 +67,11 @@ def unconfigured_appliances(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps
+        _collect_logs(request.config, apps)
 
 
 @pytest.fixture()
-def configured_appliance(appliance, pytestconfig):
+def configured_appliance(request, appliance, pytestconfig):
     with sprout_appliances(
             appliance,
             preconfigured=True,
@@ -76,6 +80,7 @@ def configured_appliance(appliance, pytestconfig):
             provider_type='rhevm',
     ) as apps:
         yield apps[0]
+        _collect_logs(request.config, apps)
 
 
 @pytest.fixture(scope="function")
@@ -184,7 +189,7 @@ def get_puddle_cfme_version(repo_file_path):
 
 
 @contextmanager
-def get_apps(appliance, old_version, count, preconfigured, pytest_config):
+def get_apps(requests, appliance, old_version, count, preconfigured, pytest_config):
     """Requests appliance from sprout based on old_versions, edits partitions and adds
         repo file for update"""
     series = appliance.version.series()
@@ -222,6 +227,7 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
         logger.exception(msg)
         pytest.skip(msg)
     finally:
+        _collect_logs(pytest_config, apps)
         for app in apps:
             app.ssh_client.close()
         if pool_id:
@@ -231,7 +237,7 @@ def get_apps(appliance, old_version, count, preconfigured, pytest_config):
 @pytest.fixture
 def appliance_preupdate(appliance, old_version, request):
     """Requests single appliance from sprout."""
-    with get_apps(appliance, old_version, count=1, preconfigured=True,
+    with get_apps(request, appliance, old_version, count=1, preconfigured=True,
                   pytest_config=request.config) as apps:
         yield apps[0]
 
@@ -239,7 +245,7 @@ def appliance_preupdate(appliance, old_version, request):
 @pytest.fixture
 def multiple_preupdate_appliances(appliance, old_version, request):
     """Requests multiple appliances from sprout."""
-    with get_apps(appliance, old_version, count=2, preconfigured=False,
+    with get_apps(request, appliance, old_version, count=2, preconfigured=False,
                   pytest_config=request.config) as apps:
         yield apps
 
@@ -247,7 +253,7 @@ def multiple_preupdate_appliances(appliance, old_version, request):
 @pytest.fixture
 def ha_multiple_preupdate_appliances(appliance, old_version, request):
     """Requests multiple appliances from sprout."""
-    with get_apps(appliance, old_version, count=3, preconfigured=False,
+    with get_apps(request, appliance, old_version, count=3, preconfigured=False,
                   pytest_config=request.config) as apps:
         yield apps
 
