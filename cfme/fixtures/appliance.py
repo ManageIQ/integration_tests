@@ -133,6 +133,16 @@ def temp_appliance_preconfig_long(request, appliance, pytestconfig):
         _collect_logs(request.config, appliances)
 
 
+@pytest.fixture(scope="function")
+def temp_appliance_preconfig_funcscope_rhevm(appliance, pytestconfig):
+    with sprout_appliances(
+            appliance,
+            config=pytestconfig, preconfigured=True,
+            provider_type='rhevm'
+    ) as appliances:
+        yield appliances[0]
+
+
 # Single appliance, unconfigured
 @pytest.fixture(scope="module")
 def temp_appliance_unconfig(temp_appliance_unconfig_modscope):

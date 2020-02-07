@@ -517,18 +517,18 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             # Some conditionally ran items require the evm service be
             # restarted:
             restart_evm = False
+            self.wait_for_web_ui(log_callback=log_callback)
             if self.version < '5.11':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
 
             if fix_ntp_clock and not self.is_pod:
-                self.wait_for_web_ui(log_callback=log_callback)
                 self.set_ntp_sources(log_callback=log_callback)
                 restart_evm = True
 
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
-            self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+                self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -757,7 +757,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         try:
             return self.rest_api.product_info['name']
         except (AttributeError, KeyError, IOError, ConnectionError):
-            self.log.exception(
+            self.log.info(
                 'appliance.product_name could not be retrieved from REST, falling back')
             try:
                 # TODO: Review this section. Does not work unconfigured
