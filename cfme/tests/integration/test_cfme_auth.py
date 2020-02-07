@@ -21,8 +21,8 @@ from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda temp_appliance_preconfig_long:
-                            temp_appliance_preconfig_long.is_pod,
+    pytest.mark.uncollectif(lambda temp_appliance_preconfig_modscope_rhevm:
+                            temp_appliance_preconfig_modscope_rhevm.is_pod,
                             reason='Tests not valid for podified'),
     pytest.mark.meta(blockers=[
         GH('ManageIQ/integration_tests:6465',
@@ -105,28 +105,28 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope='function')
-def user_obj(temp_appliance_preconfig_long, auth_user, user_type):
+def user_obj(temp_appliance_preconfig_modscope_rhevm, auth_user, user_type):
     """return a simple user object, see if it exists and delete it on teardown"""
     # Replace spaces with dashes in UPN type usernames for login compatibility
     username = auth_user.username.replace(' ', '-') if user_type == 'upn' else auth_user.username
-    user = temp_appliance_preconfig_long.collections.users.simple_user(
+    user = temp_appliance_preconfig_modscope_rhevm.collections.users.simple_user(
         username,
         credentials[auth_user.password].password,
         fullname=auth_user.fullname or auth_user.username)  # fullname could be empty
     yield user
 
-    temp_appliance_preconfig_long.browser.widgetastic.refresh()
-    temp_appliance_preconfig_long.server.login_admin()
+    temp_appliance_preconfig_modscope_rhevm.browser.widgetastic.refresh()
+    temp_appliance_preconfig_modscope_rhevm.server.login_admin()
     if user.exists:
         user.delete()
 
 
 @pytest.fixture
-def log_monitor(user_obj, temp_appliance_preconfig_long):
+def log_monitor(user_obj, temp_appliance_preconfig_modscope_rhevm):
     """Search evm.log for any plaintext password"""
     result = LogValidator(
         "/var/www/miq/vmdb/log/evm.log", failure_patterns=[f"{user_obj.credential.secret}"],
-        hostname=temp_appliance_preconfig_long.hostname
+        hostname=temp_appliance_preconfig_modscope_rhevm.hostname
     )
     result.start_monitoring()
     yield result
@@ -141,7 +141,7 @@ def log_monitor(user_obj, temp_appliance_preconfig_long):
                                 'or the auth user does not have an evm built-in group')
 # this test only runs against users that have an evm built-in group
 def test_login_evm_group(
-        temp_appliance_preconfig_long, auth_user, user_obj, soft_assert, log_monitor
+        temp_appliance_preconfig_modscope_rhevm, auth_user, user_obj, soft_assert, log_monitor
 ):
     """This test checks whether a user can login while assigned a default EVM group
         Prerequisities:
@@ -159,7 +159,7 @@ def test_login_evm_group(
     evm_group_names = [group for group in auth_user.groups if 'evmgroup' in group.lower()]
     with user_obj:
         logger.info('Logging in as user %s, member of groups %s', user_obj, evm_group_names)
-        view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
+        view = navigate_to(temp_appliance_preconfig_modscope_rhevm.server, 'LoggedIn')
         assert view.is_displayed, 'user {} failed login'.format(user_obj)
         soft_assert(user_obj.name == view.current_fullname,
                     'user {} is not in view fullname'.format(user_obj))
@@ -168,24 +168,24 @@ def test_login_evm_group(
                         'user {} evm group {} not in view group_names'.format(user_obj, name))
 
     # split loop to reduce number of logins
-    temp_appliance_preconfig_long.server.login_admin()
+    temp_appliance_preconfig_modscope_rhevm.server.login_admin()
     assert user_obj.exists, 'user record should have been created for "{}"'.format(user_obj)
 
     # assert no pwd in logs
     assert log_monitor.validate()
 
 
-def retrieve_group(temp_appliance_preconfig_long, auth_mode, username, groupname, auth_provider,
-        tenant=None):
+def retrieve_group(temp_appliance_preconfig_modscope_rhevm,
+                   auth_mode, username, groupname, auth_provider, tenant=None):
     """Retrieve group from ext/ldap auth provider through UI
 
     Args:
-        temp_appliance_preconfig_long: temp_appliance_preconfig_long object
+        temp_appliance_preconfig_modscope_rhevm: temp_appliance_preconfig_modscope_rhevm object
         auth_mode: key from cfme.configure.configuration.server_settings.AUTH_MODES, parametrization
         user_data: user_data AttrDict from yaml, with username, groupname, password fields
 
     """
-    group = temp_appliance_preconfig_long.collections.groups.instantiate(
+    group = temp_appliance_preconfig_modscope_rhevm.collections.groups.instantiate(
         description=groupname,
         role='EvmRole-user',
         tenant=tenant,
@@ -212,7 +212,7 @@ def retrieve_group(temp_appliance_preconfig_long, auth_mode, username, groupname
                          reason='Amazon auth mode with default groups tested elsewhere,'
                                 'or the auth user does not have an evm built-in group')
 def test_login_retrieve_group(
-        temp_appliance_preconfig_long, request, log_monitor,
+        temp_appliance_preconfig_modscope_rhevm, request, log_monitor,
         auth_mode, auth_provider, soft_assert, auth_user, user_obj
 ):
     """This test checks whether different cfme auth modes are working correctly.
@@ -232,14 +232,16 @@ def test_login_retrieve_group(
     # get a list of (user_obj, groupname) tuples, creating the user object inline
     # filtering on those that do NOT evmgroup in groupname
     non_evm_group = [g for g in auth_user.groups or [] if 'evmgroup' not in g.lower()][0]
-    # retrieving in test call and not fixture, getting the group from auth provider is part of test
+    # retrieving in test call and not fixture, getting the group from auth
+    # provider is part of test
     group = retrieve_group(
-        temp_appliance_preconfig_long, auth_mode, auth_user.username, non_evm_group, auth_provider,
+        temp_appliance_preconfig_modscope_rhevm, auth_mode, auth_user.username,
+        non_evm_group, auth_provider,
         tenant="My Company"  # tenant is required for group
     )
 
     with user_obj:
-        view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
+        view = navigate_to(temp_appliance_preconfig_modscope_rhevm.server, 'LoggedIn')
         soft_assert(view.current_fullname == user_obj.name,
                     'user full name "{}" did not match UI display name "{}"'
                     .format(user_obj.name, view.current_fullname))
@@ -247,7 +249,8 @@ def test_login_retrieve_group(
                     u'user group "{}" not displayed in UI groups list "{}"'
                     .format(group.description, view.group_names))
 
-    temp_appliance_preconfig_long.server.login_admin()  # context should get us back to admin
+    # context should get us back to admin
+    temp_appliance_preconfig_modscope_rhevm.server.login_admin()
     assert user_obj.exists, 'User record for "{}" should exist after login'.format(user_obj)
 
     # assert no pwd in logs
@@ -275,10 +278,10 @@ def format_user_principal(username, user_type, auth_provider):
 
 
 @pytest.fixture(scope='function')
-def local_group(temp_appliance_preconfig_long):
+def local_group(temp_appliance_preconfig_modscope_rhevm):
     """Helper method to check for existance of a group and delete if need be"""
     group_name = gen_alphanumeric(length=15, start="test-group-")
-    group = temp_appliance_preconfig_long.collections.groups.create(
+    group = temp_appliance_preconfig_modscope_rhevm.collections.groups.create(
         description=group_name, role='EvmRole-desktop'
     )
     assert group.exists
@@ -289,9 +292,10 @@ def local_group(temp_appliance_preconfig_long):
 
 
 @pytest.fixture(scope='function')
-def local_user(temp_appliance_preconfig_long, auth_user, user_type, auth_provider, local_group):
+def local_user(temp_appliance_preconfig_modscope_rhevm,
+               auth_user, user_type, auth_provider, local_group):
     # list of created users, instantiating the Credential and formatting the user name in loop
-    user = temp_appliance_preconfig_long.collections.users.create(
+    user = temp_appliance_preconfig_modscope_rhevm.collections.users.create(
         name=auth_user.fullname or auth_user.username,  # fullname could be empty
         credential=Credential(
             principal=format_user_principal(auth_user.username, user_type, auth_provider),
@@ -305,9 +309,9 @@ def local_user(temp_appliance_preconfig_long, auth_user, user_type, auth_provide
 
 
 @pytest.fixture
-def do_not_fetch_remote_groups(temp_appliance_preconfig_long):
+def do_not_fetch_remote_groups(temp_appliance_preconfig_modscope_rhevm):
     # modify auth settings to not get groups
-    temp_appliance_preconfig_long.server.authentication.auth_settings = {
+    temp_appliance_preconfig_modscope_rhevm.server.authentication.auth_settings = {
         'auth_settings': {'get_groups': False}
     }
     # this setting takes a bit to register, so wait 30 s
@@ -319,7 +323,8 @@ def do_not_fetch_remote_groups(temp_appliance_preconfig_long):
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda auth_mode: auth_mode == 'amazon',
                          reason='Amazon auth_data needed for local group testing')
-def test_login_local_group(temp_appliance_preconfig_long, local_user, local_group, soft_assert,
+def test_login_local_group(temp_appliance_preconfig_modscope_rhevm,
+                           local_user, local_group, soft_assert,
                            do_not_fetch_remote_groups):
     """
     Test remote authentication with a locally created group.
@@ -332,7 +337,7 @@ def test_login_local_group(temp_appliance_preconfig_long, local_user, local_grou
         casecomponent: Auth
     """
     with local_user:
-        view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
+        view = navigate_to(temp_appliance_preconfig_modscope_rhevm.server, 'LoggedIn')
         soft_assert(view.current_fullname == local_user.name,
                     'user full name "{}" did not match UI display name "{}"'
                     .format(local_user.name, view.current_fullname))
@@ -350,7 +355,7 @@ def test_login_local_group(temp_appliance_preconfig_long, local_user, local_grou
                          'user does not have multiple groups')
 @pytest.mark.meta(blockers=[BZ(1759291)], automates=[1759291])
 def test_user_group_switching(
-        temp_appliance_preconfig_long, auth_user, auth_mode, auth_provider,
+        temp_appliance_preconfig_modscope_rhevm, auth_user, auth_mode, auth_provider,
         soft_assert, request, user_obj, log_monitor
 ):
     """Test switching groups on a single user, between retreived group and built-in group
@@ -369,7 +374,7 @@ def test_user_group_switching(
         if 'evmgroup' not in group.lower():
             # create group in CFME via retrieve_group which looks it up on auth_provider
             logger.info(u'Retrieving a user group that is non evm built-in: {}'.format(group))
-            retrieved_groups.append(retrieve_group(temp_appliance_preconfig_long,
+            retrieved_groups.append(retrieve_group(temp_appliance_preconfig_modscope_rhevm,
                                                    auth_mode,
                                                    auth_user.username,
                                                    group,
@@ -379,7 +384,7 @@ def test_user_group_switching(
                     .format(auth_user.groups))
 
     with user_obj:
-        view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
+        view = navigate_to(temp_appliance_preconfig_modscope_rhevm.server, 'LoggedIn')
         # Check there are multiple groups displayed
         assert len(view.group_names) > 1, 'Only a single group is displayed for the user'
         display_other_groups = [g for g in view.group_names if g != view.current_groupname]
@@ -406,7 +411,7 @@ def test_user_group_switching(
                         u'After switching to group {}, its not displayed as active'
                         .format(other_group))
 
-    temp_appliance_preconfig_long.server.login_admin()
+    temp_appliance_preconfig_modscope_rhevm.server.login_admin()
     assert user_obj.exists, 'User record for "{}" should exist after login'.format(auth_user)
 
     # assert no pwd in log
