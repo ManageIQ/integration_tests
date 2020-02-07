@@ -64,6 +64,7 @@ class RHEVMProvider(InfraProvider):
     catalog_item_type = RHVCatalogItem
     vm_utilization_view = RHEVMVMUtilizationView
     type_name = "rhevm"
+    credentials = attr.ib(default=None)
     mgmt_class = RHEVMSystem
     db_types = ["Redhat::InfraManager"]
     endpoints_form = RHEVMEndpointForm
@@ -115,6 +116,7 @@ class RHEVMProvider(InfraProvider):
         return appliance.collections.infra_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
+            credentials=prov_config.get('credentials'),
             endpoints=endpoints,
             zone=prov_config.get('server_zone', 'default'),
             key=prov_key,

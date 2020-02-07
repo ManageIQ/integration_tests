@@ -34,6 +34,7 @@ class VMwareProvider(InfraProvider):
     catalog_item_type = VMwareCatalogItem
     vm_utilization_view = VirtualCenterVMUtilizationView
     type_name = "virtualcenter"
+    credentials = attr.ib(default=None)
     mgmt_class = VMWareSystem
     db_types = ["Vmware::InfraManager"]
     endpoints_form = VirtualCenterEndpointForm
@@ -88,6 +89,7 @@ class VMwareProvider(InfraProvider):
         return appliance.collections.infra_providers.instantiate(
             prov_class=cls,
             name=prov_config['name'],
+            credentials=prov_config.get('credentials'),
             endpoints=endpoints,
             zone=prov_config['server_zone'],
             key=prov_key,

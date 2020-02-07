@@ -39,6 +39,7 @@ class OpenStackProvider(CloudProvider):
     keystone_v3_domain_id = attr.ib(default=None)
     tenant_mapping = attr.ib(default=None)
     infra_provider = attr.ib(default=None)
+    credentials = attr.ib(default=None)
 
     # todo: move it to collections later
     def create(self, *args, **kwargs):
@@ -114,6 +115,7 @@ class OpenStackProvider(CloudProvider):
             keystone_v3_domain_id=prov_config.get('domain_id'),
             sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
             tenant_mapping=prov_config.get('tenant_mapping', False),
+            credentials=prov_config.get('credentials'),
             infra_provider=infra_provider)
 
     # Following methods will only work if the remote console window is open
