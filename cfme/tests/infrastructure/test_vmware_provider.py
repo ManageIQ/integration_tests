@@ -15,6 +15,7 @@ from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.wait import TimedOutError
 
 
 filter_fields = [['provisioning', 'template'],
@@ -558,3 +559,65 @@ def test_vm_notes_ui(appliance, provider):
     # to check it against what's displayed in the UI.
     assert view.basic_information.read()['Notes'] != '', ("VM notes field is empty in CFME or"
         "VM does not have any notes")
+
+
+@pytest.mark.meta(automates=[1644770])
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_delete_vm_archive(appliance, provider, create_vm):
+    """
+    Bugzilla:
+        1644770
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testtype: functional
+        testSteps:
+            1.Add VMware provider to CFME
+            2.Create a new Vm
+            3.Remove it from vmware using delete operation and check status of that vm in CFME -
+            should be archived
+        expectedResults:
+            1.VMware provider added successfully.
+            2.New VM visible in CFME
+            3.VM is Archived in CFME
+    """
+    create_vm.mgmt.delete()
+    try:
+        create_vm.wait_for_vm_state_change(from_any_provider=True, desired_state='archived')
+    except TimedOutError:
+        pytest.fail("VM did not reach desired state - Archived.")
+    quadicon = create_vm.find_quadicon(from_any_provider=True)
+    assert quadicon.data['power_state' if appliance.version > '5.11' else 'state'] == 'archived'
+
+
+@pytest.mark.meta(automates=[1644770])
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_vm_remove_from_inventory_orphan(appliance, provider, create_vm):
+    """
+    Bugzilla:
+        1644770
+    Polarion:
+        assignee: kkulkarn
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testtype: functional
+        testSteps:
+            1.Add VMware provider to CFME
+            2.Create a new Vm
+            3.Remove it from vmware using unregister(remove from inventory) operation and
+            check status of that vm in CFME- should be orphaned
+        expectedResults:
+            1.VMware provider added successfully.
+            2.New VM visible in CFME
+            3.VM is Orphaned in CFME
+    """
+    create_vm.mgmt.unregister()
+    try:
+        create_vm.wait_for_vm_state_change(from_any_provider=True, desired_state='orphaned')
+    except TimedOutError:
+        pytest.fail("VM did not reach desired state - Orphaned.")
+    quadicon = create_vm.find_quadicon(from_any_provider=True)
+    assert quadicon.data['power_state' if appliance.version > '5.11' else 'state'] == 'orphaned'
