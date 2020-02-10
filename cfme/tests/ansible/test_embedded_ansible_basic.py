@@ -458,6 +458,27 @@ def test_embedded_ansible_repository_playbook_link(ansible_repository):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1734446])
+def test_embedded_ansible_repository_playbook_sub_dir(ansible_repository):
+    """
+    The Embedded Ansible role should find playbooks in sub folders.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    # Navigation to playbook view from Ansible Repository
+    playbook_view = navigate_to(ansible_repository, "Playbooks")
+    # 'more_playbooks/hello_world.yml' Playbook name is hardcoded in order to find specific
+    # playbook in the Ansible testing repository.
+    # Asserting the playbook is available.
+    all_playbooks = playbook_view.entities.all_entity_names
+    assert "more_playbooks/hello_world.yml" in all_playbooks
+
+
+@pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1656308])
 def test_embed_tower_repo_add_new_zone(appliance, ansible_repository, new_zone, request):
     """
