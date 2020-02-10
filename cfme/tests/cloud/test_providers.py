@@ -1238,8 +1238,8 @@ def test_ec2_api_filter_limit():
 
 
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_create_sns_topic():
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
+def test_create_sns_topic(has_no_cloud_providers, provider, request):
     """
     Requires: No SNS topic(AWS_Config) for tested region
 
@@ -1254,9 +1254,21 @@ def test_ec2_create_sns_topic():
             2. Wait 3 minutes
         expectedResults:
             1.
-            2. Check SNS topic for this region in AWS
+            2. Check SNS topic exists for this region in AWS
     """
-    pass
+    # preparations for test
+    request.addfinalizer(provider.delete_if_exists)
+    topic = provider.mgmt.get_arn_if_topic_exists('AWSConfig_topic')
+    if topic:
+        provider.mgmt.delete_topic(topic)
+
+    # SNS topic should be automatically created during provider creation in CFME
+    provider.create()
+    new_topic = wait_for(lambda: provider.mgmt.get_arn_if_topic_exists('AWSConfig_topic'), delay=15,
+                         timeout=300)
+
+    # set topic targets in the environment so refreshes run correctly
+    provider.mgmt.set_sns_topic_target_for_all_cw_rules(new_topic)
 
 
 @test_requirements.ec2
