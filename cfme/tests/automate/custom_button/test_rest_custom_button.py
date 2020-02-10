@@ -15,6 +15,10 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.custom_button,
+    pytest.mark.uncollectif(
+        lambda appliance, obj_type: appliance.version >= "5.11" and obj_type == "LOAD_BALANCER",
+        reason="Load Balancer not supported from version 5.11"
+    ),
     pytest.mark.parametrize("obj_type", OBJ_TYPE, ids=[obj.capitalize() for obj in OBJ_TYPE],
                             scope="module"),
 ]
