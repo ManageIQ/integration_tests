@@ -11,6 +11,7 @@ pytestmark = [pytest.mark.manual]
 @test_requirements.rest
 @pytest.mark.customer_scenario
 @pytest.mark.tier(1)
+@pytest.mark.manual("manualonly")
 @pytest.mark.meta(coverage=[1700378])
 def test_notification_url_parallel_requests():
     """

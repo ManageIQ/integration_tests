@@ -30,29 +30,6 @@ def test_osp_flavors_can_be_selected_creating_migration_plan():
 
 
 @pytest.mark.tier(2)
-def test_osp_if_no_password_is_exposed_in_logs_during_migration():
-    """
-    title: OSP: Test if no password is exposed in logs during migration
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: V2V
-        initialEstimate: 1/8h
-        startsin: 5.10
-        subcomponent: OSP
-        testSteps:
-            1. Create infrastructure mapping for Vmware to OSP
-            2. Create migration plan
-            3. Start migration
-        expectedResults:
-            1. Mapping created and visible in UI
-            2.
-            3. logs should not show password during migration
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 def test_osp_retry_plan():
     """
     title: OSP: Test retry plan

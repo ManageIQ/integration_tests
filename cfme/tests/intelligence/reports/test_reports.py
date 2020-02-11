@@ -10,6 +10,7 @@ from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.ftp import FTPException
@@ -770,7 +771,38 @@ def test_reports_generate_custom_conditional_filter_report(
             1. Report must be generated successfully.
     """
     service, vm = edit_service_name
-    report = get_report("vm_service_report", "VM Service")
-    saved_report = report.queue(wait_for_finish=True)
+    saved_report = get_report("vm_service_report", "VM Service").queue(wait_for_finish=True)
     view = navigate_to(saved_report, "Details")
     assert view.table.row(name__contains=vm.name)["Service Name"].text == service.name
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(
+    automates=[1743579], blockers=[BZ(1743579, forced_streams=["5.11", "5.10"])]
+)
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.parametrize("create_vm", ["small_template"], indirect=True, ids=[""])
+def test_created_on_time_report_field(create_vm, get_report):
+    """
+    Bugzilla:
+        1743579
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/2h
+        setup:
+            1. Add a provider and provision a VM
+        testSteps:
+            1. Create a report based on 'VMs and Instances' with [Created on Time, Name] field.
+        expectedResults:
+            1. `Created on Time` field column must not be empty for the recently created VM.
+    """
+    report = get_report("vm_created_on_time_report.yaml", "VM Created on Time").queue(
+        wait_for_finish=True
+    )
+    view = navigate_to(report, "Details")
+    row = view.table.row(name=create_vm.name)
+    # TODO BZ(1743579): assert with VM's created_on_time once the BZ is fixed.
+    assert row.created_on_time.text != ""

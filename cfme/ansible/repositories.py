@@ -25,9 +25,17 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.wait import wait_for
+from widgetastic_manageiq import BaseEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import PaginationPane
 from widgetastic_manageiq import ParametrizedSummaryTable
 from widgetastic_manageiq import Table
+
+
+class RepositoryPlaybooksToolbar(View):
+    view_selector = View.nested(ItemsToolBarViewSelector)
+    policy = Dropdown('Policy')
+    download = Dropdown("Download")
 
 
 class RepositoryBaseView(BaseLoggedInPage):
@@ -77,6 +85,9 @@ class RepositoryDetailsView(RepositoryBaseView):
 
 
 class RepositoryPlaybooksView(RepositoryDetailsView):
+    toolbar = View.nested(RepositoryPlaybooksToolbar)
+    paginator = View.nested(PaginationPane)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
