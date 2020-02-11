@@ -75,6 +75,17 @@ def catalog_item_local(appliance, service_dialog, catalog):
     catalog_item.delete_if_exists()
 
 
+@pytest.fixture(scope="function")
+def custom_categories(appliance):
+    category = appliance.collections.categories.create(
+        name="tier_no_production",
+        description="testing dialog",
+        display_name="tier_no_production",
+    )
+    yield category
+    category.delete_if_exists()
+
+
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
     "widget_name", list(WIDGETS.keys()),
@@ -1074,4 +1085,54 @@ def test_dialog_default_value_integer(appliance, generic_catalog_item_with_impor
     assert (
         view.fields("dropdown").read() == default_drop
         and view.fields("radio").read() == default_radio
+    )
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1579405])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1579405.zip", "bz_1579405", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1579405.yml"], ids=["sample_dialog"],)
+def test_dialog_default_value_selection(appliance, custom_categories, import_datastore, import_data,
+                                        generic_catalog_item_with_imported_dialog, file_name):
+    """
+    Bugzilla:
+        1579405
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/4h
+        testtype: functional
+        startsin: 5.10
+    """
+
+    catalog_item, _, ele_label = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
+    # download yaml file
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.dialogs)
+    file_path = fs.download(file_name)
+    with open(file_path, "r") as stream:
+        dialog_data = yaml.load(stream, Loader=yaml.BaseLoader)
+
+        environment = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][0][
+            "default_value"
+        ]
+        vm_size = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][1][
+            "default_value"
+        ]
+        network = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][2][
+            "default_value"
+        ]
+        additional_disks = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][3][
+            "default_value"
+        ]
+
+    view = navigate_to(service_catalogs, "Order")
+    assert (
+        view.fields("environment").read() == environment and
+        view.fields("instance").read() == vm_size and
+        view.fields("network").read() == network and
+        view.fields("number_disk").read() == additional_disks
     )

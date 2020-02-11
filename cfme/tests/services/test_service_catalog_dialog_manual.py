@@ -554,23 +554,6 @@ def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_di
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_default_selection_of_dropdown_list_is_should_display_properly():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/6h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1579405
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_service_dialog_saving_elements_when_switching_elements():
     """
