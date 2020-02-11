@@ -686,7 +686,7 @@ def test_compare_vm_from_datastore_relationships(appliance, setup_provider, prov
     assert compare_view.is_displayed
 
 
-@pytest.mark.manual
+@pytest.mark.manual("manualonly")
 @pytest.mark.tier(1)
 def test_ui_pinning_after_relog():
     """

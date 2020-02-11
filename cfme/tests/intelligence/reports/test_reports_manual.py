@@ -65,29 +65,6 @@ def test_reports_in_global_region(context, report):
     pass
 
 
-@test_requirements.report
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1743579])
-def test_created_on_time_report_field():
-    """
-    Bugzilla:
-        1743579
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup:
-            1. Add a provider and provision a VM
-        testSteps:
-            1. Create a report based on 'VMs and Instances' with [Created on Time, Name] field.
-        expectedResults:
-            1. `Created on Time` field column must not be empty for the recently created VM.
-    """
-    pass
-
-
 @pytest.mark.ignore_stream("5.10")
 @test_requirements.report
 @pytest.mark.tier(2)
