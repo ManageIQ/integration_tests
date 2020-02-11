@@ -513,17 +513,18 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
 # may be easier just to put nique one in class def
 # !!!If we want o remove navigation from this we can just pass in the starting view?
 
-def compare_hosts(provider=None, num_hosts=2, host_list=None, ):
+
+def compare_hosts(appliance, provider=None, num_hosts=2, host_list=None):
     if num_hosts < 2:
-        pass # display error. OR just make = 2?
+        pass  # display error. OR just make = 2?
     if host_list:
-        pass # add functionality
+        pass  # add functionality
     else:
         ent_slice = slice(0, num_hosts, None)
     if provider:
         hosts_view = navigate_to(provider.collections.hosts, "All")
     else:
-        hosts_view = navigate_to(appliance.collections.hosts, "All")# use different nav so don't
+        hosts_view = navigate_to(appliance.collections.hosts, "All")  # use different nav so don't
         # need appliance
     for h in hosts_view.entities.get_all(slice=ent_slice):
         h.ensure_checked()
