@@ -504,15 +504,20 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
 
 # we need to handle appliance and provider nav, number of hosts, list of hosts??
 #
-#? view = navigate_to(self, 'All' if provider=None else 'AllForProvider') ?? is AllForProvider
+# ? view = navigate_to(self, 'All' if provider=None else 'AllForProvider') ?? is AllForProvider
 # the same as provider.collections and All same as appliance.collections??
 # set defaults and use a list of hosts or num hosts. Error if neither is passed.
 # host_list will not use get all, but will use other methods to get by name
-def compare_hosts(provider=None, num_hosts=2, host_list=None):
+# make this work for hosts first then look at differences needed to support other entities.
+# There may be just too many differences to make using one method useful.
+# may be easier just to put nique one in class def
+# !!!If we want o remove navigation from this we can just pass in the starting view?
+
+def compare_hosts(provider=None, num_hosts=2, host_list=None, ):
     if num_hosts < 2:
-        pass #display error. OR just make = 2?
+        pass # display error. OR just make = 2?
     if host_list:
-        pass #add functionality
+        pass # add functionality
     else:
         ent_slice = slice(0, num_hosts, None)
     if provider:
@@ -524,8 +529,10 @@ def compare_hosts(provider=None, num_hosts=2, host_list=None):
         h.ensure_checked()
     hosts_view.toolbar.configuration.item_select('Compare Selected items',
                                                  handle_alert=True)
-
-
+    compare_hosts_view = provider.create_view(HostsCompareView)
+    assert compare_hosts_view.is_displayed
+    # do we want to compare values on the compare view? Clone and update method used in templates.
+    return compare_hosts_view
 
 
 @test_requirements.rhev
