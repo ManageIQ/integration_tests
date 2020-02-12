@@ -15,9 +15,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.tests.services.test_service_rbac import new_group
-from cfme.tests.services.test_service_rbac import new_role
-from cfme.tests.services.test_service_rbac import new_user
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.v2v.migration_plans import MigrationPlanRequestDetailsView
 
@@ -322,29 +319,6 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
         pass
 
 
-@pytest.fixture
-def setup_user_for_v2v_migration(appliance, new_credential):
-    """
-    Fixture to set up user for v2v migration.
-
-    A new role is also created that initially  has access to all product features. The newly created
-    user has this role.
-
-    As part of the test, the role is updated so that the Migration tab is unavailable  in the UI to
-    users with this role.
-    """
-    role = new_role(appliance=appliance,
-                    product_features=[(['Everything'], True)])
-    group = new_group(appliance=appliance, role=role.name)
-    user = new_user(appliance=appliance, group=group, credential=new_credential)
-
-    yield user, role
-
-    user.delete_if_exists()
-    group.delete_if_exists()
-    role.delete_if_exists()
-
-
 @pytest.mark.parametrize('migration_feature_availability_for_role',
     ['disabled', 'enabled'],
     scope='module',
@@ -393,6 +367,8 @@ def test_rbac_migration_tab_availability(appliance, user, role_with_all_features
             if appliance.version < "5.11"
             else [(['Everything', 'Migration'], False)]
         )
+    else:
+        product_features = [(['Everything'], True)]
     v2v_role.update({'product_features': product_features})
 
     with v2v_user:
