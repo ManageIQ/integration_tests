@@ -345,9 +345,9 @@ def setup_user_for_v2v_migration(appliance, new_credential):
     role.delete_if_exists()
 
 
-@pytest.mark.parametrize('migration_feature_availability_for_role', ['disabled', 'enabled'],
-    ids=['disabled', 'enabled'],
-    scope='module'
+@pytest.mark.parametrize('migration_feature_availability_for_role',
+    ['disabled', 'enabled'],
+    scope='module',
 )
 @pytest.mark.provider(
     classes=[RHEVMProvider],
@@ -362,8 +362,8 @@ def setup_user_for_v2v_migration(appliance, new_credential):
     required_flags=["v2v"],
     scope="module",
 )
-def test_rbac_migration_tab_availability(appliance, setup_user_for_v2v_migration,
-            migration_feature_availability_for_role):
+def test_rbac_migration_tab_availability(appliance, user, role_with_all_features,
+        migration_feature_availability_for_role):
     """
     Test to verify that the Migration tab is available/unavailable in the UI with
     role-based access control.
@@ -384,18 +384,18 @@ def test_rbac_migration_tab_availability(appliance, setup_user_for_v2v_migration
             4. As admin, enable all product features for the new role.
             5. Login as the new user and verify that the 'Migration' tab is available.
     """
-    user, role = setup_user_for_v2v_migration
+    v2v_user = user
+    v2v_role = role_with_all_features
+
     if migration_feature_availability_for_role == 'disabled':
         product_features = (
             [(['Everything', 'Compute', 'Migration'], False)]
             if appliance.version < "5.11"
             else [(['Everything', 'Migration'], False)]
         )
-    else:
-        product_features = [(['Everything'], True)]
-    role.update({'product_features': product_features})
+    v2v_role.update({'product_features': product_features})
 
-    with user:
+    with v2v_user:
         view = navigate_to(appliance.server, 'Dashboard', wait_for_view=15)
         nav_tree = view.navigation.nav_item_tree()
         nav_tree_for_migration = nav_tree['Compute'] if appliance.version < "5.11" else nav_tree

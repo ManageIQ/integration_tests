@@ -92,6 +92,7 @@ depending on if the test was run against *rhos* or *ec2*.
 """
 import traceback
 
+import fauxfactory
 import pytest
 
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
@@ -250,3 +251,34 @@ def pytest_configure(config):
 
     if config.getoption('rbac'):
         enable_rbac = True
+
+
+@pytest.fixture
+def role_with_all_features(appliance):
+    collection = appliance.collections.roles
+    new_role = collection.create(name=fauxfactory.gen_alphanumeric(start="role_"),
+                             vm_restriction=None, product_features=[(['Everything'], True)])
+    yield new_role
+    new_role.delete_if_exists()
+
+
+@pytest.fixture
+def group(appliance, role_with_all_features):
+    collection = appliance.collections.groups
+    new_group = collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
+                             role=role_with_all_features.name, tenant="My Company")
+    yield new_group
+    new_group.delete_if_exists()
+
+
+@pytest.fixture
+def user(appliance, group, new_credential):
+    collection = appliance.collections.users
+    new_user = collection.create(name=fauxfactory.gen_alphanumeric(start="user_"),
+                             credential=new_credential,
+                             email='xyz@redhat.com',
+                             groups=group,
+                             cost_center='Workload',
+                             value_assign='Database')
+    yield new_user
+    new_user.delete_if_exists()
