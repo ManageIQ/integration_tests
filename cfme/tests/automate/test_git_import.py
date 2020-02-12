@@ -17,21 +17,23 @@ pytestmark = [
     pytest.mark.meta(server_roles="+git_owner"),
 ]
 
-GIT_REPO_URL = None
 
-try:
-    GIT_REPO_URL = cfme_data.automate_links.datastore_repositories.manageiq_automate
-except AttributeError:
-    pass
+@pytest.fixture
+def git_repo_url(appliance):
+    try:
+        repo_url = cfme_data.automate_links.datastore_repositories.manageiq_automate
+    except AttributeError:
+        pytest.skip(
+            'No automate datastore is available at URL - '
+            'cfme_data.automate_links.datastore_repositories.manageiq_automate'
+        )
+    return repo_url
 
 
 @pytest.fixture
-def imported_domain(appliance):
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
+def imported_domain(appliance, git_repo_url):
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=GIT_REPO_URL, verify_ssl=False
+        import_type="git", url=git_repo_url, verify_ssl=False
     )
     domain = repo.import_domain_from(branch="origin/master")
     yield domain
@@ -57,7 +59,7 @@ def new_user(appliance):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[BZ(1714493)])
-def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
+def test_automate_git_domain_removed_from_disk(appliance, imported_domain, git_repo_url):
     """
     Polarion:
         assignee: ghubale
@@ -67,14 +69,14 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
         tags: automate
     """
     imported_domain.delete()
-    repo_path = urlparse(GIT_REPO_URL).path
+    repo_path = urlparse(git_repo_url).path
     assert appliance.ssh_client.run_command(
         '[ ! -d "/var/www/vmdb/data/git_repos{}" ]'.format(repo_path)).success
 
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[BZ(1714493)])
-def test_automate_git_domain_displayed_in_service(appliance):
+def test_automate_git_domain_displayed_in_service(request, appliance, git_repo_url):
     """Tests if a domain is displayed in a service.
        Checks if the domain imported from git is displayed and usable in the pop-up tree in the
        dialog for creating services.
@@ -86,13 +88,11 @@ def test_automate_git_domain_displayed_in_service(appliance):
         initialEstimate: 1/20h
         tags: automate
     """
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=GIT_REPO_URL, verify_ssl=True
+        import_type="git", url=git_repo_url, verify_ssl=True
     )
     imported_domain = repo.import_domain_from(branch="origin/domain-display")
+    request.addfinalizer(imported_domain.delete_if_exists)
     collection = appliance.collections.catalog_items
     cat_item = collection.instantiate(collection.GENERIC, "test")
     view = navigate_to(cat_item, "Add")
@@ -111,7 +111,7 @@ def test_automate_git_domain_displayed_in_service(appliance):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1714493)])
-def test_automate_git_import_multiple_domains(request, appliance):
+def test_automate_git_import_multiple_domains(request, appliance, git_repo_url):
     """
     Importing of multiple domains from a single git repository is not allowed.
 
@@ -133,11 +133,8 @@ def test_automate_git_import_multiple_domains(request, appliance):
             2.
             3. Import of multiple domains from a single git repo is not allowed
     """
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=GIT_REPO_URL, verify_ssl=True
+        import_type="git", url=git_repo_url, verify_ssl=True
     )
     with pytest.raises(AssertionError,
                        match="Selected branch or tag contains more than one domain"):
@@ -174,7 +171,7 @@ def test_automate_git_import_multiple_domains(request, appliance):
     ],
     ids=["with_branch", "with_tag", "with_top_level_domain", "without_top_level_domain"],
 )
-def test_domain_import_git(request, appliance, param_type, param_value, verify_ssl):
+def test_domain_import_git(request, appliance, param_type, param_value, verify_ssl, git_repo_url):
     """This test case Verifies that a domain can be imported from git and Importing domain from git
        should work with or without the top level domain directory.
 
@@ -200,11 +197,8 @@ def test_domain_import_git(request, appliance, param_type, param_value, verify_s
     Bugzilla:
         1389823
     """
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=GIT_REPO_URL, verify_ssl=verify_ssl
+        import_type="git", url=git_repo_url, verify_ssl=verify_ssl
     )
     domain = repo.import_domain_from(**{param_type: param_value})
     request.addfinalizer(domain.delete)
@@ -286,7 +280,7 @@ def test_refresh_git_current_user(imported_domain, new_user):
 @test_requirements.rest
 @pytest.mark.tier(3)
 @pytest.mark.ignore_stream("5.10")
-def test_domain_import_git_rest(appliance, request):
+def test_domain_import_git_rest(appliance, request, git_repo_url):
     """
     This test checks importing datastore from git via REST
 
@@ -311,12 +305,9 @@ def test_domain_import_git_rest(appliance, request):
     Bugzilla:
         1600961
     """
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     collection = appliance.rest_api.collections.automate_domains
     data = {
-        "git_url": GIT_REPO_URL,
+        "git_url": git_repo_url,
         "ref_type": "branch",
         "ref_name": "origin/master"
     }
@@ -335,7 +326,7 @@ def test_domain_import_git_rest(appliance, request):
 
 
 @pytest.mark.tier(1)
-def test_automate_git_import_case_insensitive(request, appliance):
+def test_automate_git_import_case_insensitive(request, appliance, git_repo_url):
     """
     bin/rake evm:automate:import PREVIEW=false
     GIT_URL=https://github.com/RedHatQE/ManageIQ-automate-git REF=TestBranch
@@ -350,12 +341,8 @@ def test_automate_git_import_case_insensitive(request, appliance):
         tags: automate
         startsin: 5.7
     """
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     appliance.ssh_client.run_rake_command(
-        "evm:automate:import PREVIEW=false "
-        f"GIT_URL={GIT_REPO_URL}"
+        f"evm:automate:import PREVIEW=false GIT_URL={git_repo_url}"
     )
     domain = appliance.collections.domains.instantiate(name="testdomain")
     request.addfinalizer(domain.delete_if_exists)
@@ -365,7 +352,8 @@ def test_automate_git_import_case_insensitive(request, appliance):
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1391208])
 @pytest.mark.parametrize("connection", [True, False], ids=["with_connection", "without_connection"])
-def test_automate_git_domain_import_connection(request, temp_appliance_preconfig, connection):
+def test_automate_git_domain_import_connection(request, git_repo_url, temp_appliance_preconfig,
+                                               connection):
     """
     Bugzilla:
         1391208
@@ -388,12 +376,9 @@ def test_automate_git_domain_import_connection(request, temp_appliance_preconfig
             3. The domain should be displayed properly
     """
     # Server role 'git_owner' needs to enabled explicitly on temp_appliance_preconfig
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     temp_appliance_preconfig.server.settings.enable_server_roles('git_owner')
     repo = temp_appliance_preconfig.collections.automate_import_exports.instantiate(
-        import_type="git", url=GIT_REPO_URL, verify_ssl=True
+        import_type="git", url=git_repo_url, verify_ssl=True
     )
     if connection:
         # Checking datastore import from github repository with internet connectivity
@@ -411,7 +396,7 @@ def test_automate_git_domain_import_connection(request, temp_appliance_preconfig
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1508881])
-def test_automate_git_import_without_master(appliance, request):
+def test_automate_git_import_without_master(appliance, request, git_repo_url):
     """
     Bugzilla:
         1508881
@@ -431,11 +416,8 @@ def test_automate_git_import_without_master(appliance, request):
             2.
             3. Domain was imported from git
     """
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=GIT_REPO_URL, verify_ssl=False
+        import_type="git", url=git_repo_url, verify_ssl=False
     )
     domain = repo.import_domain_from(branch="origin/testbranch")
     request.addfinalizer(domain.delete_if_exists)
@@ -550,7 +532,7 @@ def test_automate_git_import_deleted_tag(appliance, imported_domain):
 
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1716443])
-def test_git_refresh_with_renamed_yaml(appliance):
+def test_git_refresh_with_renamed_yaml(appliance, git_repo_url):
     """
     Note: In this test case, we are checking that datastore with broken __domain__.yml should not
     get imported. But this BZ says, automate namespace, class, instance, method under domain should
@@ -573,11 +555,8 @@ def test_git_refresh_with_renamed_yaml(appliance):
         expectedResults:
             1. Domain should not get imported
     """
-    if GIT_REPO_URL is None:
-        pytest.skip('No automate repo url available at '
-                    'cfme_data.automate_links.datastore_repositories.manageiq_automate')
     repo = appliance.collections.automate_import_exports.instantiate(
-        import_type="git", url=GIT_REPO_URL
+        import_type="git", url=git_repo_url
     )
     with pytest.raises(AssertionError, match=(
             "Error: import failed: Selected branch or tag does not contain a valid domain"

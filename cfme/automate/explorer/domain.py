@@ -494,7 +494,7 @@ class Details(CFMENavigateStep):
         except CandidateNotFound:
             # Try it with regexp (drop the locked to None)
             # That will force reload from database
-            self.obj.locked = None
+            del self.obj.locked
             self.prerequisite_view.datastore.tree.click_path(*self.obj.tree_path)
 
 
