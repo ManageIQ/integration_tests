@@ -461,7 +461,7 @@ def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert
     if appliance.version < '5.11':
         soft_assert(view.configure_providers.is_displayed)
     else:
-        soft_assert(view.missing_providers.text == 'Missing Providers')
+        soft_assert(view.missing_providers.is_displayed)
 
     # Test2: Check 'add infra map' don't get displayed on overview page
     soft_assert(not view.create_infra_mapping.is_displayed)
