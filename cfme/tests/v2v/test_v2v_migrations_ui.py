@@ -440,7 +440,7 @@ def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert
     Test V2V UI with no source and target provider
 
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive
@@ -457,8 +457,11 @@ def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert
     is_target_provider_deleted = provider.delete_if_exists(cancel=False)
     view = navigate_to(map_collection, "All")
 
-    # Test1: Check 'Configure provider' get displayed after provider deletion
-    soft_assert(view.configure_providers.is_displayed)
+    # Test1: Check 'Configure provider/Missing Providers' gets displayed after provider deletion
+    if appliance.version < '5.11':
+        soft_assert(view.configure_providers.is_displayed)
+    else:
+        soft_assert(view.missing_providers.text == 'Missing Providers')
 
     # Test2: Check 'add infra map' don't get displayed on overview page
     soft_assert(not view.create_infra_mapping.is_displayed)

@@ -148,6 +148,7 @@ class AllInfraMappingView(InfrastructureMappingView):
     infra_mapping_list = InfraMappingList("infra-mappings-list-view")
     create_infra_mapping = Text(locator='(//a|//button)[text()="Create Infrastructure Mapping"]')
     configure_providers = Text(locator='//a[text()="Configure Providers"]')
+    missing_providers = Text(locator='.//h4[contains(@class,"blank-slate-pf-title")]')
     paginator_view = View.include(V2VPaginatorPane, use_parent=True)
     search_box = TextInput(locator=".//div[contains(@class,'input-group')]/input")
     clear_filters = Text(".//a[text()='Clear All Filters']")
@@ -161,6 +162,7 @@ class AllInfraMappingView(InfrastructureMappingView):
             self.create_infra_mapping.is_displayed
             or self.infra_mapping_list.is_displayed
             or self.configure_providers.is_displayed
+            or self.missing_providers.text == 'Missing Providers'
         )
 
 
