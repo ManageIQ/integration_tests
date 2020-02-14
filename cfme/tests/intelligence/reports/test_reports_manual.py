@@ -10,32 +10,6 @@ pytestmark = [pytest.mark.manual]
 
 
 @test_requirements.report
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream("5.10")
-def test_reports_timezone():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/10h
-        startsin: 5.11
-        setup:
-            1. Navigate to My Settings and change the timezone.
-            2. Create a report with the date created field
-            3. Run report
-        testSteps:
-            1. Check the timezone in the report.
-        expectedResults:
-            1. Timezone must be same as set in My Settings.
-
-    Bugzilla:
-        1599849
-    """
-    pass
-
-
-@test_requirements.report
 @test_requirements.multi_region
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])

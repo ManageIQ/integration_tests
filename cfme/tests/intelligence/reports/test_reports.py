@@ -198,6 +198,16 @@ def edit_service_name(service_vm):
         service.name = new_name
     return service, vm
 
+
+@pytest.fixture
+def timezone(appliance):
+    tz, visual_tz = "IST", "(GMT+05:30) Kolkata"
+    current_timezone = appliance.user.my_settings.visual.timezone
+    appliance.user.my_settings.visual.timezone = visual_tz
+    yield tz
+    appliance.user.my_settings.visual.timezone = current_timezone
+
+
 # =========================================== Tests ===============================================
 
 
@@ -786,7 +796,6 @@ def test_created_on_time_report_field(create_vm, get_report):
     """
     Bugzilla:
         1743579
-
     Polarion:
         assignee: pvala
         casecomponent: Reporting
@@ -806,3 +815,38 @@ def test_created_on_time_report_field(create_vm, get_report):
     row = view.table.row(name=create_vm.name)
     # TODO BZ(1743579): assert with VM's created_on_time once the BZ is fixed.
     assert row.created_on_time.text != ""
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.meta(automates=[1599849])
+def test_reports_timezone(setup_provider, timezone, get_report):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Reporting
+        caseimportance: medium
+        initialEstimate: 1/10h
+        startsin: 5.11
+        setup:
+            1. Navigate to My Settings and change the timezone.
+            2. Create a report with the date created field
+            3. Run report
+        testSteps:
+            1. Check the timezone in the report.
+        expectedResults:
+            1. Timezone must be same as set in My Settings.
+    Bugzilla:
+        1599849
+    """
+    report = get_report("vm_created_on_time_report.yaml", "VM Created on Time").queue(
+        wait_for_finish=True
+    )
+    view = navigate_to(report, "Details")
+    boot_time = [
+        timezone in row.boot_time.text
+        for row in view.table.rows()
+        if row.boot_time.text != ""
+    ]
+    assert all(boot_time)
