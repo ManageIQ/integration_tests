@@ -34,6 +34,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.providers import get_crud
 from cfme.utils.providers import list_providers
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response
@@ -1366,6 +1367,7 @@ def test_add_ec2_provider_with_non_default_url_endpoint():
     pass
 
 
+@test_requirements.ec2
 @pytest.mark.ignore_stream("5.10")
 def test_add_ec2_provider_with_sts_assume_role(appliance, ec2_provider_with_sts_creds):
     """
@@ -1413,3 +1415,34 @@ def test_add_ec2_provider_with_sts_assume_role(appliance, ec2_provider_with_sts_
     """
     ec2_provider_with_sts_creds.create()
     ec2_provider_with_sts_creds.validate()
+
+
+@test_requirements.ec2
+@pytest.mark.meta(automates=[1658207])
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
+def test_add_second_provider(setup_provider, provider, request):
+    """
+        Bugzilla: 1658207
+
+        Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/3h
+        caseimportance: high
+        casecomponent: Cloud
+        testSteps:
+            1. Go to Compute -> Cloud -> Providers
+            2. Add EC2 Provider
+            3. Add another EC2 Provider
+        expectedResults:
+            1.
+            2. Provider should be successfully added.
+            3. Provider should be successfully added.
+    """
+    second_provider = get_crud(provider.key)
+    second_provider.name = "{}-2".format(provider.name)
+    second_provider.create()
+    request.addfinalizer(second_provider.delete_if_exists)
+    second_provider.refresh_provider_relationships()
+    second_provider.validate_stats(ui=True)
+    assert provider.exists and second_provider.exists
