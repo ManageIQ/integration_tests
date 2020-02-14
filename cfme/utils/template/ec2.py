@@ -13,7 +13,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
     log_name = 'EC2'
     provider_type = 'ec2'
     image_pattern = re.compile(r'<a href="?\'?([^"\']*ec2[^"\'>]*)')
-    blocked_streams = ['upstream', 'downstream-511z']
+    blocked_streams = ['upstream']
 
     @property
     def bucket_name(self):
@@ -49,25 +49,47 @@ class EC2TemplateUpload(ProviderTemplateUpload):
 
     @log_wrap("import image from bucket")
     def import_image(self):
-        try:
-            import_task_id = self.mgmt.import_image(s3bucket=self.bucket_name,
-                                                    s3key=self.template_name,
-                                                    description=self.template_name)
+        if self.stream == 'downstream-510z':
+            try:
+                import_task_id = self.mgmt.import_image(s3bucket=self.bucket_name,
+                                                        s3key=self.template_name,
+                                                        description=self.template_name)
 
-            wait_for(self.mgmt.get_image_id_if_import_completed,
-                     func_args=[import_task_id],
-                     fail_condition=False,
-                     delay=5,
-                     timeout='90m',
-                     message='Importing image to EC2')
+                wait_for(self.mgmt.get_image_id_if_import_completed,
+                         func_args=[import_task_id],
+                         fail_condition=False,
+                         delay=5,
+                         timeout='90m',
+                         message='Importing image to EC2')
 
-            ami_id = self.mgmt.get_image_id_if_import_completed(import_task_id)
-            ami = EC2Image(uuid=ami_id, system=self.mgmt)
-            ami.set_tag("Name", self.template_name)
-            return True
+                ami_id = self.mgmt.get_image_id_if_import_completed(import_task_id)
+                ami = EC2Image(uuid=ami_id, system=self.mgmt)
+                ami.set_tag("Name", self.template_name)
+                return True
 
-        except Exception:
-            return False
+            except Exception:
+                return False
+        else:
+            try:
+                import_task_id = self.mgmt.import_snapshot(s3bucket=self.bucket_name,
+                                                        s3key=self.template_name,
+                                                        description=self.template_name)
+                wait_for(self.mgmt.get_snapshot_id_if_import_completed,
+                         func_args=[import_task_id],
+                         fail_condition=False,
+                         delay=5,
+                         timeout='90m',
+                         message='Importing image to EC2')
+
+                snapshot_id = self.mgmt.get_snapshot_id_if_import_completed(import_task_id)
+                ami_result = self.mgmt.create_image_from_snapshot(self.template_name, snapshot_id)
+                ami_id = ami_result.get("ImageId")
+                ami = EC2Image(uuid=ami_id, system=self.mgmt)
+                ami.set_tag("Name", self.template_name)
+                return True
+
+            except Exception:
+                return False
 
     def run(self):
         if not self.download_image():
@@ -90,5 +112,4 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                                                 object_keys=[self.template_name])
         if os.path.exists(self.file_path):
             os.remove(self.file_path)
-
         return True
