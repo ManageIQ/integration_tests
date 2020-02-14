@@ -1331,9 +1331,9 @@ def test_add_ec2_provider_with_instance_without_name():
     pass
 
 
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_regions_up_to_date():
+def test_regions_up_to_date(provider):
     """
     Polarion:
         assignee: mmojzis
@@ -1345,7 +1345,21 @@ def test_ec2_regions_up_to_date():
         expectedResults:
             1. There should be same regions in CFME as in AWS Console.
     """
-    pass
+    regions_provider = provider.mgmt.list_regions(verbose=True)
+    view = navigate_to(CloudProvider, 'Add')
+    view.prov_type.fill("Amazon EC2")
+    regions_cfme = view.region.all_options
+    # Delete option <Choose>
+    regions_cfme.pop(0)
+    regions_cfme_texts = [option.text for option in regions_cfme]
+    # fixing recent change in AWS naming from EU to Europe:
+    regions_cfme_texts = [region.replace('EU', 'Europe') for region in regions_cfme_texts]
+    regions_not_in_cfme = set(regions_provider) - set(regions_cfme_texts)
+    extra_regions_in_cfme = set(regions_cfme_texts) - set(regions_provider)
+    if len(regions_not_in_cfme) > 0:
+        pytest.fail("Regions {} are not in CFME!".format(regions_not_in_cfme))
+    if len(extra_regions_in_cfme) > 0:
+        pytest.fail("Extra regions in CFME: {}".format(extra_regions_in_cfme))
 
 
 @test_requirements.ec2
