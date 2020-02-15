@@ -71,18 +71,14 @@ v510 = {
 }
 
 
-@pytest.fixture(scope="module")
-def _view(appliance):
-    return navigate_to(appliance.server, 'Workers')
-
-
-def set_memory_threshold_in_ui(appliance, worker, new_threshold, _view):
-    _view.browser.refresh()
-    mem_threshold = getattr(_view.workers, worker.dropdown)
+def set_memory_threshold_in_ui(appliance, worker, new_threshold):
+    view = navigate_to(appliance.server, 'Workers')
+    view.browser.refresh()
+    mem_threshold = getattr(view.workers, worker.dropdown)
     if appliance.version < '5.11' and new_threshold in v510:
         new_threshold = v510[new_threshold]
     mem_threshold.select_by_visible_text(new_threshold.replace('.gigabytes', ' GB'))
-    _view.workers.save.click()
+    view.workers.save.click()
     return new_threshold
 
 
@@ -97,8 +93,7 @@ def get_memory_threshold_in_advanced_settings(appliance, worker):
     return loc.get('memory_threshold', worker_base['defaults']['memory_threshold'])
 
 
-def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold, unused):
-    # this function is used as parameter for a test, and other function needs view param
+def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold):
     steps = (['workers', 'worker_base'] +
              [step if step != '*' else worker.advanced for step in worker.path])
     patch = {'memory_threshold': new_threshold}
@@ -121,7 +116,7 @@ def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold, 
                          [set_memory_threshold_in_ui, set_memory_threshold_in_advanced_settings],
                          ids=["in_UI", "in_advanced_setting"])
 @pytest.mark.parametrize("worker", WORKERS, ids=[x.id for x in WORKERS])
-def test_set_memory_threshold(appliance, worker, request, set_memory_threshold, _view):
+def test_set_memory_threshold(appliance, worker, request, set_memory_threshold):
     """
     Bugzilla:
         1656873
@@ -132,6 +127,7 @@ def test_set_memory_threshold(appliance, worker, request, set_memory_threshold, 
         caseimportance: medium
         initialEstimate: 1/6h
     """
+    view = navigate_to(appliance.server, 'Workers')
     before = get_memory_threshold_in_advanced_settings(appliance, worker)
     threshold_change = "1.1.gigabytes"
     other_change = "1.2.gigabytes"
@@ -141,14 +137,14 @@ def test_set_memory_threshold(appliance, worker, request, set_memory_threshold, 
         threshold_change = other_change
     if appliance.version < "5.11":
         threshold_change = v510[threshold_change]
-    change = set_memory_threshold(appliance, worker, threshold_change, _view)
+    change = set_memory_threshold(appliance, worker, threshold_change)
     request.addfinalizer(
-        lambda: set_memory_threshold_in_advanced_settings(appliance, worker, before, None)
+        lambda: set_memory_threshold_in_advanced_settings(appliance, worker, before)
     )
 
     def _ui_check():
-        _view.browser.refresh()
-        mem_threshold = getattr(_view.workers, worker.dropdown)
+        view.browser.refresh()
+        mem_threshold = getattr(view.workers, worker.dropdown)
         after = mem_threshold.selected_option
         return after.startswith(change.replace(".gigabytes", " GB"))
     wait_for(_ui_check, delay=0, timeout=45)
