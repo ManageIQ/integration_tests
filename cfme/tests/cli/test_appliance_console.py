@@ -1411,9 +1411,8 @@ def test_appliance_console_static_dns():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_apache_reload_log_rotate():
+def test_appliance_console_apache_reload_log_rotate(appliance):
     """
     Check that apache is not reloaded twice after log rotations.
 
@@ -1423,8 +1422,14 @@ def test_appliance_console_apache_reload_log_rotate():
         initialEstimate: 1/12h
         startsin: 5.10
         testtype: structural
+        testSteps:
+            1. execute command 'cat  /etc/logrotate.d/miq_logs.conf'
+        expectedResults:
+            1. "bin/apache reload"  content should not be in output
     """
-    pass
+    command = "cat /etc/logrotate.d/miq_logs.conf"
+    result = appliance.ssh_client.run_command(command)
+    assert "bin/apache reload" not in result.output
 
 
 @pytest.mark.manual
