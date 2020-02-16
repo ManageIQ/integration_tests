@@ -109,7 +109,6 @@ def test_appliance_console_set_hostname(configured_appliance):
         casecomponent: Appliance
         initialEstimate: 1/6h
     """
-
     hostname = 'test.example.com'
     command_set = ('ap', RETURN, '1', '5', hostname, RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
@@ -185,7 +184,7 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     3. '7' setup db,
     4. '1' Creates v2_key,
     5. '1' selects internal db,
-    6. '2' choose /dev/vdb as disk
+    6.  choose /dev/vdb as disk
     7. 'n' don't create dedicated db,
     8. '0' db region number,
     9. 'pwd' db password,
@@ -200,8 +199,10 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
     """
 
     pwd = app_creds['password']
-    command_set = ('ap', RETURN, '7', '1', '1', '2', 'n', '0', pwd, TimedCommand(pwd, 360), RETURN)
-    unconfigured_appliance.appliance_console.run_commands(command_set)
+    partition = "2" if unconfigured_appliance.version < "5.11" else "1"
+    command_set = ('ap', RETURN, app_con_menu["config_db"], '1', '1', partition, 'n', '0', pwd,
+                   TimedCommand(pwd, 360), RETURN)
+    unconfigured_appliance.appliance_console.run_commands(command_set, timeout=20)
     unconfigured_appliance.evmserverd.wait_for_running()
     unconfigured_appliance.wait_for_web_ui()
 
@@ -255,9 +256,11 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     """
 
     pwd = app_creds['password']
-    command_set = ('ap', RETURN, '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), RETURN)
-    unconfigured_appliance.appliance_console.run_commands(command_set)
-    wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
+    partition = "2" if unconfigured_appliance.version < "5.11" else "1"
+    command_set = ('ap', RETURN, app_con_menu["config_db"], '1', '1', partition, 'y', pwd,
+                   TimedCommand(pwd, 360), RETURN)
+    unconfigured_appliance.appliance_console.run_commands(command_set, timeout=20)
+    wait_for(lambda: unconfigured_appliance.db.is_dedicated_active, timeout=900)
 
 
 @pytest.mark.tier(2)
@@ -373,10 +376,10 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
 
     ip = appliance.hostname
     pwd = app_creds['password']
-    command_set = ('ap', RETURN, '7', '2', ip, RETURN, pwd, RETURN, '3', ip, RETURN, RETURN, RETURN,
-                   pwd, TimedCommand(pwd, 360), RETURN, RETURN)
+    command_set = ('ap', RETURN, app_con_menu["config_db"], '2', ip, RETURN, pwd, RETURN, '3',
+                   ip, RETURN, RETURN, RETURN, pwd, TimedCommand(pwd, 360), RETURN, RETURN)
 
-    temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
+    temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set, timeout=20)
     temp_appliance_unconfig_funcscope.evmserverd.wait_for_running()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
@@ -406,13 +409,12 @@ def test_appliance_console_external_db_create(
         casecomponent: Appliance
         initialEstimate: 1/3h
     """
-
     ip = dedicated_db_appliance.hostname
     pwd = app_creds['password']
-    command_set = ('ap', RETURN, '7', '1', '2', '0', 'y', ip, RETURN, RETURN, RETURN, pwd,
-        TimedCommand(pwd, 300), RETURN)
+    command_set = ('ap', RETURN, app_con_menu["config_db"], '1', '2', '0', 'y', ip,
+                   RETURN, RETURN, RETURN, pwd, TimedCommand(pwd, 300), RETURN)
     unconfigured_appliance_secondary.appliance_console.run_commands(command_set)
-    unconfigured_appliance_secondary.evmserverd.wait_for_running()
+    unconfigured_appliance_secondary.evmserverd.wait_for_running(timeout=900)
     unconfigured_appliance_secondary.wait_for_web_ui()
 
 
@@ -422,7 +424,7 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
     1. 'ap' launches appliance_console,
     2. RETURN clears info screen,
     3. '11' extend storage,
-    4. '2' select disk,
+    4.   select disk,
     5. 'y' confirm configuration,
     6. RETURN complete.
 
@@ -432,12 +434,13 @@ def test_appliance_console_extend_storage(unconfigured_appliance):
         caseimportance: critical
         initialEstimate: 1/4h
     """
-    command_set = ('ap', RETURN, '11', '2', 'y', RETURN)
-    unconfigured_appliance.appliance_console.run_commands(command_set)
+    partition = "2" if unconfigured_appliance.version < "5.11" else "1"
+    command_set = ('ap', RETURN, app_con_menu["ext_temp_storage"], partition, 'y', RETURN)
+    unconfigured_appliance.appliance_console.run_commands(command_set, timeout=20)
 
     def is_storage_extended():
         assert unconfigured_appliance.ssh_client.run_command("df -h | grep /var/www/miq_tmp")
-    wait_for(is_storage_extended)
+    wait_for(is_storage_extended, timeout=900)
 
 
 def test_appliance_console_ipa(ipa_crud, configured_appliance):
@@ -492,7 +495,8 @@ def test_appliance_console_external_auth(auth_type, ipa_crud, configured_applian
                             matched_patterns=['.*{} to true.*'.format(auth_type.option)],
                             hostname=configured_appliance.hostname)
     evm_tail.start_monitoring()
-    command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
+    command_set = ('ap', RETURN, app_con_menu["update_ext_auth_opt"], auth_type.index, '5',
+                   RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     assert evm_tail.validate(wait="30s")
 
@@ -501,7 +505,8 @@ def test_appliance_console_external_auth(auth_type, ipa_crud, configured_applian
                             hostname=configured_appliance.hostname)
 
     evm_tail.start_monitoring()
-    command_set = ('ap', RETURN, '13', auth_type.index, '5', RETURN, RETURN)
+    command_set = ('ap', RETURN, app_con_menu["update_ext_auth_opt"], auth_type.index, '5',
+                   RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     assert evm_tail.validate(wait="30s")
 
@@ -550,8 +555,8 @@ def test_appliance_console_external_auth_all(configured_appliance):
                                               '.*local_login_disabled to true.*'],
                             hostname=configured_appliance.hostname)
     evm_tail.start_monitoring()
-    command_set = ('ap', RETURN, TimedCommand('13', 40), '1', '2', '4', TimedCommand('5', 40),
-                   RETURN, RETURN)
+    command_set = ('ap', RETURN, TimedCommand(app_con_menu["update_ext_auth_opt"], 40), '1',
+                   '2', '4', TimedCommand('5', 40), RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     assert evm_tail.validate("30s")
 
@@ -562,15 +567,14 @@ def test_appliance_console_external_auth_all(configured_appliance):
                             hostname=configured_appliance.hostname)
 
     evm_tail.start_monitoring()
-    command_set = ('ap', RETURN, TimedCommand('13', 40), '1', '2', '4', TimedCommand('5', 40),
-                   RETURN, RETURN)
+    command_set = ('ap', RETURN, TimedCommand(app_con_menu["update_ext_auth_opt"], 40), '1',
+                   '2', '4', TimedCommand('5', 40), RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=30)
     assert evm_tail.validate(wait="30s")
 
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1769901)])
 def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     """ Commands:
     1. 'ap' launches appliance_console,
@@ -863,7 +867,7 @@ def test_appliance_console_evm_stop(temp_appliance_preconfig_funcscope):
             5. Cross-check service stopped.
     """
     appliance = temp_appliance_preconfig_funcscope
-    command_set = ("ap", RETURN, "16", TimedCommand("Y", 60))
+    command_set = ("ap", RETURN, app_con_menu["stop_evm"], TimedCommand("Y", 60))
     appliance.appliance_console.run_commands(command_set, timeout=30)
     wait_for(lambda: appliance.evmserverd.running,
              delay=10,
@@ -875,7 +879,7 @@ def test_appliance_console_evm_stop(temp_appliance_preconfig_funcscope):
 
 
 @pytest.mark.tier(2)
-def test_appliance_console_evm_start(request, appliance):
+def test_appliance_console_evm_start(request, temp_appliance_preconfig_funcscope):
     """
     test starting the evm server process
 
@@ -897,13 +901,15 @@ def test_appliance_console_evm_start(request, appliance):
             4. Confirm EVM service is being started.
             5. Confirm replication is working correctly
     """
+    appliance = temp_appliance_preconfig_funcscope
     appliance.evmserverd.stop()
     wait_for(lambda: appliance.is_web_ui_running(), delay=30, num_sec=10, fail_condition=True)
 
     # Actual testcase starting from here
-    start_evm_command = ("ap", RETURN, "17", "Y", RETURN, RETURN, "21")
-    appliance.appliance_console.run_commands(start_evm_command, timeout=300)
-    wait_for(lambda: appliance.is_web_ui_running(), delay=30, num_sec=10)
+    start_evm_command = ("ap", RETURN, app_con_menu["start_evm"], "Y", RETURN,
+                         RETURN, app_con_menu["quit"])
+    appliance.appliance_console.run_commands(start_evm_command, timeout=30)
+    appliance.wait_for_web_ui()
     logged_in_page = appliance.server.login()
     request.addfinalizer(appliance.server.logout)
     assert logged_in_page.is_displayed, "UI is not working after starting the EVM service."
@@ -1218,7 +1224,7 @@ def test_appliance_console_shutdown(temp_appliance_preconfig_modscope):
             5. You will be logged out from SSH.
     """
     appliance = temp_appliance_preconfig_modscope
-    command_set = ("ap", RETURN, "19", "Y")
+    command_set = ("ap", RETURN, app_con_menu["showdown_app"], "Y")
     appliance.appliance_console.run_commands(command_set, timeout=40)
     wait_for(lambda: appliance.ssh_client.connected,
              timeout=600,
@@ -1371,10 +1377,11 @@ def test_appliance_console_restore_db_network_negative(temp_appliance_preconfig_
             5. Confirm DB restore fails.
     """
     appliance = temp_appliance_preconfig_funcscope
-    stop_evm_command = ("ap", RETURN, "16", "Y", RETURN)
+    stop_evm_command = ("ap", RETURN, app_con_menu["stop_evm"], "Y", RETURN)
     appliance.appliance_console.run_commands(stop_evm_command, timeout=30)
     invalid_db_restore_location = "nfs://host.mydomain.com/exported/my_exported_folder/db.backup"
-    command_set = ("ap", RETURN, "6", "2", invalid_db_restore_location, "Y")
+    command_set = ("ap", RETURN, app_con_menu["restore_db_from_bak"], "2",
+                   invalid_db_restore_location, "Y")
     result = appliance.appliance_console.run_commands(command_set, timeout=30)
     assert "Database restore failed." in result[-1]
 
@@ -1538,7 +1545,7 @@ def test_appliance_console_key_fetch_negative(temp_appliance_preconfig_funcscope
     """
     appliance = temp_appliance_preconfig_funcscope
     invalid_ip = fauxfactory.gen_ipaddr()
-    command_set = ("ap", RETURN, "14", "Y", "2", invalid_ip,
+    command_set = ("ap", RETURN, app_con_menu["gen_custom_encry_key"], "Y", "2", invalid_ip,
                    conf.credentials['default']['username'], conf.credentials['default']['password'],
                    TimedCommand(RETURN, 180))
     result = appliance.appliance_console.run_commands(command_set, timeout=30)
