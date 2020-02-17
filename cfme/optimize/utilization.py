@@ -79,8 +79,10 @@ class UtilizationDatastoreView(UtilizationAllView):
 
     @property
     def is_displayed(self):
-        expected_title = f'Datastore "{self.context["object"].datastore}" Utilization Trend Summary'
-        return self.in_utilization and self.title.text == expected_title
+        is_title_matched = bool(
+            re.match(r'Datastore ".*" Utilization Trend Summary', self.title.text)
+        )
+        return self.in_utilization and is_title_matched
 
 
 class UtilizationHostView(UtilizationAllView):
@@ -215,7 +217,7 @@ class ProviderOptimizeUtilization(CFMENavigateStep):
     prerequisite = NavigateToSibling("Region")
 
     def step(self, *args, **kwargs):
-        path = self.obj._region_path + ["Providers", self.obj.provider]
+        path = self.obj._region_path + ["Providers", self.obj.provider.name]
         self.prerequisite_view.tree.click_path(*path)
 
 
@@ -227,9 +229,9 @@ class ClusterOptimizeUtilization(CFMENavigateStep):
     def step(self, *args, **kwargs):
         path = self.obj._region_path + [
             "Providers",
-            self.obj.provider,
+            self.obj.provider.name,
             "Cluster / Deployment Role",
-            self.obj.cluster
+            self.obj.cluster.name
         ]
         self.prerequisite_view.tree.click_path(*path)
 
@@ -242,10 +244,10 @@ class HostOptimizeUtilization(CFMENavigateStep):
     def step(self, *args, **kwargs):
         path = self.obj._region_path + [
             "Providers",
-            self.obj.provider,
+            self.obj.provider.name,
             "Cluster / Deployment Role",
-            self.obj.cluster,
-            self.obj.host
+            self.obj.cluster.name,
+            self.obj.host.name
         ]
         self.prerequisite_view.tree.click_path(*path)
 
@@ -256,11 +258,5 @@ class DatastoreOptimizeUtilization(CFMENavigateStep):
     prerequisite = NavigateToSibling("Region")
 
     def step(self, *args, **kwargs):
-        path = self.obj._region_path + [
-            "Providers",
-            self.obj.provider,
-            "Cluster / Deployment Role",
-            self.obj.cluster,
-            self.host
-        ]
+        path = self.obj._region_path + ["Datastores", self.obj.datastore.name]
         self.prerequisite_view.tree.click_path(*path)

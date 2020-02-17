@@ -31,6 +31,7 @@ from cfme.infrastructure.host import HostsCollection
 from cfme.infrastructure.virtual_machines import InfraTemplate
 from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.modeling.base import BaseCollection
+from cfme.optimize.utilization import UtilizationProviderView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -456,3 +457,16 @@ class ProviderVms(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Relationships').click_at('Virtual Machines')
+
+
+@navigator.register(InfraProvider, "Utilts")
+class ProviderOptimizeUtilization(CFMENavigateStep):
+    VIEW = UtilizationProviderView
+
+    prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
+
+    def step(self, *args, **kwargs):
+        path = [self.appliance.region(), "Providers", self.obj.name]
+        if self.appliance.version >= "5.11":
+            path.insert(0, "Enterprise")
+        self.prerequisite_view.tree.click_path(*path)

@@ -20,6 +20,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.exceptions import MenuItemNotFound
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.optimize.utilization import UtilizationDatastoreView
 from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -493,3 +494,16 @@ class ManagedVMs(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.relationships.click_at('Managed VMs')
+
+
+@navigator.register(Datastore, "Utilts")
+class DatastoreOptimizeUtilization(CFMENavigateStep):
+    VIEW = UtilizationDatastoreView
+
+    prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
+
+    def step(self, *args, **kwargs):
+        path = [self.appliance.region(), "Datastores", self.obj.name]
+        if self.appliance.version >= "5.11":
+            path.insert(0, "Enterprise")
+        self.prerequisite_view.tree.click_path(*path)

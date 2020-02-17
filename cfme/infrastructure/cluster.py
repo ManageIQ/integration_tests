@@ -14,12 +14,12 @@ from cfme.common import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common import TimelinesView
-from cfme.common.candu_views import ClusterInfraUtilizationView
 from cfme.common.provider_views import SummaryAccordionView
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.optimize.utilization import UtilizationClusterView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -399,10 +399,20 @@ class Timelines(CFMENavigateStep):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
-@navigator.register(Cluster, "Utilization")
-class Utilization(CFMENavigateStep):
-    VIEW = ClusterInfraUtilizationView
-    prerequisite = NavigateToSibling("Details")
+@navigator.register(Cluster, "Utilts")
+class ClusterOptimizeUtilization(CFMENavigateStep):
+    VIEW = UtilizationClusterView
+
+    prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
+        path = [
+            self.appliance.region(),
+            "Providers",
+            self.obj.provider.name,
+            "Cluster / Deployment Role",
+            self.obj.name,
+        ]
+        if self.appliance.version >= "5.11":
+            path.insert(0, "Enterprise")
+        self.prerequisite_view.tree.click_path(*path)
