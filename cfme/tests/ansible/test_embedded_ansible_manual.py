@@ -256,39 +256,6 @@ def test_service_ansible_overridden_extra_vars():
     pass
 
 
-@pytest.mark.tier(3)
-def test_service_ansible_playbook_standard_output_non_ascii_hostname():
-    """
-    Look for Standard ouptut
-
-    Bugzilla:
-        1534039
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_service_ansible_playbook_retire_non_ascii():
-    """
-    Retire ansible playbook service with non_ascii host
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
 @test_requirements.ansible
 @pytest.mark.tier(3)
 def test_automate_ansible_playbook_method_type_verbosity():
