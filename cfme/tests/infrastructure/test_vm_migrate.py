@@ -1,3 +1,4 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
@@ -5,6 +6,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log_validator import LogValidator
 
 
 pytestmark = [
@@ -63,9 +65,10 @@ def test_vm_migrate(appliance, new_vm, provider):
     assert migrate_request.is_succeeded(method='ui'), msg
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
-def test_vm_migrate_should_create_notifications_when_migrations_fail():
+@pytest.mark.meta(automates=[1478462])
+def test_vm_migrate_should_create_notifications_when_migrations_fail(appliance,
+                                                                     create_vm, provider):
     """
     Polarion:
         assignee: dgaikwad
@@ -74,7 +77,41 @@ def test_vm_migrate_should_create_notifications_when_migrations_fail():
         initialEstimate: 1/4h
         startsin: 5.10
         tags: service
+        caseposneg: negative
+        testSteps:
+            1. add provider to appliance
+            2. create vm
+            3. migrate vm, use same host and datastore is None
+        expectedResults:
+            1.
+            2.
+            3. check error on UI and in the log file.
     Bugzilla:
         1478462
     """
-    pass
+    view = navigate_to(create_vm, 'Details')
+    vm_host = view.entities.summary('Relationships').get_text_of('Host')
+    hosts = [vds.name for vds in provider.hosts.all() if vds.name in vm_host]
+    err_msg = ("Status [Error Migrating VM] Message")
+    with LogValidator('/var/www/miq/vmdb/log/automation.log',
+                      matched_patterns=[err_msg],
+                      hostname=appliance.hostname).waiting(timeout=900):
+        create_vm.migrate_vm(
+            fauxfactory.gen_email(),
+            fauxfactory.gen_string("alphanumeric", 5),
+            fauxfactory.gen_string("alphanumeric", 5),
+            hosts[0],
+            "<None>",
+        )
+        request_description = create_vm.name
+        cells = {'Description': request_description, 'Request Type': 'Migrate'}
+        migrate_request = appliance.collections.requests.instantiate(
+            request_description,
+            cells=cells,
+            partial_check=True
+        )
+        migrate_request.wait_for_request(method='ui')
+        assert not migrate_request.is_succeeded(method='ui'), "VM migration does not failed"
+        assert err_msg in migrate_request.row.last_message.text, (
+            migrate_request.row.last_message.text
+        )
