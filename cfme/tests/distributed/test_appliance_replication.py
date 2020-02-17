@@ -9,6 +9,7 @@ from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
@@ -29,11 +30,13 @@ def configure_replication_appliances(remote_app, global_app):
     sharing the same encryption key as the preconfigured appliance. with remote region #0.
     Then set up database replication between them.
     """
+    logger.info("Starting appliance replication configuration.")
     global_app.configure(region=99, key_address=remote_app.hostname)
 
     remote_app.set_pglogical_replication(replication_type=':remote')
     global_app.set_pglogical_replication(replication_type=':global')
     global_app.add_pglogical_replication_subscription(remote_app.hostname)
+    logger.info("Finished appliance replication configuration.")
 
 
 def configure_distributed_appliances(primary_app, secondary_app):
@@ -364,3 +367,41 @@ def test_appliance_replicate_zones(temp_appliance_preconfig_funcscope_rhevm,
     view = navigate_to(global_appliance.server, 'Server')
     global_zones = [o.text for o in view.basic_information.appliance_zone.all_options]
     assert global_zone in global_zones and remote_zone not in global_zones
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(automates=[1796681])
+def test_appliance_replicate_remote_down(temp_appliance_preconfig_funcscope_rhevm,
+       temp_appliance_unconfig_funcscope_rhevm):
+    """Test that the Replication tab displays in the global appliance UI when the remote appliance
+    database cannot be reached.
+
+    Bugzilla:
+        1796681
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
+    global_appliance = temp_appliance_unconfig_funcscope_rhevm
+
+    configure_replication_appliances(remote_appliance, global_appliance)
+
+    global_region = global_appliance.server.zone.region
+    assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+        "Remote appliance not found on Replication tab after initial configuration.")
+
+    result = global_appliance.ssh_client.run_command(
+        f"firewall-cmd --direct --add-rule ipv4 filter OUTPUT 0 -d {remote_appliance.hostname}"
+        " -j DROP")
+    assert result.success, "Could not create firewall rule on global appliance."
+
+    global_appliance.browser.widgetastic.refresh()
+    assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+        "Remote appliance not found on Replication tab after dropped connection.")
