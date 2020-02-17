@@ -55,7 +55,7 @@ class ExpressionEditor(View, Pretty):
 
     @View.nested
     class field_form_view(View):  # noqa
-        fill_strategy = WaitFillViewStrategy()
+        fill_strategy = WaitFillViewStrategy(wait_widget="20s")
         type = BootstrapSelect("chosen_typ")
         field = BootstrapSelect("chosen_field")
         key = BootstrapSelect("chosen_key")
