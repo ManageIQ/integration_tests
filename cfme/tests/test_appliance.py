@@ -131,12 +131,15 @@ def test_firewalld_services_are_active(appliance):
     assert default_iface_zone == manageiq_zone
 
 
-@pytest.mark.meta(blockers=[BZ(1712944)])
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("upstream", "5.10")
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
                          reason=POD_REASON)
 def test_firewalld_active_zone_after_restart(appliance):
     """Verifies key firewalld active zone survives firewalld restart
+
+    Note there is a BZ 1712944 which is reported against 5.10 and CLOSED as
+    CURRENTRELEASE, meaning it won't be fixed for CFME 5.10, but it is fixed
+    for CFME 5.11 already.
 
     Polarion:
         assignee: jhenner
