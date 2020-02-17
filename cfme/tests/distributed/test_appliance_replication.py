@@ -9,6 +9,7 @@ from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -23,11 +24,13 @@ def configure_replication_appliances(remote_app, global_app):
     sharing the same encryption key as the preconfigured appliance. with remote region #0.
     Then set up database replication between them.
     """
+    logger.info("Starting appliance replication configuration.")
     global_app.configure(region=99, key_address=remote_app.hostname)
 
     remote_app.set_pglogical_replication(replication_type=':remote')
     global_app.set_pglogical_replication(replication_type=':global')
     global_app.add_pglogical_replication_subscription(remote_app.hostname)
+    logger.info("Finished appliance replication configuration.")
 
 
 def configure_distributed_appliances(primary_app, secondary_app):
@@ -275,3 +278,37 @@ def test_replication_connect_to_vm_in_region(provider,
         view.login.click()
         view = vm.create_view(InfraVmDetailsView)
         wait_for(lambda: view.is_displayed, message="Wait for VM Details page")
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(automates=[1678142])
+def test_appliance_replicate_remote_down(temp_appliance_preconfig_funcscope_rhevm,
+       temp_appliance_unconfig_funcscope_rhevm):
+    """Test that the Replication tab displays in the global appliance UI when the remote appliance
+    is down.
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+        startsin: 5.11
+    """
+    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
+    global_appliance = temp_appliance_unconfig_funcscope_rhevm
+
+    configure_replication_appliances(remote_appliance, global_appliance)
+
+    global_region = global_appliance.server.zone.region
+    assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+        "Remote appliance not found on global appliance's Replication tab.")
+
+    logger.info("Stopping remote appliance database.")
+    remote_appliance.db_service.stop()
+    logger.info("Stopped remote appliance database.")
+
+    assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+        "Remote appliance not found on global appliance's Replication tab after database stop.")
