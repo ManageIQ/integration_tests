@@ -391,6 +391,11 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         return f"{self.appliance.product_name} Region: Region {self.number} [{self.number}]"
 
     @property
+    def region_string(self):
+        """Return Region string like `Region 0`"""
+        return f"Region {self.number}"
+
+    @property
     def tree_path(self):
         return [self.settings_string]
 
