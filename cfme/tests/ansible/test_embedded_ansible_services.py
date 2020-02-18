@@ -24,7 +24,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.meta(blockers=[BZ(1677548, forced_streams=["5.11"])]),
     test_requirements.ansible,
 ]
 
@@ -92,20 +91,21 @@ def ansible_linked_vm_action(appliance, local_ansible_catalog_item, create_vm):
         action_type="Run Ansible Playbook",
         action_values=action_values,
     )
-    yield action
+    yield action, local_ansible_catalog_item
 
     action.delete_if_exists()
 
 
 @pytest.fixture()
 def ansible_policy_linked_vm(appliance, create_vm, ansible_linked_vm_action):
+    action, _ = ansible_linked_vm_action
     policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha(15, start="policy_"),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(create_vm.name),
     )
     policy.assign_actions_to_event(
-        "Tag Complete", [ansible_linked_vm_action.description]
+        "Tag Complete", [action.description]
     )
     policy_profile = appliance.collections.policy_profiles.create(
         fauxfactory.gen_alpha(15, start="profile_"), policies=[policy]
@@ -980,3 +980,41 @@ ansible_service_request_funcscope):
 
     view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.credentials.get_text_of("Cloud") == provider_credentials.name
+
+
+@pytest.mark.tier(3)
+@pytest.mark.provider([EC2Provider], scope="module")
+@pytest.mark.usefixtures("setup_provider")
+@pytest.mark.parametrize("action", ["provisioning", "retirement"])
+def test_ansible_service_retire_linked_vm(
+    appliance,
+    create_vm,
+    ansible_policy_linked_vm,
+    ansible_service_request,
+    ansible_service_funcscope,
+    action,
+    request,
+):
+    """
+    Retire Service+instances which were deployed by playbook from CFME UI.
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1h
+        tags: ansible_embed
+    """
+    create_vm.add_tag()
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+
+    view = navigate_to(ansible_service_funcscope, "Details")
+    assert create_vm.name in view.entities.vms.all_entity_names
+
+    retire_request = ansible_service_funcscope.retire()
+    retire_request.wait_for_request()
+    if retire_request.exists():
+        retire_request.remove_request()
+
+    assert not retire_request.exists
