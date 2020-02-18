@@ -37,7 +37,6 @@ from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
 from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
-from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
@@ -184,7 +183,8 @@ class BaseVM(
     # Titles of the delete buttons in configuration
     REMOVE_SELECTED = 'Remove selected items from Inventory'
     REMOVE_SINGLE = 'Remove Virtual Machine from Inventory'
-    RETIRE_DATE_FMT = parsetime.saved_report_title_format
+    RETIRE_DATE_FMT = '%a, %d %b %Y %H:%M:%S +0000'
+    RETIRE_DATE_MSG_FMT = '%m/%d/%y %H:%M UTC'
     _param_name = ParamClassName('name')
     DETAILS_VIEW_CLASS = None
 
