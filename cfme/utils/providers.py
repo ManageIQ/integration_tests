@@ -127,7 +127,15 @@ class ProviderFilter(object):
 
     def _filter_required_flags(self, provider):
         """ Filters by required yaml flags """
+        included_flags = provider.data.get('included_test_flags', '')
+        if isinstance(included_flags, str):
+            included_flags = included_flags.split(',')
+        included_flags = [flag.strip() for flag in included_flags]
+
         if self.required_flags is None:
+            if included_flags.__contains__("v2v"):
+                # Non v2v tests should not run for v2v providers
+                return False
             return None
         if self.required_flags:
             test_flags = [flag.strip() for flag in self.required_flags]
