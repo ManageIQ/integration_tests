@@ -41,16 +41,20 @@ warnings = [
     RetirementWarning('30_day_warning', '30 Days before retirement')]
 
 
-def msg_date_range(expected_dates):
+def msg_date_range(expected_dates, fmt):
     """Given the expected_dates dictionary, return a string of the form 'T_1|T_2|...|T_N', where
     T_1 through T_N are datetime strings formatted with '%m/%d/%y %H:%M UTC', one for each unique
     time between the start and end dates.
+
+    Args:
+        expected_dates: py:class:`dict` of py:class:`datetime.datetime` instances
+        fmt: py:class:`str` format code
     """
     dates = []
     num_min = int(math.ceil((expected_dates['end'] - expected_dates['start']).seconds / 60.0))
     for i in range(num_min):
         next_date = expected_dates['start'] + timedelta(minutes=i)
-        next_date = next_date.strftime('%m/%d/%y %H:%M UTC')
+        next_date = next_date.strftime(fmt)
         dates.append(next_date)
     return "|".join(dates)
 
@@ -132,21 +136,13 @@ def verify_retirement_date(retire_vm, expected_date='Never'):
         expected_date: a string, datetime, or a dict datetime dates with 'start' and 'end' keys.
     """
     if isinstance(expected_date, dict):
-        # convert to a parsetime object for comparison, function depends on version
-        if 'UTC' in retire_vm.RETIRE_DATE_FMT:
-            convert_func = parsetime.from_american_minutes_with_utc
-        elif retire_vm.RETIRE_DATE_FMT.endswith('+0000'):
-            convert_func = parsetime.from_saved_report_title_format
-        else:
-            convert_func = parsetime.from_american_date_only
-        expected_date.update({'retire': convert_func(retire_vm.retirement_date)})
+        expected_date['retire'] = datetime.strptime(retire_vm.retirement_date,
+            retire_vm.RETIRE_DATE_FMT)
         logger.info(f'Asserting retirement date "%s" is between "%s" and "%s"',  # noqa
                     expected_date['retire'],
                     expected_date['start'],
                     expected_date['end'])
-
         assert expected_date['start'] <= expected_date['retire'] <= expected_date['end']
-
     elif isinstance(expected_date, (parsetime, datetime, date)):
         assert retire_vm.retirement_date == expected_date.strftime(retire_vm.RETIRE_DATE_FMT)
     else:
@@ -294,7 +290,7 @@ def test_set_retirement_date(retire_vm, warn):
     # Verify flash message
     view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
-    msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
+    msg_date = retire_date.strftime(retire_vm.RETIRE_DATE_MSG_FMT)
     view.flash.assert_success_message(f"Retirement date set to {msg_date}")
 
     verify_retirement_date(retire_vm, expected_date=retire_date)
@@ -321,7 +317,7 @@ def test_set_retirement_date_multiple(retire_vm_pair, provider, warn):
     # Verify flash message
     view = collection.create_view(navigator.get_class(collection, 'All').VIEW, wait='5s')
     assert view.is_displayed
-    msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
+    msg_date = retire_date.strftime(retire_vm.RETIRE_DATE_MSG_FMT)
     view.flash.assert_success_message(f"Retirement dates set to {msg_date}")
 
     for vm in retire_vm_pair:
@@ -355,7 +351,7 @@ def test_set_retirement_offset(retire_vm, warn):
     # Verify flash message
     view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
-    msg_dates = msg_date_range(expected_dates)
+    msg_dates = msg_date_range(expected_dates, retire_vm.RETIRE_DATE_MSG_FMT)
     flash_regex = re.compile(f"^Retirement date set to ({msg_dates})$")
     view.flash.assert_success_message(flash_regex)
 
@@ -389,7 +385,7 @@ def test_set_retirement_offset_multiple(retire_vm_pair, provider, warn):
     # Verify flash message
     view = collection.create_view(navigator.get_class(collection, 'All').VIEW, wait='5s')
     assert view.is_displayed
-    msg_dates = msg_date_range(expected_dates)
+    msg_dates = msg_date_range(expected_dates, retire_vm_pair[0].RETIRE_DATE_MSG_FMT)
     flash_regex = re.compile(f"^Retirement dates set to ({msg_dates})$")
     view.flash.assert_success_message(flash_regex)
 
@@ -413,7 +409,7 @@ def test_unset_retirement_date(retire_vm):
     # Verify flash message
     view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
-    msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
+    msg_date = retire_date.strftime(retire_vm.RETIRE_DATE_MSG_FMT)
     view.flash.assert_success_message(f"Retirement date set to {msg_date}")
 
     verify_retirement_date(retire_vm, expected_date=retire_date)
@@ -463,7 +459,7 @@ def test_resume_retired_instance(retire_vm, provider, remove_date):
     view = retire_vm.create_view(retire_vm.DETAILS_VIEW_CLASS, wait='5s')
     assert view.is_displayed
     if retire_date:
-        msg_date = retire_date.strftime('%m/%d/%y %H:%M UTC')
+        msg_date = retire_date.strftime(retire_vm.RETIRE_DATE_MSG_FMT)
         view.flash.assert_success_message(f"Retirement date set to {msg_date}")
     else:
         view.flash.assert_success_message("Retirement date removed")
