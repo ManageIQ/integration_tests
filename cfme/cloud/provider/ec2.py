@@ -134,3 +134,14 @@ class EC2Provider(CloudProvider):
             'password': getattr(credential, 'secret', None),
             'confirm_password': getattr(credential, 'verify_secret', None)
         }
+
+    def deployment_helper(self, deploy_args):
+        """Used in utils.virtual_machines. For ec2, look up any non-default instance_type
+        that is specified under the template in the provider's YAML, and return the value."""
+        d = {}
+        templates = self.data['templates']
+        for template_type, template in templates.items():
+            if deploy_args['template'] == template['name'] and 'instance_type' in template:
+                d = {'instance_type': template['instance_type']}
+                break
+        return d
