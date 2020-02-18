@@ -1,4 +1,5 @@
 import json
+import time
 
 import fauxfactory
 import pytest
@@ -12,6 +13,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.myservice import MyService
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -73,6 +75,63 @@ def local_ansible_catalog_item(appliance, ansible_repository):
     yield cat_item
 
     cat_item.delete_if_exists()
+
+
+@pytest.fixture(scope="function")
+def dialog_with_catalog_item(appliance, request, ansible_repository, ansible_catalog):
+    def _dialog_with_catalog_item(ele_name):
+        service_dialog = appliance.collections.service_dialogs
+        dialog = fauxfactory.gen_alphanumeric(12, start="dialog_")
+        # Updating 'ele_name' which will be processed by Automate domain.
+        element_data = {
+            "element_information": {
+                "ele_label": fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+                "ele_name": ele_name
+                if ele_name
+                else fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+                "ele_desc": fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
+                "choose_type": "Text Box",
+            }
+        }
+
+        sd = service_dialog.create(label=dialog, description="my dialog")
+        tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
+                            tab_desc="my tab desc")
+        box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
+                            box_desc="my box desc")
+        box.elements.create(element_data=[element_data])
+
+        cat_item = appliance.collections.catalog_items.create(
+            appliance.collections.catalog_items.ANSIBLE_PLAYBOOK,
+            fauxfactory.gen_alphanumeric(15, start="ansi_cat_item_"),
+            fauxfactory.gen_alphanumeric(15, start="item_desc_"),
+            display_in_catalog=True,
+            provisioning={
+                "repository": ansible_repository.name,
+                "playbook": "dump_all_variables.yml",
+                "machine_credential": "CFME Default Credential",
+                "use_exisiting": True,
+                "provisioning_dialog_id": sd.label,
+            },
+        )
+
+        catalog = appliance.collections.catalogs.create(
+            fauxfactory.gen_alphanumeric(start="ansi_cat_"),
+            description=fauxfactory.gen_alphanumeric(start="cat_dis_"),
+            items=[cat_item.name],
+        )
+
+        @request.addfinalizer
+        def _finalize():
+            if catalog.exists:
+                catalog.delete()
+                cat_item.catalog = None
+            cat_item.delete_if_exists()
+            sd.delete_if_exists()
+
+        return cat_item, catalog
+
+    return _dialog_with_catalog_item
 
 
 @pytest.fixture()
@@ -980,3 +1039,58 @@ ansible_service_request_funcscope):
 
     view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.credentials.get_text_of("Cloud") == provider_credentials.name
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1505929])
+def test_service_ansible_service_name(request, appliance, dialog_with_catalog_item):
+    """
+    After creating the service using ansible playbook type add a new text
+    field to service dialog named "service_name" and then use that service
+    to order the service which will have a different name than the service
+    catalog item.
+
+    Bugzilla:
+        1505929
+
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/2h
+        tags: ansible_embed
+    """
+    ele_name = "service_name"
+    # Extracting Ansible Catalog Item and Element name from fixture.
+    ansible_cat_item, ansible_catalog = dialog_with_catalog_item(ele_name)
+
+    # Navigate to Service Catalog order page.
+    service_catalogs = ServiceCatalogs(
+        appliance, ansible_catalog, ansible_cat_item.name)
+    view = navigate_to(service_catalogs, 'Order')
+
+    # Fill the different than the dialog name and order service.
+    service_name = fauxfactory.gen_alphanumeric(20, start="diff_service_name")
+    view.fields(ele_name).fill(service_name)
+    time.sleep(5)
+    view.submit_button.click()
+
+    # Service name is updated so ansible_service_request will not work.
+    request_descr = (
+        f"Provisioning Service [{ansible_cat_item.name}] from [{ansible_cat_item.name}]"
+    )
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    service_request.wait_for_request()
+
+    # Tear down for service_request and service with different name.
+    @request.addfinalizer
+    def _revert():
+        if service_request.exists:
+            service_request.wait_for_request()
+            service_request.remove_request()
+        if service.exists:
+            service.delete()
+
+    # Go to Ordered service page and assert new name of service.
+    service = MyService(appliance, service_name)
+    assert service.exists
