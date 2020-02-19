@@ -499,7 +499,6 @@ def test_infra_discovery_screen(appliance):
 
 @pytest.fixture
 def setup_provider_min_templates(request, appliance, provider, min_templates):
-    templates_yaml = len(provider.data.get('templates', {}))
     if len(provider.mgmt.list_templates()) < min_templates:
         pytest.skip(f'Number of templates on {provider} does not meet minimum '
                     f'for test parameter {min_templates}, skipping and not setting up provider')
@@ -514,7 +513,8 @@ def verify_checked_items_compared(checkedList, view):
             # Split and slice are used to remove extra characters in the header item
             checkedList.remove(header_with_template.split(' ')[0])
         except ValueError:
-            pytest.fail(f"Entity {header_with_template.split(' ')[0]} is in compare view, but was not checked.")
+            pytest.fail(f"Entity {header_with_template.split(' ')[0]} is in compare view, "
+                        f"but was not checked.")
         except TypeError:
             pytest.fail('No entities found in compare view.')
     if len(checkedList) > 0:
