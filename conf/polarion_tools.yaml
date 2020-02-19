@@ -126,6 +126,7 @@ docstrings:
             - Events
             - GenericObjects
             - Infra
+            - MigrationAnalytics
             - Optimize
             - Provisioning
             - Quota
