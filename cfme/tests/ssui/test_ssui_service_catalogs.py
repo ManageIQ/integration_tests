@@ -82,21 +82,48 @@ def test_ssui_test_all_language_translations():
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_disable_toast_notifications_by_role_in_sui():
+@pytest.mark.customer_scenario
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1496233])
+def test_ssui_disable_notification(request, appliance, user_self_service_role,
+                                   generic_catalog_item):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: ssui
     Bugzilla:
         1496233
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: SelfServiceUI
+        initialEstimate: 1/6h
     """
-    pass
+    user, role = user_self_service_role
+
+    product_features = [(['Everything', 'Service UI', 'Core', 'Notifications'], False)]
+    role.update({'product_features': product_features})
+
+    # login with user having self service role
+    with user:
+        with appliance.context.use(ViaSSUI):
+            appliance.server.login(user)
+
+            # order service from catalog item
+            serv_cat = ServiceCatalogs(
+                appliance,
+                catalog=generic_catalog_item.catalog,
+                name=generic_catalog_item.name,
+            )
+
+            view = navigate_to(serv_cat, 'Details')
+
+            # Add Service to Shopping Cart
+            view.add_to_shopping_cart.click()
+            assert not view.notification.assert_message("Item added to shopping cart")
+
+            # Clear Service from the Shopping Cart
+            view = navigate_to(serv_cat, 'ShoppingCart')
+            view.clear.click(handle_alert=True)
+            assert view.alert.read() == "Shopping cart is empty."
 
 
 @pytest.mark.manual
