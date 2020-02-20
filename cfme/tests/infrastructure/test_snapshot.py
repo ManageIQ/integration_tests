@@ -290,9 +290,9 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
 
-
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 @pytest.mark.provider([VMwareProvider])
-def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_event, request):
+def test_revert_active_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert active snapshot
 
     Metadata:
@@ -304,14 +304,14 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
         caseimportance: medium
         initialEstimate: 1/3h
     """
-    verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
+    verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request,
                            active_snapshot=True)
 
 
 @pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1552732)])
-def test_revert_to_active_vm(small_test_vm, provider):
+def test_revert_to_active_vm(small_test_vm, provider):#This test causes failures upon cleanup. Address.
     """
     Test that it's not possible to revert to "Active VM" on RHV.
 
