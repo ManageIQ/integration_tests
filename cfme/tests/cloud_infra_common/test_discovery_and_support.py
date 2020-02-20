@@ -8,7 +8,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
-from cfme.utils.wait import wait_for
 
 
 @pytest.mark.rhv2
@@ -46,14 +45,9 @@ def test_vm_discovery(request, setup_provider, provider, create_vm):
 
     if provider.one_of(SCVMMProvider):
         provider.refresh_provider_relationships()
-    wait_for(
-        lambda: 'archived' in create_vm.find_quadicon(from_any_provider=True)
-        .data['state'].lower(),
-        num_sec=600,
-        delay=10,
-        handle_exception=True,
-        message='Waiting for archived state'
-    )
+    create_vm.mgmt.delete()
+    create_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
+                                       from_details=False, from_any_provider=True)
 
 
 def provider_classes(appliance):
