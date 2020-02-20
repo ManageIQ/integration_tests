@@ -220,24 +220,6 @@ def test_service_ansible_playbook_machine_credentials_service_details_sui():
 
 
 @pytest.mark.tier(3)
-def test_custom_button_order_ansible_playbook_service():
-    """
-    Bugzilla:
-        1449361
-
-    An Ansible Service Playbook can be ordered from a Custom Button
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/3h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
 def test_service_ansible_overridden_extra_vars():
     """
     Bugzilla:

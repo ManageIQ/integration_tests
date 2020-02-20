@@ -72,6 +72,7 @@ def setup_obj(button_group, provider):
     return obj
 
 
+@pytest.mark.meta(coverage=[1449361])
 @pytest.mark.meta(blockers=[BZ(1685555, unblock=lambda button_group: "SWITCH" not in button_group)])
 @pytest.mark.parametrize("inventory", INVENTORY, ids=["_".join(item.split()) for item in INVENTORY])
 @pytest.mark.uncollectif(lambda appliance, button_group, inventory:
