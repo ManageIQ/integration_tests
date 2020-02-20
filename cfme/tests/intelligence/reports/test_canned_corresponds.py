@@ -189,7 +189,7 @@ def test_operations_vm_on(soft_assert, temp_appliance_preconfig_funcscope, reque
 
 
 @pytest.mark.rhv3
-def test_datastores_summary(soft_assert, appliance, request):
+def test_datastores_summary(soft_assert, temp_appliance_preconfig_funcscope, request):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes.
 
@@ -202,6 +202,7 @@ def test_datastores_summary(soft_assert, appliance, request):
         caseimportance: high
         initialEstimate: 1/6h
     """
+    appliance = temp_appliance_preconfig_funcscope
     adb = appliance.db.client
     storages = adb['storages']
     vms = adb['vms']

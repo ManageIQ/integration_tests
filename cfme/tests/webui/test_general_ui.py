@@ -17,6 +17,7 @@ from cfme.common.provider_views import ProviderDetailsView
 from cfme.common.provider_views import ProviderTimelinesView
 from cfme.common.topology import BaseTopologyView
 from cfme.containers.provider import ContainersProvider
+from cfme.infrastructure.config_management import ConfigManagerProvider
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
 from cfme.infrastructure.datastore import DatastoresCompareView
@@ -734,6 +735,10 @@ def test_ui_notification_icon():
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1532404])
 @pytest.mark.provider([BaseProvider], selector=ONE_PER_CATEGORY)
+@pytest.mark.uncollectif(
+    lambda provider: provider.one_of(ConfigManagerProvider),
+    reason="Config Manager providers do not support this feature.",
+)
 def test_provider_summary_topology(setup_provider, provider):
     """
     Polarion:
