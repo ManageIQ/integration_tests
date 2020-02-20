@@ -2,17 +2,34 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.v2v.migration_analytics import MigrationAnalyticsSummaryView
 
 pytestmark = [
     pytest.mark.ignore_stream("5.10"),
     pytest.mark.tier(1),
-    test_requirements.migration_analytics
+    test_requirements.migration_analytics,
+    pytest.mark.usefixtures("setup_provider"),
 ]
 
 
-@pytest.mark.manual
+@pytest.fixture(scope="module")
+def enable_migration(appliance):
+    """This fixture helps to enable migration analytics in 5.11"""
+    def enable(is_enable):
+        yaml_data = {"prototype": {"migration_analytics": {"enabled": is_enable}}}
+        appliance.update_advanced_settings(yaml_data)
+        appliance.ssh_client.run_command('systemctl restart evmserverd')
+        appliance.wait_for_web_ui()
+
+    enable(True)
+    yield
+    enable(False)
+
+
 @pytest.mark.smoke
-def test_enable_migration_analytics():
+def test_enable_migration_analytics(appliance, enable_migration):
     """
     Polarion:
         assignee: ghubale
@@ -33,7 +50,8 @@ def test_enable_migration_analytics():
             3.
             4. Check in UI. You will have navigation to Migration > Migration Analytics
     """
-    pass
+    view = navigate_to(appliance.collections.v2v_migration_analytics, "All")
+    assert view.is_displayed
 
 
 @pytest.mark.manual
@@ -192,8 +210,8 @@ def test_verify_manifest_version():
     pass
 
 
-@pytest.mark.manual
-def test_confirm_environment_summary_data():
+@pytest.mark.provider([VMwareProvider], scope='function')
+def test_confirm_environment_summary_data(appliance, enable_migration):
     """
     Polarion:
         assignee: ghubale
@@ -212,4 +230,7 @@ def test_confirm_environment_summary_data():
             2.
             3. Check summary data
     """
-    pass
+    view = navigate_to(appliance.collections.v2v_migration_analytics, "All")
+    view.get_started.click()
+    view = appliance.browser.create_view(MigrationAnalyticsSummaryView, wait=60)
+    view.summary.read()

@@ -123,6 +123,7 @@ time_profiles = cfme.configure.settings:TimeProfileCollection
 users = cfme.configure.access_control:UserCollection
 utilization = cfme.optimize.utilization:UtilizationCollection
 v2v_infra_mappings = cfme.v2v.infrastructure_mapping:InfrastructureMappingCollection
+v2v_migration_analytics = cfme.v2v.migration_analytics:MigrationAnalyticsCollection
 v2v_migration_plans = cfme.v2v.migration_plans:MigrationPlanCollection
 v2v_conversion_hosts = cfme.v2v.migration_settings:ConversionHostCollection
 volume_backups = cfme.storage.volume_backup:VolumeBackupCollection
