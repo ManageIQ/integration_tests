@@ -130,7 +130,7 @@ def test_cluster_relationships(appliance, soft_assert):
 
 
 @pytest.mark.rhv2
-def test_operations_vm_on(soft_assert, appliance, request):
+def test_operations_vm_on(soft_assert, temp_appliance_preconfig_funcscope, request):
     """Tests vm power options from on
 
     Metadata:
@@ -145,7 +145,7 @@ def test_operations_vm_on(soft_assert, appliance, request):
         caseimportance: high
         initialEstimate: 1/6h
     """
-
+    appliance = temp_appliance_preconfig_funcscope
     adb = appliance.db.client
     vms = adb['vms']
     hosts = adb['hosts']
