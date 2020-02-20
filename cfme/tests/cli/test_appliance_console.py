@@ -443,9 +443,9 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
         initialEstimate: 1/4h
     """
 
-    command_set = ('ap', RETURN, '12', ipa_crud.host1, ipa_crud.ipadomain, ipa_crud.iparealm,
-                   ipa_crud.ipaprincipal, ipa_crud.bind_password, TimedCommand('y', 60),
-                   RETURN, RETURN)
+    command_set = ('ap', RETURN, app_con_menu["config_external_auth"], ipa_crud.host1,
+                   ipa_crud.ipadomain, ipa_crud.iparealm, ipa_crud.ipaprincipal,
+                   ipa_crud.bind_password, TimedCommand('y', 60), RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=20)
     configured_appliance.sssd.wait_for_running()
     assert configured_appliance.ssh_client.run_command("cat /etc/ipa/default.conf |"
@@ -453,8 +453,9 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 
     # Unconfigure to cleanup
     # When setup_ipa option selected, will prompt to unconfigure, then to proceed with new config
-    command_set = ('ap', RETURN, '12', TimedCommand('y', 40), TimedCommand('n', 5), RETURN, RETURN)
-    configured_appliance.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, app_con_menu["config_external_auth"], TimedCommand('y', 40),
+                   TimedCommand('n', 5), RETURN, RETURN)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=20)
     wait_for(lambda: not configured_appliance.sssd.running)
 
 
