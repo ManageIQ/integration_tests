@@ -178,7 +178,7 @@ def test_cancel_migration_attachments(
         migration_plan_in_progress_tracker = []
         clock_reading1 = request_details_list.get_clock(vm_detail)
         time.sleep(1)  # wait 1 sec to see if clock is ticking
-        if request_details_list.progress_percent(vm_detail) > 20:
+        if request_details_list.progress_percent(vm_detail) > 2:
             request_details_list.cancel_migration(vm_detail, confirmed=True)
         clock_reading2 = request_details_list.get_clock(vm_detail)
         migration_plan_in_progress_tracker.append(
