@@ -34,6 +34,7 @@ from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.providers import get_crud
 from cfme.utils.providers import list_providers
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response
@@ -196,6 +197,17 @@ def instance_with_ssh_addition_template(appliance, provider):
 
     yield instance
     instance.delete()
+
+
+@pytest.fixture
+def stack_without_parameters(provider):
+    stack = provider.mgmt.create_stack(name=fauxfactory.gen_alpha(10),
+        template_url=provider.data.provisioning.stack_provisioning.template_without_parameters,
+        capabilities=["CAPABILITY_IAM"])
+    wait_for(lambda: stack.status_active, delay=15, timeout=900)
+
+    yield stack
+    stack.delete()
 
 
 @pytest.fixture
@@ -1169,8 +1181,9 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
 
 
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_refresh_with_stack_without_parameters():
+@pytest.mark.usefixtures('has_no_cloud_providers')
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
+def test_refresh_with_stack_without_parameters(provider, request, stack_without_parameters):
     """
     Polarion:
         assignee: mmojzis
@@ -1186,7 +1199,10 @@ def test_ec2_refresh_with_stack_without_parameters():
             1.
             2. Wait for refresh - it should be refreshed successfully without errors
     """
-    pass
+    provider.create()
+    request.addfinalizer(provider.delete_if_exists)
+    provider.refresh_provider_relationships()
+    provider.validate_stats(ui=True)
 
 
 @test_requirements.ec2
@@ -1330,9 +1346,9 @@ def test_add_ec2_provider_with_instance_without_name():
     pass
 
 
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
 @test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_regions_up_to_date():
+def test_regions_up_to_date(provider):
     """
     Polarion:
         assignee: mmojzis
@@ -1344,7 +1360,21 @@ def test_ec2_regions_up_to_date():
         expectedResults:
             1. There should be same regions in CFME as in AWS Console.
     """
-    pass
+    regions_provider = provider.mgmt.list_regions(verbose=True)
+    view = navigate_to(CloudProvider, 'Add')
+    view.prov_type.fill("Amazon EC2")
+    regions_cfme = view.region.all_options
+    # Delete option <Choose>
+    regions_cfme.pop(0)
+    regions_cfme_texts = [option.text for option in regions_cfme]
+    # fixing recent change in AWS naming from EU to Europe:
+    regions_cfme_texts = [region.replace('EU', 'Europe') for region in regions_cfme_texts]
+    regions_not_in_cfme = set(regions_provider) - set(regions_cfme_texts)
+    extra_regions_in_cfme = set(regions_cfme_texts) - set(regions_provider)
+    if len(regions_not_in_cfme) > 0:
+        pytest.fail("Regions {} are not in CFME!".format(regions_not_in_cfme))
+    if len(extra_regions_in_cfme) > 0:
+        pytest.fail("Extra regions in CFME: {}".format(extra_regions_in_cfme))
 
 
 @test_requirements.ec2
@@ -1366,6 +1396,7 @@ def test_add_ec2_provider_with_non_default_url_endpoint():
     pass
 
 
+@test_requirements.ec2
 @pytest.mark.ignore_stream("5.10")
 def test_add_ec2_provider_with_sts_assume_role(appliance, ec2_provider_with_sts_creds):
     """
@@ -1413,3 +1444,34 @@ def test_add_ec2_provider_with_sts_assume_role(appliance, ec2_provider_with_sts_
     """
     ec2_provider_with_sts_creds.create()
     ec2_provider_with_sts_creds.validate()
+
+
+@test_requirements.ec2
+@pytest.mark.meta(automates=[1658207])
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
+def test_add_second_provider(setup_provider, provider, request):
+    """
+        Bugzilla: 1658207
+
+        Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/3h
+        caseimportance: high
+        casecomponent: Cloud
+        testSteps:
+            1. Go to Compute -> Cloud -> Providers
+            2. Add EC2 Provider
+            3. Add another EC2 Provider
+        expectedResults:
+            1.
+            2. Provider should be successfully added.
+            3. Provider should be successfully added.
+    """
+    second_provider = get_crud(provider.key)
+    second_provider.name = "{}-2".format(provider.name)
+    second_provider.create()
+    request.addfinalizer(second_provider.delete_if_exists)
+    second_provider.refresh_provider_relationships()
+    second_provider.validate_stats(ui=True)
+    assert provider.exists and second_provider.exists

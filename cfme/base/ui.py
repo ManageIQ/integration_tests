@@ -1316,14 +1316,13 @@ class ZoneSettings(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Zones')
 
     def step(self, *args, **kwargs):
-        rows = self.prerequisite_view.table.rows((1, re.compile(r'Zone\s?\:\s?{}'.format(
-            self.obj.description))))
+        regex = re.compile(r'Zone\s?\:\s?{}'.format(re.escape(self.obj.description)))
+        rows = self.prerequisite_view.table.rows((1, regex))
         for row in rows:
             row.click()
             break
         else:
-            raise ItemNotFound(
-                "No unique Zone with the description '{}'".format(self.obj.description))
+            raise ItemNotFound(f"No unique Zone with the description {self.obj.description!r}.")
 
 
 @navigator.register(Zone, 'Zone')

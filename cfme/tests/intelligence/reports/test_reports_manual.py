@@ -10,32 +10,6 @@ pytestmark = [pytest.mark.manual]
 
 
 @test_requirements.report
-@pytest.mark.tier(2)
-@pytest.mark.ignore_stream("5.10")
-def test_reports_timezone():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/10h
-        startsin: 5.11
-        setup:
-            1. Navigate to My Settings and change the timezone.
-            2. Create a report with the date created field
-            3. Run report
-        testSteps:
-            1. Check the timezone in the report.
-        expectedResults:
-            1. Timezone must be same as set in My Settings.
-
-    Bugzilla:
-        1599849
-    """
-    pass
-
-
-@test_requirements.report
 @test_requirements.multi_region
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
@@ -61,29 +35,6 @@ def test_reports_in_global_region(context, report):
             3. Report should be created and rendered successfully and show expected data.
             4. Report should be rendered successfully and show expected data.
 
-    """
-    pass
-
-
-@test_requirements.report
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1743579])
-def test_created_on_time_report_field():
-    """
-    Bugzilla:
-        1743579
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        caseimportance: medium
-        initialEstimate: 1/2h
-        setup:
-            1. Add a provider and provision a VM
-        testSteps:
-            1. Create a report based on 'VMs and Instances' with [Created on Time, Name] field.
-        expectedResults:
-            1. `Created on Time` field column must not be empty for the recently created VM.
     """
     pass
 

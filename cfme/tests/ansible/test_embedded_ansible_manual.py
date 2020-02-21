@@ -97,77 +97,6 @@ def test_embed_tower_exec_play_with_creds(appliance, provider):
     pass
 
 
-@pytest.mark.tier(3)
-def test_embed_tower_refresh_provider_repo_list():
-    """
-    Test if ansible playbooks list is updated in the UI when "Refresh
-    Selected Ansible Repositories" clicked in the repository list.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_embed_tower_refresh_provider_repo_details():
-    """
-    Test if ansible playbooks list is updated in the UI when "Refresh this
-    Repository" clicked in the repository details view.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_ui_requests_notifications_negative():
-    """
-    After all processes are running make sure websockets are enabled then
-    add a repo with the same name as a current repo and check the
-    notifications display correctly. With a Red banner to show it was
-    unsuccessful.
-
-    Bugzilla:
-        1471868
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_ui_requests_notifications():
-    """
-    After all processes are running and websockets role is enabled, add a
-    new repo to embedded tower and check the notifications display
-    correctly. With a Green banner to show it was successful.
-
-    Bugzilla:
-        1471868
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_ansible_catalog_items():
     """
@@ -198,27 +127,6 @@ def test_embed_tower_add_private_repo():
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_service_ansible_service_name():
-    """
-    Bugzilla:
-        1505929
-
-    After creating the service using ansible playbook type add a new text
-    field to service dialog named "service_name" and then use that service
-    to order the service which will have a different name than the service
-    catalog item.
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/2h
         tags: ansible_embed
     """
     pass
@@ -306,24 +214,6 @@ def test_service_ansible_playbook_machine_credentials_service_details_sui():
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/2h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_custom_button_order_ansible_playbook_service():
-    """
-    Bugzilla:
-        1449361
-
-    An Ansible Service Playbook can be ordered from a Custom Button
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: Automate
-        caseimportance: medium
-        initialEstimate: 1/3h
         tags: ansible_embed
     """
     pass

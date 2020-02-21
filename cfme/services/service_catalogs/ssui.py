@@ -57,6 +57,7 @@ class ShoppingCartView(DetailsServiceCatalogsView):
     close = Button('Close')
     clear = Button('Clear')
     order = Button('Order')
+    alert = Text('.//div[contains(@class, "alert")]')
 
     @property
     def is_displayed(self):

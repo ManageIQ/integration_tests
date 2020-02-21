@@ -411,6 +411,11 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
         assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/2h
+
+    VirtualCenter 6.5 VMs are in suspended power state when reverted to a snapshot created in the
+    suspended state.
+    VirtualCenter 6.7 VMs are in off power state when reverted to a snapshot created in the
+    suspended state.
     """
     # Create first snapshot when VM is running
     snapshot1 = new_snapshot(small_test_vm)
@@ -435,8 +440,12 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     snapshot2.revert_to()
     wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
              message="Waiting for the second snapshot to become active after revert")
-    # Check VM state, VM should be suspended
-    assert small_test_vm.mgmt.is_suspended
+    # Check VM state, VM should be suspended if VM version is 6.5
+    # if version is 6.7 Vm state should be off (is_stopped)
+    if small_test_vm.provider.version == 6.7:
+        assert small_test_vm.mgmt.is_stopped
+    else:
+        assert small_test_vm.mgmt.is_suspended
     # Try to delete both snapshots while the VM is suspended
     # The delete method will make sure the snapshots are indeed deleted
     snapshot1.delete()

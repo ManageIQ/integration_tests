@@ -10,19 +10,27 @@ pytestmark = [
     test_requirements.distributed
 ]
 
-
-@pytest.mark.tier(1)
-def test_distributed_field_zone_description_special():
-    """
-    Special Chars in description
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
+ROLES = ['automate',
+         'cockpit_ws',
+         'database_operations',
+         'database_owner',
+         'embedded_ansible',
+         'ems_inventory',
+         'ems_metrics_collector',
+         'ems_metrics_coordinator',
+         'ems_metrics_processor',
+         'ems_operations',
+         'event',
+         'git_owner',
+         'internet_connectivity',
+         'notifier',
+         'reporting',
+         'scheduler',
+         'smartproxy',
+         'smartstate',
+         'user_interface',
+         'remote_console',
+         'web_services']
 
 
 @pytest.mark.tier(1)
@@ -68,20 +76,6 @@ def test_verify_httpd_only_running_when_roles_require_it():
     pass
 
 
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_cu_data_processor():
-    """
-    C & U Data Processor (multiple appliances can have this role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
 def test_distributed_add_provider_to_remote_zone():
     """
     Adding a provider from the global region to a remote zone.
@@ -116,48 +110,21 @@ def test_distributed_zone_delete_occupied():
     Polarion:
         assignee: tpapaioa
         casecomponent: Appliance
-        caseimportance: medium
+        caseimportance: critical
         initialEstimate: 1/12h
     """
     pass
 
 
-@pytest.mark.tier(3)
-def test_distributed_migrate_embedded_ansible_role():
-    """
-    Ansible role failsover/migrates when active service fails
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: critical
-        initialEstimate: 1/4h
-        setup:
-            1. Configure a 2 server installation (same region + zone).
-            2. Assign the embedded Ansible role to both servers.
-            3. Find the server on which this role is active
-               (Configuration > Diagnostics > Zone: <zone name> >
-               Servers by Roles).
-        testSteps:
-            1. Run `systemctl stop evmserverd` on active server.
-        expectedResults:
-            1. Observe that the role is started on the other server.
-    """
-    pass
-
-
 @pytest.mark.tier(1)
-def test_distributed_field_zone_name_special():
+@pytest.mark.parametrize('role', ROLES)
+def test_server_role_failover(role):
     """
-    When creating a new zone, special characters can be used in the name,
-    including leading and trailing characters, and the name displays
-    correctly in the web UI after saving.
-
     Polarion:
         assignee: tpapaioa
         casecomponent: Appliance
         caseimportance: medium
-        initialEstimate: 1/30h
+        initialEstimate: 1/12h
     """
     pass
 
@@ -193,168 +160,12 @@ def test_distributed_delete_offline_worker_appliance():
     pass
 
 
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_reporting():
-    """
-    Reporting (multiple)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_cu_data_collector():
-    """
-    C & U Data Collector (multiple appliances can have this role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_web_services():
-    """
-    Web Services (multiple)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_cu_coordinator_singleton():
-    """
-    C & U Coordinator (singleton role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_smartstate_analysis():
-    """
-    SmartState Analysis (multiple)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_field_zone_name_whitespace():
-    """
-    When creating a new zone, the name can have whitespace, including
-    leading and trailing characters. After saving, any leading or trailing
-    whitespace is not displayed in the web UI.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
 def test_distributed_zone_in_different_networks():
     """
     Polarion:
         assignee: tpapaioa
         casecomponent: Infra
         initialEstimate: 1h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_scheduler_singleton():
-    """
-    Scheduler (singleton)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_field_zone_description_leading_whitespace():
-    """
-    Leading whitespace in description
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/30h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_provider_inventory_singleton():
-    """
-    Provider Inventory (singleton)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_provider_operations():
-    """
-    Provider Operations (multiple appliances can have this role)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_failover_notifier_singleton():
-    """
-    Notifier (singleton)
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/6h
     """
     pass
 

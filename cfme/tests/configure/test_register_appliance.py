@@ -71,13 +71,36 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="function")
-def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
-    """Requests appliance from sprout and configures rpms for crud update"""
+def appliance_preupdate(temp_appliance_preconfig_funcscope):
+    """Requests appliance from sprout and configures rpms for crud update
+
+    To create the required repo (fresh-new (clean) CFME appliance required).
+
+    register and attach the system to RHN
+    # SERVER=...redhat.com
+    # yum --downloadonly --downloaddir /therepo install -y rpm-build
+    # yum install -y rpm-build createrepo
+    # rpmbuild  --rebuild http://$SERVER/~jhenner/rpmrebuild/rpmrebuild-2.14-1.src.rpm
+    # cp rpmbuild/RPMS/noarch/rpmrebuild-2.14-1.noarch.rpm /therepo
+    # createrepo /therepo
+
+    # curl 'http://$SERVER/~jhenner/rpmrebuild_repo/5.XX/rpmrebuild.repo' \
+        -o /therepo/rpmrebuild.repo
+    # vim /therepo/rpmrebuild.repo
+    # rsync -avP /therepo/ jhenner@$SERVER:public_html/rpmrebuild_repo/5.XX
+    """
+    appliance = temp_appliance_preconfig_funcscope
+
     try:
-        url = cfme_data['basic_info']['rpmrebuild_59']
+        url = VersionPicker(
+            {'5.10': cfme_data['basic_info']['rpmrebuild_510'],
+             '5.11': cfme_data['basic_info']['rpmrebuild_511']}).pick(appliance.version)
     except (KeyError, AttributeError):
-        pytest.skip('Failed looking up rpmrebuild_59 in cfme_data.basic_info')
-    run = temp_appliance_preconfig_funcscope.ssh_client.run_command
+        pytest.skip('Failed looking up rpmrebuild in cfme_data.basic_info')
+
+    def run(c):
+        assert appliance.ssh_client.run_command(c).success
+
     run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
     run('yum install rpmrebuild createrepo -y')
     run('mkdir /myrepo')
@@ -87,7 +110,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     run('echo '
         '"[local-repo]\nname=Internal repository\nbaseurl=file:///myrepo/\nenabled=1\ngpgcheck=0"'
         ' > /etc/yum.repos.d/local.repo')
-    yield temp_appliance_preconfig_funcscope
+    yield appliance
 
 
 @pytest.mark.rhel_testing
@@ -134,7 +157,7 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
 
 @pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(automates=[1532201])
+@pytest.mark.meta(automates=[1532201, 1673136])
 def test_rh_registration(
         temp_appliance_preconfig_funcscope, request, reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether an appliance can be registered against RHSM and SAT6
@@ -194,12 +217,16 @@ def test_rh_registration(
             fail_func=red_hat_updates.refresh
         )
 
+        # This bit automates BZ#1673136
         wait_for(
-            func=appliance.is_registration_complete,
-            func_args=[used_repo_or_channel],
-            delay=20,
-            num_sec=400
+            func=red_hat_updates.is_subscribed,
+            func_args=[appliance.server.name],
+            delay=10,
+            num_sec=600,
+            fail_func=red_hat_updates.refresh
         )
+
+        assert appliance.is_registration_complete(used_repo_or_channel)
 
 
 @pytest.mark.rhel_testing

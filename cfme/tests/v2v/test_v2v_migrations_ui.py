@@ -15,9 +15,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.tests.services.test_service_rbac import new_group
-from cfme.tests.services.test_service_rbac import new_role
-from cfme.tests.services.test_service_rbac import new_user
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.v2v.migration_plans import MigrationPlanRequestDetailsView
 
@@ -322,6 +319,10 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
         pass
 
 
+@pytest.mark.parametrize('migration_feature_availability_for_role',
+    ['disabled', 'enabled'],
+    scope='module',
+)
 @pytest.mark.provider(
     classes=[RHEVMProvider],
     selector=ONE_PER_VERSION,
@@ -335,40 +336,53 @@ def test_v2v_infra_map_special_chars(request, appliance, source_provider, provid
     required_flags=["v2v"],
     scope="module",
 )
-def test_v2v_rbac(appliance, new_credential):
+def test_rbac_migration_tab_availability(appliance, user, role_with_all_features,
+        migration_feature_availability_for_role):
     """
-    Test migration with role-based access control
+    Test to verify that the Migration tab is available/unavailable in the UI with
+    role-based access control.
 
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive
         testtype: functional
         startsin: 5.10
         casecomponent: V2V
+        testSteps:
+            1. Create new role, group, user. The new role is created such that all users belonging
+               to this role have access to all product features.
+            2. As admin, disable 'Migration' product feature for the new role.
+            3. Login as the new user and verify that the 'Migration' tab is not available.
+            4. As admin, enable all product features for the new role.
+            5. Login as the new user and verify that the 'Migration' tab is available.
     """
-    role = new_role(appliance=appliance,
-                    product_features=[(['Everything'], True)])
-    group = new_group(appliance=appliance, role=role.name)
-    user = new_user(appliance=appliance, group=group, credential=new_credential)
+    v2v_user = user
+    v2v_role = role_with_all_features
 
-    product_features = [(['Everything', 'Compute', 'Migration'], False)]
-    role.update({'product_features': product_features})
-    with user:
-        view = navigate_to(appliance.server, 'Dashboard')
-        nav_tree = view.navigation.nav_item_tree()
-        # Checks migration option is disabled in navigation
-        assert 'Migration' not in nav_tree['Compute'], ('Migration found in nav tree, '
-                                                        'rbac should not allow this')
+    if migration_feature_availability_for_role == 'disabled':
+        product_features = (
+            [(['Everything', 'Compute', 'Migration'], False)]
+            if appliance.version < "5.11"
+            else [(['Everything', 'Migration'], False)]
+        )
+    else:
+        product_features = [(['Everything'], True)]
+    v2v_role.update({'product_features': product_features})
 
-    product_features = [(['Everything'], True)]
-    role.update({'product_features': product_features})
-    with user:
+    with v2v_user:
         view = navigate_to(appliance.server, 'Dashboard', wait_for_view=15)
         nav_tree = view.navigation.nav_item_tree()
-        # Checks migration option is enabled in navigation
-        assert 'Migration' in nav_tree['Compute'], ('Migration not found in nav tree, '
+        nav_tree_for_migration = nav_tree['Compute'] if appliance.version < "5.11" else nav_tree
+
+        if migration_feature_availability_for_role == 'disabled':
+            # Checks migration option is disabled in navigation
+            assert 'Migration' not in nav_tree_for_migration, ('Migration found in nav tree, '
+                                                        'rbac should not allow this')
+        elif migration_feature_availability_for_role == 'enabled':
+            # Checks migration option is enabled in navigation
+            assert 'Migration' in nav_tree_for_migration, ('Migration not found in nav tree, '
                                                     'rbac should allow this')
 
 
@@ -440,7 +454,7 @@ def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert
     Test V2V UI with no source and target provider
 
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive
@@ -457,8 +471,11 @@ def test_v2v_with_no_providers(appliance, source_provider, provider, soft_assert
     is_target_provider_deleted = provider.delete_if_exists(cancel=False)
     view = navigate_to(map_collection, "All")
 
-    # Test1: Check 'Configure provider' get displayed after provider deletion
-    soft_assert(view.configure_providers.is_displayed)
+    # Test1: Check 'Configure provider/Missing Providers' gets displayed after provider deletion
+    if appliance.version < '5.11':
+        soft_assert(view.configure_providers.is_displayed)
+    else:
+        soft_assert(view.missing_providers.is_displayed)
 
     # Test2: Check 'add infra map' don't get displayed on overview page
     soft_assert(not view.create_infra_mapping.is_displayed)

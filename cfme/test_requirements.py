@@ -261,6 +261,12 @@ log_depot = pytest.mark.requirement(
     assignee_id='anikifor',
 )
 
+migration_analytics = pytest.mark.requirement(
+    "Migration Analytics",
+    description='Migration Analytics',
+    assignee_id='ghubale',
+)
+
 multi_region = pytest.mark.requirement(
     "MIQ Multi-Region deployments",
     description='Multi-Region deployment and Central Administration',

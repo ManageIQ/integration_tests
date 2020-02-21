@@ -11,14 +11,19 @@ from wait_for import wait_for
 from widgetastic.utils import VersionPick
 
 from cfme import test_requirements
+from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
 from cfme.utils import os
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.net import net_check
 from cfme.utils.version import LOWEST
+
+SECONDARY_DNS_REGEX = r'(Secondary DNS:\s*)(?P<secondary_dns>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
 
 pytestmark = [
     test_requirements.app_console,
@@ -54,6 +59,15 @@ ext_auth_options = [
     LoginOption('saml', 'saml_enabled', '2'),
     LoginOption('local_login', 'local_login_disabled', '4')
 ]
+
+
+@pytest.fixture
+def secondary_dns(temp_appliance_preconfig_long):
+    command_set = ("ap", RETURN)
+    result = temp_appliance_preconfig_long.appliance_console.run_commands(command_set, timeout=30)
+    secondary_dns = re.search(SECONDARY_DNS_REGEX, result[0]).group("secondary_dns")
+    assert secondary_dns, "Secondary DNS not found"
+    return secondary_dns
 
 
 @pytest.mark.rhel_testing
@@ -440,9 +454,9 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
         initialEstimate: 1/4h
     """
 
-    command_set = ('ap', RETURN, '12', ipa_crud.host1, ipa_crud.ipadomain, ipa_crud.iparealm,
-                   ipa_crud.ipaprincipal, ipa_crud.bind_password, TimedCommand('y', 60),
-                   RETURN, RETURN)
+    command_set = ('ap', RETURN, app_con_menu["config_external_auth"], ipa_crud.host1,
+                   ipa_crud.ipadomain, ipa_crud.iparealm, ipa_crud.ipaprincipal,
+                   ipa_crud.bind_password, TimedCommand('y', 60), RETURN, RETURN)
     configured_appliance.appliance_console.run_commands(command_set, timeout=20)
     configured_appliance.sssd.wait_for_running()
     assert configured_appliance.ssh_client.run_command("cat /etc/ipa/default.conf |"
@@ -450,8 +464,9 @@ def test_appliance_console_ipa(ipa_crud, configured_appliance):
 
     # Unconfigure to cleanup
     # When setup_ipa option selected, will prompt to unconfigure, then to proceed with new config
-    command_set = ('ap', RETURN, '12', TimedCommand('y', 40), TimedCommand('n', 5), RETURN, RETURN)
-    configured_appliance.appliance_console.run_commands(command_set)
+    command_set = ('ap', RETURN, app_con_menu["config_external_auth"], TimedCommand('y', 40),
+                   TimedCommand('n', 5), RETURN, RETURN)
+    configured_appliance.appliance_console.run_commands(command_set, timeout=20)
     wait_for(lambda: not configured_appliance.sssd.running)
 
 
@@ -757,9 +772,8 @@ def test_appliance_console_ha_setup_dc():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_restart():
+def test_appliance_console_restart(temp_appliance_preconfig_funcscope):
     """
     test restarting the appliance
 
@@ -771,27 +785,28 @@ def test_appliance_console_restart():
         testSteps:
             1. 'ap' launches appliance_console.
             2. RETURN clears info screen.
-            3. '16' Stop EVM Server Processes.
-            4. 'Y' Stop CFME Server Gracefully.
-            5. Wait for some time.
-            6. '17' Start EVM Server Processes.
-            7. 'Y' to Start CFME server.
-            8. Wait for some time.
-            9. '21' Quit from appliance_console menu.
-            10. Open appliance IP into Browser.
+            3. '18' restart appliance.
+            4. '1' Restart.
+            5. Verify UI (Open appliance IP into Browser.)
         expectedResults:
             1.
             2.
             3.
             4.
-            5. Cross-check service stopped.
-            6.
-            7.
-            8. Cross-check service started.
-            9.
-            10. Confirm that Appliance is running into browser.
+            5. Confirm that Appliance is running into browser.
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+    restart_appliance_cmd = ("ap", RETURN, app_con_menu["restart_app"], "1", TimedCommand("Y", 0))
+    appliance.appliance_console.run_commands(restart_appliance_cmd, timeout=30)
+
+    wait_for(
+        net_check, num_sec=180, func_args=["22", appliance.hostname, True, 3],
+        message='waiting to shutdown machine',
+        fail_condition=True
+    )
+
+    appliance.wait_for_web_ui()
+    navigate_to(appliance.server, "LoggedIn")
 
 
 @pytest.mark.manual
@@ -1128,9 +1143,9 @@ def test_appliance_console_network_conf_negative(temp_appliance_preconfig_modsco
             "Should not able to set incorrect hostname")
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_vmdb_httpd():
+@pytest.mark.meta(automates=[1337525])
+def test_appliance_console_vmdb_httpd(temp_appliance_preconfig_funcscope):
     """
     check that httpd starts after restarting vmdb
 
@@ -1143,8 +1158,40 @@ def test_appliance_console_vmdb_httpd():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/12h
+        testSteps:
+            1. Stop the EVM service
+            2. press "ap"
+            3. press any key to continue
+            4. Press "7" for "Configure Database"
+            5. Press "4" for "Reset Configured Database"
+            6. Press "Y" for confirmation
+            7. Enter Region Number
+            8. Start EVM service
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7. Check "Database reset successfully" message
+            8. UI should be up and running
+
     """
-    pass
+    appliance = temp_appliance_preconfig_funcscope
+
+    # Stopping the EVM service
+    command_set = ("ap", RETURN, app_con_menu["stop_evm"], TimedCommand("Y", 120))
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+
+    command_set = ("ap", RETURN, app_con_menu["config_db"], "4", "Y", TimedCommand("99", 300))
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert "Database reset successfully" in result[-1], "DB reset failed"
+
+    # Starting the EVM service
+    command_set = ("ap", RETURN, app_con_menu["start_evm"], TimedCommand("Y", 120))
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+    appliance.wait_for_web_ui()
 
 
 @pytest.mark.tier(2)
@@ -1357,9 +1404,11 @@ def test_appliance_console_extend_storage_negative(appliance):
     assert "/dev/vd" not in result[-1], ("extra disks are not present.")
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_appliance_console_static_dns():
+@pytest.mark.meta(automates=[1439348])
+@pytest.mark.parametrize("ip_version_menu", [("2"), ("3")], ids=["ipv4", "ipv6"])
+def test_appliance_console_static_dns(temp_appliance_preconfig_long, secondary_dns,
+                                      ip_version_menu):
     """
     test setting secondary dns and check it"s saved as the new default
 
@@ -1372,13 +1421,50 @@ def test_appliance_console_static_dns():
         caseimportance: low
         caseposneg: negative
         initialEstimate: 1/6h
+        testSteps:
+            1. configure static ipv4
+            2. stop and start EVM service
+            3. reconfigure static ipv4
+            4. configure static ipv6
+            5. stop and start EVM service
+            6. reconfigure static ipv6
+        expectedResults:
+            1.
+            2.  check evm service status while stop and start
+            3. check default secondary DNS is listed or not while entering  DNS
+            4.
+            5. check evm service status while stop and start
+            6. check default secondary DNS is listed or not while entering  DNS
     """
-    pass
+    appliance = temp_appliance_preconfig_long
+    command_set = ("ap", RETURN, app_con_menu["config_net"], ip_version_menu, RETURN, RETURN,
+                   RETURN, RETURN, secondary_dns, RETURN, TimedCommand("Y", 120))
+    appliance.appliance_console.run_commands(command_set, timeout=30)
+
+    def _stop_start_evmserverd(appliance):
+        command_set = ("ap", RETURN, app_con_menu["stop_evm"], "Y")
+        appliance.appliance_console.run_commands(command_set, timeout=30)
+        wait_for(lambda: appliance.evmserverd.running,
+                 delay=10,
+                 timeout=300,
+                 fail_condition=True,
+                 message='Waiting to stop EVM services',
+                 fail_func=appliance.evmserverd.running
+                 )
+
+        command_set = ("ap", RETURN, app_con_menu["start_evm"], "Y")
+        appliance.appliance_console.run_commands(command_set, timeout=30)
+        appliance.evmserverd.wait_for_running()
+
+    _stop_start_evmserverd(appliance)
+    command_set = ("ap", RETURN, app_con_menu["config_net"], ip_version_menu, RETURN,
+                   RETURN, RETURN, RETURN)
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert secondary_dns in result[-1], "Default secondary DNS not found while re-configuring IP"
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_appliance_console_apache_reload_log_rotate():
+def test_appliance_console_apache_reload_log_rotate(appliance):
     """
     Check that apache is not reloaded twice after log rotations.
 
@@ -1388,8 +1474,14 @@ def test_appliance_console_apache_reload_log_rotate():
         initialEstimate: 1/12h
         startsin: 5.10
         testtype: structural
+        testSteps:
+            1. execute command 'cat  /etc/logrotate.d/miq_logs.conf'
+        expectedResults:
+            1. "bin/apache reload"  content should not be in output
     """
-    pass
+    command = "cat /etc/logrotate.d/miq_logs.conf"
+    result = appliance.ssh_client.run_command(command)
+    assert "bin/apache reload" not in result.output
 
 
 @pytest.mark.manual
@@ -1505,3 +1597,58 @@ def test_ap_failed_dbconfig_status(temp_appliance_preconfig_funcscope):
     result = appliance.ssh_client.run_command(command, timeout=30)
     assert not result.success, ('DB configuration should fail because used disk "/dev/sdz" '
                                 'which will not be available')
+
+
+@pytest.mark.tier(0)
+@pytest.mark.meta(automates=[1625377])
+def test_appliance_console_vmdb_log_negative(temp_appliance_preconfig_funcscope):
+    """
+      test to verify database configuration logs on failure
+
+    Bugzilla:
+      1625377
+
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Appliance
+        caseimportance: medium
+        caseposneg: negative
+        initialEstimate: 1/6h
+        testSteps:
+            1. 'ap' launches appliance_console.
+            2. press any key to continue
+            3. press "7" to "Configure Database"
+            4. press "3" tp "Join Region in External Database"
+            5. enter the invalid DB hostname
+            6. enter the port number
+            7. enter the DB name
+            8. enter the user name
+            9. enter the password
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9. wait and verify "Validated failed with error" error message on appliance console
+             and "could not connect to serve" error message in the appliance_console.log file
+      """
+    appliance = temp_appliance_preconfig_funcscope
+    # Creating appliance_console.log file because initially it is not created by default
+    appliance.ssh_client.run_command("touch /var/www/miq/vmdb/log/appliance_console.log")
+
+    ap_console_tail = LogValidator('/var/www/miq/vmdb/log/appliance_console.log',
+                           matched_patterns=['.*ERROR.*could not connect to serve.*'],
+                           hostname=appliance.hostname)
+    ap_console_tail.start_monitoring()
+
+    command_set = ("ap", RETURN, app_con_menu["config_db"], "3", "XXX.XXX.XXX.XXX", RETURN,
+                   RETURN, RETURN, TimedCommand(conf.credentials['default']['password'], 300)
+                   )
+    result = appliance.appliance_console.run_commands(command_set, timeout=30)
+    assert "Validated failed with error" in result[-1], "Database Configuration is not failed"
+
+    ap_console_tail.validate(wait="60s")

@@ -578,13 +578,28 @@ class SavedReport(Updateable, BaseEntity):
     def report(self):
         return self.parent_obj
 
+    @property
+    def report_timezone(self):
+        return self.queued_datetime.split()[-1]
+
     @cached_property
     def queued_datetime_in_title(self):
-        return parsetime.from_american_with_utc(self.queued_datetime).to_saved_report_title_format()
+        # when the timezone is changed,
+        # "display" key will not be available without clearing the cache
+        delattr(self.appliance, "rest_api")
+        try:
+            area = self.appliance.rest_api.settings["display"]["timezone"]
+        except KeyError:
+            area = "UTC"
+        return parsetime.from_american(
+            self.queued_datetime, self.report_timezone
+        ).to_saved_report_title_format(area)
 
     @cached_property
     def datetime_in_tree(self):
-        return parsetime.from_american_with_utc(self.run_datetime).to_iso_with_utc()
+        return parsetime.from_american(
+            self.run_datetime, self.report_timezone
+        ).to_iso(self.report_timezone)
 
     @cached_property
     def data(self):
