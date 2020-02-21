@@ -1718,3 +1718,32 @@ def test_appliance_console_vmdb_log_negative(temp_appliance_preconfig_funcscope)
     assert "Validated failed with error" in result[-1], "Database Configuration is not failed"
 
     ap_console_tail.validate(wait="60s")
+
+
+@pytest.mark.tier(0)
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1720223])
+def test_appliance_console_logfile_config_reboot():
+    """
+        test to verify logfiles disk
+    Bugzilla:
+      1720223
+
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Appliance
+        initialEstimate: 1/4h
+        testSteps:
+            1. get appliance with extra disk
+            2. set "logfile configuration"
+            3. set "Harden Appliance Using SCAP Configuration"
+            4. reboot appliance
+            5. use "df -h" command and check result
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. logfiles should use new disk
+      """
+    pass
