@@ -19,7 +19,7 @@ from cfme.utils.wait import TimedOutError
     required_fields=[['templates', 'small_template']]  # default for create_on_provider
 )
 @pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
-def test_vm_discovery(request, setup_provider, provider, create_vm):
+def test_vm_discovery(provider, create_vm):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 
     Polarion:
