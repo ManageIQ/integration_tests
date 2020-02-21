@@ -10,6 +10,7 @@ from wait_for import TimedOutError
 from wait_for import wait_for
 from widgetastic.utils import VersionPick
 
+import cfme.utils.auth as authutil
 from cfme import test_requirements
 from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
@@ -17,6 +18,7 @@ from cfme.utils import os
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import credentials
 from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
@@ -68,6 +70,13 @@ def secondary_dns(temp_appliance_preconfig_long):
     secondary_dns = re.search(SECONDARY_DNS_REGEX, result[0]).group("secondary_dns")
     assert secondary_dns, "Secondary DNS not found"
     return secondary_dns
+
+
+@pytest.fixture
+def freeipa_provider():
+    # run this on freeipa03 as to not affect tests running on freeipa01
+    auth_prov = authutil.get_auth_crud("freeipa03")
+    yield auth_prov
 
 
 @pytest.mark.rhel_testing
@@ -1718,6 +1727,70 @@ def test_appliance_console_vmdb_log_negative(temp_appliance_preconfig_funcscope)
     assert "Validated failed with error" in result[-1], "Database Configuration is not failed"
 
     ap_console_tail.validate(wait="60s")
+
+
+@pytest.mark.meta(automates=[1670138])
+@pytest.mark.meta(blockers=[BZ(1670138, forced_streams=["5.10"])])
+def test_appliance_overwrite_ssl_ipa(unconfigured_appliance, freeipa_provider):
+    """test to check ssl modifying or not  when it install from freeipa server
+
+    Bugzilla:
+        1670138
+    Polarion:
+        caseimportance: high
+        initialEstimate: 1/8h
+        assignee: dgaikwad
+        casecomponent: Appliance
+        testSteps:
+            1. appliance_console_cli --region=1 --internal --username=<username>
+            --password=<password> --key --dbdisk=/dev/vdb
+            2. appliance_console_cli \
+                --ipaserver=<freeipa_server> \
+                --ipaprincipal=<ipaprincipal> \
+                --ipapassword=<ipapassword> \
+                --iparealm=<iparealm>
+            3. appliance_console_cli --ca=ipa --http-cert
+        expectedResults:
+            1.
+            2.
+            3. content should be modified from var/www/miq/vmdb/certs/server.cer and
+            /var/www/miq/vmdb/certs/server.cer.key files after executing all 3 steps
+    """
+    appliance = unconfigured_appliance
+    server_cer_command = "cat /var/www/miq/vmdb/certs/server.cer"
+    server_cer_key_cmd = "cat /var/www/miq/vmdb/certs/server.cer.key"
+
+    result = appliance.ssh_client.run_command(server_cer_command)
+    assert result.success
+    server_cer_op = result.output
+
+    result = appliance.ssh_client.run_command(server_cer_key_cmd)
+    assert result.success
+    server_cer_key_op = result.output
+    command = (f"appliance_console_cli --region=1 --internal "
+               f"--username={credentials['database']['username']} "
+               f"--password={credentials['database']['password']} "
+               f"--key --dbdisk=/dev/vdb")
+    result = appliance.ssh_client.run_command(command)
+    assert result.success
+
+    command = (f"appliance_console_cli --ipaserver={freeipa_provider.host1} "
+               f"--ipaprincipal={freeipa_provider.ipaprincipal}"
+               f" --ipapassword={freeipa_provider.bind_password}")
+    result = appliance.ssh_client.run_command(command)
+    assert result.success
+
+    command = "appliance_console_cli --ca=ipa --http-cert"
+    result = appliance.ssh_client.run_command(command)
+    assert result.success
+
+    result = appliance.ssh_client.run_command(server_cer_command)
+    assert result.success
+    assert server_cer_op != result.output
+
+    result = appliance.ssh_client.run_command(server_cer_key_cmd)
+    assert result.success
+    assert server_cer_key_op != result.output
 
 
 @pytest.mark.tier(0)
