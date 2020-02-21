@@ -202,14 +202,17 @@ def test_delete_all_snapshots(small_test_vm, provider):
     wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh,
              message="Waiting for second snapshot to disappear")
 
-
-def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
+# We need to ensure this fixture is passed full_template. It's not designed for small_test_vm
+# I renamed it test_vm just to make sure the old fixture wasn't getting used.
+# once we update all of the tests and then remove full_test_template fixture, we can name it
+# full for clarity.
+def verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request,
                            active_snapshot=False):
     if provider.one_of(RHEVMProvider):
         # RHV snapshots have only description, no name
-        snapshot1 = new_snapshot(full_test_vm, has_name=False)
+        snapshot1 = new_snapshot(test_vm, has_name=False)
     else:
-        snapshot1 = new_snapshot(full_test_vm)
+        snapshot1 = new_snapshot(test_vm)
     full_template = getattr(provider.data.templates, 'full_template')
     # Define parameters of the ssh connection
     ssh_kwargs = {
@@ -234,16 +237,16 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     # If we are not testing 'revert to active snapshot' situation, we create another snapshot
     if not active_snapshot:
         if provider.one_of(RHEVMProvider):
-            snapshot2 = new_snapshot(full_test_vm, has_name=False)
+            snapshot2 = new_snapshot(test_vm, has_name=False)
         else:
-            snapshot2 = new_snapshot(full_test_vm)
+            snapshot2 = new_snapshot(test_vm)
         snapshot2.create()
 
     # VM on RHV provider must be powered off before snapshot revert
     if provider.one_of(RHEVMProvider):
-        full_test_vm.power_control_from_cfme(option=full_test_vm.POWER_OFF, cancel=False)
-        full_test_vm.wait_for_vm_state_change(
-            desired_state=full_test_vm.STATE_OFF, timeout=900)
+        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
+        test_vm.wait_for_vm_state_change(
+            desired_state=test_vm.STATE_OFF, timeout=900)
 
     snapshot1.revert_to()
     # Wait for the snapshot to become active
@@ -251,11 +254,11 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=provider.browser.refresh,
              message="Waiting for the first snapshot to become active")
     # VM state after revert should be OFF
-    full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_OFF, timeout=720)
+    test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
     # Let's power it ON again
-    full_test_vm.power_control_from_cfme(option=full_test_vm.POWER_ON, cancel=False)
-    full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=900)
-    soft_assert(full_test_vm.mgmt.is_running, "vm not running")
+    test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
+    test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)
+    soft_assert(test_vm.mgmt.is_running, "vm not running")
     # Wait for successful ssh connection
     wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').success,
              num_sec=400, delay=10, handle_exception=True, fail_func=ssh_client.close(),
@@ -290,6 +293,7 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
     """
     verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
 
+
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 @pytest.mark.provider([VMwareProvider])
 def test_revert_active_snapshot(create_vm, provider, soft_assert, register_event, request):
@@ -311,7 +315,7 @@ def test_revert_active_snapshot(create_vm, provider, soft_assert, register_event
 @pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1552732)])
-def test_revert_to_active_vm(small_test_vm, provider):#This test causes failures upon cleanup. Address.
+def test_revert_to_active_vm(create_vm, provider):
     """
     Test that it's not possible to revert to "Active VM" on RHV.
 
@@ -326,13 +330,13 @@ def test_revert_to_active_vm(small_test_vm, provider):#This test causes failures
         initialEstimate: 1/4h
         casecomponent: Infra
     """
-    snapshot = new_snapshot(small_test_vm, has_name=False)
+    snapshot = new_snapshot(create_vm, has_name=False)
     snapshot.create()
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
-    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
+    create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF)
     snapshot.revert_to()
-    view = navigate_to(small_test_vm, 'SnapshotsAll', force=True)
-    view.tree.click_path(small_test_vm.name, snapshot.description, 'Active VM (Active)')
+    view = navigate_to(create_vm, 'SnapshotsAll', force=True)
+    view.tree.click_path(create_vm.name, snapshot.description, 'Active VM (Active)')
     assert not view.toolbar.revert.is_displayed
 
 
