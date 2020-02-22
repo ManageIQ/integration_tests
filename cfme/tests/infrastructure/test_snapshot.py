@@ -64,7 +64,7 @@ def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
 
 
 @pytest.mark.rhv2
-def test_memory_checkbox(small_test_vm, provider, soft_assert):
+def test_memory_checkbox(create_vm, provider, soft_assert):
     """Tests snapshot memory checkbox
 
     Memory checkbox should be displayed and active when VM is running ('Power On').
@@ -80,18 +80,18 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
         initialEstimate: 1/3h
     """
     # Make sure the VM is powered on
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
+    create_vm.power_control_from_cfme(option=create_vm.POWER_ON, cancel=False)
     # Try to create snapshot with memory on powered on VM
     has_name = not provider.one_of(RHEVMProvider)
-    snapshot1 = new_snapshot(small_test_vm, has_name=has_name, memory=True)
+    snapshot1 = new_snapshot(create_vm, has_name=has_name, memory=True)
     snapshot1.create()
     assert snapshot1.exists
     # Power off the VM
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
-    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
-    soft_assert(small_test_vm.mgmt.is_stopped, "VM is not stopped!")
+    create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF)
+    soft_assert(create_vm.mgmt.is_stopped, "VM is not stopped!")
     # Check that checkbox is not displayed
-    view = navigate_to(small_test_vm, 'SnapshotsAdd')
+    view = navigate_to(create_vm, 'SnapshotsAdd')
     assert not view.snapshot_vm_memory.is_displayed, (
         "Memory checkbox is displayed when VM is stopped")
 
@@ -100,7 +100,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 @pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.meta(automates=[1571291, 1608475])
-def test_snapshot_crud(small_test_vm, provider):
+def test_snapshot_crud(create_vm, provider):
     """Tests snapshot crud
 
     Metadata:
@@ -117,7 +117,7 @@ def test_snapshot_crud(small_test_vm, provider):
     )
     result.start_monitoring()
     # has_name is false if testing RHEVMProvider
-    snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
+    snapshot = new_snapshot(create_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
     # check for the size as "read" check
     if provider.appliance.version >= "5.11" and provider.one_of(RHEVMProvider):
@@ -131,7 +131,7 @@ def test_snapshot_crud(small_test_vm, provider):
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1443411)])
-def test_delete_active_vm_snapshot(small_test_vm):
+def test_delete_active_vm_snapshot(create_vm):
     """
     Check that it's not possible to delete an Active VM from RHV snapshots
 
@@ -145,15 +145,15 @@ def test_delete_active_vm_snapshot(small_test_vm):
         caseposneg: negative
         initialEstimate: 1/12h
     """
-    view = navigate_to(small_test_vm, 'SnapshotsAll')
-    view.tree.click_path(small_test_vm.name, 'Active VM (Active)')
+    view = navigate_to(create_vm, 'SnapshotsAll')
+    view.tree.click_path(create_vm.name, 'Active VM (Active)')
     assert not view.toolbar.delete.is_displayed
 
 
 @pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider])
-def test_create_without_description(small_test_vm):
+def test_create_without_description(create_vm):
     """
     Test that we get an error message when we try to create a snapshot with
     blank description on RHV provider.
@@ -166,12 +166,12 @@ def test_create_without_description(small_test_vm):
         initialEstimate: 1/4h
         casecomponent: Infra
     """
-    if small_test_vm.appliance.version >= '5.10':
+    if create_vm.appliance.version >= '5.10':
         # In 5.10 it's not possible to create a snapshot w/o description,"Create" button is disabled
-        view = navigate_to(small_test_vm, 'SnapshotsAdd')
+        view = navigate_to(create_vm, 'SnapshotsAdd')
         assert view.create.disabled
     else:
-        snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
+        snapshot = new_snapshot(create_vm, has_name=False, create_description=False)
         with pytest.raises(AssertionError):
             snapshot.create()
         view = snapshot.parent_vm.create_view(InfraVmSnapshotAddView)
