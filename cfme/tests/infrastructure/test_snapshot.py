@@ -13,7 +13,6 @@ from cfme.infrastructure.virtual_machines import InfraVmSnapshotView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.path import data_path
