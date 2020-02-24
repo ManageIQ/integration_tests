@@ -989,32 +989,3 @@ def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linu
             compare_linux_vm_data(ssa_vm)
         else:
             compare_windows_vm_data(ssa_vm)
-
-
-@pytest.mark.meta(coverage=[1557452])
-@pytest.mark.manual("manualonly")
-def test_ssa_vm_ec2_agent_tracker():
-    """
-    Bugzilla:
-        1557452
-
-    Polarion:
-        assignee: sbulage
-        casecomponent: SmartState
-        initialEstimate: 1/3h
-        startsin: 5.9
-        tags: smartstate
-        testSteps:
-            1. Add EC2 Provider.
-            2. Update SmartState Docker credentials.
-            3. Update Docker URL to docker.io with Satoe's Private Docker Image
-            in appliance configuration
-            4. Run ssa on Instance.
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Watch evm.log for Agent installation. Check the SSA gathers all information
-            of instance like Users, Groups, Files etc.
-    """
-    pass
