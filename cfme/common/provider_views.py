@@ -1,3 +1,5 @@
+import pytest
+
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version
@@ -589,3 +591,18 @@ class TemplatesCompareView(InfraProvidersView):
         title = "Compare VM Template and Image"
         return (self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']
                 and self.title.text == title)
+
+    def verify_checked_items_compared(self, checkedList, view):
+        # The first and last header items do not contain template names, so are not iterated upon.
+        for header_with_template in view.comparison_table.headers[1:-1]:
+            try:
+                # Split and slice are used to remove extra characters in the header item
+                checkedList.remove(header_with_template.split(' ')[0])
+            except ValueError:
+                pytest.fail(f"Entity {header_with_template.split(' ')[0]} is in compare view, "
+                            f"but was not checked.")
+            except TypeError:
+                pytest.fail('No entities found in compare view.')
+        if len(checkedList) > 0:
+            pytest.fail(f'Some checked items did not appear in the compare view: {checkedList}.')
+        return True

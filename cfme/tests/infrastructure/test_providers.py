@@ -506,22 +506,7 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
     setup_or_skip(request, provider)
 
 
-def verify_checked_items_compared(checkedList, view):
-    # The first and last header items do not contain template names, so are not iterated upon.
-    for header_with_template in view.comparison_table.headers[1:-1]:
-        try:
-            # Split and slice are used to remove extra characters in the header item
-            checkedList.remove(header_with_template.split(' ')[0])
-        except ValueError:
-            pytest.fail(f"Entity {header_with_template.split(' ')[0]} is in compare view, "
-                        f"but was not checked.")
-        except TypeError:
-            pytest.fail('No entities found in compare view.')
-    if len(checkedList) > 0:
-        pytest.fail(f'Some checked items did not appear in the compare view: {checkedList}.')
-    return True
-
-
+@pytest.mark.provider([InfraProvider], selector=ONE, scope="function")
 @pytest.mark.parametrize("min_templates", [2, 4])
 @pytest.mark.meta(blockers=[BZ(1784180, forced_streams=["5.10"])], automates=[1784180])
 def test_compare_provider_templates(appliance, setup_provider_min_templates, provider,
@@ -544,4 +529,5 @@ def test_compare_provider_templates(appliance, setup_provider_min_templates, pro
     view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
     compare_templates_view = provider.create_view(TemplatesCompareView)
     assert compare_templates_view.is_displayed
-    assert verify_checked_items_compared(templateList, compare_templates_view)
+    assert compare_templates_view.verify_checked_items_compared(templateList,
+                                                                compare_templates_view)
