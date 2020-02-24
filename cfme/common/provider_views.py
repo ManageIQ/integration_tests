@@ -1,5 +1,4 @@
 import pytest
-
 from lxml.html import document_fromstring
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version
