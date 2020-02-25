@@ -5,6 +5,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.common.provider import BaseProvider
+from cfme.infrastructure.config_management import ConfigManagerProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
@@ -18,6 +19,10 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.provider([BaseProvider], scope='module'),
     pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"]),
+    pytest.mark.uncollectif(
+        lambda provider: provider.one_of(ConfigManagerProvider),
+        reason="Config Manager providers do not support this feature."
+    )
 ]
 
 
