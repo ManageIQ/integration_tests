@@ -956,13 +956,14 @@ class VM(BaseVM, RetirementMixin):
             raise
         return vm
 
-    def cleanup_on_provider(self):
+    def cleanup_on_provider(self, handle_cleanup_exception=True):
         """Clean up entity on the provider if it has been created on the provider
 
         Helper method to avoid NotFoundError's during test case tear down.
         """
         if self.exists_on_provider:
-            self.mgmt.cleanup()
+            wait_for(lambda: self.mgmt.cleanup, handle_exception=handle_cleanup_exception,
+                     timeout=900)
         else:
             logger.debug('cleanup_on_provider: entity "%s" does not exist', self.name)
 

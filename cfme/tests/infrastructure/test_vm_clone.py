@@ -9,7 +9,7 @@ from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
-from cfme.utils.wait import wait_for
+
 
 filter_fields = {
     'required_fields': [['provisioning', 'template'],
@@ -34,7 +34,7 @@ def clone_vm_name():
 
 
 @pytest.fixture
-def create_vm(appliance, provider, request, handle_cleanup_exception=True):
+def create_vm(appliance, provider, request):
     """Fixture to provision vm to the provider being tested"""
     vm_name = fauxfactory.gen_alphanumeric(15, start="test_clone_")
     vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
@@ -44,8 +44,7 @@ def create_vm(appliance, provider, request, handle_cleanup_exception=True):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     yield vm
-    wait_for(lambda: vm.cleanup_on_provider, handle_exception=handle_cleanup_exception,
-             timeout=900)
+    vm.cleanup_on_provider()
 
 
 @pytest.mark.provider([VMwareProvider], **filter_fields)
