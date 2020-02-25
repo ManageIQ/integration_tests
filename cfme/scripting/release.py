@@ -2,7 +2,8 @@
 import re
 import sys
 from collections import defaultdict
-from datetime import date
+from datetime import datetime
+from datetime import timedelta
 
 import click
 import github
@@ -72,20 +73,27 @@ def clean_body(string):
 
 
 def get_prs(release, old_release, gh):
-    """Get merged PRs between the given releases"""
+    """Get merged PRs between the given releases
 
-    # GH searching supports by date, so get dates for the release objects
-    old_date = old_release.created_at.date().isoformat()  # iso 8601 date
+    This is a bit screwy, GH API doesn't support directly listing PRs merged between tags/releases
+    The graphql v4 endpoint may provide a slightly better way to fetch these objects
+        but still its not directly filtered by the desired range on the request
+    """
+
+    # GH searching supports by datetime, so get datetimes for the release objects
+    old_date = old_release.created_at
+    # add to start datetime else it will include the commit for the release, not part of the diff
+    old_date = old_date + timedelta(seconds=5)
     if release == MASTER:
-        new_date = date.today().isoformat()
+        new_date = datetime.now()
     else:
-        new_date = release.created_at.date().isoformat()
+        new_date = release.created_at
 
     pulls = gh.search_issues(
         "",  # empty query string, required positional arg
         type="pr",
         repo=REPO_NAME,
-        merged=f'{old_date}..{new_date}',  # gh query format for range
+        merged=f'{old_date.isoformat()}..{new_date.isoformat()}',  # ISO 8601 datetimes for range
     )
 
     prs = []
