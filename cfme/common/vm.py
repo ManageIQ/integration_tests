@@ -963,7 +963,7 @@ class VM(BaseVM, RetirementMixin):
         """
         if self.exists_on_provider:
             wait_for(lambda: self.mgmt.cleanup, handle_exception=handle_cleanup_exception,
-                     timeout=900)
+                     timeout=300)
         else:
             logger.debug('cleanup_on_provider: entity "%s" does not exist', self.name)
 
