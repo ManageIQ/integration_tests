@@ -812,8 +812,7 @@ class InfraVm(VM):
             if self.parent_vm.provider.one_of(RHEVMProvider):
                 child = view.tree.child_items(root_item)
                 last_snapshot = view.tree.child_items(child[0])[0]
-                return (len(child) == 1 and
-                        child[0].text == 'Active VM (Active)' and
+                return (child[0].text == 'Active VM (Active)' and
                         last_snapshot.text == title)
             else:
                 return has_child(view.tree, f'{title} (Active)', root_item)

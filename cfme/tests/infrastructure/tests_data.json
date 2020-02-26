@@ -1,0 +1,66 @@
+{
+    "testcases": [
+        {
+            "id": "test_verify_revert_snapshot[virtualcenter-6.7-full_template]",
+            "title": "test_verify_revert_snapshot[virtualcenter-6.7-full_template]",
+            "description": "Tests revert snapshot\n\n    Only valid for RHV 4+ providers, due to EOL we are not explicitly checking/blocking on this\n\n    Metadata:\n        test_flag: snapshot, provision\n\n    Bugzilla:\n        1561618",
+            "caseautomation": "automated",
+            "automation_script": "cfme/tests/infrastructure/test_snapshot.py#L236",
+            "assignee-id": "prichard",
+            "caselevel": 2,
+            "initial-estimate": "1/4h",
+            "linked-items": [
+                "VM/Instance Snapshots"
+            ],
+            "params": [
+                "create_vm",
+                "provider"
+            ],
+            "nodeid": "cfme/tests/infrastructure/test_snapshot.py::test_verify_revert_snapshot[virtualcenter-6.7-full_template]",
+            "assignee": "prichard",
+            "casecomponent": "Infra",
+            "initialEstimate": "1/4h"
+        },
+        {
+            "id": "test_verify_revert_snapshot[rhevm-4.2-full_template]",
+            "title": "test_verify_revert_snapshot[rhevm-4.2-full_template]",
+            "description": "Tests revert snapshot\n\n    Only valid for RHV 4+ providers, due to EOL we are not explicitly checking/blocking on this\n\n    Metadata:\n        test_flag: snapshot, provision\n\n    Bugzilla:\n        1561618",
+            "caseautomation": "automated",
+            "automation_script": "cfme/tests/infrastructure/test_snapshot.py#L236",
+            "assignee-id": "prichard",
+            "caselevel": 2,
+            "initial-estimate": "1/4h",
+            "linked-items": [
+                "VM/Instance Snapshots"
+            ],
+            "params": [
+                "create_vm",
+                "provider"
+            ],
+            "nodeid": "cfme/tests/infrastructure/test_snapshot.py::test_verify_revert_snapshot[rhevm-4.2-full_template]",
+            "assignee": "prichard",
+            "casecomponent": "Infra",
+            "initialEstimate": "1/4h"
+        }
+    ],
+    "results": [
+        {
+            "title": "test_verify_revert_snapshot[virtualcenter-6.7-full_template]",
+            "verdict": "waiting",
+            "id": "test_verify_revert_snapshot[virtualcenter-6.7-full_template]",
+            "params": {
+                "create_vm": "full_template",
+                "provider": "DataProvider(category='infra', type_name='virtualcenter', version=6.7, klass=<class 'cfme.infrastructure.provider.virtualcenter.VMwareProvider'>)"
+            }
+        },
+        {
+            "title": "test_verify_revert_snapshot[rhevm-4.2-full_template]",
+            "verdict": "waiting",
+            "id": "test_verify_revert_snapshot[rhevm-4.2-full_template]",
+            "params": {
+                "create_vm": "full_template",
+                "provider": "DataProvider(category='infra', type_name='rhevm', version=4.2, klass=<class 'cfme.infrastructure.provider.rhevm.RHEVMProvider'>)"
+            }
+        }
+    ]
+}
