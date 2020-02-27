@@ -15,6 +15,7 @@ from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
+
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
 
 
@@ -119,7 +120,12 @@ def test_catalog_item_crud(appliance, dialog, catalog):
 
     # DELETE
     cat_item.delete()
-    view.flash.assert_message("The selected Catalog Item was deleted")
+    msg = (
+        f'The catalog item "{cat_item.name}" has been successfully deleted'
+        if appliance.version > "5.11"
+        else "The selected Catalog Item was deleted"
+    )
+    view.flash.assert_message(msg)
     assert not cat_item.exists
 
 
