@@ -14,12 +14,13 @@ from cfme.common import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.common import TimelinesView
+from cfme.common.candu_views import ClusterInfraUtilizationView
 from cfme.common.provider_views import SummaryAccordionView
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
-from cfme.optimize.utilization import UtilizationClusterView
+from cfme.optimize.utilization import ClusterUtilizationTrendsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -399,9 +400,18 @@ class Timelines(CFMENavigateStep):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
-@navigator.register(Cluster, "Utilts")
+@navigator.register(Cluster, "Utilization")
+class Utilization(CFMENavigateStep):
+    VIEW = ClusterInfraUtilizationView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
+
+
+@navigator.register(Cluster, "UtilTrendSummary")
 class ClusterOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationClusterView
+    VIEW = ClusterUtilizationTrendsView
 
     prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
 

@@ -20,7 +20,7 @@ from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import WaitTab
 
 
-class UtilizationView(BaseLoggedInPage):
+class UtilizationTrendsView(BaseLoggedInPage):
     """Base class for header and nav check"""
 
     title = Text(locator='//*[@id="explorer_title"]')
@@ -34,7 +34,7 @@ class UtilizationView(BaseLoggedInPage):
         ]
 
 
-class UtilizationAllView(UtilizationView):
+class UtilizationTrendsAllView(UtilizationTrendsView):
     @property
     def is_displayed(self):
         return self.in_utilization and self.tree.is_displayed
@@ -57,7 +57,7 @@ class ReportOptionView(View):
     calendar = DatePicker(id='miq_date_2')
 
 
-class UtilizationDatastoreView(UtilizationAllView):
+class DatastoreUtilizationTrendsView(UtilizationTrendsView):
     @View.nested
     class summary(WaitTab):  # noqa
         TAB_NAME = 'Summary'
@@ -85,7 +85,7 @@ class UtilizationDatastoreView(UtilizationAllView):
         return self.in_utilization and is_title_matched
 
 
-class UtilizationHostView(UtilizationAllView):
+class HostUtilizationTrendsView(UtilizationTrendsView):
     @View.nested
     class summary(WaitTab):  # noqa
         TAB_NAME = 'Summary'
@@ -116,7 +116,7 @@ class UtilizationHostView(UtilizationAllView):
         return self.in_utilization and is_title_matched
 
 
-class UtilizationClusterView(UtilizationHostView):
+class ClusterUtilizationTrendsView(HostUtilizationTrendsView):
     @property
     def is_displayed(self):
         is_title_matched = bool(
@@ -125,7 +125,7 @@ class UtilizationClusterView(UtilizationHostView):
         return self.in_utilization and is_title_matched
 
 
-class UtilizationProviderView(UtilizationHostView):
+class ProviderUtilizationTrendsView(HostUtilizationTrendsView):
     @property
     def is_displayed(self):
         is_title_matched = bool(
@@ -134,7 +134,7 @@ class UtilizationProviderView(UtilizationHostView):
         return self.in_utilization and is_title_matched
 
 
-class UtilizationRegionView(UtilizationAllView):
+class RegionUtilizationTrendsView(UtilizationTrendsView):
     @View.nested
     class summary(WaitTab):  # noqa
         TAB_NAME = 'Summary'
@@ -194,7 +194,7 @@ class UtilizationCollection(BaseCollection):
 
 @navigator.register(UtilizationCollection, "All")
 class All(CFMENavigateStep):
-    VIEW = UtilizationAllView
+    VIEW = UtilizationTrendsAllView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
     def step(self, *args, **kwargs):
@@ -204,7 +204,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Utilization, "Region")
 class RegionOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationRegionView
+    VIEW = RegionUtilizationTrendsView
     prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self, *args, **kwargs):
@@ -213,7 +213,7 @@ class RegionOptimizeUtilization(CFMENavigateStep):
 
 @navigator.register(Utilization, "Provider")
 class ProviderOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationProviderView
+    VIEW = ProviderUtilizationTrendsView
     prerequisite = NavigateToSibling("Region")
 
     def step(self, *args, **kwargs):
@@ -223,7 +223,7 @@ class ProviderOptimizeUtilization(CFMENavigateStep):
 
 @navigator.register(Utilization, "Cluster")
 class ClusterOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationClusterView
+    VIEW = ClusterUtilizationTrendsView
     prerequisite = NavigateToSibling("Region")
 
     def step(self, *args, **kwargs):
@@ -238,7 +238,7 @@ class ClusterOptimizeUtilization(CFMENavigateStep):
 
 @navigator.register(Utilization, "Host")
 class HostOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationHostView
+    VIEW = HostUtilizationTrendsView
     prerequisite = NavigateToSibling("Region")
 
     def step(self, *args, **kwargs):
@@ -254,7 +254,7 @@ class HostOptimizeUtilization(CFMENavigateStep):
 
 @navigator.register(Utilization, "Datastore")
 class DatastoreOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationDatastoreView
+    VIEW = DatastoreUtilizationTrendsView
     prerequisite = NavigateToSibling("Region")
 
     def step(self, *args, **kwargs):

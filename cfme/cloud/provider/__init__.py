@@ -28,7 +28,6 @@ from cfme.common.vm_views import VMToolbar
 from cfme.modeling.base import BaseCollection
 from cfme.networks.views import NetworkProviderDetailsView
 from cfme.networks.views import SecurityGroupView
-from cfme.optimize.utilization import UtilizationProviderView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -383,16 +382,3 @@ class CloudTenants(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary("Relationships").click_at('Cloud Tenants')
-
-
-@navigator.register(CloudProvider, "Utilts")
-class ProviderOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationProviderView
-
-    prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
-
-    def step(self, *args, **kwargs):
-        path = [self.appliance.region(), "Providers", self.obj.name]
-        if self.appliance.version >= "5.11":
-            path.insert(0, "Enterprise")
-        self.prerequisite_view.tree.click_path(*path)

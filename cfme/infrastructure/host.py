@@ -28,7 +28,7 @@ from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.networks.views import OneHostSubnetView
-from cfme.optimize.utilization import UtilizationHostView
+from cfme.optimize.utilization import HostUtilizationTrendsView
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -768,9 +768,9 @@ class HostNetworks(CFMENavigateStep):
         self.prerequisite_view.entities.summary('Properties').click_at('Network')
 
 
-@navigator.register(Host, "Utilts")
+@navigator.register(Host, "UtilTrendSummary")
 class HostOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationHostView
+    VIEW = HostUtilizationTrendsView
 
     prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
 

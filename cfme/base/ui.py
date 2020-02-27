@@ -37,7 +37,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.intelligence.rss import RSSView
 from cfme.intelligence.timelines import CloudIntelTimelinesView
-from cfme.optimize.utilization import UtilizationRegionView
+from cfme.optimize.utilization import RegionUtilizationTrendsView
 from cfme.utils import conf
 from cfme.utils.appliance import MiqImplementationContext
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -1096,9 +1096,9 @@ class RegionAdvanced(CFMENavigateStep):
         self.prerequisite_view.advanced.select()
 
 
-@navigator.register(Region, "Utilts")
+@navigator.register(Region, "UtilTrendSummary")
 class RegionOptimizeUtilization(CFMENavigateStep):
-    VIEW = UtilizationRegionView
+    VIEW = RegionUtilizationTrendsView
 
     prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
 
