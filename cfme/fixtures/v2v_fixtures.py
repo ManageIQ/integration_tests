@@ -212,8 +212,8 @@ def vddk_url():
     return url
 
 
-def get_conversion_data(target_provider):
-    if target_provider.one_of(RHEVMProvider):
+def get_conversion_data(appliance, target_provider):
+    if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11':
         resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
         engine_key = conf.credentials[target_provider.data["ssh_creds"]]
         auth_user = engine_key.username
@@ -266,7 +266,11 @@ def set_conversion_host_api(
         vmware_vddk_package_url = vddk_url()
 
     for host in conversion_data["hosts"]:
-        conversion_entity = "hosts" if target_provider.one_of(RHEVMProvider) else "vms"
+        conversion_entity = (
+            "hosts"
+            if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11'
+            else "vms"
+        )
         host_id = (
             getattr(appliance.rest_api.collections, conversion_entity).filter(
                 Q.from_dict({"name": host})).resources[0].id)
