@@ -29,6 +29,7 @@ pytestmark = [
         scope="module",
     ),
     pytest.mark.usefixtures("v2v_provider_setup"),
+    pytest.mark.meta(blocks=[1807770]),
     test_requirements.v2v
 ]
 
