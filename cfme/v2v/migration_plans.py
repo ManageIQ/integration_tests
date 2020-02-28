@@ -318,7 +318,9 @@ class MigrationPlanRequestDetailsView(View):
     migration_request_details_list = MigrationPlanRequestDetailsList("plan-request-details-list")
     paginator_view = View.include(V2VPaginatorPane, use_parent=True)
     download_logs = Dropdown("Download Log")
-    flash = V2VFlashMessages('.//div[@class="modal-wizard-alert"]')
+    @View.nested
+    class flash(V2VFlashMessages):
+        ROOT = './/div[@class="modal-wizard-alert"]'
 
     @property
     def is_displayed(self):

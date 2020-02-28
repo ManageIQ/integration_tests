@@ -106,7 +106,11 @@ class InfrastructureMappingForm(InfrastructureMappingView):
         plan_type = BootstrapSelect("targetProvider")
         name_help_text = Text(locator='.//div[contains(@id,"name")]/span')
         description_help_text = Text(locator='.//div[contains(@id,"description")]/span')
-        flash = V2VFlashMessages('.//div[@class="modal-wizard-alert"]')
+
+        @View.nested
+        class flash(V2VFlashMessages):
+            ROOT = './/div[@class="modal-wizard-alert"]'
+
         fill_strategy = WaitFillViewStrategy()
 
         def after_fill(self, was_change):

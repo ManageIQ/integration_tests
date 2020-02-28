@@ -65,7 +65,7 @@ def address(self):
 
 
 class LoginPage(View):
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    flash = View.nested(FlashMessages)
 
     class details(View):  # noqa
         region = Text('.//p[normalize-space(text())="Region:"]/span')

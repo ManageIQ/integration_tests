@@ -87,7 +87,7 @@ def test_server_actions(physical_servers_collection, physical_servers, provider,
 
     def assert_handler_displayed():
         if view.flash.is_displayed:
-            return view.flash.messages[0].text == message
+            return view.flash[0].text == message
 
         return False
 

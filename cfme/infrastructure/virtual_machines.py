@@ -1059,7 +1059,7 @@ class InfraVm(VM):
                 view.form.cancel_button.click()
             else:
                 view.form.save_button.click()
-                wait_for(lambda: len(view.flash.messages) > 0)
+                wait_for(lambda: len(view.flash.read()) > 0)
                 view.flash.assert_success_message('Management Engine Relationship saved')
                 view = navigate_to(self.vm, 'Details')
                 server_details = view.entities.summary("Properties").get_text_of("Server")
@@ -1069,7 +1069,7 @@ class InfraVm(VM):
             view = self.navigate()
             view.form.fill({'server': '<Not a Server>'})
             view.form.save_button.click()
-            wait_for(lambda: len(view.flash.messages) > 0)
+            wait_for(lambda: len(view.flash.read()) > 0)
             view.flash.assert_success_message('Management Engine Relationship saved')
             view = navigate_to(self.vm, 'Details')
             fields = view.entities.summary("Properties").fields

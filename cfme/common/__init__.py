@@ -45,7 +45,7 @@ class BaseLoggedInPage(View):
     logged in.
     """
     CSRF_TOKEN = '//meta[@name="csrf-token"]'
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    flash = View.nested(FlashMessages)
     # TODO don't use `help` here, its a built-in
     help = NavDropdown(id="help-menu")
     configuration_settings = Text('//li[.//a[@title="Configuration"]]')  # 5.11+

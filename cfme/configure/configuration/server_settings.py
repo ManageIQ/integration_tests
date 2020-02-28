@@ -80,8 +80,9 @@ class ServerRolesView511(BaseServerRolesView):
 class ServerInformationView(View):
     """ Class represents full Server tab view"""
     title = Text("//div[@id='settings_server']/h3[1]")
-    # Local Flash widget for validation since class nested under a class inheriting BaseLoggedInPage
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    # Use local FlashMessages view for validation, since this class is nested under
+    # under a class inheriting BaseLoggedInPage.
+    flash = View.nested(FlashMessages)
     save = Button('Save')
     reset = Button('Reset')
 
@@ -549,8 +550,9 @@ class ExternalAuthenticationView(View):
 class ServerAuthenticationView(View):
     """ Server Authentication View."""
     title = Text("//div[@id='settings_authentication']/h3[1]")
-    # Local Flash widget for validation since class nested under a class inheriting BaseLoggedInPage
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
+    # Use local FlashMessages view for validation,
+    # since this class is nested under a class inheriting BaseLoggedInPage.
+    flash = View.nested(FlashMessages)
     hours_timeout = BootstrapSelect(id='session_timeout_hours')
     minutes_timeout = BootstrapSelect(id='session_timeout_mins')
     # TODO new button widget to handle buttons_on buttons_off divs

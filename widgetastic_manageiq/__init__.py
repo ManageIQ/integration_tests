@@ -5924,26 +5924,15 @@ class DiagnosticsTreeView(BootstrapTreeview):
 
 
 class V2VFlashMessage(FlashMessage):
-    """Overriding text method of FlashMessage for V2V"""
+    """Override the text locator for inline notifications in V2V."""
 
-    @property
-    def text(self):
-        return self.browser.text(self)
+    TEXT_LOCATOR = "."
 
 
 class V2VFlashMessages(FlashMessages):
-    """Overriding FlashMessages method for xpath of alerts in V2V"""
+    """Override the default ParametrizedView class for inline notifications in V2V."""
 
-    @property
-    def messages(self):
-        result = []
-        msg_xpath = './/div[contains(@class, "alert")]'
-        try:
-            for flash_div in self.browser.elements(msg_xpath, check_visibility=True):
-                result.append(V2VFlashMessage(self, flash_div, logger=self.logger))
-        except NoSuchElementException:
-            pass
-        return result
+    msg_class = V2VFlashMessage
 
 
 class SSUICardPFInfoStatus(Widget):
