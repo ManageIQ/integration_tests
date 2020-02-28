@@ -133,8 +133,11 @@ class ProviderFilter(object):
         required_test_flags = [flag.strip() for flag in required_test_flags]
 
         if self.required_flags is None:
-            if required_test_flags is None:
-                # Providers with required_test_flags should have required_flag in tests
+            if required_test_flags == ['']:
+                # Providers with no required_test_flags should not be filtered
+                return True
+            else:
+                # Providers with required_test_flags should be filtered like v2v
                 return False
             return None
         if self.required_flags:
