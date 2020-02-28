@@ -29,7 +29,7 @@ pytestmark = [
         scope="module",
     ),
     pytest.mark.usefixtures("v2v_provider_setup"),
-    pytest.mark.meta(blocks=[1807770]),
+    pytest.mark.meta(blockers=[1807770]),
     test_requirements.v2v
 ]
 
@@ -55,7 +55,7 @@ def cancel_migration_plan(appliance, provider, mapping_data_vm_obj_mini):
             func=get_plan_status_and_cancel,
             delay=10,
             num_sec=180,
-            message="migration plan is in progress, be patient please")
+            message="Migration plan failed to advance")
 
         request_details_list.cancel_migration(vm_detail, confirmed=True)  # Cancel migration
 
