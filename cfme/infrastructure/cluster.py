@@ -20,6 +20,7 @@ from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.virtual_machines import VmsTemplatesAllView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
+from cfme.optimize.utilization import ClusterUtilizationTrendsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -406,3 +407,22 @@ class Utilization(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
+
+
+@navigator.register(Cluster, "UtilTrendSummary")
+class ClusterOptimizeUtilization(CFMENavigateStep):
+    VIEW = ClusterUtilizationTrendsView
+
+    prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
+
+    def step(self, *args, **kwargs):
+        path = [
+            self.appliance.region(),
+            "Providers",
+            self.obj.provider.name,
+            "Cluster / Deployment Role",
+            self.obj.name,
+        ]
+        if self.appliance.version >= "5.11":
+            path.insert(0, "Enterprise")
+        self.prerequisite_view.tree.click_path(*path)

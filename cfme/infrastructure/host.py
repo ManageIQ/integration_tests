@@ -28,6 +28,7 @@ from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.networks.views import OneHostSubnetView
+from cfme.optimize.utilization import HostUtilizationTrendsView
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -462,6 +463,17 @@ class Host(
         except ValueError:
             raise RestLookupError(f'No host rest entity found matching name {self.name}')
 
+    @property
+    def cluster(self):
+        """It return cluster for current host"""
+        rest_cluster = self.appliance.rest_api.collections.clusters.get(
+            id=self.rest_api_entity.ems_cluster_id
+        )
+        return self.appliance.collections.clusters.instantiate(
+            name=rest_cluster.name,
+            provider=self.provider
+        )
+
 
 @attr.s
 class HostsCollection(BaseCollection):
@@ -754,3 +766,23 @@ class HostNetworks(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Properties').click_at('Network')
+
+
+@navigator.register(Host, "UtilTrendSummary")
+class HostOptimizeUtilization(CFMENavigateStep):
+    VIEW = HostUtilizationTrendsView
+
+    prerequisite = NavigateToAttribute("appliance.collections.utilization", "All")
+
+    def step(self, *args, **kwargs):
+        path = [
+            self.appliance.region(),
+            "Providers",
+            self.obj.provider.name,
+            "Cluster / Deployment Role",
+            self.obj.cluster.name,
+            self.obj.name,
+        ]
+        if self.appliance.version >= "5.11":
+            path.insert(0, "Enterprise")
+        self.prerequisite_view.tree.click_path(*path)
