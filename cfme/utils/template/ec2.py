@@ -67,7 +67,8 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                 ami.set_tag("Name", self.template_name)
                 return True
 
-            except Exception:
+            except Exception as e:
+                logger.exception("Exception occurred:{}".format(e))
                 return False
         else:
             try:
@@ -88,7 +89,8 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                 ami.set_tag("Name", self.template_name)
                 return True
 
-            except Exception:
+            except Exception as e:
+                logger.exception("Exception occurred:{}".format(e))
                 return False
 
     def run(self):
