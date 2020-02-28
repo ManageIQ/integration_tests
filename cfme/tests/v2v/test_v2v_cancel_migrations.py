@@ -54,7 +54,7 @@ def cancel_migration_plan(appliance, provider, mapping_data_vm_obj_mini):
         wait_for(
             func=get_plan_status_and_cancel,
             delay=10,
-            num_sec=120,
+            num_sec=180,
             message="migration plan is in progress, be patient please")
 
         request_details_list.cancel_migration(vm_detail, confirmed=True)  # Cancel migration
