@@ -131,6 +131,7 @@ def test_firewalld_services_are_active(appliance):
     assert default_iface_zone == manageiq_zone
 
 
+@pytest.mark.meta(automates=[BZ(1712944)])
 @pytest.mark.ignore_stream("upstream", "5.10")
 @pytest.mark.uncollectif(lambda appliance: appliance.is_pod,
                          reason=POD_REASON)
