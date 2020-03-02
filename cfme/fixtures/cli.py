@@ -10,7 +10,7 @@ import requests
 from lxml import etree
 
 import cfme.utils.auth as authutil
-from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.fixtures.appliance import _collect_logs
 from cfme.fixtures.appliance import sprout_appliances
@@ -263,7 +263,7 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     _, _, appl2 = configure_appliances_ha(ha_multiple_preupdate_appliances, app_creds["password"])
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl2).setup()
-    provider_app_crud(EC2Provider, appl2).setup()
+    provider_app_crud(OpenStackProvider, appl2).setup()
     return ha_multiple_preupdate_appliances
 
 
@@ -283,7 +283,7 @@ def replicated_appliances_with_providers(multiple_appliances):
     appl2.add_pglogical_replication_subscription(appl1.hostname)
     # Add infra/cloud providers
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     return multiple_appliances
 
 
@@ -307,7 +307,7 @@ def ext_appliances_with_providers(multiple_preupdate_appliances, app_creds_modsc
     appl2.wait_for_web_ui()
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     return multiple_preupdate_appliances
 
 
@@ -325,7 +325,7 @@ def appliance_with_providers(appliance_preupdate):
     appl1 = appliance_preupdate
     # Add infra/cloud providers
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     return appliance_preupdate
 
 
