@@ -213,8 +213,13 @@ def vddk_url():
 
 
 def get_conversion_data(appliance, target_provider):
-    if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11':
-        resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
+    if target_provider.one_of(RHEVMProvider):
+        resource_type = (
+            "ManageIQ::Providers::Redhat::InfraManager::Host"
+            if appliance.version < '5.11'
+            else "ManageIQ::Providers::Openstack::CloudManager::Vm"
+        )
+        resource_type = "ManageIQ::Providers::Openstack::CloudManager::Vm"
         engine_key = conf.credentials[target_provider.data["ssh_creds"]]
         auth_user = engine_key.username
         ssh_client = ssh.SSHClient(
@@ -224,7 +229,10 @@ def get_conversion_data(appliance, target_provider):
         )
         private_key = ssh_client.run_command("cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
         try:
-            hosts = [h.name for h in target_provider.hosts.all()]
+            if appliance.version < '5.11':
+                hosts = [h.name for h in target_provider.hosts.all()]
+            else:
+                hosts = target_provider.data["conversion_instances"]
         except KeyError:
             pytest.skip("No conversion host on provider")
     else:
@@ -257,7 +265,7 @@ def set_conversion_host_api(
         pytest.skip(
             "Failed to delete all conversion hosts: {}".format(delete_hosts.output))
 
-    conversion_data = get_conversion_data(target_provider)
+    conversion_data = get_conversion_data(appliance, target_provider)
     if transformation_method == "SSH":
         vmware_key = conf.credentials[
             source_provider.data["private-keys"]["vmware-ssh-key"]["credentials"]]
