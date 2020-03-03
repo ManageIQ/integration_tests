@@ -1094,3 +1094,42 @@ def test_service_ansible_service_name(request, appliance, dialog_with_catalog_it
     # Go to Ordered service page and assert new name of service.
     service = MyService(appliance, service_name)
     assert service.exists
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1534039])
+def test_service_ansible_playbook_order_non_ascii(
+    appliance,
+    ansible_catalog_item,
+    ansible_service_request,
+    ansible_service_catalog,
+    ansible_service_funcscope,
+):
+    """
+    Look for Standard ouptut
+    Bugzilla:
+        1534039
+    Polarion:
+        assignee: sbulage
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: ansible_embed
+    """
+    ele_name = "hosts"
+    # Extracting Ansible Catalog Item and Element name from fixture.
+    ansible_cat_item, ansible_catalog = dialog_with_catalog_item(ele_name)
+    # Navigate to Service Catalog order page.
+    service_catalogs = ServiceCatalogs(
+        appliance, ansible_catalog, ansible_cat_item.name)
+    view = navigate_to(service_catalogs, 'Order')
+    # Non-ASCII hostname element name.
+    hostname = fauxfactory.gen_alphanumeric(start="àcon_")
+    view.fields(ele_name).fill(hostname)
+    time.sleep(5)
+    view.submit_button.click()
+    ansible_service_request.wait_for_request()
+
+    # Go to Ordered service page and assert hostname in it.
+    view = navigate_to(ansible_service_funcscope, "Details")
+    assert view.provisioning.credentials.get_text_of("Hosts") == hostname
