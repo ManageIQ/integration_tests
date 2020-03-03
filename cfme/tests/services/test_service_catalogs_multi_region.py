@@ -23,7 +23,7 @@ pytestmark = [
 def test_service_provision_retire_from_global_region(item_type, catalog_location, context):
     """
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         caseimportance: high
         casecomponent: Services
         initialEstimate: 1/3h

@@ -36,7 +36,7 @@ def test_replication_subscription_crud():
     Add/Edit/Remove replication subscription
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: critical
         initialEstimate: 1/4h
@@ -72,7 +72,7 @@ def test_add_duplicate_subscription():
     Try adding duplicate record
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
@@ -107,7 +107,7 @@ def test_add_bad_subscription():
       2. remote appliance isn't available and etc
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseposneg: negative
         caseimportance: low
@@ -138,7 +138,7 @@ def test_edit_bad_subscription():
     Try changing subscriptions from good to bad or vise versa
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseposneg: negative
         caseimportance: low
@@ -170,7 +170,7 @@ def test_cancel_subscription():
     Try canceling adding/changing/removing subscriptions
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -200,7 +200,7 @@ def test_change_subscription_type():
     Try setting/removing global/remote subscription
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -241,7 +241,7 @@ def test_subscription_disruption():
     Test restoring subscription after temporary disruptions
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseposneg: negative
         caseimportance: medium
@@ -285,7 +285,7 @@ def test_subscription_region_unavailable():
     remote region has become unavailable
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: high
         initialEstimate: 1/4h
