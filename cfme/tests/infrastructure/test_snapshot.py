@@ -13,7 +13,6 @@ from cfme.infrastructure.virtual_machines import InfraVmSnapshotView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.path import data_path
@@ -28,31 +27,6 @@ pytestmark = [
 ]
 
 
-def provision_vm(provider, template):
-    vm_name = random_vm_name(context="snpst")
-    vm = provider.appliance.collections.infra_vms.instantiate(vm_name,
-                                                              provider,
-                                                              template.name)
-
-    if not provider.mgmt.does_vm_exist(vm_name):
-        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    return vm
-
-
-@pytest.fixture(scope="function")
-def small_test_vm(setup_provider, provider, small_template, request):
-    vm = provision_vm(provider, small_template)
-    yield vm
-    wait_for(lambda: vm.cleanup_on_provider, handle_exception=True, timeout=900)
-
-
-@pytest.fixture(scope="function")
-def full_test_vm(setup_provider, provider, full_template, request):
-    vm = provision_vm(provider, full_template)
-    yield vm
-    vm.cleanup_on_provider()
-
-
 def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
     name = fauxfactory.gen_alphanumeric(8)
     return InfraVm.Snapshot(
@@ -64,7 +38,7 @@ def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
 
 
 @pytest.mark.rhv2
-def test_memory_checkbox(small_test_vm, provider, soft_assert):
+def test_memory_checkbox(create_vm, provider, soft_assert):
     """Tests snapshot memory checkbox
 
     Memory checkbox should be displayed and active when VM is running ('Power On').
@@ -80,18 +54,18 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
         initialEstimate: 1/3h
     """
     # Make sure the VM is powered on
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
+    create_vm.power_control_from_cfme(option=create_vm.POWER_ON, cancel=False)
     # Try to create snapshot with memory on powered on VM
     has_name = not provider.one_of(RHEVMProvider)
-    snapshot1 = new_snapshot(small_test_vm, has_name=has_name, memory=True)
+    snapshot1 = new_snapshot(create_vm, has_name=has_name, memory=True)
     snapshot1.create()
     assert snapshot1.exists
     # Power off the VM
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
-    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
-    soft_assert(small_test_vm.mgmt.is_stopped, "VM is not stopped!")
+    create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF)
+    soft_assert(create_vm.mgmt.is_stopped, "VM is not stopped!")
     # Check that checkbox is not displayed
-    view = navigate_to(small_test_vm, 'SnapshotsAdd')
+    view = navigate_to(create_vm, 'SnapshotsAdd')
     assert not view.snapshot_vm_memory.is_displayed, (
         "Memory checkbox is displayed when VM is stopped")
 
@@ -100,7 +74,7 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
 @pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.meta(automates=[1571291, 1608475])
-def test_snapshot_crud(small_test_vm, provider):
+def test_snapshot_crud(create_vm, provider):
     """Tests snapshot crud
 
     Metadata:
@@ -117,7 +91,7 @@ def test_snapshot_crud(small_test_vm, provider):
     )
     result.start_monitoring()
     # has_name is false if testing RHEVMProvider
-    snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
+    snapshot = new_snapshot(create_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
     # check for the size as "read" check
     if provider.appliance.version >= "5.11" and provider.one_of(RHEVMProvider):
@@ -131,7 +105,7 @@ def test_snapshot_crud(small_test_vm, provider):
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1443411)])
-def test_delete_active_vm_snapshot(small_test_vm):
+def test_delete_active_vm_snapshot(create_vm):
     """
     Check that it's not possible to delete an Active VM from RHV snapshots
 
@@ -145,15 +119,15 @@ def test_delete_active_vm_snapshot(small_test_vm):
         caseposneg: negative
         initialEstimate: 1/12h
     """
-    view = navigate_to(small_test_vm, 'SnapshotsAll')
-    view.tree.click_path(small_test_vm.name, 'Active VM (Active)')
+    view = navigate_to(create_vm, 'SnapshotsAll')
+    view.tree.click_path(create_vm.name, 'Active VM (Active)')
     assert not view.toolbar.delete.is_displayed
 
 
 @pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider])
-def test_create_without_description(small_test_vm):
+def test_create_without_description(create_vm):
     """
     Test that we get an error message when we try to create a snapshot with
     blank description on RHV provider.
@@ -166,12 +140,12 @@ def test_create_without_description(small_test_vm):
         initialEstimate: 1/4h
         casecomponent: Infra
     """
-    if small_test_vm.appliance.version >= '5.10':
+    if create_vm.appliance.version >= '5.10':
         # In 5.10 it's not possible to create a snapshot w/o description,"Create" button is disabled
-        view = navigate_to(small_test_vm, 'SnapshotsAdd')
+        view = navigate_to(create_vm, 'SnapshotsAdd')
         assert view.create.disabled
     else:
-        snapshot = new_snapshot(small_test_vm, has_name=False, create_description=False)
+        snapshot = new_snapshot(create_vm, has_name=False, create_description=False)
         with pytest.raises(AssertionError):
             snapshot.create()
         view = snapshot.parent_vm.create_view(InfraVmSnapshotAddView)
@@ -179,7 +153,7 @@ def test_create_without_description(small_test_vm):
 
 
 @pytest.mark.provider([VMwareProvider])
-def test_delete_all_snapshots(small_test_vm, provider):
+def test_delete_all_snapshots(create_vm, provider):
     """Tests snapshot removal
 
     Metadata:
@@ -191,9 +165,9 @@ def test_delete_all_snapshots(small_test_vm, provider):
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    snapshot1 = new_snapshot(small_test_vm)
+    snapshot1 = new_snapshot(create_vm)
     snapshot1.create()
-    snapshot2 = new_snapshot(small_test_vm)
+    snapshot2 = new_snapshot(create_vm)
     snapshot2.create()
     snapshot2.delete_all()
     # Make sure the snapshots are indeed deleted
@@ -272,7 +246,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
 
 
 @pytest.mark.rhv1
-def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
 
     Only valid for RHV 4+ providers, due to EOL we are not explicitly checking/blocking on this
@@ -288,11 +263,12 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
         casecomponent: Infra
         initialEstimate: 1/4h
     """
-    verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request)
+    verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request)
 
 
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 @pytest.mark.provider([VMwareProvider])
-def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_event, request):
+def test_revert_active_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert active snapshot
 
     Metadata:
@@ -304,14 +280,14 @@ def test_revert_active_snapshot(full_test_vm, provider, soft_assert, register_ev
         caseimportance: medium
         initialEstimate: 1/3h
     """
-    verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
+    verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request,
                            active_snapshot=True)
 
 
 @pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1552732)])
-def test_revert_to_active_vm(small_test_vm, provider):
+def test_revert_to_active_vm(create_vm, provider):
     """
     Test that it's not possible to revert to "Active VM" on RHV.
 
@@ -326,20 +302,20 @@ def test_revert_to_active_vm(small_test_vm, provider):
         initialEstimate: 1/4h
         casecomponent: Infra
     """
-    snapshot = new_snapshot(small_test_vm, has_name=False)
+    snapshot = new_snapshot(create_vm, has_name=False)
     snapshot.create()
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
-    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
+    create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF)
     snapshot.revert_to()
-    view = navigate_to(small_test_vm, 'SnapshotsAll', force=True)
-    view.tree.click_path(small_test_vm.name, snapshot.description, 'Active VM (Active)')
+    view = navigate_to(create_vm, 'SnapshotsAll', force=True)
+    view.tree.click_path(create_vm.name, snapshot.description, 'Active VM (Active)')
     assert not view.toolbar.revert.is_displayed
 
 
 @pytest.mark.rhv3
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1375544)])
-def test_revert_on_running_vm(small_test_vm):
+def test_revert_on_running_vm(create_vm):
     """
     Test that revert button is not clickable on powered on VM.
 
@@ -351,10 +327,10 @@ def test_revert_on_running_vm(small_test_vm):
         initialEstimate: 1/4h
         casecomponent: Infra
     """
-    snapshot = new_snapshot(small_test_vm, has_name=False)
+    snapshot = new_snapshot(create_vm, has_name=False)
     snapshot.create()
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
-    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_ON)
+    create_vm.power_control_from_cfme(option=create_vm.POWER_ON, cancel=False)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON)
     with pytest.raises(Exception, match='Could not find an element'):
         snapshot.revert_to()
 
@@ -373,7 +349,7 @@ def setup_snapshot_env(test_vm, memory):
 
 @pytest.mark.parametrize("parent_vm", ["on_with_memory", "on_without_memory", "off"])
 @pytest.mark.provider([VMwareProvider])
-def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
+def test_verify_vm_state_revert_snapshot(provider, parent_vm, create_vm):
     """
     test vm state after revert snapshot with parent vm:
      - powered on and includes memory
@@ -391,17 +367,17 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
         caseimportance: medium
         initialEstimate: 1/3h
     """
-    power = small_test_vm.POWER_ON if parent_vm.startswith('on') else small_test_vm.POWER_OFF
+    power = create_vm.POWER_ON if parent_vm.startswith('on') else create_vm.POWER_OFF
     memory = 'with_memory' in parent_vm
 
-    small_test_vm.power_control_from_cfme(option=power, cancel=False)
-    small_test_vm.mgmt.wait_for_steady_state()
-    setup_snapshot_env(small_test_vm, memory)
-    assert bool(small_test_vm.mgmt.is_running) == memory
+    create_vm.power_control_from_cfme(option=power, cancel=False)
+    create_vm.mgmt.wait_for_steady_state()
+    setup_snapshot_env(create_vm, memory)
+    assert bool(create_vm.mgmt.is_running) == memory
 
 
 @pytest.mark.provider([VMwareProvider])
-def test_operations_suspended_vm(small_test_vm, soft_assert):
+def test_operations_suspended_vm(create_vm, soft_assert):
     """Tests snapshot operations on suspended vm
 
     Metadata:
@@ -418,15 +394,15 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     suspended state.
     """
     # Create first snapshot when VM is running
-    snapshot1 = new_snapshot(small_test_vm)
+    snapshot1 = new_snapshot(create_vm)
     snapshot1.create()
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
              message="Waiting for the first snapshot to become active")
     # Suspend the VM
-    small_test_vm.mgmt.ensure_state(VmState.SUSPENDED)
-    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_SUSPENDED)
+    create_vm.mgmt.ensure_state(VmState.SUSPENDED)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_SUSPENDED)
     # Create second snapshot when VM is suspended
-    snapshot2 = new_snapshot(small_test_vm)
+    snapshot2 = new_snapshot(create_vm)
     snapshot2.create()
     wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
              message="Waiting for the second snapshot to become active")
@@ -435,17 +411,17 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
              message="Waiting for the first snapshot to become active after revert")
     # Check VM state, VM should be off
-    assert small_test_vm.mgmt.is_stopped
+    assert create_vm.mgmt.is_stopped
     # Revert back to second snapshot
     snapshot2.revert_to()
     wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
              message="Waiting for the second snapshot to become active after revert")
     # Check VM state, VM should be suspended if VM version is 6.5
     # if version is 6.7 Vm state should be off (is_stopped)
-    if small_test_vm.provider.version == 6.7:
-        assert small_test_vm.mgmt.is_stopped
+    if create_vm.provider.version == 6.7:
+        assert create_vm.mgmt.is_stopped
     else:
-        assert small_test_vm.mgmt.is_suspended
+        assert create_vm.mgmt.is_suspended
     # Try to delete both snapshots while the VM is suspended
     # The delete method will make sure the snapshots are indeed deleted
     snapshot1.delete()
@@ -453,7 +429,7 @@ def test_operations_suspended_vm(small_test_vm, soft_assert):
 
 
 @pytest.mark.provider([VMwareProvider])
-def test_operations_powered_off_vm(small_test_vm):
+def test_operations_powered_off_vm(create_vm):
     """
     Polarion:
         assignee: prichard
@@ -461,15 +437,15 @@ def test_operations_powered_off_vm(small_test_vm):
         initialEstimate: 1/2h
     """
     # Make sure the VM is off
-    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
-    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
+    create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF)
     # Create first snapshot
-    snapshot1 = new_snapshot(small_test_vm)
+    snapshot1 = new_snapshot(create_vm)
     snapshot1.create()
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
              message="Waiting for the first snapshot to become active")
     # Create second snapshot
-    snapshot2 = new_snapshot(small_test_vm)
+    snapshot2 = new_snapshot(create_vm)
     snapshot2.create()
     wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh,
              message="Waiting for the second snapshot to become active")
@@ -484,7 +460,7 @@ def test_operations_powered_off_vm(small_test_vm):
 
 
 @pytest.mark.rhv3
-def test_snapshot_history_btn(small_test_vm, provider):
+def test_snapshot_history_btn(create_vm, provider):
     """Tests snapshot history button
     Metadata:
         test_flag: snapshot
@@ -495,17 +471,17 @@ def test_snapshot_history_btn(small_test_vm, provider):
         caseimportance: medium
         initialEstimate: 1/6h
     """
-    snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
+    snapshot = new_snapshot(create_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
-    vm_details_view = navigate_to(small_test_vm, 'Details')
-    item = '"Snapshots" for Virtual Machine "{}"'.format(small_test_vm.name)
+    vm_details_view = navigate_to(create_vm, 'Details')
+    item = '"Snapshots" for Virtual Machine "{}"'.format(create_vm.name)
     vm_details_view.toolbar.history.item_select(item)
-    snapshot_view = small_test_vm.create_view(InfraVmSnapshotView)
+    snapshot_view = create_vm.create_view(InfraVmSnapshotView)
     assert snapshot_view.is_displayed
 
 
 @pytest.mark.provider([VMwareProvider])
-def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
+def test_create_snapshot_via_ae(appliance, request, domain, create_vm):
     """This test checks whether the vm.create_snapshot works in AE.
 
     Prerequisities:
@@ -547,18 +523,18 @@ def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
 
     # SIMULATE
     snap_name = fauxfactory.gen_alpha(start="snap_")
-    snapshot = InfraVm.Snapshot(name=snap_name, parent_vm=small_test_vm)
+    snapshot = InfraVm.Snapshot(name=snap_name, parent_vm=create_vm)
     simulate(
         appliance=appliance,
         instance="Request",
         request="snapshot",
         target_type='VM and Instance',
-        target_object=small_test_vm.name,
+        target_object=create_vm.name,
         execute_methods=True,
         attributes_values={"snap_name": snap_name})
 
     wait_for(lambda: snapshot.exists, timeout="2m", delay=10,
-             fail_func=small_test_vm.provider.browser.refresh, handle_exception=True,
+             fail_func=create_vm.provider.browser.refresh, handle_exception=True,
              message="Waiting for snapshot create")
 
     # Clean up if it appeared
