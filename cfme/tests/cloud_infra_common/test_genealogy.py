@@ -3,6 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import BaseProvider
+from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
@@ -16,12 +17,11 @@ pytestmark = [
     pytest.mark.provider(
         gen_func=providers,
         filters=[ProviderFilter(classes=[BaseProvider]),
-                 ProviderFilter(classes=[SCVMMProvider, RHEVMProvider], inverted=True)],
+                 ProviderFilter(classes=[SCVMMProvider, RHEVMProvider, OpenshiftProvider],
+                                inverted=True)],
         scope='module'),
     test_requirements.genealogy
 ]
-
-
 # uncollected above in pytest_generate_tests
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
 @pytest.mark.uncollectif(lambda provider, from_edit:
