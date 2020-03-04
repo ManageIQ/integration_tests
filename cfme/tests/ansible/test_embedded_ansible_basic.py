@@ -157,7 +157,7 @@ def new_zone(appliance):
 def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/12h
@@ -178,7 +178,7 @@ def test_embedded_ansible_repository_branch_crud(appliance, request, wait_for_an
     Ability to add repo with branch (without SCM credentials).
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/12h
@@ -214,7 +214,7 @@ def test_embedded_ansible_repository_branch_crud(appliance, request, wait_for_an
 def test_embedded_ansible_repository_invalid_url_crud(request, appliance, wait_for_ansible):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
@@ -242,7 +242,7 @@ def test_embedded_ansible_private_repository_crud(request, ansible_private_repos
     Add Private Repository by using SCM credentials. Check repository gets added successfully.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
@@ -261,7 +261,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
         credentials, appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
@@ -305,7 +305,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
 def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/6h
         tags: ansible_embed
@@ -422,7 +422,7 @@ def test_embedded_ansible_credential_with_private_key(request, wait_for_ansible,
         1439589
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -446,7 +446,7 @@ def test_embedded_ansible_repository_playbook_link(ansible_repository):
     check it will navigate to the Playbooks area.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/6h
         tags: ansible_embed
@@ -464,7 +464,7 @@ def test_embedded_ansible_repository_playbook_sub_dir(ansible_repository):
     The Embedded Ansible role should find playbooks in sub folders.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/6h
         tags: ansible_embed
@@ -488,7 +488,7 @@ def test_embed_tower_repo_add_new_zone(appliance, ansible_repository, new_zone, 
         1656308
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/2h
         testSteps:
@@ -542,7 +542,7 @@ def test_embedded_ansible_repository_refresh(ansible_repository):
     Repository"
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h

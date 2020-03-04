@@ -23,7 +23,7 @@ def test_embedded_ansible_enable(embedded_appliance):
     """Tests whether the embedded ansible role and all workers have started correctly
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
@@ -47,7 +47,7 @@ def test_embedded_ansible_disable(embedded_appliance):
     """Tests whether the embedded ansible role and all workers have stopped correctly
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
@@ -82,7 +82,7 @@ def test_embedded_ansible_event_catcher_process(embedded_appliance):
     evm:status)
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/4h
@@ -114,7 +114,7 @@ def test_embedded_ansible_logs(embedded_appliance):
     p1 (/var/log/tower)
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/4h
