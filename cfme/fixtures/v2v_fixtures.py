@@ -223,6 +223,10 @@ def get_conversion_data(appliance, target_provider):
             password=engine_key.password,
         )
         private_key = ssh_client.run_command("cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
+        try:
+            hosts = [h.name for h in target_provider.hosts.all()]
+        except KeyError:
+            pytest.skip("No conversion host on provider")
 
     elif target_provider.one_of(RHEVMProvider) and appliance.version > '5.10':
         resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
@@ -230,12 +234,8 @@ def get_conversion_data(appliance, target_provider):
             target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
         auth_user = vm_key.username
         private_key = vm_key.password
-
         try:
-            if appliance.version < '5.11':
-                hosts = [h.name for h in target_provider.hosts.all()]
-            else:
-                hosts = target_provider.data["conversion_instances"]
+            hosts = target_provider.data["conversion_instances"]
         except KeyError:
             pytest.skip("No conversion host on provider")
 
@@ -249,6 +249,7 @@ def get_conversion_data(appliance, target_provider):
             hosts = target_provider.data["conversion_instances"]
         except KeyError:
             pytest.skip("No conversion instance on provider")
+
     return {
         "resource_type": resource_type,
         "private_key": private_key,
