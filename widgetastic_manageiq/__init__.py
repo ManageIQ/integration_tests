@@ -4599,30 +4599,12 @@ class MultiSelectList(Widget):
     """
 
     ROOT = ParametrizedLocator(".//div[contains(@id,{@div_id|quote})]")
-    ITEMS_LOCATOR = VersionPick(
-        {
-            "5.11": './div/div/span[contains(@class,"dual-pane-mapper-item-container")]',
-            Version.lowest(): ('./div/div/div/'
-                              'span[contains(@class,"dual-pane-mapper-item-container")]'),
-        }
-    )
-    SELECTED_ITEMS_LOCATOR = VersionPick(
-        {
-            "5.11": ('./div[contains(@class,"selected")]/div/'
-                     'span[contains(@class,"dual-pane-mapper-item-container")]'),
-            Version.lowest(): ('./div[contains(@class,"selected")]/div/div/'
-                               'span[contains(@class,"dual-pane-mapper-item-container")]'),
-        }
-    )
-    PARTIAL_TEXT = VersionPick(
-        {
-            "5.11": ('./div/div/span[contains(@class,"dual-pane-mapper-item-container") '
-                     'and contains(normalize-space(.),"{}")]'),
-            Version.lowest(): (
-                './div/div/div/span[contains(@class,"dual-pane-mapper-item-container") '
-                'and contains(normalize-space(.),"{}")]'),
-        }
-    )
+    ITEMS_LOCATOR = './/span[contains(@class, "dual-pane-mapper-item-container")]'
+
+    SELECTED_ITEMS_LOCATOR = ('.//div[contains(@class,"selected")]/div..'
+                              '/span[contains(@class,"dual-pane-mapper-item-container")]')
+    PARTIAL_TEXT = ('.//span[contains(@class,"dual-pane-mapper-item-container") '
+                    'and contains(normalize-space(.),"{}")]')
 
     SPINNER_LOCATOR = (
         ".//div[contains(@class, dual-pane-mapper-list-container)]"
