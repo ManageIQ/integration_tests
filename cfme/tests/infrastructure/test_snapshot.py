@@ -16,8 +16,10 @@ from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
+from cfme.utils.net import find_pingable
 from cfme.utils.path import data_path
 from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -211,9 +213,19 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     else:
         snapshot1 = new_snapshot(full_test_vm)
     full_template = getattr(provider.data.templates, 'full_template')
+    try:
+        connect_ip, _ = wait_for(find_pingable,
+                                 func_args=[snapshot1.parent_vm.mgmt],
+                                 timeout="10m",
+                                 delay=5,
+                                 fail_condition=None)
+        logger.info("Waiting for %s to be available via SSH", connect_ip)
+    except TimedOutError:
+        msg = 'Timed out waiting for reachable depot VM IP'
+        pytest.fail(msg)
     # Define parameters of the ssh connection
     ssh_kwargs = {
-        'hostname': snapshot1.parent_vm.mgmt.ip,
+        'hostname': connect_ip,
         'username': credentials[full_template.creds]['username'],
         'password': credentials[full_template.creds]['password']
     }
@@ -257,6 +269,16 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=900)
     soft_assert(full_test_vm.mgmt.is_running, "vm not running")
     # Wait for successful ssh connection
+    try:
+        connect_ip, _ = wait_for(find_pingable,
+                                 func_args=[snapshot1.parent_vm.mgmt],
+                                 timeout="10m",
+                                 delay=5,
+                                 fail_condition=None)
+        logger.info("Waiting for %s to be available via SSH", connect_ip)
+    except TimedOutError:
+        msg = 'Timed out waiting for reachable VM IP'
+        pytest.fail(msg)
     wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').success,
              num_sec=400, delay=10, handle_exception=True, fail_func=ssh_client.close(),
              message="Waiting for successful SSH connection after revert")
