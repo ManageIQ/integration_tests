@@ -10,23 +10,6 @@ pytestmark = [
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_email_should_be_sent_when_service_approval_is_set_to_manual():
-    """ Email should be sent when service approval is set to manual
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: service
-    Bugzilla:
-        1380197
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_notification_banner_vm_provisioning_notification_and_service_request_should_be_in_syn():
     """ Notification Banner - VM Provisioning Notification and Service Request should be in  Sync
     Polarion:
