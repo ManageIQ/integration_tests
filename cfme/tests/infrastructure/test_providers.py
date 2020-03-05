@@ -10,6 +10,8 @@ from cfme.base.credential import Credential
 from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersDiscoverView
 from cfme.common.provider_views import InfraProvidersView
+from cfme.common.provider_views import TemplatesCompareView
+from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -18,6 +20,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -492,3 +495,39 @@ def test_infra_discovery_screen(appliance):
                    "to_ip4": ips['to']})
         view.start.click()
         view.flash.assert_message(ips['msg'])
+
+
+@pytest.fixture
+def setup_provider_min_templates(request, appliance, provider, min_templates):
+    if len(provider.mgmt.list_templates()) < min_templates:
+        pytest.skip(f'Number of templates on {provider} does not meet minimum '
+                    f'for test parameter {min_templates}, skipping and not setting up provider')
+    # Function-scoped fixture to set up a provider
+    setup_or_skip(request, provider)
+
+
+@pytest.mark.provider([InfraProvider], selector=ONE, scope="function")
+@pytest.mark.parametrize("min_templates", [2, 4])
+@pytest.mark.meta(blockers=[BZ(1784180, forced_streams=["5.10"])], automates=[1784180])
+def test_compare_provider_templates(appliance, setup_provider_min_templates, provider,
+                                    min_templates):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/6h
+    Bugzilla:
+        1746449
+    """
+    templateList = []
+    my_slice = slice(0, min_templates, None)
+    view = navigate_to(provider, 'ProviderTemplates')
+    for t in view.entities.get_all(slice=my_slice):
+        t.ensure_checked()
+        templateList.append(t.name)
+    view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
+    compare_templates_view = provider.create_view(TemplatesCompareView)
+    assert compare_templates_view.is_displayed
+    assert compare_templates_view.verify_checked_items_compared(templateList,
+                                                                compare_templates_view)
