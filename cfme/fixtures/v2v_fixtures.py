@@ -260,7 +260,11 @@ def get_conversion_data(appliance, target_provider):
 
 def set_conversion_host_api(
         appliance, transformation_method, source_provider, target_provider):
-    """Setting conversion host for RHV and OSP provider via REST"""
+    """
+    Setting conversion host for RHV and OSP provider via REST
+
+    Note: Support for using VM as UCI conversion hosts was added for RHV in 5.11.4.
+    """
     vmware_ssh_private_key = None
     vmware_vddk_package_url = None
 
