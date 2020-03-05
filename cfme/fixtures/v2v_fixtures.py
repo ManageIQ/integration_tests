@@ -230,8 +230,7 @@ def get_conversion_data(appliance, target_provider):
             except KeyError:
                 pytest.skip("No conversion host on provider")
 
-    elif target_provider.one_of(RHEVMProvider):
-        if appliance.version > '5.10':
+        elif appliance.version > '5.10':
             resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
             vm_key = conf.credentials[
                 target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
