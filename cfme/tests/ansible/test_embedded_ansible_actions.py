@@ -78,7 +78,7 @@ def test_action_run_ansible_playbook_localhost(request, ansible_catalog_item, an
     """Tests a policy with ansible playbook action against localhost.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
@@ -101,7 +101,7 @@ def test_action_run_ansible_playbook_manual_address(request, ansible_catalog_ite
     """Tests a policy with ansible playbook action against manual address.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
@@ -132,7 +132,7 @@ def test_action_run_ansible_playbook_target_machine(request, ansible_catalog_ite
     """Tests a policy with ansible playbook action against target machine.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
@@ -156,7 +156,7 @@ def test_action_run_ansible_playbook_unavailable_address(request, ansible_catalo
     """Tests a policy with ansible playbook action against unavailable address.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         initialEstimate: 1/6h
         casecomponent: Ansible
     """
@@ -186,7 +186,7 @@ def test_control_action_run_ansible_playbook_in_requests(request,
     """Checks if execution of the Action result in a Task/Request being created.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         initialEstimate: 1/6h
         casecomponent: Ansible
     """

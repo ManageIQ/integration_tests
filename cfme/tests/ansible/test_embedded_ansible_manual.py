@@ -15,7 +15,7 @@ def test_embed_tower_retire_service_with_instances_ec2():
     Retire Service+instances which were deployed by playbook from CFME UI.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
@@ -38,7 +38,7 @@ def test_embed_tower_exec_play_against_machine_multi_appliance():
     Playbook should be executed successfully.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
@@ -53,7 +53,7 @@ def test_embed_tower_failover():
     Check that ansible fails over to new region correctly
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
@@ -71,7 +71,7 @@ def test_embed_ansible_next_gen():
         1511126
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/2h
         tags: ansible_embed
@@ -88,7 +88,7 @@ def test_embed_tower_exec_play_with_creds(appliance, provider):
     and can execute it against provider type with provider type credentials.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1h
@@ -107,7 +107,7 @@ def test_embed_ansible_catalog_items():
         1449696
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
@@ -123,7 +123,7 @@ def test_embed_tower_add_private_repo():
     Ability to add private repo with SCM credentials.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
@@ -142,7 +142,7 @@ def test_embed_tower_repo_url_validation():
         1478958
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/6h
         tags: ansible_embed
@@ -159,7 +159,7 @@ def test_embed_tower_order_service_extra_vars():
     Execute playbook with extra variables which will be passed to Tower.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/4h
         tags: ansible_embed
@@ -174,7 +174,7 @@ def test_service_ansible_playbook_with_already_existing_catalog_item_name():
         1509809
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -191,7 +191,7 @@ def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
     creation)
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
@@ -210,7 +210,7 @@ def test_service_ansible_playbook_machine_credentials_service_details_sui():
     machine credentials were attached to the service.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/2h
@@ -229,7 +229,7 @@ def test_service_ansible_overridden_extra_vars():
     be overridden at "ordering" time. Check if the overridden parameters are passed.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -247,7 +247,7 @@ def test_service_ansible_playbook_standard_output_non_ascii_hostname():
         1534039
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -262,7 +262,7 @@ def test_service_ansible_playbook_retire_non_ascii():
     Retire ansible playbook service with non_ascii host
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -283,7 +283,7 @@ def test_automate_ansible_playbook_method_type_verbosity():
     levels.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
@@ -300,7 +300,7 @@ def test_embed_tower_playbook_with_retry_interval():
         1626152
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/2h
         testSteps:
@@ -336,7 +336,7 @@ def test_embed_tower_playbook_with_retry_method():
         1625047
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/2h
         testSteps:

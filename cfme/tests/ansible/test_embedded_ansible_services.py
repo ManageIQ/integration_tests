@@ -242,7 +242,7 @@ def custom_service_button(appliance, local_ansible_catalog_item):
 def test_service_ansible_playbook_available(appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: high
         initialEstimate: 1/6h
@@ -256,7 +256,7 @@ def test_service_ansible_playbook_available(appliance):
 def test_service_ansible_playbook_crud(appliance, ansible_repository):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/6h
@@ -292,7 +292,7 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
     """ Tests ansible_playbook tag addition, check added tag and removal
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: high
         initialEstimate: 1/2h
@@ -313,7 +313,7 @@ def test_service_ansible_playbook_tagging(ansible_catalog_item):
 def test_service_ansible_playbook_negative(appliance):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         caseposneg: negative
@@ -336,7 +336,7 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
     """Ansible playbooks are not designed to be part of a cloudforms service bundle.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         caseposneg: negative
@@ -356,7 +356,7 @@ def test_service_ansible_playbook_provision_in_requests(
     """Tests if ansible playbook service provisioning is shown in service requests.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -388,7 +388,7 @@ def test_service_ansible_playbook_confirm(appliance, soft_assert):
     possible.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -421,7 +421,7 @@ def test_service_ansible_retirement_remove_resources(
 ):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: critical
         initialEstimate: 1/4h
@@ -492,7 +492,7 @@ def test_service_ansible_playbook_order_retire(
     unavailable host.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Ansible
         caseimportance: medium
@@ -529,7 +529,7 @@ def test_service_ansible_playbook_plays_table(
     """Plays table in provisioned and retired service should contain at least one row.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: low
         initialEstimate: 1/6h
@@ -551,7 +551,7 @@ def test_service_ansible_playbook_order_credentials(
     screen.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -575,7 +575,7 @@ def test_service_ansible_playbook_pass_extra_vars(
     retirement.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
@@ -611,7 +611,7 @@ def test_service_ansible_execution_ttl(
     than 100 minutes and set max ttl greater than ansible playbook running time.
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 2h
@@ -656,7 +656,7 @@ def test_custom_button_ansible_credential_list(
         1448918
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/3h
@@ -692,7 +692,7 @@ def test_ansible_group_id_in_payload(
         1480019
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -736,7 +736,7 @@ def test_embed_tower_exec_play_against(
 ):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
@@ -803,7 +803,7 @@ def test_service_ansible_verbosity(
     Bugzilla:
         1460788
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -868,7 +868,7 @@ def test_ansible_service_linked_vm(
         1448918
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/3h
         tags: ansible_embed
@@ -894,7 +894,7 @@ def test_ansible_service_order_vault_credentials(
     Add vault password and test in the playbook that encrypted yml can be
     decrypted.
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/2h
         tags: ansible_embed
@@ -940,7 +940,7 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
         1734904
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/3h
         tags: ansible_embed
@@ -977,7 +977,7 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     Bugzilla:
         1742839
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/3h
         tags: ansible_embed
@@ -1014,7 +1014,7 @@ ansible_service_request_funcscope):
         1515561
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/4h
         tags: ansible_embed
@@ -1054,7 +1054,7 @@ def test_service_ansible_service_name(request, appliance, dialog_with_catalog_it
         1505929
 
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/2h

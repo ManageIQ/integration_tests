@@ -185,7 +185,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, ansible_repos
 def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/6h
@@ -222,7 +222,7 @@ def test_embedded_ansible_custom_button_localhost(create_vm_modscope, custom_vm_
         appliance, ansible_service_request, ansible_service, ansible_catalog_item):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/4h
     """
@@ -247,7 +247,7 @@ def test_embedded_ansible_custom_button_target_machine(create_vm_modscope, custo
         ansible_credential, appliance, ansible_service_request, ansible_service):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/4h
     """
@@ -272,7 +272,7 @@ def test_embedded_ansible_custom_button_specific_hosts(create_vm_modscope, custo
         ansible_credential, appliance, ansible_service_request, ansible_service):
     """
     Polarion:
-        assignee: sbulage
+        assignee: gtalreja
         casecomponent: Ansible
         initialEstimate: 1/4h
     """
