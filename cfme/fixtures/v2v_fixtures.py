@@ -213,31 +213,34 @@ def vddk_url():
 
 
 def get_conversion_data(appliance, target_provider):
-    if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11':
-        resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
-        engine_key = conf.credentials[target_provider.data["ssh_creds"]]
-        auth_user = engine_key.username
-        ssh_client = ssh.SSHClient(
-            hostname=target_provider.hostname,
-            username=engine_key.username,
-            password=engine_key.password,
-        )
-        private_key = ssh_client.run_command("cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
-        try:
-            hosts = [h.name for h in target_provider.hosts.all()]
-        except KeyError:
-            pytest.skip("No conversion host on provider")
+    if target_provider.one_of(RHEVMProvider):
+        if appliance.version < '5.11':
+            resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
+            engine_key = conf.credentials[target_provider.data["ssh_creds"]]
+            auth_user = engine_key.username
+            ssh_client = ssh.SSHClient(
+                hostname=target_provider.hostname,
+                username=engine_key.username,
+                password=engine_key.password,
+            )
+            private_key = ssh_client.run_command(
+                "cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
+            try:
+                hosts = [h.name for h in target_provider.hosts.all()]
+            except KeyError:
+                pytest.skip("No conversion host on provider")
 
-    elif target_provider.one_of(RHEVMProvider) and appliance.version > '5.10':
-        resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
-        vm_key = conf.credentials[
-            target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
-        auth_user = vm_key.username
-        private_key = vm_key.password
-        try:
-            hosts = target_provider.data["conversion_instances"]
-        except KeyError:
-            pytest.skip("No conversion host on provider")
+    elif target_provider.one_of(RHEVMProvider):
+        if appliance.version > '5.10':
+            resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
+            vm_key = conf.credentials[
+                target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
+            auth_user = vm_key.username
+            private_key = vm_key.password
+            try:
+                hosts = target_provider.data["conversion_instances"]
+            except KeyError:
+                pytest.skip("No conversion host on provider")
 
     else:
         resource_type = "ManageIQ::Providers::Openstack::CloudManager::Vm"
