@@ -20,7 +20,7 @@ def test_reports_in_global_region(context, report):
     based on data from remote regions.
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         casecomponent: Reporting
         caseimportance: critical
         initialEstimate: 1/2h
