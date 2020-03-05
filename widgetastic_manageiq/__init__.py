@@ -4599,15 +4599,17 @@ class MultiSelectList(Widget):
     """
 
     ROOT = ParametrizedLocator(".//div[contains(@id,{@div_id|quote})]")
-    ITEMS_LOCATOR = './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")]'
+    ITEMS_LOCATOR = './/span[contains(@class, "dual-pane-mapper-item-container")]'
+
     SELECTED_ITEMS_LOCATOR = (
-        './div[contains(@class,"selected")]/div/div'
+        './/div[contains(@class,"selected")]/..'
         '/span[contains(@class,"dual-pane-mapper-item-container")]'
     )
     PARTIAL_TEXT = (
-        './div/div/div/span[contains(@class,"dual-pane-mapper-item-container")'
+        './/span[contains(@class,"dual-pane-mapper-item-container") '
         'and contains(normalize-space(.),"{}")]'
     )
+
     SPINNER_LOCATOR = (
         ".//div[contains(@class, dual-pane-mapper-list-container)]"
         "/div[contains(@class,'spinner')]"
