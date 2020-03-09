@@ -215,7 +215,6 @@ def vddk_url():
 def get_conversion_data(appliance, target_provider):
     if target_provider.one_of(RHEVMProvider):
         # Support for UCI hosts for RHV would be added in 5.11.5.
-        # So, this if block should be disabled until then.
         if appliance.version >= '5.11.5':
             resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
             vm_key = conf.credentials[
@@ -267,7 +266,7 @@ def set_conversion_host_api(
     """
     Setting conversion host for RHV and OSP provider via REST
 
-    Note: Support for using VM as UCI conversion hosts will be added for RHV in 5.11.5.
+    Note: Support for using VMs as UCI conversion hosts will be added for RHV in 5.11.5.
     """
     vmware_ssh_private_key = None
     vmware_vddk_package_url = None
