@@ -1,3 +1,5 @@
+from random import sample
+
 import fauxfactory
 import pytest
 from wait_for import wait_for
@@ -6,6 +8,7 @@ from cfme import test_requirements
 from cfme.automate.dialogs.service_dialogs import DetailsDialogView
 from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -190,3 +193,37 @@ def test_edit_import_dialog(import_dialog):
 
     view = navigate_to(sd.parent, "All")
     assert view.table.row(("Label", sd.label))["description"].text == description
+
+
+@pytest.mark.meta(automates=[BZ(1583694)])
+@pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1583694.zip", "bz_1583694", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1583694.yml"], ids=["exp_dialog"])
+def test_dialog_with_dynamic_expression(appliance, provider, import_data, import_datastore,
+                                        catalog_item_with_imported_dialog):
+    """
+    Bugzilla:
+        1583694
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/16h
+    """
+    cat_item, ele_label = catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, cat_item.catalog, cat_item.name)
+
+    tmp1, tmp2 = sample(provider.appliance.collections.infra_templates.all(), 2)
+
+    # Set ownership to templates
+    group = appliance.collections.groups.instantiate("EvmGroup-super_administrator")
+    tmp1.set_ownership(group=group)
+    tmp2.set_ownership(group=group)
+
+    view = navigate_to(service_catalogs, 'Order')
+    value = view.fields(ele_label).dropdown.read()
+    assert view.fields(ele_label).dropdown.fill(
+        tmp2.name if value == tmp1.name else tmp1.name
+    )
