@@ -6,6 +6,7 @@ from cfme.utils.log_validator import LogValidator
 
 
 @pytest.mark.tier(2)
+@pytest.mark.ignore_stream('5.11')
 def test_configure_vmdb_last_start_time(appliance):
     """
         Go to Settings -> Configure -> Database
@@ -16,6 +17,7 @@ def test_configure_vmdb_last_start_time(appliance):
         assignee: tpapaioa
         casecomponent: Configuration
         caseimportance: medium
+        endsin: 5.10
         initialEstimate: 1/12h
     """
     db_last_start_time = (
