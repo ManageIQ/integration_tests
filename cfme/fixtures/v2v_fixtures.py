@@ -214,7 +214,20 @@ def vddk_url():
 
 def get_conversion_data(appliance, target_provider):
     if target_provider.one_of(RHEVMProvider):
-        if appliance.version < '5.11':
+        # Support for UCI hosts for RHV would be added in 5.11.5.
+        # So, this if block should be disabled until then.
+        if appliance.version >= '5.11.5':
+            resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
+            vm_key = conf.credentials[
+                target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
+            auth_user = vm_key.username
+            private_key = vm_key.password
+            try:
+                hosts = target_provider.data["conversion_instances"]
+            except KeyError:
+                pytest.skip("No conversion host on provider")
+
+        else:
             resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
             engine_key = conf.credentials[target_provider.data["ssh_creds"]]
             auth_user = engine_key.username
@@ -227,17 +240,6 @@ def get_conversion_data(appliance, target_provider):
                 "cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
             try:
                 hosts = [h.name for h in target_provider.hosts.all()]
-            except KeyError:
-                pytest.skip("No conversion host on provider")
-
-        elif appliance.version > '5.10':
-            resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
-            vm_key = conf.credentials[
-                target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
-            auth_user = vm_key.username
-            private_key = vm_key.password
-            try:
-                hosts = target_provider.data["conversion_instances"]
             except KeyError:
                 pytest.skip("No conversion host on provider")
 
@@ -265,7 +267,7 @@ def set_conversion_host_api(
     """
     Setting conversion host for RHV and OSP provider via REST
 
-    Note: Support for using VM as UCI conversion hosts was added for RHV in 5.11.4.
+    Note: Support for using VM as UCI conversion hosts will be added for RHV in 5.11.5.
     """
     vmware_ssh_private_key = None
     vmware_vddk_package_url = None
@@ -286,9 +288,9 @@ def set_conversion_host_api(
 
     for host in conversion_data["hosts"]:
         conversion_entity = (
-            "hosts"
-            if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11'
-            else "vms"
+            "vms"
+            if target_provider.one_of(RHEVMProvider) and appliance.version >= '5.11.5'
+            else "hosts"
         )
         host_id = (
             getattr(appliance.rest_api.collections, conversion_entity).filter(
