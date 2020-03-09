@@ -116,40 +116,6 @@ def test_contents(appliance, soft_assert):
                                                            .format(exp_str, pdf_titlepage_text_low))
 
 
-@pytest.mark.tier(3)
-@pytest.mark.sauce
-@pytest.mark.ignore_stream("upstream")
-def test_info(appliance, soft_assert):
-    """
-    Test the alt/title and href attributes.
-    Each doc link is an anchor with image child element, and then the link text anchor
-    Verify anchor title matches alt in anchor image
-    Verify image anchor href matches link text href
-
-    Polarion:
-        assignee: pvala
-        initialEstimate: 1/4h
-        casecomponent: WebUI
-
-    """
-    view = navigate_to(appliance.server, 'Documentation')
-    for link_widget in view.links.sub_widgets:
-        if not (hasattr(link_widget, 'img_anchor') or hasattr(link_widget, 'img')):
-            # This check only applies to the PDF links, essentially factors out customer portal link
-            continue
-        # Check img_anchor title attribute against img alt attribute
-        title = view.browser.get_attribute(attr='title', locator=link_widget.img_anchor.locator)
-        alt = view.browser.get_attribute(attr='alt', locator=link_widget.img.locator)
-        soft_assert(title == alt, 'Image title/alt check failed for documentation link: {}'
-                                  .format(link_widget.TEXT))
-
-        # Check img_anchor href matches link text href
-        img_href = view.browser.get_attribute(attr='href', locator=link_widget.img_anchor.locator)
-        text_href = view.browser.get_attribute(attr='href', locator=link_widget.link.locator)
-        soft_assert(img_href == text_href, 'href attributes check failed for documentation link: {}'
-                                           .format(link_widget.TEXT))
-
-
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 def test_all_docs_present(appliance):
