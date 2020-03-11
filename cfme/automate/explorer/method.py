@@ -488,7 +488,7 @@ class MethodCollection(BaseCollection):
             add_page.validate_button.click()
             add_page.wait_displayed()
             add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Data validated successfully', wait=3)
+            add_page.flash.assert_message('Data validated successfully')
         if cancel:
             add_page.cancel_button.click()
             add_page.flash.assert_no_error()

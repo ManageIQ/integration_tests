@@ -483,7 +483,7 @@ def test_infra_discovery_screen(appliance):
     assert not view.osp_infra.selected
 
     view.start.click()
-    assert view.flash.assert_message("At least 1 item must be selected for discovery")
+    view.flash.assert_message("At least 1 item must be selected for discovery")
 
     view.vmware.click()
     for ips in discovery_ips:

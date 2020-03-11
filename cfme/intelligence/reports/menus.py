@@ -152,7 +152,7 @@ class ReportMenu(BaseEntity):
         view.default_button.click()
         view.save_button.click()
         flash_view = self.create_view(AllReportMenusView)
-        assert flash_view.flash.assert_message(
+        flash_view.flash.assert_message(
             'Report Menu for role "{}" was saved'.format(group)
         )
 

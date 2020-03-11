@@ -818,7 +818,6 @@ def test_display_network_topology(appliance, openstack_provider):
     topology_col = appliance.collections.network_topology_elements
     view = navigate_to(topology_col, 'All')
     assert view.is_displayed
-    view.flash.assert_no_error()
 
 
 @pytest.mark.provider([CloudProvider], scope='class')
@@ -842,6 +841,12 @@ class TestProvidersRESTAPI(object):
         else:
             networks = appliance.rest_api.collections.cloud_networks
         assert_response(appliance)
+        wait_for(
+            lambda: len(networks) != 0,
+            fail_func=provider.refresh_provider_relationships,
+            timeout="40s",
+            silent_failure=True,
+        )
         assert len(networks) > 0, 'No cloud networks found'
         assert networks.name == 'cloud_networks'
         assert len(networks.all) == networks.subcount
@@ -867,6 +872,12 @@ class TestProvidersRESTAPI(object):
             caseimportance: low
             initialEstimate: 1/4h
         """
+        wait_for(
+            lambda: len(provider.rest_api_entity.cloud_networks) != 0,
+            fail_func=provider.refresh_provider_relationships,
+            timeout="40s",
+            silent_failure=True,
+        )
         try:
             network = provider.rest_api_entity.cloud_networks[0]
         except IndexError:

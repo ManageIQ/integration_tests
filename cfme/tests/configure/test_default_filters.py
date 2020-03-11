@@ -23,7 +23,7 @@ def test_default_filters_reset(appliance):
     node = view.tabs.default_filters.tree.CheckNode(tree_path)
     view.tabs.default_filters.tree.fill(node)
     view.tabs.default_filters.reset.click()
-    assert view.flash.assert_message('All changes have been reset')
+    view.flash.assert_message('All changes have been reset')
 
 
 def test_cloudimage_defaultfilters(appliance):

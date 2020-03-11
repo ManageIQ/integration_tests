@@ -181,7 +181,7 @@ def setup_vm(configure_fleecing, appliance, provider):
     vm = appliance.collections.infra_vms.instantiate(
         name=random_vm_name(context="report", max_length=20),
         provider=provider,
-        template_name="env-rhel7-20-percent-full-disk-tpl",
+        template_name="env-rhel7-20-percent-full-disk-pvala-tpl",
     )
     vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     vm.smartstate_scan(wait_for_task_result=True)

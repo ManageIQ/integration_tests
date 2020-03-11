@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
@@ -64,6 +65,7 @@ def vm_retirement_report(appliance, retire_vm):
 @pytest.mark.parametrize(
     "from_collection", [True, False], ids=["from_collection", "from_detail"]
 )
+@pytest.mark.meta(automates=[BZ(1805119)], blockers=[BZ(1805119)])
 def test_retire_vm_now(appliance, vm, from_collection):
     """Test retirement of vm
 
@@ -80,6 +82,9 @@ def test_retire_vm_now(appliance, vm, from_collection):
 
     Metadata:
         test_flag: rest
+
+    Bugzilla:
+        1805119
 
     Polarion:
         assignee: pvala
@@ -111,6 +116,7 @@ def test_retire_vm_now(appliance, vm, from_collection):
 @pytest.mark.parametrize(
     "from_collection", [True, False], ids=["from_collection", "from_detail"]
 )
+@pytest.mark.meta(automates=[BZ(1805119)], blockers=[BZ(1805119)])
 def test_retire_vm_future(appliance, vm, from_collection):
     """Test retirement of vm
 
@@ -127,6 +133,9 @@ def test_retire_vm_future(appliance, vm, from_collection):
 
     Metadata:
         test_flag: rest
+
+    Bugzilla:
+        1805119
 
     Polarion:
         assignee: pvala
@@ -156,6 +165,7 @@ def test_retire_vm_future(appliance, vm, from_collection):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(automates=[BZ(1805119), BZ(1638502)], blockers=[BZ(1805119)])
 def test_check_vm_retirement_requester(
     appliance, request, provider, vm_retirement_report
 ):
@@ -179,6 +189,7 @@ def test_check_vm_retirement_requester(
 
     Bugzilla:
         1638502
+        1805119
     """
     vm_name, report = vm_retirement_report
     saved_report = report.queue(wait_for_finish=True)

@@ -104,6 +104,8 @@ def enable_provider_regions(provider):
 def _setup_provider_verbose(request, provider, appliance=None):
     if appliance is None:
         appliance = store.current_appliance
+    else:
+        provider.appliance = appliance
     try:
         if request.config.option.provider_limit > 0:
             existing_providers = [
@@ -147,7 +149,7 @@ def _setup_provider_verbose(request, provider, appliance=None):
         return False
 
 
-def setup_or_skip(request, provider):
+def setup_or_skip(request, provider, appliance=None):
     """ Sets up given provider or skips the test
 
     Note:
@@ -158,7 +160,7 @@ def setup_or_skip(request, provider):
         skip_msg = "Provider {} had been marked as problematic".format(provider.key)
         _artifactor_skip_providers(request, [provider], skip_msg)
 
-    if not _setup_provider_verbose(request, provider):
+    if not _setup_provider_verbose(request, provider, appliance):
         _artifactor_skip_providers(
             request, [provider], "Unable to setup provider {}".format(provider.key))
 
@@ -295,6 +297,19 @@ def setup_provider_clsscope(request, provider):
 def setup_provider_funcscope(request, provider):
     """Function-scoped fixture to set up a provider"""
     return setup_or_skip(request, provider)
+
+
+@pytest.fixture
+def setup_provider_temp_appliance(request, provider, temp_appliance_preconfig_funcscope):
+    """Function-scoped fixture to set up a provider on a temporary appliance"""
+    return setup_or_skip(request, provider, temp_appliance_preconfig_funcscope)
+
+
+@pytest.fixture(scope="module")
+def setup_provider_temp_appliance_modscope(request, provider, temp_appliance_preconfig_modscope):
+    """Module-scoped fixture to set up a provider on a temporary appliance"""
+    return setup_or_skip(request, provider, temp_appliance_preconfig_modscope)
+
 # -----------------------------------------------
 
 
