@@ -173,8 +173,12 @@ class OrchestrationTemplate(BaseEntity, Updateable, Pretty, Taggable):
                    'content': updates.get('content')})
         view.save_button.click()
         view.flash.wait_displayed("10s")
-        view.flash.assert_success_message('Orchestration Template "{}" was saved'.format(
-            self.template_name))
+        if self.appliance.version < "5.11":
+            view.flash.assert_success_message(
+                f'Orchestration Template "{self.template_name}" was saved')
+        else:
+            view.flash.assert_success_message(
+                f'Orchestration Template {self.template_name} was saved')
 
     def delete(self):
         view = navigate_to(self, 'Details')
