@@ -287,9 +287,9 @@ def set_conversion_host_api(
 
     for host in conversion_data["hosts"]:
         conversion_entity = (
-            "vms"
-            if target_provider.one_of(RHEVMProvider) and appliance.version >= '5.11.5'
-            else "hosts"
+            "hosts"
+            if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11.5'
+            else "vms"
         )
         host_id = (
             getattr(appliance.rest_api.collections, conversion_entity).filter(
