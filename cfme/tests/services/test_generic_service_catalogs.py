@@ -269,14 +269,14 @@ class TestServiceCatalogViaREST(object):
             assert scl.name == new_names[index]
 
 
-@pytest.mark.meta(coverage=[1678149])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1678149])
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.tier(2)
-def test_copy_catalog_bundle():
+def test_copy_catalog_bundle(appliance, request, generic_catalog_item):
     """
     Bugzilla:
         1678149
+
     Polarion:
         assignee: nansari
         casecomponent: Services
@@ -291,7 +291,16 @@ def test_copy_catalog_bundle():
             2.
             3. Able to copy catalog Bundle
     """
-    pass
+    bundle_name = fauxfactory.gen_alphanumeric(15, start="cat_bundle_")
+    catalog_bundle = appliance.collections.catalog_bundles.create(
+        bundle_name, description="catalog_bundle",
+        display_in=True, catalog=generic_catalog_item.catalog,
+        dialog=generic_catalog_item.dialog,
+        catalog_items=[generic_catalog_item.name])
+
+    # copy catalog item
+    new_cat_bundle = catalog_bundle.copy()
+    request.addfinalizer(new_cat_bundle.delete_if_exists)
 
 
 @pytest.mark.meta(coverage=[1671522])

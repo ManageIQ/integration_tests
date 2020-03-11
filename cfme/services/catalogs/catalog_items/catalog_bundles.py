@@ -5,6 +5,7 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import Input
 
 from cfme.modeling.base import BaseCollection
 from cfme.services.catalogs.catalog_items import AllCatalogItemView
@@ -61,6 +62,21 @@ class EditCatalogBundleView(CatalogBundleFormView):
         )
 
 
+class CopyCatalogBundleView(CatalogBundleFormView):
+    name = Input(name="name")
+
+    add = Button("Add")
+    cancel = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.title.text == f'Service Catalog Item "{self.context["object"].name}"'
+            and self.catalog_items.is_opened
+            and self.catalog_items.is_dimmed
+        )
+
+
 @attr.s
 class CatalogBundle(NonCloudInfraCatalogItem):
 
@@ -81,6 +97,22 @@ class CatalogBundle(NonCloudInfraCatalogItem):
                 'Edit of Catalog Bundle"{}" was cancelled by the user'.format(self.name))
         view = self.create_view(DetailsCatalogItemView, override=updates, wait='10s')
         view.flash.assert_no_error()
+
+    def copy(self, name=None):
+        view = navigate_to(self, 'Copy')
+
+        # there is default name like `Copy of *`
+        if name:
+            view.name.fill(name)
+
+        copied_name = view.name.value
+        view.add.click()
+        view.flash.assert_no_error()
+
+        # Catalog bundle can be any type
+        item_args = self.__dict__
+        item_args["name"] = copied_name
+        return self.__class__(**item_args)
 
 
 @attr.s
@@ -146,3 +178,12 @@ class BundleEdit(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select('Edit this Item')
+
+
+@navigator.register(CatalogBundle, "Copy")
+class CatalogBundleCopyStep(CFMENavigateStep):
+    VIEW = CopyCatalogBundleView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select("Copy Selected Item")
