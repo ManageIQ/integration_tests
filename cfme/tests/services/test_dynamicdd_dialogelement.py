@@ -1,10 +1,12 @@
 import fauxfactory
 import pytest
+from widgetastic_patternfly import Dropdown
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.fixtures.automate import DatastoreImport
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.tests.automate.custom_button import DropdownDialogView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
@@ -135,6 +137,75 @@ def test_submit_or_cancelation_btns_in_dd_dialogs_tied_to_a_service_button_shoul
         1611527
     """
     pass
+
+
+@pytest.mark.meta(automates=[1611527])
+@pytest.mark.tier(2)
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1611527.zip", "bz_1611527", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1611527.yml"], ids=["load-button"])
+def test_dynamic_submit_cancel_button_service(request, appliance, generic_service, import_dialog,
+                                  import_datastore, import_data):
+    """
+    Bugzilla:
+        1611527
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Import Datastore and dialog
+            2. Create button with above dialog
+            3. Create catalog item
+            4. Order the service
+            5. Go to My services
+            6. Click on created service
+            7. load the service with a button
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7. Submit and Cancel button should be enabled
+    """
+    service, _ = generic_service
+    sd, ele_label = import_dialog
+
+    # Create button group
+    collection = appliance.collections.button_groups
+    button_gp = collection.create(
+        text=fauxfactory.gen_alphanumeric(start="grp_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
+        type=getattr(collection, "SERVICE"),
+    )
+    request.addfinalizer(button_gp.delete_if_exists)
+
+    # Create custom button under group
+    button = button_gp.buttons.create(
+        text=fauxfactory.gen_alphanumeric(start="btn_"),
+        hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
+        dialog=sd.label,
+        system="Request",
+        request="InspectMe",
+    )
+    request.addfinalizer(button.delete_if_exists)
+
+    # Navigate to Details page of service
+    view = navigate_to(service, "Details")
+
+    # Load service on custom button
+    custom_button_group = Dropdown(view, button_gp.text)
+    assert custom_button_group.is_displayed
+    custom_button_group.item_select(button.text)
+    view = view.browser.create_view(DropdownDialogView, wait="60s")
+    serv = view.service_name(ele_label)
+    serv.dropdown.wait_displayed()
+    wait_for(lambda: not (view.submit.disabled and view.cancel.disabled), timeout=120)
 
 
 @pytest.mark.manual

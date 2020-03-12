@@ -538,23 +538,6 @@ def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_di
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_service_dialog_saving_elements_when_switching_elements():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: service
-    Bugzilla:
-        1454428
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_entries_shouldnt_be_mislabeled_for_dropdown_element_in_dialog_editor():
     """
     Polarion:
