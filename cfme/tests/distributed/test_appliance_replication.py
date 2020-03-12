@@ -9,6 +9,8 @@ from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -16,6 +18,10 @@ pytestmark = [
     test_requirements.distributed,
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
+
+_HTTPD_ROLES_510 = ('cockpit_ws', 'user_interface', 'web_services', 'websocket')
+_HTTPD_ROLES_511 = ('cockpit_ws', 'user_interface', 'remote_console', 'web_services')
+HTTPD_ROLES = VersionPicker({Version.lowest(): _HTTPD_ROLES_510, '5.11': _HTTPD_ROLES_511})
 
 
 def configure_replication_appliances(remote_app, global_app):
@@ -275,3 +281,54 @@ def test_replication_connect_to_vm_in_region(provider,
         view.login.click()
         view = vm.create_view(InfraVmDetailsView)
         wait_for(lambda: view.is_displayed, message="Wait for VM Details page")
+
+
+@pytest.mark.ignore_stream("upstream")
+def test_appliance_httpd_roles(temp_appliance_preconfig_funcscope_rhevm,
+        temp_appliance_unconfig_funcscope_rhevm):
+    """Test that a secondary appliance only runs httpd if a server role requires it.
+    Disable all server roles that require httpd, and verify that httpd is stopped. For each server
+    role that requires httpd, enable it (with all other httpd server roles disabled), and verify
+    that httpd starts.
+
+    Bugzilla:
+        1449766
+
+    Metadata:
+        test_flag: configuration
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    primary_appliance = temp_appliance_preconfig_funcscope_rhevm
+    secondary_appliance = temp_appliance_unconfig_funcscope_rhevm
+    configure_distributed_appliances(primary_appliance, secondary_appliance)
+
+    roles = HTTPD_ROLES.pick(secondary_appliance.version)
+    fill_values = {k: False for k in roles}
+
+    # Change roles through primary appliance to guarantee UI availability.
+    sid = secondary_appliance.server.sid
+    secondary_server = primary_appliance.collections.servers.instantiate(sid=sid)
+
+    primary_appliance.browser_steal = True
+    with primary_appliance:
+        view = navigate_to(secondary_server, 'Server')
+
+        for role in roles:
+            # Disable all httpd roles and verify that httpd is stopped.
+            view.server_roles.fill(fill_values)
+            view.save.click()
+            view.flash.assert_no_error()
+
+            wait_for(lambda: not secondary_appliance.httpd.running, delay=10)
+
+            # Enable single httpd role and verify that httpd is running.
+            view.server_roles.fill({role: True})
+            view.save.click()
+            view.flash.assert_no_error()
+
+            wait_for(lambda: secondary_appliance.httpd.running, delay=10)

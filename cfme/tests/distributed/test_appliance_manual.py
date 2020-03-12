@@ -33,49 +33,6 @@ ROLES = ['automate',
          'web_services']
 
 
-@pytest.mark.tier(1)
-def test_verify_httpd_only_running_when_roles_require_it():
-    """
-    Provision preconfigured appliance A.
-    Provision non-preconfigured appliance B.
-    On appliance A, stop server processes:
-    # appliance_console
-    > Stop EVM Server Processes > Y
-    On appliance B, join to appliance A:
-    # appliance_console
-    > Configure Database > Fetch key from remote machine
-    > enter IP address of appliance A
-    > root > smartvm
-    > /var/www/miq/vmdb/certs/v2_key
-    > Join Region in External Database
-    > enter IP address of appliance A
-    > 5432 > vmdb_production > root > smartvm
-    On appliance A, restart server processes:
-    > Start EVM Server Processes > Y
-    Log in the web UI on appliance A, and disable roles on appliance B
-    that require httpd:
-    Administrator > Configuration
-    > click on appliance B in accordion menu"s list of servers
-    > under Server Control, disable all server roles > Save
-    On appliance B, verify that the httpd service stops:
-    # systemctl status httpd
-    ● httpd.service - The Apache HTTP Server
-    Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled;
-    vendor preset: disabled)
-    Active: inactive (dead) since Fri 2018-01-12 10:57:29 EST; 22s ago
-    [...]
-    Enable one of the following roles, and verify that httpd restarts:
-    Cockpit, Embedded Ansible, User Interface, Web Services, Websocket
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    pass
-
-
 def test_distributed_add_provider_to_remote_zone():
     """
     Adding a provider from the global region to a remote zone.
