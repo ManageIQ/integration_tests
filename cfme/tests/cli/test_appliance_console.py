@@ -595,11 +595,8 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
         initialEstimate: 1/3h
     """
 
-    command_set = ('ap', RETURN, '15', RETURN, RETURN)
-    temp_appliance_preconfig.appliance_console.run_commands(command_set, timeout=30)
-
-    rules_failures = temp_appliance_preconfig.appliance_console.scap_check_rules()
-    assert not rules_failures, "Some rules have failed, check log"
+    temp_appliance_preconfig.appliance_console.scap_harden_appliance()
+    assert not temp_appliance_preconfig.appliance_console.scap_failures()
 
 
 @pytest.mark.tier(1)
