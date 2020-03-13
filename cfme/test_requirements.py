@@ -211,6 +211,12 @@ discovery = pytest.mark.requirement(
     priority='lowest',
 )
 
+ha_proxy = pytest.mark.requirement(
+    "Database HA proxy",
+    description='Database HA proxy and replication',
+    assignee_id='jhenner',
+)
+
 distributed = pytest.mark.requirement(
     "Distributed Appliances",
     description='Distributed Appliance deployment, configuration, and interaction',
