@@ -48,9 +48,16 @@ class AddDialogView(DialogForm):
 
     @property
     def is_displayed(self):
+        expected_title = (
+            "Automate Customization"
+            if self.browser.product_version < "5.11"
+            else "Add a new Dialog"
+        )
         return (
-            self.in_customization and self.title.text == "Automate Customization" and
-            self.sub_title.text == "General" and self.create_tab.is_displayed
+            self.in_customization
+            and self.title.text == expected_title
+            and self.sub_title.text == "General"
+            and self.create_tab.is_displayed
         )
 
 
@@ -60,9 +67,40 @@ class EditDialogView(DialogForm):
 
     @property
     def is_displayed(self):
+        obj = self.context["object"]
+
+        expected_title = (
+            "Automate Customization"
+            if self.browser.product_version < "5.11"
+            else 'Editing {} Service Dialog'.format(obj.label)
+        )
         return (
-            self.in_customization and self.title.text == "Automate Customization" and
-            self.sub_title.text == "General" and self.label.read() == self.context['object'].label
+            self.in_customization
+            and self.title.text == expected_title
+            and self.sub_title.text == "General"
+            and self.label.read() == obj.label
+        )
+
+
+class CopyDialogView(DialogForm):
+    save_button = Button('Save')
+    cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        obj = self.context["object"]
+        expected_label = 'Copy of {}'.format(obj.label)
+
+        expected_title = (
+            "Automate Customization"
+            if self.browser.product_version < "5.11"
+            else 'Editing {} Service Dialog'.format(obj.label)
+        )
+        return (
+            self.in_customization
+            and self.title.text == expected_title
+            and self.sub_title.text == "General"
+            and self.label.read() == expected_label
         )
 
 

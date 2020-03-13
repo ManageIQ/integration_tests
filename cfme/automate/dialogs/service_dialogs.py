@@ -7,6 +7,7 @@ from widgetastic.widget import Text
 
 from cfme.automate.dialogs import AddDialogView
 from cfme.automate.dialogs import AutomateCustomizationView
+from cfme.automate.dialogs import CopyDialogView
 from cfme.automate.dialogs import EditDialogView
 from cfme.automate.dialogs.dialog_tab import TabCollection
 from cfme.exceptions import RestLookupError
@@ -90,6 +91,15 @@ class Dialog(BaseEntity, Fillable):
         view.flash.assert_success_message(
             'Dialog "{}": Delete successful'.format(self.label))
 
+    def copy(self):
+        view = navigate_to(self, "Copy")
+        view.save_button.click()
+        view = self.create_view(DetailsDialogView)
+        view.flash.assert_success_message(f'Copy of {self.label} was saved')
+        view.flash.wait_displayed(timeout=20)
+        assert view.is_displayed
+        view.flash.assert_no_error
+
     @property
     def rest_api_entity(self):
         try:
@@ -153,3 +163,12 @@ class Edit(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.configuration.item_select("Edit this Dialog")
+
+
+@navigator.register(Dialog)
+class Copy(CFMENavigateStep):
+    VIEW = CopyDialogView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select('Copy this Dialog')
