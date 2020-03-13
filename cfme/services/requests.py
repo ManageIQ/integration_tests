@@ -407,6 +407,8 @@ class RequestDetailsView(RequestsView):
 
     @View.nested
     class properties(WaitTab):  # noqa
+        # Cloud providers only?
+
         instance_type = SummaryFormItem('Properties', 'Instance Type')
         boot_disk_size = SummaryFormItem('Properties', 'Boot Disk Size ')
         is_preemptible = Checkbox(name='hardware__is_preemptible')
@@ -430,6 +432,12 @@ class RequestDetailsView(RequestsView):
         power_on = SummaryFormItem('Lifespan', 'Power on virtual machines after creation')
         retirement = SummaryFormItem('Lifespan', 'Time until Retirement')
         retirement_warning = SummaryFormItem('Lifespan', 'Retirement Warning')
+
+    @View.nested
+    class volumes(WaitTab):  # noqa
+        volume_name = SummaryFormItem('Volumes', 'Volume Name')
+        volume_size = SummaryFormItem('Volumes', 'Size (gigabytes)')
+        delete_on_terminate = Checkbox(name='volumes__delete_on_terminate_1')
 
     @property
     def is_displayed(self):

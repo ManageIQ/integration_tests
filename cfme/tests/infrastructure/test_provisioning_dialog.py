@@ -9,6 +9,7 @@ from widgetastic.utils import partial_match
 from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -23,6 +24,7 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
+
 not_scvmm = ProviderFilter(classes=[SCVMMProvider], inverted=True)
 all_infra = ProviderFilter(classes=[InfraProvider],
                            required_fields=[['provisioning', 'template'],
@@ -35,7 +37,7 @@ pytestmark = [
     pytest.mark.long_running,
     test_requirements.provision,
     pytest.mark.tier(3),
-    pytest.mark.provider(gen_func=providers, filters=[all_infra], scope="module"),
+    pytest.mark.provider(gen_func=providers, scope="module"),
 ]
 
 
@@ -54,13 +56,17 @@ def prov_data(provisioning, provider):
             'last_name': fauxfactory.gen_alphanumeric(),
             'manager_name': fauxfactory.gen_alphanumeric(20, start="manager ")},
         'network': {'vlan': partial_match(provisioning.get('vlan'))},
-        'environment': {'datastore_name': {'name': provisioning['datastore']},
-                        'host_name': {'name': provisioning['host']}},
         'catalog': {},
         'hardware': {},
         'schedule': {},
         'purpose': {},
     }
+
+    if provider.one_of(InfraProvider):
+        data['environment'] = {
+            'datastore_name': {'name': provisioning['datastore']},
+            'host_name': {'name': provisioning['host']}}
+
     if provider.one_of(RHEVMProvider):
         data['catalog']['provision_type'] = 'Native Clone'
     elif provider.one_of(VMwareProvider):
@@ -73,9 +79,9 @@ def prov_data(provisioning, provider):
 def provisioner(appliance, request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
-        vm = appliance.collections.infra_vms.instantiate(name=vm_name,
-                                                         provider=provider,
-                                                         template_name=template)
+        collection = appliance.provider_based_collection(provider)
+        vm = collection.instantiate(name=vm_name, provider=provider, template_name=template)
+
         provisioning_data['template_name'] = template
         provisioning_data['provider_name'] = provider.name
         view = navigate_to(vm.parent, 'Provision')
@@ -84,11 +90,12 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
         base_view.flash.assert_no_error()
 
         request.addfinalizer(
-            lambda: appliance.collections.infra_vms.instantiate(vm_name, provider)
-            .cleanup_on_provider())
+            lambda: vm.cleanup_on_provider())
         request_description = f'Provision from [{template}] to [{vm_name}]'
         provision_request = appliance.collections.requests.instantiate(
             description=request_description)
+        check_all_tabs(provision_request, provider)
+
         if delayed is not None:
             total_seconds = (delayed - datetime.utcnow()).total_seconds()
             try:
@@ -113,6 +120,24 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
         return vm
 
     return _provisioner
+
+
+def check_all_tabs(provision_request, provider):
+    view = navigate_to(provision_request, "Details")
+    widgets_names = 'request', 'purpose', 'catalog', 'environment', 'schedule'
+    if provider.one_of(CloudProvider):
+        widgets_names += 'properties', 'volumes', 'customize'
+    elif provider.one_of(SCVMMProvider):
+        widgets_names += 'environment', 'hardware', 'network'
+    elif provider.one_of(InfraProvider):
+        widgets_names += 'hardware', 'network', 'customize'
+    else:
+        raise NotImplementedError(f"Couldn't determine which tabs to check for "
+                                  "this provider: {provider}")
+
+    for name in widgets_names:
+        widget = getattr(view, name)
+        widget.click()
 
 
 @pytest.mark.meta(blockers=[BZ(1627673, forced_streams=['5.10'])])
@@ -141,7 +166,11 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     prov_data['hardware']["num_sockets"] = "4"
     prov_data['hardware']["cores_per_socket"] = "1" if not provider.one_of(SCVMMProvider) else None
     prov_data['hardware']["memory"] = "2048"
-    template_name = provider.data['provisioning']['template']
+    if provider.one_of(CloudProvider):
+        template_name = provider.data['provisioning']['image']['name']
+    else:
+        template_name = provider.data['provisioning']['template']
+
     vm = provisioner(template_name, prov_data)
 
     # Go to the VM info
@@ -228,6 +257,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
 
 @pytest.mark.parametrize("started", [True, False])
+@pytest.mark.meta(automates=[1670327])
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.
 
