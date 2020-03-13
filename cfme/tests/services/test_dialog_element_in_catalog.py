@@ -815,31 +815,6 @@ def test_datepicker_field_set_to_required():
     pass
 
 
-@pytest.mark.meta(coverage=[1654165])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_service_bundle_vms():
-    """
-
-    Bugzilla:
-        1654165
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testSteps:
-            1. Create Bundle, containing 2 service items, each of which will provision a single VM
-            2. Navigate to order page of service
-            3. Order the Service bundle.
-        expectedResults:
-            1.
-            2. View the Service. Both VMs should displayed, instead of the 1 VM.
-    """
-    pass
-
-
 @pytest.mark.meta(coverage=[1660637])
 @pytest.mark.manual
 @pytest.mark.tier(2)
