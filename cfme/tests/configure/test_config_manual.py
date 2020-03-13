@@ -275,42 +275,6 @@ def test_subscription_disruption():
 
 
 @pytest.mark.manual
-@test_requirements.settings
-@test_requirements.multi_region
-@pytest.mark.meta(coverage=[1741240])
-@pytest.mark.tier(3)
-def test_subscription_region_unavailable():
-    """
-    Tests that Replication tab is open w/o issues and 502 error when
-    remote region has become unavailable
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        caseimportance: high
-        initialEstimate: 1/4h
-        testSteps:
-            1. Set up two appliances where first appliance resides in global region (99) and
-            second one resides in remote region (10). Those should use the same security key
-            2. Add a provider to second appliance
-            3. Set replication subscription type to Remote in second appliance
-            4. Set replication subscription type to Global in first appliance
-            5. Add subscription to second appliance in first appliance
-            6. Stop postgresql service in remote appliance
-            7. Go to Configuration->Settings-><Current Region>->Replication tab
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5.
-            6.
-            7. Replication tab is being opened for long time and finally displays 502 error alert
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.meta(coverage=[1625788])
 def test_default_miq_group_is_tenant_group():
     """
