@@ -7,8 +7,16 @@ from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
 
+general_db = [
+    ('servers', None, 'DatabaseSummary', False),
+    ('servers', None, 'DatabaseTables', True),
+    ('servers', None, 'DatabaseIndexes', True),
+    ('servers', None, 'DatabaseSettings', True),
+    ('servers', None, 'DatabaseClientConnections', True),
+    ('servers', None, 'DatabaseUtilization', False),
+]
 
-general_list_pages = [
+general_non_db = [
     ('servers', None, 'Details', False),
     ('servers', None, 'Authentication', False),
     ('servers', None, 'Workers', False),
@@ -22,12 +30,6 @@ general_list_pages = [
     ('servers', None, 'Utilization', False),
     ('servers', None, 'Timelines', False),
     ('servers', None, 'ServerDiagnosticsCollectLogs', False),
-    ('servers', None, 'DatabaseSummary', False),
-    ('servers', None, 'DatabaseTables', True),
-    ('servers', None, 'DatabaseIndexes', True),
-    ('servers', None, 'DatabaseSettings', True),
-    ('servers', None, 'DatabaseClientConnections', True),
-    ('servers', None, 'DatabaseUtilization', False),
     ('regions', None, 'Details', False),
     ('regions', None, 'ImportTags', False),
     ('regions', None, 'Import', False),
@@ -57,6 +59,8 @@ general_list_pages = [
     ('roles', None, 'All', True),
     ('tenants', None, 'All', True),
 ]
+
+general_list_pages = general_db + general_non_db
 
 details_pages = [
     ('users', None, 'Details', False),
@@ -97,6 +101,9 @@ def schedule(appliance):
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
+@pytest.mark.uncollectif(lambda appliance, place_info:
+                         appliance.version >= '5.11' and place_info in general_db,
+                         reason="This page is disabled in 5.11 and later.")
 def test_paginator_config_pages(appliance, place_info):
     """
         Check paginator is visible for config pages
