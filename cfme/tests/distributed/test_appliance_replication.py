@@ -332,3 +332,35 @@ def test_appliance_httpd_roles(temp_appliance_preconfig_funcscope_rhevm,
             view.flash.assert_no_error()
 
             wait_for(lambda: secondary_appliance.httpd.running, delay=10)
+
+
+@pytest.mark.ignore_stream("upstream")
+def test_appliance_replicate_zones(temp_appliance_preconfig_funcscope_rhevm,
+        temp_appliance_unconfig_funcscope_rhevm):
+    """
+    Verify that no remote zones can be selected when changing the server's zone
+    in the global appliance UI.
+
+    Bugzilla:
+        1470283
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
+    global_appliance = temp_appliance_unconfig_funcscope_rhevm
+
+    configure_replication_appliances(remote_appliance, global_appliance)
+
+    remote_zone = 'remote-A'
+    remote_appliance.collections.zones.create(name=remote_zone, description=remote_zone)
+
+    global_zone = 'global-A'
+    global_appliance.collections.zones.create(name=global_zone, description=global_zone)
+
+    view = navigate_to(global_appliance.server, 'Server')
+    global_zones = [o.text for o in view.basic_information.appliance_zone.all_options]
+    assert global_zone in global_zones and remote_zone not in global_zones
