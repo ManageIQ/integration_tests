@@ -491,35 +491,6 @@ def test_service_dd_dialog_load_values_on_init(appliance, import_datastore, impo
     assert not view.fields("text_box").read()
 
 
-@pytest.mark.meta(coverage=[1684092])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_retire_catalog_bundle_service_orchestration_item():
-    """
-
-    Bugzilla:
-        1684092
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testSteps:
-            1. Add ec2 provider
-            2. Provisioned the catalog bundle with ServiceOrchestration item
-            3. Navigate to My service page
-            4. Retired the bundle
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Catalog bundle should retire with no error
-
-    """
-    pass
-
-
 @pytest.mark.meta(coverage=[1656351])
 @pytest.mark.manual
 @pytest.mark.tier(2)

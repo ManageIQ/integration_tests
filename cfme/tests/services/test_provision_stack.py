@@ -395,3 +395,73 @@ def test_stack_template_azure():
         upstream: yes
     """
     pass
+
+
+@pytest.mark.meta(blockers=[BZ(1754543, forced_streams=["5.11"])], automates=[1684092])
+@pytest.mark.customer_scenario
+@pytest.mark.tier(2)
+@pytest.mark.provider([EC2Provider], selector=ONE, scope='module')
+def test_retire_catalog_bundle_service_orchestration_item(appliance, request, catalog_item,
+                                                          stack_data):
+    """
+    Bugzilla:
+        1684092
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testSteps:
+            1. Add ec2 provider
+            2. Provisioned the catalog bundle with ServiceOrchestration item
+            3. Navigate to My service page
+            4. Retired the bundle
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Catalog bundle should retire with no error
+    """
+    bundle_name = fauxfactory.gen_alphanumeric(15, start="cat_bundle_")
+    catalog_bundle = appliance.collections.catalog_bundles.create(
+        bundle_name, description="catalog_bundle",
+        display_in=True, catalog=catalog_item.catalog,
+        dialog=catalog_item.dialog,
+        catalog_items=[catalog_item.name])
+    request.addfinalizer(catalog_bundle.delete_if_exists)
+
+    # Ordering service catalog bundle
+    service_catalogs = ServiceCatalogs(
+        appliance, catalog_bundle.catalog, catalog_bundle.name, stack_data)
+
+    provision_request = service_catalogs.order()
+    provision_request.wait_for_request(method='ui')
+    provision_request.is_succeeded(method="ui")
+
+    last_message = provision_request.get_request_row_from_ui()['Last Message'].text
+    service_name = last_message.split()[2].strip('[]')
+    service = MyService(appliance, service_name)
+
+    @request.addfinalizer
+    def _clear_request_service():
+        if provision_request.exists():
+            provision_request.remove_request(method="rest")
+        if service.exists:
+            service.delete()
+
+    assert service.exists
+
+    # Retire service
+    retire_request = service.retire()
+
+    @request.addfinalizer
+    def _clear_retire_request():
+        if retire_request.exists():
+            retire_request.remove_request()
+
+    wait_for(
+        lambda: service.is_retired,
+        delay=5, num_sec=120,
+        fail_func=service.browser.refresh,
+        message="waiting for service retire"
+    )
