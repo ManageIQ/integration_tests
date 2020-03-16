@@ -465,3 +465,37 @@ def test_retire_catalog_bundle_service_orchestration_item(appliance, request, ca
         fail_func=service.browser.refresh,
         message="waiting for service retire"
     )
+
+
+@pytest.mark.meta(automates=[1698439])
+@pytest.mark.meta(blockers=[BZ(1754543)])
+@pytest.mark.tier(2)
+@pytest.mark.provider([EC2Provider], selector=ONE, scope='module')
+def test_read_dialog_timeout_ec2_stack(order_stack):
+    """
+    Bugzilla:
+        1698439
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testSteps:
+            1. create an aws template with an optional value "timeout"
+            2. create a dialog that will offer an option to overwrite "timeout"
+               with a custom value typed at input
+            3. Navigate to order page of service
+            4. provision using a non-zero value in timeout
+        expectedResults:
+            1.
+            2.
+            3.
+            4. the value input should be passed
+    """
+    msg = "<AEMethod groupsequencecheck>.*dialog_stack_timeout: 20"
+    with LogValidator('/var/www/miq/vmdb/log/evm.log',
+                      matched_patterns=[msg],
+                      ).waiting(timeout=450):
+        provision_request = order_stack
+        provision_request.wait_for_request(method='ui')
+        provision_request.is_succeeded()

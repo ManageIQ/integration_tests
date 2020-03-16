@@ -359,35 +359,6 @@ def test_clicking_created_catalog_item_in_the_list(appliance, generic_catalog_it
         assert view.title.text == f'Service Catalog Item "{generic_catalog_item.name}"'
 
 
-@pytest.mark.meta(coverage=[1698439])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dialog_based_on_aws_orchestration_template():
-    """
-
-    Bugzilla:
-        1698439
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testSteps:
-            1. create an aws template with an optional value "timeout"
-            2. create a dialog that will offer an option to overwrite "timeout"
-            with a custom value typed at input
-            3. Navigate to order page of service
-            4. provision using a non-zero value in timeout
-        expectedResults:
-            1.
-            2.
-            3.
-            4. the value input should be passed
-    """
-    pass
-
-
 @pytest.mark.meta(automates=[1686076])
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("5.10")
