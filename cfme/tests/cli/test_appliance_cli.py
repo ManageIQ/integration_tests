@@ -28,6 +28,7 @@ tzs = [
 evm_log = '/var/www/miq/vmdb/log/evm.log'
 
 
+@pytest.mark.ignore_stream("5.11")
 @pytest.mark.tier(1)
 def test_appliance_console_cli_datetime(temp_appliance_preconfig_funcscope):
     """Grab fresh appliance and set time and date through appliance_console_cli and check result
