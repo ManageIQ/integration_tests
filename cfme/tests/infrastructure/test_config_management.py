@@ -33,7 +33,7 @@ def config_system(provider):
 def test_config_manager_detail_config_btn(provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         caseimportance: medium
         initialEstimate: 1/2h
         casecomponent: Ansible
@@ -45,7 +45,7 @@ def test_config_manager_detail_config_btn(provider):
 def test_config_manager_add(provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         casecomponent: Ansible
         initialEstimate: 1/4h
     """
@@ -56,7 +56,7 @@ def test_config_manager_add(provider):
 def test_config_manager_add_invalid_url(has_no_providers, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         caseimportance: medium
         initialEstimate: 1/15h
         casecomponent: Ansible
@@ -72,7 +72,7 @@ def test_config_manager_add_invalid_url(has_no_providers, provider):
 def test_config_manager_add_invalid_creds(has_no_providers, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: Ansible
@@ -92,7 +92,7 @@ def test_config_manager_add_invalid_creds(has_no_providers, provider):
 def test_config_manager_edit(request, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         caseimportance: medium
         initialEstimate: 1/15h
         casecomponent: Ansible
@@ -110,7 +110,7 @@ def test_config_manager_edit(request, provider):
 def test_config_manager_remove(request, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         caseimportance: medium
         initialEstimate: 1/15h
         casecomponent: Ansible
@@ -165,7 +165,7 @@ def test_ansible_tower_job_templates_tag(request, provider, tag):
 def test_ansible_tower_service_dialog_creation_from_template(provider, template_type):
     """
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Ansible
         caseimportance: high
@@ -196,7 +196,7 @@ def test_config_manager_add_multiple_times_ansible_tower_243():
     should fail and flash message should be displayed.
 
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         caseimportance: medium
         caseposneg: negative
         casecomponent: Ansible
@@ -217,7 +217,7 @@ def test_config_manager_job_template_refresh():
     template name was changed.
 
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         casecomponent: Ansible
         caseimportance: low
         initialEstimate: 1/2h
@@ -237,7 +237,7 @@ def test_config_manager_accordion_tree():
         1560552
 
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/4h
@@ -259,7 +259,7 @@ def test_config_manager_remove_objects_ansible_tower_310():
     tower job templates) were left in the UI
 
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         caseimportance: medium
         casecomponent: Ansible
         initialEstimate: 1/4h
@@ -281,7 +281,7 @@ def test_config_manager_change_zone():
         1353015
 
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1h

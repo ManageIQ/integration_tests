@@ -52,7 +52,7 @@ def test_order_tower_catalog_item(appliance, provider, catalog_item, request, jo
         1717500
 
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Services
         caseimportance: high
@@ -84,7 +84,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type,
         test_flag: provision
 
     Polarion:
-        assignee: nachandr
+        assignee: jhenner
         casecomponent: Services
         caseimportance: medium
         initialEstimate: 1/4h
