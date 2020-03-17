@@ -33,7 +33,7 @@ def test_delete_vm_on_provider_side(vm_test, provider):
     """ Delete VM on the provider side and refresh relationships in CFME
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Infra
 

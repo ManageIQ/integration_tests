@@ -32,7 +32,7 @@ def test_iso_datastore_crud(setup_provider, no_iso_dss, provider):
         test_flag: iso
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Infra
         caseimportance: critical

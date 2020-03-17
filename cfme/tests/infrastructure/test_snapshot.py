@@ -113,7 +113,7 @@ def test_delete_active_vm_snapshot(create_vm):
         1443411
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Infra
         caseimportance: medium
         caseposneg: negative
@@ -136,7 +136,7 @@ def test_create_without_description(create_vm):
         test_flag: snapshot, provision
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Infra
     """

@@ -340,7 +340,7 @@ def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
     """Tests hosts not displayed several times after removing and adding provider.
 
         Polarion:
-            assignee: anikifor
+            assignee: jhenner
             initialEstimate: 1/20h
             casecomponent: Infra
         """
@@ -527,7 +527,7 @@ def test_add_ipmi_refresh(appliance, setup_provider):
         1669011
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/20h
         caseimportance: medium
         casecomponent: Infra

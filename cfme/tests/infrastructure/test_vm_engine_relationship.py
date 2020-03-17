@@ -35,7 +35,7 @@ def test_edit_management_relationship(appliance, new_vm):
         1534400
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/6h

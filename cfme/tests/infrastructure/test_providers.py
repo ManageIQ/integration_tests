@@ -346,7 +346,7 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
 def test_rhv_guest_devices_count(appliance, setup_provider, provider):
     """
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/6h
@@ -389,7 +389,7 @@ def test_rhv_custom_attributes_after_refresh(appliance, setup_provider, provider
         1594817
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
