@@ -29,7 +29,6 @@ pytestmark = [
         scope="module",
     ),
     pytest.mark.usefixtures("v2v_provider_setup"),
-    pytest.mark.meta(blockers=[1807770]),
     test_requirements.v2v
 ]
 
@@ -218,6 +217,7 @@ def test_retry_migration_plan(cancel_migration_plan,
     Bugzilla:
         1755632
         1746592
+        1807770
     """
     migration_plan = cancel_migration_plan
     view = navigate_to(migration_plan, "Complete")
