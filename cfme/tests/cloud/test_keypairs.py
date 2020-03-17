@@ -220,10 +220,12 @@ def test_keypair_visibility_in_tenants(appliance, child_tenant_admin_user):
 
 
 @test_requirements.cloud
-@pytest.mark.meta(automates=[1713400])
+@pytest.mark.meta(automates=[1713400, 1747179])
 def test_keypair_ownership_association(appliance, keypair):
     """
-    Bugzilla: 1713400
+    Bugzilla:
+        1713400
+        1747179
 
     Polarion:
         assignee: mmojzis
