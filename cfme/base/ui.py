@@ -35,6 +35,7 @@ from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import NavigationError
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.intelligence.rss import RSSView
 from cfme.intelligence.timelines import CloudIntelTimelinesView
@@ -45,6 +46,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
+from cfme.utils.browser import manager
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
@@ -324,8 +326,7 @@ class LoginScreen(CFMENavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        from cfme.utils.browser import ensure_browser_open
-        ensure_browser_open(self.obj.appliance.server.address())
+        manager.start_at_url(self.obj.appliance.server.address())
 
     def step(self, *args, **kwargs):
         # Can be either blank or logged in
@@ -336,10 +337,8 @@ class LoginScreen(CFMENavigateStep):
         # TODO this is not the place to handle this behavior
         if not self.view.wait_displayed(timeout=60):
             # Something is wrong
-            from cfme.utils import browser
             del self.view  # In order to unbind the browser
-            browser.quit()
-            raise
+            raise NavigationError
 
 
 @navigator.register(Server)

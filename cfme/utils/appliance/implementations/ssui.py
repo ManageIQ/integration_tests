@@ -131,7 +131,7 @@ class SSUINavigateStep(NavigateStep):
             return False
 
     def pre_navigate(self, *args, **kwargs):
-        self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
+        self.appliance.ssui.open_browser()
 
     def do_nav(self, _tries=0, *args, **kwargs):
         """Describes how the navigation should take place."""
@@ -232,7 +232,7 @@ class ViaSSUI(Implementation):
     def widgetastic(self):
         """This gives us a widgetastic browser."""
         # TODO: Make this a property that could watch for browser change?
-        browser = self.open_browser(url_key=self.appliance.server.address())
+        browser = self.open_browser()
         wt = MiqSSUIBrowser(browser, self)
         manager.add_cleanup(self._reset_cache)
         return wt

@@ -6,7 +6,7 @@ packages:
   docker: docker-py
   git: GitPython
   github: PyGithub
+  keycloak: python-keycloak
   widgetastic: widgetastic.core
   widgetastic_patternfly: widgetastic.patternfly
   zmq: pyzmq
-  keycloak: python-keycloak

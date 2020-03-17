@@ -2989,8 +2989,8 @@ class ApplianceStack(LocalStack):
         logger.info(f"Pushed appliance hostname [{obj.hostname}] on stack \n"
                     f"Previous stack head was {getattr(stack_parent, 'hostname', 'empty')}")
         if obj.browser_steal:
-            from cfme.utils import browser
-            browser.start()
+            from cfme.utils.browser import manager
+            manager.browser.start()
 
     def pop(self):
         stack_parent = super().pop()
@@ -2999,8 +2999,8 @@ class ApplianceStack(LocalStack):
                     f"Stack head is {getattr(current, 'hostname', 'empty')}")
 
         if stack_parent and stack_parent.browser_steal:
-            from cfme.utils import browser
-            browser.start()
+            from cfme.utils.browser import manager
+            manager.browser.start()
         return stack_parent
 
 
@@ -3029,9 +3029,7 @@ def load_appliances(appliance_list, global_kwargs):
             mapping = IPAppliance.CONFIG_MAPPING
 
             if not any(k in mapping for k in kwargs):
-                raise ValueError(
-                    f"No valid IPAppliance kwargs found in config for appliance #{idx}"
-                )
+                raise ValueError(f"No valid IPAppliance kwargs found in config, appliance #{idx}")
             appliance = IPAppliance(**{mapping[k]: v for k, v in kwargs.items() if k in mapping})
 
             result.append(appliance)

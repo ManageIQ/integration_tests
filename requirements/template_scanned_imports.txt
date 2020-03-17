@@ -58,6 +58,7 @@ tzlocal
 urllib3
 varmeth
 wait-for
+webdriver-kaifuku
 widgetastic.core
 widgetastic.patternfly
 wrapanapi

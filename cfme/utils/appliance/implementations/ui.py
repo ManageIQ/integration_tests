@@ -278,7 +278,7 @@ class CFMENavigateStep(NavigateStep):
     @cached_property
     def view(self):
         if self.VIEW is None:
-            raise AttributeError('{} does not have VIEW specified'.format(type(self).__name__))
+            raise AttributeError(f'{type(self).__name__} does not have VIEW specified')
         return self.create_view(self.VIEW, additional_context={'object': self.obj})
 
     @property
@@ -354,7 +354,7 @@ class CFMENavigateStep(NavigateStep):
             sleep(10)   # Give it some rest
             self.appliance.wait_for_web_ui()
             self.appliance.browser.quit_browser()
-            self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
+            self.appliance.browser.open_browser()
             self.go(_tries, *args, **go_kwargs)
 
         # Same with rails errors
@@ -366,14 +366,17 @@ class CFMENavigateStep(NavigateStep):
             logger.error(rails_e)
             # RHEL7 top does not know -M and -a
             logger.debug('Top CPU consumers:')
-            logger.debug(store.current_appliance.ssh_client.run_command(
-                'top -c -b -n1 | head -30').output)
-            logger.debug('Top Memory consumers:')
-            logger.debug(store.current_appliance.ssh_client.run_command(
-                'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
-            logger.debug('Managed known Providers:')
             logger.debug(
-                '%r', [prov.key for prov in store.current_appliance.managed_known_providers])
+                store.current_appliance.ssh_client.run_command('top -c -b -n1 | head -30').output
+            )
+            logger.debug('Top Memory consumers:')
+            logger.debug(
+                store.current_appliance.ssh_client.run_command('top -c -b -n1 -o "%MEM" | head -30')
+                .output
+            )
+            logger.debug('Managed known Providers:')
+            logger.debug('%r',
+                         [prov.key for prov in store.current_appliance.managed_known_providers])
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
             self.go(_tries, *args, **go_kwargs)
@@ -389,7 +392,7 @@ class CFMENavigateStep(NavigateStep):
         #     self.view.flush_widget_cache()
         go_kwargs = kwargs.copy()
         go_kwargs.update(nav_args)
-        self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
+        self.appliance.browser.open_browser()
 
         br = self.appliance.browser
 
@@ -402,8 +405,8 @@ class CFMENavigateStep(NavigateStep):
 
         try:
             self.pre_badness_check(_tries, *args, **go_kwargs)
-            self.log_message(
-                f"Invoking {fn.__name__}, with {args} and {kwargs}", level="debug")
+            self.log_message(f"Invoking {fn.__name__}, with {args} and {kwargs}", level="debug")
+
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
@@ -523,8 +526,7 @@ class CFMENavigateStep(NavigateStep):
 
     def log_message(self, msg, level="debug"):
         class_name = self.obj.__name__ if isclass(self.obj) else self.obj.__class__.__name__
-        str_msg = f"[UI-NAV/{class_name}/{self._name}]: {msg}"
-        getattr(logger, level)(str_msg)
+        getattr(logger, level)(f"[UI-NAV/{class_name}/{self._name}]: {msg}")
 
     def construct_message(self, here, resetter, view, duration, waited, force):
         str_here = "Already Here" if here else "Needed Navigation"
@@ -615,7 +617,7 @@ class ViaUI(Implementation):
     @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        browser = self.open_browser(url_key=self.appliance.server.address())
+        browser = self.open_browser()
         wt = MiqBrowser(browser, self)
         manager.add_cleanup(self._reset_cache)
         return wt

@@ -3,8 +3,7 @@ import time
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.browser import ensure_browser_open
-from cfme.utils.browser import quit
+from cfme.utils.browser import manager
 from cfme.utils.wait import wait_for
 
 
@@ -25,13 +24,12 @@ def test_session_timeout(request, appliance):
 
     @request.addfinalizer  # Wow, why we did not figure this out before?!
     def _finalize():
-        quit()
-        ensure_browser_open()
+        manager.start()
         auth_settings.set_session_timeout(hours="24", minutes="0")
 
     auth_settings.set_session_timeout(hours="0", minutes="5")
     # Wait 10 minutes
-    time.sleep(10 * 60)
+    time.sleep(6 * 60)
     # Try getting timeout
     # I had to use wait_for because on 5.4 and upstream builds it made weird errors
     wait_for(
