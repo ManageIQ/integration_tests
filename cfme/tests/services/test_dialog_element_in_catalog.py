@@ -703,10 +703,9 @@ def test_access_child_services_from_the_my_service():
     pass
 
 
-@pytest.mark.meta(coverage=[1684575])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_load_values_on_init_option_service_dialog_element():
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1684575])
+def test_catalog_load_values_on_init(appliance, request):
     """
 
     Bugzilla:
@@ -718,13 +717,36 @@ def test_load_values_on_init_option_service_dialog_element():
         casecomponent: Services
         initialEstimate: 1/16h
         testSteps:
-            1. create a service dialog
+            1. create a service dialog with option dynamic to True
             2. In service dialog element option page
         expectedResults:
             1.
             2. Load_values_on_init button should always be enabled
     """
-    pass
+    element_data = {
+        "element_information": {
+            "ele_label": fauxfactory.gen_alphanumeric(start="label_"),
+            "ele_name": fauxfactory.gen_alphanumeric(start="name_"),
+            "ele_desc": fauxfactory.gen_alphanumeric(start="desc_"),
+            "choose_type": "Text Box",
+            "dynamic_chkbox": True
+        },
+        "options": {"field_required": True}
+    }
+    service_dialog = appliance.collections.service_dialogs
+    sd = service_dialog.create(label=fauxfactory.gen_alphanumeric(15, start="label_"),
+                               description="my dialog")
+    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
+                         tab_desc="my tab desc")
+    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
+                           box_desc="my box desc")
+    box.elements.create(element_data=[element_data])
+    request.addfinalizer(sd.delete_if_exists)
+    view = appliance.browser.create_view(EditElementView)
+    view.element.edit_element(element_data['element_information']['ele_label'])
+    assert view.element_information.dynamic_chkbox.is_enabled
+    view.options.click()
+    assert view.options.load_values_on_init.is_enabled
 
 
 @pytest.mark.meta(coverage=[1677724])

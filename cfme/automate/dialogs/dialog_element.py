@@ -55,6 +55,7 @@ class ElementForm(AddBoxView):
         )
         field_required = DialogBootstrapSwitch(label='Required')
         default_value = DialogBootstrapSwitch(label='Default value')
+        load_values_on_init = DialogBootstrapSwitch(label='Load values on init')
         default_value_dropdown = BootstrapSelect(
             locator='//label[contains(normalize-space(.), '
                     '"Default value")]/following-sibling::div/span/div'
