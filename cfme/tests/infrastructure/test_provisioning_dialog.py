@@ -10,6 +10,9 @@ from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -41,6 +44,13 @@ pytestmark = [
 ]
 
 
+def prov_source(provider):
+    if provider.one_of(CloudProvider):
+        return provider.data['provisioning']['image']['name']
+    else:
+        return provider.data['provisioning']['template']
+
+
 @pytest.fixture(scope="function")
 def vm_name():
     vm_name = random_vm_name('provd')
@@ -49,23 +59,35 @@ def vm_name():
 
 @pytest.fixture(scope="function")
 def prov_data(provisioning, provider):
-    data = {
+    # TODO Perhaps merge this with stuff with test_cloud_init_provisioning.test_provision_cloud_init
+    data = dict(provisioning, **{
         'request': {
             'email': fauxfactory.gen_email(),
             'first_name': fauxfactory.gen_alphanumeric(),
             'last_name': fauxfactory.gen_alphanumeric(),
             'manager_name': fauxfactory.gen_alphanumeric(20, start="manager ")},
-        'network': {'vlan': partial_match(provisioning.get('vlan'))},
         'catalog': {},
         'hardware': {},
         'schedule': {},
         'purpose': {},
-    }
+    })
+
+    mgmt_system = provider.mgmt
 
     if provider.one_of(InfraProvider):
+        data['network'] = {'vlan': partial_match(provisioning.get('vlan'))}
         data['environment'] = {
             'datastore_name': {'name': provisioning['datastore']},
             'host_name': {'name': provisioning['host']}}
+    elif provider.one_of(AzureProvider):
+        data['environment'] = {'public_ip_address': "New"}
+    elif provider.one_of(OpenStackProvider):
+        ip_pool = provider.data['public_network']
+        floating_ip = mgmt_system.get_first_floating_ip(pool=ip_pool)
+        provider.refresh_provider_relationships()
+        data['environment'] = {'public_ip_address': floating_ip}
+        props = data.setdefault('properties', {})
+        props['instance_type'] = partial_match(provisioning['ci-flavor-name'])
 
     if provider.one_of(RHEVMProvider):
         data['catalog']['provision_type'] = 'Native Clone'
@@ -80,12 +102,10 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
         collection = appliance.provider_based_collection(provider)
-        vm = collection.instantiate(name=vm_name, provider=provider, template_name=template)
-
         provisioning_data['template_name'] = template
         provisioning_data['provider_name'] = provider.name
-        view = navigate_to(vm.parent, 'Provision')
-        view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
+        vm = collection.create(vm_name, provider, form_values=provisioning_data)
+
         base_view = vm.appliance.browser.create_view(BaseLoggedInPage)
         base_view.flash.assert_no_error()
 
@@ -125,7 +145,9 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
 def check_all_tabs(provision_request, provider):
     view = navigate_to(provision_request, "Details")
     widgets_names = 'request', 'purpose', 'catalog', 'environment', 'schedule'
-    if provider.one_of(CloudProvider):
+    if provider.one_of(EC2Provider):
+        widgets_names += 'properties', 'customize'
+    elif provider.one_of(CloudProvider):
         widgets_names += 'properties', 'volumes', 'customize'
     elif provider.one_of(SCVMMProvider):
         widgets_names += 'environment', 'hardware', 'network'
@@ -141,6 +163,7 @@ def check_all_tabs(provision_request, provider):
 
 
 @pytest.mark.meta(blockers=[BZ(1627673, forced_streams=['5.10'])])
+@pytest.mark.provider(gen_func=providers, filters=[all_infra], scope="module")
 def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     """ Tests change RAM and CPU in provisioning dialog.
 
@@ -166,12 +189,8 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     prov_data['hardware']["num_sockets"] = "4"
     prov_data['hardware']["cores_per_socket"] = "1" if not provider.one_of(SCVMMProvider) else None
     prov_data['hardware']["memory"] = "2048"
-    if provider.one_of(CloudProvider):
-        template_name = provider.data['provisioning']['image']['name']
-    else:
-        template_name = provider.data['provisioning']['template']
 
-    vm = provisioner(template_name, prov_data)
+    vm = provisioner(prov_source(provider), prov_data)
 
     # Go to the VM info
     view = navigate_to(vm, "Details")
@@ -241,9 +260,8 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['hardware']["disk_format"] = disk_format
-    template_name = provider.data['provisioning']['template']
 
-    vm = provisioner(template_name, prov_data)
+    vm = provisioner(prov_source(provider), prov_data)
 
     # Go to the VM info
     view = navigate_to(vm, 'Details')
@@ -258,6 +276,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
 @pytest.mark.parametrize("started", [True, False])
 @pytest.mark.meta(automates=[1670327])
+@pytest.mark.provider(gen_func=providers, filters=[all_infra], scope="module")
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.
 
@@ -282,9 +301,8 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     """
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['schedule']["power_on"] = started
-    template_name = provider.data['provisioning']['template']
 
-    vm = provisioner(template_name, prov_data)
+    vm = provisioner(prov_source(provider), prov_data)
 
     wait_for(
         lambda: vm.exists_on_provider and
@@ -317,9 +335,8 @@ def test_tag(provisioner, prov_data, provider, vm_name):
     """
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['purpose']["apply_tags"] = CbTree.CheckNode(path=("Service Level *", "Gold"))
-    template_name = provider.data['provisioning']['template']
 
-    vm = provisioner(template_name, prov_data)
+    vm = provisioner(prov_source(provider), prov_data)
 
     tags = vm.get_tags()
     assert any(
@@ -363,9 +380,7 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     prov_data['schedule']["provision_start_hour"] = str(provision_time.hour)
     prov_data['schedule']["provision_start_min"] = str(provision_time.minute)
 
-    template_name = provider.data['provisioning']['template']
-
-    provisioner(template_name, prov_data, delayed=provision_time)
+    provisioner(prov_source(provider), prov_data, delayed=provision_time)
 
 
 @pytest.mark.provider([RHEVMProvider],
@@ -399,9 +414,8 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
     """
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['network'] = {'vlan': vnic_profile}
-    template_name = provider.data['provisioning']['template']
 
-    vm = provisioner(template_name, prov_data)
+    vm = provisioner(prov_source(provider), prov_data)
 
     wait_for(
         lambda: vm.exists_on_provider,
@@ -481,11 +495,10 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
         casecomponent: Provisioning
         initialEstimate: 1/4h
     """
-    template_name = provider.data['provisioning']['template']
     prov_data['catalog']['vm_name'] = vm_name
     prov_data['environment'] = {'automatic_placement': True}
 
-    vm = provisioner(template_name, prov_data)
+    vm = provisioner(prov_source(provider), prov_data)
 
     wait_for(
         lambda: vm.exists_on_provider,

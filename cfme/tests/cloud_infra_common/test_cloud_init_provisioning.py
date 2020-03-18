@@ -89,6 +89,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
     # for image selection in before_fill
     inst_args['template_name'] = image
 
+    # TODO Perhaps merge this with stuff in test_provisioning_dialog.prov_data
     if provider.one_of(AzureProvider):
         inst_args['environment'] = {'public_ip_address': "New"}
     if provider.one_of(OpenStackProvider):
@@ -98,6 +99,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
         inst_args['environment'] = {'public_ip_address': floating_ip}
         inst_arg_props = inst_args.setdefault('properties', {})
         inst_arg_props['instance_type'] = partial_match(provisioning['ci-flavor-name'])
+
     if provider.one_of(InfraProvider) and appliance.version > '5.9':
         inst_args['customize']['customize_type'] = 'Specification'
 
