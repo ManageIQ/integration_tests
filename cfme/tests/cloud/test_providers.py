@@ -230,6 +230,17 @@ def ec2_provider_with_sts_creds(appliance):
     prov.delete()
 
 
+@pytest.fixture(params=["network_providers", "block_managers", "object_managers"])
+def child_provider(request, appliance, provider):
+    try:
+        collection = getattr(appliance.collections, request.param).filter({"provider": provider})
+    except AttributeError:
+        pytest.skip(
+            'Appliance collections did not include parametrized child provider type ({})'
+            .format(request.param))
+    yield collection.all()[0]
+
+
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_add_cancelled_validation_cloud(request, appliance):
@@ -1553,12 +1564,28 @@ def test_provider_compare_ec2_provider_and_backup_regions(appliance):
     assert regions_provider_texts == regions_immediate_backup_texts
 
 
-@pytest.mark.provider([EC2Provider, OpenStackProvider], scope="function", override=True,
-                      selector=ONE)
+@pytest.mark.uncollectif(lambda child_provider, provider:
+                        (provider.one_of(EC2Provider) and "object_managers" in child_provider) or
+                        (provider.one_of(AzureProvider) and ("object_managers" or "block_managers"
+                                                             in child_provider)),
+                        reason="Storage is not supported by AzureProvider "
+                               "and Object Storage is not supported by EC2Provider")
+
 @test_requirements.cloud
-def test_cloud_provider_dashboard_after_block_storage_provider_delete(appliance, provider):
-    storage_manager = appliance.collections.block_managers.filter({'provider': provider}).all()[0]
-    storage_manager.delete()
+@pytest.mark.provider([AzureProvider, EC2Provider, OpenStackProvider], scope="function")
+def test_cloud_provider_dashboard_after_child_provider_remove(
+        appliance, provider, request, setup_provider_funcscope, child_provider):
+    child_provider.delete()
+
+    @request.addfinalizer
+    def _wait_for_delete_provider():
+        provider.delete()
+        provider.wait_for_delete()
+
     view = navigate_to(provider, "Details")
     view.toolbar.view_selector.select('Dashboard View')
-    view.flash.assert_no_error
+    try:
+        view.flash.wait_displayed(timeout=10)
+    except Exception:
+        pass
+    view.flash.assert_no_error()

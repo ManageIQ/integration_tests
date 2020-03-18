@@ -272,7 +272,7 @@ class NetworkProvider(BaseProvider, Taggable):
         """
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove this Network Provider from Inventory',
-                                               handle_alert=not cancel)
+                                               handle_alert=True)
         if not cancel:
             msg = ('Delete initiated for 1 Network Provider from the {} Database'.format(
                 self.appliance.product_name))
