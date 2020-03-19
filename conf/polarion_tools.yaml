@@ -49,6 +49,7 @@ custom_fields:
     - endsin
     - legacytest
     - multiproduct
+    - priority_id
     - reqverify
     - setup
     - startsin
