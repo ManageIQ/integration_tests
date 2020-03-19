@@ -4,6 +4,7 @@ import time
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from selenium.webdriver.common.keys import Keys
+from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import FileInput
 from widgetastic.widget import Table
 from widgetastic.widget import Text
@@ -1187,23 +1188,28 @@ class RegionDiagnosticsView(ConfigurationView):
         )
 
 
-class SambaProtocolEntities(View):
-    """ Samba Protocol fields on the shedule configuration page """
+class CommonProtocolEntities(View):
+    depot_name = Input(id='depot_name')
+    uri = Input(id='uri')
+
+
+class SambaProtocolEntities(CommonProtocolEntities):
+    """ Samba Protocol fields for Database Backup """
     samba_username = Input(id='log_userid')
     samba_password = Input(id='log_password')
     samba_confirm_password = Input(id='log_verify')
 
 
-class AWSS3ProtocolEntities(View):
-    """ AWS S3 Protocol fields on the shedule configuration page"""
+class AWSS3ProtocolEntities(CommonProtocolEntities):
+    """ AWS S3 Protocol fields for Database Backup """
     aws_region = BootstrapSelect(id='log_aws_region')
     aws_username = Input(id='log_userid')
     aws_password = Input(id='log_password')
     aws_confirm_password = Input(id='log_verify')
 
 
-class OpenstackSwiftProtocolEntities(View):
-    """ Openstack Swift Protocol fields on the shedule configuration page"""
+class OpenstackSwiftProtocolEntities(CommonProtocolEntities):
+    """ Openstack Swift Protocol fields for Database Backup """
     openstack_keystone_version = BootstrapSelect(id='keystone_api_version')
     openstack_region = Input('openstack_region')
     openstack_security_protocol = BootstrapSelect(id='security_protocol')
@@ -1213,20 +1219,26 @@ class OpenstackSwiftProtocolEntities(View):
     openstack_confirm_password = Input(id='log_verify')
 
 
-class RegionDiagnosticsDatabaseBackupEntities(View):
-    """ Database Backup fields on the shedule configuration page """
-    backup_type = BootstrapSelect('log_protocol')
-    depot_name = Input(id='depot_name')
-    uri = Input(id='uri')
+class NFSProtocolEntities(CommonProtocolEntities):
+    """ NFS Protocol fields for Database Backup """
+    pass
 
-    samba_protocol = View.nested(SambaProtocolEntities)
-    aws_s3_protocol = View.nested(AWSS3ProtocolEntities)
-    openstack_swift_protocol = View.nested(OpenstackSwiftProtocolEntities)
+
+class DatabaseBackupEntities(View):
+    """ Database Backup fields """
+    backup_type = BootstrapSelect('log_protocol')
+
+    backup_settings = ConditionalSwitchableView(reference='backup_type')
+    backup_settings.register('<No Depot>', default=True, widget=View())
+    backup_settings.register('Samba', widget=SambaProtocolEntities)
+    backup_settings.register('AWS S3', widget=AWSS3ProtocolEntities)
+    backup_settings.register('OpenStack Swift', widget=OpenstackSwiftProtocolEntities)
+    backup_settings.register('Network File System', widget=NFSProtocolEntities)
 
 
 class RegionDiagnosticsDatabaseView(RegionDiagnosticsView):
 
-    db_backup_settings = View.nested(RegionDiagnosticsDatabaseBackupEntities)
+    db_backup_settings = View.nested(DatabaseBackupEntities)
     submit_db_garbage_collection_button = Button(alt="Run Database Garbage Collection Now")
 
     depot_name = Input(id='depot_name')
@@ -1234,7 +1246,11 @@ class RegionDiagnosticsDatabaseView(RegionDiagnosticsView):
 
     @property
     def is_displayed(self):
-        return self.database.is_active()
+        return (
+            self.accordions.diagnostics.is_opened and
+            self.accordions.diagnostics.tree.currently_selected == self.context['object'].tree_path
+            and self.database.is_active()
+        )
 
 
 @navigator.register(Region, 'Diagnostics')

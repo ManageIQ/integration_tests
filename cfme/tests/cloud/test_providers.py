@@ -1524,14 +1524,14 @@ def test_provider_compare_ec2_provider_and_backup_regions(appliance):
     view = navigate_to(appliance.collections.system_schedules, 'Add')
     view.form.action_type.fill("Database Backup")
     view.form.database_backup.backup_type.fill("AWS S3")
-    regions_scheduled_backup = view.form.database_backup.aws_s3_protocol.aws_region.all_options
+    regions_scheduled_backup = view.form.database_backup.backup_settings.aws_region.all_options
     regions_scheduled_backup_texts = [option.text for option in regions_scheduled_backup if
                                       option.text != "<Choose>"]
     regions_scheduled_backup_texts.sort()
 
     view = navigate_to(appliance.server.zone.region, 'Database')
     view.db_backup_settings.backup_type.fill("AWS S3")
-    regions_immediate_backup = view.db_backup_settings.aws_s3_protocol.aws_region.all_options
+    regions_immediate_backup = view.db_backup_settings.backup_settings.aws_region.all_options
     regions_immediate_backup_texts = [option.text for option in regions_immediate_backup if
                                       option.text != "<Choose>"]
     regions_immediate_backup_texts.sort()
