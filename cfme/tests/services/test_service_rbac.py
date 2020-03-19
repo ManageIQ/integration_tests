@@ -36,19 +36,21 @@ def new_user(appliance, group, credential):
 
 @pytest.yield_fixture(scope='module')
 def role_user_group(appliance, new_credential):
+    vm_access_rule = (
+        "All VM and Instance Access Rules"
+        if appliance.version > "5.11"
+        else "Access Rules for all Virtual Machines"
+    )
     role = new_role(appliance=appliance, product_features=[(['Everything'], False),
-                            (['Everything', 'Access Rules for all Virtual Machines'], True)])
+                            (['Everything', vm_access_rule], True)])
+
     group = new_group(appliance=appliance, role=role.name)
     user = new_user(appliance=appliance, group=group, credential=new_credential)
     yield role, user
-    if user.exists:
-        user.delete(cancel=False)
 
-    if group.exists:
-        group.delete(cancel=False)
-
-    if role.exists:
-        role.delete(cancel=False)
+    user.delete_if_exists()
+    group.delete_if_exists()
+    role.delete_if_exists()
 
 
 def test_service_rbac_no_permission(appliance, role_user_group):
@@ -85,7 +87,9 @@ def test_service_rbac_catalog(appliance, role_user_group, catalog):
         assert catalog.exists
 
 
-def test_service_rbac_service_catalog(appliance, role_user_group, catalog, catalog_item):
+def test_service_rbac_service_catalog(
+    appliance, role_user_group, catalog, catalog_item, request, provider
+):
     """ Test service rbac with service catalog
 
     Polarion:
@@ -112,6 +116,22 @@ def test_service_rbac_service_catalog(appliance, role_user_group, catalog, catal
                                                                      partial_check=True)
         service_request.wait_for_request()
         assert service_request.is_succeeded()
+
+    @request.addfinalizer
+    def _finalize():
+        rest_vm = appliance.rest_api.collections.vms.get(
+            name=f"%{catalog_item.prov_data['catalog']['vm_name']}%"
+        )
+        vm = appliance.collections.infra_vms.instantiate(name=rest_vm.name, provider=provider)
+        vm.delete_if_exists()
+        vm.wait_to_disappear()
+        request = appliance.collections.requests.instantiate(
+            description=(
+                "Provisioning Service"
+                f" [{catalog_item.dialog.label}] from [{catalog_item.dialog.label}]"
+            )
+        )
+        request.remove_request()
 
 
 def test_service_rbac_catalog_item(request, appliance, role_user_group, catalog_item):
@@ -158,7 +178,7 @@ def test_service_rbac_orchestration(appliance, role_user_group):
         template.delete()
 
 
-def test_service_rbac_request(appliance, role_user_group, catalog_item):
+def test_service_rbac_request(appliance, role_user_group, catalog_item, request, provider):
     """ Test service rbac with only request module permissions
 
     Polarion:
@@ -185,3 +205,19 @@ def test_service_rbac_request(appliance, role_user_group, catalog_item):
         order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
         order_request.wait_for_request(method='ui')
         assert order_request.is_succeeded(method='ui')
+
+    @request.addfinalizer
+    def _finalize():
+        rest_vm = appliance.rest_api.collections.vms.get(
+            name=f"%{catalog_item.prov_data['catalog']['vm_name']}%"
+        )
+        vm = appliance.collections.infra_vms.instantiate(name=rest_vm.name, provider=provider)
+        vm.delete_if_exists()
+        vm.wait_to_disappear()
+        request = appliance.collections.requests.instantiate(
+            description=(
+                "Provisioning Service"
+                f" [{catalog_item.dialog.label}] from [{catalog_item.dialog.label}]"
+            )
+        )
+        request.remove_request()
