@@ -2111,7 +2111,7 @@ def test_tags_manual_features():
     and then enabling every other checkbox.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: high
         initialEstimate: 1/5h
@@ -2145,7 +2145,7 @@ def test_host_clusters_pod_filter(setup_provider):
     Test that user with Hosts & Clusters filter is able to see pods belonging to that filter only
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: high
         initialEstimate: 1/4h
@@ -2179,7 +2179,7 @@ def test_my_tasks_api():
     Test that user with My Tasks product feature can see only his tasks via API
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
@@ -2207,7 +2207,7 @@ def test_api_task_status_with_administrator():
     Test that user with evmrole Administrator can see task status via API
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2240,7 +2240,7 @@ def test_user_view_catalog_items_ssui():
     removed.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/2h
@@ -2268,7 +2268,7 @@ def test_add_child_tenant():
     Verify that child tenant can be added.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/10h
@@ -2296,7 +2296,7 @@ def test_add_project():
     Verify that project can be added to tenant.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/10h
@@ -2327,7 +2327,7 @@ def test_ssui_group_switch():
     not stay logged in after switching groups.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: SelfServiceUI
         caseimportance: critical
         initialEstimate: 1/6h
@@ -2355,7 +2355,7 @@ def test_ssui_update_dashboard():
     match the new groups permissions
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2387,7 +2387,7 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
     match the new groups permissions
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: WebUI
         initialEstimate: 1/4h
         setup: Create a user with two or more groups. The groups should have role
@@ -2416,7 +2416,7 @@ def test_user_and_group_owned():
     restriction is in place.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
@@ -2442,7 +2442,7 @@ def test_user_group_switch():
     Switching user's group while user is online
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/3h
@@ -2489,7 +2489,7 @@ def test_api_edit_user_no_groups():
     remove it from all assigned groups
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/6h
@@ -2513,7 +2513,7 @@ def test_access_doc():
     PDF documents
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/8h
@@ -2540,7 +2540,7 @@ def test_requests_in_ui_and_api():
     Test querying requests via UI and API
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2566,7 +2566,7 @@ def test_authorized_users_can_login():
     Verify that authorized users can login successfully with a valid password
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/8h
@@ -2588,7 +2588,7 @@ def test_view_quotas_without_manage_quota_permisson():
     Verify that user can see quotas without having the Manage Quota permission.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2613,7 +2613,7 @@ def test_api_provider_refresh_non_admin():
     Test provider revresh via api with non-admin user.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2642,7 +2642,7 @@ def test_orchestration_catalog_visible_providers():
     to the user
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2686,7 +2686,7 @@ def test_modify_roles():
     features.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2719,7 +2719,7 @@ def test_user_vms_tag():
     control
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Provisioning
         caseimportance: medium
         initialEstimate: 1/3h
@@ -2750,7 +2750,7 @@ def test_restricted_user_rbac():
     #<Array:0x000000057a2510> [ops/tree_select]"
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/6h
@@ -2778,7 +2778,7 @@ def test_service_non_admin_user():
     Verify there's no exception when ordering a service by non admin user.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/4h
@@ -2804,7 +2804,7 @@ def test_self_service_users_ssui():
     EVMRole-self_service can login to the SSUI
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: SelfServiceUI
         caseimportance: critical
         initialEstimate: 1/4h
@@ -2829,7 +2829,7 @@ def test_tenant_template_visibility():
     Log in as user, check template is visible for user(only this template)
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
