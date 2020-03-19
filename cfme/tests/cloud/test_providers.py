@@ -1564,17 +1564,38 @@ def test_provider_compare_ec2_provider_and_backup_regions(appliance):
     assert regions_provider_texts == regions_immediate_backup_texts
 
 
+@test_requirements.cloud
+@pytest.mark.meta(automates=[1632750], blockers=[BZ(1632750,
+                                                 unblock=lambda child_provider: "object_managers"
+                                                 in child_provider)])
 @pytest.mark.uncollectif(lambda child_provider, provider:
                         (provider.one_of(EC2Provider) and "object_managers" in child_provider) or
                         (provider.one_of(AzureProvider) and ("object_managers" or "block_managers"
                                                              in child_provider)),
                         reason="Storage is not supported by AzureProvider "
                                "and Object Storage is not supported by EC2Provider")
-
 @test_requirements.cloud
 @pytest.mark.provider([AzureProvider, EC2Provider, OpenStackProvider], scope="function")
 def test_cloud_provider_dashboard_after_child_provider_remove(
         appliance, provider, request, setup_provider_funcscope, child_provider):
+    """
+        Bugzilla: 1632750
+
+        Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/6h
+        caseimportance: high
+        casecomponent: Cloud
+        testSteps:
+            1. Have a cloud provider added
+            2. Delete one of its child managers
+            3. Go to cloud provider Dashboard
+        expectedResults:
+            1.
+            2.
+            3. Dashboard should load without any issues
+    """
     child_provider.delete()
 
     @request.addfinalizer
@@ -1584,8 +1605,5 @@ def test_cloud_provider_dashboard_after_child_provider_remove(
 
     view = navigate_to(provider, "Details")
     view.toolbar.view_selector.select('Dashboard View')
-    try:
-        view.flash.wait_displayed(timeout=10)
-    except Exception:
-        pass
+    view.wait_displayed()
     view.flash.assert_no_error()
