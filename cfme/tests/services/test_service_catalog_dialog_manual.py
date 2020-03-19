@@ -404,23 +404,6 @@ def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_v
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_saving_service_dialog_with_multi_select_drop_down_populated_by_expression_method():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1559030
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_cui_should_check_dialog_field_associations():
     """
