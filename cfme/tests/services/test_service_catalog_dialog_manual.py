@@ -27,24 +27,6 @@ def test_email_should_be_sent_when_service_approval_is_set_to_manual():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_role_configured_with_the_option_only_user_or_group_owned_should_allow_to_access_to_se():
-    """ Role configured with the option "only user or group owned
-        should allow to access to service catalogs and items
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1554775
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_notification_banner_vm_provisioning_notification_and_service_request_should_be_in_syn():
     """ Notification Banner - VM Provisioning Notification and Service Request should be in  Sync
     Polarion:
