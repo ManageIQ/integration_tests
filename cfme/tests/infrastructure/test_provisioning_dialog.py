@@ -275,7 +275,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
 
 
 @pytest.mark.parametrize("started", [True, False])
-@pytest.mark.meta(automates=[1670327])
+@pytest.mark.meta(automates=[1797706])
 @pytest.mark.provider(gen_func=providers, filters=[all_infra], scope="module")
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.

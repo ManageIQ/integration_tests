@@ -127,7 +127,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
 @test_requirements.provision
 @pytest.mark.provider([RHEVMProvider])
-@pytest.mark.meta(automates=[1670327])
+@pytest.mark.meta(automates=[1797706])
 def test_provision_cloud_init_payload(appliance, request, setup_provider, provider, provisioning,
                                       vm_name):
     """
