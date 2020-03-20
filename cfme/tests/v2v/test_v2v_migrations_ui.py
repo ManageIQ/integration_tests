@@ -523,7 +523,7 @@ def test_duplicate_plan_name(appliance, mapping_data_vm_obj_mini, provider, requ
     view.general.infra_map.fill(mapping_data_vm_obj_mini.infra_mapping_data.get("name"))
     view.general.name.fill(name)
     view.general.description.fill("description")
-    assert view.general.alert.read() == "Name {name} already exists".format(name=name)
+    assert view.general.alert.read() == f"Name {name} already exists"
     view.cancel_btn.click()
 
 
@@ -551,7 +551,7 @@ def test_duplicate_mapping_name(appliance, mapping_data_vm_obj_mini):
     view = navigate_to(infrastructure_mapping_collection, "Add")
     view.general.name.fill(name)
     view.general.description.fill("description")
-    view.general.flash.assert_message(f"Infrastructure mapping {name} already exists")
+    assert view.general.alert.read() == f"Infrastructure mapping {name} already exists"
     view.general.cancel_btn.click()
 
 

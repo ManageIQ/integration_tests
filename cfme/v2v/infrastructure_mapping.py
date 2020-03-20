@@ -54,6 +54,7 @@ class InfraMappingCommonButtons(InfrastructureMappingView):
     remove_mapping = Button("Remove Selected")
     remove_all_mappings = Button("Remove All")
     mappings_tree = InfraMappingTreeView(tree_class="treeview")
+    alert = Text('.//div[contains(@class, "alert")]')
 
 
 class ComponentView(View):
