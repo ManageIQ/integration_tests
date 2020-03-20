@@ -4,11 +4,13 @@ from datetime import date
 from datetime import datetime
 
 import attr
+import fauxfactory
 from cached_property import cached_property
 from manageiq_client.filters import Q
 from navmazing import NavigateToSibling
 from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.utils import partial_match
 
 from cfme.common import BaseLoggedInPage
 from cfme.common import CustomButtonEventsMixin
@@ -33,6 +35,7 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
 from cfme.utils.pretty import Pretty
@@ -273,6 +276,29 @@ class BaseVM(
             view = navigate_to(self.parent, 'All')
             self.find_quadicon().ensure_checked()
             view.toolbar.configuration.item_select(self.REMOVE_SELECTED, handle_alert=not cancel)
+
+    def _fill_clone_form(self, view, email=None, first_name=None, last_name=None,
+                         new_name=None, provision_type=None):
+        first_name = first_name or fauxfactory.gen_alphanumeric()
+        last_name = last_name or fauxfactory.gen_alphanumeric()
+        email = email or f"{first_name}@{last_name}.test"
+        try:
+            prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
+        except (KeyError, IndexError):
+            raise ValueError("You have to specify the correct options in cfme_data.yaml")
+
+        provisioning_data = {
+            'catalog': {'vm_name': new_name,
+                        'provision_type': provision_type},
+            'request': {
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name},
+            'environment': {"host_name": {'name': prov_data.get("host")},
+                            "datastore_name": {"name": prov_data.get("datastore")}},
+            'network': {'vlan': partial_match(prov_data.get("vlan"))},
+        }
+        view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
 
     @property
     def ip_address(self):
@@ -1073,6 +1099,11 @@ class Template(BaseVM, _TemplateMixin):
     @property
     def exists_on_provider(self):
         return self.provider.mgmt.does_template_exist(self.name)
+
+    def clone_template(self, email=None, first_name=None, last_name=None,
+                       new_name=None, provision_type=None):
+        view = navigate_to(self, 'CloneTemplate')
+        self._fill_clone_form(view, email, first_name, last_name, new_name, provision_type)
 
 
 @attr.s

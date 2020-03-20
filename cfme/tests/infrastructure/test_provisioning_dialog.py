@@ -160,6 +160,7 @@ def check_all_tabs(provision_request, provider):
     for name in widgets_names:
         widget = getattr(view, name)
         widget.click()
+        assert widget.is_displayed
 
 
 @pytest.mark.meta(blockers=[BZ(1627673, forced_streams=['5.10'])])

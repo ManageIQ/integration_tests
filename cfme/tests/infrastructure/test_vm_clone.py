@@ -4,8 +4,11 @@ from widgetastic_patternfly import DropdownItemNotFound
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
+from cfme.tests.infrastructure.test_provisioning_dialog import check_all_tabs
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -48,7 +51,7 @@ def create_vm(appliance, provider, request):
 
 
 @pytest.mark.provider([VMwareProvider], **filter_fields)
-@pytest.mark.meta(blockers=[BZ(1685201)])
+@pytest.mark.meta(automates=[BZ(1685201)])
 @test_requirements.provision
 def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     """
@@ -62,6 +65,45 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     request_description = clone_vm_name
     request_row = appliance.collections.requests.instantiate(request_description,
                                                              partial_check=True)
+    check_all_tabs(request_row, provider)
+    request_row.wait_for_request(method='ui')
+    msg = f"Request failed with the message {request_row.row.last_message.text}"
+    assert request_row.is_succeeded(method='ui'), msg
+
+
+@pytest.mark.provider([VMwareProvider, RHEVMProvider, SCVMMProvider], **filter_fields)
+@test_requirements.provision
+@pytest.mark.meta(automates=[BZ(1797733), BZ(1797706)])
+def test_template_clone(request, appliance, provider, clone_vm_name):
+    """
+    Polarion:
+        assignee: jhenner
+        casecomponent: Provisioning
+        initialEstimate: 1/6h
+        caseimportance: high
+    """
+    cloned_template_name = provider.data['provisioning']['template']
+    vm = appliance.collections.infra_templates.instantiate(cloned_template_name, provider)
+
+    if provider.one_of(VMwareProvider):
+        provision_type = 'VMware'
+    else:
+        provision_type = 'Native Clone'
+
+    @request.addfinalizer
+    def template_clone_deltion():
+        collections = appliance.collections
+        if BZ(1797733).blocks:
+            cloned_template = collections.infra_vms.instantiate(clone_vm_name, provider)
+        else:
+            cloned_template = collections.infra_templates.instantiate(clone_vm_name, provider)
+        cloned_template.delete()
+
+    vm.clone_template("email@xyz.com", "first", "last", clone_vm_name, provision_type)
+    request_row = appliance.collections.requests.instantiate(clone_vm_name, partial_check=True)
+
+    if not BZ(1797706).blocks and provider.one_of(RHEVMProvider):
+        check_all_tabs(request_row, provider)
     request_row.wait_for_request(method='ui')
     msg = f"Request failed with the message {request_row.row.last_message.text}"
     assert request_row.is_succeeded(method='ui'), msg
