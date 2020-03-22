@@ -280,12 +280,12 @@ def test_dual_disk_vm_migration(request, appliance, provider,
 @pytest.mark.parametrize(
     "source_type, dest_type, template_type",
     [
-        ["nfs", "nfs", Templates.WIN7_TEMPLATE],
-        ["nfs", "nfs", Templates.WIN10_TEMPLATE],
-        ["nfs", "nfs", Templates.WIN2016_TEMPLATE],
-        ["nfs", "nfs", Templates.RHEL69_TEMPLATE],
-        ["nfs", "nfs", Templates.WIN2012_TEMPLATE],
-        ["nfs", "nfs", Templates.UBUNTU16_TEMPLATE],
+        ["nfs", "nfs", [Templates.WIN7_TEMPLATE]],
+        ["nfs", "nfs", [Templates.WIN10_TEMPLATE]],
+        ["nfs", "nfs", [Templates.WIN2016_TEMPLATE]],
+        ["nfs", "nfs", [Templates.RHEL69_TEMPLATE]],
+        ["nfs", "nfs", [Templates.WIN2012_TEMPLATE]],
+        ["nfs", "nfs", [Templates.UBUNTU16_TEMPLATE]],
     ]
 )
 def test_migrations_different_os_templates(request, appliance, provider,
@@ -294,7 +294,7 @@ def test_migrations_different_os_templates(request, appliance, provider,
                                            soft_assert):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: high
         caseposneg: positive
         testtype: functional
