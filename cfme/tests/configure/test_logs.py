@@ -39,7 +39,7 @@ def test_provider_log_exists(log_exists):
         test_flag: log
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Configuration
         initialEstimate: 1/4h
     """
@@ -58,7 +58,7 @@ def test_provider_log_rotate(appliance, provider, log_exists):
         test_flag: log
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Configuration
     """
@@ -88,7 +88,7 @@ def test_provider_log_updated(appliance, provider, log_exists):
         test_flag: log
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Configuration
     """
@@ -120,7 +120,7 @@ def test_provider_log_level(appliance, provider, log_exists):
         test_flag: log
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Configuration
         testSteps:

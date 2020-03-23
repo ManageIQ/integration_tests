@@ -57,7 +57,7 @@ def test_publish_vm_to_template(request, vm_crud):
 
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Provisioning
         caseimportance: critical

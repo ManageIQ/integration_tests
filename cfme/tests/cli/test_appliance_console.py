@@ -269,6 +269,8 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
+@test_requirements.appliance
+@test_requirements.ha_proxy
 @pytest.mark.tier(2)
 def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
     """Testing HA configuration with 3 appliances.
@@ -306,9 +308,9 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
 
 
     Polarion:
-        assignee: sbulage
+        assignee: jhenner
         caseimportance: high
-        casecomponent: Appliance
+        casecomponent: HAProxy
         initialEstimate: 1h
         testtype: structural
     """
@@ -723,6 +725,7 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
         "ip -6 r show dev eth0 | grep 'default via 1::f'"))
 
 
+@test_requirements.ha_proxy
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_appliance_console_haproxy():
@@ -732,8 +735,8 @@ def test_appliance_console_haproxy():
     tml/high_availability_guide/configuring_haproxy
 
     Polarion:
-        assignee: sbulage
-        casecomponent: Replication
+        assignee: jhenner
+        casecomponent: HAProxy
         caseimportance: medium
         initialEstimate: 1/2h
         setup: setup HA following https://mojo.redhat.com/docs/DOC-1097888
@@ -744,6 +747,7 @@ def test_appliance_console_haproxy():
     pass
 
 
+@test_requirements.ha_proxy
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_appliance_console_ha_setup_dc():
@@ -762,8 +766,8 @@ def test_appliance_console_ha_setup_dc():
     majority.
 
     Polarion:
-        assignee: sbulage
-        casecomponent: Replication
+        assignee: jhenner
+        casecomponent: HAProxy
         initialEstimate: 1/2h
         setup: provision 3 appliances
                setup HA following https://mojo.redhat.com/docs/DOC-1097888
@@ -818,6 +822,7 @@ def test_appliance_console_restart(temp_appliance_preconfig_funcscope):
     navigate_to(appliance.server, "LoggedIn")
 
 
+@test_requirements.ha_proxy
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_appliance_console_ha_dc_re_establish():
@@ -829,8 +834,8 @@ def test_appliance_console_ha_dc_re_establish():
     tml/high_availability_guide//installation
 
     Polarion:
-        assignee: sbulage
-        casecomponent: Replication
+        assignee: jhenner
+        casecomponent: HAProxy
         initialEstimate: 1/2h
         setup: Restore network connectivity between DC1 and DC2
         startsin: 5.8
@@ -986,6 +991,7 @@ def test_appliance_ssl(appliance):
     assert re.search("hostssl +all +all +all +md5", result.output), "hostssl entry not found"
 
 
+@test_requirements.ha_proxy
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_appliance_console_restore_ha_standby_node():
@@ -997,8 +1003,8 @@ def test_appliance_console_restore_ha_standby_node():
     start rh-postgresql95-repmgr` after the restore is finished.
 
     Polarion:
-        assignee: sbulage
-        casecomponent: Replication
+        assignee: jhenner
+        casecomponent: HAProxy
         caseimportance: medium
         initialEstimate: 1/2h
         setup: provision 3 appliances
@@ -1363,6 +1369,7 @@ def test_appliance_console_static_ip_negative(temp_appliance_preconfig_modscope)
         f"old {original_ipv6} IPV6 is not found on console appliance")
 
 
+@test_requirements.ha_proxy
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_appliance_console_ha_dc_failover():
@@ -1376,8 +1383,8 @@ def test_appliance_console_ha_dc_failover():
     tml/high_availability_guide//installation
 
     Polarion:
-        assignee: sbulage
-        casecomponent: Replication
+        assignee: jhenner
+        casecomponent: HAProxy
         initialEstimate: 1/2h
         setup: Setup HA
         startsin: 5.8

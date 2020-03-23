@@ -103,7 +103,7 @@ def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, setup_iso_
         test_flag: iso, provision
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         initialEstimate: 1/4h
         casecomponent: Services
     """

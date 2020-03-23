@@ -54,7 +54,7 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
         test_flag: provision
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Provisioning
         initialEstimate: 1/4h
     """

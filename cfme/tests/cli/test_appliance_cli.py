@@ -233,12 +233,13 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active)
 
 
+@test_requirements.ha_proxy
 @pytest.mark.tier(2)
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node
 
     Polarion:
-        assignee: sbulage
+        assignee: jhenner
         caseimportance: high
         casecomponent: Appliance
         initialEstimate: 1h

@@ -211,7 +211,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
     Will be extended and improved.
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Configuration
         initialEstimate: 1/4h
         caseimportance: critical
@@ -247,7 +247,7 @@ def test_collect_unconfigured(appliance):
 
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -279,7 +279,7 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
 
     """
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Configuration
         initialEstimate: 1/4h
     """
@@ -336,7 +336,7 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
                                 collect_type):
     """
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Configuration
         initialEstimate: 1/4h
     """
@@ -386,7 +386,7 @@ def test_log_collection_over_ipv6(log_depot, depot_machine_ipv4_and_ipv6, applia
     collection succeeds.
 
     Polarion:
-        assignee: anikifor
+        assignee: jhenner
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/4h

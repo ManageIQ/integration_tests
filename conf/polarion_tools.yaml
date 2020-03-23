@@ -132,6 +132,7 @@ docstrings:
             - Provisioning
             - Quota
             - Replication
+            - HAProxy
             - Reporting
             - Rest
             - SelfServiceUI
