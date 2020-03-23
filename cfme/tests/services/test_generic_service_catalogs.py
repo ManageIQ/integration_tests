@@ -66,32 +66,6 @@ def test_delete_catalog_item_deletes_service(appliance, catalog_item):
         service_catalogs.order()
 
 
-@pytest.mark.ignore_stream("5.10")
-def test_service_circular_reference(appliance, catalog_item):
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/8h
-        tags: service
-    """
-    bundle_name = fauxfactory.gen_alphanumeric(start="first_")
-    catalog_bundle = appliance.collections.catalog_bundles.create(
-        bundle_name, description="catalog_bundle",
-        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-        catalog_items=[catalog_item.name])
-    sec_bundle_name = fauxfactory.gen_alphanumeric(start="sec_")
-    sec_catalog_bundle = appliance.collections.catalog_bundles.create(
-        sec_bundle_name, description="catalog_bundle",
-        display_in=True, catalog=catalog_item.catalog,
-        dialog=catalog_item.dialog, catalog_items=[bundle_name])
-    msg = ("Error during 'Resource Add': Adding resource <{}> to Service <{}> "
-           "will create a circular reference".format(sec_bundle_name, bundle_name))
-    with pytest.raises(Exception, match=msg):
-        catalog_bundle.update({'catalog_items': sec_catalog_bundle.name})
-
-
 def test_service_generic_catalog_bundle(appliance, catalog_item):
     """
     Polarion:
@@ -110,42 +84,6 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     request_description = bundle_name
-    provision_request = appliance.collections.requests.instantiate(request_description,
-                                                                   partial_check=True)
-    provision_request.wait_for_request()
-    msg = "Request failed with the message {}".format(provision_request.rest.message)
-    assert provision_request.is_succeeded(), msg
-
-
-@pytest.mark.ignore_stream("5.10")
-def test_bundles_in_bundle(appliance, catalog_item):
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: low
-        initialEstimate: 1/8h
-        tags: service
-    """
-    bundle_name = fauxfactory.gen_alphanumeric(start="first_")
-    appliance.collections.catalog_bundles.create(
-        bundle_name, description="catalog_bundle",
-        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-        catalog_items=[catalog_item.name])
-    sec_bundle_name = fauxfactory.gen_alphanumeric(start="sec_")
-    appliance.collections.catalog_bundles.create(
-        sec_bundle_name, description="catalog_bundle",
-        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-        catalog_items=[bundle_name])
-    third_bundle_name = fauxfactory.gen_alphanumeric(start="third_")
-    third_catalog_bundle = appliance.collections.catalog_bundles.create(
-        third_bundle_name, description="catalog_bundle",
-        display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
-        catalog_items=[bundle_name, sec_bundle_name])
-    service_catalogs = ServiceCatalogs(appliance, third_catalog_bundle.catalog, third_bundle_name)
-    service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', bundle_name)
-    request_description = third_bundle_name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
