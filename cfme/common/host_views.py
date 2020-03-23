@@ -337,7 +337,8 @@ class HostsCompareView(CompareView, ComputeInfrastructureHostsView):
         title = "Compare Host / Node"
         return (self.logged_in_as_current_user and
                 self.title.text == title and
-                self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts']
+                (self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts'] or
+                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'])
                 )
 
 
