@@ -286,7 +286,9 @@ def test_dual_disk_vm_migration(request, appliance, provider,
         ["nfs", "nfs", [Templates.RHEL69_TEMPLATE]],
         ["nfs", "nfs", [Templates.WIN2012_TEMPLATE]],
         ["nfs", "nfs", [Templates.UBUNTU16_TEMPLATE]],
-    ]
+    ],
+    ids=[Templates.WIN7_TEMPLATE, Templates.WIN10_TEMPLATE, Templates.WIN2016_TEMPLATE,
+         Templates.RHEL69_TEMPLATE, Templates.WIN2012_TEMPLATE, Templates.UBUNTU16_TEMPLATE]
 )
 def test_migrations_different_os_templates(request, appliance, provider,
                                            source_type, dest_type, template_type,
