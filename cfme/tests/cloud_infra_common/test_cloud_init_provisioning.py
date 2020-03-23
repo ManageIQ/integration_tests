@@ -14,6 +14,7 @@ from cfme.infrastructure.pxe import get_template_from_config
 from cfme.markers.env_markers.provider import providers
 from cfme.tests.infrastructure.test_provisioning_dialog import check_all_tabs
 from cfme.utils import ssh
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -60,6 +61,7 @@ def vm_name():
 
 @pytest.mark.tier(3)
 @test_requirements.provision
+@pytest.mark.meta(automates=[BZ(1797706)])
 def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
                         setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
@@ -69,6 +71,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
     Bugzilla:
         1619744
+        1797706
 
     Polarion:
         assignee: jhenner
