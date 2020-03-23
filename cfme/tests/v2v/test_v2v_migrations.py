@@ -51,7 +51,7 @@ def test_single_datastore_single_vm_migration(request, appliance, provider,
     """
     Test VM migration with single datastore
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: medium
         caseposneg: positive
         testtype: functional
@@ -106,7 +106,7 @@ def test_single_network_single_vm_migration(request, appliance, provider,
                                             mapping_data_vm_obj_single_network):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: high
         caseposneg: positive
         testtype: functional
@@ -150,7 +150,7 @@ def test_dual_datastore_dual_vm_migration(request, appliance, provider,
                                           soft_assert):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: high
         caseposneg: positive
         testtype: functional
@@ -196,7 +196,7 @@ def test_dual_nics_migration(request, appliance, provider,
                              mapping_data_vm_obj_dual_nics):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: medium
         caseposneg: positive
         testtype: functional
@@ -240,7 +240,7 @@ def test_dual_disk_vm_migration(request, appliance, provider,
                                 mapping_data_vm_obj_single_datastore):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: high
         caseposneg: positive
         testtype: functional
@@ -280,13 +280,15 @@ def test_dual_disk_vm_migration(request, appliance, provider,
 @pytest.mark.parametrize(
     "source_type, dest_type, template_type",
     [
-        ["nfs", "nfs", Templates.WIN7_TEMPLATE],
-        ["nfs", "nfs", Templates.WIN10_TEMPLATE],
-        ["nfs", "nfs", Templates.WIN2016_TEMPLATE],
-        ["nfs", "nfs", Templates.RHEL69_TEMPLATE],
-        ["nfs", "nfs", Templates.WIN2012_TEMPLATE],
-        ["nfs", "nfs", Templates.UBUNTU16_TEMPLATE],
-    ]
+        ["nfs", "nfs", [Templates.WIN7_TEMPLATE]],
+        ["nfs", "nfs", [Templates.WIN10_TEMPLATE]],
+        ["nfs", "nfs", [Templates.WIN2016_TEMPLATE]],
+        ["nfs", "nfs", [Templates.RHEL69_TEMPLATE]],
+        ["nfs", "nfs", [Templates.WIN2012_TEMPLATE]],
+        ["nfs", "nfs", [Templates.UBUNTU16_TEMPLATE]],
+    ],
+    ids=[Templates.WIN7_TEMPLATE, Templates.WIN10_TEMPLATE, Templates.WIN2016_TEMPLATE,
+         Templates.RHEL69_TEMPLATE, Templates.WIN2012_TEMPLATE, Templates.UBUNTU16_TEMPLATE]
 )
 def test_migrations_different_os_templates(request, appliance, provider,
                                            source_type, dest_type, template_type,
@@ -294,7 +296,7 @@ def test_migrations_different_os_templates(request, appliance, provider,
                                            soft_assert):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: high
         caseposneg: positive
         testtype: functional
