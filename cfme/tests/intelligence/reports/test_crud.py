@@ -131,8 +131,11 @@ def test_reports_schedule_crud(schedule_data, appliance, request):
     view.flash.assert_message(f"Schedule {schedule.name} was deleted")
 
 
+# Currently, the BZ 1667064 is reported only against 5.10, but is present in
+# 5.11 as well. It is DEFERED.
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1667064])
 def test_menuwidget_crud(appliance, request):
     """
     Bugzilla:
@@ -172,7 +175,6 @@ def test_reportwidget_crud(appliance, request):
     """
     Bugzilla:
         1656413
-        1667064
 
     Polarion:
         assignee: jhenner
@@ -270,6 +272,7 @@ def test_rssfeedwidget_crud(appliance, request):
 @pytest.mark.rhel_testing
 @pytest.mark.sauce
 @pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1667064])
 def test_dashboard_crud(appliance, request):
     """
     Polarion:
@@ -277,6 +280,9 @@ def test_dashboard_crud(appliance, request):
         caseimportance: critical
         casecomponent: Reporting
         initialEstimate: 1/12h
+
+    Bugzilla:
+        1667064
     """
     d = appliance.collections.report_dashboards.create(
         fauxfactory.gen_alphanumeric(),

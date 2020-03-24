@@ -225,6 +225,8 @@ class BZ(Blocker):
             if bug is None:
                 return False
             result = False
+            if bug.is_deferred:
+                result = True
             if bug.is_opened:
                 result = True
             if bug.upstream_bug:
