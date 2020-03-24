@@ -208,21 +208,40 @@ def test_dynamic_submit_cancel_button_service(request, appliance, generic_servic
     wait_for(lambda: not (view.submit.disabled and view.cancel.disabled), timeout=120)
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_drop_down_dialog_should_honor_the_order_of_values_as_they_are_inputted():
+@pytest.mark.meta(automates=[1593874])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["bz_1594268.yml"], ids=["sample_dialog"],)
+def test_dropdown_dialog_descending_values(appliance, generic_catalog_item_with_imported_dialog):
     """
+    Bugzilla:
+        1593874
+
     Polarion:
         assignee: nansari
         casecomponent: Services
         initialEstimate: 1/16h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1593874
+        startsin: 5.10
+    testSteps:
+            1. Create a dropdown dialog with values 'X', 'S', 'A', 'B'
+            2. 'Sort by' is set to 'None'
+            3. Add catalog item
+            4. Go to service order page
+            5. Check the values in dropdown
+    expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Drop down list should not be sorted
     """
-    pass
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    value = ['<None>', 'X', 'S', 'A', 'B']
+
+    view = navigate_to(service_catalogs, "Order")
+    options_list = [option.text for option in view.fields(ele_label).dropdown.all_options]
+
+    assert options_list == value
 
 
 @pytest.mark.manual
