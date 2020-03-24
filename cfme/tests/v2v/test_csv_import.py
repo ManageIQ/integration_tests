@@ -2,7 +2,6 @@ import tempfile
 
 import fauxfactory
 import pytest
-from deepdiff import DeepDiff
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.exceptions import UnexpectedAlertPresentException
 
@@ -65,7 +64,7 @@ def migration_plan(appliance, infra_map, csv=True):
     return view
 
 
-def check_vm_status(appliance, infra_map, error_text=None, filetype='csv', content=False,
+def check_vm_status(appliance, infra_map, filetype='csv', content=False,
                     table_hover=False, alert=False, security_group=False):
     """Function to import csv, select vm and return hover error from migration plan table"""
     plan_view = migration_plan(appliance, infra_map)
@@ -282,10 +281,10 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
     required_flags=["v2v"],
     scope="module",
 )
-def test_csv_security_group_flavor(appliance, infra_map, valid_vm, provider):
+def test_csv_security_group_flavor(appliance, soft_assert, infra_map, valid_vm, provider):
     """Test csv with secondary openstack security group and flavor
     Polarion:
-        assignee: sshveta
+        assignee: mnadeem
         caseposneg: positive
         startsin: 5.10
         casecomponent: V2V
@@ -296,12 +295,11 @@ def test_csv_security_group_flavor(appliance, infra_map, valid_vm, provider):
         flavor = provider.data.flavors[1]
     except (AttributeError, KeyError):
         pytest.skip("No provider data found.")
-    content = "Name,Security Group,Flavor\n{valid_vm},{security_group},{flavor}".format(
-        valid_vm=valid_vm,
-        security_group=security_group,
-        flavor=flavor,
-    )
-    actual_attributes = {"security_group": security_group, "flavor": flavor}
-    expected_attributes = check_vm_status(appliance, infra_map, actual_attributes, content=content,
+    content = f"Name,Security Group,Flavor\n{valid_vm},{security_group},{flavor}\n"
+
+    expected_attributes = check_vm_status(appliance, infra_map, content=content,
                                           table_hover=True, security_group=True)
-    assert not DeepDiff(actual_attributes, expected_attributes)
+
+    soft_assert(expected_attributes["security_group"] == security_group)
+    # In some case * appended in flavor name in GUI as a warning which can be safely ignore.
+    assert expected_attributes["flavor"] in (flavor, f"{flavor} *")
