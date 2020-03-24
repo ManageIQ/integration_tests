@@ -18,6 +18,7 @@ from cfme.common.host_views import HostStorageAdaptersView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostVmmInfoView
 from cfme.common.provider_views import InfraProviderDetailsView
+from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -32,6 +33,7 @@ from cfme.utils.appliance.constants import DownloadOptions
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
+from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -510,8 +512,8 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
 # host_list will not use get all, but will use other methods to get by name
 # make this work for hosts first then look at differences needed to support other entities.
 # There may be just too many differences to make using one method useful.
-# may be easier just to put nique one in class def
-# !!!If we want o remove navigation from this we can just pass in the starting view?
+# may be easier just to put unique one in class def
+# !!!If we want to remove navigation from this we can just pass in the starting view?
 
 
 def compare_hosts(appliance, provider=None, num_hosts=2, host_list=None):
