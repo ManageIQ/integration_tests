@@ -621,3 +621,30 @@ def test_copy_catalog_item_with_tags(request, generic_catalog_item, tag):
         tag_available.display_name == tag.display_name
         for tag_available in new_cat_item.get_tags()
     ]), 'Assigned tag was not found on the details page'
+
+
+@pytest.mark.meta(automates=[1671522])
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.tier(2)
+def test_add_bundle_in_bundle(appliance, catalog_bundle):
+    """
+    Bugzilla:
+        1671522
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.11
+        testSteps:
+            1. Create catalog bundle1
+            2. Navigate catalog bundle Add page-> Resources tab
+            3. Check bundle1 is available or not
+        expectedResults:
+            1.
+            2.
+            3. There should be no bundle in resources list
+    """
+    view = navigate_to(appliance.collections.catalog_bundles, "Add")
+    options = view.resources.select_resource.all_options
+    assert catalog_bundle.name not in [o.text for o in options]
+    view.cancel_button.click()
