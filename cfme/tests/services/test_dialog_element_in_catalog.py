@@ -3,6 +3,8 @@ import pytest
 import yaml
 
 from cfme import test_requirements
+from cfme.automate.dialogs.dialog_element import EditElementView
+from cfme.automate.dialogs.service_dialogs import DetailsDialogView
 from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE
@@ -1136,3 +1138,38 @@ def test_dialog_default_value_selection(appliance, custom_categories, import_dat
         view.fields("network").read() == network and
         view.fields("number_disk").read() == additional_disks
     )
+
+
+@pytest.mark.meta(automates=[1559030])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data", [DatastoreImport("bz_1558926.zip", "bz_1558926", None)], ids=["domain"],)
+@pytest.mark.parametrize("file_name", ["bz_1559030.yml"], ids=["dialog"])
+def test_save_dynamic_multi_drop_down_dialog(appliance, import_datastore, import_dialog,
+                                             import_data):
+    """
+    Bugzilla:
+        1559030
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.10
+    """
+    sd, ele_label = import_dialog
+    navigate_to(sd, "Edit")
+
+    # update dialog element
+    view = appliance.browser.create_view(EditElementView)
+    view.element.edit_element(ele_label)
+    view.options.click()
+
+    # enable multi select button
+    view.options.multi_select.fill("Yes")
+    view.ele_save_button.click()
+    view.save_button.click()
+
+    # no error should be displayed
+    view = sd.create_view(DetailsDialogView, wait="60s")
+    view.flash.assert_success_message(f'{sd.label} was saved')

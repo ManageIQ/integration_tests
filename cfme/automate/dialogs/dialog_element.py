@@ -62,7 +62,7 @@ class ElementForm(AddBoxView):
         field_past_dates = DialogBootstrapSwitch(label='Show Past Dates')
         field_category = Select(
             locator='.//select[../../../../label[normalize-space(text())="Category"]]')
-
+        multi_select = DialogBootstrapSwitch(label='Multiselect')
         validation_switch = DialogBootstrapSwitch(label='Validation')
         validation = Input(name='validator_rule')
         visible = DialogBootstrapSwitch(label='Visible')
