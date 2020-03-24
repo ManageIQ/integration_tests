@@ -42,8 +42,14 @@ def get_clusters(appliance, provider, source_provider):
         target_cluster = provider.data.get("clusters")[0]
     except IndexError:
         pytest.skip("Cluster not found in given provider data")
+
+    # Get the infra clusters object for vSphere and RHV prvoiders
+    clusters_obj = appliance.rest_api.collections.clusters.all
+    if provider.one_of(OpenStackProvider):
+        clusters_obj += appliance.rest_api.collections.cloud_tenants.all
+
     cluster_db = {
-        cluster.name: cluster for cluster in appliance.rest_api.collections.clusters.all
+        cluster.name: cluster for cluster in clusters_obj
     }
 
     try:
@@ -65,15 +71,24 @@ def get_clusters(appliance, provider, source_provider):
 @pytest.fixture(scope="function")
 def get_datastores(appliance, provider, source_provider):
     datastores = {}
+    # Get the infra datastores object for vSphere and RHV prvoiders
+    datastores_obj = appliance.rest_api.collections.data_stores.all
+    if provider.one_of(OpenStackProvider):
+        target_type = "volume"
+        datastores_obj += appliance.rest_api.collections.cloud_volume_types.all
+    else:
+        target_type = "nfs"
+
     try:
         source_ds = [
             i.name for i in source_provider.data.datastores if i.type == "nfs"][0]
         target_ds = [
-            i.name for i in provider.data.datastores if i.type == "nfs"][0]
+            i.name for i in provider.data.datastores if i.type == target_type][0]
     except IndexError:
         pytest.skip("Datastore not found in given provider data")
+
     datastore_db = {
-        ds.name: ds for ds in appliance.rest_api.collections.data_stores.all
+        ds.name: ds for ds in datastores_obj
     }
 
     try:
@@ -95,13 +110,20 @@ def get_datastores(appliance, provider, source_provider):
 @pytest.fixture(scope="function")
 def get_networks(appliance, provider, source_provider):
     networks = {}
+    # Get the network object for vSphere and RHV prvoiders
+    networks_obj = appliance.rest_api.collections.lans.all
+
     try:
         source_network = source_provider.data.get("vlans", [None])[0]
         target_network = provider.data.get("vlans", [None])[0]
     except IndexError:
         pytest.skip("Network not found in given provider data")
+
+    if provider.one_of(OpenStackProvider):
+        networks_obj += appliance.rest_api.collections.cloud_networks.all
+
     network_db = {
-        network.name: network for network in appliance.rest_api.collections.lans.all
+        network.name: network for network in networks_obj
     }
 
     try:
