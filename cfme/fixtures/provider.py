@@ -105,6 +105,8 @@ def _setup_provider_verbose(request, provider, appliance=None):
     if appliance is None:
         appliance = store.current_appliance
     else:
+        # If user wants to add provider to a specific appliance, `appliance` property of
+        # the `provider` must be first changed to that specific appliance.
         provider.appliance = appliance
     try:
         if request.config.option.provider_limit > 0:
