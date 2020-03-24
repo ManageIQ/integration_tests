@@ -63,6 +63,8 @@ class BaseOrderForm(View):
             ".//div[contains(@class, 'bootstrap-select')]/select[@id={key|quote}]/.."))
         param_dropdown = BootstrapSelect(locator=ParametrizedLocator(
             ".//div[contains(@class, 'bootstrap-select')]/select[@id='param_{key}']/.."))
+        multi_drop = BootstrapSelect(locator=ParametrizedLocator(
+            ".//div[contains(@class, 'bootstrap-select')]/select[@input-id={key|quote}]/.."))
         checkbox = Checkbox(id=Parameter("key"))
         refresh = Text(
             locator=ParametrizedLocator(

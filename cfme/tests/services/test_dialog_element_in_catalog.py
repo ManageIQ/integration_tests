@@ -992,10 +992,10 @@ def test_datepicker_in_service_request():
     pass
 
 
-@pytest.mark.meta(coverage=[1740823])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dialog_dropdown_integer_required():
+@pytest.mark.meta(automates=[1740823])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["bz_1740823.yml"], ids=["sample_dialog"],)
+def test_multi_dropdown_dialog_value(appliance, generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1740823
@@ -1005,20 +1005,27 @@ def test_dialog_dropdown_integer_required():
         casecomponent: Services
         initialEstimate: 1/16h
         startsin: 5.10
-        testSteps:
-            1. Create a multi select dropdown using the default "One, Two, Three" values.
-            2. Add dialog to catalog item
-            3. Order the new item
-            4. Go to your multi select dropdown and choose the value "<None>"
-            5. Select additional options, notice that displayed list of choices includes "<None>"
+    testSteps:
+            1. Create a multi select dropdown with values "One, Two, Three"
+            2. Add catalog item
+            3. Go to service order page
+            4. Check the values in dropdown
+            5. Check the "<None>" in multi drop down list
         expectedResults:
             1.
             2.
             3.
-            4.
-            5. "<None>" should not be displayed in the list of selected options
+            4. "One, Two, Three" should be present in list
+            5. "<None>" should not be displayed in the list
     """
-    pass
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+
+    options_list = [option.text for option in view.fields(ele_label).multi_drop.all_options]
+    assert all([opt in options_list for opt in ["One", "Two", "Three"]])
+    assert "<None>" not in options_list
 
 
 @pytest.mark.tier(2)
