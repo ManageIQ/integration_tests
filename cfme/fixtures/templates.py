@@ -18,6 +18,7 @@ class Templates(NamedConstant):
     RHEL69_TEMPLATE = "rhel69_template"
     RHEL7_MINIMAL = "rhel7_minimal"
     RHEL7_MINIMAL_MODSCOPE = "rhel7_minimal_modscope"
+    RHEL8_TEMPLATE = "rhel81_template"
     UBUNTU16_TEMPLATE = "ubuntu16_template"
     WIN7_TEMPLATE = "win7_template"
     WIN10_TEMPLATE = "win10_template"
@@ -155,6 +156,16 @@ def rhel74_template(provider):
 @pytest.fixture(scope="module")
 def rhel74_template_modscope(provider):
     return _get_template(provider, 'rhel74_template')
+
+
+@pytest.fixture(scope="function")
+def rhel81_template(provider):
+    return _get_template(provider, 'rhel81_template')
+
+
+@pytest.fixture(scope="module")
+def rhel81_template_modscope(provider):
+    return _get_template(provider, 'rhel81_template')
 
 
 @pytest.fixture(scope="function")
