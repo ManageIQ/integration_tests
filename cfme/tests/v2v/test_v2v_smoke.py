@@ -31,7 +31,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.parametrize("mapping_data_vm_obj_single_datastore",
+@pytest.mark.parametrize("v2v_provider_setup",
                          ['SSH', 'VDDK'], indirect=True)
 @pytest.mark.parametrize(
     "source_type, dest_type, template_type",
