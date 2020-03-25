@@ -6,7 +6,6 @@ import pytest
 from cfme.fixtures.cli import do_appliance_versions_match
 from cfme.fixtures.cli import provider_app_crud
 from cfme.fixtures.cli import provision_vm
-from cfme.fixtures.cli import replicated_appliances_with_providers
 from cfme.fixtures.cli import update_appliance
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
@@ -288,8 +287,8 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance,
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_update_replicated_webui(multiple_preupdate_appliances, appliance, request,
-                                 old_version, soft_assert):
+def test_update_replicated_webui(replicated_appliances_preupdate_with_providers, appliance,
+        request, old_version, soft_assert):
     """ Tests updating an appliance with providers, also confirms that the
             provisioning continues to function correctly after the update has completed
 
@@ -299,7 +298,7 @@ def test_update_replicated_webui(multiple_preupdate_appliances, appliance, reque
         casecomponent: Appliance
         initialEstimate: 1/4h
     """
-    preupdate_appls = replicated_appliances_with_providers(multiple_preupdate_appliances)
+    preupdate_appls = replicated_appliances_preupdate_with_providers
     providers_before_upgrade = set(preupdate_appls[0].managed_provider_names)
     update_appliance(preupdate_appls[0])
     update_appliance(preupdate_appls[1])

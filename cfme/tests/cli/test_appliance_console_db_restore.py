@@ -8,7 +8,6 @@ from wait_for import wait_for
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.fixtures.cli import provider_app_crud
-from cfme.fixtures.cli import replicated_appliances_with_providers
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.console import configure_appliances_ha
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
@@ -348,7 +347,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_pg_basebackup_replicated(
-        request, temp_appliances_unconfig_funcscope_rhevm):
+        request, replicated_appliances_with_providers):
     """
     Polarion:
         assignee: jhenner
@@ -357,7 +356,7 @@ def test_appliance_console_restore_pg_basebackup_replicated(
         initialEstimate: 1/2h
         upstream: no
     """
-    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
+    appl1, appl2 = replicated_appliances_with_providers
     appl1.db.backup()
     appl2.db.backup()
 
@@ -435,7 +434,7 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
 def test_appliance_console_restore_db_replicated(
-        request, temp_appliances_unconfig_funcscope_rhevm):
+        request, replicated_appliances_with_providers):
     """
     Polarion:
         assignee: jhenner
@@ -443,7 +442,7 @@ def test_appliance_console_restore_db_replicated(
         casecomponent: Configuration
         initialEstimate: 1h
     """
-    appl1, appl2 = replicated_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm)
+    appl1, appl2 = replicated_appliances_with_providers
     appl1.db.backup()
     appl2.db.backup()
     providers_before_restore = set(appl1.managed_provider_names)

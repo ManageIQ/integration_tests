@@ -9,7 +9,6 @@ from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
@@ -25,32 +24,9 @@ _HTTPD_ROLES_511 = ('cockpit_ws', 'user_interface', 'remote_console', 'web_servi
 HTTPD_ROLES = VersionPicker({Version.lowest(): _HTTPD_ROLES_510, '5.11': _HTTPD_ROLES_511})
 
 
-def configure_replication_appliances(remote_app, global_app):
-    """Configure a database-owning appliance, with global region #99,
-    sharing the same encryption key as the preconfigured appliance. with remote region #0.
-    Then set up database replication between them.
-    """
-    logger.info("Starting appliance replication configuration.")
-    global_app.configure(region=99, key_address=remote_app.hostname)
-
-    remote_app.set_pglogical_replication(replication_type=':remote')
-    global_app.set_pglogical_replication(replication_type=':global')
-    global_app.add_pglogical_replication_subscription(remote_app.hostname)
-    logger.info("Finished appliance replication configuration.")
-
-
-def configure_distributed_appliances(primary_app, secondary_app):
-    """Configure one database-owning appliance, and a second appliance
-       that connects to the database of the first.
-    """
-    secondary_app.configure(region=0,
-        key_address=primary_app.hostname, db_address=primary_app.hostname)
-
-
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_between_regions(provider,
-        temp_appliance_preconfig_funcscope_rhevm, temp_appliance_unconfig_funcscope_rhevm):
+def test_appliance_replicate_between_regions(provider, replicated_appliances):
     """Test that a provider added to the remote appliance is replicated to the global
     appliance.
 
@@ -62,26 +38,22 @@ def test_appliance_replicate_between_regions(provider,
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_app = temp_appliance_preconfig_funcscope_rhevm
-    global_app = temp_appliance_unconfig_funcscope_rhevm
+    remote_appliance, global_appliance = replicated_appliances
 
-    configure_replication_appliances(remote_app, global_app)
-
-    remote_app.browser_steal = True
-    with remote_app:
+    remote_appliance.browser_steal = True
+    with remote_appliance:
         provider.create()
-        remote_app.collections.infra_providers.wait_for_a_provider()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_app.browser_steal = True
-    with global_app:
-        global_app.collections.infra_providers.wait_for_a_provider()
+    global_appliance.browser_steal = True
+    with global_appliance:
+        global_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
 
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_external_database_appliance(provider,
-        temp_appliance_preconfig_funcscope_rhevm, temp_appliance_unconfig_funcscope_rhevm):
+def test_external_database_appliance(provider, distributed_appliances):
     """Test that a second appliance can be configured to join the region of the first,
     database-owning appliance, and that a provider created in the first appliance is
     visible in the web UI of the second appliance.
@@ -94,26 +66,22 @@ def test_external_database_appliance(provider,
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    primary_app = temp_appliance_preconfig_funcscope_rhevm
-    secondary_app = temp_appliance_unconfig_funcscope_rhevm
+    primary_appliance, secondary_appliance = distributed_appliances
 
-    configure_distributed_appliances(primary_app, secondary_app)
-
-    primary_app.browser_steal = True
-    with primary_app:
+    primary_appliance.browser_steal = True
+    with primary_appliance:
         provider.create()
-        primary_app.collections.infra_providers.wait_for_a_provider()
+        primary_appliance.collections.infra_providers.wait_for_a_provider()
 
-    secondary_app.browser_steal = True
-    with secondary_app:
-        secondary_app.collections.infra_providers.wait_for_a_provider()
+    secondary_appliance.browser_steal = True
+    with secondary_appliance:
+        secondary_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
 
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_database_disconnection(provider,
-        temp_appliance_preconfig_funcscope_rhevm, temp_appliance_unconfig_funcscope_rhevm):
+def test_appliance_replicate_database_disconnection(provider, replicated_appliances):
     """Test that a provider created on the remote appliance *after* a database restart on the
     global appliance is still successfully replicated to the global appliance.
 
@@ -125,30 +93,26 @@ def test_appliance_replicate_database_disconnection(provider,
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_app = temp_appliance_preconfig_funcscope_rhevm
-    global_app = temp_appliance_unconfig_funcscope_rhevm
+    remote_appliance, global_appliance = replicated_appliances
 
-    configure_replication_appliances(remote_app, global_app)
-
-    global_app.db_service.stop()
+    global_appliance.db_service.stop()
     sleep(60)
-    global_app.db_service.start()
+    global_appliance.db_service.start()
 
-    remote_app.browser_steal = True
-    with remote_app:
+    remote_appliance.browser_steal = True
+    with remote_appliance:
         provider.create()
-        remote_app.collections.infra_providers.wait_for_a_provider()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_app.browser_steal = True
-    with global_app:
-        global_app.collections.infra_providers.wait_for_a_provider()
+    global_appliance.browser_steal = True
+    with global_appliance:
+        global_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
 
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_database_disconnection_with_backlog(provider,
-        temp_appliance_preconfig_funcscope_rhevm, temp_appliance_unconfig_funcscope_rhevm):
+def test_appliance_replicate_database_disconnection_with_backlog(provider, replicated_appliances):
     """Test that a provider created on the remote appliance *before* a database restart on the
     global appliance is still successfully replicated to the global appliance.
 
@@ -160,22 +124,19 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider,
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_app = temp_appliance_preconfig_funcscope_rhevm
-    global_app = temp_appliance_unconfig_funcscope_rhevm
+    remote_appliance, global_appliance = replicated_appliances
 
-    configure_replication_appliances(remote_app, global_app)
-
-    remote_app.browser_steal = True
-    with remote_app:
+    remote_appliance.browser_steal = True
+    with remote_appliance:
         provider.create()
-        global_app.db_service.stop()
+        global_appliance.db_service.stop()
         sleep(60)
-        global_app.db_service.start()
-        remote_app.collections.infra_providers.wait_for_a_provider()
+        global_appliance.db_service.start()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_app.browser_steal = True
-    with global_app:
-        global_app.collections.infra_providers.wait_for_a_provider()
+    global_appliance.browser_steal = True
+    with global_appliance:
+        global_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
 
 
@@ -183,9 +144,8 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider,
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
-def test_distributed_vm_power_control(provider, create_vm,
-        register_event, soft_assert, temp_appliance_preconfig_funcscope_rhevm,
-        temp_appliance_unconfig_funcscope_rhevm):
+def test_replication_vm_power_control(provider, create_vm, register_event, soft_assert,
+        replicated_appliances):
     """Test that the global appliance can power off a VM managed by the remote appliance.
 
     Metadata:
@@ -196,18 +156,15 @@ def test_distributed_vm_power_control(provider, create_vm,
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_app = temp_appliance_preconfig_funcscope_rhevm
-    global_app = temp_appliance_unconfig_funcscope_rhevm
+    remote_appliance, global_appliance = replicated_appliances
 
-    configure_replication_appliances(remote_app, global_app)
-
-    remote_app.browser_steal = True
-    with remote_app:
+    remote_appliance.browser_steal = True
+    with remote_appliance:
         provider.create()
-        remote_app.collections.infra_providers.wait_for_a_provider()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_app.browser_steal = True
-    with global_app:
+    global_appliance.browser_steal = True
+    with global_appliance:
         register_event(target_type='VmOrTemplate', target_name=create_vm.name,
                        event_type='request_vm_poweroff')
         register_event(target_type='VmOrTemplate', target_name=create_vm.name,
@@ -226,8 +183,7 @@ def test_distributed_vm_power_control(provider, create_vm,
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1678142])
 @pytest.mark.ignore_stream('upstream', '5.10')
-def test_replication_connect_to_vm_in_region(provider,
-        temp_appliance_preconfig_funcscope_rhevm, temp_appliance_unconfig_funcscope_rhevm):
+def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
     """Test that the user can view the VM in the global appliance UI, click on the
     "Connect to VM in its Region" button, and be redirected to the VM in the remote appliance UI.
 
@@ -240,10 +196,7 @@ def test_replication_connect_to_vm_in_region(provider,
         casecomponent: Appliance
         startsin: 5.11
     """
-    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
-    global_appliance = temp_appliance_unconfig_funcscope_rhevm
-
-    configure_replication_appliances(remote_appliance, global_appliance)
+    remote_appliance, global_appliance = replicated_appliances
 
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
@@ -287,8 +240,7 @@ def test_replication_connect_to_vm_in_region(provider,
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_httpd_roles(temp_appliance_preconfig_funcscope_rhevm,
-        temp_appliance_unconfig_funcscope_rhevm):
+def test_appliance_httpd_roles(distributed_appliances):
     """Test that a secondary appliance only runs httpd if a server role requires it.
     Disable all server roles that require httpd, and verify that httpd is stopped. For each server
     role that requires httpd, enable it (with all other httpd server roles disabled), and verify
@@ -306,9 +258,7 @@ def test_appliance_httpd_roles(temp_appliance_preconfig_funcscope_rhevm,
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    primary_appliance = temp_appliance_preconfig_funcscope_rhevm
-    secondary_appliance = temp_appliance_unconfig_funcscope_rhevm
-    configure_distributed_appliances(primary_appliance, secondary_appliance)
+    primary_appliance, secondary_appliance = distributed_appliances
 
     roles = HTTPD_ROLES.pick(secondary_appliance.version)
     fill_values = {k: False for k in roles}
@@ -338,8 +288,7 @@ def test_appliance_httpd_roles(temp_appliance_preconfig_funcscope_rhevm,
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_zones(temp_appliance_preconfig_funcscope_rhevm,
-        temp_appliance_unconfig_funcscope_rhevm):
+def test_appliance_replicate_zones(replicated_appliances):
     """
     Verify that no remote zones can be selected when changing the server's zone
     in the global appliance UI.
@@ -353,10 +302,7 @@ def test_appliance_replicate_zones(temp_appliance_preconfig_funcscope_rhevm,
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
-    global_appliance = temp_appliance_unconfig_funcscope_rhevm
-
-    configure_replication_appliances(remote_appliance, global_appliance)
+    remote_appliance, global_appliance = replicated_appliances
 
     remote_zone = 'remote-A'
     remote_appliance.collections.zones.create(name=remote_zone, description=remote_zone)
@@ -372,8 +318,7 @@ def test_appliance_replicate_zones(temp_appliance_preconfig_funcscope_rhevm,
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(automates=[1796681])
-def test_appliance_replicate_remote_down(temp_appliance_preconfig_funcscope_rhevm,
-       temp_appliance_unconfig_funcscope_rhevm):
+def test_appliance_replicate_remote_down(replicated_appliances):
     """Test that the Replication tab displays in the global appliance UI when the remote appliance
     database cannot be reached.
 
@@ -388,10 +333,7 @@ def test_appliance_replicate_remote_down(temp_appliance_preconfig_funcscope_rhev
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
-    global_appliance = temp_appliance_unconfig_funcscope_rhevm
-
-    configure_replication_appliances(remote_appliance, global_appliance)
+    remote_appliance, global_appliance = replicated_appliances
 
     global_region = global_appliance.server.zone.region
     assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (

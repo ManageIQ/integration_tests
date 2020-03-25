@@ -267,24 +267,75 @@ def ha_appliances_with_providers(ha_multiple_preupdate_appliances, app_creds):
     return ha_multiple_preupdate_appliances
 
 
-def replicated_appliances_with_providers(multiple_appliances):
-    """ Accpets two unconfigured appliance at least.
-    Configures them with different region and sets the Global/Remote kind of
-    replication on them. Configures first appliance with two providers. """
-    appl1, appl2 = multiple_appliances
-    # configure appliances
-    appl1.configure(region=0)
-    appl1.wait_for_web_ui()
-    appl2.configure(region=99, key_address=appl1.hostname)
-    appl2.wait_for_web_ui()
-    # configure replication between appliances
-    appl1.set_pglogical_replication(replication_type=":remote")
-    appl2.set_pglogical_replication(replication_type=":global")
-    appl2.add_pglogical_replication_subscription(appl1.hostname)
-    # Add infra/cloud providers
-    provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(OpenStackProvider, appl1).setup()
-    return multiple_appliances
+@pytest.fixture
+def distributed_appliances(temp_appliance_preconfig_funcscope_rhevm,
+        temp_appliance_unconfig_funcscope_rhevm):
+    """Configure one database-owning appliance, and a second appliance
+       that connects to the database of the first.
+    """
+    primary_appliance = temp_appliance_preconfig_funcscope_rhevm
+    secondary_appliance = temp_appliance_unconfig_funcscope_rhevm
+    secondary_appliance.configure(region=0, key_address=primary_appliance.hostname,
+        db_address=primary_appliance.hostname)
+
+    return primary_appliance, secondary_appliance
+
+
+@pytest.fixture
+def replicated_appliances(temp_appliance_preconfig_funcscope_rhevm,
+        temp_appliance_unconfig_funcscope_rhevm):
+    """Configure a global appliance with region 99, sharing the same encryption key as the
+    preconfigured remote appliance with region 0. Then set up database replication between them.
+    """
+    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
+    global_appliance = temp_appliance_unconfig_funcscope_rhevm
+
+    logger.info("Starting appliance replication configuration.")
+    global_appliance.configure(region=99, key_address=remote_appliance.hostname)
+
+    remote_appliance.set_pglogical_replication(replication_type=':remote')
+    global_appliance.set_pglogical_replication(replication_type=':global')
+    global_appliance.add_pglogical_replication_subscription(remote_appliance.hostname)
+    logger.info("Finished appliance replication configuration.")
+
+    return remote_appliance, global_appliance
+
+
+@pytest.fixture
+def replicated_appliances_preupdate(multiple_preupdate_appliances):
+    """Configure a remote appliance with region 0 and a global appliance with region 99, sharing
+    the same encryption key. Then set up database replication between them.
+    """
+    remote_appliance, global_appliance = multiple_preupdate_appliances
+
+    logger.info("Starting appliance replication configuration.")
+    remote_appliance.configure(region=0)
+    global_appliance.configure(region=99, key_address=remote_appliance.hostname)
+
+    remote_appliance.set_pglogical_replication(replication_type=':remote')
+    global_appliance.set_pglogical_replication(replication_type=':global')
+    global_appliance.add_pglogical_replication_subscription(remote_appliance.hostname)
+    logger.info("Finished appliance replication configuration.")
+
+    return remote_appliance, global_appliance
+
+
+@pytest.fixture
+def replicated_appliances_with_providers(replicated_appliances):
+    """Add two providers to the remote appliance."""
+    remote_appliance, global_appliance = replicated_appliances
+    provider_app_crud(VMwareProvider, remote_appliance).setup()
+    provider_app_crud(OpenStackProvider, remote_appliance).setup()
+    return remote_appliance, global_appliance
+
+
+@pytest.fixture
+def replicated_appliances_preupdate_with_providers(replicated_appliances_preupdate):
+    """Add two providers to the remote appliance."""
+    remote_appliance, global_appliance = replicated_appliances_preupdate
+    provider_app_crud(VMwareProvider, remote_appliance).setup()
+    provider_app_crud(OpenStackProvider, remote_appliance).setup()
+    return remote_appliance, global_appliance
 
 
 @pytest.fixture
