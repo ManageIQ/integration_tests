@@ -62,7 +62,7 @@ def vm_view(appliance):
 def test_can_open_vm_advanced_search(vm_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -74,7 +74,7 @@ def test_vm_filter_without_user_input(appliance, vm_view, vms, subset_of_vms,
                                       expression_for_vms_subset):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -92,7 +92,7 @@ def test_vm_filter_with_user_input(
         appliance, vm_view, vms, subset_of_vms, expression_for_vms_subset):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -115,7 +115,7 @@ def test_vm_filter_with_user_input_and_cancellation(vm_view, vms, subset_of_vms,
                                                     expression_for_vms_subset):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -133,7 +133,7 @@ def test_vm_filter_with_user_input_and_cancellation(vm_view, vms, subset_of_vms,
 def test_vm_filter_save_cancel(vm_view, vms, subset_of_vms, expression_for_vms_subset):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -154,7 +154,7 @@ def test_vm_filter_save_and_load(appliance, request, vm_view, vms, subset_of_vms
                                  expression_for_vms_subset):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -183,7 +183,7 @@ def test_vm_filter_save_and_load(appliance, request, vm_view, vms, subset_of_vms
 def test_vm_filter_save_and_cancel_load(request, vm_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -208,7 +208,7 @@ def test_vm_filter_save_and_cancel_load(request, vm_view):
 def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -239,7 +239,7 @@ def test_vm_filter_save_and_load_cancel(request, vms, subset_of_vms, vm_view):
 def test_quick_search_without_vm_filter(appliance, request, vms, subset_of_vms):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -261,7 +261,7 @@ def test_quick_search_with_vm_filter(
         vm_view, vms, subset_of_vms, appliance, expression_for_vms_subset):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -280,7 +280,7 @@ def test_quick_search_with_vm_filter(
 def test_can_delete_vm_filter(vm_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -302,7 +302,7 @@ def test_delete_button_should_appear_after_save_vm(request, vm_view):
     """Delete button appears only after load, not after save
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         initialEstimate: 1/10h
     """
@@ -323,7 +323,7 @@ def test_cannot_delete_vm_filter_more_than_once(vm_view):
     """When Delete button appars, it does not want to go away
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -346,7 +346,7 @@ def test_cannot_delete_vm_filter_more_than_once(vm_view):
 def test_create_filter_with_multiple_conditions(appliance, provider, request, running_vms):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/5h

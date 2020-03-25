@@ -60,7 +60,7 @@ def _select_filter(filters, filter_name, param):
 def _can_open_advanced_search(param, appliance):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: critical
         initialEstimate: 1/10h
@@ -83,7 +83,7 @@ def _can_open_advanced_search(param, appliance):
 def _filter_crud(param, appliance):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/10h

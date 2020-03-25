@@ -13,7 +13,7 @@ def test_set_default_host_filter(request, appliance):
     """ Test for setting default filter for hosts.
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/12h
@@ -40,7 +40,7 @@ def test_clear_host_filter_results(appliance):
     """ Test for clearing filter results for hosts.
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/30h
@@ -59,7 +59,7 @@ def test_clear_datastore_filter_results(appliance):
     """ Test for clearing filter results for datastores.
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: low
         initialEstimate: 1/12h
