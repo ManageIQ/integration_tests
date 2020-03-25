@@ -1180,3 +1180,33 @@ def test_save_dynamic_multi_drop_down_dialog(appliance, import_datastore, import
     # no error should be displayed
     view = sd.create_view(DetailsDialogView, wait="60s")
     view.flash.assert_success_message(f'{sd.label} was saved')
+
+
+@pytest.mark.meta(automates=[1783375])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("file_name", ["bz_1783375.yml"], ids=["sample_dialog"],)
+def test_dialog_not_required_default_value(appliance, generic_catalog_item_with_imported_dialog,
+                                           file_name):
+    """
+    Bugzilla:
+        1783375
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.10
+    """
+    catalog_item, _, ele_label = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
+    # download yaml file
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.dialogs)
+    file_path = fs.download(file_name)
+    with open(file_path, "r") as stream:
+        dialog_data = yaml.load(stream, Loader=yaml.BaseLoader)
+        default_drop = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][0][
+            "default_value"
+        ]
+
+    view = navigate_to(service_catalogs, "Order")
+    assert view.fields("dropdown_list_1").read() == default_drop
