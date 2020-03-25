@@ -21,7 +21,6 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
-from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -124,33 +123,57 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
     soft_assert(instance.exists_on_provider, "Instance wasn't provisioned successfully")
 
 
-@pytest.mark.manual
-@pytest.mark.meta(coverage=[1676910])
-def test_provision_approval_deny():
-    """ Test whether the approver can deny the request.
+def post_approval(smtp_test, provision_request, vm_type, requester, provider, vm_names):
+    # requester includes the trailing space
+    approved_subject = normalize_text("your {} request was approved".format(vm_type))
+    approved_from = normalize_text("{} request from {}was approved".format(vm_type, requester))
 
-    Prerequisities:
-        * A provider that can provision.
+    wait_for_messages_with_subjects(smtp_test, [approved_subject, approved_from], num_sec=90)
 
-    Steps:
-        * Create a provisioning request that does not get automatically approved (eg. ``num_vms``
-            bigger than 1)
-        * Deny the created request
+    smtp_test.clear_database()
 
-    Polarion:
-        assignee: jhenner
-        caseimportance: high
-        casecomponent: Provisioning
-        initialEstimate: 1/3h
+    # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
+    logger.info('Waiting for vms %s to appear on provider %s', ", ".join(vm_names), provider.key)
+    wait_for(
+        lambda: all(map(provider.mgmt.does_vm_exist, vm_names)),
+        handle_exception=True,
+        num_sec=600
+    )
+
+    provision_request.wait_for_request(method='ui')
+    msg = "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
+    assert provision_request.is_succeeded(method='ui'), msg
+
+    # account for multiple vms, specific names
+    completed_subjects = [
+        normalize_text("your {} request has completed vm name {}".format(vm_type, name))
+        for name in vm_names
+    ]
+    wait_for_messages_with_subjects(smtp_test, completed_subjects, num_sec=90)
+
+
+def wait_for_messages_with_subjects(smtp_test, expected_subjects, num_sec):
+    """ This waits for all the expected subjects to be present the list of received
+    mails with partial match.
     """
-    pass
+    def check_subjects():
+        subjects = [normalize_text(m["subject"]) for m in smtp_test.get_emails()]
+        # Looking for each expected subject in the list of received subjects with partial match
+        for subject in expected_subjects:
+            if not any(subject in r_sub for r_sub in subjects):
+                logger.info('Subject {subjects} not found in the received emails yet.')
+                return False
+        logger.info('All expected subjects found in the received email list.')
+        return True
+    wait_for(check_subjects, num_sec=num_sec, delay=3,
+             message='Some expected subjects not found in the received emails subjects.')
 
 
 @pytest.mark.rhv2
-@pytest.mark.meta(automates=[1472844])
-@pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
+@pytest.mark.meta(automates=[1472844, 1676910])
+@pytest.mark.parametrize("action", ["edit", "approve", "deny"])
 def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
-                            edit, soft_assert):
+                            action, soft_assert):
     """ Tests provisioning approval. Tests couple of things.
 
     * Approve manually
@@ -168,6 +191,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         * Depending on whether you want to do manual approval or edit approval, do:
             * MANUAL: manually approve the request in UI
             * EDIT: Edit the request in UI so it conforms the rules for auto-approval.
+            * DENY: Deny the request in UI.
         * Wait for an e-mail with approval
         * Wait until the request finishes
         * Wait until an email with provisioning complete
@@ -182,6 +206,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         casecomponent: Provisioning
         initialEstimate: 1/8h
     """
+
     # generate_tests makes sure these have values
     # template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
 
@@ -204,32 +229,17 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     }
 
     vm = collection.create(vm_name, provider, form_values=inst_args, wait=False)
-    try:
-        wait_for(
-            lambda: len(smtp_test.get_emails()) >= 2,
-            num_sec=90,
-            delay=3
-        )
-    except TimedOutError:
-        pytest.fail('Did not receive at least 2 emails from provisioning request, received: {}'
-                    .format(smtp_test.get_emails()))
-
     pending_subject = normalize_text("your {} request is pending".format(vm_type))
     # requester includes the trailing space
     pending_from = normalize_text("{} request from {}pending approval".format(vm_type, requester))
 
-    received_pending = [normalize_text(m["subject"]) for m in smtp_test.get_emails()]
-    # Looking for each expected subject in the list of received subjects with partial match
-    for subject in [pending_subject, pending_from]:
-        soft_assert(any(subject in r_sub for r_sub in received_pending),
-                    'Expected subject [{}], not matched in received subjects [{}]'
-                    .format(subject, received_pending))
+    wait_for_messages_with_subjects(smtp_test, [pending_subject, pending_from], num_sec=90)
 
     smtp_test.clear_database()
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(vm.template_name, vm.name)}
-    provision_request = appliance.collections.requests.instantiate(cells=cells)
-    if edit:
+
+    def action_edit():
         # Automatic approval after editing the request to conform
         new_vm_name = '{}-xx'.format(vm_name)
         modifications = {
@@ -239,13 +249,17 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
             },
             'Description': 'Provision from [{}] to [{}]'.format(vm.template_name, new_vm_name)
         }
+        provision_request = appliance.collections.requests.instantiate(cells=cells)
         provision_request.edit_request(values=modifications)
         vm_names = [new_vm_name]  # Will be just one now
         request.addfinalizer(
             lambda: collection.instantiate(new_vm_name, provider).cleanup_on_provider()
         )
-    else:
+        post_approval(smtp_test, provision_request, vm_type, requester, provider, vm_names)
+
+    def action_approve():
         # Manual approval
+        provision_request = appliance.collections.requests.instantiate(cells=cells)
         provision_request.approve_request(method='ui', reason="Approved")
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
@@ -253,65 +267,20 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
                                                                  provider).cleanup_on_provider()
                      for v_name in vm_names]
         )
+        post_approval(smtp_test, provision_request, vm_type, requester, provider, vm_names)
 
-    try:
-        wait_for(
-            lambda: len(smtp_test.get_emails()) >= 2,
-            num_sec=90,
-            delay=3
-        )
-    except TimedOutError:
-        pytest.fail('Did not receive at least 1 emails from provisioning request, received: {}'
-                    .format(smtp_test.get_emails()))
-    # requester includes the trailing space
-    approved_subject = normalize_text("your {} request was approved".format(vm_type))
-    approved_from = normalize_text("{} request from {}was approved".format(vm_type, requester))
+    def action_deny():
+        provision_request = appliance.collections.requests.instantiate(cells=cells)
+        provision_request.deny_request(method='ui', reason="You stink!")
+        denied_subject = normalize_text("your {} request was denied".format(vm_type))
+        denied_from = normalize_text("{} request from {}was denied".format(vm_type, requester))
+        wait_for_messages_with_subjects(smtp_test, [denied_subject, denied_from], num_sec=90)
 
-    received_approved = [normalize_text(m["subject"]) for m in smtp_test.get_emails()]
-    # Looking for each expected subject in the list of received subjects with partial match
-    for subject in [approved_subject, approved_from]:
-        soft_assert(any(subject in r_sub for r_sub in received_approved),
-                    'Expected subject [{}], not matched in received subjects [{}]'
-                    .format(subject, received_approved))
-
-    smtp_test.clear_database()
-
-    # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
-    logger.info('Waiting for vms %s to appear on provider %s', ", ".join(vm_names), provider.key)
-    wait_for(
-        lambda: all(map(provider.mgmt.does_vm_exist, vm_names)),
-        handle_exception=True,
-        num_sec=600
-    )
-
-    provision_request.wait_for_request(method='ui')
-    msg = "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
-    assert provision_request.is_succeeded(method='ui'), msg
-
-    # account for multiple vms, specific names
-    completed_subjects = [
-        normalize_text("your {} request has completed vm name {}".format(vm_type, name))
-        for name in vm_names
-    ]
-    expected_subject_count = len(vm_names)
-    # Wait for e-mails to appear
-    try:
-        wait_for(
-            lambda: len(smtp_test.get_emails()) >= expected_subject_count,
-            message="provisioning request completed emails",
-            delay=5
-        )
-    except TimedOutError:
-        pytest.fail('Did not receive enough emails (> {}) from provisioning request, received: {}'
-                    .format(expected_subject_count, smtp_test.get_emails()))
-
-    received_complete = [normalize_text(m['subject']) for m in smtp_test.get_emails()]
-    for expected_subject in completed_subjects:
-        soft_assert(
-            any(expected_subject in subject for subject in received_complete),
-            'Expected subject [{}], not matched in received subjects [{}]'
-            .format(subject, received_complete)
-        )
+    # Call function doing what is necessary -- Variation of Strategy design pattern.
+    action_callable = locals().get(f'action_{action}')
+    if not action_callable:
+        raise NotImplementedError(f'Action {action} is not known to this test.')
+    action_callable()
 
 
 @test_requirements.rest
