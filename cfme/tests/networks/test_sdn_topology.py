@@ -31,7 +31,7 @@ def test_topology_search(request, elements_collection):
         test_flag: sdn
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         initialEstimate: 1/4h
     """
