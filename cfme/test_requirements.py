@@ -231,6 +231,13 @@ drift = pytest.mark.requirement(
     priority='lowest',
 )
 
+db_migration = pytest.mark.requirement(
+    "CFME Database Migrations",
+    description='Database migration tests',
+    assignee_id='jhenner',
+    priority='high',
+)
+
 events = pytest.mark.requirement(
     "Events",
     description='Provider event handling in MIQ/CFME (not including timelines)',
@@ -529,13 +536,6 @@ tower = pytest.mark.requirement(
 update = pytest.mark.requirement(
     "CFME update tests",
     description='Application update tests',
-    assignee_id='jhenner',
-    priority='high',
-)
-
-db_migration = pytest.mark.requirement(
-    "CFME Database Migrations",
-    description='Database migration tests',
     assignee_id='jhenner',
     priority='high',
 )
