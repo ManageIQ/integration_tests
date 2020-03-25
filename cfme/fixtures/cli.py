@@ -27,7 +27,6 @@ from cfme.utils.providers import list_providers_by_class
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
-
 TimedCommand = namedtuple("TimedCommand", ["command", "timeout"])
 
 
@@ -98,8 +97,10 @@ def dedicated_db_appliance(app_creds, unconfigured_appliance):
     10. '' finish."""
     app = unconfigured_appliance
     pwd = app_creds["password"]
-    command_set = ("ap", "", "7", "1", "1", "2", "y", pwd, TimedCommand(pwd, 360), "")
-    app.appliance_console.run_commands(command_set)
+    menu = "5" if app.version > 5.11 else "7"
+    partition = "2" if unconfigured_appliance.version < "5.11" else "1"
+    command_set = ("ap", "", menu, "1", "1", partition, "y", pwd, TimedCommand(pwd, 360), "")
+    app.appliance_console.run_commands(command_set, timeout=20)
     wait_for(lambda: app.db.is_dedicated_active)
     yield app
 
