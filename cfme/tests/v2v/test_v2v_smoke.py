@@ -39,12 +39,13 @@ pytestmark = [
         ["nfs", "nfs", Templates.RHEL7_MINIMAL]
     ]
 )
+@pytest.mark.meta(automates=[1815046])
 def test_single_vm_migration_with_ssh_and_vddk(request, appliance, provider,
                                                source_type, dest_type, template_type,
                                                mapping_data_vm_obj_single_datastore):
     """
     Polarion:
-        assignee: sshveta
+        assignee: nachandr
         caseimportance: high
         caseposneg: positive
         testtype: functional
