@@ -10,8 +10,7 @@ from cfme.utils.providers import get_crud_by_name
 
 pytestmark = [
     pytest.mark.tier(3),
-    pytest.mark.usefixtures('setup_provider_modscope'),
-    pytest.mark.provider(classes=[InfraProvider], scope='module'),
+    pytest.mark.provider(classes=[InfraProvider], scope='function'),
     test_requirements.report,
 ]
 
@@ -26,7 +25,7 @@ def compare(db_item, report_item):
 
 
 @pytest.mark.rhv3
-def test_providers_summary(appliance, soft_assert):
+def test_providers_summary(appliance, soft_assert, request, setup_provider):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding.
 
@@ -44,6 +43,7 @@ def test_providers_summary(appliance, soft_assert):
         subtype="Providers",
         menu_name="Providers Summary"
     ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete)
     # Skip cloud and network providers as they don't share some attributes with infra providers
     # Also skip the embedded ansible provider
     skipped_providers = {"ec2", "openstack", "redhat_network", "embedded_ansible_automation"}
@@ -69,7 +69,7 @@ def test_providers_summary(appliance, soft_assert):
 
 
 @pytest.mark.rhv3
-def test_cluster_relationships(appliance, soft_assert):
+def test_cluster_relationships(appliance, request, soft_assert, setup_provider):
     """Tests vm power options from on
 
     Metadata:
@@ -87,6 +87,8 @@ def test_cluster_relationships(appliance, soft_assert):
         subtype="Virtual Machines, Folders, Clusters",
         menu_name="Cluster Relationships"
     ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete)
+
     for relation in report.data.rows:
         name = relation["Name"]
         provider_name = relation["Provider Name"]
@@ -130,7 +132,9 @@ def test_cluster_relationships(appliance, soft_assert):
 
 
 @pytest.mark.rhv2
-def test_operations_vm_on(soft_assert, temp_appliance_preconfig_funcscope, request):
+def test_operations_vm_on(
+        soft_assert, temp_appliance_preconfig_funcscope, request, setup_provider_temp_appliance
+):
     """Tests vm power options from on
 
     Metadata:
@@ -156,6 +160,7 @@ def test_operations_vm_on(soft_assert, temp_appliance_preconfig_funcscope, reque
         subtype="Virtual Machines",
         menu_name="Online VMs (Powered On)"
     ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete)
 
     vms_in_db = adb.session.query(
         vms.name.label('vm_name'),
@@ -166,10 +171,6 @@ def test_operations_vm_on(soft_assert, temp_appliance_preconfig_funcscope, reque
             hosts, vms.host_id == hosts.id).outerjoin(
                 storages, vms.storage_id == storages.id).filter(
                     vms.power_state == 'on').order_by(vms.name).all()
-
-    @request.addfinalizer
-    def _finalize():
-        report.delete()
 
     assert len(vms_in_db) == len(list(report.data.rows))
     vm_names = [vm.vm_name for vm in vms_in_db]
@@ -189,7 +190,9 @@ def test_operations_vm_on(soft_assert, temp_appliance_preconfig_funcscope, reque
 
 
 @pytest.mark.rhv3
-def test_datastores_summary(soft_assert, temp_appliance_preconfig_funcscope, request):
+def test_datastores_summary(
+        soft_assert, temp_appliance_preconfig_funcscope, request, setup_provider_temp_appliance
+):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes.
 
@@ -213,15 +216,12 @@ def test_datastores_summary(soft_assert, temp_appliance_preconfig_funcscope, req
         subtype="Storage",
         menu_name="Datastores Summary"
     ).queue(wait_for_finish=True)
+    request.addfinalizer(report.delete)
 
     storages_in_db = adb.session.query(storages.store_type, storages.free_space,
                                        storages.total_space, storages.name, storages.id).all()
 
     assert len(storages_in_db) == len(list(report.data.rows))
-
-    @request.addfinalizer
-    def _finalize():
-        report.delete()
 
     storages_in_db_list = []
     report_rows_list = []

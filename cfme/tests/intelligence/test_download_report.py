@@ -1,6 +1,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 
 pytestmark = [test_requirements.report]
 
@@ -17,7 +19,8 @@ def report(appliance):
 
 
 @pytest.mark.parametrize("filetype", ["txt", "csv", "pdf"])
-def test_download_report(infra_provider, report, filetype):
+@pytest.mark.provider([InfraProvider], selector=ONE, scope="module")
+def test_download_report(setup_provider_modscope, report, filetype):
     """Download the report as a file.
 
     Polarion:
