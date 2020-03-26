@@ -230,43 +230,6 @@ def ec2_provider_with_sts_creds(appliance):
     prov.delete()
 
 
-@pytest.fixture
-def ec2_instance_without_name(appliance, provider):
-    template_id = provider.mgmt.get_template(
-        provider.data.templates.get('small_template').name).uuid
-    instance = provider.mgmt.create_vm(template_id)
-    wait_for(lambda: instance.state == VmState.RUNNING, delay=15, timeout=900)
-
-    yield instance
-    instance.cleanup()
-
-@pytest.fixture
-def aws_stack_without_parameters(appliance, provider):
-    stack = provider.mgmt.create_stack(name=fauxfactory.gen_alpha(10),
-        template_url="https://s3-us-west-2.amazonaws.com/cloudformation-templates-us-west-2/Managed"
-                     "_EC2_Batch_Environment.template",
-        capabilities=["CAPABILITY_IAM"])
-    wait_for(lambda : stack.status_active == True, delay=15, timeout=900)
-
-    yield stack
-    stack.delete()
-
-@pytest.fixture()
-def ec2_instance_with_ssh_addition_template(appliance, provider):
-    form_values = {'customize': {'custom_template':  { 'name': "SSH key addition template"}}}
-    instance = appliance.collections.cloud_instances.create(random_vm_name('refr'), provider,
-                                                            form_values=form_values)
-
-    yield instance
-    instance.delete()
-
-def set_public_images_and_refresh(appliance, provider, enable):
-    appliance.set_public_images(enable, provider)
-    provider.refresh_provider_relationships(wait=7200, delay=120)
-    view = provider.load_details()
-    return int(view.entities.summary("Relationships").get_text_of("Images"))
-
-
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_add_cancelled_validation_cloud(request, appliance):
@@ -1091,6 +1054,30 @@ def test_provider_flavors_azure():
     pass
 
 
+@pytest.mark.manual
+@test_requirements.azure
+@pytest.mark.tier(1)
+def test_market_place_images_azure():
+    """
+    Polarion:
+        assignee: anikifor
+        casecomponent: Cloud
+        caseimportance: medium
+        initialEstimate: 1/6h
+        testSteps:
+            1.Enable market place images
+            2.Add Azure provider
+            3.Refresh the provider
+        expectedResults:
+            1.
+            2.
+            3. Refresh is done fast (faster than 15 minutes)
+    Bugzilla:
+        1491330
+    """
+    pass
+
+
 @pytest.mark.ignore_stream('5.11')
 @test_requirements.azure
 @pytest.mark.tier(1)
@@ -1236,11 +1223,9 @@ def test_public_images_enable_disable(setup_provider, request, appliance, provid
     Bugzilla:
         1612086
         1491330
-
     The easiest way to simulate AWS API Limit for > 200 items is to enable
     and disable public images.
     So test for testing public images and for testing AWS API Limit is combined in this test.
-
     Polarion:
         assignee: mmojzis
         caseimportance: critical
@@ -1261,17 +1246,17 @@ def test_public_images_enable_disable(setup_provider, request, appliance, provid
     """
     # enable
     request.addfinalizer(lambda: appliance.set_public_images(False, provider))
-    provider_images = 20000 if provider.one_of(AzureProvider) else 40000
-    print(provider)
-    images = set_public_images_and_refresh(appliance, provider, enable=True)
-    if images < provider_images:
-        pytest.fail("There are not enough images after enabling public images and refresh!")
-    print(images)
+    public_provider_images_min = 20000 if provider.one_of(AzureProvider) else 40000
+    private_provider_images_max = 5000
+    appliance.set_public_images(True, provider)
+    provider.refresh_provider_relationships(method='ui')
+    wait_for(lambda: int(provider.load_details(refresh=True).entities.summary("Relationships")
+        .get_text_of("Images")) > public_provider_images_min, delay=120, timeout=3600 * 3)
     # disable
-    images = set_public_images_and_refresh(appliance, provider, enable=False)
-    print(images)
-    if images > 5000:
-        pytest.fail("There are too many images after disabling public images and refresh!")
+    appliance.set_public_images(False, provider)
+    provider.refresh_provider_relationships(method='ui')
+    wait_for(lambda: int(provider.load_details(refresh=True).entities.summary("Relationships")
+        .get_text_of("Images")) < private_provider_images_max, delay=120, timeout=3600 * 3)
 
 
 @test_requirements.ec2
@@ -1333,6 +1318,7 @@ def test_add_delete_add_provider(setup_provider, provider, request):
     provider.validate_stats(ui=True)
 
 
+@test_requirements.ec2
 @pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
 def test_deploy_instance_with_ssh_addition_template(setup_provider,
                                                     instance_with_ssh_addition_template):
@@ -1359,10 +1345,9 @@ def test_deploy_instance_with_ssh_addition_template(setup_provider,
         pytest.fail('Instance with ssh addition template was not created successfully!')
 
 
-@pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
-@pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.ec2
-def test_add_provider_with_instance_without_name(provider, ec2_instance_without_name):
+@pytest.mark.manual
+def test_add_ec2_provider_with_instance_without_name():
     """
     Polarion:
         assignee: mmojzis
@@ -1376,9 +1361,7 @@ def test_add_provider_with_instance_without_name(provider, ec2_instance_without_
             1.
             2. Refresh should complete without errors
     """
-    provider.create()
-    provider.validate_stats(ui=True)
-    provider.delete()
+    pass
 
 
 @pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
