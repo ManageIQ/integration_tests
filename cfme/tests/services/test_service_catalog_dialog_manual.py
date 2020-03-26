@@ -195,38 +195,6 @@ def test_catalog_item_changing_the_provider_template_after_filling_all_tabs():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_retire_ansible_service_bundle():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.5
-        tags: service
-    Bugzilla:
-        1363897
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_remove_catalog_items_from_catalog_bundle_resource_list():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-    Bugzilla:
-        1639557
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_request_filter_on_request_page():
     """

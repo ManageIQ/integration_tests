@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
+from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
@@ -107,3 +108,43 @@ def test_quota_for_ansible_service(request, appliance, ansible_catalog_item, cat
         provision_request.wait_for_request()
         msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
         assert provision_request.is_succeeded(), msg
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1363897])
+@pytest.mark.customer_scenario
+def test_retire_ansible_service_bundle(request, appliance, ansible_catalog_item, catalog,
+                                       ansible_tower_dialog):
+    """
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.5
+        tags: service
+    Bugzilla:
+        1363897
+    """
+    bundle_name = fauxfactory.gen_alphanumeric(start="bundle_")
+    catalog_bundle = appliance.collections.catalog_bundles.create(
+        bundle_name,
+        description="catalog_bundle",
+        display_in=True,
+        catalog=catalog,
+        dialog=ansible_tower_dialog,
+        catalog_items=ansible_catalog_item,
+    )
+    request.addfinalizer(catalog_bundle.delete_if_exists)
+    service_catalogs = ServiceCatalogs(appliance, catalog_bundle.catalog, catalog_bundle.name)
+    service_catalogs.order()
+    provision_request = appliance.collections.requests.instantiate(
+        bundle_name, partial_check=True)
+
+    provision_request.wait_for_request()
+    provision_request.remove_request(method="rest")
+
+    service = MyService(appliance, ansible_tower_dialog.label)
+    # Retire service
+    retire_request = service.retire()
+    assert retire_request.exists()
