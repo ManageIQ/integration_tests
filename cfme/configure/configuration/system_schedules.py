@@ -8,6 +8,7 @@ from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
 from cfme.base.ui import ConfigurationView
+from cfme.base.ui import DatabaseBackupEntities
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
@@ -35,22 +36,6 @@ class ItemsAnalysisEntities(View):
     """ Analysis fields on the shedule configuration page """
     filter_level1 = BootstrapSelect("filter_typ")
     filter_level2 = BootstrapSelect("filter_value")
-
-
-class SambaProtocolEntities(View):
-    """ Samba Protocol fields on the shedule configuration page """
-    samba_username = Input(id='log_userid')
-    samba_password = Input(id='log_password')
-    samba_confirm_password = Input(id='log_verify')
-
-
-class DatabaseBackupEntities(View):
-    """ Database Backup fields on the shedule configuration page """
-    backup_type = BootstrapSelect('log_protocol')
-    depot_name = Input(id='depot_name')
-    uri = Input(id='uri')
-
-    samba_protocol = View.nested(SambaProtocolEntities)
 
 
 class ScheduleAddEditEntities(View):
@@ -233,14 +218,14 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
             'start_hour': updates.get('start_hour'),
             'start_minute': updates.get('start_minute'),
             'database_backup': {
-                'depot_name': updates.get('depot_name'),
                 'backup_type': updates.get('backup_type'),
-                'uri': updates.get('uri'),
-            },
-            'samba_protocol': {
-                'samba_username': updates.get('samba_username'),
-                'samba_password': updates.get('samba_password'),
-                'samba_password_verify': updates.get('samba_password'),
+                'backup_settings': {
+                    'depot_name': updates.get('depot_name'),
+                    'uri': updates.get('uri'),
+                    'samba_username': updates.get('samba_username'),
+                    'samba_password': updates.get('samba_password'),
+                    'samba_password_verify': updates.get('samba_password')
+                }
             },
             'items_analysis': {
                 'filter_level1': updates.get('filter_level1'),
@@ -340,18 +325,18 @@ class SystemSchedulesCollection(BaseCollection):
         if action_type == 'Database Backup':
             details.update({
                 'database_backup': {
-                    'depot_name': depot_name,
                     'backup_type': backup_type,
-                    'uri': uri
+                    'backup_settings': {
+                        'depot_name': depot_name,
+                        'uri': uri
+                    }
                 }
             })
             if backup_type == 'Samba':
-                details['database_backup'].update({
-                    'samba_protocol': {
-                        'samba_username': samba_username,
-                        'samba_password': samba_password,
-                        'samba_password_verify': samba_password
-                    }
+                details['database_backup']['backup_settings'].update({
+                    'samba_username': samba_username,
+                    'samba_password': samba_password,
+                    'samba_password_verify': samba_password
                 })
         else:
             details.update({

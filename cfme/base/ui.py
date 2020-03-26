@@ -4,6 +4,7 @@ import time
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from selenium.webdriver.common.keys import Keys
+from widgetastic.widget import ConditionalSwitchableView
 from widgetastic.widget import FileInput
 from widgetastic.widget import Table
 from widgetastic.widget import Text
@@ -1187,14 +1188,69 @@ class RegionDiagnosticsView(ConfigurationView):
         )
 
 
+class CommonProtocolEntities(View):
+    depot_name = Input(id='depot_name')
+    uri = Input(id='uri')
+
+
+class SambaProtocolEntities(CommonProtocolEntities):
+    """ Samba Protocol fields for Database Backup """
+    samba_username = Input(id='log_userid')
+    samba_password = Input(id='log_password')
+    samba_confirm_password = Input(id='log_verify')
+
+
+class AWSS3ProtocolEntities(CommonProtocolEntities):
+    """ AWS S3 Protocol fields for Database Backup """
+    aws_region = BootstrapSelect(id='log_aws_region')
+    aws_username = Input(id='log_userid')
+    aws_password = Input(id='log_password')
+    aws_confirm_password = Input(id='log_verify')
+
+
+class OpenstackSwiftProtocolEntities(CommonProtocolEntities):
+    """ Openstack Swift Protocol fields for Database Backup """
+    openstack_keystone_version = BootstrapSelect(id='keystone_api_version')
+    openstack_region = Input('openstack_region')
+    openstack_security_protocol = BootstrapSelect(id='security_protocol')
+    openstack_api_port = Input('swift_api_port')
+    openstack_username = Input(id='log_userid')
+    openstack_password = Input(id='log_password')
+    openstack_confirm_password = Input(id='log_verify')
+
+
+class NFSProtocolEntities(CommonProtocolEntities):
+    """ NFS Protocol fields for Database Backup """
+    pass
+
+
+class DatabaseBackupEntities(View):
+    """ Database Backup fields """
+    backup_type = BootstrapSelect('log_protocol')
+
+    backup_settings = ConditionalSwitchableView(reference='backup_type')
+    backup_settings.register('<No Depot>', default=True, widget=View())
+    backup_settings.register('Samba', widget=SambaProtocolEntities)
+    backup_settings.register('AWS S3', widget=AWSS3ProtocolEntities)
+    backup_settings.register('OpenStack Swift', widget=OpenstackSwiftProtocolEntities)
+    backup_settings.register('Network File System', widget=NFSProtocolEntities)
+
+
 class RegionDiagnosticsDatabaseView(RegionDiagnosticsView):
 
-    db_backup_settings_type = BootstrapSelect(id='log_protocol')
+    db_backup_settings = View.nested(DatabaseBackupEntities)
     submit_db_garbage_collection_button = Button(alt="Run Database Garbage Collection Now")
+
+    depot_name = Input(id='depot_name')
+    uri = Input(id='uri')
 
     @property
     def is_displayed(self):
-        return self.database.is_active()
+        return (
+            self.accordions.diagnostics.is_opened and
+            self.accordions.diagnostics.tree.currently_selected == self.context['object'].tree_path
+            and self.database.is_active()
+        )
 
 
 @navigator.register(Region, 'Diagnostics')

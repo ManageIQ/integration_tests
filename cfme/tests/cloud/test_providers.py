@@ -1497,3 +1497,55 @@ def test_add_second_provider(setup_provider, provider, request):
     second_provider.refresh_provider_relationships()
     second_provider.validate_stats(ui=True)
     assert provider.exists and second_provider.exists
+
+
+@test_requirements.ec2
+@pytest.mark.automates([1710599, 1710623])
+@pytest.mark.ignore_stream("5.10")  # BZ 1710623 was not merged into 5.10
+def test_provider_compare_ec2_provider_and_backup_regions(appliance):
+    """
+    Bugzilla: 1710599, 1710623
+    Polarion:
+        assignee: mmojzis
+        casecomponent: Cloud
+        initialEstimate: 1/6h
+        caseimportance: medium
+        casecomponent: Cloud
+        testSteps:
+            1. Go to Compute -> Cloud -> Providers -> Add a new Cloud Provider
+            2. Select Provider: Amazon EC2 and list AWS Regions
+            3. Go to Configuration -> Settings -> Schedules -> Add a new Schedule
+            4. Select Action: Database Backup, Type: AWS S3 and list AWS Regions
+            5. Go to Configuration -> Diagnostics -> Region -> Database
+            6. Select Type: AWS S3 and list AWS Regions
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Compare all three lists. They should contain same regions.
+    """
+    view = navigate_to(CloudProvider, 'Add')
+    view.prov_type.fill("Amazon EC2")
+    regions_provider_texts = [option.text for option in view.region.all_options if
+                              option.text != "<Choose>"]
+    regions_provider_texts.sort()
+
+    view = navigate_to(appliance.collections.system_schedules, 'Add')
+    view.form.action_type.fill("Database Backup")
+    view.form.database_backup.backup_type.fill("AWS S3")
+    regions_scheduled_backup = view.form.database_backup.backup_settings.aws_region.all_options
+    regions_scheduled_backup_texts = [option.text for option in regions_scheduled_backup if
+                                      option.text != "<Choose>"]
+    regions_scheduled_backup_texts.sort()
+
+    view = navigate_to(appliance.server.zone.region, 'Database')
+    view.db_backup_settings.backup_type.fill("AWS S3")
+    regions_immediate_backup = view.db_backup_settings.backup_settings.aws_region.all_options
+    regions_immediate_backup_texts = [option.text for option in regions_immediate_backup if
+                                      option.text != "<Choose>"]
+    regions_immediate_backup_texts.sort()
+
+    assert regions_provider_texts == regions_scheduled_backup_texts
+    assert regions_provider_texts == regions_immediate_backup_texts
