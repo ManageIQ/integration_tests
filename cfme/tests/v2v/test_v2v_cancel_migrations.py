@@ -2,6 +2,7 @@ import time
 
 import fauxfactory
 import pytest
+from selenium.common.exceptions import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -13,6 +14,7 @@ from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.provider(
@@ -43,21 +45,23 @@ def cancel_migration_plan(appliance, provider, mapping_data_vm_obj_mini):
         target_provider=provider,
         vm_list=mapping_data_vm_obj_mini.vm_list
     )
+
     if migration_plan.wait_for_state("Started"):
+
+        # Cancel migration after disk migration elapsed a 240 second time duration
+        migration_plan.in_progress(plan_elapsed_time=240)
+
         request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
         vm_detail = request_details_list.read()[0]
 
-        def get_plan_status_and_cancel():
-            return request_details_list.is_in_progress(vm_detail)
-
-        wait_for(
-            func=get_plan_status_and_cancel,
-            delay=10,
-            num_sec=180,
-            message="Migration plan failed to advance")
-
         request_details_list.cancel_migration(vm_detail, confirmed=True)  # Cancel migration
 
+        # Make sure the plan successfully gets cancelled.
+        wait_for(
+            lambda: not request_details_list.is_in_progress(vm_detail),
+            delay=10,
+            num_sec=600,
+            message="migration plan is in progress, be patient please")
     else:
         pytest.skip("Migration plan failed to start")
     yield migration_plan
@@ -201,7 +205,7 @@ def test_cancel_migration_attachments(
     "source_type, dest_type, template_type",
     [["nfs", "nfs", Templates.RHEL7_MINIMAL]])
 @pytest.mark.meta(automates=[1755632])
-def test_retry_migration_plan(cancel_migration_plan,
+def test_retry_migration_plan(appliance, cancel_migration_plan,
         source_type, dest_type, template_type):
     """
     Test to cancel migration and then retry migration
@@ -220,15 +224,20 @@ def test_retry_migration_plan(cancel_migration_plan,
         1807770
     """
     migration_plan = cancel_migration_plan
-    view = navigate_to(migration_plan, "Complete")
+    try:
+        view = navigate_to(migration_plan, "Complete")
+    except NoSuchElementException:
+        view = navigate_to(migration_plan, "Complete")
     # Retry Migration
     view.plans_completed_list.migrate_plan(migration_plan.name)
     assert migration_plan.wait_for_state("Started")
 
     # Automating BZ 1755632
+    retry_interval = 60 if appliance.version < '5.11' else 15
+
     retry_interval_log = LogValidator(
         '/var/www/miq/vmdb/log/evm.log',
-        matched_patterns=[r'.*to Automate for delivery in \[60\] seconds.*']
+        matched_patterns=[rf'.*to Automate for delivery in \[{retry_interval}\] seconds.*']
     )
     retry_interval_log.start_monitoring()
     # search logs and wait for validation
