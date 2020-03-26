@@ -388,3 +388,86 @@ def test_load_service_with_button(request, appliance, generic_service, import_di
         custom_button_group = Dropdown(view, button_gp.text)
         assert custom_button_group.is_displayed
         custom_button_group.item_select(button.text)
+
+
+@pytest.mark.meta(automate=[1660637])
+@pytest.mark.customer_scenario
+def test_retire_service_bundle_and_vms(appliance, provider, catalog_item, request):
+    """
+    Bugzilla:
+        1660637
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/6h
+        testSteps:
+            1. Create service catalog item
+            2. Create bundle with above catalog item
+            3. Order the Service bundle
+            4. Navigate to my service
+            5. Retire the service
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. the service should be retired and VM should be retired and archived
+    """
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_name = "{}0001".format(catalog_item.prov_data["catalog"]["vm_name"])
+    vm = collection.instantiate("{}".format(vm_name), provider)
+
+    bundle_name = fauxfactory.gen_alphanumeric(12, start="bundle_")
+    catalog_bundle = appliance.collections.catalog_bundles.create(
+        bundle_name,
+        description="catalog_bundle",
+        display_in=True,
+        catalog=catalog_item.catalog,
+        dialog=catalog_item.dialog,
+        catalog_items=[catalog_item.name]
+    )
+    request.addfinalizer(catalog_bundle.delete_if_exists)
+
+    # Ordering service catalog bundle
+    service_catalogs = ServiceCatalogs(
+        appliance, catalog_bundle.catalog, catalog_bundle.name
+    )
+    service_catalogs.order()
+
+    request_description = (
+        f'Provisioning Service [{catalog_bundle.name}] from [{catalog_bundle.name}]'
+    )
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    provision_request.is_succeeded(method="ui")
+    service = MyService(appliance, catalog_item.dialog.label)
+
+    @request.addfinalizer
+    def _clear_request_service():
+        if provision_request.exists():
+            provision_request.remove_request(method="rest")
+        if service.exists:
+            service.delete()
+
+    assert service.exists
+
+    # Retire service
+    retire_request = service.retire()
+    assert retire_request.exists()
+
+    @request.addfinalizer
+    def _clear_retire_request():
+        if retire_request.exists():
+            retire_request.remove_request()
+
+    wait_for(
+        lambda: service.is_retired,
+        delay=5, num_sec=120,
+        fail_func=service.browser.refresh,
+        message="waiting for service retire"
+    )
+
+    # Vm should be archived
+    assert vm.wait_for_vm_state_change(from_any_provider=True, desired_state='archived')

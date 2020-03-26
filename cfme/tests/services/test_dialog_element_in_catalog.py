@@ -784,36 +784,6 @@ def test_service_bundle_vms():
     pass
 
 
-@pytest.mark.meta(coverage=[1660637])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_service_service_vms_retires_archived():
-    """
-
-    Bugzilla:
-        1660637
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testSteps:
-            1. Create service which will provision a VM
-            2. Navigate to order page of service
-            3. Order the Service bundle.
-            4. Navigate to My service page
-            5. Retire the service
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Service should retire the VMs as well and Vm should archive
-    """
-    pass
-
-
 @pytest.mark.meta(automates=[1558926])
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
