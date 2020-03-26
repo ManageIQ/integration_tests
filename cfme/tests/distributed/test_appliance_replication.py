@@ -288,6 +288,40 @@ def test_appliance_httpd_roles(distributed_appliances):
 
 
 @pytest.mark.ignore_stream("upstream")
+def test_appliance_reporting_role(distributed_appliances):
+    """Test that a report queued from an appliance with the User Interface role but not the
+    Reporting role gets successfully run by a worker appliance that does have the Reporting
+    role.
+
+    Bugzilla:
+        1629945
+
+    Metadata:
+        test_flag: configuration
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    primary_appliance, secondary_appliance = distributed_appliances
+
+    # Disable the Reporting role on the primary appliance.
+    primary_appliance.server.settings.disable_server_roles('reporting')
+
+    # Wait for the role to be disabled in the database.
+    wait_for(lambda: not primary_appliance.server.settings.server_roles_db['reporting'])
+
+    # Queue the report and wait for it to complete.
+    primary_appliance.collections.reports.instantiate(
+        type="Operations",
+        subtype="EVM",
+        menu_name="EVM Server UserID Usage Report"
+    ).queue(wait_for_finish=True)
+
+
+@pytest.mark.ignore_stream("upstream")
 def test_appliance_replicate_zones(replicated_appliances):
     """
     Verify that no remote zones can be selected when changing the server's zone
