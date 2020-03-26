@@ -1,11 +1,8 @@
 import re
-import tempfile
 from collections import namedtuple
 
 import fauxfactory
-import lxml.etree
 import pytest
-import yaml
 from wait_for import TimedOutError
 from wait_for import wait_for
 from widgetastic.utils import VersionPick
@@ -14,12 +11,10 @@ import cfme.utils.auth as authutil
 from cfme import test_requirements
 from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
-from cfme.utils import os
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
-from cfme.utils.conf import hidden
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.net import net_check
@@ -603,39 +598,8 @@ def test_appliance_console_scap(temp_appliance_preconfig, soft_assert):
     command_set = ('ap', RETURN, '15', RETURN, RETURN)
     temp_appliance_preconfig.appliance_console.run_commands(command_set, timeout=30)
 
-    with tempfile.NamedTemporaryFile('w') as f:
-        f.write(hidden['scap.rb'])
-        f.flush()
-        os.fsync(f.fileno())
-        temp_appliance_preconfig.ssh_client.put_file(
-            f.name, '/tmp/scap.rb')
-    rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
-
-    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby scap.rb '
-        '--rulesfile={rules}'.format(rules=rules))
-    temp_appliance_preconfig.ssh_client.get_file(
-        '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
-    temp_appliance_preconfig.ssh_client.get_file(
-        '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')    # Get the scap rules
-
-    with open('/tmp/scap_rules.yml') as f:
-        yml = yaml.safe_load(f.read())
-        rules = yml['rules']
-
-    tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
-    root = tree.getroot()
-    for rule in rules:
-        elements = root.findall(
-            './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
-        if elements:
-            result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
-            if result:
-                soft_assert(result[0].text == 'pass')
-                logger.info("{}: {}".format(rule, result[0].text))
-            else:
-                logger.info("{}: no result".format(rule))
-        else:
-            logger.info("{}: rule not found".format(rule))
+    rules_failures = temp_appliance_preconfig.appliance_console.scap_check_rules()
+    assert not rules_failures, "Some rules have failed, check log"
 
 
 @pytest.mark.tier(1)
