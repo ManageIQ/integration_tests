@@ -1,6 +1,7 @@
 import csv
 import tempfile
 import time
+from datetime import timedelta
 
 import attr
 from navmazing import NavigateToAttribute
@@ -395,11 +396,14 @@ class MigrationPlan(BaseEntity):
             handle_exception=True
         )
 
-    def in_progress(self):
+    def in_progress(self, plan_elapsed_time=None):
         """
         Migration plan takes some time to complete.
         Plan is visible means migration is still in progress so we wait until
-        the plan is invisible(or till migration is complete).
+        the plan is invisible or till migration is complete or till the given
+        plan_elapsed_time
+        Args:
+            plan_elapsed_time: time elapsed in migration progress
         """
         view = navigate_to(self, "InProgress")
 
@@ -417,6 +421,12 @@ class MigrationPlan(BaseEntity):
                             format(plan_name=self.name, visibility=is_plan_visible,
                                    message=new_msg)
                         )
+                        if plan_elapsed_time:
+                            h, m, s = map(int, str(plan_time_elapsed).split(":"))
+                            if timedelta(seconds=plan_elapsed_time) < timedelta(
+                                    hours=h, minutes=m, seconds=s):
+                                logger.info(f"Plan in progress elapsed time: {plan_elapsed_time}s")
+                                return True
                     except NoSuchElementException:
                         logger.info("For plan {plan_name} playbook is executing..".format(
                             plan_name=self.name))
