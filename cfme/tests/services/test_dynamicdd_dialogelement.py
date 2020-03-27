@@ -122,23 +122,6 @@ def test_dynamicdropdown_dialog(appliance, dialog, catalog):
     service_catalogs.order()
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_submit_or_cancelation_btns_in_dd_dialogs_tied_to_a_service_button_should_be_visble():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1611527
-    """
-    pass
-
-
 @pytest.mark.meta(automates=[1611527])
 @pytest.mark.tier(2)
 @pytest.mark.customer_scenario
