@@ -962,6 +962,7 @@ def test_appliance_ssl(appliance):
 
 
 @test_requirements.ha_proxy
+@test_requirements.restore
 @pytest.mark.manual
 @pytest.mark.tier(2)
 def test_appliance_console_restore_ha_standby_node():
