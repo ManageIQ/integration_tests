@@ -366,6 +366,54 @@ class ManagePolicies(CFMENavigateStep):
                                                    surf_pages=True).ensure_checked()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
+class ComparableCommonBase(object):
+    """
+    This will be the base class for a Mixin for comparing entities.
+    Not sure yet what will go here versus Comparable
+    """
+    pass
+
+
+class Comparable(ComparableCommonBase):
+    """
+    Mixin for comparing entities
+    """
+    # I need to update so I pass in list of entity objects.
+    # And make generic enough to use for other entities.
+    def compare_hosts(self, provider, num_hosts=2, host_list=None,
+                      hosts_collection="provider"):
+        # this is just to get comments and test things
+        from cfme.utils.appliance.implementations.ui import navigate_to
+        from cfme.common.host_views import HostsCompareView
+        from cfme.common.host_views import ProviderHostsCompareView
+        # if host_list is none we just check the first num_hosts items.
+        # if host_list is given then we check the hosts passed in (host.name string, or host objs)
+        if hosts_collection == 'provider':
+            hosts_view = navigate_to(provider.collections.hosts, "All")
+        elif hosts_collection == 'appliance':
+            hosts_view = navigate_to(self.collections.hosts, "All")
+        if host_list:
+            # This should be a list of host entities (later to be others)
+            # Do we need to check that the item is_entity? or just let it error on itsown
+            for item in host_list:
+                    host_entity = hosts_view.entities.get_entity(name=item)
+                    host_entity.ensure_checked()
+        else:
+            ent_slice = slice(0, num_hosts, None)
+            for h in hosts_view.entities.get_all(slice=ent_slice):
+                h.ensure_checked()
+        #hosts_view.toolbar.configuration.item_select('Compare Selected items', handle_alert=True)
+        hosts_view.toolbar.configuration.item_select(provider.collections.hosts.ENTITY.DROPDOWN_TEXT,
+                                                     handle_alert=True)
+        if hosts_collection == 'provider':
+            compare_hosts_view = provider.create_view(ProviderHostsCompareView)
+        elif hosts_collection == 'appliance':
+            compare_hosts_view = provider.create_view(HostsCompareView)
+        assert compare_hosts_view.is_displayed
+        return compare_hosts_view
+        # need to make sure as many items are displayed as were passed in and checked.
+
+
 
 class CompareView(BaseLoggedInPage):
     """generic class for compare views"""
