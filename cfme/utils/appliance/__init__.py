@@ -2611,18 +2611,15 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         if self.advanced_settings.get('product', {}).get('transformation'):
             self. _switch_migration_ui(False)
 
-    def set_public_images(self, enable, provider_type):
-        provider = 'ec2'
+    def set_public_images(self, provider, enabled=False):
+        from cfme.cloud.provider.azure import AzureProvider
+        provider_type = provider.type_name
         public_image_field = 'get_public_images'
-        if provider_type == 'azure':
-            provider = 'azure'
+        if provider.one_of(AzureProvider):
             public_image_field = 'get_market_images'
-        if self.advanced_settings.get('ems_refresh').get(
-                provider).get(public_image_field) == enable:
-            return True
-        else:
-            self.update_advanced_settings({'ems_refresh': {provider: {public_image_field: enable}}})
-            return True
+        self.update_advanced_settings({'ems_refresh': {provider_type: {
+            public_image_field: enabled}}})
+        return True
 
 
 class Appliance(IPAppliance):

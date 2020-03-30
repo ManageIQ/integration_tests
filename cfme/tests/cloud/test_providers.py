@@ -1217,12 +1217,14 @@ def test_refresh_with_stack_without_parameters(provider, request, stack_without_
 
 @test_requirements.cloud
 @pytest.mark.long_running
-@pytest.mark.provider([AzureProvider, EC2Provider], scope="function", override=True)
+@pytest.mark.ignore_stream("5.10", "5.11")
+@pytest.mark.meta(automates=[1491330, 1612086])
+@pytest.mark.provider([AzureProvider, EC2Provider], scope="function")
 def test_public_images_enable_disable(setup_provider, request, appliance, provider):
     """
     Bugzilla:
-        1612086
         1491330
+        1612086
     The easiest way to simulate AWS API Limit for > 200 items is to enable
     and disable public images.
     So test for testing public images and for testing AWS API Limit is combined in this test.
@@ -1244,16 +1246,19 @@ def test_public_images_enable_disable(setup_provider, request, appliance, provid
             4.
             5. Refresh should be successful and public images uncollected
     """
+    # if provider gets stuck loading images it could take more than two hours to be in operating
+    # state which can cause other test to fail so better to delete provider for safety
+    request.addfinalizer(lambda: provider.delete_if_exists())
+    request.addfinalizer(lambda: appliance.set_public_images(provider, enabled=False))
     # enable
-    request.addfinalizer(lambda: appliance.set_public_images(False, provider))
     public_provider_images_min = 20000 if provider.one_of(AzureProvider) else 40000
     private_provider_images_max = 5000
-    appliance.set_public_images(True, provider)
+    appliance.set_public_images(provider, enabled=True)
     provider.refresh_provider_relationships(method='ui')
     wait_for(lambda: int(provider.load_details(refresh=True).entities.summary("Relationships")
         .get_text_of("Images")) > public_provider_images_min, delay=120, timeout=3600 * 3)
     # disable
-    appliance.set_public_images(False, provider)
+    appliance.set_public_images(provider, enabled=False)
     provider.refresh_provider_relationships(method='ui')
     wait_for(lambda: int(provider.load_details(refresh=True).entities.summary("Relationships")
         .get_text_of("Images")) < private_provider_images_max, delay=120, timeout=3600 * 3)
