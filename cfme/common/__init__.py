@@ -366,6 +366,7 @@ class ManagePolicies(CFMENavigateStep):
                                                    surf_pages=True).ensure_checked()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
+
 class ComparableCommonBase(object):
     """
     This will be the base class for a Mixin for comparing entities.
@@ -402,11 +403,11 @@ class Comparable(ComparableCommonBase):
                     entity_view = navigate_to(provider.collections.hosts, "All")
                 elif entity_collection == 'appliance':
                     entity_view = navigate_to(self.collections.hosts, "All")
-            #elif type(entities_list[0]) is Vm:
+            # elif type(entities_list[0]) is Vm:
             # Do we need to check that the item is_entity? or just let it error on its own
             for item in entities_list:
-                    v_entity = entity_view.entities.get_entity(name=item.name)
-                    v_entity.ensure_checked()
+                v_entity = entity_view.entities.get_entity(name=item.name)
+                v_entity.ensure_checked()
         else:
             # This is just temporary. Need to find alternative
             if entity_collection == 'provider':
@@ -417,8 +418,8 @@ class Comparable(ComparableCommonBase):
             ent_slice = slice(0, num_entities, None)
             for v_entity in entity_view.entities.get_all(slice=ent_slice):
                 v_entity.ensure_checked()
-        entity_view.toolbar.configuration.item_select(provider.collections.hosts.ENTITY.DROPDOWN_TEXT,
-                                                     handle_alert=True)
+        entity_view.toolbar.configuration.item_select(
+            provider.collections.hosts.ENTITY.DROPDOWN_TEXT, handle_alert=True)
         if type(entities_list[0]) is Host:
             if entity_collection == 'provider':
                 compare_entity_view = provider.create_view(ProviderHostsCompareView)
@@ -427,7 +428,6 @@ class Comparable(ComparableCommonBase):
         assert compare_entity_view.is_displayed
         return compare_entity_view
         # need to make sure as many items are displayed as were passed in and checked.
-
 
 
 class CompareView(BaseLoggedInPage):
