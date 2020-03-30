@@ -56,7 +56,7 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
         1367560
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: CandU
     """

@@ -72,7 +72,7 @@ def test_cluster_graph_screen(provider, cluster, host, graph_type, interval, ena
         * Compare table and graph data
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         casecomponent: CandU
         initialEstimate: 1/4h

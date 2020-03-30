@@ -53,7 +53,7 @@ def test_gap_collection(appliance, provider, element, graph_type, order_data):
         * Check for Daily data
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h

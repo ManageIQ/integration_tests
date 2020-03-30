@@ -123,14 +123,14 @@ bottleneck = pytest.mark.requirement(
 c_and_u = pytest.mark.requirement(
     "Capacity and Utilization",
     description='Capacity and Utilization data collection',
-    assignee_id='nachandr',
+    assignee_id='gtalreja',
     priority='medium',
 )
 
 chargeback = pytest.mark.requirement(
     "Chargeback",
     description='Chargeback rates, calculations, and reports',
-    assignee_id='gtalreja',
+    assignee_id='tpapaioa',
     priority='lowest',
 )
 
@@ -325,7 +325,7 @@ multi_region = pytest.mark.requirement(
 multi_tenancy = pytest.mark.requirement(
     "MIQ Multi-Tenancy",
     description='Support for Tenants in MIQ/CFME',
-    assignee_id='gtalreja',
+    assignee_id='dgaikwad',
     priority='high',
 )
 
@@ -466,7 +466,7 @@ service = pytest.mark.requirement(
 service_chargeback = pytest.mark.requirement(
     "Service Chargeback",
     description='Chargeback rates, calculations, and reports for services',
-    assignee_id='gtalreja',
+    assignee_id='tpapaioa',
     priority='low',
 )
 
