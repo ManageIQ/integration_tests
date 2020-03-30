@@ -62,7 +62,7 @@ def test_host_most_recent_hour_graph_screen(graph_type, provider, host, enable_c
         * Check data for legends collected or not
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: CandU
     """
@@ -121,7 +121,7 @@ def test_host_graph_screen(provider, interval, graph_type, host, enable_candu):
         * Compare table and graph data
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: CandU

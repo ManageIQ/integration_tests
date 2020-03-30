@@ -54,7 +54,7 @@ def test_vm_most_recent_hour_graph_screen(graph_type, provider, enable_candu):
         * Check data for legends collected or not
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: CandU
@@ -118,7 +118,7 @@ def test_vm_graph_screen(provider, interval, graph_type, enable_candu):
         * Compare data of Table and Graph
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: CandU
