@@ -157,12 +157,12 @@ class StorageManager(BaseEntity, CustomButtonEventsMixin, Taggable, PolicyProfil
         if not cancel:
             view.flash.assert_no_error()
 
-    def delete(self):
+    def delete(self, cancel=False):
         """Delete storage manager"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select(
             f'Remove this {self.storage_title} from Inventory',
-            handle_alert=True
+            handle_alert=not cancel
         )
 
         view = self.create_view(StorageManagerDetailsView)

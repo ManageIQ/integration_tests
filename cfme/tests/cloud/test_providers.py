@@ -1569,9 +1569,9 @@ def test_provider_compare_ec2_provider_and_backup_regions(appliance):
                                                  unblock=lambda child_provider: "object_managers"
                                                  in child_provider)])
 @pytest.mark.uncollectif(lambda child_provider, provider:
-                        (provider.one_of(EC2Provider) and "object_managers" in child_provider) or
-                        (provider.one_of(AzureProvider) and ("object_managers" or "block_managers"
-                                                             in child_provider)),
+                        (provider.one_of(EC2Provider) and (child_provider == "object_managers")) or
+                        (provider.one_of(AzureProvider) and (child_provider !=
+                                                             'network_providers')),
                         reason="Storage is not supported by AzureProvider "
                                "and Object Storage is not supported by EC2Provider")
 @test_requirements.cloud
@@ -1596,8 +1596,10 @@ def test_cloud_provider_dashboard_after_child_provider_remove(
             2.
             3. Dashboard should load without any issues
     """
-    child_provider.delete()
+    child_provider.delete(cancel=False)
 
+    # Sometimes provider was not deleted so this preventing to use provider without child providers
+    # to be used in next tests
     @request.addfinalizer
     def _wait_for_delete_provider():
         provider.delete()
