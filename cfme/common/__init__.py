@@ -380,37 +380,52 @@ class Comparable(ComparableCommonBase):
     """
     # I need to update so I pass in list of entity objects.
     # And make generic enough to use for other entities.
-    def compare_hosts(self, provider, num_hosts=2, host_list=None,
-                      hosts_collection="provider"):
+    def compare_entities(self, provider, num_entities=2, entities_list=None,
+                      entity_collection="provider"):
         # this is just to get comments and test things
         from cfme.utils.appliance.implementations.ui import navigate_to
         from cfme.common.host_views import HostsCompareView
         from cfme.common.host_views import ProviderHostsCompareView
-        # if host_list is none we just check the first num_hosts items.
-        # if host_list is given then we check the hosts passed in (host.name string, or host objs)
-        if hosts_collection == 'provider':
-            hosts_view = navigate_to(provider.collections.hosts, "All")
-        elif hosts_collection == 'appliance':
-            hosts_view = navigate_to(self.collections.hosts, "All")
-        if host_list:
-            # This should be a list of host entities (later to be others)
-            # Do we need to check that the item is_entity? or just let it error on itsown
-            for item in host_list:
-                    host_entity = hosts_view.entities.get_entity(name=item)
-                    host_entity.ensure_checked()
+        from cfme.infrastructure.host import Host
+        # if entities_list is none we just check the first num_entities items.
+        # if entities_list is given then we check the entities passed in the list
+        # Do I want to push the provider vs appliance collection logic back into the test case?
+        #   ^^ I say this because I was trying to be able to base navigation on the entity type by
+        # using the nav associated with the obj. IE navigate_to(entity, "ALL")
+
+        # I need to get and set entity type. I'll update and try to get this from elsewhere,
+        # or put it ina better place in the logic; but for now...
+        #  the initial plan to create a nav view so could do something like navigate_to(host "All")
+        if entities_list:
+            if type(entities_list[0]) is Host:
+                if entity_collection == 'provider':
+                    entity_view = navigate_to(provider.collections.hosts, "All")
+                elif entity_collection == 'appliance':
+                    entity_view = navigate_to(self.collections.hosts, "All")
+            #elif type(entities_list[0]) is Vm:
+            # Do we need to check that the item is_entity? or just let it error on its own
+            for item in entities_list:
+                    v_entity = entity_view.entities.get_entity(name=item.name)
+                    v_entity.ensure_checked()
         else:
-            ent_slice = slice(0, num_hosts, None)
-            for h in hosts_view.entities.get_all(slice=ent_slice):
-                h.ensure_checked()
-        #hosts_view.toolbar.configuration.item_select('Compare Selected items', handle_alert=True)
-        hosts_view.toolbar.configuration.item_select(provider.collections.hosts.ENTITY.DROPDOWN_TEXT,
+            # This is just temporary. Need to find alternative
+            if entity_collection == 'provider':
+                entity_view = navigate_to(provider.collections.hosts, "All")
+            elif entity_collection == 'appliance':
+                entity_view = navigate_to(self.collections.hosts, "All")
+            # end of temp
+            ent_slice = slice(0, num_entities, None)
+            for v_entity in entity_view.entities.get_all(slice=ent_slice):
+                v_entity.ensure_checked()
+        entity_view.toolbar.configuration.item_select(provider.collections.hosts.ENTITY.DROPDOWN_TEXT,
                                                      handle_alert=True)
-        if hosts_collection == 'provider':
-            compare_hosts_view = provider.create_view(ProviderHostsCompareView)
-        elif hosts_collection == 'appliance':
-            compare_hosts_view = provider.create_view(HostsCompareView)
-        assert compare_hosts_view.is_displayed
-        return compare_hosts_view
+        if type(entities_list[0]) is Host:
+            if entity_collection == 'provider':
+                compare_entity_view = provider.create_view(ProviderHostsCompareView)
+            elif entity_collection == 'appliance':
+                compare_entity_view = provider.create_view(HostsCompareView)
+        assert compare_entity_view.is_displayed
+        return compare_entity_view
         # need to make sure as many items are displayed as were passed in and checked.
 
 
