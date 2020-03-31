@@ -380,7 +380,6 @@ class Comparable(ComparableCommonBase):
     Mixin for comparing entities
     """
     def compare_entities_col(self, provider, entities_list=None, app_col=False):
-        # this is just to get comments and test things
         from cfme.utils.appliance.implementations.ui import navigate_to
         from cfme.common.host_views import HostsCompareView
         from cfme.common.host_views import ProviderHostsCompareView
@@ -394,7 +393,7 @@ class Comparable(ComparableCommonBase):
         if app_col:
             compare_entity_view = provider.create_view(self.COMPARE_APP_VIEW)
         else:
-            compare_entity_view = provider.create_view(self.COMPARE_VIEW) # next replace provider
+            compare_entity_view = provider.create_view(self.COMPARE_VIEW)
         assert compare_entity_view.is_displayed
         return compare_entity_view
 
