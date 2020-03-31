@@ -1,14 +1,15 @@
 -c constraints.txt
-Click
 GitPython
 Jinja2
 PyGithub
 SQLAlchemy
 Sphinx
 Werkzeug
+aenum
 bottle
 bugzilla-data
 cached-property
+click
 cycler
 dateparser
 debtcollector
