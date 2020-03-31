@@ -8,7 +8,7 @@ import click
 from wait_for import wait_for
 
 from cfme.test_framework.sprout.client import SproutClient
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.appliance import stack
 from cfme.utils.conf import credentials
 from cfme.utils.providers import get_crud
@@ -152,7 +152,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
                 print("Processing pool...")
                 apps = []
                 for app in sprout_pool['appliances']:
-                    apps.append(IPAppliance(app['ip_address']))
+                    apps.append(DefaultAppliance(app['ip_address']))
                 sprout_client.set_pool_description(sprout_poolid, desc)
             else:
                 sys.exit("Pool does not meet the minimum size requirements!")
@@ -235,7 +235,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
                 print("Processing pool...")
                 apps = []
                 for app in sprout_pool['appliances']:
-                    apps.append(IPAppliance(app['ip_address']))
+                    apps.append(DefaultAppliance(app['ip_address']))
                 sprout_client.set_pool_description(sprout_poolid, desc)
             else:
                 sys.exit("Pool does not meet the minimum size requirements!")

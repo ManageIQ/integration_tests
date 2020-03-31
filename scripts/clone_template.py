@@ -10,7 +10,7 @@ from wrapanapi import Openshift
 from wrapanapi import VmState
 
 from cfme.utils.appliance import Appliance
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials as cred
 from cfme.utils.conf import provider_data
@@ -312,7 +312,7 @@ def main(**kwargs):
         if kwargs.get('configure'):
             logger.info('Configuring appliance, this can take a while.')
             if kwargs.get('deploy'):
-                app = IPAppliance(hostname=vm_ip)
+                app = DefaultAppliance(hostname=vm_ip)
             else:
                 app_args = (kwargs['provider'], deploy_args['vm_name'])
                 app_kwargs = {}

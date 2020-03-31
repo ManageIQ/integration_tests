@@ -25,7 +25,7 @@ from cached_property import threaded_cached_property
 from sprout import critical_section, redis
 from sprout.log import create_logger
 
-from cfme.utils.appliance import Appliance as CFMEAppliance, IPAppliance
+from cfme.utils.appliance import Appliance as CFMEAppliance, DefaultAppliance
 from cfme.utils.bz import Bugzilla
 from cfme.utils.conf import cfme_data
 from cfme.utils.providers import get_mgmt
@@ -1008,7 +1008,7 @@ class Appliance(MetadataMixin):
 
     @property
     def ipapp(self):
-        return IPAppliance(**self.app_args)
+        return DefaultAppliance(**self.app_args)
 
     def user_can_use(self, user):
         return self.provider.user_can_use(user)

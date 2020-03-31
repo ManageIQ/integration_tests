@@ -76,7 +76,7 @@ def setup_for_reports(request, appliance, provider, path, updates, vm_crud, regi
 
     Args:
         request: py.test funcarg request
-        appliance: IPAppliance object
+        appliance: DefaultAppliance object
         provider: provider object
         path: path to the report in the tree
         updates: updates to the default report so that it will display events

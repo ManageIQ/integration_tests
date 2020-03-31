@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import DefaultAppliance
 from cfme.utils.conf import cfme_performance
 from cfme.utils.grafana import get_scenario_dashboard_urls
 from cfme.utils.log import logger
@@ -38,8 +38,8 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
         'hostname': scenario['replication_master']['ip_address'],
         'username': scenario['replication_master']['ssh']['username'],
         'password': scenario['replication_master']['ssh']['password']}
-    master_appliance = IPAppliance(hostname=scenario['replication_master']['ip_address'],
-                                   openshift_creds=ssh_master_args)
+    master_appliance = DefaultAppliance(hostname=scenario['replication_master']['ip_address'],
+                                        openshift_creds=ssh_master_args)
 
     ssh_client_master = SSHClient(**ssh_master_args)
     logger.debug('Scenario: {}'.format(scenario['name']))

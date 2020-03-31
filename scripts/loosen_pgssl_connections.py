@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import DefaultAppliance
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--with_ssl', help='update for ssl connections', action="store_true")
 
     args = parser.parse_args()
-    ip_a = IPAppliance(hostname=args.address)
+    ip_a = DefaultAppliance(hostname=args.address)
     return ip_a.loosen_pgssl()
 
 

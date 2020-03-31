@@ -1154,7 +1154,7 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
         teardown: When you"re done, delete everything.  Make sure at a minimum that the
                   VM is completely Stopped in Azure.
     """
-    app = appliance.IPAppliance.from_url(vm_ip)
+    app = appliance.DefaultAppliance.from_url(vm_ip)
 
     # Credentials for the provisioned VM from CFME image, this is different to the VM that runs
     # powershell scripts as Azure has specific requirements for login/password.
