@@ -39,7 +39,7 @@ def test_validate_lookup_button_provisioning(
     configure ldap and validate for lookup button in provisioning form
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
@@ -83,7 +83,7 @@ def test_verify_database_user_login_fails_with_external_auth_configured(
         1632718
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative

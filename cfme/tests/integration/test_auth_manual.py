@@ -12,7 +12,7 @@ def test_appliance_console_ipa():
     Test setting up IPA authentication with invalid host settings
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         caseposneg: negative
@@ -33,7 +33,7 @@ def test_update_ldap_updates_login():
     entry_cache_timeout = 600
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -46,7 +46,7 @@ def test_update_ldap_updates_login():
 def test_saml_verify_user_login():
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         caseposneg: negative
@@ -71,7 +71,7 @@ def test_saml_get_user_groups_from_ext_auth_httpd():
     case of SAML)
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         initialEstimate: 1/2h
     """
@@ -86,7 +86,7 @@ def test_verify_ui_reflects_ext_auth(mode):
     Tests that login screen reflects external auth mode.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
@@ -106,7 +106,7 @@ def test_verify_ui_reflects_ext_auth(mode):
 def test_ldap_group_lookup_error_message():
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         caseimportance: low
         casecomponent: Auth
         caseposneg: negative
@@ -128,7 +128,7 @@ def test_ldap_group_lookup_error_message():
 def test_verify_user_validation_authentication():
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
@@ -158,7 +158,7 @@ def test_verify_role_configuration_for_new_ldap_groups():
     NOTE: execute rbac test cases.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1h
@@ -171,7 +171,7 @@ def test_verify_role_configuration_for_new_ldap_groups():
 def test_disable_local_login():
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -210,7 +210,7 @@ def test_ldap_auth_without_groups():
     Settings, when it is always needed.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/4h
@@ -223,7 +223,7 @@ def test_ldap_auth_without_groups():
 def test_saml_login_fails_after_password_change():
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         caseposneg: negative
@@ -247,7 +247,7 @@ def test_saml_login_fails_after_password_change():
 def test_two_factor_auth_with_user_password_and_otp():
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/3h
         casecomponent: Auth
         caseimportance: medium
@@ -270,7 +270,7 @@ def test_auth_mode_new_trusted_forest_table_entry():
     forest table entry.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
@@ -286,7 +286,7 @@ def test_ldap_invalid_user_login():
     test case).
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         caseposneg: negative
@@ -311,7 +311,7 @@ def test_remove_display_name_for_user_in_ldap_and_verify_auth():
     1. Remove display name for user in ldap and verify auth.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         caseposneg: negative
@@ -339,7 +339,7 @@ def test_change_search_base():
     dc=qetest,dc=com is expected to be retrieved.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -361,7 +361,7 @@ def test_change_domain_sequence_sssd_group_retrieval():
     user1@qetest.com: qegroup1 qetest.com
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -398,7 +398,7 @@ def test_verify_user_groups_can_be_retrieved_from_trusted_forest():
     "ldaptest". Observe that login fails for the user "ldaptest"
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -415,7 +415,7 @@ def test_verify_the_trusted_forest_settings_table_display_in_auth_page():
     forest settings table does not disappear.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
@@ -435,7 +435,7 @@ def test_external_auth_openldap_proxy_to_3_domains():
         1306436
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -450,7 +450,7 @@ def test_appliance_console_ext_auth_options_skip():
     Test skip update of ext_auth options through appliance_console
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/6h
@@ -498,7 +498,7 @@ def test_multi_domain_configuration_for_external_auth_ldaps():
     displays only one. There will be BZ.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -519,7 +519,7 @@ def test_external_auth_config_for_ldap_appliance_console():
     and auth mode set to ‘Database’.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/3h
@@ -535,7 +535,7 @@ def test_cfme_features_with_ldap():
     ldap.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1h
@@ -559,7 +559,7 @@ def test_ldaps_customized_port():
     Verify ldap user/group authentication.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/2h
@@ -575,7 +575,7 @@ def test_saml_multiple_appliances_same_realm():
     mentioned in Step#1 works fine.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/2h
@@ -592,7 +592,7 @@ def test_session_timeout():
     timeout value.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: low
         initialEstimate: 1/6h
@@ -607,7 +607,7 @@ def test_openid_auth_provider():
     Test setting up CFME with OpenID Auth Provider
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/2h

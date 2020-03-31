@@ -20,7 +20,7 @@ def test_group_roles(request, temp_appliance_preconfig_long, group_name, group_d
 
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         caseimportance: medium
         casecomponent: Auth
         initialEstimate: 1/4h

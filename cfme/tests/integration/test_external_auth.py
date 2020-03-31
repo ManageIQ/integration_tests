@@ -33,7 +33,7 @@ def test_appliance_console_ipa_ntp(request, appliance, freeipa_provider):
         1767082
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         initialEstimate: 1/4h
