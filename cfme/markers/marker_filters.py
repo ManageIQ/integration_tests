@@ -54,14 +54,14 @@ def pytest_collection_modifyitems(session, config, items):
         # for each filter, check if its active and that the item has the marker
         # Then check if the marker content matches the passed filter
         # Discard items without the matching value
-        if not getattr(item.get_closest_marker('tier'), 'args', [False])[0] in (tiers or []):
+        if tiers and getattr(item.get_closest_marker('tier'), 'args', [False])[0] not in tiers:
             discard_tier.append(item)
             continue
-        if (not getattr(item.get_closest_marker('requirement'), 'args', [False])[0]
-                in (requirements or [])):
+        if requirements and getattr(item.get_closest_marker('requirement'), 'args',
+                [False])[0] not in requirements:
             discard_requirement.append(item)
             continue
-        if customer and item.get_closest_marker('customer_scenario') is None:
+        if customer and not item.get_closest_marker('customer_scenario'):
             discard_customer.append(item)
             continue
         keep.append(item)
