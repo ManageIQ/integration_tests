@@ -32,8 +32,22 @@ def original_class(domain):
 
 
 @pytest.mark.sauce
-def test_method_crud(klass):
+@pytest.mark.meta(automates=[1704439, 1591797])
+@pytest.mark.parametrize(
+    "method_type", ["inline", "Ansible Tower Job Template", "Ansible Tower Workflow Template"],
+    ids=["inline", "job", "workflow"]
+)
+@pytest.mark.uncollectif(
+    lambda method_type, appliance: method_type
+    in ("Ansible Tower Job Template", "Ansible Tower Workflow Template")
+    and appliance.version < 5.11, reason="These type of methods introduced in 5.11"
+)
+def test_method_crud(method_type, klass):
     """
+    Bugzilla:
+        1704439
+        1591797
+
     Polarion:
         assignee: ghubale
         casecomponent: Automate
@@ -42,21 +56,30 @@ def test_method_crud(klass):
         tags: automate
     """
     # TODO(ghubale@redhat.com): Update this test case for other types of automate methods like
-    #  builtin, expression, uri, playbook, Ansible Tower Job Template and Ansible Tower Workflow
-    #  Template
-    method = klass.methods.create(
-        name=fauxfactory.gen_alphanumeric(),
-        display_name=fauxfactory.gen_alphanumeric(),
-        location='inline',
-        script='$evm.log(:info, ":P")',
-    )
+    #  builtin, expression, uri, playbook
+    if method_type in ['Ansible Tower Job Template', 'Ansible Tower Workflow Template']:
+        method = klass.methods.create(
+            name=fauxfactory.gen_alphanumeric(),
+            display_name=fauxfactory.gen_alphanumeric(),
+            location=method_type,
+            max_ttl='2'
+        )
+    elif method_type == 'inline':
+        method = klass.methods.create(
+            name=fauxfactory.gen_alphanumeric(),
+            display_name=fauxfactory.gen_alphanumeric(),
+            location=method_type,
+            script='$evm.log(:info, ":P")',
+        )
     view = method.create_view(ClassDetailsView)
-    view.flash.assert_message(f'Automate Method "{method.name}" was added')
+    if method_type in ['Ansible Tower Job Template', 'Ansible Tower Workflow Template']:
+        view.flash.assert_message(f'Automate Method "{method.name}" was saved')
+    else:
+        view.flash.assert_message(f'Automate Method "{method.name}" was added')
     assert method.exists
     origname = method.name
     with update(method):
         method.name = fauxfactory.gen_alphanumeric(8)
-        method.script = "bar"
     assert method.exists
     with update(method):
         method.name = origname

@@ -27,7 +27,6 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import EntryPoint
@@ -234,11 +233,12 @@ class PlaybookInputParameters(View):
 
 
 class MethodAddView(AutomateExplorerView):
-    fill_strategy = WaitFillViewStrategy()
+    fill_strategy = WaitFillViewStrategy("20s")
     title = Text('#explorer_title_text')
 
     location = BootstrapSelect('cls_method_location', can_hide_on_select=True)
 
+    # Inline
     inline_name = Input(name='cls_method_name')
     inline_display_name = Input(name='cls_method_display_name')
     script = ScriptBox()
@@ -246,8 +246,10 @@ class MethodAddView(AutomateExplorerView):
     validate_button = Button('Validate')
     inputs = View.nested(Inputs)
 
-    playbook_name = Input(name='name')
-    playbook_display_name = Input(name='display_name')
+    # Playbook, Ansible Tower Workflow Template, Ansible Tower Job Template
+    method_name = Input(name='name')
+    method_display_name = Input(name='display_name')
+
     repository = PlaybookBootstrapSelect('provisioning_repository_id')
     playbook = PlaybookBootstrapSelect('provisioning_playbook_id')
     machine_credential = PlaybookBootstrapSelect('provisioning_machine_credential_id')
@@ -262,6 +264,8 @@ class MethodAddView(AutomateExplorerView):
     embedded_method_table = Table('//*[@id="embedded_methods_div"]/table')
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
+
+    ansible_max_ttl = Input(name='provisioning_execution_ttl')
 
     add_button = Button('Add')
     cancel_button = Button('Cancel')
@@ -278,6 +282,7 @@ class MethodAddView(AutomateExplorerView):
 
 
 class MethodEditView(AutomateExplorerView):
+    fill_strategy = WaitFillViewStrategy("20s")
     title = Text('#explorer_title_text')
 
     # inline
@@ -288,9 +293,10 @@ class MethodEditView(AutomateExplorerView):
     validate_button = Button('Validate')
     inputs = View.nested(Inputs)
 
-    # playbook
-    playbook_name = Input(name='name')
-    playbook_display_name = Input(name='display_name')
+    # Playbook, Ansible Tower Workflow Template, Ansible Tower Job Template
+    method_name = Input(name='name')
+    method_display_name = Input(name='display_name')
+
     repository = PlaybookBootstrapSelect('provisioning_repository_id')
     playbook = PlaybookBootstrapSelect('provisioning_playbook_id')
     machine_credential = PlaybookBootstrapSelect('provisioning_machine_credential_id')
@@ -306,34 +312,43 @@ class MethodEditView(AutomateExplorerView):
     embedded_method = EntryPoint(locator='//*[@id="automate-inline-method-select"]//button',
                                  tree_id="treeview-entrypoint_selection")
 
+    ansible_max_ttl = Input(name='provisioning_execution_ttl')
+
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
 
     def before_fill(self, values):
         location = self.context['object'].location.lower()
-        if 'display_name' in values and location in ['inline', 'playbook']:
-            values['{}_display_name'.format(location)] = values['display_name']
+        if 'display_name' in values:
+            if location == 'inline':
+                values[f'{location}_display_name'] = values['display_name']
+            else:
+                values['method_display_name'] = values['display_name']
             del values['display_name']
-        elif 'name' in values and location in ['inline', 'playbook']:
-            values['{}_name'.format(location)] = values['name']
+
+        elif 'name' in values:
+            if location == 'inline':
+                values[f'{location.replace(" ", "_")}_name'] = values['name']
+            else:
+                values['method_name'] = values['name']
             del values['name']
 
     @property
     def is_displayed(self):
         return (
-            self.in_explorer
-            and self.datastore.is_opened
-            and (f'Editing Automate Method "{self.context["object"].name}"' in self.title.text)
+            self.in_explorer and
+            self.datastore.is_opened and
+            'Editing Automate Method "{}"'.format(self.context['object'].name) in self.title.text
             and check_tree_path(
                 self.datastore.tree.currently_selected,
-                self.context["object"].tree_path,
-                partial=True,
-            )
+                self.context['object'].tree_path, partial=True)
         )
 
 
 class Method(BaseEntity, Copiable):
+
+    LOCATIONS = ['Ansible Tower Job Template', 'Ansible Tower Workflow Template']
 
     def __init__(self, collection, name=None, display_name=None, location='inline', script=None,
                  data=None, repository=None, playbook=None, machine_credential=None, hosts=None,
@@ -401,11 +416,18 @@ class Method(BaseEntity, Copiable):
     def tree_path(self):
         icon_name_map = {'inline': 'fa-ruby', 'playbook': 'vendor-ansible'}
         if self.display_name:
-            return self.parent_obj.tree_path + [
-                (icon_name_map[self.location.lower()], '{} ({})'.format(self.display_name,
-                                                                        self.name))]
+            if self.location in self.LOCATIONS:
+                return self.parent_obj.tree_path + [f'{self.display_name} ({self.name})']
+            else:
+                return self.parent_obj.tree_path + [
+                    (icon_name_map[self.location.lower()], f'{self.display_name} ({self.name})')]
         else:
-            return self.parent_obj.tree_path + [(icon_name_map[self.location.lower()], self.name)]
+            if self.location in self.LOCATIONS:
+                return self.parent_obj.tree_path + [self.name]
+            else:
+                return self.parent_obj.tree_path + [(
+                    icon_name_map[self.location.lower()], self.name
+                )]
 
     @property
     def tree_path_name_only(self):
@@ -452,6 +474,7 @@ class MethodCollection(BaseCollection):
             playbook_input_parameters=None, inputs=None, embedded_method=None):
 
         add_page = navigate_to(self, 'Add')
+        add_page.wait_displayed("25s")
 
         if self.browser.product_version > '5.11' and location.islower():
             location = location.capitalize()
@@ -468,8 +491,8 @@ class MethodCollection(BaseCollection):
             })
         if location.lower() == 'playbook':
             add_page.fill({
-                'playbook_name': name,
-                'playbook_display_name': display_name,
+                'method_name': name,
+                'method_display_name': display_name,
                 'repository': repository
             })
             wait_for(lambda: add_page.playbook.is_displayed, delay=0.5, num_sec=2)
@@ -484,6 +507,15 @@ class MethodCollection(BaseCollection):
                 'playbook_input_parameters': playbook_input_parameters
             })
             validate = False
+
+        if location in ['Ansible Tower Workflow Template', 'Ansible Tower Job Template']:
+            add_page.fill({
+                'method_name': name,
+                'method_display_name': display_name,
+                'ansible_max_ttl': max_ttl,
+            })
+            validate = False
+
         if validate:
             add_page.validate_button.click()
             add_page.wait_displayed()
@@ -498,12 +530,6 @@ class MethodCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-
-            # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-            if BZ(1704439).blocks:
-                view = self.create_view(ClassDetailsView)
-                view.flash.assert_message('Automate Method "{}" was added'.format(name))
-                self.browser.refresh()
 
             return self.instantiate(
                 name=name,
@@ -557,10 +583,6 @@ class MethodCollection(BaseCollection):
         for method in checked_methods:
             all_page.flash.assert_message(
                 'Automate Method "{}": Delete successful'.format(method.name))
-
-        # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
-        if BZ(1704439).blocks:
-            self.browser.refresh()
 
 
 @navigator.register(MethodCollection)
