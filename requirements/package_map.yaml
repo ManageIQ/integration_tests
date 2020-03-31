@@ -8,3 +8,5 @@ packages:
   github: PyGithub
   widgetastic: widgetastic.core
   widgetastic_patternfly: widgetastic.patternfly
+  zmq: pyzmq
+  keycloak: python-keycloak
