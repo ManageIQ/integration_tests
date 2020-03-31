@@ -157,24 +157,42 @@ def run_plugins(item, when):
         logger.info(
             "Calling metaplugin {}({}) with meta signature {} {}".format(
                 plugin_name, plug.function.__name__, str(plug.metas), str(plug.kwargs)))
-        plug.function(**env)
+        try:
+            plug.function(**env)
+        except Exception:
+            # log and raise to let the hook function handle it
+            logger.exception(f'Exception running meta marker plugin function for plugin {plug} '
+                             f'with env {env}')
+            raise
         logger.info(
             "Metaplugin {}({}) with meta signature {} {} has finished".format(
                 plugin_name, plug.function.__name__, str(plug.metas), str(plug.kwargs)))
 
 
 def pytest_runtest_setup(item):
-    run_plugins(item, plugin.SETUP)
+    try:
+        run_plugins(item, plugin.SETUP)
+    except Exception:
+        pytest.skip('Exception while running meta marker plugin in SETUP')
 
 
 def pytest_runtest_teardown(item):
-    run_plugins(item, plugin.TEARDOWN)
+    try:
+        run_plugins(item, plugin.TEARDOWN)
+    except Exception:
+        pytest.fail('Exception while running meta marker plugin in TEARDOWN')
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
-    run_plugins(item, plugin.BEFORE_RUN)
+    try:
+        run_plugins(item, plugin.BEFORE_RUN)
+    except Exception:
+        pytest.skip('Exception while running meta marker plugin in BEFORE_RUN')
     try:
         yield
     finally:
-        run_plugins(item, plugin.AFTER_RUN)
+        try:
+            run_plugins(item, plugin.AFTER_RUN)
+        except Exception:
+            pytest.fail('Exception while running meta marker plugin in AFTER_RUN')
