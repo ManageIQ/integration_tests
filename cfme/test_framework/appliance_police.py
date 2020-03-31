@@ -15,7 +15,7 @@ class AppliancePoliceException(Exception):
     port = attr.ib()
 
     def __str__(self):
-        return "{} (port {})".format(self.message, self.port)
+        return f"{self.message} (port {self.port})"
 
 
 @pytest.fixture(autouse=True, scope="function")
@@ -65,7 +65,7 @@ def appliance_police(appliance):
 
     # Regardles of the exception raised, we didn't return anywhere above
     # time to call a human
-    msg = 'Help! My appliance {} crashed with: {}'.format(appliance.url, e_message)
+    msg = f'Help! My appliance {appliance.url} crashed with: {e_message}'
     store.slave_manager.message(msg)
     if 'appliance_police_recipients' in rdb:
         rdb_kwargs = {

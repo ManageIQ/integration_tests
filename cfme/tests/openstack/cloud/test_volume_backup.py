@@ -20,7 +20,7 @@ VOLUME_SIZE = 1
 @pytest.fixture(scope='function')
 def volume_backup(appliance, provider):
     volume_collection = appliance.collections.volumes
-    storage_manager = '{} Cinder Manager'.format(provider.name)
+    storage_manager = f'{provider.name} Cinder Manager'
     backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
 
     # create new volume
@@ -60,7 +60,7 @@ def volume_backup_with_type(appliance, provider):
         return volume_type.exists
 
     volume_collection = appliance.collections.volumes
-    storage_manager = '{} Cinder Manager'.format(provider.name)
+    storage_manager = f'{provider.name} Cinder Manager'
     backup_collection = appliance.collections.volume_backups.filter({'provider': provider})
 
     # create new volume
@@ -193,7 +193,7 @@ def test_incr_backup_of_attached_volume_crud(appliance, provider, request, attac
     view = navigate_to(collection, "All")
 
     view.flash.assert_success_message(
-        'Delete of Backup "{}" was successfully initiated.'.format(backup_name))
+        f'Delete of Backup "{backup_name}" was successfully initiated.')
 
     wait_for(lambda: not incr_backup_of_attached_volume.exists, delay=5, timeout=600,
              fail_func=incr_backup_of_attached_volume.refresh,

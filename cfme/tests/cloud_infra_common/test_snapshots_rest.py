@@ -101,7 +101,7 @@ def vm_snapshot(appliance, vm):
         snap.wait_not_exists(num_sec=300, delay=5)
 
 
-class TestRESTSnapshots(object):
+class TestRESTSnapshots:
     """Tests actions with VM/instance snapshots using REST API."""
 
     @pytest.mark.rhv2

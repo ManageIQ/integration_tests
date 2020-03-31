@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     provider_type = cmd_args.provider_type
 
-    template_name = ("{}-{}".format(cmd_args.template_name, stream) if cmd_args.template_name else
+    template_name = (f"{cmd_args.template_name}-{stream}" if cmd_args.template_name else
                      TemplateName(image_url).template_name)
 
     if cmd_args.print_name_only:

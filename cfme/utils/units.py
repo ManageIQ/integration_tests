@@ -26,7 +26,7 @@ REGEXP = re.compile(
 
 
 @functools.total_ordering
-class Unit(object):
+class Unit:
     """This class serves for simple comparison of numbers that have units.
 
     Imagine you pull a text value from the UI. 2 GB. By doing ``Unit.parse('2 GB')`` you get an
@@ -82,7 +82,7 @@ class Unit(object):
             raise TypeError('Incomparable types {} and {}'.format(type(self), type(other)))
         # other is instance of this class too now
         if self.unit_type != other.unit_type:
-            raise TypeError('Incomparable units {} and {}'.format(self.unit_type, other.unit_type))
+            raise TypeError(f'Incomparable units {self.unit_type} and {other.unit_type}')
         return other
 
     def __eq__(self, other):
@@ -104,7 +104,7 @@ class Unit(object):
             type(self).__name__, repr(self.number), repr(self.prefix), repr(self.unit_type))
 
     def __str__(self):
-        return '{} {}{}'.format(self.number, self.prefix, self.unit_type)
+        return f'{self.number} {self.prefix}{self.unit_type}'
 
 
 # Chargeback header names: used in chargeback tests for convenience

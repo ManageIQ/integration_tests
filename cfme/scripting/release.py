@@ -59,7 +59,7 @@ PR_LINK = "[{pr}](https://github.com/ManageIQ/integration_tests/pull/{pr})"
 def clean_commit(commit_msg):
     replacements = ["1LP", "RFR", "WIP", "WIPTEST", "NOTEST"]
     for replacement in replacements:
-        commit_msg = commit_msg.replace("[{}]".format(replacement), "")
+        commit_msg = commit_msg.replace(f"[{replacement}]", "")
     return commit_msg.strip(" ")
 
 

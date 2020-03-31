@@ -36,15 +36,15 @@ def check_tier(item):
     strings = []
     tier = item.get_closest_marker('tier')
     if tier is None:
-        strings.append('[TCV-E] MISSING TIER: {}'.format(item.nodeid))
+        strings.append(f'[TCV-E] MISSING TIER: {item.nodeid}')
     else:
         try:
             tier = tier.args[0]
         except IndexError:
-            strings.append('[TCV-E] BAD TIER SPECIFICATION: {}'.format(item.nodeid))
+            strings.append(f'[TCV-E] BAD TIER SPECIFICATION: {item.nodeid}')
         else:
             if not 1 <= tier <= 3:
-                strings.append('[TCV-E] BAD TIER NUMBER ({}): {}'.format(tier, item.nodeid))
+                strings.append(f'[TCV-E] BAD TIER NUMBER ({tier}): {item.nodeid}')
     return strings
 
 
@@ -52,16 +52,16 @@ def check_requirement(item, available_requirements):
     strings = []
     requirement = item.get_closest_marker('requirement')
     if requirement is None:
-        strings.append('[TCV-E] MISSING REQUIREMENT: {}'.format(item.nodeid))
+        strings.append(f'[TCV-E] MISSING REQUIREMENT: {item.nodeid}')
     else:
         try:
             requirement = requirement.args[0]
         except IndexError:
-            strings.append('[TCV-E] BAD REQUIREMENT SPECIFICATION: {}'.format(item.nodeid))
+            strings.append(f'[TCV-E] BAD REQUIREMENT SPECIFICATION: {item.nodeid}')
         else:
             if requirement not in available_requirements:
                 strings.append(
-                    '[TCV-E] BAD REQUIREMENT STRING ({}): {}'.format(requirement, item.nodeid))
+                    f'[TCV-E] BAD REQUIREMENT STRING ({requirement}): {item.nodeid}')
     return strings
 
 

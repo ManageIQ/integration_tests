@@ -15,13 +15,13 @@ from widgetastic_manageiq import WaitTab
 
 class VmwareCloudCredential(Credential):
     def __init__(self, organization=None, **kwargs):
-        super(VmwareCloudCredential, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.organization = organization
 
     @property
     def view_value_mapping(self):
-        d = super(VmwareCloudCredential, self).view_value_mapping
-        d['username'] = '{}@{}'.format(self.principal, self.organization)
+        d = super().view_value_mapping
+        d['username'] = f'{self.principal}@{self.organization}'
         return d
 
 

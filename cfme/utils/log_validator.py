@@ -15,10 +15,10 @@ class FailPatternMatchError(Exception):
         self.line = line
 
     def __str__(self):
-        return repr("Pattern '{p}': {m}".format(p=self.pattern, m=self.message))
+        return repr(f"Pattern '{self.pattern}': {self.message}")
 
 
-class LogValidator(object):
+class LogValidator:
     """
     Log content validator class provides methods
     to monitor the log content before test is started,
@@ -118,7 +118,7 @@ class LogValidator(object):
             self._check_fail_logs(line)
             self._check_match_logs(line)
 
-        logger.info("Matches found: {}".format(self._matches))
+        logger.info(f"Matches found: {self._matches}")
         return self._matches
 
     def validate(self, wait=None, message="waiting for log validation", **kwargs):

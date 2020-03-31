@@ -68,7 +68,7 @@ class NetworkProviderAddView(ProviderAddView):
 
     @property
     def is_displayed(self):
-        return (super(NetworkProviderAddView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == [
                     'Networks', 'Providers'] and
                 self.title.text == 'Add New Network Provider')

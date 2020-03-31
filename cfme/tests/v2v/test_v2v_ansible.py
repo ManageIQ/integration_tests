@@ -70,7 +70,7 @@ def catalog_item(request, appliance, machine_credential, ansible_repository, pla
         description=fauxfactory.gen_alphanumeric(),
         provisioning={
             "repository": ansible_repository.name,
-            "playbook": "{}.yml".format(playbook_type),
+            "playbook": f"{playbook_type}.yml",
             "machine_credential": machine_credential,
             "create_new": True,
             "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),

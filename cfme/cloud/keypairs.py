@@ -247,7 +247,7 @@ class KeyPairCollection(BaseCollection):
             flash_message = 'Add of new Key Pair was cancelled by the user'
         else:
             view.form.add.click()
-            flash_message = 'Key Pair "{}" created'.format(name)
+            flash_message = f'Key Pair "{name}" created'
 
         # add/cancel should redirect, new view
         view = self.create_view(KeyPairAllView)

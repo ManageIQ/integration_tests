@@ -29,8 +29,8 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
     def upload_template(self):
         cmd_args = [
             "ovftool --noSSLVerify",
-            "--datastore={}".format(self._picked_datastore),
-            "--name={}".format(self.temp_template_name),
+            f"--datastore={self._picked_datastore}",
+            f"--name={self.temp_template_name}",
             "--vCloudTemplate=True",
             "--overwrite",
             self.raw_image_url,
@@ -42,7 +42,7 @@ class VMWareTemplateUpload(ProviderTemplateUpload):
         ]
 
         if 'proxy' in list(self.template_upload_data.keys()):
-            cmd_args.append("--proxy={}".format(self.template_upload_data.proxy))
+            cmd_args.append(f"--proxy={self.template_upload_data.proxy}")
 
         command = ' '.join(cmd_args)
 

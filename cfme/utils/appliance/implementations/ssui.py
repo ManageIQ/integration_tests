@@ -28,7 +28,7 @@ class MiqSSUIBrowser(HandleModalsMixin, Browser):
             'endpoint': endpoint,
             'store': store,
         })
-        super(MiqSSUIBrowser, self).__init__(
+        super().__init__(
             selenium,
             plugin_class=MiqSSUIBrowserPlugin,
             logger=create_sublogger('MiqSSUIBrowser'),
@@ -144,7 +144,7 @@ class SSUINavigateStep(NavigateStep):
 
     def log_message(self, msg, level="debug"):
         class_name = self.obj.__name__ if isclass(self.obj) else self.obj.__class__.__name__
-        str_msg = "[SUI-NAV/{}/{}]: {}".format(class_name, self._name, msg)
+        str_msg = f"[SUI-NAV/{class_name}/{self._name}]: {msg}"
         getattr(logger, level)(str_msg)
 
     def construct_message(self, here, resetter, view, duration, waited, force):
@@ -187,7 +187,7 @@ class SSUINavigateStep(NavigateStep):
                 "is_displayed not implemented for {} view".format(self.VIEW or ""), level="warn")
         except Exception as e:
             self.log_message(
-                "Exception raised [{}] whilst checking if already here".format(e), level="error")
+                f"Exception raised [{e}] whilst checking if already here", level="error")
 
         if not here or nav_args['force']:
             if nav_args['force']:
@@ -206,7 +206,7 @@ class SSUINavigateStep(NavigateStep):
             waited = True
             wait_for(
                 lambda: view.is_displayed, num_sec=nav_args['wait_for_view'],
-                message="Waiting for view [{}] to display".format(view.__class__.__name__)
+                message=f"Waiting for view [{view.__class__.__name__}] to display"
             )
         self.log_message(
             self.construct_message(here, resetter_used, view, duration, waited, force_used),

@@ -165,7 +165,7 @@ class ObjectStoreObjectCollection(BaseCollection):
             try:
                 view.entities.get_entity(key=obj.key, surf_pages=True).ensure_checked()
             except ItemNotFound:
-                raise ItemNotFound('Could not locate object {}'.format(obj.key))
+                raise ItemNotFound(f'Could not locate object {obj.key}')
 
         view.toolbar.configuration.item_select('Remove Object Storage Objects', handle_alert=True)
         view.flash.assert_no_error()
@@ -190,4 +190,4 @@ class ObjectStoreObjectDetails(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(key=self.obj.key, surf_pages=True).click()
         except ItemNotFound:
-            raise ItemNotFound('Could not locate object {}'.format(self.obj.key))
+            raise ItemNotFound(f'Could not locate object {self.obj.key}')

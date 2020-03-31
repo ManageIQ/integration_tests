@@ -18,7 +18,7 @@ data = defaultdict(dict)
 
 
 def process_vm(vm, mgmt, user, prov):
-    print("Inspecting: {} on {}".format(vm.name, prov))
+    print(f"Inspecting: {vm.name} on {prov}")
     if vm.is_stopped:
         return
     ip = vm.ip
@@ -36,11 +36,11 @@ def process_vm(vm, mgmt, user, prov):
                              ['EmsVmware', 'EmsOpenstack', 'EmsRedhat', 'EmsMicrosoft']]
 
                 for provider in providers:
-                    prov_name = prov_key_db.get(provider, 'Unknown ({})'.format(prov))
+                    prov_name = prov_key_db.get(provider, f'Unknown ({prov})')
                     if prov_name in data[user]:
-                        data[user][prov_name].append("{} ({})".format(vm, prov))
+                        data[user][prov_name].append(f"{vm} ({prov})")
                     else:
-                        data[user][prov_name] = ["{} ({})".format(vm, prov)]
+                        data[user][prov_name] = [f"{vm} ({prov})"]
 
             except Exception:
                 pass
@@ -66,7 +66,7 @@ for prov in li:
     prov_key_db[ip] = prov
     if li[prov]['type'] not in ['ec2', 'scvmm']:
         mgmt = get_mgmt(prov)
-        print("DOING {}".format(prov))
+        print(f"DOING {prov}")
         process_provider(mgmt, prov)
 
 with open('provider_usage.json', 'w') as f:
@@ -74,7 +74,7 @@ with open('provider_usage.json', 'w') as f:
 
 string = ""
 for user in data:
-    string += ('<h2>{}</h2><table class="table table-striped">'.format(user))
+    string += (f'<h2>{user}</h2><table class="table table-striped">')
     string += ('<thead><tr><td><strong>Provider</strong></td>'
                '<td>Count</td><td><em>VMs</em></td></tr></thead>')
     for prov in data[user]:

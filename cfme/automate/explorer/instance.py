@@ -153,7 +153,7 @@ class Instance(BaseEntity, Copiable):
     ICON_NAME = 'fa-file-text-o'
 
     def __init__(self, collection, name, display_name=None, description=None, fields=None):
-        super(Instance, self).__init__(collection)
+        super().__init__(collection)
 
         self.name = name
         if display_name is not None:
@@ -180,7 +180,7 @@ class Instance(BaseEntity, Copiable):
                 table.name == self.name,
                 table.class_id == self.klass.db_id)[0]  # noqa
         except IndexError:
-            raise ItemNotFound('Instance named {} not found in the database'.format(self.name))
+            raise ItemNotFound(f'Instance named {self.name} not found in the database')
 
     @property
     def db_object(self):
@@ -207,7 +207,7 @@ class Instance(BaseEntity, Copiable):
     def tree_path(self):
         if self.display_name:
             return self.parent_obj.tree_path + [
-                (self.ICON_NAME, '{} ({})'.format(self.display_name, self.name))]
+                (self.ICON_NAME, f'{self.display_name} ({self.name})')]
         else:
             return self.parent_obj.tree_path + [(self.ICON_NAME, self.name)]
 
@@ -235,7 +235,7 @@ class Instance(BaseEntity, Copiable):
                 'Automate Instance "{}" was saved'.format(updates.get('name', self.name)))
         else:
             view.flash.assert_message(
-                'Edit of Automate Instance "{}" was cancelled by the user'.format(self.name))
+                f'Edit of Automate Instance "{self.name}" was cancelled by the user')
 
     def delete(self, cancel=False):
         # Ensure this has correct data
@@ -288,7 +288,7 @@ class InstanceCollection(BaseCollection):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Automate Instance "{}" was added'.format(name))
+            add_page.flash.assert_message(f'Automate Instance "{name}" was added')
 
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
             if BZ(1704439).blocks:
@@ -334,7 +334,7 @@ class InstanceCollection(BaseCollection):
         all_page.flash.assert_no_error()
         for instance in checked_instances:
             all_page.flash.assert_message(
-                'Automate Instance "{}": Delete successful'.format(instance.name))
+                f'Automate Instance "{instance.name}": Delete successful')
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
         if BZ(1704439).blocks:

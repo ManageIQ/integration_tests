@@ -48,7 +48,7 @@ def generated_request(appliance, provider, provisioning, template_name, vm_name)
     first_name = fauxfactory.gen_alphanumeric()
     last_name = fauxfactory.gen_alphanumeric()
     notes = fauxfactory.gen_alphanumeric()
-    e_mail = "{}@{}.test".format(first_name, last_name)
+    e_mail = f"{first_name}@{last_name}.test"
     host, datastore = list(map(provisioning.get, ('host', 'datastore')))
     vm = appliance.collections.infra_vms.instantiate(name=vm_name,
                                                      provider=provider,
@@ -83,7 +83,7 @@ def generated_request(appliance, provider, provisioning, template_name, vm_name)
 
     view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
     request_cells = {
-        "Description": "Provision from [{}] to [{}###]".format(template_name, vm_name),
+        "Description": f"Provision from [{template_name}] to [{vm_name}###]",
     }
     provision_request = appliance.collections.requests.instantiate(cells=request_cells)
     yield provision_request
@@ -126,7 +126,7 @@ def test_copy_request(request, generated_request, vm_name, template_name):
         initialEstimate: 1/4h
         casecomponent: Services
     """
-    new_vm_name = '{}-xx'.format(vm_name)
+    new_vm_name = f'{vm_name}-xx'
     modifications = {'catalog': {'vm_name': new_vm_name}}
     new_request = generated_request.copy_request(values=modifications)
     request.addfinalizer(new_request.remove_request)

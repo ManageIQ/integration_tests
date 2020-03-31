@@ -244,7 +244,7 @@ class NetworkProvider(BaseProvider, Taggable):
     def _post_create_checks(self, main_view, add_view=None):
         main_view.flash.assert_no_error()
         if main_view.is_displayed:
-            success_text = '{} Providers "{}" was saved'.format(self.string_name, self.name)
+            success_text = f'{self.string_name} Providers "{self.name}" was saved'
             main_view.flash.assert_message(success_text)
         else:
             add_view.flash.assert_no_error()
@@ -254,7 +254,7 @@ class NetworkProvider(BaseProvider, Taggable):
         details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
         main_view.flash.assert_no_error()
-        success_text = '{} Manager "{}" was saved'.format(self.string_name, self.name)
+        success_text = f'{self.string_name} Manager "{self.name}" was saved'
         if main_view.is_displayed:
             main_view.flash.assert_message(success_text)
         elif details_view.is_displayed:
@@ -379,7 +379,7 @@ class OpenCloudTenants(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'CloudSubnets')
@@ -393,7 +393,7 @@ class OpenCloudSubnets(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'CloudNetworks')
@@ -407,7 +407,7 @@ class OpenCloudNetworks(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'NetworkRouters')
@@ -421,7 +421,7 @@ class OpenNetworkRouters(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'SecurityGroups')
@@ -435,7 +435,7 @@ class OpenSecurityGroups(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'FloatingIPs')
@@ -449,7 +449,7 @@ class OpenFloatingIPs(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'NetworkPorts')
@@ -463,7 +463,7 @@ class OpenNetworkPorts(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'LoadBalancers')
@@ -477,7 +477,7 @@ class OpenNetworkBalancers(CFMENavigateStep):
         if item_amt > 0:
             self.prerequisite_view.entities.relationships.click_at(item)
         else:
-            raise DestinationNotFound("This provider doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This provider doesn't have {item}")
 
 
 @navigator.register(NetworkProvider, 'TopologyFromDetails')

@@ -85,7 +85,7 @@ class Namespace(BaseEntity):
             'namespaces': NamespaceCollection,
             'classes': ClassCollection
         }
-        super(Namespace, self).__init__(collection)
+        super().__init__(collection)
         self.name = name
         if description is not None:
             self.description = description
@@ -107,7 +107,7 @@ class Namespace(BaseEntity):
                 table.name == self.name,
                 table.parent_id == self.parent_obj.db_id)[0]  # noqa
         except IndexError:
-            raise ItemNotFound('Namespace named {} not found in the database'.format(self.name))
+            raise ItemNotFound(f'Namespace named {self.name} not found in the database')
 
     @property
     def db_object(self):
@@ -175,10 +175,10 @@ class Namespace(BaseEntity):
         view.flash.assert_no_error()
         if changed:
             text = (updates.get('description', self.description) or updates.get('name', self.name))
-            view.flash.assert_message('Automate Namespace "{}" was saved'.format(text))
+            view.flash.assert_message(f'Automate Namespace "{text}" was saved')
         else:
             view.flash.assert_message(
-                'Edit of Automate Namespace "{}" was cancelled by the user'.format(self.name))
+                f'Edit of Automate Namespace "{self.name}" was cancelled by the user')
 
 
 @attr.s

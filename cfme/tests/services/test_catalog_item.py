@@ -182,7 +182,7 @@ def test_catalog_item_duplicate_name(appliance, dialog, catalog):
         dialog=dialog
     )
     view = cat_item.create_view(AllCatalogItemView, wait='10s')
-    view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(cat_item.name))
+    view.flash.assert_success_message(f'Service Catalog Item "{cat_item.name}" was added')
     with pytest.raises(AssertionError):
         appliance.collections.catalog_items.create(
             appliance.collections.catalog_items.GENERIC,

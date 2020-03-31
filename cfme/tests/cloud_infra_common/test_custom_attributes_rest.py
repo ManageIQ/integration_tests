@@ -58,14 +58,14 @@ def get_vm(appliance, provider, vm_obj):
 @pytest.fixture(scope='module')
 def get_service(appliance):
     uid = fauxfactory.gen_alphanumeric(5)
-    name = 'test_rest_service_{}'.format(uid)
+    name = f'test_rest_service_{uid}'
 
     def _get_service():
         service = appliance.rest_api.collections.services.find_by(name=name)
         if not service:
             body = {
                 'name': name,
-                'description': 'Test REST Service {}'.format(uid),
+                'description': f'Test REST Service {uid}',
             }
             service = appliance.rest_api.collections.services.action.create(body)
         return service[0]
@@ -95,8 +95,8 @@ def add_custom_attributes(request, resource, num=2):
     for __ in range(num):
         uid = fauxfactory.gen_alphanumeric(5)
         body.append({
-            'name': 'ca_name_{}'.format(uid),
-            'value': 'ca_value_{}'.format(uid)
+            'name': f'ca_name_{uid}',
+            'value': f'ca_value_{uid}'
         })
     attrs = resource.custom_attributes.action.add(*body)
 
@@ -123,7 +123,7 @@ def _uncollect(provider, collection_name):
 GENERIC_UNCOLLECT = 'Invalid combination of collection_name and provider type'
 
 
-class TestCustomAttributesRESTAPI(object):
+class TestCustomAttributesRESTAPI:
     @pytest.mark.uncollectif(lambda provider, collection_name:
                              _uncollect(provider, collection_name),
                              reason=GENERIC_UNCOLLECT)
@@ -253,8 +253,8 @@ class TestCustomAttributesRESTAPI(object):
         for __ in range(response_len):
             uid = fauxfactory.gen_alphanumeric(5)
             body.append({
-                'name': 'ca_name_{}'.format(uid),
-                'value': 'ca_value_{}'.format(uid),
+                'name': f'ca_name_{uid}',
+                'value': f'ca_value_{uid}',
                 'section': 'metadata'
             })
         if from_detail:
@@ -329,8 +329,8 @@ class TestCustomAttributesRESTAPI(object):
         add_custom_attributes(request, resource)
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
-            'name': 'ca_name_{}'.format(uid),
-            'value': 'ca_value_{}'.format(uid),
+            'name': f'ca_name_{uid}',
+            'value': f'ca_value_{uid}',
             'section': 'bad_section'
         }
         with pytest.raises(Exception, match='Api::BadRequestError'):

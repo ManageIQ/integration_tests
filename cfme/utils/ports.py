@@ -5,7 +5,7 @@ from cfme.utils import clear_property_cache
 from cfme.utils.log import logger
 
 
-class Ports(object):
+class Ports:
 
     SSH = 22
     DB = 5432

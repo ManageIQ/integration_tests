@@ -130,7 +130,7 @@ class Rdb(Pdb):
 
         """
         host, port = self.sock.getsockname()
-        endpoint = 'host {} port {}'.format(store.my_ip_address, port)
+        endpoint = f'host {store.my_ip_address} port {port}'
 
         recipients = kwargs.pop('recipients', None)
         if recipients:
@@ -148,10 +148,10 @@ class Rdb(Pdb):
                 msg['Subject'] = subject
                 msg['To'] = ', '.join(recipients)
                 smtp.sendmail('rdb-breakpoint@redhat.com', recipients, msg.as_string())
-            except socket.error:
+            except OSError:
                 logger.critical("Couldn't send email")
 
-        msg = 'Remote debugger listening on {}'.format(endpoint)
+        msg = f'Remote debugger listening on {endpoint}'
         logger.critical(msg)
         write_line(msg, red=True, bold=True)
         self.sock.listen(1)
@@ -160,7 +160,7 @@ class Rdb(Pdb):
         Pdb.__init__(self, completekey='tab', stdin=client_fh, stdout=client_fh)
         sys.stdout = sys.stdin = client_fh
         Pdb.set_trace(self, *args, **kwargs)
-        msg = 'Debugger on {} shut down'.format(endpoint)
+        msg = f'Debugger on {endpoint} shut down'
         logger.critical(msg)
         write_line(msg, green=True, bold=True)
 

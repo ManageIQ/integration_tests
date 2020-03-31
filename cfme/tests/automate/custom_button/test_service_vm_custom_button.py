@@ -224,7 +224,7 @@ def test_custom_button_with_dynamic_dialog_vm(
             # `$evm.root['vm']` of dynamic dialog by expected service vm name in automation log
             log = LogValidator(
                 "/var/www/miq/vmdb/log/automation.log",
-                matched_patterns=["Attributes - Begin", 'name = "{}"'.format(service.vm_name)],
+                matched_patterns=["Attributes - Begin", f'name = "{service.vm_name}"'],
             )
             log.start_monitoring()
             submit = "submit" if context is ViaUI else "submit_request"

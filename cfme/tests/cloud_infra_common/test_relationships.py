@@ -111,7 +111,7 @@ def get_obj(relationship, appliance, **kwargs):
         view = navigate_to(host, "Details")
         cluster_name = view.entities.summary("Relationships").get_text_of("Cluster")
         if cluster_name == "None":
-            pytest.skip("Host {} is not a clustered host".format(host.name))
+            pytest.skip(f"Host {host.name} is not a clustered host")
         obj = cluster_col.instantiate(name=cluster_name, provider=provider)
     elif relationship in ["Datastores", "VMs", "Templates"]:
         obj = kwargs.get("host")
@@ -147,7 +147,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
     """
     host_view = navigate_to(host, "Details")
     if host_view.entities.summary("Relationships").get_text_of(relationship) == "0":
-        pytest.skip("There are no relationships for {}".format(relationship))
+        pytest.skip(f"There are no relationships for {relationship}")
     obj = get_obj(relationship, appliance, provider=provider, host=host)
     host_view.entities.summary("Relationships").click_at(relationship)
     relationship_view = appliance.browser.create_view(view, additional_context={'object': obj})
@@ -171,7 +171,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
     """
     provider_view = navigate_to(provider, "Details")  # resetter selects summary view
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
-        pytest.skip("There are no relationships for {}".format(relationship))
+        pytest.skip(f"There are no relationships for {relationship}")
     provider_view.entities.summary("Relationships").click_at(relationship)
     relationship_view = appliance.browser.create_view(view, additional_context={'object': provider})
     assert relationship_view.is_displayed
@@ -194,7 +194,7 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
     # Version dependent strings
     provider_view = navigate_to(provider, "Details")  # resetter selects summary view
     if provider_view.entities.summary("Relationships").get_text_of(relationship) == "0":
-        pytest.skip("There are no relationships for {}".format(relationship))
+        pytest.skip(f"There are no relationships for {relationship}")
     obj = get_obj(relationship, appliance, provider=provider)
     provider_view.entities.summary("Relationships").click_at(relationship)
     relationship_view = appliance.browser.create_view(view, additional_context={'object': obj})
@@ -213,7 +213,7 @@ def prov_child_visibility(appliance, provider, request, tag, user_restricted):
             provider.remove_tag(tag=tag)
 
         if not actual_visibility:
-            pytest.skip("There are no relationships for {}".format(relationship))
+            pytest.skip(f"There are no relationships for {relationship}")
 
         with user_restricted:
             actual_visibility = _check_actual_visibility(rel_cls)

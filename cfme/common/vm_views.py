@@ -41,7 +41,7 @@ from widgetastic_manageiq import WaitTab
 class InstanceEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(InstanceEntity, self).data
+        data_dict = super().data
         if 'quadicon' in data_dict and data_dict['quadicon']:
             try:
                 quad_data = document_fromstring(data_dict['quadicon'])
@@ -130,7 +130,7 @@ class SelectTable(Table):
 
     def read_content(self):
         """This is a default Table.read() method for those who will need table content"""
-        return super(SelectTable, self).read()
+        return super().read()
 
 
 class VMToolbar(View):
@@ -557,7 +557,7 @@ class PolicySimulationView(BaseLoggedInPage):
             getattr(self.context["object"], "VM_TYPE", None) or
             getattr(self.context["object"].ENTITY, "VM_TYPE", None)
         )
-        expected_title = "{} Policy Simulation".format(vm_type)
+        expected_title = f"{vm_type} Policy Simulation"
         return self.title.text == expected_title and len(self.form.entities.get_all()) > 0
 
 

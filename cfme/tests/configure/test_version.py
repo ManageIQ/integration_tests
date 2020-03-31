@@ -23,4 +23,4 @@ def test_appliance_version(appliance):
     """
     ssh_version = str(appliance.version)
     ui_version = about.get_detail(about.VERSION, server=appliance.server)
-    assert ui_version.startswith(ssh_version), "UI: {}, SSH: {}".format(ui_version, ssh_version)
+    assert ui_version.startswith(ssh_version), f"UI: {ui_version}, SSH: {ssh_version}"

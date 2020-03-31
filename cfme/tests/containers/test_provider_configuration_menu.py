@@ -72,7 +72,7 @@ def test_ocp_operator_out_of_the_box(appliance):
                           if role_name_prefix in row.name.text.lower()])
 
     # validate the role exist out-of-the-box
-    assert is_role_found, "No {role} found".format(role=role_name_prefix)
+    assert is_role_found, f"No {role_name_prefix} found"
 
 
 @pytest.mark.meta(automates=[1516292])

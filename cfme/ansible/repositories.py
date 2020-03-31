@@ -216,7 +216,7 @@ class Repository(BaseEntity, Fillable, Taggable):
             wait_for(_wait_until_changes_applied, delay=10, timeout="5m")
         else:
             view.flash.assert_message(
-                'Edit of Repository "{}" cancelled by the user.'.format(self.name))
+                f'Edit of Repository "{self.name}" cancelled by the user.')
 
     def delete(self):
         """Delete the repository in the UI."""
@@ -227,7 +227,7 @@ class Repository(BaseEntity, Fillable, Taggable):
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
         repo_list_page.flash.assert_message(
-            'Delete of Repository "{}" was successfully initiated.'.format(self.name))
+            f'Delete of Repository "{self.name}" was successfully initiated.')
         wait_for(
             lambda: not self.exists,
             delay=10,
@@ -353,7 +353,7 @@ class RepositoryCollection(BaseCollection):
         view.flash.assert_no_error()
         for repository in checked_repositories:
             view.flash.assert_message(
-                'Delete of Repository "{}" was successfully initiated.'.format(repository.name))
+                f'Delete of Repository "{repository.name}" was successfully initiated.')
 
 
 @navigator.register(RepositoryCollection, 'All')

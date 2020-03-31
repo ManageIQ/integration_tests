@@ -50,7 +50,7 @@ class Subnet(Taggable, BaseEntity, CustomButtonEventsMixin, ValidateStatsMixin):
         view.fill({'subnet_name': new_name,
                    'gateway': gateway})
         view.save.click()
-        view.flash.assert_success_message('Cloud Subnet "{}" updated'.format(new_name))
+        view.flash.assert_success_message(f'Cloud Subnet "{new_name}" updated')
         self.name = new_name
 
     def delete(self):
@@ -147,7 +147,7 @@ class SubnetCollection(BaseCollection):
                    'gateway': gateway,
                    'cloud_tenant': tenant})
         view.add.click()
-        view.flash.assert_success_message('Cloud Subnet "{}" created'.format(name))
+        view.flash.assert_success_message(f'Cloud Subnet "{name}" created')
         subnet = self.instantiate(name, provider, network_name)
         # Refresh provider's relationships to have new subnet displayed
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
@@ -220,6 +220,6 @@ class NetworkPorts(CFMENavigateStep):
         item = 'Network Ports'
         if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
             raise DestinationNotFound(
-                'Cloud Subnet {} has a 0 count for {} relationships'.format(self.obj, item))
+                f'Cloud Subnet {self.obj} has a 0 count for {item} relationships')
 
         self.prerequisite_view.entities.relationships.click_at(item)

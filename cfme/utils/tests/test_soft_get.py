@@ -6,7 +6,7 @@ from cfme.utils.soft_get import soft_get
 
 def test_soft_get():
 
-    class TestObj(object):
+    class TestObj:
         a = 1
         b = 2
         c = 3

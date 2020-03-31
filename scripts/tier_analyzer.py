@@ -11,7 +11,7 @@ import sys
 def check_virtualenv():
     """Check if we are in virtualenv and if not, raise an error."""
     if not hasattr(sys, 'real_prefix'):
-        raise EnvironmentError('You must activate CFME virtualenv in oder to run this script.')
+        raise OSError('You must activate CFME virtualenv in oder to run this script.')
 
 
 def get_pytest_collect_only_output(args, use_tier_marker=False):
@@ -68,11 +68,11 @@ def print_message(args, diff, all_parsed, all_count, tiers_parsed, tiers_count):
 
     if args.verbose:
         sep()
-        print('There are {} test_cases run for {} provider:\n'.format(all_count, args.provider))
+        print(f'There are {all_count} test_cases run for {args.provider} provider:\n')
         for test_case in all_parsed:
             print(test_case)
         sep()
-        print('There are {} test_cases marked with "{}":\n'.format(tiers_count, args.tier_marker))
+        print(f'There are {tiers_count} test_cases marked with "{args.tier_marker}":\n')
         for test_case in tiers_parsed:
             print(test_case)
 

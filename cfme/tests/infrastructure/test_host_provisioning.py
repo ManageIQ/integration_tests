@@ -183,7 +183,7 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
 
     view = navigate_to(test_host, 'Provision')
 
-    note = ('Provisioning host {} on provider {}'.format(prov_host_name, provider.key))
+    note = (f'Provisioning host {prov_host_name} on provider {provider.key}')
     provisioning_data = {
         'request': {
             'email': 'template_provisioner@example.com',
@@ -196,7 +196,7 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
                     },
         'environment': {'provider_name': provider.name,
                         'datastore_name': {'name': datastores},
-                        'cluster': "{} / {}".format(datacenter, cluster),
+                        'cluster': f"{datacenter} / {cluster}",
                         'host_name': prov_host_name
                         },
         'customize': {'root_password': root_password,
@@ -213,7 +213,7 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
         "Host Request was Submitted, you will be notified when your Hosts are ready"
     )
 
-    request_description = 'PXE install on [{}] from image [{}]'.format(prov_host_name, pxe_image)
+    request_description = f'PXE install on [{prov_host_name}] from image [{pxe_image}]'
     host_request = appliance.collections.requests.instantiate(request_description)
     host_request.wait_for_request(method='ui')
     assert host_request.row.last_message.text == 'Host Provisioned Successfully'

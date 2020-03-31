@@ -3,7 +3,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 
 
-class ValidateStatsMixin(object):
+class ValidateStatsMixin:
     # TODO: Move this class to a higher level, where could be useful for thing beyond this
     # network module, maybe BaseEntity
 

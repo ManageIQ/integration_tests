@@ -45,7 +45,7 @@ class Ostriz(ArtifactorBasePlugin):
         env_params=None,
     ):
         env_params = env_params or {}
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         json_data = artifacts[test_ident]
         json_data["name"] = test_ident
         json_data["run"] = run_id

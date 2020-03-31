@@ -3,7 +3,7 @@ import pytest
 
 
 @attr.s
-class ApplianceCluster(object):
+class ApplianceCluster:
     """
     Holder for Multi-Region appliances setup.
     Appliance from global region is stored in global_appliance.

@@ -51,14 +51,14 @@ def list_vms(provider_key, output_queue):
     """
     output_list = []
 
-    print('Listing VMS on provider {}'.format(provider_key))
+    print(f'Listing VMS on provider {provider_key}')
     provider = get_mgmt(provider_key)
     # TODO thread metadata collection for further speed improvements
     for vm in provider.list_vms():
         # Init these meta values in case they fail to query
         status, creation, vm_type = None, None, None
         try:
-            print('Collecting metadata for VM {} on provider {}'.format(vm.name, provider_key))
+            print(f'Collecting metadata for VM {vm.name} on provider {provider_key}')
             status = vm.state
             creation = vm.creation_time
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     queue = Queue()  # for MP output
     proc_list = [
-        Process(target=list_vms, args=(provider, queue), name='list_vms:{}'.format(provider))
+        Process(target=list_vms, args=(provider, queue), name=f'list_vms:{provider}')
         for provider in providers
     ]
     for proc in proc_list:

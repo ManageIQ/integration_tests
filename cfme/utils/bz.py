@@ -15,7 +15,7 @@ from cfme.utils.version import current_version
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 
 
-class Product(object):
+class Product:
     def __init__(self, data):
         self._data = data
 
@@ -48,7 +48,7 @@ class Product(object):
         return self.versions[-1]
 
 
-class Bugzilla(object):
+class Bugzilla:
     def __init__(self, **kwargs):
         # __kwargs passed to _Bugzilla instantiation, pop our args out
         self.__product = kwargs.pop("product", None)
@@ -66,8 +66,7 @@ class Bugzilla(object):
 
     @property
     def bugs(self):
-        for bug in self.__bug_cache.values():
-            yield bug
+        yield from self.__bug_cache.values()
 
     def products(self, *names):
         return [Product(p) for p in self.bugzilla._proxy.Product.get({"names": names})["products"]]
@@ -143,9 +142,9 @@ class Bugzilla(object):
             bug = id
         else:
             bug = self.get_bug(id)
-        expanded = set([])
-        found = set([])
-        stack = set([bug])
+        expanded = set()
+        found = set()
+        stack = {bug}
         while stack:
             b = stack.pop()
             if b.status == "CLOSED" and b.resolution == "DUPLICATE":
@@ -163,7 +162,7 @@ class Bugzilla(object):
     def resolve_blocker(self, blocker, version=None, ignore_bugs=None, force_block_streams=None):
         # ignore_bugs is mutable but is not mutated here! Same force_block_streams
         force_block_streams = force_block_streams or []
-        ignore_bugs = set([]) if not ignore_bugs else ignore_bugs
+        ignore_bugs = set() if not ignore_bugs else ignore_bugs
         if isinstance(id, BugWrapper):
             bug = blocker
         else:
@@ -174,7 +173,7 @@ class Bugzilla(object):
             version = bug.product.latest_version
         is_upstream = version == bug.product.latest_version
         variants = self.get_bug_variants(bug)
-        filtered = set([])
+        filtered = set()
         version_series = ".".join(str(version).split(".")[:2])
         for variant in sorted(variants, key=lambda variant: variant.id):
             if variant.id in ignore_bugs:
@@ -279,7 +278,7 @@ def check_fixed_in(fixed_in, version_series):
     return fixed_in.is_in_series(version_series)
 
 
-class BugWrapper(object):
+class BugWrapper:
     _copy_matchers = list(map(re.compile, [
         r'^[+]{3}\s*This bug is a CFME zstream clone. The original bug is:\s*[+]{3}\n[+]{3}\s*'
         r'https://bugzilla.redhat.com/show_bug.cgi\?id=(\d+)\.\s*[+]{3}',

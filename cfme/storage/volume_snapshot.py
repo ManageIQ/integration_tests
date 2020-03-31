@@ -256,7 +256,7 @@ class Details(CFMENavigateStep):
                                                        surf_pages=True).click()
         except ItemNotFound:
             raise ItemNotFound(
-                'Could not locate volume snapshot {}'.format(self.obj.name)
+                f'Could not locate volume snapshot {self.obj.name}'
             )
 
 

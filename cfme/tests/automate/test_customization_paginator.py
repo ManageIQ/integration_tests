@@ -19,18 +19,18 @@ def some_dialogs(appliance, request):
         random_str = fauxfactory.gen_alphanumeric(16)
         element_data = {
             'element_information': {
-                'ele_label': "ele_{}".format(random_str),
+                'ele_label': f"ele_{random_str}",
                 'ele_name': format(random_str),
                 'ele_desc': format(random_str),
                 'choose_type': "Check Box"
             }
         }
         service_dialogs = appliance.collections.service_dialogs
-        sd = service_dialogs.create(label='test_paginator_{}'.format(random_str),
+        sd = service_dialogs.create(label=f'test_paginator_{random_str}',
                                     description="my dialog")
-        tab = sd.tabs.create(tab_label='tab_{}'.format(random_str),
+        tab = sd.tabs.create(tab_label=f'tab_{random_str}',
                 tab_desc="my tab desc")
-        box = tab.boxes.create(box_label='box_{}'.format(random_str),
+        box = tab.boxes.create(box_label=f'box_{random_str}',
                 box_desc="my box desc")
         box.elements.create(element_data=[element_data])
         to_delete.append(sd)
@@ -90,7 +90,7 @@ def test_paginator_service_dialogs(some_dialogs, soft_assert, appliance):
         current_rec_end = view.paginator.max_item
 
         assert int(current_rec_offset) <= int(current_rec_end) <= int(current_total), \
-            "Incorrect paginator value, expected {0} <= {1} <= {2}".format(
+            "Incorrect paginator value, expected {} <= {} <= {}".format(
                 current_rec_offset, current_rec_end, current_total)
 
     assert {dlg.label for dlg in some_dialogs} <= dialogs_found, \

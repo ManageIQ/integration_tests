@@ -47,14 +47,14 @@ class OpenStackProvider(CloudProvider):
             self.infra_provider.create(validate_credentials=True, validate_inventory=True,
                                        check_existing=True)
         kwargs['validate_credentials'] = kwargs.get('validate_credentials', True)
-        return super(OpenStackProvider, self).create(*args, **kwargs)
+        return super().create(*args, **kwargs)
 
     def create_rest(self, *args, **kwargs):
         # Override the standard behaviour to actually create the underlying infra first.
         if self.infra_provider:
             self.infra_provider.create_rest(validate_inventory=True,
                                             check_existing=True)
-        return super(OpenStackProvider, self).create_rest(*args, **kwargs)
+        return super().create_rest(*args, **kwargs)
 
     @property
     def view_value_mapping(self):

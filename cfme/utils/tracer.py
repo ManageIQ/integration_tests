@@ -14,7 +14,7 @@ from functools import wraps
 from cfme.utils.log import logger
 
 
-class FileStore(object):
+class FileStore:
     def __init__(self):
         """Simple file cacher
 
@@ -32,7 +32,7 @@ class FileStore(object):
             try:
                 self._store[name] = open(name, "r").readlines()
                 return self._store[name]
-            except IOError:
+            except OSError:
                 return []
 
 
@@ -78,13 +78,13 @@ def trace(scope=1, file_name_limit=None):
                 s = "-" * len(frames)
                 c = ">" * len(frames)
                 logger.debug(
-                    "{}{} called '{}()' from {}".format(s, c, frame.f_code.co_name, filename)
+                    f"{s}{c} called '{frame.f_code.co_name}()' from {filename}"
                 )
         if why == "return":
             if len(frames) <= scope:
                 s = "-" * len(frames)
                 c = "<" * len(frames)
-                logger.debug("{}{} returned".format(s, c))
+                logger.debug(f"{s}{c} returned")
             frames.pop()
         return globaltrace
 

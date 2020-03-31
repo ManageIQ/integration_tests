@@ -300,10 +300,10 @@ class Host(
         """
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)
-        view.flash.assert_success_message('"{}": Analysis successfully initiated'.format(self.name))
+        view.flash.assert_success_message(f'"{self.name}": Analysis successfully initiated')
         if wait_for_task_result:
             task = self.appliance.collections.tasks.instantiate(
-                name="SmartState Analysis for '{}'".format(self.name), tab='MyOtherTasks')
+                name=f"SmartState Analysis for '{self.name}'", tab='MyOtherTasks')
             task.wait_for_finished()
             return task
 
@@ -316,7 +316,7 @@ class Host(
         view.flash.assert_no_error()
         wait_for(
             lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
+            num_sec=timeout, delay=5, message=f"compliance of {self.name} checked"
         )
 
     @property
@@ -344,7 +344,7 @@ class Host(
         elif text.startswith("compliant"):
             return True
         else:
-            raise ValueError("{} is not a known state for compliance".format(text))
+            raise ValueError(f"{text} is not a known state for compliance")
 
     def equal_drift_results(self, drift_section, section, *indexes):
         """Compares drift analysis results of a row specified by it's title text.
@@ -491,7 +491,7 @@ class HostsCollection(BaseCollection):
                 view.entities.get_entity(name=host.name, surf_pages=True).ensure_checked()
                 checked_hosts.append(host)
             except ItemNotFound:
-                raise ItemNotFound('Could not find host {} in the UI'.format(host.name))
+                raise ItemNotFound(f'Could not find host {host.name} in the UI')
         return view
 
     def create(self, name, provider=None, credentials=None, hostname=None, ip_address=None,
@@ -527,7 +527,7 @@ class HostsCollection(BaseCollection):
                 view.endpoints.ipmi.validate_button.click()
         if not cancel:
             view.add_button.click()
-            flash_message = 'Host / Node " {}" was added'.format(name)
+            flash_message = f'Host / Node " {name}" was added'
         else:
             view.cancel_button.click()
             flash_message = "Add of new Host / Node was cancelled by the user"
@@ -559,7 +559,7 @@ class HostsCollection(BaseCollection):
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         for host in hosts:
             view.flash.assert_success_message(
-                '"{}": Analysis successfully initiated'.format(host.name))
+                f'"{host.name}": Analysis successfully initiated')
 
     def delete(self, *hosts):
         """Deletes this host from CFME."""

@@ -66,7 +66,7 @@ def test_cloud_default_view(appliance, group_name, expected_view):
     # gtl_params.values(), source of page, are mix of class and collection name
     nav_cls = getattr(appliance.collections, page) if isinstance(page, str) else page
     selected_view = navigate_to(nav_cls, 'All', use_resetter=False).toolbar.view_selector.selected
-    assert expected_view == selected_view, '{} view setting failed'.format(expected_view)
+    assert expected_view == selected_view, f'{expected_view} view setting failed'
     default_views.set_default_view(group_name, old_default, fieldset='Clouds')
 
 
@@ -97,5 +97,5 @@ def test_cloud_compare_view(appliance, expected_view):
     [e.ensure_checked() for e in inst_view.entities.get_all(slice=e_slice)]
     inst_view.toolbar.configuration.item_select('Compare Selected items')
     selected_view = getattr(inst_view.actions, selector_type).selected
-    assert expected_view == selected_view, '{} setting failed'.format(expected_view)
+    assert expected_view == selected_view, f'{expected_view} setting failed'
     default_views.set_default_view(group_name, old_default)

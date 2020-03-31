@@ -104,7 +104,7 @@ def test_reports_schedule_crud(schedule_data, appliance, request):
     request.addfinalizer(schedule.delete_if_exists)
 
     view = schedule.create_view(ScheduleDetailsView)
-    view.flash.assert_success_message('Schedule "{}" was added'.format(schedule.name))
+    view.flash.assert_success_message(f'Schedule "{schedule.name}" was added')
 
     # update
     date = datetime.datetime.today() + datetime.timedelta(5)
@@ -114,7 +114,7 @@ def test_reports_schedule_crud(schedule_data, appliance, request):
     with update(schedule):
         schedule.description = updated_description
         schedule.timer = updated_timer
-    view.flash.assert_message('Schedule "{}" was saved'.format(schedule.name))
+    view.flash.assert_message(f'Schedule "{schedule.name}" was saved')
 
     assert view.schedule_info.get_text_of("Description") == updated_description
 
@@ -128,7 +128,7 @@ def test_reports_schedule_crud(schedule_data, appliance, request):
 
     # delete
     schedule.delete()
-    view.flash.assert_message("Schedule {} was deleted".format(schedule.name))
+    view.flash.assert_message(f"Schedule {schedule.name} was deleted")
 
 
 @pytest.mark.sauce
@@ -145,7 +145,7 @@ def test_menuwidget_crud(appliance, request):
         caseimportance: critical
         initialEstimate: 1/12h
     """
-    dashboard = "{} / Dashboard".format(appliance.server.intel_name)
+    dashboard = f"{appliance.server.intel_name} / Dashboard"
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.MENU,
         fauxfactory.gen_alphanumeric(),
@@ -160,7 +160,7 @@ def test_menuwidget_crud(appliance, request):
     request.addfinalizer(w.delete_if_exists)
 
     view = w.create_view(AllDashboardWidgetsView)
-    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
+    view.flash.assert_message(f'Widget "{w.title}" was saved')
     with update(w):
         w.active = False
     w.delete()
@@ -194,7 +194,7 @@ def test_reportwidget_crud(appliance, request):
     request.addfinalizer(w.delete_if_exists)
 
     view = w.create_view(AllDashboardWidgetsView)
-    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
+    view.flash.assert_message(f'Widget "{w.title}" was saved')
     with update(w):
         w.active = False
     w.delete()
@@ -222,7 +222,7 @@ def test_chartwidget_crud(appliance, request):
     request.addfinalizer(w.delete_if_exists)
 
     view = w.create_view(AllDashboardWidgetsView)
-    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
+    view.flash.assert_message(f'Widget "{w.title}" was saved')
     with update(w):
         w.active = False
     w.delete()
@@ -252,7 +252,7 @@ def test_rssfeedwidget_crud(appliance, request):
     request.addfinalizer(w.delete_if_exists)
 
     view = w.create_view(AllDashboardWidgetsView)
-    view.flash.assert_message('Widget "{}" was saved'.format(w.title))
+    view.flash.assert_message(f'Widget "{w.title}" was saved')
     # Basic update
     with update(w):
         w.active = False
@@ -313,7 +313,7 @@ def test_run_report(appliance):
     def rest_running_report_finishes():
         response.task.reload()
         if "error" in response.task.status.lower():
-            pytest.fail("Error when running report: `{}`".format(response.task.message))
+            pytest.fail(f"Error when running report: `{response.task.message}`")
         return response.task.state.lower() == 'finished'
 
     result = appliance.rest_api.collections.results.get(id=response.result_id)
@@ -352,13 +352,13 @@ def test_import_report_rest(appliance, request):
         )
         report.delete_if_exists()
 
-    assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
+    assert response['message'] == f'Imported Report: [{menu_name}]'
     report = appliance.rest_api.collections.reports.get(name=menu_name)
     assert report.name == menu_name
 
     response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
     assert_response(appliance)
-    assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
+    assert response['message'] == f'Skipping Report (already in DB): [{menu_name}]'
 
 
 @pytest.mark.sauce

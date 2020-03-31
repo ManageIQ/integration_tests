@@ -163,7 +163,7 @@ class Dashboard(BaseEntity, Updateable, Pretty):
         view = self.create_view(DashboardDetailsView, override=updates, wait=10)
         view.flash.assert_no_error()
         if changed:
-            view.flash.assert_message('Dashboard "{}" was saved'.format(self.title))
+            view.flash.assert_message(f'Dashboard "{self.title}" was saved')
         else:
             view.flash.assert_message('Edit of Dashboard "{}" was cancelled by the user'
                                       .format(self.title))
@@ -206,7 +206,7 @@ class DashboardsCollection(BaseCollection):
         })
         view.add_button.click()
         view = dashboard.create_view(DashboardAllGroupsView, wait=10)
-        view.flash.assert_success_message('Dashboard "{}" was saved'.format(dashboard.title))
+        view.flash.assert_success_message(f'Dashboard "{dashboard.title}" was saved')
         return dashboard
 
 
@@ -302,5 +302,5 @@ class DefaultDashboardDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.dashboards.tree.click_path(
             "All Dashboards",
-            "{} ({})".format(self.obj.title, self.obj.name)
+            f"{self.obj.title} ({self.obj.name})"
         )

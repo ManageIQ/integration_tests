@@ -160,9 +160,9 @@ class Task(BaseEntity):
         message = self.message.lower()
         if self.status == self.ERROR:
             if 'timed out' in message:
-                raise TimedOutError("Task {} timed out: {}".format(self.name, message))
+                raise TimedOutError(f"Task {self.name} timed out: {message}")
             else:
-                raise Exception("Task {} error: {}".format(self.name, message))
+                raise Exception(f"Task {self.name} error: {message}")
 
         if self.state.lower() == 'finished' and self.status == self.OK:
             return True
@@ -248,12 +248,12 @@ class TasksCollection(BaseCollection):
             if row[1].browser.is_displayed('i[@class="pficon pficon-error-circle-o"]',
                                            parent=row[1]):
                 if silent_failure:
-                    logger.warning("Task {} error: {}".format(row.task_name.text, message))
+                    logger.warning(f"Task {row.task_name.text} error: {message}")
                     return False
                 elif 'timed out' in message:
-                    raise TimedOutError("Task {} timed out: {}".format(row.task_name.text, message))
+                    raise TimedOutError(f"Task {row.task_name.text} timed out: {message}")
                 else:
-                    Exception("Task {} error: {}".format(row.task_name.text, message))
+                    Exception(f"Task {row.task_name.text} error: {message}")
         return True
 
     def wait_for_finished(self, delay=5, timeout='5m', *tasks):

@@ -1,7 +1,7 @@
 from cfme.utils import InstanceClassMethod
 
 
-class ClassWithCompleteDefinition(object):
+class ClassWithCompleteDefinition:
     @InstanceClassMethod
     def execute(self, x):
         return (self, x)
@@ -11,7 +11,7 @@ class ClassWithCompleteDefinition(object):
         return cls
 
 
-class ClassWithIncompleteDefinition(object):
+class ClassWithIncompleteDefinition:
     @InstanceClassMethod
     def execute(self, x):
         return (self, x)

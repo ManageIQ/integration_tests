@@ -123,7 +123,7 @@ def test_priority(
             14.The contents of the file should be the same as in the first case.
     """
     ssh_client = appliance.ssh_client
-    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
+    ssh_client.run_command(f"rm -f {FILE_LOCATION}")
     domain_collection.set_order([original_domain])  # Default first
     #
     # FIRST SIMULATION
@@ -136,13 +136,13 @@ def test_priority(
         execute_methods=True
     )
     wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION)).success,
+        lambda: ssh_client.run_command(f"cat {FILE_LOCATION}").success,
         num_sec=120, delay=0.5, message="wait for file to appear"
     )
-    request.addfinalizer(lambda: ssh_client.run_command("rm -f {}".format(FILE_LOCATION)))
-    result = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    request.addfinalizer(lambda: ssh_client.run_command(f"rm -f {FILE_LOCATION}"))
+    result = ssh_client.run_command(f"cat {FILE_LOCATION}")
     assert result.output.strip() == original_method_write_data
-    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
+    ssh_client.run_command(f"rm -f {FILE_LOCATION}")
     # END OF FIRST SIMULATION
     # We've checked that the automate method works, so let's copy them to new domain
     original_method.copy_to(copy_domain)
@@ -167,12 +167,12 @@ def test_priority(
         execute_methods=True
     )
     wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION)).success,
+        lambda: ssh_client.run_command(f"cat {FILE_LOCATION}").success,
         num_sec=120, delay=0.5, message="wait for file to appear"
     )
-    result = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    result = ssh_client.run_command(f"cat {FILE_LOCATION}")
     assert result.output.strip() == copy_method_write_data
-    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
+    ssh_client.run_command(f"rm -f {FILE_LOCATION}")
     # END OF SECOND SIMULATION
     # And last shot, now again with default domain
     domain_collection.set_order([original_domain])
@@ -188,12 +188,12 @@ def test_priority(
         execute_methods=True
     )
     wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION)).success,
+        lambda: ssh_client.run_command(f"cat {FILE_LOCATION}").success,
         num_sec=120, delay=0.5, message="wait for file to appear"
     )
-    result = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    result = ssh_client.run_command(f"cat {FILE_LOCATION}")
     assert result.output.strip() == original_method_write_data
-    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
+    ssh_client.run_command(f"rm -f {FILE_LOCATION}")
     # END OF LAST SIMULATION
 
 

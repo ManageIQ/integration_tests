@@ -171,14 +171,14 @@ def get_puddle_cfme_version(repo_file_path):
     # The urljoin does replace the last bit of url when there is no slash on
     # the end, which does happen with the repos we get, therefore we better
     # join the urls just by string concatenation.
-    repomd_url = '{}/repodata/repomd.xml'.format(cfme_baseurl)
+    repomd_url = f'{cfme_baseurl}/repodata/repomd.xml'
     repomd_response = requests.get(repomd_url)
     assert repomd_response.ok
     repomd_root = etree.fromstring(repomd_response.content)
     cfme_primary_path, = repomd_root.xpath(
         "repo:data[@type='primary']/repo:location/@href",
         namespaces=namespaces)
-    cfme_primary_url = '{}/{}'.format(cfme_baseurl, cfme_primary_path)
+    cfme_primary_url = f'{cfme_baseurl}/{cfme_primary_path}'
     cfme_primary_response = requests.get(cfme_primary_url)
     assert cfme_primary_response.ok
     primary_xml = zlib.decompress(cfme_primary_response.content, zlib.MAX_WBITS | 16)
@@ -218,7 +218,7 @@ def get_apps(requests, appliance, old_version, count, preconfigured, pytest_conf
         for app in apps:
             app.db.extend_partition()
             app.ssh_client.run_command(
-                "curl {} -o /etc/yum.repos.d/update.repo".format(url)
+                f"curl {url} -o /etc/yum.repos.d/update.repo"
             )
 
         yield apps
@@ -384,11 +384,11 @@ def appliance_with_providers(appliance_preupdate):
 def provider_app_crud(provider_class, appliance):
     try:
         prov = list_providers_by_class(provider_class)[0]
-        logger.info("using provider {}".format(prov.name))
+        logger.info(f"using provider {prov.name}")
         prov.appliance = appliance
         return prov
     except IndexError:
-        pytest.skip("No {} providers available (required)".format(provider_class.type_name))
+        pytest.skip(f"No {provider_class.type_name} providers available (required)")
 
 
 def provision_vm(request, provider):
@@ -432,7 +432,7 @@ def update_appliance(appliance):
 def upgrade_appliances(appliances):
     for appliance in appliances:
         result = appliance.ssh_client.run_command("yum update -y", timeout=3600)
-        assert result.success, "update failed {}".format(result.output)
+        assert result.success, f"update failed {result.output}"
 
 
 def do_appliance_versions_match(appliance1, appliance2):

@@ -50,15 +50,15 @@ def test_generic_object_definition_crud(appliance, context, soft_assert):
         if context.name == 'UI':
             view = appliance.browser.create_view(BaseLoggedInPage)
             view.flash.assert_success_message(
-                'Generic Object Class "{}" has been successfully added.'.format(definition.name))
+                f'Generic Object Class "{definition.name}" has been successfully added.')
         assert definition.exists
 
         with update(definition):
-            definition.name = '{}_updated'.format(definition.name)
+            definition.name = f'{definition.name}_updated'
             definition.attributes = {"new_address": "string"}
         if context.name == 'UI':
             view.flash.assert_success_message(
-                'Generic Object Class "{}" has been successfully saved.'.format(definition.name))
+                f'Generic Object Class "{definition.name}" has been successfully saved.')
             view = navigate_to(definition, 'Details')
             soft_assert(view.summary('Attributes (2)').get_text_of('new_address'))
             soft_assert(view.summary('Attributes (2)').get_text_of('addr01'))
@@ -72,7 +72,7 @@ def test_generic_object_definition_crud(appliance, context, soft_assert):
         definition.delete()
         if context.name == 'UI' and not BZ(bug_id=1644658, forced_streams=["5.10"]).blocks:
             view.flash.assert_success_message(
-                'Generic Object Class:"{}" was successfully deleted'.format(definition.name))
+                f'Generic Object Class:"{definition.name}" was successfully deleted')
         assert not definition.exists
 
 
@@ -146,24 +146,24 @@ def test_import_export_generic_object_definition(request, appliance, gen_obj_def
             4. Generic object definition once again exists on the appliance
     """
     # Create the generic object directory
-    assert appliance.ssh_client.run_command("mkdir {}".format(GEN_OBJ_DIRECTORY)).success
+    assert appliance.ssh_client.run_command(f"mkdir {GEN_OBJ_DIRECTORY}").success
 
     @request.addfinalizer
     def cleanup():
-        assert appliance.ssh_client.run_command("rm -rf {}".format(GEN_OBJ_DIRECTORY)).success
+        assert appliance.ssh_client.run_command(f"rm -rf {GEN_OBJ_DIRECTORY}").success
 
     # Export the user defined generic object definitions
     assert appliance.ssh_client.run_rake_command(
-        "evm:export:generic_object_definitions -- --directory {}".format(GEN_OBJ_DIRECTORY)
+        f"evm:export:generic_object_definitions -- --directory {GEN_OBJ_DIRECTORY}"
     ).success
     # Verify the file's information
     try:
         with appliance.ssh_client.open_sftp().open(
-                "{}/{}.yaml".format(GEN_OBJ_DIRECTORY, gen_obj_def_import_export.name)
+                f"{GEN_OBJ_DIRECTORY}/{gen_obj_def_import_export.name}.yaml"
         ) as f:
             data = yaml.safe_load(f)[0]["GenericObjectDefinition"]
 
-    except IOError:
+    except OSError:
         pytest.fail(
             "IOError: {}/{}.yaml not found on the appliance, "
             "exporting the generic object definition failed".format(

@@ -77,5 +77,5 @@ def test_custom_vm_report(soft_assert, report_vms):
                         found = True
             soft_assert(
                 found,
-                "Host {} not found in {}!".format(possible_ips_or_hosts, provider_hosts_and_ips)
+                f"Host {possible_ips_or_hosts} not found in {provider_hosts_and_ips}!"
             )

@@ -42,7 +42,7 @@ def policy_for_testing(appliance, create_vm_modscope, provider, ansible_action):
     policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha(15, start="policy_"),
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
+        scope=f"fill_field(VM and Instance : Name, INCLUDES, {vm.name})"
     )
     policy.assign_actions_to_event("Tag Complete", [ansible_action.description])
     policy_profile = appliance.collections.policy_profiles.create(

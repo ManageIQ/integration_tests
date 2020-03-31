@@ -8,7 +8,7 @@ from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 
-class HandleModalsMixin(object):
+class HandleModalsMixin:
     IGNORE_SUBSEQUENT_ALERTS = False
     @property
     def _modal_alert(self):

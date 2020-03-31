@@ -42,12 +42,12 @@ def prov_data(vm_name, provisioning):
 @pytest.fixture
 def set_child_tenant_quota(request, appliance, new_child):
     field, value = request.param
-    new_child.set_quota(**{'{}_cb'.format(field): True, field: value})
+    new_child.set_quota(**{f'{field}_cb': True, field: value})
     yield
     # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.login_admin()
     appliance.server.browser.refresh()
-    new_child.set_quota(**{'{}_cb'.format(field): False})
+    new_child.set_quota(**{f'{field}_cb': False})
 
 
 @pytest.fixture(scope='module')
@@ -79,7 +79,7 @@ def new_group(appliance, new_child, new_tenant):
     collection = appliance.collections.groups
     group = collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
                               role='EvmRole-administrator',
-                              tenant='My Company/{}/{}'.format(new_tenant.name, new_child.name))
+                              tenant=f'My Company/{new_tenant.name}/{new_child.name}')
     yield group
     if group.exists:
         group.delete()

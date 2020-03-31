@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import attr
 
 from cfme.infrastructure.config_management.config_systems import ConfigSystemsCollection

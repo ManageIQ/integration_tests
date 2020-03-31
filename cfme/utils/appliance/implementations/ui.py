@@ -49,7 +49,7 @@ class ErrorView(View):
         """Gets the displayed error messages"""
         if self.browser.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
             try:
-                return "{}: {}".format(self.title.text, self.body.text)
+                return f"{self.title.text}: {self.body.text}"
             except NoSuchElementException:
                 return None
         elif self.browser.is_displayed(
@@ -238,7 +238,7 @@ class MiqBrowser(HandleModalsMixin, Browser):
             'endpoint': endpoint,
             'store': store,
         })
-        super(MiqBrowser, self).__init__(
+        super().__init__(
             selenium,
             plugin_class=MiqBrowserPlugin,
             logger=create_sublogger('MiqBrowser'),
@@ -403,7 +403,7 @@ class CFMENavigateStep(NavigateStep):
         try:
             self.pre_badness_check(_tries, *args, **go_kwargs)
             self.log_message(
-                "Invoking {}, with {} and {}".format(fn.__name__, args, kwargs), level="debug")
+                f"Invoking {fn.__name__}, with {args} and {kwargs}", level="debug")
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
@@ -459,13 +459,13 @@ class CFMENavigateStep(NavigateStep):
                 req = br.widgetastic.text(req[0]) if req else "No request stated"
                 reason = br.widgetastic.elements("/html/body/p[2]/strong")
                 reason = br.widgetastic.text(reason[0]) if reason else "No reason stated"
-                logger.info("Proxy error: {} / {}".format(req, reason))
+                logger.info(f"Proxy error: {req} / {reason}")
                 restart_evmserverd = True
             elif br.widgetastic.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
                 # 503 and similar sort of errors
                 title = br.widgetastic.text("//body/h1")
                 body = br.widgetastic.text("//body/p")
-                logger.exception("Application error {}: {}".format(title, body))
+                logger.exception(f"Application error {title}: {body}")
                 sleep(5)  # Give it a little bit of rest
                 recycle = True
             elif br.widgetastic.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
@@ -505,7 +505,7 @@ class CFMENavigateStep(NavigateStep):
 
         if recycle or restart_evmserverd:
             self.appliance.browser.quit_browser()
-            logger.debug('browser killed on try {}'.format(_tries))
+            logger.debug(f'browser killed on try {_tries}')
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries, *args, **go_kwargs)
 
@@ -523,7 +523,7 @@ class CFMENavigateStep(NavigateStep):
 
     def log_message(self, msg, level="debug"):
         class_name = self.obj.__name__ if isclass(self.obj) else self.obj.__class__.__name__
-        str_msg = "[UI-NAV/{}/{}]: {}".format(class_name, self._name, msg)
+        str_msg = f"[UI-NAV/{class_name}/{self._name}]: {msg}"
         getattr(logger, level)(str_msg)
 
     def construct_message(self, here, resetter, view, duration, waited, force):
@@ -564,7 +564,7 @@ class CFMENavigateStep(NavigateStep):
                 "is_displayed not implemented for {} view".format(self.VIEW or ""), level="warn")
         except Exception as e:
             self.log_message(
-                "Exception raised [{}] whilst checking if already here".format(e), level="error")
+                f"Exception raised [{e}] whilst checking if already here", level="error")
         if not here or nav_args['force']:
             if nav_args['force']:
                 force_used = True
@@ -590,7 +590,7 @@ class CFMENavigateStep(NavigateStep):
             waited = True
             wait_for(
                 lambda: view.is_displayed, num_sec=nav_args['wait_for_view'],
-                message="Waiting for view [{}] to display".format(view.__class__.__name__)
+                message=f"Waiting for view [{view.__class__.__name__}] to display"
             )
         self.log_message(
             self.construct_message(here, resetter_used, view, duration, waited, force_used),

@@ -44,7 +44,7 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).cleanup_on_provider()
+            f"{vm_name}0001", provider).cleanup_on_provider()
     )
 
     register_event(target_type='Service', target_name=catalog_item.name,
@@ -52,12 +52,12 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
-    logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
+    logger.info(f"Waiting for cfme provision request for service {catalog_item.name}")
     request_description = catalog_item.name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+    msg = f"Provisioning failed with the message {provision_request.rest.message}"
     assert provision_request.is_succeeded(), msg
 
 
@@ -117,7 +117,7 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).cleanup_on_provider()
+            f"{vm_name}0001", provider).cleanup_on_provider()
     )
     bundle_name = fauxfactory.gen_alphanumeric(12, start="bundle_")
     catalog_bundle = appliance.collections.catalog_bundles.create(
@@ -126,12 +126,12 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
         dialog=catalog_item.dialog, catalog_items=[catalog_item.name])
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_bundle.name)
     service_catalogs.order()
-    logger.info("Waiting for cfme provision request for service {}".format(bundle_name))
+    logger.info(f"Waiting for cfme provision request for service {bundle_name}")
     request_description = bundle_name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+    msg = f"Provisioning failed with the message {provision_request.rest.message}"
     assert provision_request.is_succeeded(), msg
 
 
@@ -175,7 +175,7 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
     """
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
-    logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
+    logger.info(f"Waiting for cfme provision request for service {catalog_item.name}")
     request_description = catalog_item.name
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)

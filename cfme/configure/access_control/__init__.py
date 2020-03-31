@@ -230,7 +230,7 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
         view.toolbar.configuration.item_select('Copy this User to a new User')
         view = self.create_view(AddUserView)
         new_user = self.parent.instantiate(
-            name="{}copy".format(self.name),
+            name=f"{self.name}copy",
             credential=Credential(principal='redhat', secret='redhat')
         )
         view.fill({
@@ -241,7 +241,7 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
         })
         view.add_button.click()
         view = self.create_view(AllUserView)
-        view.flash.assert_success_message('User "{}" was saved'.format(new_user.name))
+        view.flash.assert_success_message(f'User "{new_user.name}" was saved')
         assert view.is_displayed
         return new_user
 
@@ -256,8 +256,8 @@ class User(Updateable, Pretty, BaseEntity, Taggable):
                 not having appropriate permissions OR delete is not allowed
                 for currently selected user
         """
-        flash_success_msg = 'EVM User "{}": Delete successful'.format(self.name)
-        flash_blocked_msg = "Default EVM User \"{}\" cannot be deleted".format(self.name)
+        flash_success_msg = f'EVM User "{self.name}": Delete successful'
+        flash_blocked_msg = f"Default EVM User \"{self.name}\" cannot be deleted"
         delete_user_txt = 'Delete this User'
 
         view = navigate_to(self, 'Details')
@@ -368,7 +368,7 @@ class UserCollection(BaseCollection):
             flash_message = 'Add of new User was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'User "{}" was saved'.format(user.name)
+            flash_message = f'User "{user.name}" was saved'
 
         try:
             view.flash.assert_message(user_blocked_msg)
@@ -525,7 +525,7 @@ class DetailsGroupView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == u'EVM Group "{}"'.format(self.context['object'].description)
+            self.title.text == 'EVM Group "{}"'.format(self.context['object'].description)
         )
 
 
@@ -635,7 +635,7 @@ class Group(BaseEntity, Taggable):
                    'group_tenant': self.tenant})
         view.add_button.click()
         view = self.create_view(AllGroupView)
-        view.flash.assert_success_message(u'Group "{}" was saved'.format(self.description))
+        view.flash.assert_success_message(f'Group "{self.description}" was saved')
         assert view.is_displayed
 
     def add_group_from_ldap_lookup(self):
@@ -699,11 +699,11 @@ class Group(BaseEntity, Taggable):
                 not having appropriate permissions OR delete is not allowed
                 for currently selected group
         """
-        flash_success_msg = u'EVM Group "{}": Delete successful'.format(self.description)
+        flash_success_msg = f'EVM Group "{self.description}": Delete successful'
         flash_blocked_msg_list = [
-            (u'EVM Group "{}": Error during delete: '
+            ('EVM Group "{}": Error during delete: '
              'A read only group cannot be deleted.'.format(self.description)),
-            (u'EVM Group "{}": Error during delete: '
+            ('EVM Group "{}": Error during delete: '
              'The group has users assigned that do not '
              'belong to any other group'.format(self.description))]
         delete_group_txt = 'Delete this Group'
@@ -732,7 +732,7 @@ class Group(BaseEntity, Taggable):
         else:
             view = self.create_view(DetailsGroupView)
             assert view.is_displayed, (
-                "Access Control Group {} Detail View is not displayed".format(self.description))
+                f"Access Control Group {self.description} Detail View is not displayed")
 
     def set_group_order(self, updated_order):
         """ Sets group order for group lookup
@@ -861,7 +861,7 @@ class GroupCollection(BaseCollection):
             flash_message = 'Add of new Group was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'Group "{}" was saved'.format(group.description)
+            flash_message = f'Group "{group.description}" was saved'
 
         try:
             view.flash.assert_message(flash_blocked_msg)
@@ -1025,7 +1025,7 @@ class Role(Updateable, Pretty, BaseEntity):
         Note: In case updates is the same as original role data, update will be canceled,
               as 'Save' button will not be active
         """
-        flash_blocked_msg = "Read Only Role \"{}\" can not be edited".format(self.name)
+        flash_blocked_msg = f"Read Only Role \"{self.name}\" can not be edited"
         edit_role_txt = 'Edit this Role'
         view = navigate_to(self, 'Details')
         # TODO: Remove following code when toolbar disappear issue (BZ1630012) get patched
@@ -1069,7 +1069,7 @@ class Role(Updateable, Pretty, BaseEntity):
         """
         flash_blocked_msg = ("Role \"{}\": Error during delete: Cannot delete record "
                              "because of dependent entitlements".format(self.name))
-        flash_success_msg = 'Role "{}": Delete successful'.format(self.name)
+        flash_success_msg = f'Role "{self.name}": Delete successful'
         delete_role_txt = 'Delete this Role'
 
         view = navigate_to(self, 'Details')
@@ -1102,7 +1102,7 @@ class Role(Updateable, Pretty, BaseEntity):
         Returns: Role object of copied role
         """
         if name is None:
-            name = "{}_copy".format(self.name)
+            name = f"{self.name}_copy"
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Copy this Role to a new Role')
         view = self.create_view(AddRoleView, wait=10)  # implicit assert
@@ -1110,7 +1110,7 @@ class Role(Updateable, Pretty, BaseEntity):
         view.fill({'name_txt': new_role.name, "vm_restriction_select": vm_restriction})
         view.add_button.click()
         view = self.create_view(AllRolesView, wait=10)  # implicit assert
-        view.flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
+        view.flash.assert_success_message(f'Role "{new_role.name}" was saved')
         return new_role
 
     @staticmethod
@@ -1167,7 +1167,7 @@ class RoleCollection(BaseCollection):
             flash_message = 'Add of new Role was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'Role "{}" was saved'.format(role.name)
+            flash_message = f'Role "{role.name}" was saved'
         view = self.create_view(AllRolesView, wait=10)  # implicit assert
 
         try:
@@ -1376,7 +1376,7 @@ class Tenant(Updateable, BaseEntity, Taggable):
         new_name = updates.get('name', self.name)
         if changed:
             view.save_button.click()
-            flash_message = '{} "{}" has been successfully saved.'.format(self.obj_type, new_name)
+            flash_message = f'{self.obj_type} "{new_name}" has been successfully saved.'
         else:
             view.cancel_button.click()
             flash_message = ('Edit of {} "{}" was canceled by the user.'
@@ -1397,7 +1397,7 @@ class Tenant(Updateable, BaseEntity, Taggable):
         if cancel:
             view = self.create_view(ParentDetailsTenantView)
             view.flash.assert_success_message(
-                'Tenant "{}": Delete successful'.format(self.description))
+                f'Tenant "{self.description}": Delete successful')
         else:
             view = self.create_view(DetailsRoleView)
         assert view.is_displayed
@@ -1417,7 +1417,7 @@ class Tenant(Updateable, BaseEntity, Taggable):
                                   'template_txt': kwargs.get('template')})
         if changed:
             view.save_button.click()
-            expected_msg = 'Quotas for {} "{}" were saved'.format(self.obj_type, self.name)
+            expected_msg = f'Quotas for {self.obj_type} "{self.name}" were saved'
         else:
             view.cancel_button.click()
             expected_msg = ('Manage quotas for {} "{}" was cancelled by the user'
@@ -1488,7 +1488,7 @@ class TenantCollection(BaseCollection):
             view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
-        view.flash.assert_success_message('Tenant "{}" has been successfully added.'.format(name))
+        view.flash.assert_success_message(f'Tenant "{name}" has been successfully added.')
         return tenant
 
     def delete(self, *tenants):
@@ -1589,7 +1589,7 @@ class ProjectCollection(TenantCollection):
             view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
-        view.flash.assert_success_message('Project "{}" has been successfully added.'.format(name))
+        view.flash.assert_success_message(f'Project "{name}" has been successfully added.')
 
         return project
 

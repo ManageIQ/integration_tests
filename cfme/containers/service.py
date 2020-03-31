@@ -34,7 +34,7 @@ class ServiceAllView(ServiceView):
 
     @property
     def is_displayed(self):
-        return self.in_service and super(ServiceAllView, self).is_displayed
+        return self.in_service and super().is_displayed
 
 
 class ServiceDetailsView(ContainerObjectDetailsBaseView):

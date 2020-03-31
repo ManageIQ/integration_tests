@@ -42,7 +42,7 @@ def auth_class_from_type(auth_prov_type):
     try:
         return auth_provider_types()[auth_prov_type]
     except KeyError:
-        raise UnknownProviderType('Unknown auth provider type: {}'.format(auth_prov_type))
+        raise UnknownProviderType(f'Unknown auth provider type: {auth_prov_type}')
 
 
 def get_auth_crud(auth_prov_key):
@@ -56,7 +56,7 @@ def get_auth_crud(auth_prov_key):
     auth_prov_config = auth_prov_data[auth_prov_key]
     klass = auth_class_from_type(auth_prov_config.get('type'))
     if auth_prov_config.get('type') != klass.auth_type:
-        raise ValueError('{} must have type "{}"'.format(klass.__name__, klass.auth_type))
+        raise ValueError(f'{klass.__name__} must have type "{klass.auth_type}"')
     return klass.from_config(auth_prov_config, auth_prov_key)
 
 
@@ -93,7 +93,7 @@ def auth_user_data(provider_key, user_type):
 
 
 @attr.s
-class BaseAuthProvider(object):
+class BaseAuthProvider:
     """Base class for authentication provider objects    """
     auth_type = None
     view_class = None
@@ -123,7 +123,7 @@ class BaseAuthProvider(object):
     def as_fill_value(self, user_type=None, auth_mode=None):
         """Basic implementation matches instance attributes to view form attributes"""
         if user_type not in list(USER_TYPES.keys()):
-            raise ValueError('invalid user_type "{}", must be key in USER_TYPES'.format(user_type))
+            raise ValueError(f'invalid user_type "{user_type}", must be key in USER_TYPES')
         class_attrs = attr.fields_dict(type(self))  # dict of attr objects keyed by name
         # attr filter needs the Attribute object
         include_attrs = [class_attrs.get(name)
@@ -198,7 +198,7 @@ class MIQAuthProvider(BaseAuthProvider):
             user_type: key for USER_TYPES, used to lookup user_suffix
             auth_mode: key for AUTH_MODES, used to lookup port
         """
-        fill = super(MIQAuthProvider, self).as_fill_value(user_type=user_type, auth_mode=auth_mode)
+        fill = super().as_fill_value(user_type=user_type, auth_mode=auth_mode)
 
         # Handle args that have multiple possibilities depending on user_type and auth_mode
         if self.ports:

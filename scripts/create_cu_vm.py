@@ -48,14 +48,14 @@ def config_cu_vm(ssh_client):
 
     logger.info('Setting up cron jobs on the CU VM')
 
-    command_run(ssh_client, "cd /etc/init.d; wget {}/cu-disk-script.sh".format(url),
+    command_run(ssh_client, f"cd /etc/init.d; wget {url}/cu-disk-script.sh",
                 "CU: There was an error downloading disk script file")
-    command_run(ssh_client, "cd /etc/init.d; wget {}/cu-network-script.sh".format(url),
+    command_run(ssh_client, f"cd /etc/init.d; wget {url}/cu-network-script.sh",
                 "CU: There was an error downloading network script file")
     command_run(ssh_client,
                 "chmod +x /etc/init.d/cu-disk-script.sh /etc/init.d/cu-network-script.sh",
                 "CU: There was an error running chmod")
-    command_run(ssh_client, "cd /tmp; wget {}/crontab.in".format(url),
+    command_run(ssh_client, f"cd /tmp; wget {url}/crontab.in",
                 "CU: There was an error downloading crontab.in")
     command_run(ssh_client, "crontab /tmp/crontab.in",
                 "CU: There was an error running crontab:")

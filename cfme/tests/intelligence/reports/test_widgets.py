@@ -94,7 +94,7 @@ def test_widgets_on_dashboard(appliance, request, dashboard, default_widgets,
                 "Count of the widgets differ")
     for custom_w in custom_widgets:
         soft_assert(dashboard_view.widgets(custom_w.title).is_displayed,
-                    "Widget {} not found on dashboard".format(custom_w.title))
+                    f"Widget {custom_w.title} not found on dashboard")
 
 
 @test_requirements.dashboard
@@ -197,7 +197,7 @@ def test_generate_widget_content_by_automate(request, appliance, klass, namespac
     request.addfinalizer(widget.delete)
     # Added newly created widget to dashboard
     view = widget.create_view(AllDashboardWidgetsView)
-    view.flash.assert_message('Widget "{title}" was saved'.format(title=widget.title))
+    view.flash.assert_message(f'Widget "{widget.title}" was saved')
     view = navigate_to(appliance.server, 'Dashboard')
     view.add_widget.item_select(widget.title)
 

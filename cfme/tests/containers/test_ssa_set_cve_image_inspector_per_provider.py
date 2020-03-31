@@ -68,9 +68,9 @@ def set_cve_location(appliance, provider, soft_assert):
             provider_edit_view.save.click()
             view = appliance.browser.create_view(ContainerProvidersView)
             view.flash.assert_success_message(
-                'Containers Provider "{}" was saved'.format(provider.name))
+                f'Containers Provider "{provider.name}" was saved')
         except AssertionError:
-            soft_assert(False, "{} wasn't added successfully".format(provider.name))
+            soft_assert(False, f"{provider.name} wasn't added successfully")
     else:
         provider_edit_view.cancel.click()
     yield
@@ -94,9 +94,9 @@ def set_image_inspector_registry(appliance, provider, soft_assert):
             provider_edit_view.save.click()
             view = appliance.browser.create_view(ContainerProvidersView)
             view.flash.assert_success_message(
-                'Containers Provider "{}" was saved'.format(provider.name))
+                f'Containers Provider "{provider.name}" was saved')
         except AssertionError:
-            soft_assert(False, "{} wasn't added successfully".format(provider.name))
+            soft_assert(False, f"{provider.name} wasn't added successfully")
     else:
         provider_edit_view.cancel.click()
     yield
@@ -133,7 +133,7 @@ def verify_ssa_image_attributes(provider, soft_assert, rand_image):
         wait_for_retval = wait_for(
             get_table_attr,
             func_args=[rand_image, tbl, attr],
-            message='Trying to get attribute "{}" of table "{}"'.format(attr, tbl),
+            message=f'Trying to get attribute "{attr}" of table "{tbl}"',
             delay=5,
             num_sec=120,
             silent_failure=True

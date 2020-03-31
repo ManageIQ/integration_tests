@@ -33,7 +33,7 @@ def pytest_collection_modifyitems(session, config, items):
         source = 'jenkins'
 
     store.terminalreporter.write(
-        'Attempting Uncollect for build: {} and source: {}\n'.format(build, source), bold=True)
+        f'Attempting Uncollect for build: {build} and source: {source}\n', bold=True)
 
     # The following code assumes slaves collect AFTER master is done, this prevents a parallel
     # speed up, but in the future we may move uncollection to a later stage and only do it on
@@ -57,11 +57,11 @@ def pytest_collection_modifyitems(session, config, items):
         for item in items:
             try:
                 name, location = get_test_idents(item)
-                test_ident = "{}/{}".format(location, name)
+                test_ident = f"{location}/{name}"
                 status = pl['tests'][test_ident]['statuses']['overall']
 
                 if status == 'passed':
-                    logger.info('Uncollecting {} as it passed last time'.format(item.name))
+                    logger.info(f'Uncollecting {item.name} as it passed last time')
                     continue
                 else:
                     new_items.append(item)

@@ -103,7 +103,7 @@ def meta(request):
 Plugin = namedtuple('Plugin', ['name', 'metas', 'function', 'kwargs'])
 
 
-class PluginContainer(object):
+class PluginContainer:
     SETUP = "setup"
     TEARDOWN = "teardown"
     BEFORE_RUN = "before_run"
@@ -147,7 +147,7 @@ def run_plugins(item, when):
         disabled_plugins = [name.strip() for name in disabled_plugins.split(",")]
     for plugin_name, plugin_objects in by_names.items():
         if plugin_name in disabled_plugins:
-            logger.info("Ignoring plugin {} due to commandline option".format(plugin_name))
+            logger.info(f"Ignoring plugin {plugin_name} due to commandline option")
             continue
         plugin_objects.sort(key=lambda p: len(p.metas), reverse=True)
         plug = plugin_objects[0]

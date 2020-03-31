@@ -54,7 +54,7 @@ def test_myservice_crud(appliance, setup_provider, context, order_service):
     with appliance.context.use(context):
         my_service = MyService(appliance, catalog_item.name)
         my_service.set_ownership("Administrator", "EvmGroup-approver")
-        my_service.update({'description': '{}_edited'.format(catalog_item.name)})
+        my_service.update({'description': f'{catalog_item.name}_edited'})
         my_service.edit_tags("Cost Center", "Cost Center 002")
         my_service.delete()
 

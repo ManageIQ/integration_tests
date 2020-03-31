@@ -189,7 +189,7 @@ def set_hosts_credentials(appliance, request, provider):
 
 def set_agent_creds(appliance, request, provider):
     version = appliance.version.vstring
-    docker_image_name = "simaishi/amazon-ssa:{}".format(version)
+    docker_image_name = f"simaishi/amazon-ssa:{version}"
     unique_agent = fauxfactory.gen_alpha(length=20, start="test_ssa_agent-")
     agent_data = {
         "ems": {
@@ -476,7 +476,7 @@ def schedule_ssa(appliance, ssa_vm, wait_for_task_result=True):
     ss.enable()
     if wait_for_task_result:
         task = appliance.collections.tasks.instantiate(
-            name='Scan from Vm {}'.format(ssa_vm.name), tab='AllTasks')
+            name=f'Scan from Vm {ssa_vm.name}', tab='AllTasks')
         task.wait_for_finished()
     return ss
 
@@ -499,13 +499,13 @@ def compare_linux_vm_data(soft_assert):
         current_services = view.entities.summary('Configuration').get_text_of('Init Processes')
 
         soft_assert(current_users == expected_users,
-                    "users: '{}' != '{}'".format(current_users, expected_users))
+                    f"users: '{current_users}' != '{expected_users}'")
         soft_assert(current_groups == expected_groups,
-                    "groups: '{}' != '{}'".format(current_groups, expected_groups))
+                    f"groups: '{current_groups}' != '{expected_groups}'")
         soft_assert(current_packages == expected_packages,
-                    "packages: '{}' != '{}'".format(current_packages, expected_packages))
+                    f"packages: '{current_packages}' != '{expected_packages}'")
         soft_assert(current_services == expected_services,
-                    "services: '{}' != '{}'".format(current_services, expected_services))
+                    f"services: '{current_services}' != '{expected_services}'")
 
     return _compare_linux_vm_data
 
@@ -526,14 +526,14 @@ def compare_windows_vm_data(soft_assert):
         current_fs_drivers = view.entities.summary('Configuration')\
             .get_text_of('File System Drivers')
 
-        soft_assert(current_patches != '0', "patches: '{}' != '0'".format(current_patches))
+        soft_assert(current_patches != '0', f"patches: '{current_patches}' != '0'")
         soft_assert(current_applications != '0', "applications: '{}' != '0'".format(
             current_applications))
         soft_assert(current_win32_services != '0',
-                    "win32 services: '{}' != '0'".format(current_win32_services))
+                    f"win32 services: '{current_win32_services}' != '0'")
         soft_assert(current_kernel_drivers != '0',
-                    "kernel drivers: '{}' != '0'".format(current_kernel_drivers))
-        soft_assert(current_fs_drivers != '0', "fs drivers: '{}' != '0'".format(current_fs_drivers))
+                    f"kernel drivers: '{current_kernel_drivers}' != '0'")
+        soft_assert(current_fs_drivers != '0', f"fs drivers: '{current_fs_drivers}' != '0'")
 
     return _compare_windows_vm_data
 
@@ -565,7 +565,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
     quadicon_os_icon = template.find_quadicon().data['os']
     view = navigate_to(template, 'Details')
     details_os_icon = view.entities.summary('Properties').get_text_of('Operating System')
-    logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
+    logger.info(f"Icons: {details_os_icon}, {quadicon_os_icon}")
 
     c_users = view.entities.summary('Security').get_text_of('Users')
     c_groups = view.entities.summary('Security').get_text_of('Groups')
@@ -577,9 +577,9 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         c_users, c_groups, c_packages))
 
     if vm_analysis_provisioning_data['fs-type'] not in ['ntfs', 'fat32']:
-        soft_assert(c_users != '0', "users: '{}' != '0'".format(c_users))
-        soft_assert(c_groups != '0', "groups: '{}' != '0'".format(c_groups))
-        soft_assert(c_packages != '0', "packages: '{}' != '0'".format(c_packages))
+        soft_assert(c_users != '0', f"users: '{c_users}' != '0'")
+        soft_assert(c_groups != '0', f"groups: '{c_groups}' != '0'")
+        soft_assert(c_packages != '0', f"packages: '{c_packages}' != '0'")
     else:
         # Make sure windows-specific data is not empty
         compare_windows_vm_data(ssa_vm)
@@ -603,7 +603,7 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
     """
     ssa_vm.smartstate_scan(wait_for_task_result=True)
     task = appliance.collections.tasks.instantiate(
-        name='Scan from Vm {}'.format(ssa_vm.name), tab='AllTasks')
+        name=f'Scan from Vm {ssa_vm.name}', tab='AllTasks')
     task.wait_for_finished()
     # Check release and quadicon
     quadicon_os_icon = ssa_vm.find_quadicon().data['os']
@@ -614,9 +614,9 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
     soft_assert(vm_system_type in details_os_icon.lower(),
-                "details icon: '{}' not in '{}'".format(vm_system_type, details_os_icon))
+                f"details icon: '{vm_system_type}' not in '{details_os_icon}'")
     soft_assert(vm_system_type in quadicon_os_icon.lower(),
-                "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
+                f"quad icon: '{vm_system_type}' not in '{quadicon_os_icon}'")
 
     if ssa_vm.system_type != WINDOWS:
         compare_linux_vm_data(ssa_vm)
@@ -652,9 +652,9 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type,
     # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
     os_type = vm_system_type if vm_system_type != 'redhat' else 'red hat'
     soft_assert(os_type in details_os_icon.lower(),
-                "details icon: '{}' not in '{}'".format(vm_system_type, details_os_icon))
+                f"details icon: '{vm_system_type}' not in '{details_os_icon}'")
     soft_assert(vm_system_type in quadicon_os_icon.lower(),
-                "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
+                f"quad icon: '{vm_system_type}' not in '{quadicon_os_icon}'")
 
     if ssa_vm.system_type != WINDOWS:
         compare_linux_vm_data(ssa_vm)
@@ -690,9 +690,9 @@ def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type,
     # RHEL has 'Red Hat' in details_os_icon, but 'redhat' in quadicon_os_icon
     os_type = vm_system_type if vm_system_type != 'redhat' else 'red hat'
     soft_assert(os_type in details_os_icon.lower(),
-                "details icon: '{}' not in '{}'".format(os_type, details_os_icon))
+                f"details icon: '{os_type}' not in '{details_os_icon}'")
     soft_assert(vm_system_type in quadicon_os_icon.lower(),
-                "quad icon: '{}' not in '{}'".format(vm_system_type, quadicon_os_icon))
+                f"quad icon: '{vm_system_type}' not in '{quadicon_os_icon}'")
 
     if ssa_vm.system_type != WINDOWS:
         compare_linux_vm_data(ssa_vm)
@@ -743,7 +743,7 @@ def test_ssa_users(ssa_vm):
             details_property_view.paginator.find_row_on_pages(
                 details_property_view.table, name=username)
         except NoSuchElementException:
-            pytest.fail('User {} was not found in details table after SSA run'.format(username))
+            pytest.fail(f'User {username} was not found in details table after SSA run')
 
 
 @pytest.mark.rhv3
@@ -786,7 +786,7 @@ def test_ssa_groups(ssa_vm):
             details_property_view.paginator.find_row_on_pages(
                 details_property_view.table, name=group)
         except NoSuchElementException:
-            pytest.fail('Group {} was not found in details table after SSA run'.format(group))
+            pytest.fail(f'Group {group} was not found in details table after SSA run')
 
 
 @pytest.mark.long_running
@@ -811,7 +811,7 @@ def test_ssa_packages(ssa_vm):
         pytest.skip("Windows has no packages")
 
     if 'package' not in list(ssa_vm.system_type.keys()):
-        pytest.skip("Don't know how to update packages for {}".format(ssa_vm.system_type))
+        pytest.skip(f"Don't know how to update packages for {ssa_vm.system_type}")
 
     package_name = ssa_vm.system_type['package']
     package_command = ssa_vm.system_type['install-command']
@@ -836,7 +836,7 @@ def test_ssa_packages(ssa_vm):
         details_property_view.paginator.find_row_on_pages(
             details_property_view.table, name=package_name)
     except NoSuchElementException:
-        pytest.fail('Package {} was not found in details table after SSA run'.format(package_name))
+        pytest.fail(f'Package {package_name} was not found in details table after SSA run')
 
 
 @pytest.mark.long_running
@@ -921,7 +921,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
     # check drift difference
     soft_assert(
         ssa_vm.equal_drift_results(
-            '{} (1)'.format(added_tag.category.display_name),
+            f'{added_tag.category.display_name} (1)',
             'My Company Tags',
             0,
             1
@@ -936,15 +936,15 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
     drift_analysis_view.toolbar.same_values_attributes.click()
     soft_assert(
         not drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{}'.format(added_tag.category.display_name)),
-        "{} row should be hidden, but not".format(added_tag.display_name))
+            f'{added_tag.category.display_name}'),
+        f"{added_tag.display_name} row should be hidden, but not")
 
     # Accounting tag should be displayed now
     drift_analysis_view.toolbar.different_values_attributes.click()
     soft_assert(
         drift_analysis_view.drift_analysis.check_section_attribute_availability(
-            '{} (1)'.format(added_tag.category.display_name)),
-        "{} row should be visible, but not".format(added_tag.display_name))
+            f'{added_tag.category.display_name} (1)'),
+        f"{added_tag.display_name} row should be visible, but not")
 
 
 @pytest.mark.tier(2)
@@ -979,7 +979,7 @@ def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linu
     for ssa_vm in ssa_multiple_vms:
         # check SSA results for all created vms
         task = appliance.collections.tasks.instantiate(
-            name='Scan from Vm {}'.format(ssa_vm.name), tab='AllTasks')
+            name=f'Scan from Vm {ssa_vm.name}', tab='AllTasks')
         task.wait_for_finished()
 
         current_lastanalyzed = ssa_vm.last_analysed

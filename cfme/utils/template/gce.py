@@ -38,7 +38,7 @@ class GoogleCloudTemplateUpload(ProviderTemplateUpload):
 
         # Download file to cli-tool-client
         return check_call('curl',
-                          '--output {}'.format(self.local_file_path),
+                          f'--output {self.local_file_path}',
                           self.raw_image_url) == 0
 
     @log_wrap("create bucket on GCE")
@@ -83,4 +83,4 @@ class GoogleCloudTemplateUpload(ProviderTemplateUpload):
     @log_wrap("cleanup")
     def teardown(self):
         self.mgmt.delete_file_from_bucket(self.bucket_name, self.image_name)
-        self.execute_ssh_command('rm -f /var/tmp/templates/{}'.format(self.image_name))
+        self.execute_ssh_command(f'rm -f /var/tmp/templates/{self.image_name}')

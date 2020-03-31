@@ -152,7 +152,7 @@ class ProvisioningDialog(Updateable, Pretty, BaseEntity):
             btn = view.form.reset
             view = self.create_view(ProvDiagDetailsView)
         if cancel:
-            flash_msg = 'Edit of Dialog "{}" was cancelled by the user'.format(self.description)
+            flash_msg = f'Edit of Dialog "{self.description}" was cancelled by the user'
             btn = view.form.cancel
             view = self.create_view(ProvDiagDetailsView)
         else:
@@ -199,7 +199,7 @@ class ProvisioningDialogsCollection(BaseCollection):
             flash_msg = 'Add of new Dialog was cancelled by the user'
             btn = view.form.cancel
         else:
-            flash_msg = 'Dialog "{}" was added'.format(dialog.description)
+            flash_msg = f'Dialog "{dialog.description}" was added'
             btn = view.form.add
         btn.click()
         view = dialog.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView, wait='10s')

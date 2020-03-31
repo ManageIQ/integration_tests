@@ -153,7 +153,7 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
     product_feature.extend(["Access Control", "Tenants", "Modify", "Manage Quotas"])
 
     # List of two tenants with their parents to assign to two different groups
-    tenant_ = ["My Company/{parent}".format(parent=new_tenant.name),
+    tenant_ = [f"My Company/{new_tenant.name}",
                "My Company/{parent}/{child}".format(parent=new_tenant.name,
                                                     child=child_tenant.name)]
 

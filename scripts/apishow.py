@@ -184,11 +184,11 @@ def print_info(store):
 
     for name, collection in sorted(store.items()):
         print('=' * (2 + len(name)))
-        print('* {}'.format(name))
+        print(f'* {name}')
 
         def _print_resource(res_title, res_dict):
             if 'actions_avail' in res_dict and res_dict['actions_avail']:
-                print('  {} actions:'.format(res_title))
+                print(f'  {res_title} actions:')
                 covered = True if 'actions' in res_dict else False
                 for action, methods in res_dict['actions_avail'].items():
                     methods_num = len(methods)
@@ -199,7 +199,7 @@ def print_info(store):
                         cov_str = ' OK'
                     else:
                         cov_str = ''
-                    print('    * {}{}'.format(action, cov_str))
+                    print(f'    * {action}{cov_str}')
                     # not only POST method exists for this action, list them all
                     if not only_post:
                         for method in methods:
@@ -207,12 +207,12 @@ def print_info(store):
                                 method,
                                 ' OK' if covered and method in res_dict['actions'][action] else ''))
             if 'entity' in res_dict:
-                _print_resource('{} entity'.format(res_title), res_dict['entity'])
+                _print_resource(f'{res_title} entity', res_dict['entity'])
 
             for key, subcollection in sorted(res_dict.items()):
                 if key in ('actions', 'actions_avail', 'entity'):
                     continue
-                _print_resource('Subcollection "{}"'.format(key), subcollection)
+                _print_resource(f'Subcollection "{key}"', subcollection)
 
         _print_resource('Collection', collection)
 
@@ -242,7 +242,7 @@ if __name__ == '__main__':
         (conf.credentials['default']['username'], conf.credentials['default']['password']),
         verify_ssl=False)
 
-    print("Appliance URL: {}".format(appliance_url))
+    print(f"Appliance URL: {appliance_url}")
 
     store = {}
 

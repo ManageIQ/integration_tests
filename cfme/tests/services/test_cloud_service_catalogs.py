@@ -44,7 +44,7 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
         initialEstimate: 1/4h
     """
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-    vm = appliance.collections.cloud_instances.instantiate("{}0001".format(vm_name), provider)
+    vm = appliance.collections.cloud_instances.instantiate(f"{vm_name}0001", provider)
 
     request.addfinalizer(lambda: vm.cleanup_on_provider())
     image = provisioning['image']['name']
@@ -96,5 +96,5 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request()
-    msg = "Request failed with the message {}".format(provision_request.rest.message)
+    msg = f"Request failed with the message {provision_request.rest.message}"
     assert provision_request.is_succeeded(), msg

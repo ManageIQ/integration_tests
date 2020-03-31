@@ -85,7 +85,7 @@ class AnsibleTowerProvider(ConfigManagerProvider):
     @property
     def ui_name(self):
         """Return the name used in the UI"""
-        return '{} Automation Manager'.format(self.name)
+        return f'{self.name} Automation Manager'
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):

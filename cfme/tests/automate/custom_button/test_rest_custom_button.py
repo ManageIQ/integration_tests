@@ -42,7 +42,7 @@ def buttons_rest(request, appliance, obj_type):
     return response
 
 
-class TestCustomButtonRESTAPI(object):
+class TestCustomButtonRESTAPI:
     @pytest.fixture(params=["custom_button_sets", "custom_buttons"], ids=["Group", "Button"])
     def buttons_groups(self, request, appliance, obj_type):
         button_type = CLASS_MAP[obj_type]["rest"]
@@ -155,7 +155,7 @@ class TestCustomButtonRESTAPI(object):
         entities, _type = buttons_groups
         num_entities = len(entities)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_entities)]
-        new = [{"name": "Edited_{}".format(u), "description": "Edited_{}".format(u)} for u in uniq]
+        new = [{"name": f"Edited_{u}", "description": f"Edited_{u}"} for u in uniq]
         if from_detail:
             edited = []
             for index in range(num_entities):

@@ -127,7 +127,7 @@ def _setup_provider_verbose(request, provider, appliance=None):
                     logger.info('waiting for provider %r to disappear', p.key)
                     p.wait_for_delete()
         store.terminalreporter.write_line(
-            "Trying to set up provider {}\n".format(provider.key), green=True)
+            f"Trying to set up provider {provider.key}\n", green=True)
         enable_provider_regions(provider)
         provider.setup()
         return True
@@ -159,12 +159,12 @@ def setup_or_skip(request, provider, appliance=None):
         of problematic providers and won't be used by any test until the end of the test run.
     """
     if provider in _problematic_providers:
-        skip_msg = "Provider {} had been marked as problematic".format(provider.key)
+        skip_msg = f"Provider {provider.key} had been marked as problematic"
         _artifactor_skip_providers(request, [provider], skip_msg)
 
     if not _setup_provider_verbose(request, provider, appliance):
         _artifactor_skip_providers(
-            request, [provider], "Unable to setup provider {}".format(provider.key))
+            request, [provider], f"Unable to setup provider {provider.key}")
 
 
 def setup_one_or_skip(request, filters=None, use_global_filters=True):
@@ -237,7 +237,7 @@ def _generate_provider_fixtures():
                 """ Sets up one of the matching providers """
                 return setup_one_by_class_or_skip(request, prov_class)
             return _setup_provider
-        fn_name = '{}_provider'.format(prov_type)
+        fn_name = f'{prov_type}_provider'
         globals()[fn_name] = gen_setup_provider(prov_class)
 
         def gen_has_no_providers(prov_class):
@@ -246,7 +246,7 @@ def _generate_provider_fixtures():
                 """ Clears all providers of given class from the appliance """
                 prov_class.clear_providers()
             return _has_no_providers
-        fn_name = 'has_no_{}_providers'.format(prov_type)
+        fn_name = f'has_no_{prov_type}_providers'
         globals()[fn_name] = gen_has_no_providers(prov_class)
 
 

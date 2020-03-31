@@ -117,7 +117,7 @@ class PhysicalChassis(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, T
         # Verify that the stats retrieved from wrapanapi match those retrieved
         # from the UI
         for stat in stats_to_match:
-            logger.debug("Validating stat {} of {}".format(stat, self.name))
+            logger.debug(f"Validating stat {stat} of {self.name}")
             try:
                 cfme_stat = int(getattr(self, stat)(method='ui' if ui else None))
                 chassis_stat = int(chassis_stats[stat])
@@ -128,14 +128,14 @@ class PhysicalChassis(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, T
                     raise StatsDoNotMatch(msg.format(stat, self.name, chassis_stat, cfme_stat))
             except KeyError:
                 raise HostStatsNotContains(
-                    "Chassis stats information does not contain '{}'".format(stat))
+                    f"Chassis stats information does not contain '{stat}'")
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
+                raise ProviderHasNoProperty(f"Provider does not know how to get '{stat}'")
 
         # Verify that the inventory retrieved from wrapanapi match those retrieved
         # from the UI
         for inventory in inventory_to_match:
-            logger.debug("Validating inventory {} of {}".format(inventory, self.name))
+            logger.debug(f"Validating inventory {inventory} of {self.name}")
             try:
                 cfme_inventory = getattr(self, inventory)(method='ui' if ui else None)
                 chass_inventory = chassis_inventory[inventory]
@@ -147,7 +147,7 @@ class PhysicalChassis(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, T
                                                      cfme_inventory))
             except KeyError:
                 raise HostStatsNotContains(
-                    "Server inventory information does not contain '{}'".format(inventory))
+                    f"Server inventory information does not contain '{inventory}'")
             except AttributeError:
                 msg = "Provider does not know how to get '{}'"
                 raise ProviderHasNoProperty(msg.format(inventory))
@@ -196,7 +196,7 @@ class ComputePhysicalInfrastructureChassisView(BaseLoggedInPage):
 class PhysicalChassisEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(PhysicalChassisEntity, self).data
+        data_dict = super().data
         if data_dict.get("quadicon", ""):
             quad_data = document_fromstring(data_dict["quadicon"])
             data_dict["no_host"] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)

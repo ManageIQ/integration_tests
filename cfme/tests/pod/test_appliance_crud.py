@@ -102,7 +102,7 @@ def appliance_data(provider):
 
 def read_host_file(appliance, path):
     """ Read file on the host """
-    out = appliance.ssh_client.run_command('cat {}'.format(path), ensure_host=True)
+    out = appliance.ssh_client.run_command(f'cat {path}', ensure_host=True)
     if out.failed:
         pytest.fail("Can't read host file")
 
@@ -136,7 +136,7 @@ def template_tags(template):
     try:
         return yaml.safe_load(template['custom_data'])['TAGS']
     except (KeyError, AttributeError) as e:
-        pytest.fail("Can't retrieve template tags: {}".format(e.message))
+        pytest.fail(f"Can't retrieve template tags: {e.message}")
 
 
 @pytest.fixture
@@ -171,7 +171,7 @@ def create_external_database(appliance):
                                                                                   ip=db_host,
                                                                                   name=db_name,
                                                                                   user=user))
-    assert result.success, "DB failed creation: {}".format(result.output)
+    assert result.success, f"DB failed creation: {result.output}"
     yield (db_host, db_name)
     result = appliance.ssh_client.run_command(('env PGPASSWORD={pwd} psql -t -q -d '
                                                'vmdb_production -h {ip} -U {user} -c '
@@ -179,7 +179,7 @@ def create_external_database(appliance):
                                                                                 ip=db_host,
                                                                                 name=db_name,
                                                                                 user=user))
-    assert result.success, "DB drop failed: {}".format(result.output)
+    assert result.success, f"DB drop failed: {result.output}"
 
 
 @pytest.fixture
@@ -277,7 +277,7 @@ def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
                 memcached_tag=tags['cfme-openshift-memcached']['tag'],
                 db_url=tags['cfme-openshift-postgresql']['url'],
                 db_tag=tags['cfme-openshift-postgresql']['tag'])
-            logger.info("ansible config file:\n {conf}".format(conf=fulfilled_config))
+            logger.info(f"ansible config file:\n {fulfilled_config}")
             with tempfile.NamedTemporaryFile('w') as f:
                 f.write(fulfilled_config)
                 f.flush()
@@ -290,8 +290,8 @@ def temp_pod_ansible_appliance(provider, appliance_data, template_tags):
                            '/usr/share/ansible/openshift-ansible/playbooks/'
                            'openshift-management/config.yml').format(inventory_file=remote_file)
             cmd_result = ssh_client.run_command(ansible_cmd, ensure_host=True)
-            logger.info("deployment result: {result}".format(result=cmd_result.output))
-            ssh_client.run_command('rm -f {f}'.format(f=remote_file))
+            logger.info(f"deployment result: {cmd_result.output}")
+            ssh_client.run_command(f'rm -f {remote_file}')
 
             assert cmd_result.success
             # retrieve data of created appliance
@@ -364,7 +364,7 @@ def new_ssa_image(temp_pod_appliance, template_folder, aws_provider):
 
     # tag image
     registry_host = registry_data['registry'].split('://')[-1]
-    dst_url = "{}/{}".format(registry_host, SSA_IMAGE_STREAM)
+    dst_url = f"{registry_host}/{SSA_IMAGE_STREAM}"
     result = docker_client.tag(image=image_url,
                                repository=dst_url,
                                tag=ss_image_version)
@@ -766,13 +766,13 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
     output_file = '/tmp/ipa_configmap'
     generator_cmd = ['/usr/bin/bash -c',
                      '"httpd_configmap_generator', 'ipa',
-                     '--host={}'.format(appliance.hostname),
-                     '--ipa-server={}'.format(auth_prov.host1),
-                     '--ipa-domain={}'.format(auth_prov.iparealm),  # looks like yaml value is wrong
-                     '--ipa-realm={}'.format(auth_prov.iparealm),
-                     '--ipa-principal={}'.format(auth_prov.ipaprincipal),
-                     '--ipa-password={}'.format(auth_prov.bind_password),
-                     '--output={}'.format(output_file), '-d', '-f"']
+                     f'--host={appliance.hostname}',
+                     f'--ipa-server={auth_prov.host1}',
+                     f'--ipa-domain={auth_prov.iparealm}',  # looks like yaml value is wrong
+                     f'--ipa-realm={auth_prov.iparealm}',
+                     f'--ipa-principal={auth_prov.ipaprincipal}',
+                     f'--ipa-password={auth_prov.bind_password}',
+                     f'--output={output_file}', '-d', '-f"']
 
     # todo: implement this in wrapanapi by resolving chain dc->rc->po/st
     def get_pod_name(pattern):
@@ -791,14 +791,14 @@ def test_pod_appliance_basic_ipa_auth(temp_pod_appliance, provider, setup_provid
     logger.info("generator pod name: {}", generator_pod_name)
     # workaround generator pod becomes ready but cannot property run commands for some time
     sleep(60)
-    logger.info(appliance.ssh_client.run_command('oc get pods -n {}'.format(appliance.project),
+    logger.info(appliance.ssh_client.run_command(f'oc get pods -n {appliance.project}',
                                                  ensure_host=True))
     generator_output = str(appliance.ssh_client.run_command(
         'oc exec {pod} -n {ns} -- {cmd}'.format(pod=generator_pod_name, ns=appliance.project,
                                                 cmd=" ".join(generator_cmd)),
         ensure_host=True))
 
-    assert_output = "config map generation failed because of {}".format(generator_output)
+    assert_output = f"config map generation failed because of {generator_output}"
     assert 'Saving Auth Config-Map to' in generator_output, assert_output
 
     httpd_config = provider.mgmt.run_command(namespace=appliance.project,

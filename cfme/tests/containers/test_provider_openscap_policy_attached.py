@@ -88,7 +88,7 @@ def test_check_compliance_provider_policy(provider, soft_assert, delete_all_cont
         wait_for_retval = wait_for(
             get_table_attr,
             func_args=[openscap_assigned_rand_image, tbl, attr],
-            message='Trying to get attribute "{}" of table "{}"'.format(attr, tbl),
+            message=f'Trying to get attribute "{attr}" of table "{tbl}"',
             delay=5,
             num_sec=120,
             silent_failure=True

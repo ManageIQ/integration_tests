@@ -60,7 +60,7 @@ def get_report(directory):
     try:
         with open("bz-report.yaml", "r") as stream:
             info = yaml.load(stream, Loader=yaml.BaseLoader)
-    except IOError:
+    except OSError:
         msg = (
             "ERROR: File bz-report.yaml not found, something went wrong during report generation.\n"
             "       Likely no BZs were found in {} with 'automates'/'coverage',"
@@ -273,7 +273,7 @@ def coverage(directory, set_bzs, bz_status):
         STATUS[bz_status]["coverage_text"])
     )
     for bz in bz_list:
-        click.echo("    id: {}, qe_test_coverage: {}".format(bz.id, bz.qe_test_coverage))
+        click.echo(f"    id: {bz.id}, qe_test_coverage: {bz.qe_test_coverage}")
 
     if set_bzs:
         click.echo("Setting qe_test_coverage on the above BZs to '+'...")

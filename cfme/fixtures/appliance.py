@@ -267,7 +267,7 @@ def get_vddk_url(provider):
     except ValueError:
         major = str(provider.version)
         minor = "0"
-    vddk_version = "v{}_{}".format(major, minor)
+    vddk_version = f"v{major}_{minor}"
 
     try:
         vddk_urls = conf.cfme_data.basic_info.vddk_url
@@ -281,7 +281,7 @@ def get_vddk_url(provider):
     url = vddk_urls.get(vddk_version)
 
     if url is None:
-        pytest.skip("VDDK {} is unavailable, skipping test".format(vddk_version))
+        pytest.skip(f"VDDK {vddk_version} is unavailable, skipping test")
 
     return url
 

@@ -92,7 +92,7 @@ def test_cloud_grid_page_per_item(appliance, request, page, value, set_grid):
     assert int(items_per_page) == int(limit)
 
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), 'Gridview Failed for page {}!'.format(page)
+        assert int(max_item) == int(limit), f'Gridview Failed for page {page}!'
     assert int(max_item) <= int(item_amt)
 
 
@@ -126,7 +126,7 @@ def test_cloud_tile_page_per_item(appliance, request, page, value, set_tile):
     assert int(items_per_page) == int(limit)
 
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), 'Tileview Failed for page {}!'.format(page)
+        assert int(max_item) == int(limit), f'Tileview Failed for page {page}!'
     assert int(max_item) <= int(item_amt)
 
 
@@ -160,7 +160,7 @@ def test_cloud_list_page_per_item(appliance, request, page, value, set_list):
     assert int(items_per_page) == int(limit)
 
     if int(item_amt) >= int(limit):
-        assert int(max_item) == int(limit), 'Listview Failed for page {}!'.format(page)
+        assert int(max_item) == int(limit), f'Listview Failed for page {page}!'
     assert int(max_item) <= int(item_amt)
 
 

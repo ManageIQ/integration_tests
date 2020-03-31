@@ -15,19 +15,19 @@ from cfme.utils.providers import list_provider_keys
 
 def main(*providers):
     for provider_key in list_provider_keys('openstack'):
-        print('Checking {}'.format(provider_key))
+        print(f'Checking {provider_key}')
         api = get_mgmt(provider_key).api
         try:
             fips = api.floating_ips.findall(fixed_ip=None)
         except Exception:
-            print('Unable to get fips for {}:'.format(provider_key))
+            print(f'Unable to get fips for {provider_key}:')
             print(format_exc().splitlines()[-1])
             continue
 
         for fip in fips:
-            print('Deleting {} on {}'.format(fip.ip, provider_key))
+            print(f'Deleting {fip.ip} on {provider_key}')
             fip.delete()
-            print('{} deleted'.format(fip.ip))
+            print(f'{fip.ip} deleted')
 
 
 if __name__ == "__main__":

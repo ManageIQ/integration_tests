@@ -95,7 +95,7 @@ class OpenStackInstance(Instance):
 
     @property
     def vm_default_args(self):
-        inst_args = super(OpenStackInstance, self).vm_default_args
+        inst_args = super().vm_default_args
         provisioning = self.provider.data['provisioning']
         recursive_update(inst_args, {
             'environment': {

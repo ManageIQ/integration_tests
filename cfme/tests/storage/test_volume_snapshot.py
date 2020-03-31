@@ -42,7 +42,7 @@ def volume(appliance, provider):
             volume_kwargs['az'] = provider.data['provisioning']['availability_zone']
 
     elif provider.one_of(EC2Provider):
-        volume_kwargs['az'] = "{}a".format(provider.region)
+        volume_kwargs['az'] = f"{provider.region}a"
         volume_kwargs['volume_type'] = 'General Purpose SSD (GP2)'
     else:
         return False
@@ -111,7 +111,7 @@ def test_storage_snapshot_create_cancelled_validation(volume, snapshot_create_fr
     else:
         view = volume.create_view(VolumeDetailsView, wait='10s')
     view.flash.assert_message(
-        'Snapshot of Cloud Volume "{}" was cancelled by the user'.format(volume.name))
+        f'Snapshot of Cloud Volume "{volume.name}" was cancelled by the user')
 
 
 @pytest.mark.parametrize('snapshot_create_from', [True, False], ids=['from_manager', 'from_volume'])
@@ -164,7 +164,7 @@ def test_storage_volume_snapshot_crud(volume, provider, snapshot_create_from):
     snapshot = volume.create_snapshot(snapshot_name, from_manager=snapshot_create_from)
     view = volume.create_view(VolumeDetailsView, wait='10s')
     view.flash.assert_success_message(
-        'Snapshot for Cloud Volume "{}" created'.format(volume.name))
+        f'Snapshot for Cloud Volume "{volume.name}" created')
 
     # check for volume relationship tables snapshot count
     try:

@@ -393,7 +393,7 @@ class Credential(BaseEntity, Taggable):
     # is also problematic for attrs
 
     def __init__(self, collection, name, credential_type, **credentials):
-        super(Credential, self).__init__(collection)
+        super().__init__(collection)
         self.name = name
         self.credential_type = credential_type
         for key, value in credentials.items():
@@ -431,7 +431,7 @@ class Credential(BaseEntity, Taggable):
                     updates.get("name", self.name)))
         else:
             view.flash.assert_message(
-                'Edit of Credential "{}" was canceled by the user.'.format(self.name))
+                f'Edit of Credential "{self.name}" was canceled by the user.')
 
     def delete(self):
         view = navigate_to(self, "Details")
@@ -441,7 +441,7 @@ class Credential(BaseEntity, Taggable):
         wait_for(lambda: False, silent_failure=True, timeout=5)
         assert credentials_list_page.is_displayed
         credentials_list_page.flash.assert_success_message(
-            'Deletion of Credential "{}" was successfully initiated.'.format(self.name))
+            f'Deletion of Credential "{self.name}" was successfully initiated.')
         wait_for(
             lambda: not self.exists,
             delay=10,
@@ -479,7 +479,7 @@ class CredentialsCollection(BaseCollection):
         wait_for(lambda: False, silent_failure=True, timeout=5)
         assert credentials_list_page.is_displayed
         credentials_list_page.flash.assert_success_message(
-            'Add of Credential "{}" has been successfully queued.'.format(name))
+            f'Add of Credential "{name}" has been successfully queued.')
 
         credential = self.instantiate(name, credential_type, **credentials)
 

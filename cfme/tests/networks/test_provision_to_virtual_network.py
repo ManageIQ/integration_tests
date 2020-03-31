@@ -25,7 +25,7 @@ pytestmark = [
 def network(provider, appliance):
     """Adding cloud network in ui."""
     test_name = fauxfactory.gen_alphanumeric(18, start="test_network_")
-    net_manager = '{} Network Manager'.format(provider.name)
+    net_manager = f'{provider.name} Network Manager'
 
     collection = appliance.collections.network_providers
     network_provider = collection.instantiate(prov_class=NetworkProvider, name=net_manager)
@@ -87,5 +87,5 @@ def test_provision_vm_to_virtual_network(appliance, setup_provider, provider,
         delay=50,
         num_sec=900,
         fail_func=appliance.server.browser.refresh,
-        message='Cannot do provision for vm {}.'.format(vm_name)
+        message=f'Cannot do provision for vm {vm_name}.'
     )

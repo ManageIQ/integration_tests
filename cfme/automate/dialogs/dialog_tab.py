@@ -18,7 +18,7 @@ class EditTabView(TabForm):
     def is_displayed(self):
         return (
             self.in_customization and
-            self.title.text == "Editing Dialog {} [Tab Information]".format(self.tab_label)
+            self.title.text == f"Editing Dialog {self.tab_label} [Tab Information]"
         )
 
 

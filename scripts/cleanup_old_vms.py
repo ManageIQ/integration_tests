@@ -104,7 +104,7 @@ def cleanup_provider(provider_key, matchers, scan_failure_queue, max_hours, dryr
 
     logger.info('%r: NOT matching text filters: %r',
                 provider_key,
-                set([v.name for v in vm_list]) - set([v.name for v in text_matched_vms]))
+                {v.name for v in vm_list} - {v.name for v in text_matched_vms})
     logger.info('%r: MATCHED text filters: %r', provider_key, [vm.name for vm in text_matched_vms])
 
     if not text_matched_vms:

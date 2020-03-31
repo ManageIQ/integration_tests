@@ -134,7 +134,7 @@ def check_vm_visibility(user_restricted, appliance):
             except ItemNotFound:
                 actual_visibility = False
         assert actual_visibility == vis_expect, (
-            'VM visibility is not as expected, expected {}'.format(vis_expect)
+            f'VM visibility is not as expected, expected {vis_expect}'
         )
     return _check_vm_visibility
 

@@ -108,7 +108,7 @@ class PolicyProfile(BaseEntity, Updateable, Pretty):
                     updates.get("description", self.description)))
         else:
             view.flash.assert_message(
-                'Edit of Policy Profile "{}" was cancelled by the user'.format(self.description))
+                f'Edit of Policy Profile "{self.description}" was cancelled by the user')
 
     def delete(self, cancel=False):
         """Delete this Policy Profile in UI.
@@ -125,7 +125,7 @@ class PolicyProfile(BaseEntity, Updateable, Pretty):
             view = self.create_view(PolicyProfilesAllView)
             assert view.is_displayed
             view.flash.assert_success_message(
-                'Policy Profile "{}": Delete successful'.format(self.description))
+                f'Policy Profile "{self.description}": Delete successful')
 
     @property
     def exists(self):

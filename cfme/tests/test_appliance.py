@@ -37,7 +37,7 @@ def test_rpms_present(appliance, package):
         testtype: functional
         casecomponent: Appliance
     """
-    result = appliance.ssh_client.run_command('rpm -q {}'.format(package))
+    result = appliance.ssh_client.run_command(f'rpm -q {package}')
     assert 'is not installed' not in result.output
     assert result.success
 
@@ -122,11 +122,11 @@ def test_firewalld_services_are_active(appliance):
     """
     manageiq_zone = "manageiq"
     result = appliance.ssh_client.run_command(
-        'firewall-cmd --permanent --zone={} --list-services'.format(manageiq_zone))
+        f'firewall-cmd --permanent --zone={manageiq_zone} --list-services')
     assert {'ssh', 'http', 'https'} <= set(result.output.split())
 
     default_iface_zone = appliance.ssh_client.run_command(
-        "firewall-cmd --get-zone-of-interface {}".format(appliance.default_iface)
+        f"firewall-cmd --get-zone-of-interface {appliance.default_iface}"
     ).output.strip()
     assert default_iface_zone == manageiq_zone
 
@@ -153,7 +153,7 @@ def test_firewalld_active_zone_after_restart(appliance):
 
     def get_def_iface_zone():
         default_iface_zone_cmd = appliance.ssh_client.run_command(
-            "firewall-cmd --get-zone-of-interface {}".format(appliance.default_iface)
+            f"firewall-cmd --get-zone-of-interface {appliance.default_iface}"
         )
         assert default_iface_zone_cmd.success
         return default_iface_zone_cmd.output.strip()
@@ -221,7 +221,7 @@ def test_certificates_present(appliance, soft_assert):
     ).success
 
     for cert in known_certs:
-        assert appliance.ssh_client.run_command("test -f '{}'".format(cert)).success
+        assert appliance.ssh_client.run_command(f"test -f '{cert}'").success
         assert appliance.ssh_client.run_command(
             "openssl verify -CAfile {ca_cert} '{cert_file}'"
             .format(ca_cert=rhsm_ca_cert, cert_file=cert)
@@ -250,7 +250,7 @@ def test_html5_ssl_files_present(appliance, soft_assert):
 
     for ssl_file in ssl_files:
         # Test for files existance
-        assert appliance.ssh_client.run_command("test -f '{}'".format(ssl_file)).success
+        assert appliance.ssh_client.run_command(f"test -f '{ssl_file}'").success
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -295,8 +295,8 @@ def test_keys_included(appliance, soft_assert):
     keys = ['v0_key', 'v1_key', 'v2_key']
     for k in keys:
         soft_assert(appliance.ssh_client.run_command(
-            "test -e /var/www/miq/vmdb/certs/{}".format(k)).success,
-            "{} was not included in the build".format(k))
+            f"test -e /var/www/miq/vmdb/certs/{k}").success,
+            f"{k} was not included in the build")
 
 
 def test_appliance_console_packages(appliance):
@@ -459,7 +459,7 @@ def test_codename_in_stdout(appliance):
     @wait_for_decorator
     def codename_in_stdout():
         r = appliance.ssh_client.run_command(
-            r'journalctl -u evmserverd -c "{}" | egrep -i "codename: \w+$"'.format(cursor))
+            fr'journalctl -u evmserverd -c "{cursor}" | egrep -i "codename: \w+$"')
         return r.success
 
     appliance.wait_for_web_ui()

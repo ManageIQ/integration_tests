@@ -159,7 +159,7 @@ logging.TRACE = 5
 logging.addLevelName(logging.TRACE, 'TRACE')
 
 
-class logger_wrap(object):
+class logger_wrap:
     """ Sets up the logger by default, used as a decorator in utils.appliance
 
     If the logger doesn't exist, sets up a sensible alternative
@@ -209,14 +209,14 @@ class PrefixAddingLoggerFilter(logging.Filter):
 
     def filter(self, record):
         if self.prefix:
-            record.msg = "{0}{1}".format(safe_string(self.prefix), safe_string(record.msg))
+            record.msg = "{}{}".format(safe_string(self.prefix), safe_string(record.msg))
         return True
 
 
 class NamedLoggerAdapter(TraceLoggerAdapter):
     """An adapter that injects a name into log messages"""
     def process(self, message, kwargs):
-        return '({}) {}'.format(self.extra, message), kwargs
+        return f'({self.extra}) {message}', kwargs
 
 
 def _load_conf(logger_name=None):
@@ -263,7 +263,7 @@ class WarningsRelpathFilter(logging.Filter):
         return True
 
 
-class WarningsDeduplicationFilter(object):
+class WarningsDeduplicationFilter:
     """
     this filter is needed since something in the codebase causes the warnings
     once filter to be reset, so we need to deduplicate on our own
@@ -283,7 +283,7 @@ class WarningsDeduplicationFilter(object):
             return True
 
 
-class Perflog(object):
+class Perflog:
     """Performance logger, useful for timing arbitrary events by name
 
     Logged events will be written to ``log/perf.log`` by default, unless
@@ -412,7 +412,7 @@ def format_marker(mstring, mark="-"):
     """
     if len(mstring) <= MARKER_LEN - 2:
         # Pad with spaces
-        mstring = ' {} '.format(mstring)
+        mstring = f' {mstring} '
         # Format centered, surrounded the leader_mark
         format_spec = '{{:{leader_mark}^{marker_len}}}'\
             .format(leader_mark=mark, marker_len=MARKER_LEN)
@@ -523,9 +523,9 @@ def setup_for_worker(workername, loggers=('cfme', 'py.warnings', 'wrapanapi')):
                        if isinstance(x, logging.FileHandler))
         handler.close()
         base, name = os.path.split(handler.baseFilename)
-        add_prefix.prefix = "({})".format(workername)
+        add_prefix.prefix = f"({workername})"
         handler.baseFilename = os.path.join(
-            base, "{worker}-{name}".format(worker=workername, name=name))
+            base, f"{workername}-{name}")
         log.debug("worker log started")  # directly reopens the file
 
 

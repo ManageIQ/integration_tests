@@ -153,7 +153,7 @@ class ReportMenu(BaseEntity):
         view.save_button.click()
         flash_view = self.create_view(AllReportMenusView)
         flash_view.flash.assert_message(
-            'Report Menu for role "{}" was saved'.format(group)
+            f'Report Menu for role "{group}" was saved'
         )
 
     @contextmanager
@@ -185,7 +185,7 @@ class ReportMenu(BaseEntity):
             view.save_button.click()
             flash_view = self.create_view(AllReportMenusView)
             flash_view.flash.assert_message(
-                'Report Menu for role "{}" was saved'.format(group)
+                f'Report Menu for role "{group}" was saved'
             )
 
     @contextmanager
@@ -221,7 +221,7 @@ class ReportMenu(BaseEntity):
             view.save_button.click()
             flash_view = self.create_view(AllReportMenusView)
             flash_view.flash.assert_message(
-                'Report Menu for role "{}" was saved'.format(group)
+                f'Report Menu for role "{group}" was saved'
             )
 
     def move_reports(self, group, folder, subfolder, *reports):

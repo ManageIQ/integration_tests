@@ -141,5 +141,5 @@ def test_time_profile_copy(appliance):
         hours=True,
         timezone='(GMT-10:00) Hawaii')
     copied_time_profile = time_profile.copy(
-        description='check_copy{}'.format(time_profile.description))
+        description=f'check_copy{time_profile.description}')
     collection.delete(False, time_profile, copied_time_profile)

@@ -53,7 +53,7 @@ post_vars = {'job_name': job_name,
 print('calling trackerbot.post_jenkins_result with attributes: ')
 for name, attr in post_vars.items():
     if name != 'artifact_report':
-        print('    {}: {}'.format(name, attr))
+        print(f'    {name}: {attr}')
 
 # pack the result attr values into the jenkins post
 post_jenkins_result(**post_vars)

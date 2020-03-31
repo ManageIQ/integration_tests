@@ -50,7 +50,7 @@ def get_detail(field, server):
             # this is AboutModal.items function, TODO rename
             return view.modal.items()[field]
     except (KeyError, AttributeError):
-        raise ItemNotFound('No field named {} found in "About" modal.'.format(field))
+        raise ItemNotFound(f'No field named {field} found in "About" modal.')
     finally:
         # close since its a blocking modal and will break further navigation
         view.modal.close()

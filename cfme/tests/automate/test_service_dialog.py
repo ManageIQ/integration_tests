@@ -56,7 +56,7 @@ def test_crud_service_dialog(appliance):
 
     dialog, element = create_dialog(appliance, element_data)
     view = appliance.browser.create_view(DialogsView, wait="10s")
-    flash_message = '{} was saved'.format(dialog.label)
+    flash_message = f'{dialog.label} was saved'
     view.flash.assert_message(flash_message)
     with update(dialog):
         dialog.description = "my edited description"

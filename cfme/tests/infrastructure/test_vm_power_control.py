@@ -150,7 +150,7 @@ def wait_for_vm_tools(vm, timeout=300):
         return False
 
 
-class TestControlOnQuadicons(object):
+class TestControlOnQuadicons:
 
     @pytest.mark.rhv3
     def test_power_off_cancel(self, testing_vm, ensure_vm_running, soft_assert):
@@ -244,7 +244,7 @@ class TestControlOnQuadicons(object):
         soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
 
-class TestVmDetailsPowerControlPerProvider(object):
+class TestVmDetailsPowerControlPerProvider:
 
     @pytest.mark.rhv3
     def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
@@ -278,7 +278,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             new_last_boot_time = view.entities.summary("Power Management").get_text_of(
                 "Last Boot Time")
             soft_assert(new_last_boot_time == last_boot_time,
-                        "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+                        f"ui: {new_last_boot_time} should ==  orig: {last_boot_time}")
 
     @pytest.mark.rhv3
     def test_power_on(self, appliance, testing_vm, ensure_vm_stopped, soft_assert):
@@ -341,7 +341,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             new_last_boot_time = view.entities.summary("Power Management").get_text_of(
                 "Last Boot Time")
             soft_assert(new_last_boot_time == last_boot_time,
-                        "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+                        f"ui: {new_last_boot_time} should ==  orig: {last_boot_time}")
 
     @pytest.mark.rhv1
     def test_start_from_suspend(self, appliance, testing_vm, ensure_vm_suspended, soft_assert):
@@ -421,7 +421,7 @@ def test_no_template_power_control(provider, soft_assert):
             action = 'Start'
         elif action == 'Power Off':
             action = 'Stop'
-        view.flash.assert_message('{} action does not apply to selected items'.format(action))
+        view.flash.assert_message(f'{action} action does not apply to selected items')
         view.flash.dismiss()
 
     # Ensure there isn't a power button on the details page
@@ -610,7 +610,7 @@ def test_guest_os_shutdown(appliance, provider, testing_vm_tools, ensure_vm_runn
     if not (BZ(1571895, forced_streams=["5.10", "5.11"]).blocks and provider.one_of(RHEVMProvider)):
         new_last_boot_time = view.entities.summary("Power Management").get_text_of("Last Boot Time")
         soft_assert(new_last_boot_time == last_boot_time,
-                    "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+                    f"ui: {new_last_boot_time} should ==  orig: {last_boot_time}")
 
 
 @pytest.fixture(scope="function")

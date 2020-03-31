@@ -20,7 +20,7 @@ def main(no_quickstart):
     print('Welcome to IPython designed for running CFME QE code.')
     ipython = TerminalInteractiveShell.instance()
     for code_import in IMPORTS:
-        print('> {}'.format(code_import))
+        print(f'> {code_import}')
         ipython.run_cell(code_import)
     from cfme.utils.path import conf_path
     custom_import_path = conf_path.join('miq_python_startup.py')

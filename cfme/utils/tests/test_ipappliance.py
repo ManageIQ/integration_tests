@@ -7,12 +7,12 @@ def test_ipappliance_from_hostname():
     hostname = '1.2.3.4'
     ip_a = IPAppliance(hostname=hostname)
     assert ip_a.hostname == hostname
-    assert ip_a.url == 'https://{}/'.format(hostname)
+    assert ip_a.url == f'https://{hostname}/'
 
 
 def test_ipappliance_from_url():
     address = '1.2.3.4'
-    url = 'http://{}/'.format(address)
+    url = f'http://{address}/'
     ip_a = IPAppliance.from_url(url)
     assert ip_a.url == url
     assert ip_a.hostname == address

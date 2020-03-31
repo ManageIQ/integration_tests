@@ -67,7 +67,7 @@ def new_compute_rate(appliance, enable_candu):
             }
         )
     except Exception as ex:
-        pytest.fail('Exception during chargeback creation for test setup: {}'.format(ex.message))
+        pytest.fail(f'Exception during chargeback creation for test setup: {ex.message}')
 
     yield desc
 
@@ -149,7 +149,7 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
     result = appliance.ssh_client.run_rails_command(
         'Service.queue_chargeback_reports')
-    assert result.success, "Failed to run Service Chargeback report".format(result.output)
+    assert result.success, f"Failed to run Service Chargeback report"
 
 
 @pytest.mark.rhel_testing
@@ -232,7 +232,7 @@ def test_monthly_charges(appliance, has_no_providers_modscope, setup_provider, c
     with appliance.context.use(context):
         dashboard = Dashboard(appliance)
         monthly_charges = dashboard.monthly_charges()
-        logger.info('Monthly charges is {}'.format(monthly_charges))
+        logger.info(f'Monthly charges is {monthly_charges}')
         assert monthly_charges != '$0'
 
 

@@ -37,7 +37,7 @@ def run_command(cmd):
 
 
 # copy scripts
-run_command("cp {} /var/www/miq/vmdb/".format(options.scripts))
+run_command(f"cp {options.scripts} /var/www/miq/vmdb/")
 
 # changedir and untar scripts
 run_command("cd /var/www/miq/vmdb/;tar xvf " + options.scripts)
@@ -52,7 +52,7 @@ psql_output = run_command(
 )
 count = psql_output.split("\n")[2].strip()
 if count > 2:
-    logger.info("Too many postgres threads({})... restarting".format(count))
+    logger.info(f"Too many postgres threads({count})... restarting")
     current_appliance.db_service.restart()
     time.sleep(60)
 run_command(

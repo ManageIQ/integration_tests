@@ -136,7 +136,7 @@ SAMPLE_INTERVAL = 10
 
 class SmemMemoryMonitor(Thread):
     def __init__(self, ssh_client, scenario_data):
-        super(SmemMemoryMonitor, self).__init__()
+        super().__init__()
         self.ssh_client = ssh_client
         self.scenario_data = scenario_data
         self.grafana_urls = {}
@@ -165,7 +165,7 @@ class SmemMemoryMonitor(Thread):
             process_results[process_name][process_pid][starttime]['swap'] = swap_mem
             del memory_by_pid[process_pid]
         else:
-            logger.warning('Process {} PID, not found: {}'.format(process_name, process_pid))
+            logger.warning(f'Process {process_name} PID, not found: {process_pid}')
 
     def get_appliance_memory(self, appliance_results, plottime):
         # 5.5/5.6 - RHEL 7 / Centos 7
@@ -212,7 +212,7 @@ class SmemMemoryMonitor(Thread):
                 if len(pid_worker) == 2:
                     workers[pid_worker[0].strip()] = pid_worker[1].strip()
                 else:
-                    logger.error('Unexpected output from psql: {}'.format(worker))
+                    logger.error(f'Unexpected output from psql: {worker}')
             return workers
         else:
             return {}
@@ -264,9 +264,9 @@ class SmemMemoryMonitor(Thread):
                     memory_by_pid[pid]['name'] = values[6]
                     memory_by_pid[pid]['cmd'] = ' '.join(values[7:])
                 except Exception as e:
-                    logger.error('Processing smem output error: {}'.format(e.__class__.__name__, e))
-                    logger.error('Issue with pid: {} line: {}'.format(pid, line))
-                    logger.error('Complete smem output: {}'.format(result.output))
+                    logger.error(f'Processing smem output error: {e.__class__.__name__}')
+                    logger.error(f'Issue with pid: {pid} line: {line}')
+                    logger.error(f'Complete smem output: {result.output}')
         return memory_by_pid
 
     def _real_run(self):
@@ -338,7 +338,7 @@ class SmemMemoryMonitor(Thread):
                         self.create_process_result(process_results, plottime, pid,
                             'evm:dbsync:replicate', memory_by_pid)
                     else:
-                        logger.debug('Unaccounted for ruby pid: {}'.format(pid))
+                        logger.debug(f'Unaccounted for ruby pid: {pid}')
 
             timediff = time.time() - starttime
             logger.debug('Monitoring sampled in {}s'.format(round(timediff, 4)))
@@ -356,7 +356,7 @@ class SmemMemoryMonitor(Thread):
         try:
             self._real_run()
         except Exception as e:
-            logger.error('Error in Monitoring Thread: {}'.format(e))
+            logger.error(f'Error in Monitoring Thread: {e}')
             logger.error('{}'.format(traceback.format_exc()))
 
 
@@ -386,10 +386,10 @@ def create_report(scenario_data, appliance_results, process_results, use_slab, g
 
     scenario_path = workload_path.join(scenario_data['scenario']['name'])
     if os.path.exists(str(scenario_path)):
-        logger.warning('Duplicate Workload-Scenario Name: {}'.format(scenario_path))
+        logger.warning(f'Duplicate Workload-Scenario Name: {scenario_path}')
         scenario_path = workload_path.join('{}-{}'.format(time.strftime('%Y%m%d%H%M%S'),
             scenario_data['scenario']['name']))
-        logger.warning('Using: {}'.format(scenario_path))
+        logger.warning(f'Using: {scenario_path}')
     os.mkdir(str(scenario_path))
 
     mem_graphs_path = scenario_path.join('graphs')
@@ -409,7 +409,7 @@ def create_report(scenario_data, appliance_results, process_results, use_slab, g
     with open(str(scenario_path.join('scenario.yml')), 'w') as scenario_file:
         yaml.safe_dump(dict(scenario_data['scenario']), scenario_file, default_flow_style=False)
 
-    generate_summary_csv(scenario_path.join('{}-summary.csv'.format(ver)), appliance_results,
+    generate_summary_csv(scenario_path.join(f'{ver}-summary.csv'), appliance_results,
         process_results, provider_names, ver)
     generate_raw_data_csv(mem_rawdata_path, appliance_results, process_results)
     generate_summary_html(scenario_path, ver, appliance_results, process_results, scenario_data,
@@ -456,7 +456,7 @@ def generate_raw_data_csv(directory, appliance_results, process_results):
                 appliance_results[ts]['swap_total'], appliance_results[ts]['swap_free']))
     for process_name in process_results:
         for process_pid in process_results[process_name]:
-            file_name = str(directory.join('{}-{}.csv'.format(process_pid, process_name)))
+            file_name = str(directory.join(f'{process_pid}-{process_name}.csv'))
             with open(file_name, 'w') as csv_file:
                 csv_file.write('TimeStamp,RSS,PSS,USS,VSS,SWAP\n')
                 for ts in process_results[process_name][process_pid]:
@@ -467,14 +467,14 @@ def generate_raw_data_csv(directory, appliance_results, process_results):
                         process_results[process_name][process_pid][ts]['vss'],
                         process_results[process_name][process_pid][ts]['swap']))
     timediff = time.time() - starttime
-    logger.info('Generated Raw Data CSVs in: {}'.format(timediff))
+    logger.info(f'Generated Raw Data CSVs in: {timediff}')
 
 
 def generate_summary_csv(file_name, appliance_results, process_results, provider_names,
         version_string):
     starttime = time.time()
     with open(str(file_name), 'w') as csv_file:
-        csv_file.write('Version: {}, Provider(s): {}\n'.format(version_string, provider_names))
+        csv_file.write(f'Version: {version_string}, Provider(s): {provider_names}\n')
         csv_file.write('Measurement,Start of test,End of test\n')
         start = list(appliance_results.keys())[0]
         end = list(appliance_results.keys())[-1]
@@ -507,7 +507,7 @@ def generate_summary_csv(file_name, appliance_results, process_results, provider
         summary_csv_measurement_dump(csv_file, process_results, 'swap')
 
     timediff = time.time() - starttime
-    logger.info('Generated Summary CSV in: {}'.format(timediff))
+    logger.info(f'Generated Summary CSV in: {timediff}')
 
 
 def generate_summary_html(directory, version_string, appliance_results, process_results,
@@ -524,7 +524,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
             scenario_data['test_name'].title()))
         html_file.write('<b>Appliance Roles:</b> {}<br>\n'.format(
             scenario_data['appliance_roles'].replace(',', ', ')))
-        html_file.write('<b>Provider(s):</b> {}<br>\n'.format(provider_names))
+        html_file.write(f'<b>Provider(s):</b> {provider_names}<br>\n')
         html_file.write('<b><a href=\'https://{}/\' target="_blank">{}</a></b>\n'.format(
             scenario_data['appliance_ip'], scenario_data['appliance_name']))
         if grafana_urls:
@@ -533,7 +533,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
                     ' : <b><a href=\'{}\' target="_blank">{}</a></b>'.format(grafana_urls[g_name],
                     g_name))
         html_file.write('<br>\n')
-        html_file.write('<b><a href=\'{}-summary.csv\'>Summary CSV</a></b>'.format(version_string))
+        html_file.write(f'<b><a href=\'{version_string}-summary.csv\'>Summary CSV</a></b>')
         html_file.write(' : <b><a href=\'workload.html\'>Workload Info</a></b>')
         html_file.write(' : <b><a href=\'graphs/\'>Graphs directory</a></b>\n')
         html_file.write(' : <b><a href=\'rawdata/\'>CSVs directory</a></b><br>\n')
@@ -574,7 +574,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('<td>{}</td>\n'.format(round(appliance_results[end]['used'], 2)))
         html_file.write('<td>{}</td>\n'.format(round(growth, 2)))
         html_file.write('<td>{}</td>\n'.format(round(max_used_memory, 2)))
-        html_file.write('<td>{}</td>\n'.format(total_proc_count))
+        html_file.write(f'<td>{total_proc_count}</td>\n')
         html_file.write('</table>\n')
 
         # CFME/Miq Worker Results
@@ -595,8 +595,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
 
         html_file.write('<tr>\n')
         html_file.write('<td>{}</td>\n'.format(a_pids + r_pids))
-        html_file.write('<td>{}</td>\n'.format(a_pids))
-        html_file.write('<td>{}</td>\n'.format(r_pids))
+        html_file.write(f'<td>{a_pids}</td>\n')
+        html_file.write(f'<td>{r_pids}</td>\n')
         html_file.write('<td>{}</td>\n'.format(round(t_rss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_pss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_uss, 2)))
@@ -631,8 +631,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('<tr>\n')
         html_file.write('<td>ruby</td>\n')
         html_file.write('<td>{}</td>\n'.format(a_pids + r_pids))
-        html_file.write('<td>{}</td>\n'.format(a_pids))
-        html_file.write('<td>{}</td>\n'.format(r_pids))
+        html_file.write(f'<td>{a_pids}</td>\n')
+        html_file.write(f'<td>{r_pids}</td>\n')
         html_file.write('<td>{}</td>\n'.format(round(t_rss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_pss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_uss, 2)))
@@ -653,8 +653,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('<tr>\n')
         html_file.write('<td>memcached</td>\n')
         html_file.write('<td>{}</td>\n'.format(a_pids + r_pids))
-        html_file.write('<td>{}</td>\n'.format(a_pids))
-        html_file.write('<td>{}</td>\n'.format(r_pids))
+        html_file.write(f'<td>{a_pids}</td>\n')
+        html_file.write(f'<td>{r_pids}</td>\n')
         html_file.write('<td>{}</td>\n'.format(round(t_rss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_pss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_uss, 2)))
@@ -675,8 +675,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('<tr>\n')
         html_file.write('<td>postgres</td>\n')
         html_file.write('<td>{}</td>\n'.format(a_pids + r_pids))
-        html_file.write('<td>{}</td>\n'.format(a_pids))
-        html_file.write('<td>{}</td>\n'.format(r_pids))
+        html_file.write(f'<td>{a_pids}</td>\n')
+        html_file.write(f'<td>{r_pids}</td>\n')
         html_file.write('<td>{}</td>\n'.format(round(t_rss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_pss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_uss, 2)))
@@ -697,8 +697,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('<tr>\n')
         html_file.write('<td>httpd</td>\n')
         html_file.write('<td>{}</td>\n'.format(a_pids + r_pids))
-        html_file.write('<td>{}</td>\n'.format(a_pids))
-        html_file.write('<td>{}</td>\n'.format(r_pids))
+        html_file.write(f'<td>{a_pids}</td>\n')
+        html_file.write(f'<td>{r_pids}</td>\n')
         html_file.write('<td>{}</td>\n'.format(round(t_rss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_pss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_uss, 2)))
@@ -719,8 +719,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('<tr>\n')
         html_file.write('<td>collectd</td>\n')
         html_file.write('<td>{}</td>\n'.format(a_pids + r_pids))
-        html_file.write('<td>{}</td>\n'.format(a_pids))
-        html_file.write('<td>{}</td>\n'.format(r_pids))
+        html_file.write(f'<td>{a_pids}</td>\n')
+        html_file.write(f'<td>{r_pids}</td>\n')
         html_file.write('<td>{}</td>\n'.format(round(t_rss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_pss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(t_uss, 2)))
@@ -731,8 +731,8 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('<tr>\n')
         html_file.write('<td>total</td>\n')
         html_file.write('<td>{}</td>\n'.format(t_a_pids + t_r_pids))
-        html_file.write('<td>{}</td>\n'.format(t_a_pids))
-        html_file.write('<td>{}</td>\n'.format(t_r_pids))
+        html_file.write(f'<td>{t_a_pids}</td>\n')
+        html_file.write(f'<td>{t_r_pids}</td>\n')
         html_file.write('<td>{}</td>\n'.format(round(tt_rss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(tt_pss, 2)))
         html_file.write('<td>{}</td>\n'.format(round(tt_uss, 2)))
@@ -743,9 +743,9 @@ def generate_summary_html(directory, version_string, appliance_results, process_
 
         # Appliance Graph
         html_file.write('</td></tr><tr><td>\n')
-        file_name = '{}-appliance_memory.png'.format(version_string)
-        html_file.write('<img src=\'graphs/{}\'>\n'.format(file_name))
-        file_name = '{}-appliance_swap.png'.format(version_string)
+        file_name = f'{version_string}-appliance_memory.png'
+        html_file.write(f'<img src=\'graphs/{file_name}\'>\n')
+        file_name = f'{version_string}-appliance_swap.png'
         # Check for swap usage through out time frame:
         max_swap_used = 0
         for ts in appliance_results:
@@ -753,10 +753,10 @@ def generate_summary_html(directory, version_string, appliance_results, process_
             if swap_used > max_swap_used:
                 max_swap_used = swap_used
         if max_swap_used < 10:  # Less than 10MiB Max, then hide graph
-            html_file.write('<br><a href=\'graphs/{}\'>Swap Graph '.format(file_name))
+            html_file.write(f'<br><a href=\'graphs/{file_name}\'>Swap Graph ')
             html_file.write('(Hidden, max_swap_used < 10 MiB)</a>\n')
         else:
-            html_file.write('<img src=\'graphs/{}\'>\n'.format(file_name))
+            html_file.write(f'<img src=\'graphs/{file_name}\'>\n')
         html_file.write('</td></tr><tr><td>\n')
         # Per Process Results
         html_file.write('<table style="width:100%" border="1"><tr>\n')
@@ -787,7 +787,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
                         html_file.write('<td><a href=\'graphs/{}-{}.png\'>{}</a></td>\n'.format(
                             ordered_name, pid, pid))
                     else:
-                        html_file.write('<td>{}</td>\n'.format(ordered_name))
+                        html_file.write(f'<td>{ordered_name}</td>\n')
                         html_file.write('<td><a href=\'#{}-{}.png\'>{}</a></td>\n'.format(
                             ordered_name, pid, pid))
                     html_file.write('<td>{}</td>\n'.format(start.replace(microsecond=0)))
@@ -811,7 +811,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
                         pid, ordered_name))
                     html_file.write('</tr>\n')
             else:
-                logger.debug('Process/Worker not part of test: {}'.format(ordered_name))
+                logger.debug(f'Process/Worker not part of test: {ordered_name}')
 
         html_file.write('</table>\n')
 
@@ -822,12 +822,12 @@ def generate_summary_html(directory, version_string, appliance_results, process_
                 html_file.write('<div id=\'{}\'>Process name: {}</div><br>\n'.format(
                     ordered_name, ordered_name))
                 if len(process_results[ordered_name]) > 1:
-                    file_name = '{}-all.png'.format(ordered_name)
+                    file_name = f'{ordered_name}-all.png'
                     html_file.write('<img id=\'{}\' src=\'graphs/{}\'><br>\n'.format(file_name,
                         file_name))
                 else:
                     for pid in sorted(process_results[ordered_name]):
-                        file_name = '{}-{}.png'.format(ordered_name, pid)
+                        file_name = f'{ordered_name}-{pid}.png'
                         html_file.write('<img id=\'{}\' src=\'graphs/{}\'><br>\n'.format(
                             file_name, file_name))
                 html_file.write('</td></tr>\n')
@@ -836,7 +836,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
         html_file.write('</body>\n')
         html_file.write('</html>\n')
     timediff = time.time() - starttime
-    logger.info('Generated Summary html in: {}'.format(timediff))
+    logger.info(f'Generated Summary html in: {timediff}')
 
 
 def generate_workload_html(directory, ver, scenario_data, provider_names, grafana_urls):
@@ -852,7 +852,7 @@ def generate_workload_html(directory, ver, scenario_data, provider_names, grafan
             scenario_data['test_name'].title()))
         html_file.write('<b>Appliance Roles:</b> {}<br>\n'.format(
             scenario_data['appliance_roles'].replace(',', ', ')))
-        html_file.write('<b>Provider(s):</b> {}<br>\n'.format(provider_names))
+        html_file.write(f'<b>Provider(s):</b> {provider_names}<br>\n')
         html_file.write('<b><a href=\'https://{}/\' target="_blank">{}</a></b>\n'.format(
             scenario_data['appliance_ip'], scenario_data['appliance_name']))
         if grafana_urls:
@@ -861,7 +861,7 @@ def generate_workload_html(directory, ver, scenario_data, provider_names, grafan
                     ' : <b><a href=\'{}\' target="_blank">{}</a></b>'.format(grafana_urls[g_name],
                     g_name))
         html_file.write('<br>\n')
-        html_file.write('<b><a href=\'{}-summary.csv\'>Summary CSV</a></b>'.format(ver))
+        html_file.write(f'<b><a href=\'{ver}-summary.csv\'>Summary CSV</a></b>')
         html_file.write(' : <b><a href=\'index.html\'>Memory Info</a></b>')
         html_file.write(' : <b><a href=\'graphs/\'>Graphs directory</a></b>\n')
         html_file.write(' : <b><a href=\'rawdata/\'>CSVs directory</a></b><br>\n')
@@ -940,7 +940,7 @@ def generate_workload_html(directory, ver, scenario_data, provider_names, grafan
         html_file.write('</body>\n')
         html_file.write('</html>\n')
     timediff = time.time() - starttime
-    logger.info('Generated Workload html in: {}'.format(timediff))
+    logger.info(f'Generated Workload html in: {timediff}')
 
 
 def add_workload_quantifiers(quantifiers, scenario_data):
@@ -961,11 +961,11 @@ def add_workload_quantifiers(quantifiers, scenario_data):
         marker_pos = html_file.tell()
         remainder = html_file.read()
         html_file.seek(marker_pos)
-        html_file.write('{} \n'.format(yaml_html))
+        html_file.write(f'{yaml_html} \n')
         html_file.write(remainder)
 
     timediff = time.time() - starttime
-    logger.info('Added quantifiers in: {}'.format(timediff))
+    logger.info(f'Added quantifiers in: {timediff}')
 
 
 def get_scenario_html(scenario_data):
@@ -1015,11 +1015,11 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
                           for ts in appliance_results.keys())
 
     # Stack Plot Memory Usage
-    file_name = graphs_path.join('{}-appliance_memory.png'.format(ver))
+    file_name = graphs_path.join(f'{ver}-appliance_memory.png')
     mpl.rcParams['axes.prop_cycle'] = cycler('color', ['firebrick', 'coral', 'steelblue',
         'forestgreen'])
     fig, ax = plt.subplots()
-    plt.title('Provider(s): {}\nAppliance Memory'.format(provider_names))
+    plt.title(f'Provider(s): {provider_names}\nAppliance Memory')
     plt.xlabel('Date / Time')
     plt.ylabel('Memory (MiB)')
     if use_slab:
@@ -1078,9 +1078,9 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
 
     # Stack Plot Swap usage
     mpl.rcParams['axes.prop_cycle'] = cycler('color', ['firebrick', 'forestgreen'])
-    file_name = graphs_path.join('{}-appliance_swap.png'.format(ver))
+    file_name = graphs_path.join(f'{ver}-appliance_swap.png')
     fig, ax = plt.subplots()
-    plt.title('Provider(s): {}\nAppliance Swap'.format(provider_names))
+    plt.title(f'Provider(s): {provider_names}\nAppliance Swap')
     plt.xlabel('Date / Time')
     plt.ylabel('Swap (MiB)')
 
@@ -1109,7 +1109,7 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
     mpl.rcdefaults()
 
     timediff = time.time() - starttime
-    logger.info('Plotted Appliance Memory in: {}'.format(timediff))
+    logger.info(f'Plotted Appliance Memory in: {timediff}')
 
 
 def graph_all_miq_workers(graph_file_path, process_results, provider_names):
@@ -1122,7 +1122,7 @@ def graph_all_miq_workers(graph_file_path, process_results, provider_names):
     file_name = graph_file_path.join('all-processes.png')
 
     fig, ax = plt.subplots()
-    plt.title('Provider(s): {}\nAll Workers/Monitored Processes'.format(provider_names))
+    plt.title(f'Provider(s): {provider_names}\nAll Workers/Monitored Processes')
     plt.xlabel('Date / Time')
     plt.ylabel('Memory (MiB)')
     for process_name in process_results:
@@ -1148,7 +1148,7 @@ def graph_all_miq_workers(graph_file_path, process_results, provider_names):
     plt.close()
 
     timediff = time.time() - starttime
-    logger.info('Plotted All Type/Process Memory in: {}'.format(timediff))
+    logger.info(f'Plotted All Type/Process Memory in: {timediff}')
 
 
 def graph_individual_process_measurements(graph_file_path, process_results, provider_names):
@@ -1161,7 +1161,7 @@ def graph_individual_process_measurements(graph_file_path, process_results, prov
     for process_name in process_results:
         for process_pid in process_results[process_name]:
 
-            file_name = graph_file_path.join('{}-{}.png'.format(process_name, process_pid))
+            file_name = graph_file_path.join(f'{process_name}-{process_pid}.png')
 
             dates = list(process_results[process_name][process_pid].keys())
             rss_samples = list(process_results[process_name][process_pid][ts]['rss']
@@ -1221,7 +1221,7 @@ def graph_individual_process_measurements(graph_file_path, process_results, prov
             plt.close()
 
     timediff = time.time() - starttime
-    logger.info('Plotted Individual Process Memory in: {}'.format(timediff))
+    logger.info(f'Plotted Individual Process Memory in: {timediff}')
 
 
 def graph_same_miq_workers(graph_file_path, process_results, provider_names):
@@ -1235,7 +1235,7 @@ def graph_same_miq_workers(graph_file_path, process_results, provider_names):
         if len(process_results[process_name]) > 1:
             logger.debug('Plotting {} {} processes on single graph.'.format(
                 len(process_results[process_name]), process_name))
-            file_name = graph_file_path.join('{}-all.png'.format(process_name))
+            file_name = graph_file_path.join(f'{process_name}-all.png')
 
             fig, ax = plt.subplots()
             pids = 'PIDs: '
@@ -1260,11 +1260,11 @@ def graph_same_miq_workers(graph_file_path, process_results, provider_names):
                         for ts in process_results[process_name][process_pid].keys())
                 swap_samples = list(process_results[process_name][process_pid][ts]['swap']
                         for ts in process_results[process_name][process_pid].keys())
-                plt.plot(dates, rss_samples, linewidth=1, label='{} RSS'.format(process_pid))
-                plt.plot(dates, pss_samples, linewidth=1, label='{} PSS'.format(process_pid))
-                plt.plot(dates, uss_samples, linewidth=1, label='{} USS'.format(process_pid))
-                plt.plot(dates, vss_samples, linewidth=1, label='{} VSS'.format(process_pid))
-                plt.plot(dates, swap_samples, linewidth=1, label='{} SWAP'.format(process_pid))
+                plt.plot(dates, rss_samples, linewidth=1, label=f'{process_pid} RSS')
+                plt.plot(dates, pss_samples, linewidth=1, label=f'{process_pid} PSS')
+                plt.plot(dates, uss_samples, linewidth=1, label=f'{process_pid} USS')
+                plt.plot(dates, vss_samples, linewidth=1, label=f'{process_pid} VSS')
+                plt.plot(dates, swap_samples, linewidth=1, label=f'{process_pid} SWAP')
                 if rss_samples:
                     ax.annotate(str(round(rss_samples[0], 2)), xy=(dates[0], rss_samples[0]),
                         xytext=(4, 4), textcoords='offset points')
@@ -1300,7 +1300,7 @@ def graph_same_miq_workers(graph_file_path, process_results, provider_names):
             plt.close()
 
     timediff = time.time() - starttime
-    logger.info('Plotted Same Type/Process Memory in: {}'.format(timediff))
+    logger.info(f'Plotted Same Type/Process Memory in: {timediff}')
 
 
 def summary_csv_measurement_dump(csv_file, process_results, measurement):

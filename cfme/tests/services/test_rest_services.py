@@ -82,8 +82,8 @@ def wait_for_retired(entity, num_sec=1000):
 def service_body(**kwargs):
     uid = fauxfactory.gen_alphanumeric(5)
     body = {
-        'name': 'test_rest_service_{}'.format(uid),
-        'description': 'Test REST Service {}'.format(uid),
+        'name': f'test_rest_service_{uid}',
+        'description': f'Test REST Service {uid}',
     }
     body.update(kwargs)
     return body
@@ -118,10 +118,10 @@ def catalog_bundle(request, dialog, service_catalog_obj, appliance, provider):
         num=NUM_BUNDLE_ITEMS)
 
     uid = fauxfactory.gen_alphanumeric()
-    bundle_name = 'test_rest_bundle_{}'.format(uid)
+    bundle_name = f'test_rest_bundle_{uid}'
     bundle = appliance.collections.catalog_bundles.create(
         bundle_name,
-        description='Test REST Bundle {}'.format(uid),
+        description=f'Test REST Bundle {uid}',
         display_in=True,
         catalog=service_catalog_obj,
         dialog=dialog,
@@ -236,7 +236,7 @@ def unassign_templates(templates):
             template.reload()
 
 
-class TestServiceRESTAPI(object):
+class TestServiceRESTAPI:
     def test_query_service_attributes(self, services, soft_assert):
         """Tests access to service attributes.
 
@@ -253,7 +253,7 @@ class TestServiceRESTAPI(object):
         for failure in outcome.failed:
             if failure.name == "reconfigure_dialog"and BZ(1663972).blocks:
                 continue
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     def test_edit_service(self, appliance, services):
@@ -692,7 +692,7 @@ class TestServiceRESTAPI(object):
         parent = collection.action.create(service_body(parent_service={'id': grandparent.id}))[0]
         child = collection.action.create(service_body(parent_service={'id': parent.id}))[0]
         assert parent.ancestry == str(grandparent.id)
-        assert child.ancestry == '{}/{}'.format(grandparent.id, parent.id)
+        assert child.ancestry == f'{grandparent.id}/{parent.id}'
         grandparent.action.delete()
         assert_response(appliance)
         wait_for(
@@ -809,7 +809,7 @@ class TestServiceRESTAPI(object):
 
 
 @test_requirements.rest
-class TestServiceDialogsRESTAPI(object):
+class TestServiceDialogsRESTAPI:
     def check_returned_dialog(self, appliance):
         returned = appliance.rest_api.response.json()
         if 'results' in returned:
@@ -930,7 +930,7 @@ class TestServiceDialogsRESTAPI(object):
         delete_resources_from_collection(service_dialogs)
 
 
-class TestServiceTemplateRESTAPI(object):
+class TestServiceTemplateRESTAPI:
     def test_query_service_templates_attributes(self, service_templates, soft_assert):
         """Tests access to service template attributes.
 
@@ -1110,7 +1110,7 @@ class TestServiceTemplateRESTAPI(object):
             assert service_template.name == new_names[i]
 
 
-class TestServiceCatalogsRESTAPI(object):
+class TestServiceCatalogsRESTAPI:
     def test_query_service_catalog_attributes(self, service_catalogs, soft_assert):
         """Tests access to service catalog attributes.
 
@@ -1125,7 +1125,7 @@ class TestServiceCatalogsRESTAPI(object):
         """
         outcome = query_resource_attributes(service_catalogs[0])
         for failure in outcome.failed:
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
@@ -1212,7 +1212,7 @@ class TestServiceCatalogsRESTAPI(object):
         wait_for(_order_finished, num_sec=180, delay=10)
 
         service_name = get_dialog_service_name(appliance, service_request, template.name)
-        assert '[{}]'.format(service_name) in service_request.message
+        assert f'[{service_name}]' in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
         assert new_service.name == service_name
@@ -1267,7 +1267,7 @@ class TestServiceCatalogsRESTAPI(object):
                 service_request,
                 *[t.name for t in catalog.service_templates.all]
             )
-            assert '[{}]'.format(service_name) in service_request.message
+            assert f'[{service_name}]' in service_request.message
 
             # Service name can no longer be used to uniquely identify service when multiple
             # services are using the same dialog (all services have the same name).
@@ -1310,7 +1310,7 @@ class TestServiceCatalogsRESTAPI(object):
         wait_for(_order_finished, num_sec=2000, delay=10)
 
         service_name = get_dialog_service_name(appliance, service_request, catalog_bundle.name)
-        assert '[{}]'.format(service_name) in service_request.message
+        assert f'[{service_name}]' in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
         assert new_service.name == service_name
@@ -1355,7 +1355,7 @@ class TestServiceCatalogsRESTAPI(object):
         delete_resources_from_collection(service_catalogs, num_sec=300, delay=5)
 
 
-class TestPendingRequestsRESTAPI(object):
+class TestPendingRequestsRESTAPI:
     def _get_instance(self, miq_domain):
         auto_class = (miq_domain
                       .namespaces.instantiate(name='Service')
@@ -1516,7 +1516,7 @@ class TestPendingRequestsRESTAPI(object):
 
         source_id = str(pending_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
-        assert '[{}]'.format(new_service.name) in pending_request.message
+        assert f'[{new_service.name}]' in pending_request.message
 
         request.addfinalizer(new_service.action.delete)
 
@@ -1545,7 +1545,7 @@ class TestPendingRequestsRESTAPI(object):
         wait_for(_order_denied, num_sec=30, delay=2)
 
 
-class TestServiceRequests(object):
+class TestServiceRequests:
     @pytest.fixture(scope='class')
     def new_role(self, appliance):
         role = copy_role(appliance, 'EvmRole-user_self_service')
@@ -1596,7 +1596,7 @@ class TestServiceRequests(object):
 
         catalog = user_api.get_entity('service_catalogs', catalog_id)
         templates_collection = catalog.service_templates
-        template_href = '{}/service_templates/{}'.format(catalog.href, template_id)
+        template_href = f'{catalog.href}/service_templates/{template_id}'
 
         # The "order" action doesn't return resource in the "service_requests" collection
         # using workaround with `response.json()`
@@ -1616,14 +1616,14 @@ class TestServiceRequests(object):
         wait_for(_order_finished, num_sec=180, delay=10)
 
         service_name = get_dialog_service_name(appliance, service_request, new_template.name)
-        assert '[{}]'.format(service_name) in service_request.message
+        assert f'[{service_name}]' in service_request.message
         source_id = str(service_request.source_id)
         new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
         assert new_service.name == service_name
         request.addfinalizer(new_service.action.delete)
 
 
-class TestOrchestrationTemplatesRESTAPI(object):
+class TestOrchestrationTemplatesRESTAPI:
     @pytest.fixture(scope='function')
     def orchestration_templates(self, request, appliance):
         num = 2
@@ -1768,8 +1768,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
         for _ in range(num_orch_templates):
             uniq = fauxfactory.gen_alphanumeric(5)
             new.append({
-                "name": "test_copied_{}".format(uniq),
-                "content": "{{ 'Description' : '{}' }}\n".format(uniq)
+                "name": f"test_copied_{uniq}",
+                "content": f"{{ 'Description' : '{uniq}' }}\n"
             })
         if from_detail:
             copied = []
@@ -1845,8 +1845,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
         """
         uniq = fauxfactory.gen_alphanumeric(5)
         payload = {
-            'name': 'test_{}'.format(uniq),
-            'description': 'Test Template {}'.format(uniq),
+            'name': f'test_{uniq}',
+            'description': f'Test Template {uniq}',
             'type': 'InvalidOrchestrationTemplateType',
             'orderable': False,
             'draft': False,
@@ -1857,7 +1857,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
         assert_response(appliance, http_status=400)
 
 
-class TestServiceOrderCart(object):
+class TestServiceOrderCart:
     @pytest.fixture(scope="class")
     def service_templates_class(self, request, appliance):
         return service_templates(request, appliance)
@@ -1898,7 +1898,7 @@ class TestServiceOrderCart(object):
             tags: service
         """
         assert cart.state == 'cart'
-        cart_dict = appliance.rest_api.get('{}/cart'.format(cart.collection._href))
+        cart_dict = appliance.rest_api.get(f'{cart.collection._href}/cart')
         assert cart_dict['id'] == cart.id
 
     @pytest.mark.tier(3)
@@ -1949,7 +1949,7 @@ class TestServiceOrderCart(object):
             cart.action.delete()
 
         assert_response(appliance)
-        cart_dict = appliance.rest_api.get('{}/cart'.format(href))
+        cart_dict = appliance.rest_api.get(f'{href}/cart')
         assert response['id'] == cart_dict['id']
 
     @pytest.mark.tier(3)
@@ -2098,7 +2098,7 @@ class TestServiceOrderCart(object):
                 sr,
                 *[t.name for t in selected_templates]
             )
-            assert '[{}]'.format(service_name) in sr.message
+            assert f'[{service_name}]' in sr.message
             service_description = selected_templates[index].description
             new_service = appliance.rest_api.collections.services.get(
                 description=service_description)
@@ -2107,7 +2107,7 @@ class TestServiceOrderCart(object):
 
         # when cart is ordered, it can not longer be accessed using /api/service_orders/cart
         with pytest.raises(Exception, match='ActiveRecord::RecordNotFound'):
-            appliance.rest_api.get('{}/cart'.format(cart.collection._href))
+            appliance.rest_api.get(f'{cart.collection._href}/cart')
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])

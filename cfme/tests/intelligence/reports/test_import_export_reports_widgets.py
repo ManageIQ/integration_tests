@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.tier(1), test_requirements.report]
 
 def yaml_path(yaml_name):
     """ Returns yaml path of the file with yaml_name name"""
-    yaml_name = "{}.yaml".format(yaml_name)
+    yaml_name = f"{yaml_name}.yaml"
 
     try:
         fs = FTPClientWrapper(cfme_data.ftpserver.entities.reports)
@@ -115,7 +115,7 @@ def test_import_report(appliance, report):
     collection.import_report(yaml_path("import_report"))
     view = collection.create_view(ImportExportCustomReportsView)
     assert view.is_displayed
-    view.flash.assert_message("Imported Report: [{}]".format(report.menu_name))
+    view.flash.assert_message(f"Imported Report: [{report.menu_name}]")
 
     assert report.exists
 
@@ -160,10 +160,10 @@ def test_import_duplicate_report(appliance, report, overwrite):
     collection.import_report(file_path, overwrite=overwrite)
 
     if overwrite:
-        view.flash.assert_message("Replaced Report: [{}]".format(report.menu_name))
+        view.flash.assert_message(f"Replaced Report: [{report.menu_name}]")
     else:
         view.flash.assert_message(
-            "Skipping Report (already in DB): [{}]".format(report.menu_name)
+            f"Skipping Report (already in DB): [{report.menu_name}]"
         )
 
 

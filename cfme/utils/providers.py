@@ -39,10 +39,10 @@ def load_setuptools_entrypoints():
             continue
         except VersionConflict as e:
             raise Exception(
-                "Plugin {} could not be loaded: {}!".format(ep.name, e))
+                f"Plugin {ep.name} could not be loaded: {e}!")
 
 
-class ProviderFilter(object):
+class ProviderFilter:
     """ Filter used to obtain only providers matching given requirements
 
     Args:
@@ -165,7 +165,7 @@ class ProviderFilter(object):
             version_restrictions = []
             since_version = provider.data.get('since_version')
             if since_version:
-                version_restrictions.append('>= {}'.format(since_version))
+                version_restrictions.append(f'>= {since_version}')
             restricted_version = provider.data.get('restricted_version')
             if restricted_version:
                 version_restrictions.append(restricted_version)
@@ -184,7 +184,7 @@ class ProviderFilter(object):
                         return False
                     break
                 else:
-                    raise Exception('Operator not found in {}'.format(restriction))
+                    raise Exception(f'Operator not found in {restriction}')
         return None
 
     def __call__(self, provider):
@@ -308,7 +308,7 @@ def get_class_from_type(prov_type):
     try:
         return all_types()[prov_type]
     except KeyError:
-        raise UnknownProviderType("Unknown provider type: {}!".format(prov_type))
+        raise UnknownProviderType(f"Unknown provider type: {prov_type}!")
 
 
 def get_crud(provider_key, appliance=None):
@@ -339,7 +339,7 @@ def get_crud_by_name(provider_name):
     for provider_key, provider_data in providers_data.items():
         if provider_data.get("name") == provider_name:
             return get_crud(provider_key)
-    raise NameError("Could not find provider {}".format(provider_name))
+    raise NameError(f"Could not find provider {provider_name}")
 
 
 def get_mgmt(provider_key, providers=None, credentials=None):
@@ -401,8 +401,8 @@ def get_mgmt(provider_key, providers=None, credentials=None):
 
 class UnknownProvider(Exception):
     def __init__(self, provider_key, *args, **kwargs):
-        super(UnknownProvider, self).__init__(provider_key, *args, **kwargs)
+        super().__init__(provider_key, *args, **kwargs)
         self.provider_key = provider_key
 
     def __str__(self):
-        return 'Unknown provider: "{}"'.format(self.provider_key)
+        return f'Unknown provider: "{self.provider_key}"'

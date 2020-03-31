@@ -72,7 +72,7 @@ def net_check(port, addr=None, force=False, timeout=10):
             # Then try to connect to the port
             try:
                 socket.create_connection((addr, port), timeout=timeout).close()  # immediately close
-            except socket.error:
+            except OSError:
                 _ports[addr][port] = False
             else:
                 _ports[addr][port] = True
@@ -126,7 +126,7 @@ def resolve_ips(host_iterable, force_dns=False):
     to be converted to an IP. If that succeeds, it is appended to the set together with original
     hostname. If it can't be resolved, just the original hostname is appended.
     """
-    result = set([])
+    result = set()
     for host in map(str, host_iterable):
         result.add(host)  # It is already an  IP address
         if ip_address.match(host) is None:
@@ -145,7 +145,7 @@ def is_pingable(ip_addr):
     """
     try:
         logger.info('Pinging address: %s', ip_addr)
-        status = os.system("ping -c1 -w2 {} >/dev/null".format(ip_addr))
+        status = os.system(f"ping -c1 -w2 {ip_addr} >/dev/null")
         if status == 0:
             logger.info('IP: %s is RESPONDING !', ip_addr)
             return True
@@ -240,10 +240,10 @@ def is_ipv4(ip_addr):
     except AttributeError:
         try:
             socket.inet_aton(ip_addr)
-        except socket.error:
+        except OSError:
             return False
         return ip_addr.count('.') == 3
-    except socket.error:
+    except OSError:
         return False
 
     return True
@@ -258,7 +258,7 @@ def is_ipv6(ip_addr):
     """
     try:
         socket.inet_pton(socket.AF_INET6, ip_addr)
-    except socket.error:
+    except OSError:
         return False
 
     return True

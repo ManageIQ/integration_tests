@@ -12,7 +12,7 @@ def ansible_tower_dialog_rest(request, appliance):
     """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
     data = {
-        "description": "my ansible dialog {}".format(uid),
+        "description": f"my ansible dialog {uid}",
         "buttons": "submit,cancel",
         "label": uid,
         "dialog_tabs": [

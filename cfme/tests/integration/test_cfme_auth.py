@@ -160,16 +160,16 @@ def test_login_evm_group(
     with user_obj:
         logger.info('Logging in as user %s, member of groups %s', user_obj, evm_group_names)
         view = navigate_to(temp_appliance_preconfig_long.server, 'LoggedIn')
-        assert view.is_displayed, 'user {} failed login'.format(user_obj)
+        assert view.is_displayed, f'user {user_obj} failed login'
         soft_assert(user_obj.name == view.current_fullname,
-                    'user {} is not in view fullname'.format(user_obj))
+                    f'user {user_obj} is not in view fullname')
         for name in evm_group_names:
             soft_assert(name in view.group_names,
-                        'user {} evm group {} not in view group_names'.format(user_obj, name))
+                        f'user {user_obj} evm group {name} not in view group_names')
 
     # split loop to reduce number of logins
     temp_appliance_preconfig_long.server.login_admin()
-    assert user_obj.exists, 'user record should have been created for "{}"'.format(user_obj)
+    assert user_obj.exists, f'user record should have been created for "{user_obj}"'
 
     # assert no pwd in logs
     assert log_monitor.validate()
@@ -244,11 +244,11 @@ def test_login_retrieve_group(
                     'user full name "{}" did not match UI display name "{}"'
                     .format(user_obj.name, view.current_fullname))
         soft_assert(group.description in view.group_names,
-                    u'user group "{}" not displayed in UI groups list "{}"'
+                    'user group "{}" not displayed in UI groups list "{}"'
                     .format(group.description, view.group_names))
 
     temp_appliance_preconfig_long.server.login_admin()  # context should get us back to admin
-    assert user_obj.exists, 'User record for "{}" should exist after login'.format(user_obj)
+    assert user_obj.exists, f'User record for "{user_obj}" should exist after login'
 
     # assert no pwd in logs
     assert log_monitor.validate()
@@ -271,7 +271,7 @@ def format_user_principal(username, user_type, auth_provider):
                                  username,
                                  auth_provider.user_types[user_type].user_suffix)
     else:
-        pytest.skip('No user formatting for {} and user type {}'.format(auth_provider, user_type))
+        pytest.skip(f'No user formatting for {auth_provider} and user type {user_type}')
 
 
 @pytest.fixture(scope='function')
@@ -368,7 +368,7 @@ def test_user_group_switching(
         # pick non-evm group when there are multiple groups for the user
         if 'evmgroup' not in group.lower():
             # create group in CFME via retrieve_group which looks it up on auth_provider
-            logger.info(u'Retrieving a user group that is non evm built-in: {}'.format(group))
+            logger.info(f'Retrieving a user group that is non evm built-in: {group}')
             retrieved_groups.append(retrieve_group(temp_appliance_preconfig_long,
                                                    auth_mode,
                                                    auth_user.username,
@@ -391,23 +391,23 @@ def test_user_group_switching(
         # check retrieved groups are there
         for group in retrieved_groups:
             soft_assert(group.description in view.group_names,
-                        u'user group "{}" not displayed in UI groups list "{}"'
+                        'user group "{}" not displayed in UI groups list "{}"'
                         .format(group, view.group_names))
 
         # change to the other groups
         for other_group in display_other_groups:
-            soft_assert(other_group in auth_user.groups, u'Group {} in UI not expected for user {}'
+            soft_assert(other_group in auth_user.groups, 'Group {} in UI not expected for user {}'
                                                          .format(other_group, auth_user))
             view.change_group(other_group)
-            assert view.is_displayed, (u'Not logged in after switching to group {} for {}'
+            assert view.is_displayed, ('Not logged in after switching to group {} for {}'
                                        .format(other_group, auth_user))
             # assert selected group has changed
             soft_assert(other_group == view.current_groupname,
-                        u'After switching to group {}, its not displayed as active'
+                        'After switching to group {}, its not displayed as active'
                         .format(other_group))
 
     temp_appliance_preconfig_long.server.login_admin()
-    assert user_obj.exists, 'User record for "{}" should exist after login'.format(auth_user)
+    assert user_obj.exists, f'User record for "{auth_user}" should exist after login'
 
     # assert no pwd in log
     assert log_monitor.validate()

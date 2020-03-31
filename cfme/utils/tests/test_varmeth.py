@@ -3,7 +3,7 @@ import pytest
 from cfme.utils.varmeth import variable
 
 
-class _TestClass(object):
+class _TestClass:
     secret = 42
 
     @variable

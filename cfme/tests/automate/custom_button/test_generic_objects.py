@@ -52,7 +52,7 @@ def setup_obj(appliance, button_group):
     elif obj_type == "TENANT":
         obj = appliance.collections.tenants.get_root_tenant()
     else:
-        logger.error("No object collected for custom button object type '{}'".format(obj_type))
+        logger.error(f"No object collected for custom button object type '{obj_type}'")
     return obj
 
 
@@ -187,7 +187,7 @@ def test_custom_button_automate_evm_obj(appliance, request, submit, setup_obj, b
         custom_button_group.item_select(button.text)
 
         diff = "executed" if appliance.version < "5.10" else "launched"
-        view.flash.assert_message('"{btn}" was {diff}'.format(btn=button.text, diff=diff))
+        view.flash.assert_message(f'"{button.text}" was {diff}')
 
         # Submit all: single request for all entity execution
         # One by one: separate requests for all entity execution

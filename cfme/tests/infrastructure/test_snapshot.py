@@ -30,8 +30,8 @@ pytestmark = [
 def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
     name = fauxfactory.gen_alphanumeric(8)
     return InfraVm.Snapshot(
-        name="test_snapshot_{}".format(name) if has_name else None,
-        description="snapshot_{}".format(name) if create_description else None,
+        name=f"test_snapshot_{name}" if has_name else None,
+        description=f"snapshot_{name}" if create_description else None,
         memory=memory,
         parent_vm=test_vm
     )
@@ -474,7 +474,7 @@ def test_snapshot_history_btn(create_vm, provider):
     snapshot = new_snapshot(create_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
     vm_details_view = navigate_to(create_vm, 'Details')
-    item = '"Snapshots" for Virtual Machine "{}"'.format(create_vm.name)
+    item = f'"Snapshots" for Virtual Machine "{create_vm.name}"'
     vm_details_view.toolbar.history.item_select(item)
     snapshot_view = create_vm.create_view(InfraVmSnapshotView)
     assert snapshot_view.is_displayed

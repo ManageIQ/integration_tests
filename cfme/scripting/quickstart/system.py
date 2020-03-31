@@ -51,7 +51,7 @@ if os.path.exists(OS_RELEASE_FILE):
             if version:
                 OS_VERSION = version.group(1).rstrip('\n')
 
-print('OS_NAME: {}, OS_VERSION: {}'.format(OS_NAME, OS_VERSION))
+print(f'OS_NAME: {OS_NAME}, OS_VERSION: {OS_VERSION}')
 
 RH_BASE = (
     " gcc postgresql-devel libxml2-devel libxslt-devel"

@@ -18,7 +18,7 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 
 
-class ConsoleMixin(object):
+class ConsoleMixin:
     """
     A mixin to provide methods to get a vm console object
     """
@@ -34,7 +34,7 @@ class ConsoleMixin(object):
         br_wt = browser.widgetastic
         appliance_handle = br_wt.window_handle
         cur_handles = br_wt.selenium.window_handles
-        logger.info("Current Window Handles:  {}".format(cur_handles))
+        logger.info(f"Current Window Handles:  {cur_handles}")
 
         for handle in cur_handles:
             if handle != appliance_handle:
@@ -53,9 +53,9 @@ class ConsoleMixin(object):
 
         appliance_handle = self.appliance.browser.widgetastic.window_handle
         logger.info("Creating VMConsole:")
-        logger.info("   appliance_handle: {}".format(appliance_handle))
-        logger.info("     console_handle: {}".format(console_handle))
-        logger.info("               name: {}".format(self.name))
+        logger.info(f"   appliance_handle: {appliance_handle}")
+        logger.info(f"     console_handle: {console_handle}")
+        logger.info(f"               name: {self.name}")
 
         return VMConsole(appliance_handle=appliance_handle,
                          console_handle=console_handle,
@@ -135,7 +135,7 @@ class VMConsole(Pretty):
         canvas, wait = wait_for(func=_get_canvas_element, func_args=[self.provider],
                           delay=1, handle_exceptions=True,
                           num_sec=timeout)
-        logger.info("canvas: {}\n".format(canvas))
+        logger.info(f"canvas: {canvas}\n")
 
         # Now run some java script to get the contents of the canvas element
         # base 64 encoded.
@@ -181,7 +181,7 @@ class VMConsole(Pretty):
                                 config='--user-words eng.user-words'))
         tmp_file.close()
 
-        logger.info('screen text:{}'.format(text))
+        logger.info(f'screen text:{text}')
         return text
 
     def is_connected(self):
@@ -196,7 +196,7 @@ class VMConsole(Pretty):
         self.switch_to_console()
         canvas = self.provider.get_remote_console_canvas()
         canvas.click()
-        logger.info("Sending following Keys to Console {}".format(text))
+        logger.info(f"Sending following Keys to Console {text}")
         for character in text:
             self.browser.send_keys_to_focused_element(character)
             # time.sleep() is used as a short delay between two keystrokes.
@@ -231,19 +231,19 @@ class VMConsole(Pretty):
 
     def switch_to_appliance(self):
         """Switch focus to appliance tab/window."""
-        logger.info("Switching to appliance: window handle = {}".format(self.appliance_handle))
+        logger.info(f"Switching to appliance: window handle = {self.appliance_handle}")
         self.browser.selenium.switch_to.window(self.appliance_handle)
 
     def switch_to_console(self):
         """Switch focus to console tab/window."""
-        logger.info("Switching to console: window handle = {}".format(self.console_handle))
+        logger.info(f"Switching to console: window handle = {self.console_handle}")
         if (self.console_handle and self.console_handle in self.browser.selenium.window_handles):
             self.browser.selenium.switch_to_window(self.console_handle)
 
     def wait_for_connect(self, timeout=30):
         """Wait for as long as the specified/default timeout for the console to be connected."""
         try:
-            logger.info('Waiting for console connection (timeout={})'.format(timeout))
+            logger.info(f'Waiting for console connection (timeout={timeout})')
             wait_for(func=lambda: self.is_connected(),
                      delay=1, handle_exceptions=True,
                      num_sec=timeout)
@@ -292,7 +292,7 @@ class VMConsole(Pretty):
             return None
         try:
             if to_disappear:
-                logger.info("Waiting for {} to disappear from screen".format(text_to_find))
+                logger.info(f"Waiting for {text_to_find} to disappear from screen")
 
             result = wait_for(func=lambda: to_disappear != self.find_text_on_screen(text_to_find),
                      delay=5,

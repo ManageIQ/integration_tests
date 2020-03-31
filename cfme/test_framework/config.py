@@ -8,7 +8,7 @@ import attr
 import yaycl
 
 
-class Configuration(object):
+class Configuration:
     """
     holds the current configuration
     """
@@ -48,7 +48,7 @@ class Configuration(object):
 
 
 @attr.s(eq=False)
-class DeprecatedConfigWrapper(object):
+class DeprecatedConfigWrapper:
     """
     a wrapper that provides the old :code:``utils.conf`` api
     """
@@ -58,7 +58,7 @@ class DeprecatedConfigWrapper(object):
     def __getattr__(self, key):
         if self._warn:
             warnings.warn(
-                'the configuration module {} will be deprecated'.format(key),
+                f'the configuration module {key} will be deprecated',
                 category=DeprecationWarning,
                 stacklevel=2,
             )
@@ -71,7 +71,7 @@ class DeprecatedConfigWrapper(object):
     def __getitem__(self, key):
         if self._warn:
             warnings.warn(
-                'the configuration module {} will be deprecated'.format(key),
+                f'the configuration module {key} will be deprecated',
                 category=DeprecationWarning,
                 stacklevel=2,
             )

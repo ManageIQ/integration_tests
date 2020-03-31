@@ -86,7 +86,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
         request.addfinalizer(
             lambda: appliance.collections.infra_vms.instantiate(vm_name, provider)
             .cleanup_on_provider())
-        request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
+        request_description = f'Provision from [{template}] to [{vm_name}]'
         provision_request = appliance.collections.requests.instantiate(
             description=request_description)
         if delayed is not None:
@@ -108,7 +108,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
         # nav to requests page happens on successful provision
         logger.info('Waiting for cfme provision request for vm %s', vm_name)
         provision_request.wait_for_request()
-        msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+        msg = f"Provisioning failed with the message {provision_request.rest.message}"
         assert provision_request.is_succeeded(), msg
         return vm
 
@@ -299,7 +299,7 @@ def test_tag(provisioner, prov_data, provider, vm_name):
     assert any(
         tag.category.display_name == "Service Level" and tag.display_name == "Gold"
         for tag in tags
-    ), "Service Level: Gold not in tags ({})".format(tags)
+    ), f"Service Level: Gold not in tags ({tags})"
 
 
 @pytest.mark.rhv3
@@ -467,7 +467,7 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
     wait_for(
         lambda: vm.exists_on_provider,
         num_sec=240, delay=5,
-        message="VM {} exists on provider.".format(vm_name)
+        message=f"VM {vm_name} exists on provider."
     )
     assert 'Datacenter' == provider.mgmt.get_vm(vm_name).raw.parent.parent.name, (
         'The new vm is not placed in the Datacenter root directory!')

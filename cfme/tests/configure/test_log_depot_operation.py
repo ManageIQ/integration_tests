@@ -21,7 +21,7 @@ from cfme.utils.update import update
 pytestmark = [pytest.mark.long_running, test_requirements.log_depot]
 
 
-class LogDepotType(object):
+class LogDepotType:
     def __init__(self, protocol, credentials, access_dir=None, path=None):
         self.protocol = protocol
         self._param_name = self.protocol
@@ -121,7 +121,7 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     It also provides a finalizer to disable the depot after test run.
     """
     log_depot.machine_ip = depot_machine_ip
-    uri = '{}{}'.format(log_depot.machine_ip, log_depot.access_dir)
+    uri = f'{log_depot.machine_ip}{log_depot.access_dir}'
     server_log_depot = appliance.server.collect_logs
     with update(server_log_depot):
         server_log_depot.depot_type = log_depot.protocol
@@ -134,21 +134,21 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
 
 
 def check_ftp(appliance, ftp, server_name, server_zone_id, check_contents=False):
-    server_string = '{}_{}'.format(server_name, server_zone_id)
+    server_string = f'{server_name}_{server_zone_id}'
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
         date_group = '(_.*?){4}'
         zip_files = ftp.filesystem.search(re.compile(
-            r"^.*{}{}[.]zip$".format(server_string, date_group)), directories=False)
+            fr"^.*{server_string}{date_group}[.]zip$"), directories=False)
         assert zip_files, "No logs found!"
         # Collection of Models and Dialogs introduced in 5.10 but it work only in 5.11 (BZ 1656318)
         if appliance.version >= "5.11" and not BZ(1706989).blocks:
             models_files = ftp.filesystem.search(re.compile(
-                r"^Models_.*{}[.]zip$".format(server_string)), directories=False
+                fr"^Models_.*{server_string}[.]zip$"), directories=False
             )
             assert models_files, 'No models files found'
             dialogs_files = ftp.filesystem.search(re.compile(
-                r"^Dialogs_.*{}[.]zip$".format(server_string)), directories=False
+                fr"^Dialogs_.*{server_string}[.]zip$"), directories=False
             )
             assert dialogs_files, 'No dialogs files found'
 
@@ -173,7 +173,7 @@ def check_ftp(appliance, ftp, server_name, server_zone_id, check_contents=False)
                         if "ansible" in log and BZ(1751961).blocks:
                             continue
                         result = log_ssh.run_command(
-                            "unzip -l ~{} | grep {}".format(zip_file.path, log), ensure_user=True
+                            f"unzip -l ~{zip_file.path} | grep {log}", ensure_user=True
                         )
                         assert log in result.output
                         log_file_size = result.output.split()[0]
@@ -303,7 +303,7 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
         ftp.recursively_delete()
 
     with appliance:
-        uri = '{}{}'.format(log_depot.machine_ip, log_depot.access_dir)
+        uri = f'{log_depot.machine_ip}{log_depot.access_dir}'
         with update(collect_logs):
             collect_logs.second_server_collect = from_secondary
             collect_logs.depot_type = log_depot.protocol
@@ -355,7 +355,7 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
         # delete all files
         ftp.recursively_delete()
 
-    uri = '{}{}'.format(log_depot.machine_ip, log_depot.access_dir)
+    uri = f'{log_depot.machine_ip}{log_depot.access_dir}'
     collect_logs = (
         appliance.server.zone.collect_logs if zone_collect else appliance.server.collect_logs)
     with update(collect_logs):

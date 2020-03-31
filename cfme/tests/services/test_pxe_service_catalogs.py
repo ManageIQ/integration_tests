@@ -134,7 +134,7 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).cleanup_on_provider()
+            f"{vm_name}0001", provider).cleanup_on_provider()
     )
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
@@ -144,5 +144,5 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     provision_request = appliance.collections.requests.instantiate(request_description,
                                                                    partial_check=True)
     provision_request.wait_for_request(num_sec=3600)
-    msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+    msg = f"Provisioning failed with the message {provision_request.rest.message}"
     assert provision_request.is_succeeded(), msg

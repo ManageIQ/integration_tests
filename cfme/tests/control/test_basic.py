@@ -562,7 +562,7 @@ def test_control_assign_actions_to_event(request, policy_class, policy, action):
         prefix = policy.TREE_NODE if not policy.TREE_NODE == "Vm" else policy.TREE_NODE.upper()
         if policy.TREE_NODE == "Physical Infrastructure" and BZ(1700070).blocks:
             prefix = policy.PRETTY
-        event = "{} Compliance Check".format(prefix)
+        event = f"{prefix} Compliance Check"
         request.addfinalizer(lambda: policy.assign_actions_to_event(
             event, {"Mark as Non-Compliant": False}))
     policy.assign_actions_to_event(event, action)

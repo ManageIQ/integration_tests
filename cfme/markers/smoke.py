@@ -70,7 +70,7 @@ def pytest_collection_modifyitems(session, config, items):
         smoke_tests.halt_on_fail = config.getvalue('haltonsmokefail')
 
 
-class SmokeTests(object):
+class SmokeTests:
     # state trackers
     run_tests = 0
     failed_tests = 0

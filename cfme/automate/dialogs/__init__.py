@@ -72,7 +72,7 @@ class EditDialogView(DialogForm):
         expected_title = (
             "Automate Customization"
             if self.browser.product_version < "5.11"
-            else 'Editing {} Service Dialog'.format(obj.label)
+            else f'Editing {obj.label} Service Dialog'
         )
         return (
             self.in_customization
@@ -89,12 +89,12 @@ class CopyDialogView(DialogForm):
     @property
     def is_displayed(self):
         obj = self.context["object"]
-        expected_label = 'Copy of {}'.format(obj.label)
+        expected_label = f'Copy of {obj.label}'
 
         expected_title = (
             "Automate Customization"
             if self.browser.product_version < "5.11"
-            else 'Editing {} Service Dialog'.format(obj.label)
+            else f'Editing {obj.label} Service Dialog'
         )
         return (
             self.in_customization

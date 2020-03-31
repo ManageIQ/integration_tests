@@ -101,7 +101,7 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope):
     def run(c):
         assert appliance.ssh_client.run_command(c).success
 
-    run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
+    run(f'curl -o /etc/yum.repos.d/rpmrebuild.repo {url}')
     run('yum install rpmrebuild createrepo -y')
     run('mkdir /myrepo')
     run('rpmrebuild --release=99 cfme-appliance')

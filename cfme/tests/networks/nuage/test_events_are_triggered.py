@@ -102,7 +102,7 @@ def expect_event(listener, event_type, entity_id, comment=''):
 
     listener(
         {
-            'full_data': '{} [ID={}] {}'.format(event_type, entity_id, comment),
+            'full_data': f'{event_type} [ID={entity_id}] {comment}',
             'cmp_func': cmp_function
         },
         source='NUAGE',

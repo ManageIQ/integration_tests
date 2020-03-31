@@ -30,13 +30,13 @@ def test_host_configuration(host_collection, provider, soft_assert, appliance):
     for host in hosts:
         host.run_smartstate_analysis()
         task = appliance.collections.tasks.instantiate(
-            name="SmartState Analysis for '{}'".format(host.name), tab='MyOtherTasks')
+            name=f"SmartState Analysis for '{host.name}'", tab='MyOtherTasks')
         task.wait_for_finished()
         fields = ['Packages', 'Services', 'Files']
         view = navigate_to(host, 'Details')
         for field in fields:
             value = int(view.entities.summary('Configuration').get_text_of(field))
-            soft_assert(value > 0, 'Nodes number of {} is 0'.format(field))
+            soft_assert(value > 0, f'Nodes number of {field} is 0')
 
 
 @pytest.mark.regression
@@ -55,7 +55,7 @@ def test_host_cpu_resources(host_collection, provider, soft_assert):
         view = navigate_to(host, 'Details')
         for field in fields:
             value = int(view.entities.summary('Properties').get_text_of(field))
-            soft_assert(value > 0, "Aggregate Node {} is 0".format(field))
+            soft_assert(value > 0, f"Aggregate Node {field} is 0")
 
 
 @pytest.mark.regression
@@ -73,7 +73,7 @@ def test_host_auth(host_collection, provider, soft_assert):
         auth_status = view.entities.summary('Authentication Status').get_text_of(
             'SSH Key Pair Credentials')
         soft_assert(auth_status == 'Valid',
-                    'Incorrect SSH authentication status {}'.format(auth_status))
+                    f'Incorrect SSH authentication status {auth_status}')
 
 
 @pytest.mark.regression
@@ -193,7 +193,7 @@ def test_hypervisor_hostname(host_collection, provider, soft_assert):
         view = navigate_to(host, 'Details')
         hv_name = view.entities.summary('Properties').get_text_of('Hypervisor Hostname')
         soft_assert(hv_name in hvisors,
-            "Hypervisor hostname {} is not in Hypervisor list".format(hv_name))
+            f"Hypervisor hostname {hv_name} is not in Hypervisor list")
 
 
 @pytest.mark.rfe
@@ -212,7 +212,7 @@ def test_hypervisor_hostname_views(host_collection, provider, view_type, soft_as
     for item in items:
         hv_name = item.data['hypervisor_hostname']
         soft_assert(hv_name in hvisors,
-                    "Hypervisor hostname {} is not in Hypervisor list".format(hv_name))
+                    f"Hypervisor hostname {hv_name} is not in Hypervisor list")
 
 
 @pytest.mark.rfe

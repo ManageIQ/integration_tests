@@ -43,7 +43,7 @@ def test_group_roles(request, temp_appliance_preconfig_long, group_name, group_d
         username = credentials[group_name]['username']
         password = credentials[group_name]['password']
     except KeyError:
-        pytest.fail('No match in credentials file for group "{}"'.format(group_name))
+        pytest.fail(f'No match in credentials file for group "{group_name}"')
 
     user = appliance.collections.users.simple_user(username, password)
     with user:

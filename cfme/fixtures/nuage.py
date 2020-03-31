@@ -72,7 +72,7 @@ def with_nuage_sandbox_modscope(appliance, setup_provider_modscope, provider):
     tenant = (appliance.db.client.session
               .query(tenants_table.name, tenants_table.ems_ref)
               .filter(tenants_table.ems_ref == enterprise.id).first())
-    assert tenant is not None, 'Nuage sandbox tenant inventory missing: {}'.format(enterprise.name)
+    assert tenant is not None, f'Nuage sandbox tenant inventory missing: {enterprise.name}'
 
     # Let integration test do whatever it needs to do.
     yield sandbox

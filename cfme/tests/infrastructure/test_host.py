@@ -60,7 +60,7 @@ def host_ips(provider):
         if ipaddr:
             ipaddresses.append(ipaddr)
     if not ipaddresses:
-        pytest.skip('No hosts IP addresses found for provider "{}"'.format(provider.name))
+        pytest.skip(f'No hosts IP addresses found for provider "{provider.name}"')
 
     ipaddresses.sort()
     return tuple(ipaddresses)

@@ -178,4 +178,4 @@ class Details(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(key=self.obj.key, surf_pages=True).click()
         except ItemNotFound:
-            raise ItemNotFound('Could not locate container {}'.format(self.obj.key))
+            raise ItemNotFound(f'Could not locate container {self.obj.key}')

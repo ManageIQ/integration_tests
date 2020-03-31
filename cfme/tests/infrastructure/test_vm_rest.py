@@ -44,7 +44,7 @@ def test_query_vm_attributes(vm, soft_assert):
     outcome = query_resource_attributes(vm)
     for failure in outcome.failed:
         # BZ 1546995
-        soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+        soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 
@@ -72,7 +72,7 @@ def test_vm_scan(appliance, vm, from_detail):
     def _finished():
         response.task.reload()
         if 'error' in response.task.status.lower():
-            pytest.fail('Error when running scan vm method: `{}`'.format(response.task.message))
+            pytest.fail(f'Error when running scan vm method: `{response.task.message}`')
         return response.task.state.lower() == 'finished'
 
 

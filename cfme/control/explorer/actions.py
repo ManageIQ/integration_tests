@@ -203,7 +203,7 @@ class Action(BaseEntity, Updateable, Pretty):
                 'Action "{}" was saved'.format(updates.get("description", self.description)))
         else:
             view.flash.assert_message(
-                'Edit of Action "{}" was cancelled by the user'.format(self.description))
+                f'Edit of Action "{self.description}" was cancelled by the user')
 
     def delete(self, cancel=False):
         """Delete this Action in UI.
@@ -219,7 +219,7 @@ class Action(BaseEntity, Updateable, Pretty):
         else:
             view = self.create_view(ActionsAllView, wait="15s")
             view.flash.assert_success_message(
-                'Action "{}": Delete successful'.format(self.description))
+                f'Action "{self.description}": Delete successful')
 
     @property
     def exists(self):
@@ -270,7 +270,7 @@ class ActionCollection(BaseCollection):
         view.add_button.click()
         action = self.instantiate(description, action_type, action_values=action_values)
         view = action.create_view(ActionDetailsView, wait='10s')
-        view.flash.assert_success_message('Action "{}" was added'.format(action.description))
+        view.flash.assert_success_message(f'Action "{action.description}" was added')
         return action
 
 

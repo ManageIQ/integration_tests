@@ -59,7 +59,7 @@ def _load_firefox_profile():
     return profile
 
 
-class Wharf(object):
+class Wharf:
     # class level to allow python level atomic removal of instance values
     docker_id = None
 
@@ -76,7 +76,7 @@ class Wharf(object):
             return json.loads(response.content)
         except ValueError:
             raise ValueError(
-                "JSON could not be decoded:\n{}".format(response.content))
+                f"JSON could not be decoded:\n{response.content}")
 
     def checkout(self):
         if self.docker_id is not None:
@@ -122,7 +122,7 @@ class Wharf(object):
         return self.docker_id is not None
 
 
-class BrowserFactory(object):
+class BrowserFactory:
     def __init__(self, webdriver_class, browser_kwargs):
         self.webdriver_class = webdriver_class
         self.browser_kwargs = browser_kwargs
@@ -174,7 +174,7 @@ class BrowserFactory(object):
 
 class WharfFactory(BrowserFactory):
     def __init__(self, webdriver_class, browser_kwargs, wharf):
-        super(WharfFactory, self).__init__(webdriver_class, browser_kwargs)
+        super().__init__(webdriver_class, browser_kwargs)
         self.wharf = wharf
 
         if browser_kwargs.get('desired_capabilities', {}).get('browserName') == 'chrome':
@@ -196,7 +196,7 @@ class WharfFactory(BrowserFactory):
         log.info(view_msg)
         write_line(view_msg, cyan=True)
         return dict(
-            super(WharfFactory, self).processed_browser_args(),
+            super().processed_browser_args(),
             command_executor=command_executor,
         )
 
@@ -222,12 +222,12 @@ class WharfFactory(BrowserFactory):
 
     def close(self, browser):
         try:
-            super(WharfFactory, self).close(browser)
+            super().close(browser)
         finally:
             self.wharf.checkin()
 
 
-class BrowserManager(object):
+class BrowserManager:
     def __init__(self, browser_factory):
         self.factory = browser_factory
         self.browser = None
@@ -338,7 +338,7 @@ class BrowserManager(object):
         return self.browser
 
 
-class WithZoom(object):
+class WithZoom:
     """
     This class is a decorator that used to wrap function with zoom level.
     this class perform zoom by <level>, call the target function and exit

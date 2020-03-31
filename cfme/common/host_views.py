@@ -49,7 +49,7 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
 class HostEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(HostEntity, self).data
+        data_dict = super().data
         try:
             if 'quadicon' in data_dict and data_dict['quadicon']:
                 quad_data = document_fromstring(data_dict['quadicon'])

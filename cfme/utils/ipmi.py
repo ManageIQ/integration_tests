@@ -49,7 +49,7 @@ class IPMI():
         elif "Chassis Power is off" in output:
             return False
         else:
-            raise IPMIException("Unexpected command output: {}".format(output))
+            raise IPMIException(f"Unexpected command output: {output}")
 
     def power_off(self):
         """ Turns the power off.
@@ -84,7 +84,7 @@ class IPMI():
             if "Reset" in output:
                 return True
             else:
-                raise Exception("Unexpected command output: {}".format(output))
+                raise Exception(f"Unexpected command output: {output}")
 
     def _change_power_state(self, power_on=True):
         """ Changes the power state of a machine.
@@ -106,7 +106,7 @@ class IPMI():
         elif "Chassis Power Control: Down/Off" in output and not power_on:
             return True
         else:
-            raise Exception("Unexpected command output: {}".format(output))
+            raise Exception(f"Unexpected command output: {output}")
 
     def _run_command(self, command):
         """ Builds the command arguments from the command string.

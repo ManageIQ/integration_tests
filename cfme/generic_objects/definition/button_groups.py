@@ -330,7 +330,7 @@ class ButtonGroupDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.accordion.classes.tree.click_path(
             'All Generic Object Classes', self.obj.parent.parent.name, 'Actions',
-            '{} (Group)'.format(self.obj.name))
+            f'{self.obj.name} (Group)')
 
 
 @navigator.register(GenericObjectButtonGroup, "Edit")

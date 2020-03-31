@@ -21,7 +21,7 @@ VOLUME_SIZE = 1
 @pytest.fixture(scope='function')
 def volume(appliance, provider):
     collection = appliance.collections.volumes
-    storage_manager = '{} Cinder Manager'.format(provider.name)
+    storage_manager = f'{provider.name} Cinder Manager'
     volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
@@ -49,7 +49,7 @@ def volume_with_type(appliance, provider):
         return volume_type.exists
 
     collection = appliance.collections.volumes
-    storage_manager = '{} Cinder Manager'.format(provider.name)
+    storage_manager = f'{provider.name} Cinder Manager'
     volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
@@ -84,7 +84,7 @@ def test_create_volume(volume, provider):
         initialEstimate: 1/4h
     """
     assert volume.exists
-    assert volume.size == '{} GB'.format(VOLUME_SIZE)
+    assert volume.size == f'{VOLUME_SIZE} GB'
     assert volume.tenant == provider.data['provisioning']['cloud_tenant']
 
 
@@ -124,7 +124,7 @@ def test_create_volume_with_type(volume_with_type, provider):
         initialEstimate: 1/4h
     """
     assert volume_with_type.exists
-    assert volume_with_type.size == '{} GB'.format(VOLUME_SIZE)
+    assert volume_with_type.size == f'{VOLUME_SIZE} GB'
     assert volume_with_type.tenant == provider.data['provisioning']['cloud_tenant']
 
 

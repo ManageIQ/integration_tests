@@ -55,7 +55,7 @@ def test_vmware_provider_filters(appliance, provider, soft_assert):
     esx_platforms = ['Platform / ESX 6.0', 'Platform / ESX 6.5', 'Platform / ESX 6.7']
     view = navigate_to(appliance.collections.hosts, 'All')
     all_options = view.filters.navigation.all_options
-    logger.info("All options for Filters are: {} ".format(all_options))
+    logger.info(f"All options for Filters are: {all_options} ")
     for esx_platform in esx_platforms:
         soft_assert(esx_platform in all_options, "ESX Platform does not exists in options")
 
@@ -284,7 +284,7 @@ def test_vmware_cdrom_dropdown_not_blank(appliance, provider):
     try:
         iso_ds = datastore_collection.instantiate(name=ds[0], provider=provider)
     except IndexError:
-        pytest.skip('No datastores found of type iso on provider {}'.format(provider.name))
+        pytest.skip(f'No datastores found of type iso on provider {provider.name}')
     iso_ds.run_smartstate_analysis()
     vms_collections = appliance.collections.infra_vms
     vm = vms_collections.instantiate(name='cu-24x7', provider=provider)
@@ -342,9 +342,9 @@ def test_vmware_inaccessible_datastore_vm_provisioning(request, appliance, provi
         datastore for datastore in provider.mgmt.list_datastore()
         if not provider.mgmt.get_datastore(datastore).summary.accessible]
     if inaccessible_datastores:
-        logger.info("Found {} inaccessible_datastores".format(inaccessible_datastores))
+        logger.info(f"Found {inaccessible_datastores} inaccessible_datastores")
     else:
-        pytest.skip("This provider {} has no inaccessible_datastores.".format(provider.name))
+        pytest.skip(f"This provider {provider.name} has no inaccessible_datastores.")
     vm = appliance.collections.infra_vms.create(
         fauxfactory.gen_alphanumeric(18, start="test-vmware-"),
         provider, find_in_cfme=True, wait=True,
@@ -426,9 +426,9 @@ def test_esxi_reboot_not_orphan_vms(appliance, provider):
                 puts \"VM_ID=#{vm.id} name=[#{vm.name}] uid=#{vm.uid_ems}\"'"
     result = appliance.ssh_client.run_rails_command(command)
     provider.refresh_provider_relationships()
-    assert result.success, "SSH Command result was unsuccessful: {}".format(result)
+    assert result.success, f"SSH Command result was unsuccessful: {result}"
     if not result.output:
-        logger.info("Output of Rails command was {}".format(result.output))
+        logger.info(f"Output of Rails command was {result.output}")
         vm_name = re.findall(r"\[.+\]", result.output)[0].split('[')[1].split(']')[0]
         vm = appliance.collections.infra_vms.instantiate(name=vm_name, provider=provider)
         view = vm.load_details(from_any_provider=True)
@@ -473,7 +473,7 @@ def test_switches_class_present_ems(appliance, provider):
                 puts "class name [#{p.switches.first.class.name}]"'
                 """
     result = appliance.ssh_client.run_rails_command(command)
-    assert result.success, "SSH Command result was unsuccessful: {}".format(result)
+    assert result.success, f"SSH Command result was unsuccessful: {result}"
     logger.info('output of rails command: %s', result.output)
     # https://bugzilla.redhat.com/show_bug.cgi?id=1688900#c19
     # due to above comment, and since list of Switch classes that can be returned would differ based
@@ -517,7 +517,7 @@ def test_rebuilt_vcenter_duplicate_hosts(appliance, provider):
     hosts_before = len(appliance.rest_api.collections.hosts.all)
     command = "'Host.all.each { |h| h.ems_id = nil; h.ems_ref = h.id.to_s; h.save! }'"
     result = appliance.ssh_client.run_rails_command(command)
-    assert result.success, "SSH Command result was unsuccessful: {}".format(result)
+    assert result.success, f"SSH Command result was unsuccessful: {result}"
     logger.info('output of rails command: %s', result.output)
     provider.refresh_provider_relationships(wait=300, delay=30, refresh_delta=120)
     # Using appliance.rest_api as hosts.all() do not return archived hosts, I need those too

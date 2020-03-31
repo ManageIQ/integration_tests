@@ -10,7 +10,7 @@ ROOT = py.path.local(cfme.__file__).dirpath()
 
 MODULES = sorted(x for x in ROOT.visit("*.py") if 'test_' not in x.basename)
 
-KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
+KNOWN_FAILURES = {ROOT.dirpath().join(x) for x in[
     'cfme/utils/ports.py',  # module object
     'cfme/utils/dockerbot/check_prs.py',  # unprotected script
     'cfme/utils/conf.py',  # config object that replaces the module
@@ -23,7 +23,7 @@ KNOWN_FAILURES = set(ROOT.dirpath().join(x) for x in[
     'cfme/configure/tasks.py',
     'cfme/scripting/bz.py',
     'cfme/scripting/miq.py',
-])
+]}
 
 
 @pytest.mark.parametrize('module_path', MODULES, ids=ROOT.dirpath().bestrelpath)

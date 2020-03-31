@@ -145,7 +145,7 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
     manual = item.get_closest_marker('manual')
     if not manual:
         # The master here should probably link the latest "commit" eventually
-        automation_script = 'http://github.com/{0}/{1}/blob/master/{2}#L{3}'.format(
+        automation_script = 'http://github.com/{}/{}/blob/master/{}#L{}'.format(
             xunit['gh_owner'],
             xunit['gh_repo'],
             item.location[0],
@@ -156,11 +156,11 @@ def get_testcase_data(name, tests, processed_test, item, legacy=False):
         # Description with timestamp and link to test case source.
         # The timestamp will not be visible in Polarion, but will cause Polarion
         # to update the "Updated" field even when there's no other change.
-        description = '{0}<br id="{1}"/><br/><a href="{2}">Test Source</a>'.format(
+        description = '{}<br id="{}"/><br/><a href="{}">Test Source</a>'.format(
             description, timestamp, automation_script)
     else:
         custom_fields['caseautomation'] = "manualonly"
-        description = '{}'.format(description)
+        description = f'{description}'
 
     processed_test.append(name)
     tests.append(dict(
@@ -190,7 +190,7 @@ def testresult_record(test_name, parameters=None, result=None):
     properties.append(testcase_id)
     for param, value in parameters.items():
         param_el = etree.Element(
-            'property', name="polarion-parameter-{}".format(param), value=value)
+            'property', name=f"polarion-parameter-{param}", value=value)
         properties.append(param_el)
     testcase.append(properties)
     return testcase
@@ -236,7 +236,7 @@ def testrun_gen(tests, filename, config, collectonly=True):
         if prop_value is None:
             continue
         prop_el = etree.Element(
-            'property', name="polarion-{}".format(prop_name), value=str(prop_value))
+            'property', name=f"polarion-{prop_name}", value=str(prop_value))
         properties.append(prop_el)
     testsuites.append(properties)
     testsuites.append(testsuite)
@@ -315,7 +315,7 @@ def gen_duplicates_log(items):
 
     with open('duplicates.log', 'w') as f:
         for test in sorted(duplicates):
-            f.write('{}\n'.format(test))
+            f.write(f'{test}\n')
 
 
 @pytest.hookimpl(trylast=True)

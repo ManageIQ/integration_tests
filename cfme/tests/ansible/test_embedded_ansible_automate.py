@@ -111,7 +111,7 @@ def alert(appliance, management_event_instance):
 def alert_profile(appliance, alert, create_vm_modscope):
     _alert_profile = appliance.collections.alert_profiles.create(
         alert_profiles.VMInstanceAlertProfile,
-        "Alert profile for {}".format(create_vm_modscope.name),
+        f"Alert profile for {create_vm_modscope.name}",
         alerts=[alert]
     )
     _alert_profile.assign_to("The Enterprise")
@@ -172,7 +172,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, ansible_repos
         appliance=appliance,
         request="Call_Instance",
         attributes_values={
-            "namespace": "{}/{}".format(domain.name, namespace.name),
+            "namespace": f"{domain.name}/{namespace.name}",
             "class": klass.name,
             "instance": instance.name
         }

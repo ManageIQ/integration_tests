@@ -68,14 +68,14 @@ def setup_distributed_env(cfme_version, provider_type, provider, lease, desc):
     apps[0].appliance_console.run_commands(command_set0)
     apps[0].evmserverd.wait_for_running()
     apps[0].wait_for_web_ui()
-    print("VMDB appliance provisioned and configured {}".format(ip0))
+    print(f"VMDB appliance provisioned and configured {ip0}")
     command_set1 = ('ap', '', opt, '2', ip0, '', pwd, '', '3') + port + ('', '',
         pwd, TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].evmserverd.wait_for_running()
     apps[1].wait_for_web_ui()
-    print("Non-VMDB appliance provisioned and configured {}".format(ip1))
-    print("Appliance pool lease time is {}".format(lease))
+    print(f"Non-VMDB appliance provisioned and configured {ip1}")
+    print(f"Appliance pool lease time is {lease}")
 
 
 @main.command('ha', help='Sets up high availability environment')
@@ -102,28 +102,28 @@ def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
     command_set0 = ('ap', '', '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
     wait_for(lambda: apps[0].db.is_dedicated_active)
-    print("Dedicated database provisioned and configured {}".format(ip0))
+    print(f"Dedicated database provisioned and configured {ip0}")
 
     command_set1 = ('ap', '', '7', '1', '2', '1', 'y') + port + ('', '', pwd,
         TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].evmserverd.wait_for_running()
     apps[1].wait_for_web_ui()
-    print("Non-VMDB appliance provisioned and region created {}".format(ip1))
+    print(f"Non-VMDB appliance provisioned and region created {ip1}")
 
     command_set2 = ('ap', '', '8', '1', '1', '', '', pwd, pwd, ip0, 'y', '')
     apps[0].appliance_console.run_commands(command_set2)
-    print("Primary HA node configured {}".format(ip0))
+    print(f"Primary HA node configured {ip0}")
 
     command_set3 = ('ap', '', '8', '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y',
         TimedCommand('y', 300), '')
     apps[2].appliance_console.run_commands(command_set3)
-    print("Secondary HA node provision and configured {}".format(ip2))
+    print(f"Secondary HA node provision and configured {ip2}")
 
     command_set4 = ('ap', '', '10', '1', '')
     apps[1].appliance_console.run_commands(command_set4)
     print("HA configuration complete")
-    print("Appliance pool lease time is {}".format(lease))
+    print(f"Appliance pool lease time is {lease}")
 
 
 @main.command('replicated', help='Sets up replicated environment')
@@ -165,7 +165,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
             count=required_app_count, cfme_version=cfme_version,
             provider_type=provider_type, provider=provider, lease_time=lease_time
         )
-        print("Appliance pool lease time is {}".format(lease))
+        print(f"Appliance pool lease time is {lease}")
         sprout_client.set_pool_description(request_id, desc)
         print("Appliances Provisioned")
     print("Configuring Replicated Environment")
@@ -179,7 +179,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
     apps[0].appliance_console.run_commands(command_set0)
     apps[0].evmserverd.wait_for_running()
     apps[0].wait_for_web_ui()
-    print("Done: Global @ {}".format(ip0))
+    print(f"Done: Global @ {ip0}")
 
     print("Remote Appliance Configuration")
     command_set1 = ('ap', '', opt, '2', ip0, '', pwd, '', '1', 'y', '1', 'n', '1', pwd,
@@ -187,7 +187,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].evmserverd.wait_for_running()
     apps[1].wait_for_web_ui()
-    print("Done: Remote @ {}".format(ip1))
+    print(f"Done: Remote @ {ip1}")
 
     if remote_worker:
         print("Remote Worker Appliance Configuration")
@@ -196,7 +196,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
         apps[2].appliance_console.run_commands(command_set2)
         apps[2].evmserverd.wait_for_running()
         apps[2].wait_for_web_ui()
-        print("Done: Remote Worker @ {}".format(ip2))
+        print(f"Done: Remote Worker @ {ip2}")
 
     print("Configuring Replication")
     print("Setup - Replication on remote appliance")
@@ -248,7 +248,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
             count=required_app_count, cfme_version=cfme_version,
             provider_type=provider_type, provider=provider, lease_time=lease_time
         )
-        print("Appliance pool lease time is {}".format(lease))
+        print(f"Appliance pool lease time is {lease}")
         sprout_client.set_pool_description(request_id, desc)
         print("Appliances Provisioned")
     print("Configuring Replicated Environment")
@@ -272,7 +272,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
     global_app.evmserverd.wait_for_running()
     global_app.wait_for_web_ui()
 
-    print("Done: Global @ {}".format(gip))
+    print(f"Done: Global @ {gip}")
 
     for num, app in enumerate(remote_apps):
         region_n = str((num + 1) * 10)
@@ -290,7 +290,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
         app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
         app.evmserverd.wait_for_running()
         app.wait_for_web_ui()
-        print("Done: Remote @ {}, region: {}".format(app.hostname, region_n))
+        print(f"Done: Remote @ {app.hostname}, region: {region_n}")
 
         print("Configuring Replication")
         print("Setup - Replication on remote appliance")
@@ -306,7 +306,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
         for app, prov_id in zip(cycle(remote_apps), add_prov):
             stack.push(app)
             prov = get_crud(prov_id)
-            print("Adding provider {} to appliance {}".format(prov_id, app.hostname))
+            print(f"Adding provider {prov_id} to appliance {app.hostname}")
             prov.create_rest()
             stack.pop()
 

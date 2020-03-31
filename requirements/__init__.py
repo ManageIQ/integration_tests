@@ -17,7 +17,7 @@ class RepoImportScanner(Scanner):
         # workaround for https://gitlab.com/python-devs/importlib_metadata/issues/81
         self.tricky_package_map = kwargs.pop("package_map", None) or {}
         # overwrite libraries_installed keyed on package names
-        super(RepoImportScanner, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.installed_packages = [
             lib.key
             for lib in self.libraries_installed
@@ -85,4 +85,4 @@ class RepoImportScanner(Scanner):
         :return: void
         """
         for library in self.libraries_found:
-            fd.write("{}\n".format(library))
+            fd.write(f"{library}\n")

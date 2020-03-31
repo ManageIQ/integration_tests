@@ -36,7 +36,7 @@ def template(template_location, provider):
             logger.info("Cannot apply %r to %r in the template specification, ignoring.", field, o)
         else:
             if not isinstance(o, str):
-                raise ValueError("{!r} is not a string! (for template)".format(o))
+                raise ValueError(f"{o!r} is not a string! (for template)")
             if not TEMPLATES:
                 # There is nothing in TEMPLATES, that means no trackerbot URL and no data pulled.
                 # This should normally not constitute an issue so continue.
@@ -70,7 +70,7 @@ def _get_template(provider, template_type_name):
         template_type = provider.data.templates.get(template_type_name)
     except (AttributeError, KeyError):
         logger.error("Wanted template %s on %s but it is not there!", template, provider.key)
-        pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
+        pytest.skip(f'No {template_type_name} for provider {provider.key}')
     if not isinstance(template_type, Mapping):
         pytest.skip('Template mapping is incorrect, {} on provider {}'
                     .format(template_type_name, provider.key))

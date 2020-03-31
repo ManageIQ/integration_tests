@@ -32,12 +32,12 @@ logging.getLogger("pika").propagate = False
 
 def send_message_to_bot(msg):
 
-    required_fields = set(['rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'])
+    required_fields = {'rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'}
     if not required_fields.issubset(docker_conf.keys()):
-        logger.warning("Skipping - docker.yaml doesn't have {}".format(required_fields))
+        logger.warning(f"Skipping - docker.yaml doesn't have {required_fields}")
         return
 
-    logger.info("Github PR bot: about to send '{}'".format(msg))
+    logger.info(f"Github PR bot: about to send '{msg}'")
     url = docker_conf['rabbitmq_url']
     queue = docker_conf['gh_queue']
     irc_channel = docker_conf['gh_channel']
@@ -53,7 +53,7 @@ def send_message_to_bot(msg):
                               body=json.dumps(message, ensure_ascii=True))
     except Exception:
         output = traceback.format_exc()
-        logger.warning("Exception while sending a message to the bot: {}".format(output))
+        logger.warning(f"Exception while sending a message to the bot: {output}")
     finally:
         if connection:
             connection.close()
@@ -70,8 +70,8 @@ def perform_request(url):
     """
     out = {}
     if token:
-        headers = {'Authorization': 'token {}'.format(token)}
-        full_url = "https://api.github.com/repos/{}/{}/{}".format(owner, repo, url)
+        headers = {'Authorization': f'token {token}'}
+        full_url = f"https://api.github.com/repos/{owner}/{repo}/{url}"
         r = requests.get(full_url, headers=headers)
         out = r.json()
     return out
@@ -110,7 +110,7 @@ def create_run(db_pr, pr):
     run_record = tapi.run.post(new_run)
     for group in tapi.group.get(stream=True, use_for_prt=True)['objects']:
         stream = group['name']
-        logger.info('  Adding task stream {}...'.format(stream))
+        logger.info(f'  Adding task stream {stream}...')
         task_data = dict(output="",
             tid=fauxfactory.gen_alphanumeric(8),
             result="pending",
@@ -129,7 +129,7 @@ def check_prs():
 
     numbers = []
     while True:
-        json_data = perform_request('pulls?per_page=100&page={}'.format(page))
+        json_data = perform_request(f'pulls?per_page=100&page={page}')
         if not json_data:
             break
         for pr in json_data:
@@ -227,7 +227,7 @@ def vm_reaper():
                         appliance = Appliance.from_provider(task['provider'], task['vm_name'])
                         try:
                             if appliance.does_vm_exist():
-                                logger.info("Destroying {}".format(appliance.vm_name))
+                                logger.info(f"Destroying {appliance.vm_name}")
                                 appliance.destroy()
                             vm_cleanup = True
                         except Exception:
@@ -260,13 +260,13 @@ def set_status(commit, status, context, runid):
     """
     data = {
         "state": status,
-        "description": "{} #{}".format(status, runid),
-        "context": "ci/{}".format(context)
+        "description": f"{status} #{runid}",
+        "context": f"ci/{context}"
     }
     data_json = json.dumps(data)
 
     if not DEBUG:
-        headers = {'Authorization': 'token {}'.format(token)}
+        headers = {'Authorization': f'token {token}'}
         requests.post("https://api.github.com/repos/{}/{}/commits/{}/statuses".format(
             owner, repo, commit), data=data_json, headers=headers)
 
@@ -305,7 +305,7 @@ def check_status(pr):
 
     try:
         tasks = tapi.task.get(run=run_id)['objects']
-        statuses = perform_request("commits/{}/statuses".format(commit))
+        statuses = perform_request(f"commits/{commit}/statuses")
         for task in tasks:
             for status in statuses:
                 if status['context'] == "ci/{}".format(task['stream']):
