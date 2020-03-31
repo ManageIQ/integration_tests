@@ -1,14 +1,17 @@
 import fauxfactory
 import pytest
+from wait_for import wait_for
 from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
+from cfme.utils.log import logger
 
 pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
@@ -27,6 +30,16 @@ def create_vm(provider, vm_name):
     )
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm
+
+
+def are_dicts_same(dict1, dict2):
+    logger.info("Comparing two dictionaries dict1: {%s}\n dict2:{%s}" % (dict1, dict2))
+    if set(dict1) != set(dict2):
+        return False
+    for key in dict1.keys():
+        if set(dict1[key]) != set(dict2[key]):
+            return False
+    return True
 
 
 @pytest.fixture
@@ -311,9 +324,8 @@ def test_replication_appliance_add_multi_subscription(request, setup_multi_regio
         ), f"{host.hostname} Remote Appliance is not found in Global Appliance's list"
 
 
-@pytest.mark.manual
 @pytest.mark.tier(1)
-def test_replication_global_region_dashboard():
+def test_replication_global_region_dashboard(request, setup_replication):
     """
     Global dashboard show remote data
 
@@ -329,7 +341,54 @@ def test_replication_global_region_dashboard():
             1.
             2. Dashboard on the Global displays data from the Remote region
     """
-    pass
+    remote_app, global_app = setup_replication
+    remote_provider = provider_app_crud(InfraProvider, remote_app)
+    remote_provider.setup()
+    assert remote_provider.name in remote_app.managed_provider_names, "Provider is not available."
+
+    new_vm_name = fauxfactory.gen_alphanumeric(start="test_rep_dashboard", length=25).lower()
+    vm = create_vm(provider=remote_provider, vm_name=new_vm_name)
+    request.addfinalizer(vm.cleanup_on_provider)
+    data_items = ('EVM: Recently Discovered Hosts', 'EVM: Recently Discovered VMs',
+                  'Top Storage Consumers')
+    remote_app_data, global_app_data = {}, {}
+
+    def get_tabel_data(widget):
+        ret = [row.name.text for row in widget.contents]
+        logger.info("Widget text data:{%s}" % ret)
+        return ret
+
+    def data_check(view, table):
+        return bool(get_tabel_data(view.dashboards("Default Dashboard").widgets(table)))
+
+    view = navigate_to(remote_app.server, "Dashboard")
+    for table_name in data_items:
+        logger.info("Table name:{%s}" % table_name)
+        wait_for(
+            data_check, func_args=[view, table_name], delay=20, num_sec=600,
+            fail_func=view.dashboards("Default Dashboard").browser.refresh,
+            message=f"Waiting for table data item: {table_name} "
+        )
+        remote_app_data[table_name] = get_tabel_data(view.dashboards(
+            "Default Dashboard").widgets(table_name))
+
+    view = navigate_to(global_app.server, "Dashboard")
+    for table_name in data_items:
+        logger.info("Table name:{%s}" % table_name)
+        wait_for(
+            data_check, func_args=[view, table_name], delay=20, num_sec=600,
+            fail_func=view.dashboards("Default Dashboard").browser.refresh,
+            message=f"Waiting for table data item: {table_name}"
+        )
+
+        global_app_data[table_name] = get_tabel_data(view.dashboards(
+            "Default Dashboard").widgets(table_name))
+
+    # TODO(ndhandre): Widget not implemented so some widget not checking in this test case they are
+    #  'Vendor and Guest OS Chart', 'Top Memory Consumers (weekly)', 'Top CPU Consumers (weekly)',
+    #  'Virtual Infrastructure Platforms', 'Guest OS Information'
+
+    assert are_dicts_same(remote_app_data, global_app_data), "Dashboard is not same of both app."
 
 
 @pytest.mark.tier(1)
