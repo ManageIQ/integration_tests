@@ -69,7 +69,7 @@ def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
     imported_domain.delete()
     repo_path = urlparse(GIT_REPO_URL).path
     assert appliance.ssh_client.run_command(
-        '[ ! -d "/var/www/vmdb/data/git_repos{}" ]'.format(repo_path)).success
+        f'[ ! -d "/var/www/vmdb/data/git_repos{repo_path}" ]').success
 
 
 @pytest.mark.tier(2)

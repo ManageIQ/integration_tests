@@ -32,7 +32,7 @@ RUNCMD_TIMEOUT = 1200.0
 
 @attr.s(frozen=True, eq=False)
 @total_ordering
-class SSHResult(object):
+class SSHResult:
     """Allows rich comparison for more convenient testing.
 
     Given you have ``result`` which is an instance of :py:class:`SSHResult`, you can do as follows
@@ -165,7 +165,7 @@ class SSHClient(paramiko.SSHClient):
     def vmdb_version(self):
         res = self.run_command('cat /var/www/miq/vmdb/VERSION')
         if res.failed:
-            raise RuntimeError('Unable to retrieve appliance VMDB version: {}'.format(res.output))
+            raise RuntimeError(f'Unable to retrieve appliance VMDB version: {res.output}')
         version_string = res.output
         return Version(version_string)
 
@@ -256,7 +256,7 @@ class SSHClient(paramiko.SSHClient):
             is_loggedin = self.run_command(command='oc whoami', ensure_host=True)
             if is_loggedin.success:
                 username = str(is_loggedin).strip()
-                logger.info('user {u} is already logged in'.format(u=username))
+                logger.info(f'user {username} is already logged in')
                 if username != self.oc_username:
                     logger.info('logging out from openshift')
                     self.run_command(command='oc logout', ensure_host=True)
@@ -351,7 +351,7 @@ class SSHClient(paramiko.SSHClient):
                 filename = os_path.expanduser("~/.ssh/known_hosts")
                 try:
                     self._system_host_keys.load(filename)
-                except IOError:
+                except OSError:
                     pass
                 return
             self._system_host_keys.load(filename)
@@ -504,19 +504,19 @@ class SSHClient(paramiko.SSHClient):
             logger.info('For this purpose, temporary file name is %r', tempfilename)
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tempfilename, **kwargs)
-            self.run_command('mv {} {}'.format(tempfilename, remote_file))
+            self.run_command(f'mv {tempfilename} {remote_file}')
             return scp
         elif self.is_pod and not ensure_host:
             tmp_folder_name = fauxfactory.gen_alpha(15, start="automation-").lower()
             logger.info('For this purpose, temporary folder name is /tmp/%s', tmp_folder_name)
             # Clean up container's temporary folder
-            self.run_command('rm -rf /tmp/{0}'.format(tmp_folder_name))
+            self.run_command(f'rm -rf /tmp/{tmp_folder_name}')
             # Create/Clean up the host's temporary folder
             self.run_command(
                 'rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name), ensure_host=True)
             # Now upload the file to the openshift host
             tmp_file_name = fauxfactory.gen_alpha(start="file-").lower()
-            tmp_full_name = '/tmp/{}/{}'.format(tmp_folder_name, tmp_file_name)
+            tmp_full_name = f'/tmp/{tmp_folder_name}/{tmp_file_name}'
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tmp_full_name, **kwargs)
             # use oc rsync to put the file in the container
@@ -525,7 +525,7 @@ class SSHClient(paramiko.SSHClient):
                                                      pod=self._container),
                                     ensure_host=True)
             # Move the file onto correct place
-            assert self.run_command('mv {} {}'.format(tmp_full_name, remote_file))
+            assert self.run_command(f'mv {tmp_full_name} {remote_file}')
             return scp
         else:
             if self.username == 'root':
@@ -546,12 +546,12 @@ class SSHClient(paramiko.SSHClient):
         base_name = os_path.basename(remote_file)
         if self.is_container:
             tmp_file_name = fauxfactory.gen_alpha(start="temp_")
-            tempfilename = '/share/{}'.format(tmp_file_name)
+            tempfilename = f'/share/{tmp_file_name}'
             logger.info('For this purpose, temporary file name is %r', tempfilename)
-            self.run_command('cp {} {}'.format(remote_file, tempfilename))
+            self.run_command(f'cp {remote_file} {tempfilename}')
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
                 tempfilename, local_path, **kwargs)
-            self.run_command('rm {}'.format(tempfilename))
+            self.run_command(f'rm {tempfilename}')
             check_call([
                 'mv',
                 os_path.join(local_path, tmp_file_name),
@@ -560,7 +560,7 @@ class SSHClient(paramiko.SSHClient):
         elif self.is_pod:
             tmp_folder_name = fauxfactory.gen_alpha(start="automation-").lower()
             tmp_file_name = fauxfactory.gen_alpha(start="file-").lower()
-            tmp_full_name = '/tmp/{}/{}'.format(tmp_folder_name, tmp_file_name)
+            tmp_full_name = f'/tmp/{tmp_folder_name}/{tmp_file_name}'
             logger.info('For this purpose, temporary file name is %r', tmp_full_name)
             # Clean up container's temporary folder
             self.run_command('rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name))
@@ -568,7 +568,7 @@ class SSHClient(paramiko.SSHClient):
             self.run_command(
                 'rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name), ensure_host=True)
             # Now copy the file in container to the tmp folder
-            assert self.run_command('cp {} {}'.format(remote_file, tmp_full_name))
+            assert self.run_command(f'cp {remote_file} {tmp_full_name}')
             # Use the oc rsync to pull the file onto the host
             rsync_cmd = 'oc rsync --namespace={proj} {pod}:/tmp/{file} /tmp'
             assert self.run_command(rsync_cmd.format(proj=self._project, pod=self._container,
@@ -611,27 +611,27 @@ class SSHClient(paramiko.SSHClient):
         # If already patched with current file, exit
         logger.info('Checking if already patched')
         result = self.run_command(
-            'patch {} {} -f --dry-run -R'.format(remote_path, diff_remote_path))
+            f'patch {remote_path} {diff_remote_path} -f --dry-run -R')
         if result.success:
             return False
 
         # If we have a .bak file available, it means the file is already patched
         # by some older patch; in that case, replace the file-to-be-patched by the .bak first
         logger.info("Checking if %s.bak is available", remote_path)
-        result = self.run_command('test -e {}.bak'.format(remote_path))
+        result = self.run_command(f'test -e {remote_path}.bak')
         if result.success:
             logger.info("%s.bak found; using it to replace %s", remote_path, remote_path)
-            result = self.run_command('mv {}.bak {}'.format(remote_path, remote_path))
+            result = self.run_command(f'mv {remote_path}.bak {remote_path}')
             if result.failed:
                 raise Exception(
-                    "Unable to replace {} with {}.bak".format(remote_path, remote_path))
+                    f"Unable to replace {remote_path} with {remote_path}.bak")
         else:
             logger.info("%s.bak not found", remote_path)
 
         # If not patched and there's MD5 checksum available, check it
         if md5:
             logger.info("MD5 sum check in progress for %s", remote_path)
-            result = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
+            result = self.run_command(f'md5sum -c - <<< "{md5} {remote_path}"')
             if result.success:
                 logger.info('MD5 sum check result: file not changed')
             else:
@@ -639,9 +639,9 @@ class SSHClient(paramiko.SSHClient):
 
         # Create the backup and patch
         result = self.run_command(
-            'patch {} {} -f -b -z .bak'.format(remote_path, diff_remote_path))
+            f'patch {remote_path} {diff_remote_path} -f -b -z .bak')
         if result.failed:
-            raise Exception("Unable to patch file {}: {}".format(remote_path, result.output))
+            raise Exception(f"Unable to patch file {remote_path}: {result.output}")
         return True
 
     def is_file_available(self, remote_path):
@@ -722,7 +722,7 @@ class SSHClient(paramiko.SSHClient):
             ]))
         data = self.run_rake_command("evm:status")
         if data.rc != 0:
-            raise Exception("systemctl status evmserverd $?={}".format(data.rc))
+            raise Exception(f"systemctl status evmserverd $?={data.rc}")
         data = data.output.strip().split("\n\n")
         if len(data) == 2:
             srvs, wrks = data
@@ -730,7 +730,7 @@ class SSHClient(paramiko.SSHClient):
             srvs = data[0]
             wrks = ""
         if "checking evm status" not in srvs.lower():
-            raise Exception("Wrong command output:\n{}".format(data.output))
+            raise Exception(f"Wrong command output:\n{data.output}")
 
         def _process_dict(d):
             for k in ['ID', 'PID', 'SPID']:

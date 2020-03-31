@@ -13,34 +13,34 @@ def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False)
     """
     log_dir = '/var/www/miq/vmdb/log/'
 
-    log_file = '{}{}.log'.format(log_dir, log_prefix)
-    dest_file = '{}{}.perf.log'.format(log_dir, log_prefix)
-    dest_file_gz = '{}{}.perf.log.gz'.format(log_dir, log_prefix)
+    log_file = f'{log_dir}{log_prefix}.log'
+    dest_file = f'{log_dir}{log_prefix}.perf.log'
+    dest_file_gz = f'{log_dir}{log_prefix}.perf.log.gz'
 
-    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
+    ssh_client.run_command(f'rm -f {dest_file_gz}')
 
-    result = ssh_client.run_command('ls -1 {}-*'.format(log_file))
+    result = ssh_client.run_command(f'ls -1 {log_file}-*')
     if result.success:
         files = result.output.strip().split('\n')
         for lfile in sorted(files):
-            ssh_client.run_command('cp {} {}-2.gz'.format(lfile, lfile))
-            ssh_client.run_command('gunzip {}-2.gz'.format(lfile))
+            ssh_client.run_command(f'cp {lfile} {lfile}-2.gz')
+            ssh_client.run_command(f'gunzip {lfile}-2.gz')
             if strip_whitespace:
                 ssh_client.run_command(r'sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' {}-2'
                                        .format(lfile))
-            ssh_client.run_command('cat {}-2 >> {}'.format(lfile, dest_file))
-            ssh_client.run_command('rm {}-2'.format(lfile))
+            ssh_client.run_command(f'cat {lfile}-2 >> {dest_file}')
+            ssh_client.run_command(f'rm {lfile}-2')
 
-    ssh_client.run_command('cp {} {}-2'.format(log_file, log_file))
+    ssh_client.run_command(f'cp {log_file} {log_file}-2')
     if strip_whitespace:
         ssh_client.run_command(r'sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' {}-2'
                                .format(log_file))
-    ssh_client.run_command('cat {}-2 >> {}'.format(log_file, dest_file))
-    ssh_client.run_command('rm {}-2'.format(log_file))
-    ssh_client.run_command('gzip {}{}.perf.log'.format(log_dir, log_prefix))
+    ssh_client.run_command(f'cat {log_file}-2 >> {dest_file}')
+    ssh_client.run_command(f'rm {log_file}-2')
+    ssh_client.run_command(f'gzip {log_dir}{log_prefix}.perf.log')
 
     ssh_client.get_file(dest_file_gz, local_file_name)
-    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
+    ssh_client.run_command(f'rm -f {dest_file_gz}')
 
 
 def convert_top_mem_to_mib(top_mem):
@@ -89,7 +89,7 @@ def get_worker_pid(worker_type):
         )
     worker_pid = str(result.output).strip()
     if result.output:
-        logger.info('Obtained {} PID: {}'.format(worker_type, worker_pid))
+        logger.info(f'Obtained {worker_type} PID: {worker_pid}')
     else:
         logger.error('Could not obtain {} PID, check evmserverd running or if specific role is'
                      ' enabled...'.format(worker_type))
@@ -101,7 +101,7 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
     """Sets the logging level for level_rails and detects when change occured."""
     ui_worker_pid = '#{}'.format(get_worker_pid(validate_against_worker))
 
-    logger.info('Setting log level_rails on appliance to {}'.format(level))
+    logger.info(f'Setting log level_rails on appliance to {level}')
     yaml = store.current_appliance.advanced_settings
     if not str(yaml['log']['level_rails']).lower() == level.lower():
         logger.info('Opening /var/www/miq/vmdb/log/evm.log for tail')
@@ -115,7 +115,7 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
         attempts = 0
         detected = False
         while (not detected and attempts < 60):
-            logger.debug('Attempting to detect log level_rails change: {}'.format(attempts))
+            logger.debug(f'Attempting to detect log level_rails change: {attempts}')
             for line in evm_tail:
                 if ui_worker_pid in line:
                     if 'Log level for production.log has been changed to' in line:
@@ -131,4 +131,4 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
             logger.error('Could not detect log level_rails change.')
         evm_tail.close()
     else:
-        logger.info('Log level_rails already set to {}'.format(level))
+        logger.info(f'Log level_rails already set to {level}')

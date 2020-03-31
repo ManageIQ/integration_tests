@@ -40,7 +40,7 @@ class EventsTable(DynamicTable):
     def _is_header_in_body(self):
         """Checks whether the header is erroneously specified in the body of table."""
         bz = BZ(1703141, forced_streams=['5.10'])
-        return False if bz.blocks else super(EventsTable, self)._is_header_in_body
+        return False if bz.blocks else super()._is_header_in_body
 
 
 class AnalysisProfileToolbar(View):
@@ -307,7 +307,7 @@ class AnalysisProfile(Pretty, Updateable, BaseEntity):
         # TODO revisit this method when BZ is fixed:
         # https://bugzilla.redhat.com/show_bug.cgi?id=1485953
         if not new_name:
-            new_name = '{}-copy'.format(self.name)
+            new_name = f'{self.name}-copy'
         new_profile = self.parent.instantiate(
             name=new_name,
             description=self.description,

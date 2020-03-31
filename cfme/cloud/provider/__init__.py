@@ -145,7 +145,7 @@ class CloudProvider(BaseProvider, CloudInfraProviderMixin, Pretty, PolicyProfile
     zone = attr.ib(default=None)
 
     def __attrs_post_init__(self):
-        super(CloudProvider, self).__attrs_post_init__()
+        super().__attrs_post_init__()
         self.parent = self.appliance.collections.cloud_providers
 
     def as_fill_value(self):

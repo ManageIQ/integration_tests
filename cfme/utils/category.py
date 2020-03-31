@@ -1,7 +1,7 @@
 """Module used for handling categories of let's say form values and for categorizing them."""
 
 
-class CategoryBase(object):
+class CategoryBase:
     """Base class for categories
 
     Args:

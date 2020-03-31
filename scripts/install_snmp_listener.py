@@ -59,7 +59,7 @@ def main():
             # last ssh command, close
             # Check if accessible
             try:
-                requests.get("http://{}:8765/".format(args.address))
+                requests.get(f"http://{args.address}:8765/")
             except requests.exceptions.ConnectionError:
                 print("Could not detect running listener!")
                 exit(2)

@@ -84,7 +84,7 @@ def create_catalog_item(appliance, provider, provisioning, dialog, catalog,
         ('provision_type', 'template', 'host', 'datastore', 'iso_file', 'vlan'))
     if console_test:
         template = _get_template(provider, 'console_template').name
-        logger.info("Console template name : {}".format(template))
+        logger.info(f"Console template name : {template}")
     item_name = dialog.label
     if provider.one_of(InfraProvider):
         catalog_name = template
@@ -196,7 +196,7 @@ def service_vm(appliance, provider, catalog_item):
 
     collection = provider.appliance.provider_based_collection(provider)
     vm_name = "{}0001".format(catalog_item.prov_data["catalog"]["vm_name"])
-    vm = collection.instantiate("{}".format(vm_name), provider)
+    vm = collection.instantiate(f"{vm_name}", provider)
 
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     provision_request = service_catalogs.order()
@@ -204,7 +204,7 @@ def service_vm(appliance, provider, catalog_item):
     provision_request.wait_for_request()
 
     if not provision_request.is_finished():
-        pytest.skip("Failed to provision service '{}'".format(catalog_item.name))
+        pytest.skip(f"Failed to provision service '{catalog_item.name}'")
 
     service = MyService(appliance, catalog_item.name, vm_name=vm_name)
     yield service, vm
@@ -228,7 +228,7 @@ def generic_service(appliance, generic_catalog_item):
     provision_request.wait_for_request()
 
     if not provision_request.is_finished():
-        pytest.skip("Failed to provision service '{}'".format(generic_catalog_item.name))
+        pytest.skip(f"Failed to provision service '{generic_catalog_item.name}'")
 
     service = MyService(appliance, generic_catalog_item.dialog.label)
     yield service, generic_catalog_item

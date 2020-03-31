@@ -67,7 +67,7 @@ def new_instance(provider):
 @pytest.fixture(scope='function')
 def volume(appliance, provider):
     collection = appliance.collections.volumes
-    storage_manager = '{} Cinder Manager'.format(provider.name)
+    storage_manager = f'{provider.name} Cinder Manager'
     volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
@@ -91,7 +91,7 @@ def volume_with_type(appliance, provider):
         return volume_type.exists
 
     collection = appliance.collections.volumes
-    storage_manager = '{} Cinder Manager'.format(provider.name)
+    storage_manager = f'{provider.name} Cinder Manager'
     volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
                                storage_manager=storage_manager,
                                tenant=provider.data['provisioning']['cloud_tenant'],
@@ -319,7 +319,7 @@ def test_instance_operating_system_linux(new_instance):
     view = navigate_to(new_instance, 'Details')
     os = view.entities.summary('Properties').get_text_of("Operating System")
     prov_data_os = new_instance.provider.data['provisioning']['image']['os_distro']
-    assert os == prov_data_os, 'OS type mismatch: expected {} and got {}'.format(prov_data_os, os)
+    assert os == prov_data_os, f'OS type mismatch: expected {prov_data_os} and got {os}'
 
 
 @pytest.mark.regression
@@ -334,7 +334,7 @@ def test_instance_attach_volume(volume, new_instance, appliance):
     new_instance.attach_volume(volume.name)
     view = appliance.browser.create_view(navigator.get_class(new_instance, 'AttachVolume').VIEW)
     view.flash.assert_success_message(
-        'Attaching Cloud Volume "{}" to {} finished'.format(volume.name, new_instance.name))
+        f'Attaching Cloud Volume "{volume.name}" to {new_instance.name} finished')
 
     wait_for(lambda: new_instance.volume_count > initial_volume_count,
              delay=20,

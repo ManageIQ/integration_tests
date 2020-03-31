@@ -47,7 +47,7 @@ def template(request, appliance, provider, vm):
                 )
             )
         except Exception as e:
-            logger.error("Failed to delete template. {}".format(e))
+            logger.error(f"Failed to delete template. {e}")
 
     return template
 
@@ -78,7 +78,7 @@ def test_query_template_attributes(request, appliance, provider, soft_assert):
     outcome = query_resource_attributes(template_rest)
     for failure in outcome.failed:
         # BZ1546995
-        soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+        soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 

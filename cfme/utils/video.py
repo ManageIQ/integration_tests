@@ -34,7 +34,7 @@ def process_running(pid):
         return True
 
 
-class Recorder(object):
+class Recorder:
     """Recorder class
 
     Usage:

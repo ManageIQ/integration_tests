@@ -35,7 +35,7 @@ class BootstrapSelect(VanillaBootstrapSelect):
         # should wait until it appears and only then we can fill it.
         self.logger.info("FILLING WIDGET %s", str(self))
         self.wait_displayed()
-        super(BootstrapSelect, self).fill(value)
+        super().fill(value)
         # BZ 1649057 (fixed) documents that a loading screen appears twice when a scope or
         # expression element is selected. Between loads, the page is displayed
         # and we make a selection, which
@@ -227,9 +227,7 @@ class ExpressionEditor(View, Pretty):
         self.first_expression_text_widget.click()
 
     def select_expression_by_text(self, text):
-        self.browser.click(
-            "{}[contains(normalize-space(text()),'{}')]".format(self.EXPRESSION_TEXT, text)
-        )
+        self.browser.click(f"{self.EXPRESSION_TEXT}[contains(normalize-space(text()),'{text}')]")
 
     def no_expression_present(self):
         els = self.browser.elements(self.EXPRESSION_TEXT, parent=self._expressions_root)
@@ -444,16 +442,16 @@ def get_func(name, context):
         name: Name of the variable containing the callable.
     Returns: Callable from this module
     """
-    assert not name.startswith("_"), "Command '{}' is private!".format(name)
+    assert not name.startswith("_"), f"Command '{name}' is private!"
     try:
         func = getattr(context, name)
     except AttributeError:
-        raise NameError("Could not find function {} to operate the editor!".format(name))
+        raise NameError(f"Could not find function {name} to operate the editor!")
     try:
         func.__call__
         return func
     except AttributeError:
-        raise NameError("{} is not callable!".format(name))
+        raise NameError(f"{name} is not callable!")
 
 
 def run_commands(command_list, clear_expression=True, context=None):
@@ -550,7 +548,7 @@ def create_program(dsl_program, widget_object):
             continue
         args_match = re.match(ARGS_CALL, line)
         if not args_match:
-            raise SyntaxError("Could not resolve statement `{}' on line {}".format(line, i))
+            raise SyntaxError(f"Could not resolve statement `{line}' on line {i}")
         fname = args_match.groupdict()["name"]
         args = [x.strip() for x in args_match.groupdict()["args"].split(",")]
         if len(args) > 0 and len(args[0]) > 0:

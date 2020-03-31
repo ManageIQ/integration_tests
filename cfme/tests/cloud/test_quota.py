@@ -45,20 +45,20 @@ def prov_data(appliance, provisioning):
 def set_child_tenant_quota(request, appliance, new_child):
     """This fixture assigns quota to child tenant"""
     field, value = request.param
-    new_child.set_quota(**{"{}_cb".format(field): True, field: value})
+    new_child.set_quota(**{f"{field}_cb": True, field: value})
     yield
     appliance.server.login_admin()
-    new_child.set_quota(**{"{}_cb".format(field): False})
+    new_child.set_quota(**{f"{field}_cb": False})
 
 
 @pytest.fixture
 def set_project_quota(request, appliance, new_project):
     """This fixture assigns quota to project"""
     field, value = request.param
-    new_project.set_quota(**{"{}_cb".format(field): True, field: value})
+    new_project.set_quota(**{f"{field}_cb": True, field: value})
     yield
     appliance.server.login_admin()
-    new_project.set_quota(**{"{}_cb".format(field): False})
+    new_project.set_quota(**{f"{field}_cb": False})
 
 
 @pytest.fixture(scope="module")
@@ -94,7 +94,7 @@ def new_group_child(appliance, new_child, new_tenant):
     group = appliance.collections.groups.create(
         description=fauxfactory.gen_alphanumeric(start="group_"),
         role="EvmRole-super_administrator",
-        tenant="My Company/{parent}/{child}".format(parent=new_tenant.name, child=new_child.name),
+        tenant=f"My Company/{new_tenant.name}/{new_child.name}",
     )
     yield group
     if group.exists:
@@ -138,7 +138,7 @@ def new_group_project(appliance, new_project):
     group = appliance.collections.groups.create(
         description=fauxfactory.gen_alphanumeric(start="group_"),
         role="EvmRole-super_administrator",
-        tenant="My Company/{project}".format(project=new_project.name),
+        tenant=f"My Company/{new_project.name}",
     )
     yield group
     if group.exists:
@@ -369,9 +369,9 @@ def automate_flavor_method(appliance, klass, namespace):
 def set_roottenant_quota(request, appliance):
     field, value = request.param
     roottenant = appliance.collections.tenants.get_root_tenant()
-    roottenant.set_quota(**{'{}_cb'.format(field): True, field: value})
+    roottenant.set_quota(**{f'{field}_cb': True, field: value})
     yield
-    roottenant.set_quota(**{'{}_cb'.format(field): False})
+    roottenant.set_quota(**{f'{field}_cb': False})
 
 
 @pytest.fixture(scope="module")

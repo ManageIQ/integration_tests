@@ -47,11 +47,11 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     )
     update_url = supported_version_repo_map[update_to]
     if appliance_ip:
-        print('Connecting to {}'.format(appliance_ip))
+        print(f'Connecting to {appliance_ip}')
     else:
         print('Fetching appliance from env.local.yaml')
     app = get_appliance(appliance_ip)
-    assert app.version > '5.7', "{} is not supported, must be 5.7 or higher".format(app.version)
+    assert app.version > '5.7', f"{app.version} is not supported, must be 5.7 or higher"
     is_major_upgrade = app.version.series() not in update_to
     assert not("5.11" in update_to and is_major_upgrade), "Major upgrade for 5.11 Not implemented"
 
@@ -62,7 +62,7 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     urls = cfme_data['basic_info'][update_url]
     print('Adding update repo to appliance')
     app.ssh_client.run_command(
-        "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
+        f"curl {urls} -o /etc/yum.repos.d/update.repo"
     )
     cfme = '-y'
     if cfme_only:
@@ -70,8 +70,8 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     print('Stopping EVM')
     app.evmserverd.stop()
     print('Running yum update')
-    result = app.ssh_client.run_command('yum update {}'.format(cfme), timeout=3600)
-    assert result.success, "update failed {}".format(result.output)
+    result = app.ssh_client.run_command(f'yum update {cfme}', timeout=3600)
+    assert result.success, f"update failed {result.output}"
 
     if is_major_upgrade:
         print('Running database migration')
@@ -94,13 +94,13 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
 @click.option('--backup', default=None, help='Location of local backup file, including file name')
 def backup_migrate(appliance_ip, db_url, keys_url, backup):
     """Restores and migrates database backup on an appliance"""
-    print('Connecting to {}'.format(appliance_ip))
+    print(f'Connecting to {appliance_ip}')
     app = get_appliance(appliance_ip)
     if db_url:
         print('Downloading database backup')
         result = app.ssh_client.run_command(
-            'curl -o "/evm_db.backup" "{}"'.format(db_url), timeout=30)
-        assert result.success, "Failed to download database: {}".format(result.output)
+            f'curl -o "/evm_db.backup" "{db_url}"', timeout=30)
+        assert result.success, f"Failed to download database: {result.output}"
         backup = '/evm_db.backup'
     else:
         backup = backup
@@ -111,18 +111,18 @@ def backup_migrate(appliance_ip, db_url, keys_url, backup):
     app.db.create()
     print('Restoring database from backup')
     result = app.ssh_client.run_command(
-        'pg_restore -v --dbname=vmdb_production {}'.format(backup), timeout=600)
-    assert result.success, "Failed to restore new database: {}".format(result.output)
+        f'pg_restore -v --dbname=vmdb_production {backup}', timeout=600)
+    assert result.success, f"Failed to restore new database: {result.output}"
     print('Running database migration')
     app.db.migrate()
     app.db.automate_reset()
     if keys_url:
         result = app.ssh_client.run_command(
-            'curl -o "/var/www/miq/vmdb/certs/v2_key" "{}v2_key"'.format(keys_url), timeout=15)
-        assert result.success, "Failed to download v2_key: {}".format(result.output)
+            f'curl -o "/var/www/miq/vmdb/certs/v2_key" "{keys_url}v2_key"', timeout=15)
+        assert result.success, f"Failed to download v2_key: {result.output}"
         result = app.ssh_client.run_command(
-            'curl -o "/var/www/miq/vmdb/GUID" "{}GUID"'.format(keys_url), timeout=15)
-        assert result.success, "Failed to download GUID: {}".format(result.output)
+            f'curl -o "/var/www/miq/vmdb/GUID" "{keys_url}GUID"', timeout=15)
+        assert result.success, f"Failed to download GUID: {result.output}"
     else:
         app.db.fix_auth_key()
     app.db.fix_auth_dbyml()
@@ -183,7 +183,7 @@ def fn(method, *args, **kwargs):
 for method in methods_to_install:
     command = click.Command(
         method.replace('_', '-'),
-        short_help='Returns the {} property'.format(method),
+        short_help=f'Returns the {method} property',
         callback=partial(fn, method), params=[
             click.Argument(['appliance_ip'], default=None, required=False)])
     main.add_command(command)

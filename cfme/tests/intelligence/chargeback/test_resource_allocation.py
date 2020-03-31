@@ -67,7 +67,7 @@ def vm_ownership(enable_candu, provider, appliance):
     vm = appliance.provider_based_collection(provider, coll_type='vms').instantiate(vm_name,
                                                                                     provider)
     if not vm.exists_on_provider:
-        pytest.skip('Skipping test, {} VM does not exist'.format(vm_name))
+        pytest.skip(f'Skipping test, {vm_name} VM does not exist')
     vm.mgmt.ensure_state(VmState.RUNNING)
 
     group_collection = appliance.collections.groups
@@ -81,7 +81,7 @@ def vm_ownership(enable_candu, provider, appliance):
         cost_center='Workload',
         value_assign='Database')
     vm.set_ownership(user=user)
-    logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
+    logger.info(f'Assigned VM OWNERSHIP for {vm_name} running on {provider.name}')
     yield user.name
 
     vm.unset_ownership()
@@ -178,7 +178,7 @@ def verify_records_metrics_table(appliance, provider):
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
         .format(provider.id, repr(vm_name)))
-    assert ret.success, "Failed to capture VM C&U data:".format(ret.output)
+    assert ret.success, f"Failed to capture VM C&U data:"
 
     with appliance.db.client.transaction:
         result = (
@@ -247,7 +247,7 @@ def resource_alloc(vm_ownership, appliance, provider):
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
         format(provider.id, repr(vm_name)))
-    assert ret.success, "Failed to rollup VM C&U data:".format(ret.out)
+    assert ret.success, f"Failed to rollup VM C&U data:"
 
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=600,
         message='Waiting for hourly rollups')
@@ -346,7 +346,7 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
     }
     report = appliance.collections.reports.create(is_candu=True, **data)
 
-    logger.info('Queuing chargeback report with custom rate for {} provider'.format(provider.name))
+    logger.info(f'Queuing chargeback report with custom rate for {provider.name} provider')
     report.queue(wait_for_finish=True)
 
     if not list(report.saved_reports.all()[0].data.rows):

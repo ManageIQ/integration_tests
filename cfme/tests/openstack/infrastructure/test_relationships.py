@@ -64,7 +64,7 @@ def test_templates(provider, soft_assert):
     template_names = templates_view.entities.entity_names
 
     for image in images:
-        soft_assert(image in template_names, 'Missing template: {}'.format(image))
+        soft_assert(image in template_names, f'Missing template: {image}')
 
 
 @pytest.mark.regression

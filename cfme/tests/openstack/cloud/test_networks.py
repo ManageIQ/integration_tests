@@ -33,7 +33,7 @@ def create_network(appliance, provider, is_external):
                                 tenant=provider.data.get('provisioning').get('cloud_tenant'),
                                 provider=provider,
                                 network_type='VXLAN',
-                                network_manager='{} Network Manager'.format(provider.name),
+                                network_manager=f'{provider.name} Network Manager',
                                 is_external=is_external)
     return network
 
@@ -43,7 +43,7 @@ def create_subnet(appliance, provider, network):
     subnet = collection.create(name=fauxfactory.gen_alpha(12, start="subnet_"),
                                tenant=provider.data.get('provisioning').get('cloud_tenant'),
                                provider=provider,
-                               network_manager='{} Network Manager'.format(provider.name),
+                               network_manager=f'{provider.name} Network Manager',
                                network_name=network.name,
                                cidr=SUBNET_CIDR)
     return subnet
@@ -54,7 +54,7 @@ def create_router(appliance, provider, ext_gw, ext_network=None, ext_subnet=None
     router = collection.create(name=fauxfactory.gen_alpha(12, start="router_"),
                                tenant=provider.data.get('provisioning').get('cloud_tenant'),
                                provider=provider,
-                               network_manager='{} Network Manager'.format(provider.name),
+                               network_manager=f'{provider.name} Network Manager',
                                has_external_gw=ext_gw,
                                ext_network=ext_network,
                                ext_network_subnet=ext_subnet)

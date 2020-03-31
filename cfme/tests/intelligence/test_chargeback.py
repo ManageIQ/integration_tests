@@ -119,18 +119,18 @@ def test_chargeback_rate(rate_resource, rate_type, rate_action, request, chargeb
 
     view = cb_rate.create_view(navigator.get_class(cb_rate.parent, 'All').VIEW, wait=10)
     view.flash.assert_success_message(
-        'Chargeback Rate "{}" was added'.format(cb_rate.description))
+        f'Chargeback Rate "{cb_rate.description}" was added')
     assert cb_rate.exists
 
     if rate_action == 'delete':
         cb_rate.delete()
         view.flash.assert_success_message(
-            'Chargeback Rate "{}": Delete successful'.format(cb_rate.description))
+            f'Chargeback Rate "{cb_rate.description}": Delete successful')
         assert not cb_rate.exists
 
     if rate_action == 'edit':
         with update(cb_rate):
-            cb_rate.description = '{}_edited'.format(cb_rate.description)
+            cb_rate.description = f'{cb_rate.description}_edited'
             if rate_resource == 'compute':
                 cb_rate.fields = {
                     'Fixed Compute Cost 1': random_per_time(fixed_rate='500'),
@@ -143,11 +143,11 @@ def test_chargeback_rate(rate_resource, rate_type, rate_action, request, chargeb
                 }
         view = cb_rate.create_view(navigator.get_class(cb_rate, 'Details').VIEW, wait=10)
         view.flash.assert_success_message(
-            'Chargeback Rate "{}" was saved'.format(cb_rate.description))
+            f'Chargeback Rate "{cb_rate.description}" was saved')
         assert cb_rate.exists
 
 
-class TestRatesViaREST(object):
+class TestRatesViaREST:
     @pytest.fixture(scope="function")
     def rates(self, request, appliance):
         response = _rates(request, appliance)

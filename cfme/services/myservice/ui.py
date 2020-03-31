@@ -224,7 +224,7 @@ class ReconfigureServiceView(SetOwnershipForm):
         return (
             self.in_myservices and
             self.myservice.is_opened and
-            self.title.text == 'Reconfigure Service "{}"'.format(name)
+            self.title.text == f'Reconfigure Service "{name}"'
         )
 
 
@@ -312,7 +312,7 @@ def delete(self):
     view.toolbar.configuration.item_select("Remove Service from Inventory", handle_alert=True)
     view = self.create_view(MyServicesView, wait='5s')
     view.flash.assert_no_error()
-    view.flash.assert_success_message('Service "{}": Delete successful'.format(self.name))
+    view.flash.assert_success_message(f'Service "{self.name}": Delete successful')
 
 
 @MiqImplementationContext.external_for(MyService.status.getter, ViaUI)
@@ -352,7 +352,7 @@ def check_vm_add(self, vm):
 @MiqImplementationContext.external_for(MyService.download_file, ViaUI)
 def download_file(self, extension):
     view = navigate_to(self, 'All')
-    view.toolbar.download.item_select('Download as {}'.format(extension))
+    view.toolbar.download.item_select(f'Download as {extension}')
     view.flash.assert_no_error()
 
 

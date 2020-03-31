@@ -101,7 +101,7 @@ def appliance_preupdate(old_version, appliance, request):
     apps[0].db.extend_partition()
     urls = cfme_data["basic_info"][update_url]
     apps[0].ssh_client.run_command(
-        "curl {} -o /etc/yum.repos.d/update.repo".format(urls)
+        f"curl {urls} -o /etc/yum.repos.d/update.repo"
     )
     logger.info('Appliance update.repo file: \n%s',
                 apps[0].ssh_client.run_command('cat /etc/yum.repos.d/update.repo').output)
@@ -114,7 +114,7 @@ def do_yum_update(appliance):
     appliance.evmserverd.stop()
     with appliance.ssh_client as ssh:
         result = ssh.run_command('yum update -y', timeout=3600)
-        assert result.success, "update failed {}".format(result.output)
+        assert result.success, f"update failed {result.output}"
     appliance.evmserverd.start()
     appliance.wait_for_web_ui()
 

@@ -74,7 +74,7 @@ class CloudNetwork(Taggable, BaseEntity, CustomButtonEventsMixin):
                    'administrative_state': change_admin_state,
                    'shared': change_shared})
         view.save.click()
-        view.flash.assert_success_message('Cloud Network "{}" updated'.format(name))
+        view.flash.assert_success_message(f'Cloud Network "{name}" updated')
         self.name = name
 
     def delete(self):
@@ -130,7 +130,7 @@ class CloudNetworkCollection(BaseCollection):
                    'administrative_state': admin_state,
                    'shared': is_shared})
         view.add.click()
-        view.flash.assert_success_message('Cloud Network "{}" created'.format(name))
+        view.flash.assert_success_message(f'Cloud Network "{name}" created')
         network = self.instantiate(name, provider)
         # Refresh provider's relationships to have new network displayed
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)

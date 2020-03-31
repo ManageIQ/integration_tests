@@ -34,7 +34,7 @@ def get_system_versions(ssh_client):
     system_dict['operating_system'] = operating_system
 
     timediff = time.time() - starttime
-    logger.info('Got version info in: {}'.format(timediff))
+    logger.info(f'Got version info in: {timediff}')
     return system_dict
 
 
@@ -58,7 +58,7 @@ def get_process_versions(ssh_client):
     process_dict['httpd'] = httpdv
 
     timediff = time.time() - starttime
-    logger.info('Got process version info in: {}'.format(timediff))
+    logger.info(f'Got process version info in: {timediff}')
     return process_dict
 
 
@@ -78,7 +78,7 @@ def get_gem_versions(ssh_client):
         gem_dict[name] = ver
 
     timediff = time.time() - starttime
-    logger.info('Got version info in: {}'.format(timediff))
+    logger.info(f'Got version info in: {timediff}')
     return gem_dict
 
 
@@ -90,7 +90,7 @@ def get_rpm_versions(ssh_client):
         "rpm -qa --queryformat='%{N}, %{V}-%{R}\n' | sort")[1]).split('\n')  # noqa
 
     timediff = time.time() - starttime
-    logger.info('Got version info in: {}'.format(timediff))
+    logger.info(f'Got version info in: {timediff}')
     return rpm_list
 
 
@@ -104,7 +104,7 @@ def generate_system_file(ssh_client, directory):
             csv_file.write('{}, {} \n'.format(key, system_info[key]))
 
     timediff = time.time() - starttime
-    logger.info('Generated system file in: {}'.format(timediff))
+    logger.info(f'Generated system file in: {timediff}')
 
 
 def generate_processes_file(ssh_client, directory):
@@ -117,7 +117,7 @@ def generate_processes_file(ssh_client, directory):
             csv_file.write('{}, {} \n'.format(key, process_info[key]))
 
     timediff = time.time() - starttime
-    logger.info('Generated processes file in: {}'.format(timediff))
+    logger.info(f'Generated processes file in: {timediff}')
 
 
 def generate_gems_file(ssh_client, directory):
@@ -130,7 +130,7 @@ def generate_gems_file(ssh_client, directory):
             csv_file.write('{}, {} \n'.format(key, gem_info[key]))
 
     timediff = time.time() - starttime
-    logger.info('Generated gems file in: {}'.format(timediff))
+    logger.info(f'Generated gems file in: {timediff}')
 
 
 def generate_rpms_file(ssh_client, directory):
@@ -140,10 +140,10 @@ def generate_rpms_file(ssh_client, directory):
     file_name = str(os.path.join(directory, 'rpms.csv'))
     with open(file_name, 'w') as csv_file:
         for key in rpm_info:
-            csv_file.write('{}\n'.format(key))
+            csv_file.write(f'{key}\n')
 
     timediff = time.time() - starttime
-    logger.info('Generated rpms file in: {}'.format(timediff))
+    logger.info(f'Generated rpms file in: {timediff}')
 
 
 @pytest.fixture(scope='session')
@@ -154,7 +154,7 @@ def generate_version_files():
     relative_path = os.path.relpath(str(results_path), str(os.getcwd()))
     # avoid importing outside perf testing
     from cfme.utils.smem_memory_monitor import test_ts
-    relative_string = relative_path + '/{}*'.format(test_ts)
+    relative_string = relative_path + f'/{test_ts}*'
     directory_list = glob.glob(relative_string)
 
     for directory in directory_list:
@@ -169,5 +169,5 @@ def generate_version_files():
         generate_rpms_file(ssh_client, module_path)
 
     timediff = time.time() - starttime
-    logger.info('Generated all version files in {}'.format(timediff))
+    logger.info(f'Generated all version files in {timediff}')
     ssh_client.close()

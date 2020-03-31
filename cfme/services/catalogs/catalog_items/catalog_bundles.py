@@ -94,7 +94,7 @@ class CatalogBundle(NonCloudInfraCatalogItem):
                 'Catalog Bundle "{}" was saved'.format(updates.get('name', self.name)))
         else:
             view.flash.assert_success_message(
-                'Edit of Catalog Bundle"{}" was cancelled by the user'.format(self.name))
+                f'Edit of Catalog Bundle"{self.name}" was cancelled by the user')
         view = self.create_view(DetailsCatalogItemView, override=updates, wait='10s')
         view.flash.assert_no_error()
 
@@ -145,7 +145,7 @@ class CatalogBundlesCollection(BaseCollection):
         for cat_item in catalog_items:
             view.resources.fill({'select_resource': cat_item})
         view.add_button.click()
-        view.flash.assert_success_message('Catalog Bundle "{}" was added'.format(name))
+        view.flash.assert_success_message(f'Catalog Bundle "{name}" was added')
         view = self.create_view(AllCatalogItemView, wait='10s')
         view.flash.assert_no_error()
         return self.instantiate(name, catalog_items=catalog_items, catalog=catalog,

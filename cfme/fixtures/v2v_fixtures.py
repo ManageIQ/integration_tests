@@ -80,7 +80,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
             if BZ(1753364, forced_streams=['5.11']).blocks:
                 _start_event_workers_for_osp(appliance, osp_provider)
         else:
-            pytest.skip("Provider {} is not a valid provider for v2v tests".format(provider.name))
+            pytest.skip(f"Provider {provider.name} is not a valid provider for v2v tests")
     v2v_providers = V2vProviders(vmware_provider=vmware_provider,
                                  rhv_provider=rhv_provider,
                                  osp_provider=osp_provider)
@@ -208,7 +208,7 @@ def vddk_url():
     url = vddk_urls.get(vddk_version)
 
     if url is None:
-        pytest.skip("VDDK {} is unavailable, skipping test".format(vddk_version))
+        pytest.skip(f"VDDK {vddk_version} is unavailable, skipping test")
     return url
 
 
@@ -275,7 +275,7 @@ def set_conversion_host_api(
         "'MiqTask.delete_all; ConversionHost.delete_all'")
     if not delete_hosts.success:
         pytest.skip(
-            "Failed to delete all conversion hosts: {}".format(delete_hosts.output))
+            f"Failed to delete all conversion hosts: {delete_hosts.output}")
 
     conversion_data = get_conversion_data(appliance, target_provider)
     if transformation_method == "SSH":
@@ -317,7 +317,7 @@ def delete_conversion_hosts(appliance):
         "'MiqTask.delete_all; ConversionHost.delete_all'")
     if not delete_hosts.success:
         pytest.skip(
-            "Failed to delete all conversion hosts: {}".format(delete_hosts.output))
+            f"Failed to delete all conversion hosts: {delete_hosts.output}")
 
 
 def cleanup_target(provider, migrated_vm):
@@ -401,7 +401,7 @@ def infra_mapping_default_data(source_provider, provider):
                                "5.10": "rhv" if provider.one_of(RHEVMProvider) else "osp"}).pick()
     infra_mapping_data = {
         "name": fauxfactory.gen_alphanumeric(15, start="infra_map_"),
-        "description": "migration with vmware to {}".format(plan_type),
+        "description": f"migration with vmware to {plan_type}",
         "plan_type": plan_type,
         "clusters": [component_generator("clusters", source_provider, provider)],
         "datastores": [component_generator(
@@ -681,5 +681,5 @@ def component_generator(selector, source_provider, provider, source_type=None, t
 
     skip_test = not (sources and targets and component)
     if skip_test:
-        pytest.skip("No data for source or target {} in providers.".format(selector))
+        pytest.skip(f"No data for source or target {selector} in providers.")
     return component

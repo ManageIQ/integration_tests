@@ -132,13 +132,13 @@ def set_parent_tenant_quota(request, appliance, new_tenant):
     """
     for i in range(0, NUM_TENANTS):
         field, value = request.param
-        new_tenant[i].set_quota(**{'{}_cb'.format(field): True, field: value})
+        new_tenant[i].set_quota(**{f'{field}_cb': True, field: value})
     yield
     # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.login_admin()
     appliance.server.browser.refresh()
     for i in range(0, NUM_TENANTS):
-        new_tenant[i].set_quota(**{'{}_cb'.format(field): False})
+        new_tenant[i].set_quota(**{f'{field}_cb': False})
 
 
 @pytest.fixture(scope='module')

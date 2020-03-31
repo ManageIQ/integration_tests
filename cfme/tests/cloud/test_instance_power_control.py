@@ -128,11 +128,11 @@ def check_power_options(soft_assert, instance, power_state):
     for pwr_option in instance.ui_powerstates_available[power_state]:
         soft_assert(
             instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
-            "{} must be available in current power state - {} ".format(pwr_option, power_state))
+            f"{pwr_option} must be available in current power state - {power_state} ")
     for pwr_option in instance.ui_powerstates_unavailable[power_state]:
         soft_assert(
             not instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
-            "{} must not be available in current power state - {} ".format(pwr_option, power_state))
+            f"{pwr_option} must not be available in current power state - {power_state} ")
 
 
 def wait_for_instance_state(soft_assert, instance, state):
@@ -183,7 +183,7 @@ def wait_for_instance_state(soft_assert, instance, state):
     # Check Vm state in CFME
     soft_assert(
         instance.wait_for_instance_state_change(desired_state=desired_ui_state, timeout=1200),
-        "Instance {} isn't {} in CFME UI".format(instance, desired_ui_state)
+        f"Instance {instance} isn't {desired_ui_state} in CFME UI"
     )
 
 
@@ -507,7 +507,7 @@ def test_instance_power_options_from_off(provider, testing_instance,
 
 
 @test_requirements.rest
-class TestInstanceRESTAPI(object):
+class TestInstanceRESTAPI:
     """ Tests using the /api/instances collection. """
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])

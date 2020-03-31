@@ -71,7 +71,7 @@ def test_schedule_crud(appliance, current_server_time):
     )
 
     view = appliance.browser.create_view(BaseLoggedInPage)
-    view.flash.assert_message('Schedule "{}" was saved'.format(schedule.name))
+    view.flash.assert_message(f'Schedule "{schedule.name}" was saved')
     # test for bz 1569127
     start_date_updated = start_date - relativedelta.relativedelta(days=1)
     updates = {
@@ -80,16 +80,16 @@ def test_schedule_crud(appliance, current_server_time):
     }
     schedule.update(updates, cancel=True)
     view.flash.assert_message(
-        'Edit of Schedule "{}" was cancelled by the user'.format(schedule.name))
+        f'Edit of Schedule "{schedule.name}" was cancelled by the user')
     schedule.update(updates, reset=True)
     view.flash.assert_message('All changes have been reset')
     with update(schedule):
         schedule.name = fauxfactory.gen_alphanumeric()
         schedule.start_date = start_date_updated
-    view.flash.assert_message('Schedule "{}" was saved'.format(schedule.name))
+    view.flash.assert_message(f'Schedule "{schedule.name}" was saved')
     schedule.delete(cancel=True)
     schedule.delete()
-    view.flash.assert_message('Schedule "{}": Delete successful'.format(schedule.description))
+    view.flash.assert_message(f'Schedule "{schedule.description}": Delete successful')
 
 
 def test_schedule_analysis_in_the_past(appliance, current_server_time, request):
@@ -138,7 +138,7 @@ def test_create_multiple_schedules_in_one_timezone(appliance, request):
             time_zone='(GMT-04:00) Atlantic Time (Canada)'
         )
         view = appliance.browser.create_view(BaseLoggedInPage)
-        view.flash.assert_message('Schedule "{}" was saved'.format(schedule.name))
+        view.flash.assert_message(f'Schedule "{schedule.name}" was saved')
         schedule_list.append(schedule)
 
 

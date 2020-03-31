@@ -24,7 +24,7 @@ def advance_appliance_date_by_day(appliance):
     appliance_date = dateutil.parser.parse(txt_date)
     td = datetime.timedelta(days=1)
     advanced_txt_date = (appliance_date + td).strftime("%Y-%m-%d %H:%M:%S%z")
-    appliance.ssh_client.run_command("date -s '{}'".format(advanced_txt_date))
+    appliance.ssh_client.run_command(f"date -s '{advanced_txt_date}'")
 
 
 @test_requirements.appliance
@@ -43,9 +43,9 @@ def test_appliance_log_rotate(temp_appliance_preconfig_funcscope):
     initial_log_files = {}
     for log_path in LOGS.pick():
         initial_log_files[log_path] = appliance.ssh_client.run_command(
-            "ls -1 {}*".format(log_path)).output.split('\n')
+            f"ls -1 {log_path}*").output.split('\n')
         appliance.ssh_client.run_command(
-            "echo 'Ensure line in logs' >> {}".format(log_path))
+            f"echo 'Ensure line in logs' >> {log_path}")
 
     # Perform the logrotate.
     advance_appliance_date_by_day(appliance)

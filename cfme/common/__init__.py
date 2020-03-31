@@ -176,7 +176,7 @@ class ManagePoliciesView(BaseLoggedInPage):
     is_displayed = displayed_not_implemented
 
 
-class PolicyProfileAssignable(object):
+class PolicyProfileAssignable:
     """This class can be inherited by anything that provider load_details method.
 
     It provides functionality to assign and unassign Policy Profiles
@@ -187,7 +187,7 @@ class PolicyProfileAssignable(object):
         try:
             return self._assigned_policy_profiles
         except AttributeError:
-            self._assigned_policy_profiles = set([])
+            self._assigned_policy_profiles = set()
             return self._assigned_policy_profiles
 
     def assign_policy_profiles(self, *policy_profile_names):
@@ -425,7 +425,7 @@ class TagPageView(BaseLoggedInPage):
         )
 
 
-class TaggableCommonBase(object):
+class TaggableCommonBase:
     """Class represents common functionality for tagging via collection and entities pages"""
 
     def _set_random_tag(self, view):
@@ -463,7 +463,7 @@ class TaggableCommonBase(object):
         # Handle nested view.form and where the view contains form widgets
         try:
             updated = view.form.fill({
-                "tag_category": '{} *'.format(category_name),
+                "tag_category": f'{category_name} *',
                 "tag_name": tag_name
             })
         except (NoSuchElementException, SelectItemNotFound):
@@ -484,7 +484,7 @@ class TaggableCommonBase(object):
         tag = tag.display_name
         if self.appliance.version < '5.11':
             try:
-                row = view.form.tags.row(category="{} *".format(category), assigned_value=tag)
+                row = view.form.tags.row(category=f"{category} *", assigned_value=tag)
             except RowNotFound:
                 row = view.form.tags.row(category=category, assigned_value=tag)
             row[0].click()
@@ -622,9 +622,9 @@ class Taggable(TaggableCommonBase):
         try:
             view = navigate_to(self, 'Details', force=True)
         except (NavigationDestinationNotFound, DestinationNotFound):
-            raise ItemNotFound('Details page does not exist for: {}'.format(self))
+            raise ItemNotFound(f'Details page does not exist for: {self}')
         except TimedOutError:
-            raise ItemNotFound('Timed out navigating to details for: {}'.format(self))
+            raise ItemNotFound(f'Timed out navigating to details for: {self}')
         tags_objs = []
         entities = view.entities
         if hasattr(entities, 'smart_management'):
@@ -632,7 +632,7 @@ class Taggable(TaggableCommonBase):
         else:
             tag_table = entities.summary('Smart Management')
         tags_text = tag_table.get_text_of(tenant)
-        if tags_text != 'No {} have been assigned'.format(tenant):
+        if tags_text != f'No {tenant} have been assigned':
             # check for users/groups page in case one tag string is returned
             for tag in [tags_text] if isinstance(tags_text, str) else list(tags_text):
                 tag_category, tag_name = tag.split(':')
@@ -786,7 +786,7 @@ class EditTagsFromListCollection(CFMENavigateStep):
                 "Edit 'My Company' Tags for this {}".format(type(self.obj).__name__))
 
 
-class Validatable(object):
+class Validatable:
     """Mixin for various validations. Requires the class to be also :py:class:`Taggable`.
 
     :var :py:attr:`property_tuples`: Tuples which first value is the provider class's attribute
@@ -833,10 +833,10 @@ class Validatable(object):
                 if ref_tag.category.display_name == tag.category.display_name \
                         and ref_tag.display_name == tag.display_name:
                     found = True
-            assert found, ("Tag '{}' not found in UI".format(ref_tag))
+            assert found, (f"Tag '{ref_tag}' not found in UI")
 
 
-class UtilizationMixin(object):
+class UtilizationMixin:
     """Use this mixin to have simple access to the Utilization information of an object.
 
     Requires that the class(page) has ``load_details(refresh)`` method
@@ -883,7 +883,7 @@ class CustomButtonEventsView(View):
         )
 
 
-class CustomButtonEventsMixin(object):
+class CustomButtonEventsMixin:
     def get_button_events(self):
         try:
             view = navigate_to(self, "ButtonEvents")

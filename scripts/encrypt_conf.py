@@ -33,7 +33,7 @@ args = parse_cmd_line()
 conf_name = args.file.strip()
 if args.encrypt:
     yaycl_crypt.encrypt_yaml(conf, conf_name, delete=args.delete)
-    print('{} conf encrypted'.format(conf_name))
+    print(f'{conf_name} conf encrypted')
 if args.decrypt:
     yaycl_crypt.decrypt_yaml(conf, conf_name, delete=args.delete)
-    print('{} conf decrypted'.format(conf_name))
+    print(f'{conf_name} conf decrypted')

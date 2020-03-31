@@ -10,7 +10,7 @@ def ensure_file_contains(target, content):
     if path.exists(target):
         with open(target) as fp:
             if content not in fp.read():
-                print('{target!r} has unexpected content'.format(target=target))
+                print(f'{target!r} has unexpected content')
                 print('please open the file and add the following:')
                 print(content)
                 print("# end")

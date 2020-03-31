@@ -79,7 +79,7 @@ def import_tags(appliance):
     except AssertionError:
         for script in scripts:
             client.run_command(
-                'cd /var/www/miq/vmdb/lib/tasks/ && rm -f {}'.format(script))
+                f'cd /var/www/miq/vmdb/lib/tasks/ && rm -f {script}')
         pytest.skip('Not all scripts were successfully downloaded')
     try:
         assert client.run_command(
@@ -102,7 +102,7 @@ def import_tags(appliance):
     yield tags
     for script in scripts:
         client.run_command(
-            'cd /var/www/miq/vmdb/lib/tasks/ && rm -f {}'.format(script))
+            f'cd /var/www/miq/vmdb/lib/tasks/ && rm -f {script}')
     client.run_command('cd /tmp && rm -f tags.yml*')
 
 
@@ -140,9 +140,9 @@ def create_20k_vms(appliance):
                             ' :vendor => "vmware", :location => "foo" }')
     rails_cleanup_command = ('20000.times { |i| ManageIQ::Providers::Vmware::InfraManager::'
                              'Vm.where(:name => "vm_%05d" % (1+i)).first.delete}')
-    appliance.ssh_client.run_rails_command("'{}'".format(rails_create_command))
+    appliance.ssh_client.run_rails_command(f"'{rails_create_command}'")
     yield
-    appliance.ssh_client.run_rails_command("'{}'".format(rails_cleanup_command))
+    appliance.ssh_client.run_rails_command(f"'{rails_cleanup_command}'")
 
 
 @pytest.fixture
@@ -192,7 +192,7 @@ def test_configuration_large_number_of_tags(appliance, import_tags, soft_assert)
         for tag in tags:
             tag = tag.strip()
             soft_assert(view.entities.my_company_tags.tree.has_path(category, tag), (
-                'Tag {} was not imported'.format(tag)
+                f'Tag {tag} was not imported'
             ))
 
 
@@ -213,7 +213,7 @@ def test_configuration_help_menu(appliance, set_help_menu_options, soft_assert):
     view = navigate_to(appliance.server, 'Dashboard')
     for option in set_help_menu_options:
         soft_assert(view.help.has_item(
-            option), '{} option is not available in help menu'.format(option))
+            option), f'{option} option is not available in help menu')
 
 
 def test_automate_can_edit_copied_method(appliance, request):

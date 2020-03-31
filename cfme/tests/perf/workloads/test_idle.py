@@ -51,7 +51,7 @@ def test_idle(appliance, request, scenario):
         monitor_thread.join()
         add_workload_quantifiers(quantifiers, scenario_data)
         timediff = time.time() - starttime
-        logger.info('Finished cleaning up monitoring thread in {}'.format(timediff))
+        logger.info(f'Finished cleaning up monitoring thread in {timediff}')
     request.addfinalizer(lambda: cleanup_workload(from_ts, quantifiers, scenario_data))
 
     monitor_thread.start()
@@ -59,7 +59,7 @@ def test_idle(appliance, request, scenario):
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
     appliance.update_server_roles({role: True for role in scenario['roles']})
     s_time = scenario['total_time']
-    logger.info('Idling appliance for {}s'.format(s_time))
+    logger.info(f'Idling appliance for {s_time}s')
     time.sleep(s_time)
 
     quantifiers['Elapsed_Time'] = s_time

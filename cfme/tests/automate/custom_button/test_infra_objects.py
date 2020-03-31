@@ -112,7 +112,7 @@ def setup_obj(button_group, provider):
         else:
             obj = getattr(provider.appliance.collections, obj_type.lower()).all()[0]
     except IndexError:
-        pytest.skip("Object not found for {obj} type".format(obj=obj_type))
+        pytest.skip(f"Object not found for {obj_type} type")
 
     return obj
 
@@ -247,7 +247,7 @@ def test_custom_button_automate_infra_obj(appliance, request, submit, setup_obj,
         custom_button_group.item_select(button.text)
 
         diff = "executed" if appliance.version < "5.10" else "launched"
-        view.flash.assert_message('"{btn}" was {diff}'.format(btn=button.text, diff=diff))
+        view.flash.assert_message(f'"{button.text}" was {diff}')
 
         # Submit all: single request for all entity execution
         # One by one: separate requests for all entity execution

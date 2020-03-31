@@ -154,7 +154,7 @@ class InstanceDetailsView(CloudInstanceView):
             relationship_provider_name = relationships.get_text_of('Cloud Provider')
             return (
                 self.in_cloud_instance and
-                self.entities.title.text == 'Instance "{}"'.format(expected_name) and
+                self.entities.title.text == f'Instance "{expected_name}"' and
                 relationship_provider_name == expected_provider
             )
         except (NameError, NoSuchElementException):
@@ -163,7 +163,7 @@ class InstanceDetailsView(CloudInstanceView):
             # table
             return (
                 self.in_cloud_instance and
-                self.entities.title.text == 'Instance "{}"'.format(expected_name)
+                self.entities.title.text == f'Instance "{expected_name}"'
             )
 
     toolbar = View.nested(InstanceDetailsToolbar)
@@ -268,8 +268,8 @@ class Instance(VM):
         def _looking_for_state_change():
             view = navigate_to(self, 'Details')
             current_state = view.entities.summary("Power Management").get_text_of("Power State")
-            logger.info('Current Instance state: {}'.format(current_state))
-            logger.info('Desired Instance state: {}'.format(desired_state))
+            logger.info(f'Current Instance state: {current_state}')
+            logger.info(f'Desired Instance state: {desired_state}')
             if isinstance(desired_state, (list, tuple)):
                 return current_state in desired_state
             else:
@@ -294,7 +294,7 @@ class Instance(VM):
         try:
             return view.entities.get_entity(name=self.name, surf_pages=True)
         except ItemNotFound:
-            raise ItemNotFound("Instance '{}' not found in UI!".format(self.name))
+            raise ItemNotFound(f"Instance '{self.name}' not found in UI!")
 
     def power_control_from_cfme(self, *args, **kwargs):
         """Power controls a VM from within CFME using details or collection
@@ -316,7 +316,7 @@ class Instance(VM):
                 row = view.entities.get_entity(name=self.name, surf_pages=True)
             except ItemNotFound:
                 raise ItemNotFound(
-                    'Failed to find instance in table: {}'.format(self.name)
+                    f'Failed to find instance in table: {self.name}'
                 )
             row.ensure_checked()
 
@@ -402,7 +402,7 @@ class Instance(VM):
         resource_group_id = None
         if self.provider.one_of(AzureProvider):
             resource_groups = self.appliance.rest_api.get(
-                '{}?attributes=resource_groups'.format(provider_rest._href))['resource_groups']
+                f'{provider_rest._href}?attributes=resource_groups')['resource_groups']
             resource_group_id = None
             resource_group_name = provisioning.get('resource_group')
             for res_group in resource_groups:
@@ -568,7 +568,7 @@ class Details(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
                                                              use_search=True)
         except ItemNotFound:
-            raise ItemNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
+            raise ItemNotFound(f'Failed to locate instance with name "{self.obj.name}"')
         row.click()
 
     def resetter(self, *args, **kwargs):
@@ -585,7 +585,7 @@ class ArchiveDetails(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True,
                                                              use_search=True)
         except ItemNotFound:
-            raise ItemNotFound('Failed to locate instance with name "{}"'.format(self.obj.name))
+            raise ItemNotFound(f'Failed to locate instance with name "{self.obj.name}"')
         row.click()
 
     def resetter(self, *args, **kwargs):

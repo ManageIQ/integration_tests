@@ -256,9 +256,9 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
                     raise StatsDoNotMatch(msg.format(stat, self.name, server_stat, cfme_stat))
             except KeyError:
                 raise HostStatsNotContains(
-                    "Server stats information does not contain '{}'".format(stat))
+                    f"Server stats information does not contain '{stat}'")
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
+                raise ProviderHasNoProperty(f"Provider does not know how to get '{stat}'")
 
         # Verify that the inventory retrieved from wrapanapi match those retrieved
         # from the UI
@@ -274,7 +274,7 @@ class PhysicalServer(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Ta
                                                      cfme_inventory))
             except KeyError:
                 raise HostStatsNotContains(
-                    "Server inventory information does not contain '{}'".format(inventory))
+                    f"Server inventory information does not contain '{inventory}'")
             except AttributeError:
                 msg = "Provider does not know how to get '{}'"
                 raise ProviderHasNoProperty(msg.format(inventory))

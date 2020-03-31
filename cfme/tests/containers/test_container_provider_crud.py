@@ -49,7 +49,7 @@ def test_container_provider_crud(request, appliance, has_no_providers, provider)
     assert view.is_displayed
 
     view.flash.assert_success_message(
-        'Containers Provider "{}" was saved'.format(provider.name))
+        f'Containers Provider "{provider.name}" was saved')
 
     assert provider.name == str(view.entities.get_first_entity().data.get('name', {}))
 

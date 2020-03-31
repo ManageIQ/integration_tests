@@ -9,4 +9,4 @@ def has_persistent_volume(provider, appliance):
     if vols_count:
         yield
     else:
-        pytest.skip('No Persistent Volumes Detected on OpenShift Provider {}'.format(provider.name))
+        pytest.skip(f'No Persistent Volumes Detected on OpenShift Provider {provider.name}')

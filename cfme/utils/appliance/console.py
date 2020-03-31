@@ -48,8 +48,8 @@ class ApplianceConsole(AppliancePlugin):
             else:
                 cmd, timeout = command
             channel.settimeout(timeout)
-            cmd = "{}\n".format(cmd) if autoreturn else "{}".format(cmd)
-            logger.info("Executing sub-command: %s, timeout:%s" % (cmd, timeout))
+            cmd = f"{cmd}\n" if autoreturn else f"{cmd}"
+            logger.info(f"Executing sub-command: {cmd}, timeout:{timeout}")
             channel.send(cmd)
             result = ''
             try:
@@ -102,7 +102,7 @@ class ApplianceConsole(AppliancePlugin):
         self.appliance.ssh_client.get_file(
             '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
         self.appliance.ssh_client.get_file(
-            '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')  # Get the scap rules
+            f'{rules}', '/tmp/scap_rules.yml')  # Get the scap rules
 
         with open('/tmp/scap_rules.yml') as f:
             yml = yaml.safe_load(f.read())
@@ -112,7 +112,7 @@ class ApplianceConsole(AppliancePlugin):
         root = tree.getroot()
         for rule in rules:
             elements = root.findall(
-                './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
+                f'.//{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{rule}"]')
             if elements:
                 result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
                 if result:
@@ -120,9 +120,9 @@ class ApplianceConsole(AppliancePlugin):
                         rules_failures.append(rule)
                     logger.info("{}: {}".format(rule, result[0].text))
                 else:
-                    logger.info("{}: no result".format(rule))
+                    logger.info(f"{rule}: no result")
             else:
-                logger.info("{}: rule not found".format(rule))
+                logger.info(f"{rule}: rule not found")
         return rules_failures
 
     def configure_primary_replication_node(self, pwd):
@@ -406,12 +406,12 @@ def answer_cluster_related_questions(interaction, node_uid, db_name,
 class ApplianceConsoleCli(AppliancePlugin):
     def _run(self, appliance_console_cli_command, timeout=35):
         result = self.appliance.ssh_client.run_command(
-            "appliance_console_cli {}".format(appliance_console_cli_command),
+            f"appliance_console_cli {appliance_console_cli_command}",
             timeout)
         return result
 
     def set_hostname(self, hostname):
-        return self._run("--host {host}".format(host=hostname), timeout=60)
+        return self._run(f"--host {hostname}", timeout=60)
 
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
@@ -454,8 +454,8 @@ class ApplianceConsoleCli(AppliancePlugin):
         cmd_result = self._run(
             '--ipaserver {s} --ipaprincipal {u} --ipapassword {p} {d} {r}'
             .format(s=ipaserver, u=ipaprincipal, p=ipapassword,
-                    d='--ipadomain {}'.format(ipadomain) if ipadomain else '',
-                    r='--iparealm {}'.format(iparealm) if iparealm else ''), timeout=90)
+                    d=f'--ipadomain {ipadomain}' if ipadomain else '',
+                    r=f'--iparealm {iparealm}' if iparealm else ''), timeout=90)
         logger.debug('IPA configuration output: %s', str(cmd_result))
         assert cmd_result.success
         assert 'ipa-client-install exit code: 1' not in cmd_result.output

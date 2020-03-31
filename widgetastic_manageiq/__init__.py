@@ -133,7 +133,7 @@ class SectionedBootstrapSelect(BootstrapSelect):
         for section in self.all_sections:
             if section.text == text:
                 return section.value
-        raise NoSuchElementException("No section named {}".format(text))
+        raise NoSuchElementException(f"No section named {text}")
 
     def get_elements_in_section(self, text):
         return self.browser.elements(
@@ -408,7 +408,7 @@ class CheckboxSelect(Widget):
                 if txt == text:
                     return cb
             else:
-                raise NameError("Checkbox with text {} not found!".format(text))
+                raise NameError(f"Checkbox with text {text} not found!")
         else:
             # Has to be only single
             return Checkbox(
@@ -678,12 +678,12 @@ class SummaryTable(VanillaTable):
         try:
             rowspan_attribute = self.browser.get_attribute("rowspan", self.row((0, field_name))[0])
         except IndexError:
-            raise NameError("Could not find field with name {!r}".format(field_name))
+            raise NameError(f"Could not find field with name {field_name!r}")
         if not rowspan_attribute:
             return self.row((0, field_name))
         else:
             rowspan_image_element = self.browser.element(
-                "{}/*[self::i or self::img]".format(rowspan_path), self
+                f"{rowspan_path}/*[self::i or self::img]", self
             )
             rowspan_child_class = rowspan_image_element.get_attribute("class")
             if not rowspan_child_class:
@@ -928,7 +928,7 @@ class SNMPHostsField(View):
         if self._input.is_displayed:
             return [self._input]
         else:
-            return [Input(self, "host_{}".format(i)) for i in range(1, 4)]
+            return [Input(self, f"host_{i}") for i in range(1, 4)]
 
 
 class SNMPTrapsField(Widget):
@@ -936,15 +936,15 @@ class SNMPTrapsField(Widget):
         Widget.__init__(self, parent, logger=logger)
 
     def fill_oid_field(self, i, oid):
-        oid_field = Input(self, "oid__{}".format(i))
+        oid_field = Input(self, f"oid__{i}")
         return oid_field.fill(oid)
 
     def fill_type_field(self, i, type_):
-        type_field = BootstrapSelect(self, "var_type__{}".format(i))
+        type_field = BootstrapSelect(self, f"var_type__{i}")
         return type_field.fill(type_)
 
     def fill_value_field(self, i, value):
-        value_field = Input(self, "value__{}".format(i))
+        value_field = Input(self, f"value__{i}")
         return value_field.fill(value)
 
     def fill(self, traps):
@@ -1003,27 +1003,27 @@ class ScriptBox(Widget):
 
     @property
     def script(self):
-        return self.browser.execute_script("{}.getValue();".format(self.name))
+        return self.browser.execute_script(f"{self.name}.getValue();")
 
     def fill(self, value):
         if self.script == value:
             return False
-        self.browser.execute_script("{}.setValue(arguments[0]);".format(self.name), value)
-        self.browser.execute_script("{}.save();".format(self.name))
+        self.browser.execute_script(f"{self.name}.setValue(arguments[0]);", value)
+        self.browser.execute_script(f"{self.name}.save();")
         return True
 
     def read(self):
         return self.script
 
     def get_value(self):
-        script = self.browser.execute_script("return {}.getValue();".format(self.name))
+        script = self.browser.execute_script(f"return {self.name}.getValue();")
         script = script.replace('\\"', '"').replace("\\n", "\n")
         return script
 
     def workaround_save_issue(self):
         # We need to fire off the handlers manually in some cases ...
         self.browser.execute_script(
-            "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.item_name)
+            f"{self.item_name}._handlers.change.map(function(handler) {{ handler() }});"
         )
 
 
@@ -1122,7 +1122,7 @@ class SettingsGroupSubmenu(NavDropdown):
                     not be expanded
         """
         if not self.expandable:
-            raise WidgetOperationFailed("{} is not expandable".format(self.locator))
+            raise WidgetOperationFailed(f"{self.locator} is not expandable")
 
         # Make sure the Settings menu is expanded
         if not self.parent.expanded:
@@ -1131,7 +1131,7 @@ class SettingsGroupSubmenu(NavDropdown):
         # Hover over 'Change Group'
         self.move_to()
         if not self.expanded:
-            raise WidgetOperationFailed("Could not expand {}".format(self.locator))
+            raise WidgetOperationFailed(f"Could not expand {self.locator}")
         else:
             self.logger.info("expanded")
 
@@ -1146,7 +1146,7 @@ class SettingsGroupSubmenu(NavDropdown):
 
         self.browser.move_to_element(self.parent)
         if self.expanded:
-            raise WidgetOperationFailed("Could not collapse {}".format(self.locator))
+            raise WidgetOperationFailed(f"Could not collapse {self.locator}")
         else:
             self.logger.info("collapsed")
 
@@ -1165,7 +1165,7 @@ class SettingsGroupSubmenu(NavDropdown):
             return [self.text]
         return [
             self.browser.text(element)
-            for element in self.browser.elements("{}/li".format(self.GROUP_SUBMENU), parent=self)
+            for element in self.browser.elements(f"{self.GROUP_SUBMENU}/li", parent=self)
         ]
 
     def has_item(self, item):
@@ -1203,10 +1203,10 @@ class SettingsGroupSubmenu(NavDropdown):
             item - string to select in the group list
         """
         if not self.item_enabled(item):
-            raise WidgetOperationFailed("Cannot click disabled item {}".format(item))
+            raise WidgetOperationFailed(f"Cannot click disabled item {item}")
 
         self.expand()
-        self.logger.info("selecting item {}".format(item))
+        self.logger.info(f"selecting item {item}")
         self.browser.click("./ul/li[normalize-space(.)={}]".format(quote(item)), parent=self)
 
     def read(self):
@@ -1669,7 +1669,7 @@ class Paginator(Widget):
         if self._is_enabled(cur_page_btn):
             self.browser.click(cur_page_btn)
         else:
-            raise NoSuchElementException("such button {} is absent/grayed out".format(cmd))
+            raise NoSuchElementException(f"such button {cmd} is absent/grayed out")
 
     def next_page(self):
         self._click_button("next")
@@ -1689,7 +1689,7 @@ class Paginator(Widget):
         return re.search(r"(\d+)?-?(\d+)\s+of\s+(\d+)", text).groups()
 
 
-class ReportDataControllerMixin(object):
+class ReportDataControllerMixin:
     """
     This is helper mixin for several widgets which use Miq JS API
     """
@@ -1699,8 +1699,8 @@ class ReportDataControllerMixin(object):
         if data:
             raw_data["data"] = [data]
         json_data = json.dumps(raw_data)
-        js_cmd = "sendDataWithRx({data}); return ManageIQ.qe.gtl.result".format(data=json_data)
-        self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
+        js_cmd = f"sendDataWithRx({json_data}); return ManageIQ.qe.gtl.result"
+        self.logger.info(f"executed command: {js_cmd}")
         # command result is always stored in this global variable
         self.browser.plugin.ensure_page_safe()
         result = self.browser.execute_script(js_cmd)
@@ -1717,7 +1717,7 @@ class ReportDataControllerMixin(object):
         js_cmd = ("sendDataWithRx({data}); " "return ManageIQ.qe.gtl.result.{method}()").format(
             data=js_data, method=method
         )
-        self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
+        self.logger.info(f"executed command: {js_cmd}")
         self.browser.plugin.ensure_page_safe()
         result = self.browser.execute_script(js_cmd)
         self.browser.plugin.ensure_page_safe()
@@ -1733,7 +1733,7 @@ class ReportDataControllerMixin(object):
         js_cmd = ("sendDataWithRx({data}); " "return ManageIQ.qe.gtl.result").format(
             data=json.dumps(raw_data)
         )
-        self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
+        self.logger.info(f"executed command: {js_cmd}")
         self.browser.plugin.ensure_page_safe()
         result = self.browser.execute_script(js_cmd)
         self.browser.plugin.ensure_page_safe()
@@ -1856,9 +1856,7 @@ class PaginationPane(View, ReportDataControllerMixin):
             else:
                 return row
         else:
-            raise NoSuchElementException(
-                "Row matching filter {} not found on table {}".format(kwargs, table)
-            )
+            raise NoSuchElementException(f"Row matching filter {kwargs} not found on table {table}")
 
     def reset_selection(self):
         if self.is_displayed:
@@ -1921,12 +1919,12 @@ class NonJSPaginationPane(View):
         try:
             int(value)
         except ValueError:
-            raise ValueError("Value should be integer and not {}".format(value))
+            raise ValueError(f"Value should be integer and not {value}")
 
         if self.browser.product_version >= "5.8.2":
             items_text = str(value)
         else:
-            items_text = "{} items".format(value)
+            items_text = f"{value} items"
         self.items_on_page.select_by_visible_text(items_text)
 
     def _parse_pages(self):
@@ -2025,9 +2023,7 @@ class NonJSPaginationPane(View):
             else:
                 return row
         else:
-            raise NoSuchElementException(
-                "Row matching filter {} not found on table {}".format(kwargs, table)
-            )
+            raise NoSuchElementException(f"Row matching filter {kwargs} not found on table {table}")
 
     def reset_selection(self):
         if self.is_displayed:
@@ -2141,7 +2137,7 @@ class RadioGroup(Widget):
         try:
             return next(btn for btn in br.elements(self.LABELS) if br.text(btn) == name)
         except StopIteration:
-            raise NoSuchElementException("RadioButton {name} is absent on page".format(name=name))
+            raise NoSuchElementException(f"RadioButton {name} is absent on page")
 
     @property
     def button_names(self):
@@ -2187,7 +2183,7 @@ class ViewSelector(View):
                 if button.title == title:
                     return button.click()
             else:
-                raise ValueError("The view with title {title} isn't present".format(title=title))
+                raise ValueError(f"The view with title {title} isn't present")
 
     @property
     def selected(self):
@@ -2271,7 +2267,7 @@ class CompareToolBarMixin(View):
             if button.title == title:
                 return button.click()
         else:
-            raise ValueError("The Mode with title {title} isn't present".format(title=title))
+            raise ValueError(f"The Mode with title {title} isn't present")
 
     @property
     def selected(self):
@@ -2360,7 +2356,7 @@ class ReportToolBarViewSelector(View):
             if button.is_displayed and button.title == title:
                 return button.click()
         else:
-            raise ValueError("The view with title {title} isn't present".format(title=title))
+            raise ValueError(f"The view with title {title} isn't present")
 
     @property
     def selected(self):
@@ -2583,7 +2579,7 @@ class Search(View):
         self.open_advanced_search()
         if self.advanced_search_form.load_filter_button.disabled:
             raise NoSuchElementException(
-                "Load Filter button disabled, cannot load filter: {}".format(saved_filter)
+                f"Load Filter button disabled, cannot load filter: {saved_filter}"
             )
         assert saved_filter is not None or report_filter is not None, "At least 1 param required!"
 
@@ -2848,9 +2844,7 @@ class ReactSelect(Widget, ClickableMixin):
                 partial match, use the :py:class:`BootstrapSelect.partial` to wrap the value.
         """
         if len(items) > 1:
-            raise ValueError(
-                "The ReactSelect {} does not allow multiple selections".format(self.locator)
-            )
+            raise ValueError(f"The ReactSelect {self.locator} does not allow multiple selections")
         self.open()
         for item in items:
             item = item.split(" *")[0]
@@ -3053,14 +3047,14 @@ class TimelinesChart(View):
     legend = Table(locator='//div[@id="legend"]/table')
     zoom = TimelinesZoomSlider(locator='//input[@id="timeline-pf-slider"]')
 
-    class TimelinesEvent(object):
+    class TimelinesEvent:
         def __repr__(self):
             attrs = [att for att in self.__dict__.keys() if not att.startswith("_")]
             params = ", ".join(["{}={}".format(att, getattr(self, att)) for att in attrs])
-            return "TimelinesEvent({})".format(params)
+            return f"TimelinesEvent({params})"
 
     def __init__(self, parent, locator=None, logger=None):
-        super(TimelinesChart, self).__init__(parent=parent, logger=logger)
+        super().__init__(parent=parent, logger=logger)
         self.locator = locator or '//div[contains(@class, "timeline-container")]'
 
     def get_categories(self, *categories):
@@ -3093,7 +3087,7 @@ class TimelinesChart(View):
                 setattr(event, attr_name, attr_val.strip())
             except AttributeError:
                 self.logger.exception(
-                    "Regex search failed for line: {} in TimelinesChart Cell".format(line)
+                    f"Regex search failed for line: {line} in TimelinesChart Cell"
                 )
         event.category = category
         return event
@@ -3262,7 +3256,7 @@ class FileInput(BaseFileInput):
             f.flush()
             value = os.path.abspath(f.name)
             atexit.register(f.close)
-        return super(FileInput, self).fill(value)
+        return super().fill(value)
 
 
 class JSBaseEntity(View, ReportDataControllerMixin):
@@ -3509,9 +3503,9 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                 return self.parent.entity_class(parent=self, entity_id=entity_id)
 
             if not surf_pages:
-                raise ItemNotFound("Entity {keys} isn't found on this page".format(keys=keys))
+                raise ItemNotFound(f"Entity {keys} isn't found on this page")
         else:
-            raise ItemNotFound("Entity {keys} isn't found on this page".format(keys=keys))
+            raise ItemNotFound(f"Entity {keys} isn't found on this page")
 
     def get_first_entity(self):
         """ obtains first entity on page and returns it
@@ -3795,7 +3789,7 @@ class DynamicTable(VanillaTable):
 
     def __init__(self, *args, **kwargs):
         self.action_row = kwargs.pop("action_row", 0)  # pull this off and pass the rest up
-        super(DynamicTable, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def row_add(self):
         """Use the action-cell column widget to add a row
@@ -3815,7 +3809,7 @@ class DynamicTable(VanillaTable):
             self[pos_action_index].click()
         except IndexError:  # self.action_row must have been None
             raise DynamicTableAddError(
-                'DynamicTable action_row index "{}" not found in table'.format(self.action_row)
+                f'DynamicTable action_row index "{self.action_row}" not found in table'
             )
         return pos_action_index
 
@@ -3832,7 +3826,7 @@ class DynamicTable(VanillaTable):
             self[row or self.action_row].actions.click()
         except IndexError:  # self.action_row must have been None
             raise DynamicTableAddError(
-                'DynamicTable action_row index "{}" not found in table'.format(self.action_row)
+                f'DynamicTable action_row index "{self.action_row}" not found in table'
             )
         return self._process_negative_index(nindex=-1)  # use process_negative_index to get last row
 
@@ -3978,7 +3972,7 @@ class ViewButtonGroup(Widget):
     )
 
     def __init__(self, parent, title, name, logger=None):
-        super(ViewButtonGroup, self).__init__(parent, logger=logger)
+        super().__init__(parent, logger=logger)
         self.title = title
         self.name = name
 
@@ -4117,7 +4111,7 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
         if entity_id:
             return self.entity_class(parent=self, entity_id=entity_id)
 
-        raise ItemNotFound("Entity {keys} isn't found on this page".format(keys=keys))
+        raise ItemNotFound(f"Entity {keys} isn't found on this page")
 
     def get_first_entity(self):
         """ obtains first entity
@@ -4242,7 +4236,7 @@ class PotentiallyInvisibleTab(WaitTab):
         if not self.is_displayed:
             self.logger.info("Tab not present and ignoring turned on - not touching the tab.")
             return
-        return super(PotentiallyInvisibleTab, self).select()
+        return super().select()
 
 
 class Splitter(Widget):
@@ -4693,7 +4687,7 @@ class MultiSelectList(Widget):
                 for option in all_options:
                     option.click()
         except KeyError:
-            raise ItemNotFound("{} was not found in {}".format(text, self.all_items))
+            raise ItemNotFound(f"{text} was not found in {self.all_items}")
 
 
 class InfraMappingTreeView(Widget):
@@ -4832,7 +4826,7 @@ class MigrationPlansList(Widget):
             if self.browser.text(el) == plan_name:
                 return item
         else:
-            raise ItemNotFound("Migration Plan: {} not found".format(plan_name))
+            raise ItemNotFound(f"Migration Plan: {plan_name} not found")
 
     def migrate_plan(self, plan_name):
         """Find item by text and click migrate or retry button."""
@@ -5000,7 +4994,7 @@ class InfraMappingList(Widget):
             el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
             if self.browser.text(el) == map_name:
                 return item
-        raise ItemNotFound("Infra Mapping: {} not found".format(map_name))
+        raise ItemNotFound(f"Infra Mapping: {map_name} not found")
 
     def expand_map_clusters(self, map_name):
         """Click on clusters to expand to show details."""
@@ -5042,7 +5036,7 @@ class InfraMappingList(Widget):
                     self.browser.element(self.ITEM_ASSOCIATED_PLANS_BUTTON_LOCATOR, parent=el)
                 )
         except NoSuchElementException:
-            raise ItemNotFound("There are no associated plans with map {}".format(map_name))
+            raise ItemNotFound(f"There are no associated plans with map {map_name}")
 
     def read(self):
         return self.all_items
@@ -5211,7 +5205,7 @@ class MigrationPlanRequestDetailsList(Widget):
             el = self.browser.element(".//*[@class='list-group-item-heading']", parent=item)
             if self.browser.text(el) == vm_name:
                 return item
-        raise ItemNotFound("VM: {} not found".format(vm_name))
+        raise ItemNotFound(f"VM: {vm_name} not found")
 
     def read(self):
         return self.all_items
@@ -5433,7 +5427,7 @@ class MigrationProgressBar(Widget):
         for el in self.browser.elements(self.ITEM_LOCATOR):
             if plan_name in self.browser.text(el):
                 return el
-        raise ItemNotFound("No plan found with plan name : {}".format(plan_name))
+        raise ItemNotFound(f"No plan found with plan name : {plan_name}")
 
     def get_clock(self, plan_name):
         """Returns in-process time of migration at that time"""
@@ -5912,11 +5906,9 @@ class DiagnosticsTreeView(BootstrapTreeview):
             item_lst[0].click()
             return True
         elif len(item_lst) > 1:
-            raise ManyEntitiesFound(
-                "More than 1 items partially matching name '{}' found.".format(name)
-            )
+            raise ManyEntitiesFound(f"More than 1 items partially matching name '{name}' found.")
         else:
-            raise ItemNotFound("No items partially matching name '{}' found.".format(name))
+            raise ItemNotFound(f"No items partially matching name '{name}' found.")
 
     @property
     def currently_selected_role(self):

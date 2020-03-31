@@ -100,8 +100,8 @@ def compliance_condition(appliance):
 def compliance_policy(vm, policy_name, appliance):
     compliance_policy = appliance.collections.policies.create(
         policies.VMCompliancePolicy,
-        "compliance_{}".format(policy_name),
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name),
+        f"compliance_{policy_name}",
+        scope=f"fill_field(VM and Instance : Name, INCLUDES, {vm.name})",
     )
     return compliance_policy
 
@@ -126,7 +126,7 @@ def policy_for_testing(
     control_policy = appliance.collections.policies.create(
         policies.VMControlPolicy,
         policy_name,
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name),
+        scope=f"fill_field(VM and Instance : Name, INCLUDES, {vm.name})",
     )
     policy_profile_collection = appliance.collections.policy_profiles
     policy_profile = policy_profile_collection.create(
@@ -213,7 +213,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
     try:
         vm.mgmt.wait_for_state(VmState.RUNNING, timeout=600, delay=5)
     except TimedOutError:
-        pytest.fail("CFME did not power on the VM {}".format(vm.name))
+        pytest.fail(f"CFME did not power on the VM {vm.name}")
 
 
 @pytest.mark.provider(
@@ -246,7 +246,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
     try:
         vm.mgmt.wait_for_state(VmState.STOPPED, timeout=600, delay=5)
     except TimedOutError:
-        pytest.fail("CFME did not power off the VM {}".format(vm.name))
+        pytest.fail(f"CFME did not power off the VM {vm.name}")
 
 
 @pytest.mark.provider(
@@ -280,7 +280,7 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
     try:
         vm.mgmt.wait_for_state(VmState.SUSPENDED, timeout=600, delay=5)
     except TimedOutError:
-        pytest.fail("CFME did not suspend the VM {}".format(vm.name))
+        pytest.fail(f"CFME did not suspend the VM {vm.name}")
 
 
 @pytest.mark.provider(
@@ -315,7 +315,7 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     except TimedOutError:
         pass  # VM did not start, so that's what we want
     else:
-        pytest.fail("CFME did not prevent starting of the VM {}".format(vm.name))
+        pytest.fail(f"CFME did not prevent starting of the VM {vm.name}")
 
 
 @pytest.mark.provider(
@@ -357,7 +357,7 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
     except TimedOutError:
         pass
     else:
-        pytest.fail("CFME did not prevent retire of the VM {}".format(vm.name))
+        pytest.fail(f"CFME did not prevent retire of the VM {vm.name}")
 
 
 @pytest.mark.provider([VMwareProvider], scope="module")
@@ -388,7 +388,7 @@ def test_action_prevent_ssa(request, configure_fleecing, vm, vm_on, policy_for_t
     policy_result = LogValidator(
         "/var/www/miq/vmdb/log/policy.log",
         matched_patterns=[
-            '.*Prevent current event from proceeding.*VM Analysis Request.*{}'.format(vm.name)
+            f'.*Prevent current event from proceeding.*VM Analysis Request.*{vm.name}'
         ]
     )
     policy_result.start_monitoring()
@@ -400,7 +400,7 @@ def test_action_prevent_ssa(request, configure_fleecing, vm, vm_on, policy_for_t
     except TimedOutError:
         assert policy_result.validate(wait="120s")
     else:
-        pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
+        pytest.fail(f"CFME did not prevent analysing the VM {vm.name}")
 
 
 @pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
@@ -431,7 +431,7 @@ def test_action_prevent_host_ssa(request, host, host_policy):
     policy_result = LogValidator(
         "/var/www/miq/vmdb/log/policy.log",
         matched_patterns=[
-            '.*Prevent current event from proceeding.*Host Analysis Request.*{}'.format(host.name)
+            f'.*Prevent current event from proceeding.*Host Analysis Request.*{host.name}'
         ]
     )
     policy_result.start_monitoring()
@@ -443,7 +443,7 @@ def test_action_prevent_host_ssa(request, host, host_policy):
 
     original = _scan()
     view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)
-    view.flash.assert_success_message('"{}": Analysis successfully initiated'.format(host.name))
+    view.flash.assert_success_message(f'"{host.name}": Analysis successfully initiated')
     try:
         wait_for(
             lambda: _scan() != original,
@@ -455,7 +455,7 @@ def test_action_prevent_host_ssa(request, host, host_policy):
     except TimedOutError:
         assert policy_result.validate(wait="120s")
     else:
-        pytest.fail("CFME did not prevent analysing the Host {}".format(host.name))
+        pytest.fail(f"CFME did not prevent analysing the Host {host.name}")
 
 
 @pytest.mark.provider(
@@ -694,7 +694,7 @@ def test_action_initiate_smartstate_analysis(
     try:
         do_scan(vm)
     except TimedOutError:
-        pytest.fail("CFME did not finish analysing the VM {}".format(vm.name))
+        pytest.fail(f"CFME did not finish analysing the VM {vm.name}")
 
 
 # TODO: Rework to use REST
@@ -869,7 +869,7 @@ def test_action_cancel_clone(
         )
     policy_for_testing.assign_events("VM Clone Start")
     policy_for_testing.assign_actions_to_event("VM Clone Start", ["Cancel vCenter Task"])
-    clone_vm_name = "{}-clone".format(vm_big.name)
+    clone_vm_name = f"{vm_big.name}-clone"
 
     @request.addfinalizer
     def finalize():

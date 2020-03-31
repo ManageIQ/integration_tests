@@ -46,7 +46,7 @@ def subset_of_vms(vms):
 @pytest.fixture
 def expression_for_vms_subset(subset_of_vms):
     return ";select_first_expression;click_or;".join(
-        ["fill_field(Virtual Machine : Name, =, {})".format(vm) for vm in subset_of_vms]
+        [f"fill_field(Virtual Machine : Name, =, {vm})" for vm in subset_of_vms]
     )
 
 
@@ -84,7 +84,7 @@ def test_vm_filter_without_user_input(appliance, vm_view, vms, subset_of_vms,
     vm_view.flash.assert_no_error()
     vms_present = vm_view.entities.entity_names
     for vm in subset_of_vms:
-        assert vm in vms_present, "Could not find VM {} after filtering!".format(vm)
+        assert vm in vms_present, f"Could not find VM {vm} after filtering!"
 
 
 @pytest.mark.meta(blockers=[BZ(1715550, forced_streams=["5.10", "5.11"])])
@@ -108,7 +108,7 @@ def test_vm_filter_with_user_input(
     # Check the number of VMs after filtering and that it's less than without filtering
     vms_after = len(vm_view.entities.get_all())
     assert vms_after < vms_before
-    assert vm in vm_view.entities.entity_names, "Could not find VM {} after filtering!".format(vm)
+    assert vm in vm_view.entities.entity_names, f"Could not find VM {vm} after filtering!"
 
 
 def test_vm_filter_with_user_input_and_cancellation(vm_view, vms, subset_of_vms,
@@ -409,6 +409,6 @@ def test_create_filter_with_multiple_conditions(appliance, provider, request, ru
     vms_after = len(vm_view.entities.get_all())
 
     assert 2 <= vms_after < vms_before
-    msg = "Could not find VMs {}, {} after filtering!".format(vm1_name, vm2_name)
+    msg = f"Could not find VMs {vm1_name}, {vm2_name} after filtering!"
     vms = vm_view.entities.entity_names
     assert vm1_name in vms and vm2_name in vms, msg

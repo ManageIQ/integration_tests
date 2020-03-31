@@ -65,7 +65,7 @@ def pytest_exception_interact(node, call, report):
     exception_filename = str(call.excinfo.traceback[-1].path).replace(
         project_path.strpath + "/", ''
     )
-    exception_location = "{}:{}".format(exception_filename, exception_lineno)
+    exception_location = f"{exception_filename}:{exception_lineno}"
     fire_art_test_hook(
         node, 'tb_info',
         exception=exception_name, file_line=exception_location,

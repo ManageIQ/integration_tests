@@ -59,7 +59,7 @@ def private_flavor(appliance, provider):
 
     view = appliance.browser.create_view(navigator.get_class(collection, 'All').VIEW)
     view.flash.assert_success_message(
-        'Add of Flavor "{}" was successfully initialized.'.format(private_flavor.name))
+        f'Add of Flavor "{private_flavor.name}" was successfully initialized.')
 
     wait_for(lambda: private_flavor.exists, delay=5, timeout=600, fail_func=private_flavor.refresh,
              message='Wait for flavor to appear')
@@ -192,7 +192,7 @@ def test_flavor_crud(appliance, provider, request):
 
     view = appliance.browser.create_view(navigator.get_class(collection, 'All').VIEW)
     view.flash.assert_success_message(
-        'Add of Flavor "{}" was successfully initialized.'.format(flavor.name))
+        f'Add of Flavor "{flavor.name}" was successfully initialized.')
 
     wait_for(lambda: flavor.exists, delay=5, timeout=600, fail_func=flavor.refresh,
              message='Wait for flavor to appear')
@@ -200,7 +200,7 @@ def test_flavor_crud(appliance, provider, request):
     flavor.delete()
     view = appliance.browser.create_view(navigator.get_class(collection, 'All').VIEW)
     view.flash.assert_success_message(
-        'Delete of Flavor "{}" was successfully initiated.'.format(flavor.name))
+        f'Delete of Flavor "{flavor.name}" was successfully initiated.')
 
     wait_for(lambda: not flavor.exists, delay=5, timeout=600, fail_func=flavor.refresh,
              message='Wait for flavor to appear')
@@ -281,7 +281,7 @@ def test_create_instance_with_private_flavor(instance_with_private_flavor, provi
     flavor_obj.delete()
     view = navigate_to(collection, "All")
     view.flash.assert_success_message(
-        'Delete of Flavor "{name}" was successfully initiated.'.format(name=flavor_obj.name))
+        f'Delete of Flavor "{flavor_obj.name}" was successfully initiated.')
 
     wait_for(lambda: not flavor_obj.exists, delay=5, timeout=600, fail_func=flavor_obj.refresh,
              message='Wait for flavor to disappear')
@@ -311,6 +311,6 @@ def test_filter_by_flavor_via_api(appliance):
         1596069
     """
     flavor = choice(appliance.rest_api.collections.flavors.all)
-    url = "/api/vms?filter[]=flavor.name='{}'".format(flavor.name)
+    url = f"/api/vms?filter[]=flavor.name='{flavor.name}'"
     appliance.rest_api.get(appliance.url_path(url))
     assert_response(appliance)

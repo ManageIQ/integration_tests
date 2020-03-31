@@ -63,7 +63,7 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     request_row = appliance.collections.requests.instantiate(request_description,
                                                              partial_check=True)
     request_row.wait_for_request(method='ui')
-    msg = "Request failed with the message {}".format(request_row.row.last_message.text)
+    msg = f"Request failed with the message {request_row.row.last_message.text}"
     assert request_row.is_succeeded(method='ui'), msg
 
 

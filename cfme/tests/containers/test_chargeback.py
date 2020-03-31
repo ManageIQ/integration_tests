@@ -53,7 +53,7 @@ def dump_args(**kwargs):
     '"""
     out = ''
     for key, val in kwargs.items():
-        out += '{}={}, '.format(key, val)
+        out += f'{key}={val}, '
     if out:
         return out[:-2] + ';'
     return kwargs
@@ -100,7 +100,7 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
             }
         }
     else:
-        raise Exception("Unknown object type: {}".format(obj_type))
+        raise Exception(f"Unknown object type: {obj_type}")
 
     data['menu_name'] = title
     data['title'] = title
@@ -150,7 +150,7 @@ def assign_custom_compute_rate(obj_type, chargeback_rate, provider):
             })
         logger.info('ASSIGNING CUSTOM COMPUTE RATE FOR PROJECT CHARGEBACK')
     else:
-        raise Exception("Unknown object type: {}".format(obj_type))
+        raise Exception(f"Unknown object type: {obj_type}")
 
     compute_assign.assign()
     logger.info('Rate - {}: {}'.format(chargeback_rate.description,
@@ -251,7 +251,7 @@ def abstract_test_chargeback_cost(
         )
 
     assert found_something_to_test, \
-        'Could not find {} with the assigned rate: {}'.format(obj_type, compute_rate.description)
+        f'Could not find {obj_type} with the assigned rate: {compute_rate.description}'
 
 
 # Ideally, we would have a single test parametrized by two marks, one in module and the other in

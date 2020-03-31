@@ -37,7 +37,7 @@ else:
                        **kwargs_from_env(assert_hostname=False))
 
 
-class DockerInstance(object):
+class DockerInstance:
     def process_bindings(self, bindings):
         self.port_bindings = {}
         self.ports = []
@@ -120,7 +120,7 @@ class PytestDocker(DockerInstance):
             print("Dry run running pytest")
 
 
-class DockerBot(object):
+class DockerBot:
     def __init__(self, **args):
         links = []
         self.args = args
@@ -185,9 +185,9 @@ class DockerBot(object):
         owner = self.args['gh_owner']
         repo = self.args['gh_repo']
         if token:
-            headers = {'Authorization': 'token {}'.format(token)}
+            headers = {'Authorization': f'token {token}'}
             r = requests.get(
-                'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
+                f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr}',
                 headers=headers)
             return r.json()['base']['ref']
 
@@ -196,21 +196,21 @@ class DockerBot(object):
         owner = self.args['gh_dev_owner']
         repo = self.args['gh_dev_repo']
         if token:
-            headers = {'Authorization': 'token {}'.format(token)}
+            headers = {'Authorization': f'token {token}'}
             r = requests.get(
-                'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
+                f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr}',
                 headers=headers)
             user, user_branch = r.json()['head']['label'].split(":")
-        return "https://github.com/{}/{}.git".format(user, repo), user_branch
+        return f"https://github.com/{user}/{repo}.git", user_branch
 
     def get_pr_metadata(self, pr=None):
         token = self.args['gh_token']
         owner = self.args['gh_owner']
         repo = self.args['gh_repo']
         if token:
-            headers = {'Authorization': 'token {}'.format(token)}
+            headers = {'Authorization': f'token {token}'}
             r = requests.get(
-                'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
+                f'https://api.github.com/repos/{owner}/{repo}/pulls/{pr}',
                 headers=headers)
             body = r.json()['body'] or ""
             metadata = re.findall("{{(.*?)}}", body)
@@ -227,7 +227,7 @@ class DockerBot(object):
         owner = self.args['gh_owner']
         repo = self.args['gh_repo']
         if token:
-            headers = {'Authorization': 'token {}'.format(token)}
+            headers = {'Authorization': f'token {token}'}
             page = 1
             while True:
                 r = requests.get(
@@ -381,7 +381,7 @@ class DockerBot(object):
     def process_appliance(self):
         self.appliance = self.args['appliance']
         self.app_name = self.args.get('appliance_name', "Unnamed")
-        print("  APPLIANCE: {} ({})".format(self.appliance, self.app_name))
+        print(f"  APPLIANCE: {self.appliance} ({self.app_name})")
 
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
@@ -393,7 +393,7 @@ class DockerBot(object):
                                                                                   self.pr_metadata))
             sprout_appliances = self.pr_metadata.get('sprouts', 1)
             if pytest:
-                self.args['pytest'] = "py.test {}".format(pytest)
+                self.args['pytest'] = f"py.test {pytest}"
             else:
                 files = self.modified_files
                 if files:
@@ -408,14 +408,14 @@ class DockerBot(object):
             self.base_branch = self.get_base_branch(self.args['pr']) or self.base_branch
         if self.args['sprout'] and False:
 
-            self.args['pytest'] += ' --use-sprout --sprout-appliances {}'.format(sprout_appliances)
+            self.args['pytest'] += f' --use-sprout --sprout-appliances {sprout_appliances}'
             self.args['pytest'] += ' --sprout-group {}'.format(self.args['sprout_stream'])
             self.args['pytest'] += ' --sprout-desc {}'.format(self.args['sprout_description'])
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
         if self.args['dev_pr']:
             repo, branch = self.get_dev_branch(self.args['dev_pr'])
-            self.args['pytest'] += ' --dev-branch {} --dev-repo {}'.format(branch, repo)
+            self.args['pytest'] += f' --dev-branch {branch} --dev-repo {repo}'
         print("  PYTEST Command: {}".format(self.args['pytest']))
 
     def enc_key(self):
@@ -496,7 +496,7 @@ class DockerBot(object):
             os.mkdir(log_path)
         except OSError:
             pass
-        print("  LOG_ID: {}".format(self.pytest_name))
+        print(f"  LOG_ID: {self.pytest_name}")
         return log_path
 
     def create_pytest_bindings(self):

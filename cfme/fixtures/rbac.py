@@ -172,7 +172,7 @@ def pytest_pyfunc_call(pyfuncitem):
     if 'rbac_role' in pyfuncitem.fixturenames:
         user = pyfuncitem._request.getfixturevalue('rbac_role')
         really_logout()
-        logger.info("setting user to {}".format(user))
+        logger.info(f"setting user to {user}")
         user_obj = current_appliance.collections.users.instantiate(
             username=conf.credentials[user]['username'],
             password=conf.credentials[user]['password']

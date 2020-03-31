@@ -32,12 +32,12 @@ def pytest_runtest_setup(item):
 def pytest_collection_modifyitems(session, config, items):
     log.logger.info(log.format_marker('Starting new test run', mark="="))
     expression = config.getvalue('keyword') or False
-    expr_string = ', will filter with "{}"'.format(expression) if expression else ''
+    expr_string = f', will filter with "{expression}"' if expression else ''
     log.logger.info('Collected {} items{}'.format(len(items), expr_string))
 
 
 @attr.s(frozen=True)
-class LogExtraData(object):
+class LogExtraData:
     config = attr.ib()
 
     @property
@@ -90,7 +90,7 @@ def pytest_sessionfinish(session, exitstatus):
         c[_test_status(test)] += 1
     # Prepend a total to the summary list
     results = ['total: {}'.format(sum(c.values()))] + [
-        '{}: {}'.format(k, v) for k, v in c.items()]
+        f'{k}: {v}' for k, v in c.items()]
     # Then join it with commas
     summary = ', '.join(results)
     log.logger.info(log.format_marker('Finished test run', mark='='))

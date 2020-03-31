@@ -33,7 +33,7 @@ def repository(appliance, ansible):
     repo_name = f"test_repo_{uniq}"
     data = {
         "name": repo_name,
-        "description": "Test Repo {}".format(uniq),
+        "description": f"Test Repo {uniq}",
         "manager_resource": {"href": ansible.href},
         "related": {},
         "scm_type": "git",
@@ -57,7 +57,7 @@ def repository(appliance, ansible):
         repo_rest.action.delete()
 
 
-class TestReposRESTAPI(object):
+class TestReposRESTAPI:
     @pytest.mark.parametrize(
         'from_collection', [False, True], ids=['from_detail', 'from_collection'])
     def test_edit_repository(self, appliance, repository, from_collection):
@@ -137,7 +137,7 @@ class TestReposRESTAPI(object):
         delete_resources_from_collection([repository], not_found=False, num_sec=300, delay=5)
 
 
-class TestPayloadsRESTAPI(object):
+class TestPayloadsRESTAPI:
     def test_payloads_collection(self, appliance, repository):
         """Checks the configuration_script_payloads collection using REST API.
 

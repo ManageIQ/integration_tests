@@ -107,4 +107,4 @@ class VolumeTypeDetails(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
         except ItemNotFound:
-            raise ItemNotFound('Volume Type {} not found'.format(self.obj.name))
+            raise ItemNotFound(f'Volume Type {self.obj.name} not found')

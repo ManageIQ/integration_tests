@@ -32,18 +32,18 @@ def create_groupings(input_list):
     return output_list
 
 
-class Suite(object):
+class Suite:
     def __init__(self):
         pass
 
 
-class Test(object):
+class Test:
     def __init__(self):
         self.results = []
         pass
 
 
-class Group(object):
+class Group:
     def __init__(self, params):
         self.params = sorted(list(params))
         self.tests = []
@@ -74,7 +74,7 @@ for test_data in elem:
             item_id_param = item_param[0].strip('[]')
 
         if item_class:
-            node_name = '{}.{}'.format(item_class, item_name)
+            node_name = f'{item_class}.{item_name}'
         else:
             node_name = item_name
         suite_name = doc_data.get(node_name, {}).get('metadata', {}).get('from_docs', {}) \
@@ -102,7 +102,7 @@ for test_data in elem:
             suite.tests = []
             suite.cache_params = []
             suite.description = suite_description
-            suite.params = set(['No param'])
+            suite.params = {'No param'}
             suite.cache_tests = {}
 
         if item_param:
@@ -223,7 +223,7 @@ for prov in suite_data['provider_keys']:
                     the_group.tests = the_tests
     # write the page for the specific prov
     data = template_env.get_template('test_matrix.html').render({'suites': prov_suites[prov]})
-    with open(os.path.join(log_path.strpath, '{}.html'.format(prov)), "w") as f:
+    with open(os.path.join(log_path.strpath, f'{prov}.html'), "w") as f:
         f.write(data)
 
 

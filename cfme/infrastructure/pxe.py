@@ -88,7 +88,7 @@ class PXEServersView(PXEMainView):
     """
     @property
     def is_displayed(self):
-        return (super(PXEServersView, self).is_displayed and
+        return (super().is_displayed and
                 self.title.text == 'All PXE Servers')
 
 
@@ -397,7 +397,7 @@ class PXECustomizationTemplatesView(PXEMainView):
 
     @property
     def is_displayed(self):
-        return (super(PXECustomizationTemplatesView, self).is_displayed and
+        return (super().is_displayed and
                 self.title.text == 'All Customization Templates - System Image Types')
 
 
@@ -416,7 +416,7 @@ class PXECustomizationTemplateDetailsView(PXEMainView):
     def is_displayed(self):
         if getattr(self.context['object'], 'name'):
             title = 'Customization Template "{name}"'.format(name=self.context['object'].name)
-            return (super(PXECustomizationTemplateDetailsView, self).is_displayed and
+            return (super().is_displayed and
                     self.title.text == title)
         else:
             return False
@@ -519,8 +519,8 @@ class CustomizationTemplate(Updateable, Pretty, BaseEntity):
              cancel (bool): It's used for flag to cancel or not the copy operation.
         """
         view = navigate_to(self, 'Copy')
-        name = name or 'Copy of {}'.format(self.name)
-        description = description or 'Copy of {}'.format(self.description)
+        name = name or f'Copy of {self.name}'
+        description = description or f'Copy of {self.description}'
         view.fill({'name': name, 'description': description})
 
         customization_template = self.parent.instantiate(name, description, self.script_data,
@@ -594,8 +594,9 @@ class CustomizationTemplateAll(CFMENavigateStep):
     prerequisite = NavigateToSibling('PXEMainPage')
 
     def step(self, *args, **kwargs):
-        self.view.sidebar.templates.tree.click_path(('All Customization Templates - '
-                                                     'System Image Types'))
+        self.view.sidebar.templates.tree.click_path(
+            'All Customization Templates - System Image Types'
+        )
 
 
 @navigator.register(CustomizationTemplateCollection, 'Add')
@@ -643,7 +644,7 @@ class PXESystemImageTypesView(PXEMainView):
 
     @property
     def is_displayed(self):
-        return (super(PXESystemImageTypesView, self).is_displayed and
+        return (super().is_displayed and
                 self.title.text == 'All System Image Types')
 
 
@@ -793,7 +794,7 @@ class SystemImageType(Updateable, Pretty, BaseEntity):
                                                handle_alert=not cancel)
         if not cancel:
             main_view = self.create_view(PXESystemImageTypesView)
-            msg = 'System Image Type "{}": Delete successful'.format(self.name)
+            msg = f'System Image Type "{self.name}": Delete successful'
             main_view.flash.assert_success_message(msg)
         else:
             navigate_to(self, 'Details')
@@ -825,7 +826,7 @@ class SystemImageTypeCollection(BaseCollection):
             msg = 'Add of new System Image Type was cancelled by the user'
         else:
             view.add.click()
-            msg = 'System Image Type "{}" was added'.format(name)
+            msg = f'System Image Type "{name}" was added'
         main_view = self.create_view(PXESystemImageTypesView)
         main_view.flash.assert_success_message(msg)
         return system_image_type
@@ -892,7 +893,7 @@ class PXEDatastoresView(PXEMainView):
 
     @property
     def is_displayed(self):
-        return (super(PXEDatastoresView, self).is_displayed and
+        return (super().is_displayed and
                 self.title.text == 'All ISO Datastores')
 
 
@@ -955,7 +956,7 @@ class ISODatastore(Updateable, Pretty, Navigatable):
             msg = 'Add of new ISO Datastore was cancelled by the user'
         else:
             view.add.click()
-            msg = 'ISO Datastore "{}" was added'.format(self.provider)
+            msg = f'ISO Datastore "{self.provider}" was added'
         main_view.flash.assert_success_message(msg)
 
         if refresh:
@@ -1013,8 +1014,9 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         basic_info = view.entities.basic_information
         last_time = basic_info.get_text_of('Last Refreshed On')
         view.toolbar.configuration.item_select('Refresh Relationships', handle_alert=True)
-        view.flash.assert_success_message(('ISO Datastore "{}": Refresh Relationships successfully '
-                                           'initiated'.format(self.provider)))
+        view.flash.assert_success_message(
+            f'ISO Datastore "{self.provider}": Refresh Relationships successfully initiated'
+        )
         if wait:
             wait_for(lambda lt: lt != basic_info.get_text_of('Last Refreshed On'),
                      func_args=[last_time], fail_func=view.toolbar.reload.click, num_sec=timeout,

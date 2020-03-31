@@ -48,7 +48,7 @@ def test_cockpit_button_access(appliance, provider, cockpit, request):
     for node in nodes:
 
         view = (navigate_to(node, 'Details', force=True) if node else
-                pytest.skip("Could not determine node of {}".format(provider.name)))
+                pytest.skip(f"Could not determine node of {provider.name}"))
 
         if cockpit:
             assert not view.toolbar.web_console.disabled

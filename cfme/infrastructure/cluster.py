@@ -261,7 +261,7 @@ class Cluster(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         )
         if wait_for_task_result:
             task = self.appliance.collections.tasks.instantiate(
-                name="SmartState Analysis for [{}]".format(self.name), tab='MyOtherTasks')
+                name=f"SmartState Analysis for [{self.name}]", tab='MyOtherTasks')
             task.wait_for_finished()
             return task
 

@@ -230,5 +230,5 @@ class Details(CFMENavigateStep):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise ItemNotFound('Resource pool {} not found'.format(self.obj.name))
+            raise ItemNotFound(f'Resource pool {self.obj.name} not found')
         row.click()

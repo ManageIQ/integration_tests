@@ -161,7 +161,7 @@ def ansible_policy_linked_vm(appliance, create_vm, ansible_linked_vm_action):
     policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha(15, start="policy_"),
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(create_vm.name),
+        scope=f"fill_field(VM and Instance : Name, INCLUDES, {create_vm.name})",
     )
     policy.assign_actions_to_event(
         "Tag Complete", [ansible_linked_vm_action.description]
@@ -842,7 +842,7 @@ def test_service_ansible_verbosity(
     # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
     # is being logging in evm.log
     assert log.validate(wait="60s")
-    logger.info("Pattern found {}".format(log.matched_patterns))
+    logger.info(f"Pattern found {log.matched_patterns}")
 
     view = navigate_to(ansible_service, "Details")
     assert verbosity[0] == view.provisioning.details.get_text_of("Verbosity")

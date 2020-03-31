@@ -417,7 +417,7 @@ def test_retire_service_bundle_and_vms(appliance, provider, catalog_item, reques
     """
     collection = provider.appliance.provider_based_collection(provider)
     vm_name = "{}0001".format(catalog_item.prov_data["catalog"]["vm_name"])
-    vm = collection.instantiate("{}".format(vm_name), provider)
+    vm = collection.instantiate(f"{vm_name}", provider)
 
     bundle_name = fauxfactory.gen_alphanumeric(12, start="bundle_")
     catalog_bundle = appliance.collections.catalog_bundles.create(

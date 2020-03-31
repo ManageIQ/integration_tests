@@ -55,11 +55,11 @@ def cfme_vhd(provider, appliance):
     try:
         url = '{}/'.format(conf.cfme_data["basic_info"]["cfme_images_url"][stream])
     except KeyError:
-        pytest.skip("No such stream: {} found in cfme_data.yaml".format(stream))
+        pytest.skip(f"No such stream: {stream} found in cfme_data.yaml")
     # get image name
     image_name = get_vhd_name(url)
     if not image_name:
-        pytest.skip("No hyperv vhd image at {}".format(url))
+        pytest.skip(f"No hyperv vhd image at {url}")
     # download the image to SCVMM library
     if appliance.version > "5.10":
         unzip = True
@@ -83,7 +83,7 @@ def scvmm_appliance(provider, cfme_vhd):
     """ Create an appliance from the VHD provided on SCVMM """
     # script to create template
     version = ".".join(re.findall(r"\d+", cfme_vhd)[0:4])  # [0:4] gets the 4 version num for CFME
-    template_name = "cfme-{}-template".format(version)
+    template_name = f"cfme-{version}-template"
     vhd_path = provider.data.get("vhd_path")
     small_disk = provider.data.get("small_disk")
 
@@ -269,7 +269,7 @@ def test_check_disk_allocation_size_scvmm(vm):
         "Total Datastore Used Space"
     )
 
-    msg = "Usage before snapshot: {}, Usage after snapshot: {}".format(usage_before, usage_after)
+    msg = f"Usage before snapshot: {usage_before}, Usage after snapshot: {usage_after}"
     # convert usage after and before to bytes
     vb, kb = usage_before.split()
     va, ka = usage_after.split()

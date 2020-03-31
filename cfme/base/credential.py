@@ -5,7 +5,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 
 
-class FromConfigMixin(object):
+class FromConfigMixin:
     @staticmethod
     def rename_properties(creds):
         """
@@ -81,9 +81,9 @@ class Credential(Pretty, Updateable, FromConfigMixin):
         elif attr == 'principal':
             domain = object.__getattribute__(self, 'domain')
             principal = object.__getattribute__(self, 'principal')
-            return r'{}\{}'.format(domain, principal) if domain else principal
+            return fr'{domain}\{principal}' if domain else principal
         else:
-            return super(Credential, self).__getattribute__(attr)
+            return super().__getattribute__(attr)
 
     @property
     def view_value_mapping(self):
@@ -155,7 +155,7 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
             else:
                 return object.__getattribute__(self, 'token')
         else:
-            return super(TokenCredential, self).__getattribute__(attr)
+            return super().__getattribute__(attr)
 
     def __eq__(self, other):
         return self.token == other.token and self.verify_token == other.verify_token
@@ -185,7 +185,7 @@ class ServiceAccountCredential(Pretty, Updateable):
     pretty_attrs = ['service_account']
 
     def __init__(self, service_account):
-        super(ServiceAccountCredential, self)
+        super()
         self.service_account = service_account
 
     @property

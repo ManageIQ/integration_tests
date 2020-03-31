@@ -161,7 +161,7 @@ def test_paginator_details_page(appliance, place_info, schedule):
 
     if check_paginator_for_page(view):
         paginator = view.paginator
-        items_selector = Dropdown(view, '{} Items'.format(paginator.items_per_page))
+        items_selector = Dropdown(view, f'{paginator.items_per_page} Items')
         msg = 'Not all options are present in items per page'
         if view.extra.appliance.version < '5.11':
             assert set(items_selection_5_10) == set(items_selector.items), msg

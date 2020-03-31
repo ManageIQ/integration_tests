@@ -34,10 +34,10 @@ def test_sdn_api_inventory_networks(provider, appliance):
         # Ec2 API returns only the Id of the networks, so the alternative is to count the networks
         # instead of checking there names. Less accurate, but Better than nothing...
         assert len(cfme_networks) == len(prov_networks), 'There is NOT the same amount of networks'
-        'in CFME than on EC2: {prov} {cfme}'.format(prov=prov_networks, cfme=cfme_networks)
+        f'in CFME than on EC2: {prov_networks} {cfme_networks}'
     else:
         assert cfme_networks == prov_networks, 'Prov networks list: {networks} different from '
-        'cfme list: {cfme}'.format(networks=prov_networks, cfme=cfme_networks)
+        f'cfme list: {cfme_networks}'
 
 
 @pytest.mark.provider([AzureProvider, EC2Provider], scope='function')
@@ -60,7 +60,7 @@ def test_sdn_api_inventory_routers(provider, appliance):
     cfme_routers = sorted([rt.name for rt in appliance.collections.network_routers.all()])
 
     assert cfme_routers == prov_routers, 'Prov routers list: {router} different from cfme list: '
-    '{cfme}'.format(router=prov_routers, cfme=cfme_routers)
+    f'{cfme_routers}'
 
 
 def test_sdn_api_inventory_subnets(provider, appliance):
@@ -86,7 +86,7 @@ def test_sdn_api_inventory_subnets(provider, appliance):
         prov_subnets = provider.mgmt.list_subnet()
 
     assert sorted(cfme_subnets) == sorted(prov_subnets), 'Prov subnets list: {sub} '
-    'different from cfme list: {cfme}'.format(sub=prov_subnets, cfme=cfme_subnets)
+    f'different from cfme list: {cfme_subnets}'
 
 
 @pytest.mark.provider([EC2Provider, AzureProvider], scope='function')
@@ -106,7 +106,7 @@ def test_sdn_api_inventory_security_groups(provider, appliance):
     cfme_sec_gp = sorted([sec.name for sec in appliance.collections.network_security_groups.all()])
 
     assert prov_sec_gp == cfme_sec_gp, 'Prov security groups list: {sec} different from '
-    'cfme list: {cfme}'.format(sec=prov_sec_gp, cfme=cfme_sec_gp)
+    f'cfme list: {cfme_sec_gp}'
 
 
 @pytest.mark.ignore_stream('5.11')  # Load Balancers are deprecated in 5.11
@@ -127,7 +127,7 @@ def test_sdn_api_inventory_loadbalancers(provider, appliance):
     cfme_load_balancers = sorted([lb.name for lb in appliance.collections.balancers.all()])
 
     assert prov_load_balancers == cfme_load_balancers, 'Provider balancer list: {prov} different '
-    'from cfme list: {cfme}'.format(prov=prov_load_balancers, cfme=cfme_load_balancers)
+    f'from cfme list: {cfme_load_balancers}'
 
 
 @pytest.fixture

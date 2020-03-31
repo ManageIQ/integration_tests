@@ -87,7 +87,7 @@ class SatelliteProvider(ConfigManagerProvider):
     @property
     def ui_name(self):
         """Return the name used in the UI"""
-        return '{} Configuration Manager'.format(self.name)
+        return f'{self.name} Configuration Manager'
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):

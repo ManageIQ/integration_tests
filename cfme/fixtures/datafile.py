@@ -92,7 +92,7 @@ def pytest_sessionfinish(session, exitstatus):
     if unused_data_files:
         # Write the log of unused data files out, minus the data dir prefix
         udf_log = ''.join(
-            (line[len(str(data_path)):] + '\n' for line in unused_data_files)
+            line[len(str(data_path)):] + '\n' for line in unused_data_files
         )
         udf_log_file.write(udf_log + '\n')
 
@@ -107,7 +107,7 @@ def pytest_sessionfinish(session, exitstatus):
         )
 
 
-class _FixtureDataFile(object):
+class _FixtureDataFile:
     def __init__(self, request):
         self.base_path = str(request.session.fspath)
         self.testmod_path = str(request.fspath)

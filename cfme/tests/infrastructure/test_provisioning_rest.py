@@ -30,7 +30,7 @@ def get_provision_data(rest_api, provider, template_name, auto_approve=True):
             guid = template.guid
             break
     else:
-        raise Exception('No such template {} on provider!'.format(template_name))
+        raise Exception(f'No such template {template_name} on provider!')
 
     result = {
         "version": "1.1",
@@ -114,7 +114,7 @@ def test_provision(request, appliance, provider, provision_data):
         provision_request.rest.message)
     assert provision_request.is_succeeded(), msg
     found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
-    assert found_vms, 'VM `{}` not found'.format(vm_name)
+    assert found_vms, f'VM `{vm_name}` not found'
 
 
 @pytest.mark.rhv2
@@ -159,7 +159,7 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
         provision_request.rest.message)
     assert provision_request.is_succeeded(), msg
     found_vms = appliance.rest_api.collections.vms.find_by(name=vm_name)
-    assert found_vms, 'VM `{}` not found'.format(vm_name)
+    assert found_vms, f'VM `{vm_name}` not found'
     # Check the VM vNIC
     vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
     nics = vm.mgmt.get_nics()
@@ -220,7 +220,7 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
 
     request = appliance.collections.requests.instantiate(description=vm_name, partial_check=True)
     request.wait_for_request()
-    assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
+    assert provider.mgmt.does_vm_exist(vm_name), f"The VM {vm_name} does not exist!"
 
     wait_for(check_one_approval_mail_received, num_sec=90, delay=5)
     wait_for(check_one_completed_mail_received, num_sec=90, delay=5)

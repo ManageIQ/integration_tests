@@ -106,7 +106,7 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
         datastore.run_smartstate_analysis(wait_for_task_result=True)
     except (MenuItemNotFound, DropdownDisabled):
         # TODO need to update to cover all detastores
-        pytest.skip('Smart State analysis is disabled for {} datastore'.format(datastore.name))
+        pytest.skip(f'Smart State analysis is disabled for {datastore.name} datastore')
     details_view = navigate_to(datastore, 'DetailsFromProvider')
     # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
 
@@ -125,6 +125,6 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
         for row_name in CONTENT_ROWS_TO_CHECK:
             value = details_view.entities.content.get_text_of(row_name)
             soft_assert(value != '0',
-                        'Expected value for {} to be non-empty'.format(row_name))
+                        f'Expected value for {row_name} to be non-empty')
     else:
         assert details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[-1]) != '0'

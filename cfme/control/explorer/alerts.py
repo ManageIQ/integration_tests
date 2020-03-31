@@ -260,7 +260,7 @@ class Alert(BaseEntity, Updateable, Pretty):
                 'Alert "{}" was saved'.format(updates.get("description", self.description)))
         else:
             view.flash.assert_message(
-                'Edit of Alert "{}" was cancelled by the user'.format(self.description))
+                f'Edit of Alert "{self.description}" was cancelled by the user')
 
     def delete(self, cancel=False):
         """Delete this Alert in UI.
@@ -277,7 +277,7 @@ class Alert(BaseEntity, Updateable, Pretty):
             view = self.create_view(AlertsAllView)
             assert view.is_displayed
             view.flash.assert_success_message(
-                'Alert "{}": Delete successful'.format(self.description))
+                f'Alert "{self.description}": Delete successful')
 
     def copy(self, **updates):
         """Copy this Alert in UI.
@@ -385,7 +385,7 @@ class AlertCollection(BaseCollection):
         alert._fill(view)
         view.add_button.click()
         view = alert.create_view(AlertDetailsView, wait='10s')
-        view.flash.assert_success_message('Alert "{}" was added'.format(alert.description))
+        view.flash.assert_success_message(f'Alert "{alert.description}" was added')
         return alert
 
     def all(self):

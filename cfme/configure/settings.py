@@ -119,11 +119,11 @@ class TimeProfile(Updateable, BaseEntity):
             })
         else:
             new_time_profile = self.parent.instantiate(
-                description="{} copy".format(self.description),
+                description=f"{self.description} copy",
                 scope=self.scope
             )
             changed = view.form.fill({
-                'description': "{} copy".format(self.description),
+                'description': f"{self.description} copy",
                 'scope': self.scope,
             })
 

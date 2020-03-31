@@ -96,7 +96,7 @@ def test_generic_objects_crud(appliance, context, request):
             instance.attributes = {'addr01': 'Changed'}
             instance.associations = {'services': myservices}
         rest_instance = appliance.rest_api.collections.generic_objects.get(name=instance.name)
-        rest_data = appliance.rest_api.get('{}?associations=services'.format(rest_instance.href))
+        rest_data = appliance.rest_api.get(f'{rest_instance.href}?associations=services')
         assert len(rest_data['services']) == 2
         assert rest_data['property_attributes']['addr01'] == 'Changed'
         instance.delete()

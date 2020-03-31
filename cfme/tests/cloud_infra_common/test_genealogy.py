@@ -70,7 +70,7 @@ def test_vm_genealogy_detected(
             logger.exception("The parent template not detected!")
             raise pytest.fail("The parent template not detected!")
         assert small_template.name in vm_crud_ancestors, \
-            "{} is not in {}'s ancestors".format(small_template.name, create_vm.name)
+            f"{small_template.name} is not in {create_vm.name}'s ancestors"
 
 
 @pytest.mark.manual

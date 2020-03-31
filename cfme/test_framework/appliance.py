@@ -27,7 +27,7 @@ def appliances_from_cli(cli_appliances, appliance_version):
         parsed_url = urlparse(appliance_data['hostname'])
         if not parsed_url.hostname:
             raise ValueError(
-                "Invalid appliance url: {}".format(appliance_data)
+                f"Invalid appliance url: {appliance_data}"
             )
 
         appliance = appliance_data.copy()
@@ -75,7 +75,7 @@ def pytest_configure(config):
 
     if not stack.top:
         for appliance in appliances:
-            reporter.write_line('* {!r}'.format(appliance), cyan=True)
+            reporter.write_line(f'* {appliance!r}', cyan=True)
     appliance = appliances[0]
 
     stack.push(appliance)
@@ -93,7 +93,7 @@ def pytest_unconfigure(config):
 
 
 @attr.s(eq=False)
-class ApplianceHolderPlugin(object):
+class ApplianceHolderPlugin:
     held_appliance = attr.ib()
     appliances = attr.ib(default=attr.Factory(list))
 

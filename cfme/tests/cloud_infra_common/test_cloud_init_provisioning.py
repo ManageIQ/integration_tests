@@ -101,7 +101,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
     if provider.one_of(InfraProvider) and appliance.version > '5.9':
         inst_args['customize']['customize_type'] = 'Specification'
 
-    logger.info('Instance args: {}'.format(inst_args))
+    logger.info(f'Instance args: {inst_args}')
 
     collection = appliance.provider_based_collection(provider)
     instance = collection.create(vm_name, provider, form_values=inst_args)
@@ -164,7 +164,7 @@ def test_provision_cloud_init_payload(appliance, request, setup_provider, provid
     }
 
     inst_args['customize'].update(ci_payload)
-    logger.info('Instance args: {}'.format(inst_args))
+    logger.info(f'Instance args: {inst_args}')
 
     # Provision VM
     collection = appliance.provider_based_collection(provider)
@@ -175,7 +175,7 @@ def test_provision_cloud_init_payload(appliance, request, setup_provider, provid
     provision_request.wait_for_request()
 
     connect_ip = wait_for(find_global_ipv6, func_args=[instance], num_sec=600, delay=20).out
-    logger.info('Connect IP: {}'.format(connect_ip))
+    logger.info(f'Connect IP: {connect_ip}')
 
     # Connect to the newly provisioned VM
     with ssh.SSHClient(hostname=connect_ip,

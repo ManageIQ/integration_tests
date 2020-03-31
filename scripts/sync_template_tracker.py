@@ -81,7 +81,7 @@ def main(trackerbot_url, mark_usable=None, selected_provider=None, **kwargs):
     while not bad_providers.empty():
         bad_provider_keys.append(bad_providers.get())
     logger.warning('Filtering out providers that failed template query: %s', bad_provider_keys)
-    working_providers = set([key for key in all_providers if key not in bad_provider_keys])
+    working_providers = {key for key in all_providers if key not in bad_provider_keys}
 
     # Flip mgmt_templates into dict keyed on template name, listing providers
     # [
@@ -197,7 +197,7 @@ def main(trackerbot_url, mark_usable=None, selected_provider=None, **kwargs):
             headers=['Group', 'Provider', 'Template'],
             tablefmt='orgtbl'
         )
-        report.write('{}\n\n'.format(add_message))
+        report.write(f'{add_message}\n\n')
         report.write(del_header)
         del_message = tabulate(
             sorted([(ptdel.provider_key, ptdel.template_name) for ptdel in tb_pts_to_delete],

@@ -67,7 +67,7 @@ def log_wrap(process_message):
     return decorate
 
 
-class ProviderTemplateUpload(object):
+class ProviderTemplateUpload:
     """ Base class for template management.
 
     Class variables:
@@ -171,11 +171,11 @@ class ProviderTemplateUpload(object):
 
     @cached_property
     def temp_template_name(self):
-        return 'raw-{}'.format(self.image_name)[:40]  # rhevm template name length for <4.2
+        return f'raw-{self.image_name}'[:40]  # rhevm template name length for <4.2
 
     @cached_property
     def temp_vm_name(self):
-        return 'raw-vm-{}'.format(self.template_name)
+        return f'raw-vm-{self.template_name}'
 
     @cached_property
     def creds(self):
@@ -283,7 +283,7 @@ class ProviderTemplateUpload(object):
         # Download checksum from url
         checksum = None
         try:
-            response = request.urlopen('{}/SHA256SUM'.format(self.image_url))
+            response = request.urlopen(f'{self.image_url}/SHA256SUM')
             checksums = response.read().decode('utf-8')
             for line in checksums.split("\n"):
                 if self.image_name in line:
@@ -358,7 +358,7 @@ class ProviderTemplateUpload(object):
                         logger.exception("Deleting previously unpacked file {} failed.".format(
                             self.image_name))
                         return False
-                logger.info("Image archived - unpacking as : {}".format(self._unzipped_file))
+                logger.info(f"Image archived - unpacking as : {self._unzipped_file}")
                 try:
                     archive.extractall()
                     archive.close()
@@ -366,7 +366,7 @@ class ProviderTemplateUpload(object):
                     os.remove(archive_path)
                     return True
                 except Exception:
-                    logger.exception("{} archive unpacked failed.".format(suffix))
+                    logger.exception(f"{suffix} archive unpacked failed.")
                     return False
 
     @log_wrap('add template to glance')
@@ -450,9 +450,9 @@ class ProviderTemplateUpload(object):
                  timeout=300,
                  message='Waiting for appliance-initialization to complete')
         for service in upstream_services:
-            self.execute_ssh_command('{}'.format(service), client_args=client_args)
+            self.execute_ssh_command(f'{service}', client_args=client_args)
         for cleanup in upstream_cleanup:
-            self.execute_ssh_command('rm -rf {}'.format(cleanup), client_args=client_args)
+            self.execute_ssh_command(f'rm -rf {cleanup}', client_args=client_args)
 
         check_pgsql = self.execute_ssh_command('ls /var/lib/pgsql/data/', client_args=client_args)
 

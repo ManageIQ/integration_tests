@@ -111,11 +111,11 @@ def manager():
 
 # you probably don't want to instantiate this manually
 # instead, use the "manager" function above
-class CoverageManager(object):
+class CoverageManager:
     def __init__(self, ipappliance):
         self.ipapp = ipappliance
         if store.slave_manager:
-            sublogger_name = '{} coverage'.format(store.slave_manager.slaveid)
+            sublogger_name = f'{store.slave_manager.slaveid} coverage'
         else:
             sublogger_name = 'coverage'
         self.log = create_sublogger(sublogger_name)
@@ -132,7 +132,7 @@ class CoverageManager(object):
 
     def print_message(self, message):
         self.log.info(message)
-        message = 'coverage: {}'.format(message)
+        message = f'coverage: {message}'
         if store.slave_manager:
             store.slave_manager.message(message)
         elif store.parallel_session:
@@ -181,7 +181,7 @@ class CoverageManager(object):
         # bundle install for old downstream and upstream builds
         def _bundle_install():
             self.ipapp.ssh_client.run_command('yum -y install git')
-            self.ipapp.ssh_client.run_command('cd {}; bundle'.format(rails_root))
+            self.ipapp.ssh_client.run_command(f'cd {rails_root}; bundle')
 
         VersionPicker({
             LOWEST: _gem_install,
@@ -190,14 +190,14 @@ class CoverageManager(object):
 
     def _install_coverage_hook(self):
         # Clean appliance coverage dir
-        self.ipapp.ssh_client.run_command('rm -rf {}'.format(appliance_coverage_root.strpath))
+        self.ipapp.ssh_client.run_command(f'rm -rf {appliance_coverage_root.strpath}')
         # Put the coverage hook in the miq config path
         self.ipapp.ssh_client.put_file(
             coverage_hook.strpath,
             rails_root.join('config', coverage_hook_file_name).strpath
         )
         result = self.ipapp.ssh_client.run_command(
-            'cd {}; [ -e lib/code_coverage.rb ]'.format(rails_root)
+            f'cd {rails_root}; [ -e lib/code_coverage.rb ]'
         )
         return result.success
 
@@ -206,7 +206,7 @@ class CoverageManager(object):
         self.ipapp.ssh_client.run_command('systemctl stop evmserverd')
         # collect back to the collection appliance if parallelized
         if store.current_appliance != self.collection_appliance:
-            self.print_message('sending reports to {}'.format(self.collection_appliance.hostname))
+            self.print_message(f'sending reports to {self.collection_appliance.hostname}')
             result = self.ipapp.ssh_client.run_command(
                 'sshpass -p {passwd} '
                 'scp -o StrictHostKeyChecking=no '
@@ -246,7 +246,7 @@ class CoverageManager(object):
             '-C', coverage_output_dir.strpath]).wait()
 
 
-class UiCoveragePlugin(object):
+class UiCoveragePlugin:
     def pytest_configure(self, config):
         if config.getoption('--help'):
             return

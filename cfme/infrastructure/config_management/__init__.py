@@ -421,7 +421,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
 
         return RestEntity(self.appliance.rest_api.collections.providers, data={
             "href": self.appliance.url_path(
-                "/api/providers/{}?provider_class=provider".format(provider_id)
+                f"/api/providers/{provider_id}?provider_class=provider"
             )
         })
 
@@ -436,7 +436,7 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
             include_ssl = True
 
         payload = {
-            "type": "ManageIQ::Providers::{}::Provider".format(config_type),
+            "type": f"ManageIQ::Providers::{config_type}::Provider",
             "url": self.url,
             "name": self.name,
             "credentials": {
@@ -456,12 +456,12 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
                 **payload
             )
         except APIException as err:
-            raise AssertionError("Provider wasn't added: {}".format(err))
+            raise AssertionError(f"Provider wasn't added: {err}")
 
         response = self.appliance.rest_api.response
         if not response:
             raise AssertionError(
-                "Provider wasn't added, status code {}".format(response.status_code)
+                f"Provider wasn't added, status code {response.status_code}"
             )
 
         assert_response(self.appliance)
@@ -472,12 +472,12 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         try:
             self.rest_api_entity.action.delete()
         except APIException as err:
-            raise AssertionError("Provider wasn't deleted: {}".format(err))
+            raise AssertionError(f"Provider wasn't deleted: {err}")
 
         response = self.appliance.rest_api.response
         if not response:
             raise AssertionError(
-                "Provider wasn't deleted, status code {}".format(response.status_code)
+                f"Provider wasn't deleted, status code {response.status_code}"
             )
 
     def refresh_relationships(self, cancel=False):

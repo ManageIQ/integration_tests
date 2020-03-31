@@ -575,8 +575,8 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     host = utility_vm_nfs_ip
     loc = data['network_share']['nfs']['path']
     nfs_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
-    nfs_restore_dir_path = 'nfs://{}{}'.format(host, loc)
-    nfs_restore_file_path = '{}/db_backup/{}'.format(nfs_restore_dir_path, nfs_dump_file_name)
+    nfs_restore_dir_path = f'nfs://{host}{loc}'
+    nfs_restore_file_path = f'{nfs_restore_dir_path}/db_backup/{nfs_dump_file_name}'
     # Transfer v2_key and db backup from first appliance to second appliance
     fetch_v2key(appl1, appl2)
 
@@ -651,8 +651,8 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     host = utility_vm_samba_ip
     loc = data['network_share']['smb']['path']
     smb_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
-    smb_restore_dir_path = 'smb://{}{}'.format(host, loc)
-    smb_restore_file_path = '{}/db_backup/{}'.format(smb_restore_dir_path, smb_dump_file_name)
+    smb_restore_dir_path = f'smb://{host}{loc}'
+    smb_restore_file_path = f'{smb_restore_dir_path}/db_backup/{smb_dump_file_name}'
 
     creds_key = data['network_share']['smb']['credentials']
     pwd = credentials[creds_key]['password']
@@ -680,7 +680,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
             smb_restore_dir_path)
         # Enter the username with access to this file.
         interaction.answer(re.escape("Example: 'mydomain.com/user': "), usr)
-        interaction.answer(re.escape('Enter the password for {}: '.format(usr)), pwd)
+        interaction.answer(re.escape(f'Enter the password for {usr}: '), pwd)
         # Running Database backup to nfs://10.8.198.142/srv/export...
         interaction.answer('Press any key to continue.', '', timeout=120)
 
@@ -703,7 +703,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
             smb_restore_file_path)
         # Enter the username with access to this file.
         interaction.answer(re.escape("Example: 'mydomain.com/user': "), usr)
-        interaction.answer(re.escape('Enter the password for {}: '.format(usr)), pwd)
+        interaction.answer(re.escape(f'Enter the password for {usr}: '), pwd)
         interaction.answer(r'Are you sure you would like to restore the database\? \(Y\/N\): ', 'y')
         interaction.answer('Press any key to continue.', '', timeout=80)
 

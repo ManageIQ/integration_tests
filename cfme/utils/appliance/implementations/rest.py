@@ -1,6 +1,6 @@
 
 
-class ViaREST(object):
+class ViaREST:
 
     name = "REST"
     navigator = None

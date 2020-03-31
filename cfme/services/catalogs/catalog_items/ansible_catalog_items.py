@@ -36,7 +36,7 @@ class BootstrapSelect(VanillaBootstrapSelect):
         # Some BootstrapSelects appears on the page only if another select changed. Therefore we
         # should wait until it appears and only then we can fill it.
         self.wait_displayed()
-        return super(BootstrapSelect, self).fill(value)
+        return super().fill(value)
 
 
 class ActionsCell(View):

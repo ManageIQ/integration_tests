@@ -100,7 +100,7 @@ def test_cluster_graph_screen(provider, cluster, host, graph_type, interval, ena
     # zoom in button not available with normal graph except Host and VM.
     # We have to use vm or host average graph for zoom in operation.
     graph_zoom = ["cluster_host", "cluster_vm"]
-    avg_graph = graph_type if graph_type in graph_zoom else "{}_vm_host_avg".format(graph_type)
+    avg_graph = graph_type if graph_type in graph_zoom else f"{graph_type}_vm_host_avg"
     try:
         avg_graph = getattr(view, avg_graph)
     except AttributeError as e:

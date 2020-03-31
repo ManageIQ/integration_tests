@@ -17,7 +17,7 @@ class ApplianceVersionException(CFMEException):
         self.version = version
 
     def __str__(self):
-        return "Version {} not supported.  {}".format(self.version, self.msg)
+        return f"Version {self.version} not supported.  {self.msg}"
 
 
 class BugException(CFMEException):
@@ -27,7 +27,7 @@ class BugException(CFMEException):
         self.operation = operation
 
     def __str__(self):
-        return "Bug {} blocks the operation [{}]".format(self.bug_no, self.operation)
+        return f"Bug {self.bug_no} blocks the operation [{self.operation}]"
 
 
 class ConsoleNotSupported(CFMEException):
@@ -51,7 +51,7 @@ class ConsoleTypeNotSupported(CFMEException):
         self.console_type = console_type
 
     def __str__(self):
-        return "Console type not supported: {}".format(self.console_type)
+        return f"Console type not supported: {self.console_type}"
 
 
 class TaskFailedException(CFMEException):
@@ -62,7 +62,7 @@ class TaskFailedException(CFMEException):
         self.message = message
 
     def __str__(self):
-        return "Task {} error: {}".format(self.task_name, self.message)
+        return f"Task {self.task_name} error: {self.message}"
 
 
 class CFMEExceptionOccured(CFMEException):
@@ -122,7 +122,7 @@ class NavigationError(CFMEException):
         self.page_name = page_name
 
     def __str__(self):
-        return 'Unable to navigate to page "{}"'.format(self.page_name)
+        return f'Unable to navigate to page "{self.page_name}"'
     pass
 
 

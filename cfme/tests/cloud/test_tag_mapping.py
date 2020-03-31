@@ -48,7 +48,7 @@ def refresh_provider(provider):
 @pytest.fixture(params=['instances', 'images'])
 def tag_mapping_items(request, appliance, provider):
     entity_type = request.param
-    collection = getattr(appliance.collections, 'cloud_{}'.format(entity_type))
+    collection = getattr(appliance.collections, f'cloud_{entity_type}')
     collection.filters = {'provider': provider}
     view = navigate_to(collection, 'AllForProvider')
     name = view.entities.get_first_entity().name
@@ -59,7 +59,7 @@ def tag_mapping_items(request, appliance, provider):
             else provider.mgmt.get_vm(name)
         )
     except ImageNotFoundError:
-        msg = 'Failed looking up template [{}] from CFME on provider: {}'.format(name, provider)
+        msg = f'Failed looking up template [{name}] from CFME on provider: {provider}'
         logger.exception(msg)
         pytest.skip(msg)
     return collection.instantiate(name=name, provider=provider), mgmt_item, entity_type
@@ -149,7 +149,7 @@ def test_labels_update(provider, tag_mapping_items, soft_assert):
     fields = view.entities.summary('Labels').fields
     soft_assert(
         tag_label not in fields,
-        '{} label was not removed from details page'.format(tag_label)
+        f'{tag_label} label was not removed from details page'
     )
 
 
@@ -214,14 +214,14 @@ def test_mapping_tags(
     soft_assert(any(
         tag.category.display_name == category.name and tag.display_name == tag_value
         for tag in entity.get_tags()
-    ), '{}: {} was not found in tags'.format(category.name, tag_value))
+    ), f'{category.name}: {tag_value} was not found in tags')
 
     # delete it
     map_tag.delete()
 
     # check the tag goes away
     provider.refresh_provider_relationships(method='ui')
-    soft_assert(not '{}: {}'.format(category.name, tag_value) in entity.get_tags())
+    soft_assert(f'{category.name}: {tag_value}' not in entity.get_tags())
 
 
 @pytest.mark.tier(2)

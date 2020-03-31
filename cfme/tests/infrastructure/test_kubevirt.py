@@ -23,7 +23,7 @@ def temp_vm(appliance, provider, provisioning):
     vm = appliance.collections.infra_vms.instantiate(name=vm_name,
                                                      provider=provider,
                                                      template_name=template_name)
-    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
+    note = (f'template {template_name} to vm {vm_name} on provider {provider.key}')
     prov_data.update({
         'request': {
             'email': 'template_provisioner@example.com',
@@ -70,11 +70,11 @@ def test_k6t_vm_crud(request, appliance, provider, provisioning, custom_prov_dat
     template = provisioning['template']
     do_vm_provisioning(appliance, template, provider, vm_name, prov_data, request, wait=False)
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
-    request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
+    request_description = f'Provision from [{template}] to [{vm_name}]'
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui', num_sec=300)
     assert provision_request.is_succeeded(method='ui'), \
-        ("Provisioning failed with the message {}".format(provision_request.row.last_message.text))
+        (f"Provisioning failed with the message {provision_request.row.last_message.text}")
 
 
 @pytest.mark.parametrize('from_details', ['True', 'False'], ids=['from_details', 'from_all_view'])

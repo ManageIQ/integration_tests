@@ -39,12 +39,12 @@ def test_category_crud(appliance, soft_assert):
         display_name=fauxfactory.gen_alphanumeric(32)
     )
     view = appliance.browser.create_view(navigator.get_class(cg.parent, 'All').VIEW)
-    soft_assert(view.flash.assert_message('Category "{}" was added'.format(cg.display_name)))
+    soft_assert(view.flash.assert_message(f'Category "{cg.display_name}" was added'))
     with update(cg):
         cg.description = fauxfactory.gen_alphanumeric(32)
-    soft_assert(view.flash.assert_message('Category "{}" was saved'.format(cg.name)))
+    soft_assert(view.flash.assert_message(f'Category "{cg.name}" was saved'))
     cg.delete()
-    soft_assert(view.flash.assert_message('Category "{}": Delete successful'.format(cg.name)))
+    soft_assert(view.flash.assert_message(f'Category "{cg.name}": Delete successful'))
 
 
 @test_requirements.rest
@@ -76,7 +76,7 @@ def test_query_custom_category_via_api(appliance, custom_category):
 
 
 @test_requirements.rest
-class TestCategoriesViaREST(object):
+class TestCategoriesViaREST:
     @pytest.fixture(scope="function")
     def categories(self, request, appliance):
         response = _categories(request, appliance, num=5)

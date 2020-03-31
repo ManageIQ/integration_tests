@@ -37,7 +37,7 @@ def blockers(uses_blockers, meta):
     result = []
     for blocker in meta.get("blockers", []):
         if isinstance(blocker, int):
-            result.append(Blocker.parse("BZ#{}".format(blocker)))
+            result.append(Blocker.parse(f"BZ#{blocker}"))
         elif isinstance(blocker, Blocker):
             result.append(blocker)
         else:
@@ -52,7 +52,7 @@ def bug(blocker):
     Returns:
         Instance of :py:class:`utils.bz.BugWrapper` or :py:class:`NoneType` if the bug is closed.
     """
-    return lambda bug_id, **kwargs: blocker("BZ#{}".format(bug_id), **kwargs).bugzilla_bug
+    return lambda bug_id, **kwargs: blocker(f"BZ#{bug_id}", **kwargs).bugzilla_bug
 
 
 def pytest_addoption(parser):
@@ -69,14 +69,14 @@ def pytest_collection_modifyitems(session, config, items):
     if not config.getvalue("list_blockers"):
         return
     store.terminalreporter.write("Loading blockers ...\n", bold=True)
-    blocking = set([])
+    blocking = set()
     for item in items:
         if "blockers" not in item._metadata:
             continue
         for blocker in item._metadata["blockers"]:
             if isinstance(blocker, int):
                 # TODO: DRY
-                blocker_object = Blocker.parse("BZ#{}".format(blocker))
+                blocker_object = Blocker.parse(f"BZ#{blocker}")
             else:
                 blocker_object = Blocker.parse(blocker)
             if blocker_object.blocks:
@@ -86,16 +86,16 @@ def pytest_collection_modifyitems(session, config, items):
         for blocker in blocking:
             if isinstance(blocker, BZ):
                 bug = blocker.bugzilla_bug
-                store.terminalreporter.write("- #{} - {}\n".format(bug.id, bug.status))
-                store.terminalreporter.write("  {}\n".format(bug.summary))
+                store.terminalreporter.write(f"- #{bug.id} - {bug.status}\n")
+                store.terminalreporter.write(f"  {bug.summary}\n")
                 store.terminalreporter.write(
                     "  {} -> {}\n".format(str(bug.version), str(bug.target_release)))
                 store.terminalreporter.write(
-                    "  https://bugzilla.redhat.com/show_bug.cgi?id={}\n\n".format(bug.id))
+                    f"  https://bugzilla.redhat.com/show_bug.cgi?id={bug.id}\n\n")
             elif isinstance(blocker, GH):
                 bug = blocker.data
                 store.terminalreporter.write("- {}\n".format(str(bug)))
-                store.terminalreporter.write("  {}\n".format(bug.title))
+                store.terminalreporter.write(f"  {bug.title}\n")
             else:
                 store.terminalreporter.write("- {}\n".format(str(blocker.data)))
     else:

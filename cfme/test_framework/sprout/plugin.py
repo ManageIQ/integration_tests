@@ -191,14 +191,14 @@ def mangle_in_sprout_appliances(config):
     conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
     log.info("appliance_template: %s", template_name)
     with project_path.join('.appliance_template').open('w') as template_file:
-        template_file.write('export appliance_template="{}"'.format(template_name))
+        template_file.write(f'export appliance_template="{template_name}"')
     log.info("Sprout setup finished.")
 
     config.pluginmanager.register(ShutdownPlugin())
 
 
 @attr.s
-class SproutProvisioningRequest(object):
+class SproutProvisioningRequest:
     """data holder for provisioning metadata"""
 
     group = attr.ib()
@@ -236,7 +236,7 @@ class SproutProvisioningRequest(object):
 
 
 @attr.s
-class SproutManager(object):
+class SproutManager:
     sprout_user_key = attr.ib(default=None)
     pool = attr.ib(init=False, default=None)
     lease_time = attr.ib(init=False, default=None, repr=False)
@@ -385,7 +385,7 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.add_hookspecs(NewHooks)
 
 
-class ShutdownPlugin(object):
+class ShutdownPlugin:
 
     def pytest_miq_node_shutdown(self, config, nodeinfo):
         if config.getoption('ui_coverage'):
@@ -396,7 +396,7 @@ class ShutdownPlugin(object):
         if nodeinfo:
             netloc = urlparse(nodeinfo).netloc
             ip_address = netloc.split(":")[0]
-            log.debug("Trying to end appliance {}".format(ip_address))
+            log.debug(f"Trying to end appliance {ip_address}")
             if config.getoption('--use-sprout'):
                 try:
                     call_method = config._sprout_mgr.client.call_method
@@ -413,6 +413,6 @@ class ShutdownPlugin(object):
             log.debug('The IP address was not present - not terminating any appliance')
 
 
-class NewHooks(object):
+class NewHooks:
     def pytest_miq_node_shutdown(self, config, nodeinfo):
         pass

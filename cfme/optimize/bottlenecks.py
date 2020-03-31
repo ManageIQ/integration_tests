@@ -25,9 +25,9 @@ class BottlenecksTabsView(BottlenecksView):
         region_number = self.browser.appliance.server.zone.region.number
         return (
             super(BottlenecksView, self).is_displayed and
-            self.title.text == 'Region "Region {}" Bottlenecks Summary'.format(region_number) and
+            self.title.text == f'Region "Region {region_number}" Bottlenecks Summary' and
             self.bottlenecks.is_opened and
-            self.bottlenecks.tree.currently_selected == ["Region {}".format(region_number)]
+            self.bottlenecks.tree.currently_selected == [f"Region {region_number}"]
         )
 
     @View.nested

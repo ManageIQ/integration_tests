@@ -58,7 +58,7 @@ def provider_types(category):
     if category not in _provider_types_cache:
         _provider_types_cache[category] = {
             ep.name: ep.resolve() for ep in iter_entry_points(
-                'manageiq.provider_types.{}'.format(category))
+                f'manageiq.provider_types.{category}')
         }
     return _provider_types_cache[category]
 
@@ -132,7 +132,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             return conf.cfme_data['management_systems'][self.key]
         else:
             raise ProviderHasNoKey(
-                'Provider {} has no key, so cannot get yaml data'.format(self.name))
+                f'Provider {self.name} has no key, so cannot get yaml data')
 
     @property
     def mgmt(self):
@@ -147,7 +147,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             return get_mgmt(self.provider_data)
         else:
             raise ProviderHasNoKey(
-                'Provider {} has no key, so cannot get mgmt system'.format(self.name))
+                f'Provider {self.name} has no key, so cannot get mgmt system')
 
     @property
     def type(self):
@@ -602,7 +602,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             if updates:
                 self.name = updates.get('name', self.name)
 
-            success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+            success_text = f'{self.string_name} Provider "{self.name}" was saved'
             if main_view.is_displayed:
                 # since 5.8.1 main view is displayed when edit starts from main view
                 main_view.flash.assert_message(success_text)
@@ -636,7 +636,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         try:
             provider_rest.action.delete()
         except APIException as err:
-            raise AssertionError("Provider wasn't deleted: {}".format(err))
+            raise AssertionError(f"Provider wasn't deleted: {err}")
 
         response = self.appliance.rest_api.response
         if not response:
@@ -830,9 +830,9 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                     return False
             except KeyError:
                 raise HostStatsNotContains(
-                    "Host stats information does not contain '{}'".format(stat))
+                    f"Host stats information does not contain '{stat}'")
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
+                raise ProviderHasNoProperty(f"Provider does not know how to get '{stat}'")
         else:
             return True
 
@@ -1026,7 +1026,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     def get_provider_details(self, provider_id):
         """Returns the name, and type associated with the provider_id"""
         # TODO: Move to ProviderCollection.find
-        logger.debug('Retrieving the provider details for ID: {}'.format(provider_id))
+        logger.debug(f'Retrieving the provider details for ID: {provider_id}')
 
         details = {}
         try:
@@ -1045,7 +1045,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         the vm_id.
         """
         # TODO: Move to VMCollection.find
-        logger.debug('Retrieving the VM details for ID: {}'.format(vm_id))
+        logger.debug(f'Retrieving the VM details for ID: {vm_id}')
 
         details = {}
         try:
@@ -1096,7 +1096,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         Return the ID associated with the specified VM name
         """
         # TODO: Get Provider object from VMCollection.find, then use VM.id to get the id
-        logger.debug('Retrieving the ID for VM: {}'.format(vm_name))
+        logger.debug(f'Retrieving the ID for VM: {vm_name}')
         for vm_id in self.get_all_vm_ids():
             details = self.get_vm_details(vm_id)
             if details['name'] == vm_name:
@@ -1140,7 +1140,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         return result_list
 
 
-class CloudInfraProviderMixin(object):
+class CloudInfraProviderMixin:
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
@@ -1231,7 +1231,7 @@ class CloudInfraProviderMixin(object):
             return True
 
 
-class DefaultEndpoint(object):
+class DefaultEndpoint:
     credential_class = Credential
     name = 'default'
 

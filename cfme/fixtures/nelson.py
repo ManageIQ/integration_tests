@@ -32,7 +32,7 @@ def pytest_collection_modifyitems(items):
         item_param = re.findall(r'\.*(\[.*\])', item_name)
         if item_param:
             item_name = item_name.replace(item_param[0], '')
-        node_name = '{}.{}'.format(item_class, item_name)
+        node_name = f'{item_class}.{item_name}'
         output[node_name] = {}
         docstring = getattr(item.function, '__doc__') or ''
         output[node_name]['docstring'] = docstring.encode('utf-8')
@@ -65,7 +65,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     pytest.mark.meta(from_docs=metadata)(obj)
     if metadata:
         test_path = get_rel_path(collector.fspath)
-        logger.debug('Parsed docstring metadata on {} in {}'.format(name, test_path))
+        logger.debug(f'Parsed docstring metadata on {name} in {test_path}')
         logger.trace('{} doc metadata: {}'.format(name, str(metadata)))
 
 
@@ -88,10 +88,10 @@ class GoogleDocstring(docstring.GoogleDocstring):
     """Custom version of napoleon's GoogleDocstring that adds some special cases"""
     def __init__(self, *args, **kwargs):
         self.metadata = {}
-        super(GoogleDocstring, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._sections['usage'] = self._parse_usage_section
         self._sections['metadata'] = self._parse_metadata_section
-        super(GoogleDocstring, self)._parse()
+        super()._parse()
 
     def _parse(self):
         pass

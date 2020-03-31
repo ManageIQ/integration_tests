@@ -61,9 +61,9 @@ class ReportWidget(BaseDashboardReportWidget):
         self.filter, self.subfilter, self.repfilter = self.filter
         for i in range(1, 5):
             try:
-                setattr(self, "column{}".format(i), self.columns[i])
+                setattr(self, f"column{i}", self.columns[i])
             except IndexError:
-                setattr(self, "column{}".format(i), None)
+                setattr(self, f"column{i}", None)
 
     @property
     def fill_dict(self):

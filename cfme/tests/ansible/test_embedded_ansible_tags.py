@@ -50,14 +50,14 @@ def check_tag_place(soft_assert):
         tags = item.get_tags()
         soft_assert(
             tag in tags,
-            "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, tags)
+            f"{tag.category.display_name}: {tag.display_name} not in ({tags})"
         )
 
         item.remove_tag(tag=tag, details=tag_place)
         tags = item.get_tags()
         soft_assert(
             tag not in tags,
-            "{}: {} should not be in ({})".format(tag.category.display_name, tag.display_name, tags)
+            f"{tag.category.display_name}: {tag.display_name} should not be in ({tags})"
         )
     return _check_tag_place
 

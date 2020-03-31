@@ -230,7 +230,7 @@ class VmTemplatesAllForProviderView(InfraVmView):
             return (
                 self.in_infra_vms and
                 str(self.entities.title.text) ==
-                'VM or Templates under Provider "{}"'.format(expected_provider)
+                f'VM or Templates under Provider "{expected_provider}"'
             )
 
     def reset_page(self):
@@ -523,7 +523,7 @@ class VMDisk(
         return self.size * 1024 if self.size_unit == 'GB' else self.size
 
 
-class VMHardware(object):
+class VMHardware:
     """Represents VM's hardware, i.e. CPU (cores, sockets) and memory
     """
     EQUAL_ATTRS = {'cores_per_socket', 'sockets', 'mem_size_mb'}
@@ -766,7 +766,7 @@ class InfraVm(VM):
 
     @attr.s
     # TODO snapshot collections
-    class Snapshot(object):
+    class Snapshot:
         snapshot_tree = ManageIQTree('snapshot_treebox')
 
         name = attr.ib(default=None)
@@ -803,7 +803,7 @@ class InfraVm(VM):
                         child[0].text == 'Active VM (Active)' and
                         last_snapshot.text == title)
             else:
-                return has_child(view.tree, '{} (Active)'.format(title), root_item)
+                return has_child(view.tree, f'{title} (Active)', root_item)
 
         @property
         def size(self):
@@ -822,7 +822,7 @@ class InfraVm(VM):
             root_item = view.tree.expand_path(self.parent_vm.name)
             snapshot_path = find_path(view.tree, title, root_item)
             if not snapshot_path:
-                raise Exception('Could not find snapshot with name "{}"'.format(title))
+                raise Exception(f'Could not find snapshot with name "{title}"')
             else:
                 view.tree.click_path(*snapshot_path)
             return view.size.text
@@ -851,7 +851,7 @@ class InfraVm(VM):
             root_item = view.tree.expand_path(self.parent_vm.name)
             snapshot_path = find_path(view.tree, title, root_item)
             if not snapshot_path:
-                raise Exception('Could not find snapshot with name "{}"'.format(title))
+                raise Exception(f'Could not find snapshot with name "{title}"')
             else:
                 view.tree.click_path(*snapshot_path)
 
@@ -883,7 +883,7 @@ class InfraVm(VM):
             root_item = view.tree.expand_path(self.parent_vm.name)
             snapshot_path = find_path(view.tree, title, root_item)
             if not snapshot_path:
-                raise Exception('Could not find snapshot with name "{}"'.format(title))
+                raise Exception(f'Could not find snapshot with name "{title}"')
             else:
                 view.tree.click_path(*snapshot_path)
 
@@ -923,7 +923,7 @@ class InfraVm(VM):
         view = navigate_to(self, 'Migrate')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
-        email = email or "{}@{}.test".format(first_name, last_name)
+        email = email or f"{first_name}@{last_name}.test"
         try:
             prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
             host_name = host or prov_data.get("host")
@@ -950,7 +950,7 @@ class InfraVm(VM):
         view = navigate_to(self, 'Clone')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
-        email = email or "{}@{}.test".format(first_name, last_name)
+        email = email or f"{first_name}@{last_name}.test"
         try:
             prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
         except (KeyError, IndexError):
@@ -973,7 +973,7 @@ class InfraVm(VM):
         view = navigate_to(self, 'Publish')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
-        email = email or "{}@{}.test".format(first_name, last_name)
+        email = email or f"{first_name}@{last_name}.test"
         try:
             prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
         except (KeyError, IndexError):
@@ -994,7 +994,7 @@ class InfraVm(VM):
             provisioning_data['environment'] = {'automatic_placement': True}
 
         view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
-        cells = {'Description': 'Publish from [{}] to [{}]'.format(self.name, template_name)}
+        cells = {'Description': f'Publish from [{self.name}] to [{template_name}]'}
         provision_request = self.appliance.collections.requests.instantiate(cells=cells)
         provision_request.wait_for_request()
         return self.appliance.collections.infra_templates.instantiate(template_name, self.provider)
@@ -1036,7 +1036,7 @@ class InfraVm(VM):
         return int(self.rest_api_entity.ems_cluster_id)
 
     @attr.s
-    class CfmeRelationship(object):
+    class CfmeRelationship:
         vm = attr.ib()
 
         def navigate(self):
@@ -1053,7 +1053,7 @@ class InfraVm(VM):
 
         def set_relationship(self, server_name, server_id, cancel=False):
             view = self.navigate()
-            view.form.fill({'server': '{} ({})'.format(server_name, server_id)})
+            view.form.fill({'server': f'{server_name} ({server_id})'})
 
             if cancel:
                 view.form.cancel_button.click()
@@ -1363,7 +1363,7 @@ class InfraTemplateCollection(TemplateCollection):
 
 
 @attr.s
-class Genealogy(object):
+class Genealogy:
     """Class, representing genealogy of an infra object with possibility of data retrieval
     and comparison.
 
@@ -1517,7 +1517,7 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
             entity_item = self.prerequisite_view.entities.get_entity(
                 name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise ItemNotFound('Failed to locate VM/Template with name "{}"'.format(self.obj.name))
+            raise ItemNotFound(f'Failed to locate VM/Template with name "{self.obj.name}"')
         entity_item.click()
 
     def resetter(self, *args, **kwargs):
@@ -1535,7 +1535,7 @@ class ArchiveDetails(CFMENavigateStep):
             entity_item = self.prerequisite_view.entities.get_entity(
                 name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise ItemNotFound('Failed to locate VM/Template with name "{}"'.format(self.obj.name))
+            raise ItemNotFound(f'Failed to locate VM/Template with name "{self.obj.name}"')
         entity_item.click()
 
     def resetter(self, *args, **kwargs):
@@ -1582,7 +1582,7 @@ class VmDetails(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                              surf_pages=True)
         except ItemNotFound:
-            raise ItemNotFound('Failed to locate VM/Template with name "{}"'.format(self.obj.name))
+            raise ItemNotFound(f'Failed to locate VM/Template with name "{self.obj.name}"')
         row.click()
 
     def resetter(self, *args, **kwargs):

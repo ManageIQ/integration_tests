@@ -53,13 +53,13 @@ def test_tables_sort(test_item, soft_assert, appliance):
         # in CFME 5.8, the sort on IP Address column for container providers fails to sort?
         soft_assert((view.entities.elements.sorted_by == attributize_string(header_text) and
                     view.entities.elements.sort_order == 'asc'),
-                    'Failed checking sorted_by {} and sort_order asc'.format(header_text))
+                    f'Failed checking sorted_by {header_text} and sort_order asc')
         rows_ascending = [r[col].text for r in view.entities.elements.rows()]
         # opposite sort order
         view.entities.elements.sort_by(column=header_text, order='desc')
         soft_assert((view.entities.elements.sorted_by == attributize_string(header_text) and
                     view.entities.elements.sort_order == 'desc'),
-                    'Failed checking sorted_by {} and sort_order desc'.format(header_text))
+                    f'Failed checking sorted_by {header_text} and sort_order desc')
         rows_descending = [r[col].text for r in view.entities.elements.rows()]
 
         soft_assert(

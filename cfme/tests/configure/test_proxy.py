@@ -20,7 +20,7 @@ def validate_proxy_logs(provider, utility_vm_ssh, appliance_ip):
     def _is_ip_in_log():
         provider.refresh_provider_relationships()
         return utility_vm_ssh.run_command(
-            "grep {} /var/log/squid/access.log".format(appliance_ip)).success
+            f"grep {appliance_ip} /var/log/squid/access.log").success
 
     # need to wait until requests will occur in access.log or check if its empty after some time
     wait_for(func=_is_ip_in_log, num_sec=300, delay=10,

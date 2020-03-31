@@ -4,7 +4,7 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
 
 
-class SMTPCollectorClient(object):
+class SMTPCollectorClient:
     """Client for smtp_collector.py script
 
     Args:
@@ -17,7 +17,7 @@ class SMTPCollectorClient(object):
         self._port = port
 
     def _query(self, method, path, **params):
-        return method("http://{}:{}/{}".format(self._host, self._port, path), params=params)
+        return method(f"http://{self._host}:{self._port}/{path}", params=params)
 
     def clear_database(self):
         """Clear the database in collector

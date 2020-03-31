@@ -27,7 +27,7 @@ class FTPException(Exception):
     pass
 
 
-class FTPDirectory(object):
+class FTPDirectory:
     """ FTP FS Directory encapsulation
 
     This class represents one directory.
@@ -71,7 +71,7 @@ class FTPDirectory(object):
         return os.path.join(self.parent_dir.path if self.parent_dir else "", self.name)
 
     def __repr__(self):
-        return "<FTPDirectory {}>".format(self.path)
+        return f"<FTPDirectory {self.path}>"
 
     def cd(self, path):
         """ Change to a directory
@@ -108,7 +108,7 @@ class FTPDirectory(object):
                     return item.cd("/".join(remainder))
                 else:
                     return item
-        raise FTPException("Directory {}{} does not exist!".format(self.path, enter))
+        raise FTPException(f"Directory {self.path}{enter} does not exist!")
 
     def search(self, by, files=True, directories=True):
         """ Recursive search by string or regexp.
@@ -146,7 +146,7 @@ class FTPDirectory(object):
         return results
 
 
-class FTPFile(object):
+class FTPFile:
     """ FTP FS File encapsulation
 
     This class represents one file in the FS hierarchy.
@@ -189,7 +189,7 @@ class FTPFile(object):
         return self.client.dt + self.time
 
     def __repr__(self):
-        return "<FTPFile {}>".format(self.path)
+        return f"<FTPFile {self.path}>"
 
     def retr(self, callback):
         """ Retrieve file
@@ -210,11 +210,11 @@ class FTPFile(object):
         dirs = dirs.lstrip("/").split("/")
         # Dive in
         for d in dirs:
-            assert self.client.cwd(d), "Could not change into the directory {}!".format(d)
+            assert self.client.cwd(d), f"Could not change into the directory {d}!"
         self.client.retrbinary(f, callback)
         # Dive out
         for d in dirs:
-            assert self.client.cdup(), "Could not get out of directory {}!".format(d)
+            assert self.client.cdup(), f"Could not get out of directory {d}!"
 
     def download(self, target=None):
         """ Download file into this machine
@@ -231,7 +231,7 @@ class FTPFile(object):
             self.retr(output.write)
 
 
-class FTPClient(object):
+class FTPClient:
     """ FTP Client encapsulation
 
     This class provides basic encapsulation around ftplib's FTP class.
@@ -306,7 +306,7 @@ class FTPClient(object):
         void_file = BytesIO(b'random_example')
         self.cwd(self.upload_dir)
         assert "Transfer complete" in self.storbinary(TIMECHECK_FILE_NAME, void_file),\
-            "Could not upload a file for time checking with name {}!".format(TIMECHECK_FILE_NAME)
+            f"Could not upload a file for time checking with name {TIMECHECK_FILE_NAME}!"
         void_file.close()
         now = datetime.now()
         for d, name, time in self.ls():
@@ -376,7 +376,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("MKD {}".format(d)).startswith("250")
+            return self.ftp.sendcmd(f"MKD {d}").startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -391,7 +391,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("RMD {}".format(d)).startswith("250")
+            return self.ftp.sendcmd(f"RMD {d}").startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -406,7 +406,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("DELE {}".format(f)).startswith("250")
+            return self.ftp.sendcmd(f"DELE {f}").startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -421,7 +421,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("CWD {}".format(d)).startswith("250")
+            return self.ftp.sendcmd(f"CWD {d}").startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -443,7 +443,7 @@ class FTPClient(object):
             f: Requested file name
             callback: Callable with one parameter accepting the data
         """
-        return self.ftp.retrbinary("RETR {}".format(f), callback)
+        return self.ftp.retrbinary(f"RETR {f}", callback)
 
     def storbinary(self, f, file_obj):
         """ Store file
@@ -454,7 +454,7 @@ class FTPClient(object):
             f: Requested file name
             file_obj: File object to be stored
         """
-        return self.ftp.storbinary("STOR {}".format(f), file_obj)
+        return self.ftp.storbinary(f"STOR {f}", file_obj)
 
     def recursively_delete(self, d=None):
         """ Recursively deletes content of pwd
@@ -470,19 +470,19 @@ class FTPClient(object):
         """
         # Enter the directory
         if d:
-            assert self.cwd(d), "Could not enter directory {}".format(d)
+            assert self.cwd(d), f"Could not enter directory {d}"
         # Work in it
         for isdir, name, time in self.ls():
             if isdir:
                 self.recursively_delete(name)
             else:
-                assert self.dele(name), "Could not delete {}!".format(name)
+                assert self.dele(name), f"Could not delete {name}!"
         # Go out of it
         if d:
             # Go to parent directory
-            assert self.cdup(), "Could not go to parent directory of {}!".format(d)
+            assert self.cdup(), f"Could not go to parent directory of {d}!"
             # And delete it
-            assert self.rmd(d), "Could not remove directory {}!".format(d)
+            assert self.rmd(d), f"Could not remove directory {d}!"
 
     def tree(self, d=None):
         """ Walks the tree recursively and creates a tree
@@ -507,7 +507,7 @@ class FTPClient(object):
         # Enter the directory
         items = []
         if d:
-            assert self.cwd(d), "Could not enter directory {}".format(d)
+            assert self.cwd(d), f"Could not enter directory {d}"
         # Work in it
         for isdir, name, time in self.ls():
             if isdir:
@@ -517,7 +517,7 @@ class FTPClient(object):
         # Go out of it
         if d:
             # Go to parent directory
-            assert self.cdup(), "Could not go to parent directory of {}!".format(d)
+            assert self.cdup(), f"Could not go to parent directory of {d}!"
         return items
 
     @property
@@ -586,7 +586,7 @@ class FTPClientWrapper(FTPClient):
         self.entrypoint = entrypoint or ftp_data.entrypoint
         self.entity_path = entity_path
 
-        super(FTPClientWrapper, self).__init__(
+        super().__init__(
             host=host, login=login, password=password, time_diff=False
         )
 
@@ -609,7 +609,7 @@ class FTPClientWrapper(FTPClient):
         if name in self.file_names:
             return FTPFileWrapper(self, name=name, parent_dir=self.pwd())
         else:
-            raise FTPException("{} not found".format(name))
+            raise FTPException(f"{name} not found")
 
     def files(self):
         """List of FTP file objects"""

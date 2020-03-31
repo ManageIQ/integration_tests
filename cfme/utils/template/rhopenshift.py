@@ -15,7 +15,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
     template_filenames = ()
 
     def __init__(self, *args, **kwargs):
-        super(OpenshiftTemplateUpload, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._tags = None
 
     @property
@@ -48,7 +48,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
 
     @log_wrap('create destination directory')
     def create_destination_directory(self):
-        return self.execute_ssh_command('mkdir -p {}'.format(self.destination_directory)).success
+        return self.execute_ssh_command(f'mkdir -p {self.destination_directory}').success
 
     @log_wrap('download template')
     def download_template(self):
@@ -71,13 +71,13 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
             .format(self.destination_directory))
 
         if result.failed or not result.output:
-            logger.error('Unable to find cfme-openshift-* files: %r'.format(result))
+            logger.error(f'Unable to find cfme-openshift-* files: %r')
             return False
 
         tags = {}
         for img_url in str(result).split():
             update_img_cmd = 'docker pull {url}'
-            logger.info("updating image stream to tag {t}".format(t=img_url))
+            logger.info(f"updating image stream to tag {img_url}")
             result = self.execute_ssh_command(update_img_cmd.format(url=img_url))
             # url ex:
             # brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888/cloudforms46/cfme-openshift-httpd:2.4.6-14
@@ -97,7 +97,7 @@ class OpenshiftTemplateUpload(ProviderTemplateUpload):
         new_template_name = self.template_name
         logger.info('removing old templates from ocp if those exist')
         for template in (default_template_name, new_template_name):
-            tmp_cmd = 'oc get template {t} --namespace=openshift'.format(t=template)
+            tmp_cmd = f'oc get template {template} --namespace=openshift'
             if self.execute_ssh_command(tmp_cmd).success:
                 self.execute_ssh_command('oc delete template {t} '
                                 '--namespace=openshift'.format(t=template))

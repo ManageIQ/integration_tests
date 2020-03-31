@@ -42,10 +42,10 @@ def main():
     parser.add_argument('-c', action='append', dest='children',
         help='hostname or ip address of child appliance')
     args = parser.parse_args()
-    print("Appliance: {}".format(args.appliance))
+    print(f"Appliance: {args.appliance}")
     if args.children:
         for child in args.children:
-            print("Child: {}".format(child))
+            print(f"Child: {child}")
 
     local_key_name = "v2_key_" + fauxfactory.gen_alphanumeric(8)
 
@@ -83,46 +83,46 @@ def main():
             result = client.run_rails_command(
                 '\'puts MiqPassword.encrypt("smartvm");\'')
             if result.failed:
-                print('Retrieving encrypted db password failed on {}'.format(address))
+                print(f'Retrieving encrypted db password failed on {address}')
                 sys.exit(1)
             else:
                 encrypted_pass = result.output
                 result = client.run_command(
-                    ('cd /var/www/miq/vmdb; '
-                     'sed -i.`date +%m-%d-%Y` "s/password:'
-                     ' .*/password: {}/g" config/database.yml'.format(re.escape(encrypted_pass))))
+                    'cd /var/www/miq/vmdb; '
+                    'sed -i.`date +%m-%d-%Y` "s/password:'
+                    rf' .*/password: {re.escape(encrypted_pass)}/g" config/database.yml')
                 if result.failed:
-                    print('Updating database.yml failed on {}'.format(address))
+                    print(f'Updating database.yml failed on {address}')
                     print(result.output)
                     sys.exit(1)
                 else:
-                    print('Updating database.yml succeeded on {}'.format(address))
+                    print(f'Updating database.yml succeeded on {address}')
 
     def update_password(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
             result = client.run_command(
                 'ruby /var/www/miq/vmdb/tools/fix_auth.rb --hostname localhost --password smartvm')
             if result.failed:
-                print('Updating DB password failed on {}'.format(address))
+                print(f'Updating DB password failed on {address}')
                 print(result.output)
                 sys.exit(1)
             else:
-                print('DB password updated on {}'.format(address))
+                print(f'DB password updated on {address}')
 
     def put_key(address):
-        print('copying key to {}'.format(address))
+        print(f'copying key to {address}')
         with SSHClient(hostname=address, **ssh_creds) as client:
             client.put_file(local_key_name, '/var/www/miq/vmdb/certs/v2_key')
 
     def restart_appliance(address):
-        print('Restarting evmserverd on {}'.format(address))
+        print(f'Restarting evmserverd on {address}')
         with SSHClient(hostname=address, **ssh_creds) as client:
             result = client.run_command('systemctl restart evmserverd')
             if result.failed:
-                print("Restarting evmserverd failed on {}".format(address))
+                print(f"Restarting evmserverd failed on {address}")
                 sys.exit(1)
             else:
-                print("Restarting succeeded on {}".format(address))
+                print(f"Restarting succeeded on {address}")
 
     # make sure ssh is ready on each appliance
     wait_for(func=is_ssh_running, func_args=[args.appliance], delay=10, num_sec=600)

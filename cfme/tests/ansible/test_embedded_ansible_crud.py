@@ -37,7 +37,7 @@ def test_embedded_ansible_enable(embedded_appliance):
         endpoint = "api" if embedded_appliance.is_pod else "ansibleapi"
 
         assert embedded_appliance.ssh_client.run_command(
-            'curl -kL https://localhost/{endp} | grep "AWX REST API"'.format(endp=endpoint),
+            f'curl -kL https://localhost/{endpoint} | grep "AWX REST API"',
             container=embedded_appliance.ansible_pod_name,
         )
 

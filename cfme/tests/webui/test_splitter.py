@@ -89,4 +89,4 @@ def test_pull_splitter_persistence(request, appliance, model_object, destination
         if not selenium.find_element_by_xpath(
                 "//div[@id='left_div'][contains(@class, {})]".format(
                     unescape(quoteattr(position)))):
-            pytest.fail("Splitter did not persist when on '{}' position!".format(position))
+            pytest.fail(f"Splitter did not persist when on '{position}' position!")

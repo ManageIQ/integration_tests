@@ -10,7 +10,7 @@ class AppliancePluginException(Exception):
 
 
 @attr.s(slots=True)
-class AppliancePluginDescriptor(object):
+class AppliancePluginDescriptor:
     cls = attr.ib()
     args = attr.ib()
     kwargs = attr.ib()
@@ -27,7 +27,7 @@ class AppliancePluginDescriptor(object):
 
 
 @attr.s
-class AppliancePlugin(object):
+class AppliancePlugin:
     """Base class for all appliance plugins.
 
     Usage:

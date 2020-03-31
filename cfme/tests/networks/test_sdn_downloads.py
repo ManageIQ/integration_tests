@@ -97,4 +97,4 @@ def test_download_pdf_summary(appliance, collection_type, provider):
         random_obj = random.choice(all_entities)
         download_summary(random_obj)
     else:
-        pytest.skip('{} entities not available'.format(collection_type))
+        pytest.skip(f'{collection_type} entities not available')

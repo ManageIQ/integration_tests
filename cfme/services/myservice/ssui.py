@@ -280,7 +280,7 @@ def retire(self):
     view.retire.click()
     if self.appliance.version < "5.10":
         view = self.create_view(MyServicesView, wait='20s')
-        assert view.notification.assert_message("{} was retired.".format(self.name))
+        assert view.notification.assert_message(f"{self.name} was retired.")
     else:
         view = self.create_view(DetailsMyServiceView, wait='20s')
         assert view.notification.assert_message("Service Retire - Request Created")

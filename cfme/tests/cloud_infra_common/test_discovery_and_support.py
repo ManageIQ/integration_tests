@@ -57,11 +57,11 @@ def provider_classes(appliance):
     # we want to collect these provider categories
     for cat in selected.keys():
         selected[cat].extend(
-            set(  # quick and dirty uniqueness for types/versions
+            {  # quick and dirty uniqueness for types/versions
                 prov.klass
                 for prov in required_providers
                 if prov.category == cat
-            )
+            }
         )
     return selected
 

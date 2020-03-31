@@ -56,5 +56,5 @@ def pytest_runtest_setup(item):
     else:
         error_verb = 'not yet run or does not exist'
 
-    errmsg = 'required test {} {}'.format(test_id, error_verb)
+    errmsg = f'required test {test_id} {error_verb}'
     pytest.skip(errmsg)

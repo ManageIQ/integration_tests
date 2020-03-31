@@ -60,7 +60,7 @@ def test_appliance_console_cli_timezone(timezone, temp_appliance_preconfig_modsc
         initialEstimate: 1/12h
     """
     app = temp_appliance_preconfig_modscope
-    app.ssh_client.run_command("appliance_console_cli --timezone {}".format(timezone))
+    app.ssh_client.run_command(f"appliance_console_cli --timezone {timezone}")
     app.appliance_console.timezone_check(timezone)
 
 
@@ -147,19 +147,19 @@ def test_appliance_console_cli_external_auth(auth_type, ipa_crud, configured_app
         initialEstimate: 1/4h
     """
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to true.*'.format(auth_type)],
+                            matched_patterns=[f'.*{auth_type} to true.*'],
                             hostname=configured_appliance.hostname)
     evm_tail.start_monitoring()
-    cmd_set = 'appliance_console_cli --extauth-opts="/authentication/{}=true"'.format(auth_type)
+    cmd_set = f'appliance_console_cli --extauth-opts="/authentication/{auth_type}=true"'
     assert configured_appliance.ssh_client.run_command(cmd_set)
     assert evm_tail.validate(wait="30s")
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to false.*'.format(auth_type)],
+                            matched_patterns=[f'.*{auth_type} to false.*'],
                             hostname=configured_appliance.hostname)
 
     evm_tail.start_monitoring()
-    cmd_unset = 'appliance_console_cli --extauth-opts="/authentication/{}=false"'.format(auth_type)
+    cmd_unset = f'appliance_console_cli --extauth-opts="/authentication/{auth_type}=false"'
     assert configured_appliance.ssh_client.run_command(cmd_unset)
     assert evm_tail.validate(wait="30s")
 
@@ -280,7 +280,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
                       hostname=apps[2].hostname).waiting(timeout=450):
         # Cause failover to occur
         result = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+        assert result.success, f"Failed to stop APPLIANCE_PG_SERVICE: {result.output}"
 
     apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()

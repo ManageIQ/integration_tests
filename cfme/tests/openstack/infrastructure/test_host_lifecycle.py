@@ -55,7 +55,7 @@ def test_scale_provider_down(provider, host, has_mistral_service):
     wait_for(
         lambda: view.entities.summary('Properties').get_text_of('Maintenance Mode') ==
         'Enabled', delay=15, timeout=300,
-        message="Maintenance Mode of host {} becomes Enabled".format(host.name),
+        message=f"Maintenance Mode of host {host.name} becomes Enabled",
         fail_func=host.browser.refresh)
     assert view.entities.summary('Properties').get_text_of('Maintenance Mode') == 'Enabled'
     provider.scale_down()
@@ -64,13 +64,13 @@ def test_scale_provider_down(provider, host, has_mistral_service):
     host.name = host_uuid  # host's name is changed after scale down
     host.browser.refresh()
     wait_for(lambda: host.exists, delay=15, timeout=600,
-             message="Hostname changed to {} after scale down".format(host.name),
+             message=f"Hostname changed to {host.name} after scale down",
              fail_func=provider.browser.refresh)
     view = navigate_to(host, 'Details')
     wait_for(
         lambda: view.entities.summary('Openstack Hardware').get_text_of('Provisioning State') ==
         'available', delay=15, timeout=600,
-        message="Provisioning State of host {} is available".format(host.name),
+        message=f"Provisioning State of host {host.name} is available",
         fail_func=host.browser.refresh)
     prov_state = view.entities.summary('Openstack Hardware').get_text_of('Provisioning State')
     assert prov_state == 'available'
@@ -122,7 +122,7 @@ def test_register_host(provider, host, has_mistral_service):
     provider.browser.refresh()
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     wait_for(lambda: host.exists, delay=15, timeout=600,
-             message="Host {} become visible".format(host.name),
+             message=f"Host {host.name} become visible",
              fail_func=host.browser.refresh)
 
     assert host.exists
@@ -148,7 +148,7 @@ def test_introspect_host(host, provider, has_mistral_service):
     wait_for(
         lambda: view.entities.summary('Openstack Hardware').get_text_of('Introspected') ==
         'true', delay=15, timeout=600, fail_func=host.browser.refresh,
-        message="Introspected state of host {} is true".format(host.name))
+        message=f"Introspected state of host {host.name} is true")
     assert view.entities.summary('Openstack Hardware').get_text_of('Introspected') == 'true'
 
 

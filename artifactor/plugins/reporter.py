@@ -56,7 +56,7 @@ def overall_test_status(statuses):
     return "passed"
 
 
-class ReporterBase(object):
+class ReporterBase:
     def _run_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
         template_data = self.process_data(old_artifacts, artifact_dir, version, fw_version)
 
@@ -71,7 +71,7 @@ class ReporterBase(object):
         template_env = Environment(loader=FileSystemLoader(template_path.strpath))
         data = template_env.get_template(template).render(**report)
 
-        with open(os.path.join(log_dir, "{}.html".format(filename)), "w") as f:
+        with open(os.path.join(log_dir, f"{filename}.html"), "w") as f:
             f.write(data)
         try:
             shutil.copytree(template_path.join("dist").strpath, os.path.join(log_dir, "dist"))
@@ -201,9 +201,7 @@ class ReporterBase(object):
 
         if name_filter:
             template_data["tests"] = [
-                x
-                for x in template_data["tests"]
-                if re.findall(r"{}[-\]]+".format(name_filter), x["name"])
+                x for x in template_data["tests"] if re.findall(fr"{name_filter}[-\]]+", x["name"])
             ]
 
         # Create the tree dict that is used for js tree
@@ -295,7 +293,7 @@ class ReporterBase(object):
                 ).format(v["name"], proc_name, teststring, label, pretty_time)
                 # Do we really need the os.path.split (now process_pytest_path) here?
                 # For me it seems the name is always the leaf
-                list_string += "<li>{}</li>\n".format(link)
+                list_string += f"<li>{link}</li>\n"
 
             # If there is a '_sub' attribute then we know we have other modules to go.
             elif "_sub" in v:
@@ -351,7 +349,7 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
 
     @ArtifactorBasePlugin.check_configured
     def skip_test(self, test_location, test_name, skip_data):
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         return None, {"artifacts": {test_ident: {"skipped": skip_data}}}
 
     @ArtifactorBasePlugin.check_configured
@@ -367,7 +365,7 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
     ):
         if not param_dict:
             param_dict = {}
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         return (
             None,
             {
@@ -388,7 +386,7 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifacts, test_location, test_name, slaveid):
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         overall_status = overall_test_status(artifacts[test_ident]["statuses"])
         return (
             None,
@@ -414,7 +412,7 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
         test_outcome,
         test_phase_duration,
     ):
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         ret_dict = {
             "artifacts": {
                 test_ident: {
@@ -434,7 +432,7 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
 
     @ArtifactorBasePlugin.check_configured
     def tb_info(self, test_location, test_name, exception, file_line, short_tb):
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         return (
             None,
             {

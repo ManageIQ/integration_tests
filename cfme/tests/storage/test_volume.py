@@ -104,7 +104,7 @@ def create_volume(appliance, provider, is_from_manager=False, az=None, cancel=Fa
                                               cancel=cancel,
                                               from_manager=is_from_manager)
     elif provider.one_of(EC2Provider):
-        az = az if az else "{}a".format(provider.region)
+        az = az if az else f"{provider.region}a"
         volume = volume_collection.create(name=name,
                                           volume_type='General Purpose SSD (GP2)',
                                           volume_size=STORAGE_SIZE,
@@ -304,7 +304,7 @@ def test_multiple_cloud_volumes_tag_edit(appliance, soft_assert):
         soft_assert(any(
             tag.category.display_name == assigned_tag.category.display_name and
             tag.display_name == assigned_tag.display_name for tag in tag_available), (
-            'Tag is not assigned to volume {}'.format(item.name)))
+            f'Tag is not assigned to volume {item.name}'))
 
     # remove tags to multiple items at once
     appliance.collections.volumes.remove_tag(volumes, assigned_tag)

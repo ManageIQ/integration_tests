@@ -40,7 +40,7 @@ class PhysicalProvider(Pretty, BaseProvider, Fillable):
     key = attr.ib(default=None)
 
     def __attrs_post_init__(self):
-        super(PhysicalProvider, self).__attrs_post_init__()
+        super().__attrs_post_init__()
         self.parent = self.appliance.collections.physical_providers
 
     @property

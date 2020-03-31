@@ -41,7 +41,7 @@ def set_default(provider, request):
        be created with specific values for these entries.
     """
     with_prov = (
-        "Datastore", "ManageIQ (Locked)", "{}".format(provider.string_name), "VM", "Provisioning",
+        "Datastore", "ManageIQ (Locked)", f"{provider.string_name}", "VM", "Provisioning",
         "StateMachines", "ProvisionRequestApproval", "Default (Default)"
     )
     default = (
@@ -101,11 +101,11 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
 @pytest.fixture
 def set_roottenant_quota(request, roottenant, appliance):
     field, value = request.param
-    roottenant.set_quota(**{'{}_cb'.format(field): True, field: value})
+    roottenant.set_quota(**{f'{field}_cb': True, field: value})
     yield
     # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.browser.refresh()
-    roottenant.set_quota(**{'{}_cb'.format(field): False})
+    roottenant.set_quota(**{f'{field}_cb': False})
 
 
 @pytest.fixture(scope='function')
@@ -376,7 +376,7 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, small_vm, set_root
     migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
                                                                  partial_check=True)
     migrate_request.wait_for_request(method='ui')
-    msg = "Request failed with the message {}".format(migrate_request.row.last_message.text)
+    msg = f"Request failed with the message {migrate_request.row.last_message.text}"
     assert migrate_request.is_succeeded(method='ui'), msg
 
 

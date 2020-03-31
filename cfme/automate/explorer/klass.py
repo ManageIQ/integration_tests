@@ -119,7 +119,7 @@ class Class(BaseEntity, Copiable):
             'instances': InstanceCollection,
             'methods': MethodCollection
         }
-        super(Class, self).__init__(collection)
+        super().__init__(collection)
 
         self.name = name
         if display_name is not None:
@@ -145,7 +145,7 @@ class Class(BaseEntity, Copiable):
                 table.name == self.name,
                 table.namespace_id == self.namespace.db_id)[0]  # noqa
         except IndexError:
-            raise ItemNotFound('Class named {} not found in the database'.format(self.name))
+            raise ItemNotFound(f'Class named {self.name} not found in the database')
 
     @property
     def db_object(self):
@@ -175,7 +175,7 @@ class Class(BaseEntity, Copiable):
     @property
     def tree_path(self):
         if self.display_name:
-            return self.parent_obj.tree_path + ['{} ({})'.format(self.display_name, self.name)]
+            return self.parent_obj.tree_path + [f'{self.display_name} ({self.name})']
         else:
             return self.parent_obj.tree_path + [self.name]
 
@@ -235,10 +235,10 @@ class Class(BaseEntity, Copiable):
                 fqdn = self.fqdn.rsplit('/', 1)[0] + '/{}'.format(updates['name'])
             else:
                 fqdn = self.fqdn
-            view.flash.assert_message('Automate Class "{}" was saved'.format(fqdn))
+            view.flash.assert_message(f'Automate Class "{fqdn}" was saved')
         else:
             view.flash.assert_message(
-                'Edit of Automate Class "{}" was cancelled by the user'.format(self.name))
+                f'Edit of Automate Class "{self.name}" was cancelled by the user')
 
 
 @attr.s
@@ -491,7 +491,7 @@ class ClassSchema(Navigatable):
             page.schema.save_button.click()
             page.flash.assert_no_error()
             page.flash.assert_message(
-                'Schema for Automate Class "{}" was saved'.format(self.klass.name))
+                f'Schema for Automate Class "{self.klass.name}" was saved')
         else:
             page.schema.cancel_button.click()
             page.flash.assert_no_error()
@@ -509,7 +509,7 @@ class ClassSchema(Navigatable):
             page.schema.save_button.click()
             page.flash.assert_no_error()
             page.flash.assert_message(
-                'Schema for Automate Class "{}" was saved'.format(self.klass.name))
+                f'Schema for Automate Class "{self.klass.name}" was saved')
         else:
             page.schema.cancel_button.click()
             page.flash.assert_no_error()
@@ -530,7 +530,7 @@ class ClassSchema(Navigatable):
             page.schema.save_button.click()
             page.flash.assert_no_error()
             page.flash.assert_message(
-                'Schema for Automate Class "{}" was saved'.format(self.klass.name))
+                f'Schema for Automate Class "{self.klass.name}" was saved')
         else:
             page.schema.cancel_button.click()
             page.flash.assert_no_error()
@@ -548,7 +548,7 @@ class ClassSchema(Navigatable):
             page.schema.save_button.click()
             page.flash.assert_no_error()
             page.flash.assert_message(
-                'Schema for Automate Class "{}" was saved'.format(self.klass.name))
+                f'Schema for Automate Class "{self.klass.name}" was saved')
         else:
             page.schema.cancel_button.click()
             page.flash.assert_no_error()

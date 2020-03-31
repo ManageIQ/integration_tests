@@ -34,7 +34,7 @@ from widgetastic_manageiq import WaitTab
 class ProviderEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(ProviderEntity, self).data
+        data_dict = super().data
         try:
             if 'quadicon' in data_dict and data_dict['quadicon']:
                 quad_data = document_fromstring(data_dict['quadicon'])
@@ -120,7 +120,7 @@ class InfraProviderDetailsView(ProviderDetailsView):
     """
     @property
     def is_displayed(self):
-        return (super(InfraProviderDetailsView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'])
 
 
@@ -130,7 +130,7 @@ class CloudProviderDetailsView(ProviderDetailsView):
     """
     @property
     def is_displayed(self):
-        return (super(CloudProviderDetailsView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'])
 
 
@@ -140,7 +140,7 @@ class PhysicalProviderDetailsView(ProviderDetailsView):
     """
     @property
     def is_displayed(self):
-        return (super(PhysicalProviderDetailsView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute',
                                                        'Physical Infrastructure',
                                                        'Providers'])
@@ -345,7 +345,7 @@ class ContainerProvidersView(ProvidersView):
 
     @property
     def is_displayed(self):
-        return (super(ContainerProvidersView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
                 self.entities.title.text == self.SUMMARY_TEXT)
 
@@ -360,7 +360,7 @@ class InfraProvidersView(ProvidersView):
     """
     @property
     def is_displayed(self):
-        return (super(InfraProvidersView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.entities.title.text == 'Infrastructure Providers')
 
@@ -371,7 +371,7 @@ class CloudProvidersView(ProvidersView):
     """
     @property
     def is_displayed(self):
-        return (super(CloudProvidersView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
                 self.entities.title.text == 'Cloud Providers')
 
@@ -382,7 +382,7 @@ class NetworkProvidersView(ProvidersView):
     """
     @property
     def is_displayed(self):
-        return (super(NetworkProvidersView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.entities.title.text == 'Network Managers')
 
@@ -393,13 +393,13 @@ class PhysicalProvidersView(ProvidersView):
     """
     @property
     def is_displayed(self):
-        return (super(PhysicalProvidersView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == [
                     'Compute', 'Physical Infrastructure', 'Providers'] and
                 self.entities.title.text == 'Physical Infrastructure Providers')
 
 
-class BeforeFillMixin(object):
+class BeforeFillMixin:
     """
      this mixin is used to activate appropriate tab before filling this tab
     """
@@ -442,7 +442,7 @@ class InfraProviderAddView(ProviderAddView):
 
     @property
     def is_displayed(self):
-        return (super(InfraProviderAddView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == 'Add New Infrastructure Provider')
 
@@ -465,7 +465,7 @@ class CloudProviderAddView(ProviderAddView):
 
     @property
     def is_displayed(self):
-        return (super(CloudProviderAddView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
                 self.title.text == 'Add New Cloud Provider')
 
@@ -526,7 +526,7 @@ class PhysicalProviderAddView(ProviderAddView):
 
     @property
     def is_displayed(self):
-        return (super(PhysicalProviderAddView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == [
                     'Compute', 'Physical Infrastructure', 'Providers'] and
                 self.title.text == 'Add New Physical Infrastructure Provider')

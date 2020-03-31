@@ -24,7 +24,7 @@ def load_appliance_collections():
 
 
 @attr.s
-class EntityCollections(object):
+class EntityCollections:
     """Caches instances of collection objects for use by the collections accessor
 
     The appliance object has a ``collections`` attribute. This attribute is an instance
@@ -55,7 +55,7 @@ class EntityCollections(object):
         return collections
 
     def __dir__(self):
-        internal_dir = dir(super(EntityCollections, self))
+        internal_dir = dir(super())
         return internal_dir + list(self._availiable_collections.keys())
 
     def __getattr__(self, name):
@@ -208,7 +208,7 @@ class BaseEntity(NavigatableMixin):
         .. code-block:: python
             expected_title = self.context['object'].expected_details_title
         """
-        return "{} (Summary)".format(self.name)
+        return f"{self.name} (Summary)"
 
     @property
     def expected_details_breadcrumb(self):
@@ -218,11 +218,11 @@ class BaseEntity(NavigatableMixin):
         .. code-block:: python
             expected_breadcrumb = self.context['object'].expected_details_breadcrumb
         """
-        return "{} (Summary)".format(self.name)
+        return f"{self.name} (Summary)"
 
 
 @attr.s
-class CollectionProperty(object):
+class CollectionProperty:
     type_or_get_type = attr.ib(validator=attr.validators.instance_of((Callable, type)))
 
     def __get__(self, instance, owner):

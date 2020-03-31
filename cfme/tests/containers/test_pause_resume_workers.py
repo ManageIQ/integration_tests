@@ -23,7 +23,7 @@ def check_ems_state_in_diagnostics(appliance, provider):
     workers_view.browser.refresh()
     try:
         if workers_view.workers_table.rows(
-                name='Event Monitor for Provider: {}'.format(provider.name)).next():
+                name=f'Event Monitor for Provider: {provider.name}').next():
             return True
     except Exception:
         return False

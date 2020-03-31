@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
 from pytest_polarion_collect.utils import get_parsed_docstring

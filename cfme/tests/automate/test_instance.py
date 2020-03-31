@@ -93,7 +93,7 @@ def test_automate_instance_missing(domain, klass, namespace, appliance):
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         location='inline',
-        script='$evm.log(:info, "{}")'.format(catch_string),
+        script=f'$evm.log(:info, "{catch_string}")',
     )
     klass.schema.add_fields({'name': 'mfield', 'type': 'Method', 'data_type': 'String'})
     klass.instances.create(name='.missing', fields={'mfield': {'value': '${#_missing_instance}'}})
@@ -107,13 +107,13 @@ def test_automate_instance_missing(domain, klass, namespace, appliance):
         appliance=appliance,
         request='Call_Instance',
         attributes_values={
-            'namespace': '{}/{}'.format(domain.name, namespace.name),
+            'namespace': f'{domain.name}/{namespace.name}',
             'class': klass2.name,
             'instance': instance2.name
         }
     )
     assert appliance.ssh_client.run_command(
-        'grep {} /var/www/miq/vmdb/log/automation.log'.format(catch_string)).success
+        f'grep {catch_string} /var/www/miq/vmdb/log/automation.log').success
 
 
 @pytest.mark.tier(1)
@@ -151,7 +151,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
     method = klass.methods.create(
         name=fauxfactory.gen_alphanumeric(),
         location='inline',
-        script='$evm.log(:info, "{}")'.format(catch_string)
+        script=f'$evm.log(:info, "{catch_string}")'
     )
     request.addfinalizer(method.delete_if_exists)
 
@@ -201,7 +201,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
     # Also checking if method1 of klass1 is executed successfully or not by searching 'catch_string'
     # in automation log.
     result = LogValidator(
-        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(catch_string)],
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[f".*{catch_string}.*"],
         failure_patterns=[".*ERROR.*"]
     )
     result.start_monitoring()
@@ -211,7 +211,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
         appliance=klass.appliance,
         request="Call_Instance",
         attributes_values={
-            "namespace": "{}/{}".format(domain.name, namespace.name),
+            "namespace": f"{domain.name}/{namespace.name}",
             "class": klass2.name,
             "instance": instance2.name,
         },
@@ -268,7 +268,7 @@ def test_check_system_request_calls_depr_conf_mgmt(appliance, copy_instance):
     """
     search = '/AutomationManagement/AnsibleTower/Operations/StateMachines/Job/default'
     result = LogValidator(
-        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(search)]
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[f".*{search}.*"]
     )
     result.start_monitoring()
     # Executing the automate instance - 'ansible_tower_job' using simulation
@@ -337,7 +337,7 @@ def test_quota_source_value(request, entity, search, copy_quota_instance, generi
     request.addfinalizer(lambda: root_tenant.set_quota(**{"cpu_cb": False}))
 
     result = LogValidator(
-        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[".*{}.*".format(search)]
+        "/var/www/miq/vmdb/log/automation.log", matched_patterns=[f".*{search}.*"]
     )
     result.start_monitoring()
     service_catalogs = ServiceCatalogs(

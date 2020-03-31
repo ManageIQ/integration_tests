@@ -90,7 +90,7 @@ def setup_openldap_user_group(appliance, two_child_tenants, openldap_auth_provid
     for group in ldap_user.groups:
         if 'evmgroup' not in group.lower():
             # create group in CFME via retrieve_group which looks it up on auth_provider
-            logger.info('Retrieving a user group that is non evm built-in: {}'.format(group))
+            logger.info(f'Retrieving a user group that is non evm built-in: {group}')
             tenant = 'My Company/marketing' if group == 'marketing' else 'My Company/finance'
             retrieved_groups.append(retrieve_group(appliance,
                                                    'ldap',
@@ -170,7 +170,7 @@ def test_user_crud(appliance):
 
     user = new_user(appliance, [group])
     with update(user):
-        user.name = "{}edited".format(user.name)
+        user.name = f"{user.name}edited"
     copied_user = user.copy()
     copied_user.delete()
     user.delete()
@@ -571,7 +571,7 @@ def test_group_crud(appliance):
     group = group_collection.create(
         description=fauxfactory.gen_alphanumeric(start="grp_"), role=role)
     with update(group):
-        group.description = "{}edited".format(group.description)
+        group.description = f"{group.description}edited"
     group.delete()
 
 
@@ -843,7 +843,7 @@ def test_role_crud(appliance):
         ],
     )
     with update(role):
-        role.name = "{}edited".format(role.name)
+        role.name = f"{role.name}edited"
     copied_role = role.copy()
     copied_role.delete()
     role.delete()
@@ -989,7 +989,7 @@ def _test_vm_provision(appliance):
 def _test_vm_removal(appliance, provider):
     logger.info("Testing for VM removal permission")
     vm = appliance.collections.infra_vms.all()[0]  # pick first vm from collection
-    logger.debug("VM {} selected".format(vm.name))
+    logger.debug(f"VM {vm.name} selected")
     vm.delete(cancel=True)
 
 
@@ -1153,7 +1153,7 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
             if fails:
                 message = ''
                 for failure in fails.values():
-                    message = "{}\n\n{}".format(message, failure)
+                    message = f"{message}\n\n{failure}"
                 raise Exception(message)
     finally:
         appliance.server.login_admin()
@@ -1330,7 +1330,7 @@ def test_delete_default_tenant(appliance):
     """
     view = navigate_to(appliance.collections.tenants, "All")
     roottenant = appliance.collections.tenants.get_root_tenant()
-    msg = 'Default Tenant "{}" can not be deleted'.format(roottenant.name)
+    msg = f'Default Tenant "{roottenant.name}" can not be deleted'
     tenant = appliance.collections.tenants.instantiate(name=roottenant.name)
     appliance.collections.tenants.delete(tenant)
     assert view.flash.assert_message(msg)
@@ -1370,9 +1370,9 @@ def test_superadmin_tenant_crud(request, appliance):
             tenant.delete()
 
     with update(tenant):
-        tenant.description = "{}edited".format(tenant.description)
+        tenant.description = f"{tenant.description}edited"
     with update(tenant):
-        tenant.name = "{}edited".format(tenant.name)
+        tenant.name = f"{tenant.name}edited"
     tenant.delete()
 
 
@@ -1417,9 +1417,9 @@ def test_superadmin_tenant_project_crud(request, appliance):
                 item.delete()
 
     with update(project):
-        project.description = "{}edited".format(project.description)
+        project.description = f"{project.description}edited"
     with update(project):
-        project.name = "{}_edited".format(project.name)
+        project.name = f"{project.name}_edited"
     project.delete()
     tenant.delete()
 
@@ -1466,9 +1466,9 @@ def test_superadmin_child_tenant_crud(request, appliance, number_of_childrens):
 
     tenant_update = tenant.parent_tenant
     with update(tenant_update):
-        tenant_update.description = "{}edited".format(tenant_update.description)
+        tenant_update.description = f"{tenant_update.description}edited"
     with update(tenant_update):
-        tenant_update.name = "{}edited".format(tenant_update.name)
+        tenant_update.name = f"{tenant_update.name}edited"
 
 
 @pytest.mark.tier(3)
@@ -1541,7 +1541,7 @@ def test_superadmin_tenant_admin_crud(appliance):
     user = new_user(appliance, [group])
     assert user.exists
     with update(user):
-        user.name = "{}_edited".format(user.name)
+        user.name = f"{user.name}_edited"
     user.delete()
     assert not user.exists
 
@@ -1576,7 +1576,7 @@ def test_tenantadmin_group_crud(child_tenant_admin_user, tenant_role, child_tena
         assert group.exists
 
         with update(group):
-            group.description = "{}edited".format(group.description)
+            group.description = f"{group.description}edited"
 
         group.delete()
         assert not group.exists
@@ -1941,7 +1941,7 @@ def test_superadmin_child_tenant_delete_parent_catalog(appliance, request):
     group_collection = appliance.collections.groups
     group = group_collection.create(description=fauxfactory.gen_alphanumeric(start="grp_"),
                                     role="EvmRole-super_administrator",
-                                    tenant="{}/{}".format(root_tenant.name, new_tenant.name))
+                                    tenant=f"{root_tenant.name}/{new_tenant.name}")
     user = new_user(appliance, [group])
 
     @request.addfinalizer
@@ -2072,14 +2072,14 @@ def test_tenant_ldap_group_switch_between_tenants(appliance, setup_openldap_auth
             soft_assert(other_group in user.groups,
                 f"Group {other_group} in UI not expected for user {user.name}")
             view.change_group(other_group)
-            assert view.is_displayed, (u'Not logged in after switching to group {} for {}'
+            assert view.is_displayed, ('Not logged in after switching to group {} for {}'
                 .format(other_group, user.name))
             # assert selected group has changed
             soft_assert(other_group == view.current_groupname,
                         f"After switching to group {other_group}, its not displayed as active")
 
     appliance.server.login_admin()
-    assert user.exists, 'User record for "{}" should exist after login'.format(user.name)
+    assert user.exists, f'User record for "{user.name}" should exist after login'
 
 
 @pytest.mark.manual

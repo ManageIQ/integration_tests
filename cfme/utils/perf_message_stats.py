@@ -332,21 +332,21 @@ def generate_hourly_charts_and_csvs(hourly_buckets, charts_dir):
             lines['Get ' + cmd] = cmd_get
             line_chart_render(cmd + ' Command Put/Get Count', 'Hour during ' + dt,
                 '# Count of Commands', linechartxaxis, lines,
-                charts_dir.join('/{}-{}-cmdcnt.svg'.format(cmd, dt)))
+                charts_dir.join(f'/{cmd}-{dt}-cmdcnt.svg'))
 
             lines = {}
             lines['Average Dequeue Timing'] = avgdeqtimings
             lines['Min Dequeue Timing'] = mindeqtimings
             lines['Max Dequeue Timing'] = maxdeqtimings
             line_chart_render(cmd + ' Dequeue Timings', 'Hour during ' + dt, 'Time (s)',
-                linechartxaxis, lines, charts_dir.join('/{}-{}-dequeue.svg'.format(cmd, dt)))
+                linechartxaxis, lines, charts_dir.join(f'/{cmd}-{dt}-dequeue.svg'))
 
             lines = {}
             lines['Average Deliver Timing'] = avgdeltimings
             lines['Min Deliver Timing'] = mindeltimings
             lines['Max Deliver Timing'] = maxdeltimings
             line_chart_render(cmd + ' Deliver Timings', 'Hour during ' + dt, 'Time (s)',
-                linechartxaxis, lines, charts_dir.join('/{}-{}-deliver.svg'.format(cmd, dt)))
+                linechartxaxis, lines, charts_dir.join(f'/{cmd}-{dt}-deliver.svg'))
         output_file.close()
 
 
@@ -374,7 +374,7 @@ def generate_total_time_charts(msg_cmds, charts_dir):
         lines['Queue'] = msg_cmds[cmd]['queue']
         lines['Execute'] = msg_cmds[cmd]['execute']
         line_chart_render(cmd + ' Total Time', 'Message #', 'Time (s)', [], lines,
-            charts_dir.join('/{}-total.svg'.format(cmd)))
+            charts_dir.join(f'/{cmd}-total.svg'))
 
 
 def generate_worker_charts(workers, top_workers, charts_dir):
@@ -389,12 +389,12 @@ def generate_worker_charts(workers, top_workers, charts_dir):
         lines['Shared Mem'] = top_workers[worker]['share']
         line_chart_render(worker_name, 'Date Time', 'Memory in MiB',
             top_workers[worker]['datetimes'], lines,
-            charts_dir.join('/{}-Memory.svg'.format(worker_name)))
+            charts_dir.join(f'/{worker_name}-Memory.svg'))
 
         lines = {}
         lines['CPU %'] = top_workers[worker]['cpu_per']
         line_chart_render(worker_name, 'Date Time', 'CPU Usage', top_workers[worker]['datetimes'],
-            lines, charts_dir.join('/{}-CPU.svg'.format(worker_name)))
+            lines, charts_dir.join(f'/{worker_name}-CPU.svg'))
 
 
 def get_first_miqtop(top_log_file):
@@ -563,7 +563,7 @@ def messages_to_statistics_csv(messages, statistics_file_name):
         headers = ['cmd', 'puts', 'gets']
         for measurement in measurements:
             for metric in metrics:
-                headers.append('{}_{}'.format(measurement, metric))
+                headers.append(f'{measurement}_{metric}')
 
         csvfile.writerow(headers)
 
@@ -638,7 +638,7 @@ def top_to_appliance(top_file):
 
     top_keys = ['datetimes', 'cpuus', 'cpusy', 'cpuni', 'cpuid', 'cpuwa', 'cpuhi', 'cpusi', 'cpust',
         'memtot', 'memuse', 'memfre', 'buffer', 'swatot', 'swause', 'swafre', 'cached']
-    top_app = dict((key, []) for key in top_keys)
+    top_app = {key: [] for key in top_keys}
 
     cur_time = None
     miqtop_ahead = True
@@ -721,7 +721,7 @@ def top_to_workers(workers, top_file):
     grep_pids = ''
     for wkr in workers:
         grep_pids = r'{}^{}\s\\|'.format(grep_pids, workers[wkr].pid)
-    grep_pattern = r'{}^top\s\-\s\\|^miqtop\:'.format(grep_pids)
+    grep_pattern = fr'{grep_pids}^top\s\-\s\\|^miqtop\:'
     # Use grep to reduce # of lines to sort through
     p = subprocess.Popen(['grep', grep_pattern, top_file], stdout=subprocess.PIPE)
     greppedtop, err = p.communicate()
@@ -928,19 +928,19 @@ def perf_process_evm(evm_file, top_file):
             cpu_mem_charts[1]))
 
     html_menu.write('<a href="worker_menu.html" target="menu">Worker CPU/Memory</a><br>')
-    html_menu.write('Parsed {} lines for messages<br>'.format(msg_lc))
-    html_menu.write('Start Time: {}<br>'.format(test_start))
-    html_menu.write('End Time: {}<br>'.format(test_end))
+    html_menu.write(f'Parsed {msg_lc} lines for messages<br>')
+    html_menu.write(f'Start Time: {test_start}<br>')
+    html_menu.write(f'End Time: {test_end}<br>')
     html_menu.write('Message Count: {}<br>'.format(len(messages)))
     html_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
 
-    html_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc))
+    html_menu.write(f'Parsed {wkr_lc} lines for workers<br>')
     html_menu.write('Total Workers: {}<br>'.format(len(workers)))
-    html_menu.write('Workers Memory Exceeded: {}<br>'.format(wkr_mem_exc))
-    html_menu.write('Workers Uptime Exceeded: {}<br>'.format(wkr_upt_exc))
-    html_menu.write('Workers Exited: {}<br>'.format(wkr_ext))
-    html_menu.write('Workers Stopped: {}<br>'.format(wkr_stp))
-    html_menu.write('Workers Interrupted: {}<br>'.format(wkr_int))
+    html_menu.write(f'Workers Memory Exceeded: {wkr_mem_exc}<br>')
+    html_menu.write(f'Workers Uptime Exceeded: {wkr_upt_exc}<br>')
+    html_menu.write(f'Workers Exited: {wkr_ext}<br>')
+    html_menu.write(f'Workers Stopped: {wkr_stp}<br>')
+    html_menu.write(f'Workers Interrupted: {wkr_int}<br>')
 
     html_menu.write('<a href="csv_output/messages-rawdata.csv">messages-rawdata.csv</a><br>')
     html_menu.write('<a href="csv_output/messages-statistics.csv">messages-statistics.csv</a><br>')
@@ -956,7 +956,7 @@ def perf_process_evm(evm_file, top_file):
             if dt == '':
                 html_menu.write('Queued:&nbsp;')
             else:
-                html_menu.write('{}:&nbsp;'.format(dt))
+                html_menu.write(f'{dt}:&nbsp;')
             html_menu.write('<a href="charts/{}-{}-cmdcnt.svg" target="showframe">'
                 'cnt</a>&nbsp;|&nbsp;'.format(cmd, dt))
             html_menu.write('<a href="charts/{}-{}-dequeue.svg" target="showframe">'
@@ -980,19 +980,19 @@ def perf_process_evm(evm_file, top_file):
             cpu_mem_charts[1]))
 
     html_wkr_menu.write('<a href="msg_menu.html" target="menu">Message Latencies</a><br>')
-    html_wkr_menu.write('Parsed {} lines for messages<br>'.format(msg_lc))
-    html_wkr_menu.write('Start Time: {}<br>'.format(test_start))
-    html_wkr_menu.write('End Time: {}<br>'.format(test_end))
+    html_wkr_menu.write(f'Parsed {msg_lc} lines for messages<br>')
+    html_wkr_menu.write(f'Start Time: {test_start}<br>')
+    html_wkr_menu.write(f'End Time: {test_end}<br>')
     html_wkr_menu.write('Message Count: {}<br>'.format(len(messages)))
     html_wkr_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
 
-    html_wkr_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc))
+    html_wkr_menu.write(f'Parsed {wkr_lc} lines for workers<br>')
     html_wkr_menu.write('Total Workers: {}<br>'.format(len(workers)))
-    html_wkr_menu.write('Workers Memory Exceeded: {}<br>'.format(wkr_mem_exc))
-    html_wkr_menu.write('Workers Uptime Exceeded: {}<br>'.format(wkr_upt_exc))
-    html_wkr_menu.write('Workers Exited: {}<br>'.format(wkr_ext))
-    html_wkr_menu.write('Workers Stopped: {}<br>'.format(wkr_stp))
-    html_wkr_menu.write('Workers Interrupted: {}<br>'.format(wkr_int))
+    html_wkr_menu.write(f'Workers Memory Exceeded: {wkr_mem_exc}<br>')
+    html_wkr_menu.write(f'Workers Uptime Exceeded: {wkr_upt_exc}<br>')
+    html_wkr_menu.write(f'Workers Exited: {wkr_ext}<br>')
+    html_wkr_menu.write(f'Workers Stopped: {wkr_stp}<br>')
+    html_wkr_menu.write(f'Workers Interrupted: {wkr_int}<br>')
 
     html_wkr_menu.write('<a href="csv_output/messages-rawdata.csv">messages-rawdata.csv</a><br>')
     html_wkr_menu.write('<a href="csv_output/messages-statistics.csv">'
@@ -1005,9 +1005,9 @@ def perf_process_evm(evm_file, top_file):
         if workers[worker_id].terminated == '':
             if not w_type == workers[worker_id].worker_type:
                 w_type = workers[worker_id].worker_type
-                html_wkr_menu.write('{}<br>'.format(w_type))
+                html_wkr_menu.write(f'{w_type}<br>')
             worker_name = '{}-{}'.format(worker_id, workers[worker_id].worker_type)
-            html_wkr_menu.write('{} - '.format(worker_id))
+            html_wkr_menu.write(f'{worker_id} - ')
             html_wkr_menu.write('<a href="charts/{}-CPU.svg" target="showframe">CPU</a>'
                 ' | '.format(worker_name))
             html_wkr_menu.write('<a href="charts/{}-Memory.svg" target="showframe">Memory</a><br>'
@@ -1019,9 +1019,9 @@ def perf_process_evm(evm_file, top_file):
         if not workers[worker_id].terminated == '':
             if not w_type == workers[worker_id].worker_type:
                 w_type = workers[worker_id].worker_type
-                html_wkr_menu.write('<br>{}<br>'.format(w_type))
+                html_wkr_menu.write(f'<br>{w_type}<br>')
             worker_name = '{}-{}'.format(worker_id, workers[worker_id].worker_type)
-            html_wkr_menu.write('{} - '.format(worker_id))
+            html_wkr_menu.write(f'{worker_id} - ')
             html_wkr_menu.write('<a href="charts/{}-CPU.svg" target="showframe">CPU</a>'
                 ' | '.format(worker_name))
             html_wkr_menu.write('<a href="charts/{}-Memory.svg" target="showframe">Memory</a><br>'
@@ -1036,7 +1036,7 @@ def perf_process_evm(evm_file, top_file):
     logger.info('Total time processing evm log file and generating report: %s', timediff)
 
 
-class MiqMsgStat(object):
+class MiqMsgStat:
 
     def __init__(self):
         self.headers = ['msg_id', 'msg_cmd', 'msg_args', 'pid_put', 'pid_get', 'puttime', 'gettime',
@@ -1062,7 +1062,7 @@ class MiqMsgStat(object):
             str(self.del_time) + ' : ' + str(self.total_time)
 
 
-class MiqMsgLists(object):
+class MiqMsgLists:
 
     def __init__(self):
         self.cmd = ''
@@ -1073,7 +1073,7 @@ class MiqMsgLists(object):
         self.totaltimes = []
 
 
-class MiqMsgBucket(object):
+class MiqMsgBucket:
     def __init__(self):
         self.headers = ['date', 'hour', 'total_put', 'total_get', 'sum_deq', 'min_deq', 'max_deq',
             'avg_deq', 'sum_del', 'min_del', 'max_del', 'avg_del']
@@ -1101,7 +1101,7 @@ class MiqMsgBucket(object):
             + ' : ' + str(self.min_del) + ' : ' + str(self.max_del) + ' : ' + str(self.avg_del)
 
 
-class MiqWorker(object):
+class MiqWorker:
 
     def __init__(self):
         self.headers = ['worker_id', 'worker_type', 'pid', 'start_ts', 'end_ts', 'terminated']

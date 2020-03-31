@@ -45,9 +45,9 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
     # Then we can check the operations
     for widget in widgets:
         widget.minimize()
-        soft_assert(widget.minimized, 'Widget {} could not be minimized'.format(widget.name))
+        soft_assert(widget.minimized, f'Widget {widget.name} could not be minimized')
         widget.restore()
-        soft_assert(not widget.minimized, 'Widget {} could not be maximized'.format(widget.name))
+        soft_assert(not widget.minimized, f'Widget {widget.name} could not be maximized')
         # TODO: Once modal problems resolved, uncomment
         # if widget.can_zoom:
         #     widget.zoom()
@@ -91,12 +91,12 @@ def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards, 
     dash_dict = {d.title: d for d in dashboards_to_delete}
     try:
         for dash in dashboards.all():
-            soft_assert(dash.name in dash_dict, "Dashboard {} not found!".format(dash.name))
+            soft_assert(dash.name in dash_dict, f"Dashboard {dash.name} not found!")
             dash.dashboard_view.click()
             if dash.name in list(dash_dict.keys()):
                 for widget in dash.collections.widgets.all():
                     soft_assert(widget.name in dash_dict[dash.name].widgets,
-                                "Widget {} not found in {}!".format(widget.name, dash.name))
+                                f"Widget {widget.name} not found in {dash.name}!")
                 del dash_dict[dash.name]
         soft_assert(not dash_dict, "Some of the dashboards were not found! ({})".format(
             ", ".join(list(dash_dict.keys()))))

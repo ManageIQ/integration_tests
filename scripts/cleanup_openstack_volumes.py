@@ -22,7 +22,7 @@ GRACE_TIME = timedelta(hours=2)
 
 def main(*providers):
     for provider_key in providers:
-        print("Cleaning up {}".format(provider_key))
+        print(f"Cleaning up {provider_key}")
         api = get_mgmt(provider_key).capi
         try:
             volumes = api.volumes.findall(attachments=[])
@@ -33,7 +33,7 @@ def main(*providers):
 
         for volume in volumes:
             if iso8601.parse_date(volume.created_at) < (datetime.now(tz=local_tz) - GRACE_TIME):
-                print("Deleting {}".format(volume.id))
+                print(f"Deleting {volume.id}")
                 try:
                     volume.delete()
                 except Exception as e:

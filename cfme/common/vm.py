@@ -46,7 +46,7 @@ def base_types(template=False):
     from pkg_resources import iter_entry_points
     search = "template" if template else "vm"
     return {
-        ep.name: ep.resolve() for ep in iter_entry_points('manageiq.{}_categories'.format(search))
+        ep.name: ep.resolve() for ep in iter_entry_points(f'manageiq.{search}_categories')
     }
 
 
@@ -55,7 +55,7 @@ def instance_types(category, template=False):
     search = "template" if template else "vm"
     return {
         ep.name: ep.resolve() for ep in iter_entry_points(
-            'manageiq.{}_types.{}'.format(search, category))
+            f'manageiq.{search}_types.{category}')
     }
 
 
@@ -66,7 +66,7 @@ def all_types(template=False):
     return all_types
 
 
-class RetirementMixin(object):
+class RetirementMixin:
 
     def post_set_retirement(self):
         raise NotImplementedError('Implement post_set_retirement.')
@@ -153,7 +153,7 @@ class RetirementMixin(object):
         self.post_set_retirement()
 
 
-class _TemplateMixin(object):
+class _TemplateMixin:
     pass
 
 
@@ -227,7 +227,7 @@ class BaseVM(
         view.flash.assert_no_error()
         wait_for(
             lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
+            num_sec=timeout, delay=5, message=f"compliance of {self.name} checked"
         )
 
     @property
@@ -255,7 +255,7 @@ class BaseVM(
         elif text.startswith("compliant"):
             return True
         else:
-            raise ValueError("{} is not a known state for compliance".format(text))
+            raise ValueError(f"{text} is not a known state for compliance")
 
     def delete(self, cancel=False, from_details=False):
         """Deletes the VM/Instance from the VMDB.
@@ -345,7 +345,7 @@ class BaseVM(
         try:
             return view.entities.get_entity(name=self.name, surf_pages=True, use_search=use_search)
         except ItemNotFound:
-            raise ItemNotFound("VM '{}' not found in UI!".format(self.name))
+            raise ItemNotFound(f"VM '{self.name}' not found in UI!")
 
     def open_console(self, console='VM Console', invokes_alert=None):
         """
@@ -362,7 +362,7 @@ class BaseVM(
                            setting this to true will handle this.
         """
         if console not in ['VM Console', 'VMRC Console']:
-            raise NotImplementedError('Not supported console type: {}'.format(console))
+            raise NotImplementedError(f'Not supported console type: {console}')
 
         view = navigate_to(self, 'Details')
 
@@ -477,7 +477,7 @@ class BaseVM(
                                                handle_alert=not cancel)
         if wait_for_task_result:
             task = self.appliance.collections.tasks.instantiate(
-                name='Scan from Vm {}'.format(self.name), tab='AllTasks')
+                name=f'Scan from Vm {self.name}', tab='AllTasks')
             task.wait_for_finished()
             return task
 
@@ -556,7 +556,7 @@ class BaseVM(
         })
         if fill_result:
             view.form.save_button.click()
-            msg = 'Ownership saved for selected {}'.format(self.VM_TYPE)
+            msg = f'Ownership saved for selected {self.VM_TYPE}'
         else:
             view.form.cancel_button.click()
             logger.warning('No change during unset_ownership')
@@ -773,7 +773,7 @@ class BaseVMCollection(BaseCollection):
             provision_request.wait_for_request(num_sec=900)
             if provision_request.is_succeeded():
                 wait_for(lambda: provider.mgmt.does_vm_exist(vm.name), num_sec=1000, delay=5,
-                         message="VM {} becomes visible".format(vm.name))
+                         message=f"VM {vm.name} becomes visible")
             else:
                 logger.error("Provisioning failed with the message {}".
                             format(provision_request.rest.message))

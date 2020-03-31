@@ -317,7 +317,7 @@ class Volume(BaseEntity, CustomButtonEventsMixin, Updateable, Taggable):
         view.force.fill(force)
 
         view.save.click()
-        view.flash.assert_success_message('Backup for Cloud Volume "{}" created'.format(self.name))
+        view.flash.assert_success_message(f'Backup for Cloud Volume "{self.name}" created')
 
         wait_for(lambda: self.backups_count > initial_backup_count,
                  delay=20,
@@ -531,7 +531,7 @@ class VolumeCollection(BaseCollection, TaggableCollection):
                 try:
                     view.entities.get_entity(name=volume.name).ensure_checked()
                 except ItemNotFound:
-                    raise ItemNotFound("Volume {} not found".format(volume.name))
+                    raise ItemNotFound(f"Volume {volume.name} not found")
 
             view.toolbar.configuration.item_select('Delete selected Cloud Volumes',
                                                    handle_alert=True)
@@ -591,7 +591,7 @@ class VolumeDetails(CFMENavigateStep):
                                                        surf_pages=True).click()
 
         except ItemNotFound:
-            raise ItemNotFound('Volume {} not found'.format(self.obj.name))
+            raise ItemNotFound(f'Volume {self.obj.name} not found')
 
 
 @navigator.register(VolumeCollection, 'Add')

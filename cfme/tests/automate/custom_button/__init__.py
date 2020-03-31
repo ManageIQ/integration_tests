@@ -88,7 +88,7 @@ def check_log_requests_count(appliance, parse_str=None):
         parse_str = "Attributes - Begin"
 
     count = appliance.ssh_client.run_command(
-        "grep -c -w '{parse_str}' /var/www/miq/vmdb/log/automation.log".format(parse_str=parse_str)
+        f"grep -c -w '{parse_str}' /var/www/miq/vmdb/log/automation.log"
     )
     return int(count.output)
 

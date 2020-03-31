@@ -51,7 +51,7 @@ def compute_coverage(branch):
             if not used_lines:
                 continue
             if isinstance(used_lines, int):
-                used_lines = set([used_lines])
+                used_lines = {used_lines}
             else:
                 used_lines = set(used_lines)
             if line in used_lines:

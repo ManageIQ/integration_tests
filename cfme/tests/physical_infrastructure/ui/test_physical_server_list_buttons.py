@@ -82,7 +82,7 @@ def test_server_actions(physical_servers_collection, physical_servers, provider,
     view = provider.create_view(PhysicalServersView)
 
     last_part = 's' if len(physical_servers) > 1 else ''
-    message = 'Requested Server {} for the selected server{}'.format(method, last_part)
+    message = f'Requested Server {method} for the selected server{last_part}'
     physical_servers_collection.custom_button_action(button, item, physical_servers)
 
     def assert_handler_displayed():

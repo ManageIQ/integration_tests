@@ -100,7 +100,7 @@ def test_cluster_relationships(appliance, request, soft_assert, setup_provider):
         cluster_list = provider.mgmt.list_clusters() if isinstance(
             provider, SCVMMProvider) else provider.mgmt.list_cluster()
         verified_cluster = [item for item in cluster_list if name in item]
-        soft_assert(verified_cluster, "Cluster {} not found in {}".format(name, provider_name))
+        soft_assert(verified_cluster, f"Cluster {name} not found in {provider_name}")
         if not host_name:
             continue  # No host name
         host_ip = resolve_hostname(host_name, force=True)
@@ -128,7 +128,7 @@ def test_cluster_relationships(appliance, request, soft_assert, setup_provider):
                 if host_ip == ip_from_provider:
                     break
         else:
-            soft_assert(False, "Hostname {} not found in {}".format(host_name, provider_name))
+            soft_assert(False, f"Hostname {host_name} not found in {provider_name}")
 
 
 @pytest.mark.rhv2
@@ -177,10 +177,10 @@ def test_operations_vm_on(
     for vm in vms_in_db:
         # Following check is based on BZ 1504010
         assert vm_names.count(vm.vm_name) == 1, (
-            'There is a duplicate entry in DB for VM {}'.format(vm.vm_name))
+            f'There is a duplicate entry in DB for VM {vm.vm_name}')
         store_path = vm.vm_location
         if vm.storages_name:
-            store_path = '{}/{}'.format(vm.storages_name, store_path)
+            store_path = f'{vm.storages_name}/{store_path}'
         for item in report.data.rows:
             if vm.vm_name == item['VM Name']:
                 assert compare(vm.hosts_name, item['Host'])

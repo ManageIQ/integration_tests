@@ -40,7 +40,7 @@ def test_host_role_association(appliance, provider, soft_assert):
         host.run_smartstate_analysis()
 
         task = appliance.collections.tasks.instantiate(
-            name="SmartState Analysis for '{}'".format(host.name), tab='MyOtherTasks')
+            name=f"SmartState Analysis for '{host.name}'", tab='MyOtherTasks')
         task.wait_for_finished()
         view = navigate_to(host, 'Details')
         role_name = str(view.title.text.split()[1]).translate(None, '()')

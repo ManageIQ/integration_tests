@@ -134,7 +134,7 @@ def test_containers_smartstate_analysis_multiple_images(provider, test_item,
             table_data = {k.lower(): v for k, v in table.read().items()}
 
             if not soft_assert(attr.lower() in table_data,
-                               '{} table has missing attribute \'{}\''.format(tbl, attr)):
+                               f'{tbl} table has missing attribute \'{attr}\''):
                 continue
             provider.refresh_provider_relationships()
             wait_for_retval = wait_for(lambda: get_table_attr(image_instance, tbl, attr),
@@ -147,4 +147,4 @@ def test_containers_smartstate_analysis_multiple_images(provider, test_item,
                 continue
             value = wait_for_retval.out
             soft_assert(verifier(value),
-                        '{}.{} attribute has unexpected value ({})'.format(tbl, attr, value))
+                        f'{tbl}.{attr} attribute has unexpected value ({value})')

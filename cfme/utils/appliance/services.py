@@ -37,7 +37,7 @@ class SystemdService(AppliancePlugin):
         unit = self.unit_name if unit_name is None else unit_name
         with self.appliance.ssh_client as ssh:
             cmd = 'systemctl {} {}'.format(quote(command), quote(unit))
-            log_callback('Running {}'.format(cmd))
+            log_callback(f'Running {cmd}')
             result = ssh.run_command(cmd,
                                      container=self.appliance.ansible_pod_name)
 

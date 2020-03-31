@@ -41,11 +41,11 @@ Implementation:
 """
 
 
-class _default(object):
+class _default:
     """Whoever touches this outside of this module, his/her hands will fall off."""
 
 
-class variable(object):
+class variable:
     """Create a new variable method."""
 
     def __init__(self, *args, **kwargs):

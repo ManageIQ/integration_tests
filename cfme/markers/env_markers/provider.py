@@ -150,7 +150,7 @@ def data_provider_types(provider):
 
 
 @attr.s
-class DataProvider(object):
+class DataProvider:
     """A simple holder for a pseudo provider.
 
     This is not a real provider. This is used in place of a real provider to allow things like
@@ -165,15 +165,15 @@ class DataProvider(object):
     @cached_property
     def the_id(self):
         if self.version:
-            return "{}-{}".format(self.type_name, self.version)
+            return f"{self.type_name}-{self.version}"
         else:
-            return "{}".format(self.type_name)
+            return f"{self.type_name}"
 
     def one_of(self, *classes):
         return issubclass(self.klass, classes)
 
     def __repr__(self):
-        return '{}({})[{}]'.format(self.type_name, self.category, self.version)
+        return f'{self.type_name}({self.category})[{self.version}]'
 
 
 def all_required(miq_version, filters=None):
@@ -267,7 +267,7 @@ def providers(metafunc, filters=None, selector=ONE_PER_VERSION, fixture_name='pr
         for a_prov in available_providers:
             try:
                 if not a_prov.version:
-                    raise ValueError("provider {p} has no version".format(p=a_prov))
+                    raise ValueError(f"provider {a_prov} has no version")
                 elif (a_prov.version == provider.version and
                         a_prov.type == provider.type_name and
                         a_prov.category == provider.category):

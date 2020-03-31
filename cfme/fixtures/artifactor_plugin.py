@@ -68,7 +68,7 @@ def get_name(obj):
             str(obj))
 
 
-class DummyClient(object):
+class DummyClient:
     def fire_hook(self, *args, **kwargs):
         return
 

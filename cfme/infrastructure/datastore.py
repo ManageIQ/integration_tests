@@ -68,7 +68,7 @@ class DatastoreSideBar(View):
 class DatastoreEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(DatastoreEntity, self).data
+        data_dict = super().data
         try:
             if 'quadicon' in data_dict and data_dict['quadicon']:
                 quad_data = document_fromstring(data_dict['quadicon'])
@@ -336,11 +336,10 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
         except TimedOutError:
             raise MenuItemNotFound('Smart State analysis is disabled for this datastore')
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
-        view.flash.assert_success_message(('"{}": scan successfully '
-                                           'initiated'.format(self.name)))
+        view.flash.assert_success_message(f'"{self.name}": scan successfully initiated')
         if wait_for_task_result:
             task = self.appliance.collections.tasks.instantiate(
-                name="SmartState Analysis for [{}]".format(self.name), tab='MyOtherTasks')
+                name=f"SmartState Analysis for [{self.name}]", tab='MyOtherTasks')
             task.wait_for_finished()
             return task
 
@@ -407,7 +406,7 @@ class DatastoreCollection(BaseCollection):
                 view.entities.get_entity(name=datastore.name, surf_pages=True).ensure_checked()
                 checked_datastores.append(datastore)
             except ItemNotFound:
-                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
+                raise ValueError(f'Could not find datastore {datastore.name} in the UI')
 
         if set(datastores) == set(checked_datastores):
             view.toolbar.configuration.item_select('Remove Datastores', handle_alert=True)
@@ -430,12 +429,12 @@ class DatastoreCollection(BaseCollection):
                 view.entities.get_entity(name=datastore.name, surf_pages=True).ensure_checked()
                 checked_datastores.append(datastore)
             except ItemNotFound:
-                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
+                raise ValueError(f'Could not find datastore {datastore.name} in the UI')
 
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         for datastore in datastores:
             view.flash.assert_success_message(
-                '"{}": scan successfully initiated'.format(datastore.name))
+                f'"{datastore.name}": scan successfully initiated')
 
 
 @navigator.register(DatastoreCollection, 'All')

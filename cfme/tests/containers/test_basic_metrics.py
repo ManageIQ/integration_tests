@@ -45,7 +45,7 @@ def enable_capacity_and_utilization(appliance):
     if appliance.wait_for_server_roles(args, delay=10, timeout=300):
         yield
     else:
-        pytest.skip("Failed to set server roles on appliance {}".format(appliance))
+        pytest.skip(f"Failed to set server roles on appliance {appliance}")
 
     logger.info("Disabling metrics collection roles")
     appliance.server.settings.disable_server_roles(*args)
@@ -78,10 +78,10 @@ def test_basic_metrics(provider):
                   router.metadata.name == 'prometheus'].pop()
         metrics_url = router.status.ingress[0].host
     except AttributeError:
-        pytest.skip('Could not determine metric route for {}'.format(provider.key))
+        pytest.skip(f'Could not determine metric route for {provider.key}')
     creds = provider.get_credentials_from_config(provider.key, cred_type='token')
-    header = {"Authorization": "Bearer {token}".format(token=creds.token)}
-    response = requests.get("https://{url}:443".format(url=metrics_url), headers=header,
+    header = {"Authorization": f"Bearer {creds.token}"}
+    response = requests.get(f"https://{metrics_url}:443", headers=header,
                             verify=False)
     assert response.ok, "{metrics} failed to start!".format(metrics=router["metadata"]["name"])
 

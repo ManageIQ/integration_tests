@@ -104,7 +104,7 @@ signal.signal(signal.SIGQUIT, handle_end_session)
 
 
 @attr.s(hash=False)
-class SlaveDetail(object):
+class SlaveDetail:
 
     slaveid_generator = (f'slave{i:02d}'.encode('ascii') for i in count())
 
@@ -140,7 +140,7 @@ class SlaveDetail(object):
             return self.process.poll()
 
 
-class ParallelSession(object):
+class ParallelSession:
     def __init__(self, config, appliances):
         self.config = config
         self.session = None
@@ -505,8 +505,7 @@ class ParallelSession(object):
         self.zmq_ctx.destroy()
 
     def _test_item_generator(self):
-        for tests in chain(self._serial_item_generator(), self._modscope_item_generator()):
-            yield tests
+        yield from chain(self._serial_item_generator(), self._modscope_item_generator())
 
     def _serial_item_generator(self):
         # yields list of tests that will run on a single collection
@@ -641,7 +640,7 @@ def report_collection_diff(slaveid, from_collection, to_collection):
     return f'{slaveid} diff:\n{deep}\n'
 
 
-class TerminalDistReporter(object):
+class TerminalDistReporter:
     """Terminal Reporter for Distributed Testing
 
     trdist reporter exists to make sure we get good distributed logging during the runtest loop,
