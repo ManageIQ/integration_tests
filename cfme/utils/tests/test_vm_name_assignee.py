@@ -19,7 +19,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhv1
 def test_vm_name_postfix_1(appliance, create_vm_modscope, provider):
     """
     Test the HTML5 console support for a particular provider.
@@ -45,7 +44,6 @@ def test_vm_name_postfix_1(appliance, create_vm_modscope, provider):
     provider.appliance.provider_based_collection(provider)
 
 
-@pytest.mark.rhv1
 def test_vm_name_postfix_2(appliance, create_vm_modscope, provider):
     """
     Test the HTML5 console support for a particular provider.

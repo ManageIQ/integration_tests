@@ -137,7 +137,6 @@ def test_discover_host(request, provider, appliance, host_ips):
         assert host in host_ips
 
 
-@pytest.mark.rhv2
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(lambda provider, creds:
@@ -182,7 +181,6 @@ def test_multiple_host_good_creds(setup_provider, provider, creds):
     view.flash.assert_success_message('Credentials/Settings saved successfully')
 
 
-@pytest.mark.rhv3
 def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials
 
@@ -333,7 +331,6 @@ def test_infrastructure_hosts_icons_states(
 
 
 @test_requirements.rhev
-@pytest.mark.rhv3
 @pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
 @pytest.mark.meta(automates=[1528859])
 def test_hosts_not_displayed_several_times(appliance, provider, setup_provider):
@@ -516,7 +513,6 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
 
 
 @test_requirements.rhev
-@pytest.mark.rhv3
 @pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
 @pytest.mark.meta(automates=[1669011])
 def test_add_ipmi_refresh(appliance, setup_provider):

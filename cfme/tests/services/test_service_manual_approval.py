@@ -81,7 +81,6 @@ def modify_instance(create_domain):
         instance.fields = {"approval_type": {"value": "manual"}}
 
 
-@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[BZ(1633540, forced_streams=['5.10'],
     unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.ignore_stream("upstream")

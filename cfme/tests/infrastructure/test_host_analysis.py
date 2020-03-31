@@ -58,7 +58,6 @@ def host_with_credentials(provider, host_name):
     host.update_credentials_rest(credentials={'default': Host.Credential(principal="", secret="")})
 
 
-@pytest.mark.rhv1
 @pytest.mark.uncollectif(lambda provider, appliance:
                          provider.one_of(RHEVMProvider) and not appliance.is_downstream,
                          reason='RHEVM host analysis not valid on upstream')

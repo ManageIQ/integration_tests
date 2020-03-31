@@ -27,7 +27,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
     """Tests editing a catalog bundle enrty point and check if the value is saved.

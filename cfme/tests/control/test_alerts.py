@@ -173,7 +173,6 @@ def setup_snmp(appliance):
     appliance.ssh_client.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(

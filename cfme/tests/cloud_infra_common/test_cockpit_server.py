@@ -13,7 +13,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [test_requirements.cockpit]
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider(
     gen_func=providers,
     filters=[

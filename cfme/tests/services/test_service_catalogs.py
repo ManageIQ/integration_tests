@@ -27,7 +27,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhv1
 @pytest.mark.tier(2)
 def test_order_catalog_item(appliance, provider, catalog_item, request,
                             register_event):
@@ -62,7 +61,6 @@ def test_order_catalog_item(appliance, provider, catalog_item, request,
 
 
 @test_requirements.rest
-@pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
         request, appliance, provider, catalog_item, catalog):
@@ -100,7 +98,6 @@ def test_order_catalog_item_via_rest(
         return req.status.lower() == "ok" and req.request_state.lower() == "finished"
 
 
-@pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_order_catalog_bundle(appliance, provider, catalog_item, request):
     """Tests ordering a catalog bundle
@@ -136,7 +133,6 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
 
 
 @pytest.mark.skip('Catalog items are converted to collections. Refactoring is required')
-@pytest.mark.rhv3
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(3)
@@ -160,7 +156,6 @@ def test_no_template_catalog_item(provider, provisioning, dialog, catalog, appli
         catalog_item.create()
 
 
-@pytest.mark.rhv3
 @pytest.mark.tier(3)
 def test_request_with_orphaned_template(appliance, provider, catalog_item):
     """Tests edit catalog item after deleting provider
@@ -185,7 +180,6 @@ def test_request_with_orphaned_template(appliance, provider, catalog_item):
     assert provision_request.row.status.text == 'Error'
 
 
-@pytest.mark.rhv3
 @test_requirements.filtering
 @pytest.mark.tier(3)
 def test_advanced_search_registry_element(request, appliance):

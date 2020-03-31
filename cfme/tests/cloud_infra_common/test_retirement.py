@@ -122,7 +122,6 @@ def generate_retirement_date(delta=9):
     return gen_date
 
 
-@pytest.mark.rhv1
 @pytest.mark.meta(automates=[1518926, 1565128])
 def test_retirement_now(create_vm):
     """Test on-demand retirement of a VM/Instance.
@@ -154,7 +153,6 @@ def test_retirement_now(create_vm):
     verify_retirement_date(create_vm, expected_date=expected_date)
 
 
-@pytest.mark.rhv1
 @pytest.mark.parametrize('create_vms',
                          [{'template_type': 'small_template', 'num_vms': 2}],
                          ids=['small_template-two_vms'],
@@ -230,7 +228,6 @@ def test_retirement_now_ec2_instance_backed(create_vm, tagged, appliance):
     verify_retirement_date(create_vm, expected_date=expected_date)
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 def test_set_retirement_date(create_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
@@ -254,7 +251,6 @@ def test_set_retirement_date(create_vm, warn):
     verify_retirement_date(create_vm, expected_date=expected_date)
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 @pytest.mark.parametrize('create_vms',
                          [{'template_type': 'small_template', 'num_vms': 2}],
@@ -320,7 +316,6 @@ def test_set_retirement_offset(create_vm, warn):
     verify_retirement_date(create_vm, expected_date=expected_date)
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
 @pytest.mark.parametrize('create_vms',
                          [{'template_type': 'small_template', 'num_vms': 2}],
@@ -362,7 +357,6 @@ def test_set_retirement_offset_multiple(create_vms, provider, warn):
         verify_retirement_date(vm, expected_date=expected_date)
 
 
-@pytest.mark.rhv3
 def test_unset_retirement_date(create_vm):
     """Tests cancelling a scheduled retirement by removing the set date
 
@@ -393,7 +387,6 @@ def test_unset_retirement_date(create_vm):
     verify_retirement_date(create_vm, expected_date='Never')
 
 
-@pytest.mark.rhv3
 @pytest.mark.tier(2)
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
 def test_resume_retired_instance(create_vm, provider, remove_date):

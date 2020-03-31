@@ -160,7 +160,6 @@ def quota_limit(roottenant):
     roottenant.set_quota(**{"storage_cb": False})
 
 
-@pytest.mark.rhv2
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
@@ -207,7 +206,6 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set_roott
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
 # indirect is the list where we define which fixtures are to be passed values indirectly.
-@pytest.mark.rhv3
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'set_default'],
@@ -249,7 +247,6 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here
 # indirect is the list where we define which fixtures are to be passed values indirectly.
-@pytest.mark.rhv2
 @pytest.mark.meta(automates=[1467644])
 @pytest.mark.parametrize(
     ['set_roottenant_quota', 'custom_prov_data'],

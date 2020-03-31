@@ -83,7 +83,6 @@ def clean_vm(appliance, provider, vm_name):
     appliance.collections.infra_vms.instantiate(vm_name, provider).cleanup_on_provider()
 
 
-@pytest.mark.rhv2
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
 def test_provision(request, appliance, provider, provision_data):
@@ -117,7 +116,6 @@ def test_provision(request, appliance, provider, provision_data):
     assert found_vms, f'VM `{vm_name}` not found'
 
 
-@pytest.mark.rhv2
 # These profile names are RHV specific
 @pytest.mark.provider([RHEVMProvider], scope='module')
 @pytest.mark.parametrize('vnic_profile', ['empty_vnic_profile', 'specific_vnic_profile'])
@@ -177,7 +175,6 @@ def test_provision_vlan(request, appliance, provision_data, vnic_profile, provid
         assert profile_via_provider.name == profile_name.split()[0], assert_msg
 
 
-@pytest.mark.rhv3
 @pytest.mark.meta(server_roles="+notifier")
 def test_provision_emails(request, provision_data, provider, appliance, smtp_test):
     """
@@ -226,7 +223,6 @@ def test_provision_emails(request, provision_data, provider, appliance, smtp_tes
     wait_for(check_one_completed_mail_received, num_sec=90, delay=5)
 
 
-@pytest.mark.rhv3
 def test_create_pending_provision_requests(request, appliance, provider, small_template):
     """Tests creation and and auto-approval of pending provision request
     using /api/provision_requests.
@@ -266,7 +262,6 @@ def test_create_pending_provision_requests(request, appliance, provider, small_t
         delay=10)
 
 
-@pytest.mark.rhv3
 def test_provision_attributes(appliance, provider, small_template, soft_assert):
     """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
 

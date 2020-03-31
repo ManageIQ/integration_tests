@@ -26,7 +26,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhv2
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_catalog_crud_ssui(appliance, setup_provider,
                                    context, order_service):

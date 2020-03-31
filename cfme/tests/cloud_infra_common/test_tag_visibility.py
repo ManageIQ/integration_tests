@@ -30,7 +30,6 @@ def tagged_vm(tag, provider):
     tag_vm.remove_tag(tag=tag)
 
 
-@pytest.mark.rhv3
 def test_tag_vis_vm(tagged_vm, user_restricted):
     """
     Polarion:
