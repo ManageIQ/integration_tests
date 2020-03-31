@@ -27,7 +27,6 @@ def vm_test(provider):
         vm.cleanup_on_provider()
 
 
-@pytest.mark.rhv2
 @pytest.mark.meta(automates=[1592430])
 def test_delete_vm_on_provider_side(vm_test, provider):
     """ Delete VM on the provider side and refresh relationships in CFME

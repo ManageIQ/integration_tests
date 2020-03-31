@@ -160,7 +160,6 @@ def set_entity_quota_tag(request, entities, appliance):
     entities.remove_tag(tag)
 
 
-@pytest.mark.rhv2
 @pytest.mark.parametrize(
     ['set_entity_quota_tag', 'custom_prov_data'],
     [
@@ -198,7 +197,6 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider,
 
 # Here set_entity_quota_tag is used for setting the tag value.
 # Here custom_prov_data is used to provide the value fo the catalog item to be created.
-@pytest.mark.rhv2
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
     ['set_entity_quota_tag', 'custom_prov_data'],

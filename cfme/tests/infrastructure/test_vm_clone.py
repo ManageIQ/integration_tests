@@ -67,7 +67,6 @@ def test_vm_clone(appliance, provider, clone_vm_name, create_vm):
     assert request_row.is_succeeded(method='ui'), msg
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider(gen_func=providers,
                       filters=[infra_filter, not_vmware],)
 @test_requirements.provision

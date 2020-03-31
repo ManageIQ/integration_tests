@@ -106,7 +106,6 @@ def generic_catalog_item(appliance, service_dialog, catalog):
     catalog_item.delete_if_exists()
 
 
-@pytest.mark.rhv2
 @pytest.mark.tier(2)
 @pytest.mark.provider(
     [InfraProvider],

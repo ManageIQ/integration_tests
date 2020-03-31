@@ -15,7 +15,6 @@ pytest_plugins = [
     "cfme.markers.regression",
     "cfme.markers.requires",
     "cfme.markers.rhel_tests",
-    "cfme.markers.rhv",
     "cfme.markers.sauce",
     "cfme.markers.serial",
     "cfme.markers.skipper",

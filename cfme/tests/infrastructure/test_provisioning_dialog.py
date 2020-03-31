@@ -115,7 +115,6 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
     return _provisioner
 
 
-@pytest.mark.rhv2
 @pytest.mark.meta(blockers=[BZ(1627673, forced_streams=['5.10'])])
 def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     """ Tests change RAM and CPU in provisioning dialog.
@@ -164,7 +163,6 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     soft_assert(memory == "2048 MB", "memory should be {}, is {}".format("2048 MB", memory))
 
 
-@pytest.mark.rhv3
 # Special parametrization in testgen above
 @pytest.mark.meta(blockers=[1209847, 1380782], automates=[1633867])
 @pytest.mark.provider(gen_func=providers,
@@ -229,7 +227,6 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
         assert thin != 'true', "The disk format should not be Thin"
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize("started", [True, False])
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.
@@ -266,7 +263,6 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     )
 
 
-@pytest.mark.rhv3
 @test_requirements.tag
 def test_tag(provisioner, prov_data, provider, vm_name):
     """ Tests tagging VMs using provisioning dialogs.
@@ -302,7 +298,6 @@ def test_tag(provisioner, prov_data, provider, vm_name):
     ), f"Service Level: Gold not in tags ({tags})"
 
 
-@pytest.mark.rhv3
 @pytest.mark.meta(blockers=[1204115])
 @test_requirements.scheduled_ops
 def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
@@ -343,7 +338,6 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     provisioner(template_name, prov_data, delayed=provision_time)
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider],
                       required_fields=[['provisioning', 'template'],
                                        ['provisioning', 'host'],
@@ -394,7 +388,6 @@ def test_provisioning_vnic_profiles(provisioner, provider, prov_data, vm_name, v
         assert not profile, 'The vNIC profile should be empty.'
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider],
                       required_fields=[['provisioning', 'template_2_nics']])
 @pytest.mark.meta(blockers=[BZ(1625139, forced_streams=['5.10', 'upstream'])])
@@ -473,7 +466,6 @@ def test_vmware_default_placement(provisioner, prov_data, provider, setup_provid
         'The new vm is not placed in the Datacenter root directory!')
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider], required_fields=[['provisioning', 'template_false_sparse']])
 @pytest.mark.meta(automates=[1726590], blockers=[BZ(1726590, forced_streams=["5.10"])])
 def test_linked_clone_default(provisioner, provisioning, provider, prov_data, vm_name):

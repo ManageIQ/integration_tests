@@ -35,7 +35,6 @@ def new_vm(setup_provider, provider):
     vm.cleanup_on_provider()
 
 
-@pytest.mark.rhv1
 def test_vm_migrate(appliance, new_vm, provider):
     """Tests migration of a vm
 

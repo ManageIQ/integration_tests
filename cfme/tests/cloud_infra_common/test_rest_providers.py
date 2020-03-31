@@ -46,7 +46,6 @@ def provider_rest(request, appliance, provider):
     return provider_rest
 
 
-@pytest.mark.rhv1
 def test_query_provider_attributes(provider, provider_rest, soft_assert):
     """Tests access to attributes of /api/providers.
 
@@ -70,7 +69,6 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 
-@pytest.mark.rhv3
 def test_provider_options(appliance):
     """Tests that provider settings are present in OPTIONS listing.
 
@@ -87,7 +85,6 @@ def test_provider_options(appliance):
     assert 'provider_settings' in options['data']
 
 
-@pytest.mark.rhv3
 def test_create_provider(provider_rest):
     """Tests creating provider using REST API.
 
@@ -103,7 +100,6 @@ def test_create_provider(provider_rest):
     assert "ManageIQ::Providers::" in provider_rest.type
 
 
-@pytest.mark.rhv1
 def test_provider_refresh(provider_rest, appliance):
     """Test checking that refresh invoked from the REST API works.
 
@@ -140,7 +136,6 @@ def test_provider_refresh(provider_rest, appliance):
         assert task.status.lower() == "ok", f"Task failed with status '{task.status}'"
 
 
-@pytest.mark.rhv3
 def test_provider_edit(request, provider_rest, appliance):
     """Test editing a provider using REST API.
 
@@ -162,7 +157,6 @@ def test_provider_edit(request, provider_rest, appliance):
     assert provider_rest.name == new_name == edited.name
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
 def test_provider_delete_from_detail(provider_rest, method):
     """Tests deletion of the provider from detail using REST API.
@@ -183,7 +177,6 @@ def test_provider_delete_from_detail(provider_rest, method):
     delete_resources_from_detail([provider_rest], method=method, num_sec=50)
 
 
-@pytest.mark.rhv3
 def test_provider_delete_from_collection(provider_rest):
     """Tests deletion of the provider from collection using REST API.
 

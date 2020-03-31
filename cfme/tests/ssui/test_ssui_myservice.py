@@ -35,7 +35,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.rhv1
 @pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_service):
@@ -84,7 +83,6 @@ def test_retire_service_ssui(appliance, setup_provider,
             my_service.delete()
 
 
-@pytest.mark.rhv3
 @pytest.mark.long_running
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_service_start(appliance, setup_provider, context,

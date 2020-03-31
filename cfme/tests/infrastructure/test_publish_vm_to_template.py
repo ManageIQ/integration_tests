@@ -47,7 +47,6 @@ def vm_crud(provider):
                          provider.name)
 
 
-@pytest.mark.rhv2
 def test_publish_vm_to_template(request, vm_crud):
     """ Try to publish VM to template.
     Steps:

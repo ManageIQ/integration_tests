@@ -57,7 +57,6 @@ def set_host_credentials(provider, a_host, setup_provider_modscope):
         credentials={'default': Host.Credential(principal='', secret='')})
 
 
-@pytest.mark.rhv3
 def test_host_drift_analysis(appliance, request, a_host, soft_assert, set_host_credentials):
     """Tests host drift analysis
 

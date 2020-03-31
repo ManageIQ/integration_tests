@@ -184,7 +184,6 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
 
 
 # Here custom_prov_data is the dict required during provisioning of the VM.
-@pytest.mark.rhv2
 @pytest.mark.parametrize(
     ['custom_prov_data'],
     [

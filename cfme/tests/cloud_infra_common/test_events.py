@@ -37,7 +37,6 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     vm.cleanup_on_provider()
 
 
-@pytest.mark.rhv2
 def test_vm_create(request, appliance, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.
 

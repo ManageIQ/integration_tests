@@ -538,7 +538,6 @@ def compare_windows_vm_data(soft_assert):
     return _compare_windows_vm_data
 
 
-@pytest.mark.rhv2
 @pytest.mark.tier(1)
 def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_provisioning_data,
                       appliance, ssa_vm, compare_windows_vm_data):
@@ -625,7 +624,6 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
         compare_windows_vm_data(ssa_vm)
 
 
-@pytest.mark.rhv3
 @pytest.mark.tier(2)
 def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type,
                       compare_linux_vm_data, compare_windows_vm_data):
@@ -663,7 +661,6 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type,
         compare_windows_vm_data(ssa_vm)
 
 
-@pytest.mark.rhv1
 @pytest.mark.tier(2)
 def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type,
                 compare_linux_vm_data, compare_windows_vm_data):
@@ -701,7 +698,6 @@ def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type,
         compare_windows_vm_data(ssa_vm)
 
 
-@pytest.mark.rhv3
 def test_ssa_users(ssa_vm):
     """ Tests SSA fetches correct results for users list
 
@@ -746,7 +742,6 @@ def test_ssa_users(ssa_vm):
             pytest.fail(f'User {username} was not found in details table after SSA run')
 
 
-@pytest.mark.rhv3
 def test_ssa_groups(ssa_vm):
     """ Tests SSA fetches correct results for groups
 
@@ -868,7 +863,6 @@ def test_ssa_files(ssa_vm):
             ssa_expect_files[0]))
 
 
-@pytest.mark.rhv2
 @pytest.mark.tier(2)
 def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
     """ Tests drift analysis is correct

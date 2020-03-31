@@ -122,7 +122,6 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
         metrics_tbl.id.in_(provs.subquery()))
 
 
-@pytest.mark.rhv2
 @pytest.mark.meta(automates=[1671580, 1722937])
 @pytest.mark.meta(
     blockers=[BZ(1744845, forced_streams=['5.10'],
@@ -152,7 +151,6 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
             break
 
 
-@pytest.mark.rhv2
 @pytest.mark.meta(automates=[1671580, 1722937])
 @pytest.mark.meta(
     blockers=[BZ(1724415, forced_streams=['5.10', '5.11'],
@@ -183,7 +181,6 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
             break
 
 
-@pytest.mark.rhv2
 @pytest.mark.meta(automates=[1671580, 1722937])
 @pytest.mark.meta(
     blockers=[BZ(1744845, forced_streams=['5.10'],
@@ -206,7 +203,6 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
             break
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider, GCEProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
@@ -235,7 +231,6 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
             break
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
@@ -258,7 +253,6 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
             break
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
@@ -282,7 +276,6 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
             break
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],
@@ -305,7 +298,6 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
             break
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider],
     required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')],

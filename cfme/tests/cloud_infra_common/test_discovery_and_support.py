@@ -10,7 +10,6 @@ from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 
 
-@pytest.mark.rhv2
 @pytest.mark.tier(2)
 @test_requirements.power
 @pytest.mark.provider(

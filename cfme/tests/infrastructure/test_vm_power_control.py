@@ -152,7 +152,6 @@ def wait_for_vm_tools(vm, timeout=300):
 
 class TestControlOnQuadicons:
 
-    @pytest.mark.rhv3
     def test_power_off_cancel(self, testing_vm, ensure_vm_running, soft_assert):
         """Tests power off cancel
 
@@ -174,7 +173,6 @@ class TestControlOnQuadicons:
         soft_assert(
             testing_vm.mgmt.is_running, "vm not running")
 
-    @pytest.mark.rhv1
     def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests power off
 
@@ -197,7 +195,6 @@ class TestControlOnQuadicons:
         soft_assert(vm_state == 'off')
         soft_assert(not testing_vm.mgmt.is_running, "vm running")
 
-    @pytest.mark.rhv3
     def test_power_on_cancel(self, testing_vm, ensure_vm_stopped, soft_assert):
         """Tests power on cancel
 
@@ -216,7 +213,6 @@ class TestControlOnQuadicons:
         soft_assert(vm_state == 'off')
         soft_assert(not testing_vm.mgmt.is_running, "vm running")
 
-    @pytest.mark.rhv1
     @pytest.mark.tier(1)
     def test_power_on(self, appliance, testing_vm, ensure_vm_stopped, soft_assert):
         """Tests power on
@@ -246,7 +242,6 @@ class TestControlOnQuadicons:
 
 class TestVmDetailsPowerControlPerProvider:
 
-    @pytest.mark.rhv3
     def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests power off
 
@@ -280,7 +275,6 @@ class TestVmDetailsPowerControlPerProvider:
             soft_assert(new_last_boot_time == last_boot_time,
                         f"ui: {new_last_boot_time} should ==  orig: {last_boot_time}")
 
-    @pytest.mark.rhv3
     def test_power_on(self, appliance, testing_vm, ensure_vm_stopped, soft_assert):
         """Tests power on
 
@@ -307,7 +301,6 @@ class TestVmDetailsPowerControlPerProvider:
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
         soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
-    @pytest.mark.rhv3
     @pytest.mark.meta(automates=[BZ(1174858)])
     def test_suspend(self, appliance, testing_vm, ensure_vm_running, soft_assert):
         """Tests suspend
@@ -343,7 +336,6 @@ class TestVmDetailsPowerControlPerProvider:
             soft_assert(new_last_boot_time == last_boot_time,
                         f"ui: {new_last_boot_time} should ==  orig: {last_boot_time}")
 
-    @pytest.mark.rhv1
     def test_start_from_suspend(self, appliance, testing_vm, ensure_vm_suspended, soft_assert):
         """Tests start from suspend
 
@@ -378,7 +370,6 @@ class TestVmDetailsPowerControlPerProvider:
         soft_assert(testing_vm.mgmt.is_running, "vm not running")
 
 
-@pytest.mark.rhv3
 def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
 
@@ -429,7 +420,6 @@ def test_no_template_power_control(provider, soft_assert):
     soft_assert(not view.toolbar.power.is_displayed, "Power displayed in template details!")
 
 
-@pytest.mark.rhv3
 @pytest.mark.meta(
     blockers=[
         BZ(
@@ -460,7 +450,6 @@ def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, so
     assert not status, "Power displayed in archived VM's details!"
 
 
-@pytest.mark.rhv3
 def test_archived_vm_status(testing_vm, archived_vm):
     """Tests archived vm status
 
@@ -478,7 +467,6 @@ def test_archived_vm_status(testing_vm, archived_vm):
     assert (vm_state == 'archived')
 
 
-@pytest.mark.rhv3
 def test_orphaned_vm_status(testing_vm, orphaned_vm):
     """Tests orphaned vm status
 
@@ -492,7 +480,6 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
     assert (vm_state == 'orphaned')
 
 
-@pytest.mark.rhv1
 def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_running):
     """Tests vm power options from on
 
@@ -509,7 +496,6 @@ def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_r
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_ON)
 
 
-@pytest.mark.rhv3
 @pytest.mark.meta(automates=[BZ(1724062)])
 def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_stopped):
     """Tests vm power options from off

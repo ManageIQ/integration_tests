@@ -57,7 +57,6 @@ def vm_name():
     return random_vm_name('ci')
 
 
-@pytest.mark.rhv2
 @pytest.mark.tier(3)
 @test_requirements.provision
 def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
@@ -121,7 +120,6 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
         wait_for(ssh_client.uptime, num_sec=200, handle_exception=True)
 
 
-@pytest.mark.rhv3
 @test_requirements.provision
 @pytest.mark.provider([RHEVMProvider])
 def test_provision_cloud_init_payload(appliance, request, setup_provider, provider, provisioning,
