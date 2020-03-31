@@ -19,7 +19,7 @@ class TriesExceeded(Exception):
     pass
 
 
-class FakeObject(object):
+class FakeObject:
     def __init__(self, **kwargs):
         self.__dict__ = kwargs
 
@@ -163,7 +163,7 @@ def read_env(file):
     if file.check():
         # parse the file with bash, since it's pretty good at it, and dump the env
         # Use env -i to clean up the env (except the very few variables provider by bash itself)
-        command = ['env', '-i', 'bash', '-c', 'source {} && env'.format(file.strpath)]
+        command = ['env', '-i', 'bash', '-c', f'source {file.strpath} && env']
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1)
 
         # filter out the remaining unwanted things
@@ -255,7 +255,7 @@ def process_shell_output(value):
             result_lines.append(entry)
     elif isinstance(value, dict):
         for key, value in value.items():
-            result_lines.append('{}={}'.format(key, value))
+            result_lines.append(f'{key}={value}')
     elif isinstance(value, str):
         result_lines.append(value)
     elif isinstance(value, bool):
@@ -319,7 +319,7 @@ def castmap(t, i, *args, **kwargs):
     return list(icastmap(t, i, *args, **kwargs))
 
 
-class InstanceClassMethod(object):
+class InstanceClassMethod:
     """ Decorator-descriptor that enables you to use any method both as class and instance one
 
     Usage:
@@ -360,7 +360,7 @@ class InstanceClassMethod(object):
             return partial(self.instance_or_class_method, o)
 
 
-class ParamClassName(object):
+class ParamClassName:
     """ ParamClassName is a Descriptor to help when using classes and instances as parameters
 
     Note: This descriptor is a hack until collections are implemented everywhere

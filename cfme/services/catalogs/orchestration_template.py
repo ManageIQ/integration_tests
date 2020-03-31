@@ -34,7 +34,7 @@ class OrchestrationTemplatesView(ServicesCatalogView):
     @property
     def is_displayed(self):
         return (
-            super(OrchestrationTemplatesView, self).is_displayed and
+            super().is_displayed and
             self.title.text == 'All Orchestration Templates' and
             self.orchestration_templates.is_opened and
             self.orchestration_templates.tree.currently_selected == ["All Orchestration Templates"])

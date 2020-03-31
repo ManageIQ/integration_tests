@@ -109,7 +109,7 @@ def connect_az_account(pwsh_ssh):
     https://docs.microsoft.com/en-us/powershell/azure/authenticate-azureps
     """
     path_script = os.path.join(SPACE, 'connect_account.ps1')
-    connect = pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=180)
+    connect = pwsh_ssh.run_command(f"pwsh {path_script}", timeout=180)
     assert connect.success, "Failed to connect to Azure account"
 
 
@@ -117,7 +117,7 @@ def connect_az_account(pwsh_ssh):
 def cfme_vhd(appliance, pwsh_ssh):
     path_script = os.path.join(SPACE, 'get_ip.ps1')
     ip_of_recourse = pwsh_ssh.run_command(
-        r'pwsh {}| grep -oE "([0-9]{{1,3}}\.){{3}}[0-9]{{1,3}}"'.format(path_script),
+        fr'pwsh {path_script}| grep -oE "([0-9]{{1,3}}\.){{3}}[0-9]{{1,3}}"',
         timeout=60).output.strip()
     if ip_of_recourse is not None:
         pytest.skip("The resource is taken by some other VM in Azure")
@@ -129,10 +129,10 @@ def cfme_vhd(appliance, pwsh_ssh):
         pytest.skip("Skipping since no such key found in yaml")
 
     image = pwsh_ssh.run_command(
-        """wget -qO- {url} | grep -Po '(?<=href=")[^"]*' | grep azure""".format(url=url),
+        f"""wget -qO- {url} | grep -Po '(?<=href=")[^"]*' | grep azure""",
         timeout=30).output.strip()
     image_url = urljoin(url, image)
-    pwsh_ssh.run_command("wget {image} -P {dest}".format(dest=SPACE, image=image_url),
+    pwsh_ssh.run_command(f"wget {image_url} -P {SPACE}",
                          timeout=180)
 
     # unpack the archive
@@ -152,7 +152,7 @@ def upload_image_to_azure(cfme_vhd, pwsh_ssh):
         r"""sed -i '1s/.*/$BlobNameSource = "{vhd}"/' {script}"""
             .format(script=path_script, vhd=cfme_vhd), timeout=30)
 
-    pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=15 * 60)
+    pwsh_ssh.run_command(f"pwsh {path_script}", timeout=15 * 60)
 
 
 @pytest.fixture(scope='function')
@@ -169,12 +169,12 @@ def vm_ip(cfme_vhd, pwsh_ssh):
             name=cfme_vhd.replace('.x86_64.vhd', '-vm')),
         timeout=20)
 
-    pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=600)
+    pwsh_ssh.run_command(f"pwsh {path_script}", timeout=600)
 
     # get the ip of the resource
     path_get_ip = os.path.join(SPACE, 'get_ip.ps1')
     ip = pwsh_ssh.run_command(
-        r'pwsh {}| grep -oE "([0-9]{{1,3}}\.){{3}}[0-9]{{1,3}}"'.format(path_get_ip),
+        fr'pwsh {path_get_ip}| grep -oE "([0-9]{{1,3}}\.){{3}}[0-9]{{1,3}}"',
         timeout=60).output.strip()
     yield ip
 
@@ -186,7 +186,7 @@ def vm_ip(cfme_vhd, pwsh_ssh):
                 name=cfme_vhd.replace('.x86_64.vhd', '-vm')),
             timeout=20)
 
-        pwsh_ssh.run_command("pwsh {}".format(path_script), timeout=180)
+        pwsh_ssh.run_command(f"pwsh {path_script}", timeout=180)
 
 
 @pytest.fixture
@@ -821,7 +821,7 @@ def test_display_network_topology(appliance, openstack_provider):
 
 
 @pytest.mark.provider([CloudProvider], scope='class')
-class TestProvidersRESTAPI(object):
+class TestProvidersRESTAPI:
     @pytest.mark.tier(3)
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
     def test_cloud_networks_query(self, provider, appliance, from_detail, setup_provider):
@@ -990,7 +990,7 @@ def test_vpc_env_selection(setup_provider, request, provider, appliance, provisi
     view.flash.assert_no_error()
 
     # make sure the request succeeds
-    request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
+    request_description = f'Provision from [{template}] to [{vm_name}]'
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui', num_sec=15 * 60)
     assert provision_request.is_succeeded(method='ui'), "Provisioning failed: {}".format(
@@ -1169,17 +1169,17 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
         # permit root login over ssh for future appliance configuration
         command = 'sed -i "s/.*PermitRootLogin.*/PermitRootLogin yes/g" /etc/ssh/sshd_config'
         config = app_ssh_client.run_command(
-            'echo {} | sudo -S {}'.format(password, command), ensure_user=True)
+            f'echo {password} | sudo -S {command}', ensure_user=True)
         assert config.success
 
         # restart sshd to apply configuration changes
         restart = app_ssh_client.run_command(
-            'echo {} | sudo -S systemctl restart sshd'.format(password), ensure_user=True)
+            f'echo {password} | sudo -S systemctl restart sshd', ensure_user=True)
         assert restart.success
 
         # unlock root password
         unlock = app_ssh_client.run_command(
-            'echo {} | sudo -S passwd -u root'.format(password), ensure_user=True)
+            f'echo {password} | sudo -S passwd -u root', ensure_user=True)
         assert unlock.success
 
     app.configure()
@@ -1394,9 +1394,9 @@ def test_regions_up_to_date(provider):
     regions_not_in_cfme = set(regions_provider) - set(regions_cfme_texts)
     extra_regions_in_cfme = set(regions_cfme_texts) - set(regions_provider)
     if len(regions_not_in_cfme) > 0:
-        pytest.fail("Regions {} are not in CFME!".format(regions_not_in_cfme))
+        pytest.fail(f"Regions {regions_not_in_cfme} are not in CFME!")
     if len(extra_regions_in_cfme) > 0:
-        pytest.fail("Extra regions in CFME: {}".format(extra_regions_in_cfme))
+        pytest.fail(f"Extra regions in CFME: {extra_regions_in_cfme}")
 
 
 @test_requirements.ec2
@@ -1491,7 +1491,7 @@ def test_add_second_provider(setup_provider, provider, request):
             3. Provider should be successfully added.
     """
     second_provider = get_crud(provider.key)
-    second_provider.name = "{}-2".format(provider.name)
+    second_provider.name = f"{provider.name}-2"
     second_provider.create()
     request.addfinalizer(second_provider.delete_if_exists)
     second_provider.refresh_provider_relationships()

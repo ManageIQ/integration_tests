@@ -68,7 +68,7 @@ def test_tagwise(candu_db_restore, interval, graph_type, gp_by, host):
     try:
         graph = getattr(view.interval_type, graph_type)
     except AttributeError:
-        pytest.fail('{} graph was not displayed'.format(graph_type))
+        pytest.fail(f'{graph_type} graph was not displayed')
     assert graph.is_displayed
 
     graph.zoom_in()

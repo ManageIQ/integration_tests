@@ -144,7 +144,7 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
                     updates.get("description", self.description)))
         else:
             view.flash.assert_message(
-                'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
+                f'Edit of Alert Profile "{self.description}" was cancelled by the user')
 
     def delete(self, cancel=False):
         """Delete this Alert Profile in UI.
@@ -222,7 +222,7 @@ class AlertProfileCollection(BaseCollection):
         view = alert_profile.create_view(AlertProfileDetailsView)
         assert view.is_displayed
         view.flash.assert_success_message(
-            'Alert Profile "{}" was added'.format(alert_profile.description))
+            f'Alert Profile "{alert_profile.description}" was added')
         return alert_profile
 
 
@@ -242,9 +242,9 @@ class AlertProfileNew(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
-            "{} Alert Profiles".format(self.obj.TYPE))
+            f"{self.obj.TYPE} Alert Profiles")
         self.prerequisite_view.configuration.item_select(
-            "Add a New {} Alert Profile".format(self.obj.TYPE))
+            f"Add a New {self.obj.TYPE} Alert Profile")
 
 
 @navigator.register(BaseAlertProfile, "Edit")
@@ -272,7 +272,7 @@ class AlertProfileDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
-            "{} Alert Profiles".format(self.obj.TYPE), self.obj.description)
+            f"{self.obj.TYPE} Alert Profiles", self.obj.description)
 
 
 class ClusterAlertProfile(BaseAlertProfile):

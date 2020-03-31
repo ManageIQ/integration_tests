@@ -13,7 +13,7 @@ At the moment, lists of parameters are not supported
 from cfme.utils import testgen
 
 
-class EnvironmentMarker(object):
+class EnvironmentMarker:
     """Base Environment Marker"""
     PARAM_BY_DEFAULT = False
     NAME = None

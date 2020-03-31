@@ -179,7 +179,7 @@ class SecurityGroupCollection(BaseCollection):
         """
 
         view = navigate_to(self, 'Add')
-        changed = view.form.fill({'network_manager': "{} Network Manager".format(provider.name),
+        changed = view.form.fill({'network_manager': f"{provider.name} Network Manager",
                                   'name': name,
                                   'description': description,
                                   'cloud_tenant': 'admin'})
@@ -189,7 +189,7 @@ class SecurityGroupCollection(BaseCollection):
             flash_message = 'Add of new Security Group was cancelled by the user'
         else:
             view.form.add.click()
-            flash_message = 'Security Group "{}" created'.format(name)
+            flash_message = f'Security Group "{name}" created'
 
         # add/cancel should redirect, new view
         view = self.create_view(SecurityGroupAllView)

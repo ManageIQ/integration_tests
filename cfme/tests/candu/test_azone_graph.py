@@ -86,7 +86,7 @@ def test_azone_graph_screen(provider, azone, graph_type, interval, enable_candu)
 
     # zoom in button not available with normal graph except Instance in Azone Utilization page.
     # We have to use vm average graph for zoom in operation.
-    avg_graph = graph_type if graph_type == "azone_instance" else "{}_avg".format(graph_type)
+    avg_graph = graph_type if graph_type == "azone_instance" else f"{graph_type}_avg"
     try:
         avg_graph = getattr(view, avg_graph)
     except AttributeError as e:

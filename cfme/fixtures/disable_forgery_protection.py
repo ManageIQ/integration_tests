@@ -18,7 +18,7 @@ def disable_forgery_protection():
         ssh_client.run_command("service evmserverd restart")
 
     timediff = time.time() - starttime
-    logger.info('Turned off "allow_forgery_protection" in: {}'.format(timediff))
+    logger.info(f'Turned off "allow_forgery_protection" in: {timediff}')
 
     yield
 
@@ -32,4 +32,4 @@ def disable_forgery_protection():
         ssh_client.run_command("service evmserverd restart")
 
     timediff = time.time() - starttime
-    logger.info('Turned on "allow_forgery_protection" in: {}'.format(timediff))
+    logger.info(f'Turned on "allow_forgery_protection" in: {timediff}')

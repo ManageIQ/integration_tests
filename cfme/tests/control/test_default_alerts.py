@@ -15,7 +15,7 @@ def default_alerts(appliance):
             all_alerts = yaml.safe_load(f)
             alerts = (all_alerts.get('v5.10'))
     else:
-        pytest.skip('Could not find {}, skipping test.'.format(file_name))
+        pytest.skip(f'Could not find {file_name}, skipping test.')
 
     # instantiate a list of alerts based on default_alerts.yaml
     alert_collection = appliance.collections.alerts

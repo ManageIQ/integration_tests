@@ -68,7 +68,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                 return True
 
             except Exception as e:
-                logger.exception("Exception occurred:{}".format(e))
+                logger.exception(f"Exception occurred:{e}")
                 return False
         else:
             try:
@@ -90,7 +90,7 @@ class EC2TemplateUpload(ProviderTemplateUpload):
                 return True
 
             except Exception as e:
-                logger.exception("Exception occurred:{}".format(e))
+                logger.exception(f"Exception occurred:{e}")
                 return False
 
     def run(self):

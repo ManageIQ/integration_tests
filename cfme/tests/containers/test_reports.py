@@ -83,7 +83,7 @@ def test_container_reports_base_on_options(soft_assert, appliance):
         compare = (base_on.match if hasattr(base_on, 'match') else base_on.__eq__)
         option = [opt for opt in view.base_report_on.all_options
                   if compare(str(opt.text))]
-        soft_assert(option, 'Could not find option "{}" for base report on.'.format(base_on))
+        soft_assert(option, f'Could not find option "{base_on}" for base report on.')
 
 
 def test_report_pods_per_ready_status(appliance, soft_assert, provider):
@@ -323,7 +323,7 @@ def test_report_recently_discovered_pods(appliance, provider, soft_assert):
     for pod in pods_per_ready_status.keys():
 
         soft_assert(pod in pods_in_report,
-                    'Could not find pod "{}" in report.'.format(pod))
+                    f'Could not find pod "{pod}" in report.')
 
 
 def test_report_number_of_images_per_node(appliance, provider, soft_assert):
@@ -348,7 +348,7 @@ def test_report_number_of_images_per_node(appliance, provider, soft_assert):
         # Use 'in' since the image name in the API may include also registry and tag
         is_image = [img_nm for img_nm in pod_images if img_nm in expected_image]
         soft_assert(is_image,
-                    'Expected image for pod "{0}" in node {1} is "{2}". found images: {3}'
+                    'Expected image for pod "{}" in node {} is "{}". found images: {}'
                     .format(pod_name, node, expected_image, pod_images))
 
 

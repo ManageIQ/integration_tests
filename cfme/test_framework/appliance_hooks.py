@@ -5,7 +5,7 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.add_hookspecs(ApplianceHooks)
 
 
-class ApplianceHooks(object):
+class ApplianceHooks:
     def pytest_appliance_setup(self, config):
         holder = config.pluginmanager.getplugin('appliance-holder')
         appliance = holder.held_appliance

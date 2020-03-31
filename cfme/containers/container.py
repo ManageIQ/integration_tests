@@ -58,7 +58,7 @@ class ContainerAllView(ContainerView):
 
     @property
     def is_displayed(self):
-        return self.in_containers and super(ContainerAllView, self).is_displayed
+        return self.in_containers and super().is_displayed
 
 
 class ContainerDetailsView(ContainerObjectDetailsBaseView):

@@ -45,8 +45,8 @@ pytestmark = [
 @pytest.fixture
 def stack_data(appliance, provider, provisioning, request):
     random_base = fauxfactory.gen_alphanumeric()
-    stackname = 'test{}'.format(random_base)
-    vm_name = 'test-{}'.format(random_base)
+    stackname = f'test{random_base}'
+    vm_name = f'test-{random_base}'
     stack_timeout = '20'
     if provider.one_of(AzureProvider):
         try:
@@ -54,7 +54,7 @@ def stack_data(appliance, provider, provisioning, request):
             vm_user = credentials[template.creds].username
             vm_password = credentials[template.creds].password
         except AttributeError:
-            pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
+            pytest.skip(f'Could not find small_template or credentials for {provider.name}')
 
         stack_data = {
             'stack_name': stackname,

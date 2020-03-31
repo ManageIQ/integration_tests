@@ -107,7 +107,7 @@ class LoginPage(View):
         elif method == '_js_auth_fn':
             self.browser.execute_script('miqAjaxAuth();')
         else:
-            raise ValueError('Unknown method {}'.format(method))
+            raise ValueError(f'Unknown method {method}')
         if self.flash.is_displayed:
             self.flash.assert_no_error()
 
@@ -1004,8 +1004,7 @@ class RegionChangeNameView(RegionView):
 
     @property
     def is_displayed(self):
-        return self.region_description.is_displayed and super(RegionChangeNameView,
-                                                              self).is_displayed
+        return self.region_description.is_displayed and super().is_displayed
 
 
 class HelpMenuView(RegionView):
@@ -1626,7 +1625,7 @@ def update(self, updates):
             'Zone "{}" was saved'.format(updates.get('name', self.name)))
     else:
         view.flash.assert_message(
-            'Edit of Zone "{}" was cancelled by the user'.format(self.name))
+            f'Edit of Zone "{self.name}" was cancelled by the user')
 
 
 @MiqImplementationContext.external_for(Zone.delete, ViaUI)
@@ -1639,7 +1638,7 @@ def delete(self, cancel=False):
     view = navigate_to(self, 'Zone')
     view.zone.configuration.item_select('Delete this Zone', handle_alert=not cancel)
     if not cancel:
-        view.flash.assert_message('Zone "{}": Delete successful'.format(self.name))
+        view.flash.assert_message(f'Zone "{self.name}": Delete successful')
 
 
 @MiqImplementationContext.external_for(ZoneCollection.create, ViaUI)
@@ -1674,7 +1673,7 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
     else:
         add_page.add_button.click()
         add_page.flash.assert_no_error()
-        add_page.flash.assert_message('Zone "{}" was added'.format(name))
+        add_page.flash.assert_message(f'Zone "{name}" was added')
     return self.instantiate(
         name=name, description=description, smartproxy_ip=smartproxy_ip,
         ntp_servers=ntp_servers, max_scans=max_scans, user=user

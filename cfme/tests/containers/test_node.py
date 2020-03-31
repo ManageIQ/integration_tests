@@ -39,7 +39,7 @@ def test_nodes_navigate(soft_assert, appliance):
         try:
             view = navigate_to(test_item, dest)
         except NodeNotFound:
-            soft_assert(False, 'Could not navigate to Node "{}" .'.format(dest))
+            soft_assert(False, f'Could not navigate to Node "{dest}" .')
         else:
             # Navigation successful, page is displayed
             assert view.is_displayed

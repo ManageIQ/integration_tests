@@ -301,7 +301,7 @@ class CollectLogsBase(Pretty, NavigatableMixin, Updateable):
         secondary_server = secondary_servers[0] if secondary_servers else None
 
         if self.zone_collect:
-            message = "Zone {}".format(self.appliance.server.zone.name)
+            message = f"Zone {self.appliance.server.zone.name}"
         elif self.second_server_collect:
             message = "MiqServer {} [{}]".format(
                 secondary_server.name,

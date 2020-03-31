@@ -52,7 +52,7 @@ class SSHCmdException(Exception):
         self.msg = msg
 
     def __str__(self):
-        return '{}: {}'.format(self.msg, self.cmd)
+        return f'{self.msg}: {self.cmd}'
 
 
 def ssh_run_cmd(ssh, cmd, error_msg, use_rails=False, **kwargs):
@@ -136,9 +136,9 @@ def jenkins_artifact_url(jenkins_username, jenkins_token, jenkins_url, jenkins_j
     Returns:
         URL to artifact within the artifactor archive of Jenkins job.
     """
-    url = '{}/job/{}/{}/artifact/{}'.format(jenkins_url, jenkins_job, jenkins_build, artifact_path)
+    url = f'{jenkins_url}/job/{jenkins_job}/{jenkins_build}/artifact/{artifact_path}'
     scheme, netloc, path, query, fragment = urlsplit(url)
-    netloc = '{}:{}@{}'.format(jenkins_username, jenkins_token, netloc)
+    netloc = f'{jenkins_username}:{jenkins_token}@{netloc}'
     return urlunsplit([scheme, netloc, path, query, fragment])
 
 
@@ -160,7 +160,7 @@ def download_artifact(
     Returns:
         text of download.
     """
-    url = '{}/job/{}/{}/artifact/{}'.format(jenkins_url, jenkins_job, jenkins_build, artifact_path)
+    url = f'{jenkins_url}/job/{jenkins_job}/{jenkins_build}/artifact/{artifact_path}'
     return requests.get(
         url, verify=False, auth=HTTPBasicAuth(jenkins_username, jenkins_token)).text
 
@@ -279,12 +279,12 @@ def merge_coverage_data(ssh, coverage_dir):
     resultset_link = py.path.local(coverage_dir).join('.resultset.json')
     ssh_run_cmd(
         ssh=ssh,
-        cmd='if [ -e "{}" ]; then rm -f {}; fi'.format(resultset_link, resultset_link),
-        error_msg='Failed to remove link {}'.format(resultset_link))
+        cmd=f'if [ -e "{resultset_link}" ]; then rm -f {resultset_link}; fi',
+        error_msg=f'Failed to remove link {resultset_link}')
     ssh_run_cmd(
         ssh=ssh,
-        cmd='ln -s {} {}'.format(merged_resultset, resultset_link),
-        error_msg='Failed to link {} to {}'.format(merged_resultset, resultset_link))
+        cmd=f'ln -s {merged_resultset} {resultset_link}',
+        error_msg=f'Failed to link {merged_resultset} to {resultset_link}')
 
 
 def pull_merged_coverage_data(ssh, coverage_dir):
@@ -300,7 +300,7 @@ def pull_merged_coverage_data(ssh, coverage_dir):
     logger.info('Packing the generated HTML')
     ssh_run_cmd(
         ssh=ssh,
-        cmd='cd {}; tar cfz /tmp/merged.tgz merged'.format(coverage_dir),
+        cmd=f'cd {coverage_dir}; tar cfz /tmp/merged.tgz merged',
         error_msg='Could not archive results!')
     logger.info('Grabbing the generated HTML')
     ssh.get_file('/tmp/merged.tgz', log_path.strpath)
@@ -337,7 +337,7 @@ def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scann
     # Create install directory for sonar scanner:
     ssh_run_cmd(
         ssh=ssh,
-        cmd='mkdir -p {}'.format(scanner_dir),
+        cmd=f'mkdir -p {scanner_dir}',
         error_msg='Could not create sonar scanner directory, {}, on appliance.'.format(
             scanner_dir))
 
@@ -345,12 +345,12 @@ def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scann
     ssh_run_cmd(
         ssh=ssh,
         cmd='wget -O {} {}'.format(scanner_zip, quote(scanner_url)),
-        error_msg='Could not download scanner software, {}'.format(scanner_url))
+        error_msg=f'Could not download scanner software, {scanner_url}')
 
     # Extract the scanner
     ssh_run_cmd(
         ssh=ssh,
-        cmd='unzip -d {} {}'.format(scanner_dir, scanner_zip),
+        cmd=f'unzip -d {scanner_dir} {scanner_zip}',
         error_msg='Could not extract scanner software, {}, to {}'.format(
             scanner_zip, scanner_dir))
 
@@ -367,19 +367,19 @@ def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scann
     # has no similar option.
     ssh_run_cmd(
         ssh=ssh,
-        cmd='cd {}; mv $(ls)/* .'.format(scanner_dir),
-        error_msg='Could not move scanner files into scanner dir, {}'.format(scanner_dir))
+        cmd=f'cd {scanner_dir}; mv $(ls)/* .',
+        error_msg=f'Could not move scanner files into scanner dir, {scanner_dir}')
 
     # Configure the scanner to point to the local sonarqube
     # WARNING:  This definitely makes the assumption the only thing we need in that config is
     #           the variable sonar.host.url set.  If that is ever wrong this will fail, perhaps
     #           mysteriously.  So the ease of this implementation is traded off against that
     #           possible future consequence.
-    scanner_conf = '{}/conf/sonar-scanner.properties'.format(scanner_dir)
+    scanner_conf = f'{scanner_dir}/conf/sonar-scanner.properties'
     ssh_run_cmd(
         ssh=ssh,
-        cmd='echo "sonar.host.url={}" > {}'.format(server_url, scanner_conf),
-        error_msg='Could write scanner conf, {}s'.format(scanner_conf))
+        cmd=f'echo "sonar.host.url={server_url}" > {scanner_conf}',
+        error_msg=f'Could write scanner conf, {scanner_conf}s')
 
     # Now configure the project
     #
@@ -404,7 +404,7 @@ def install_sonar_scanner(ssh, project_name, project_version, scanner_url, scann
     #   sonar.sources=opt/rh/cfme-gemset,var/www/miq/vmdb
     project_conf = 'sonar-project.properties'
     local_conf = os.path.join(log_path.strpath, project_conf)
-    remote_conf = '/{}'.format(project_conf)
+    remote_conf = f'/{project_conf}'
     sonar_auth_snippet = ''
     if sonar_creds is not None:
         sonar_auth_snippet = '''
@@ -450,13 +450,13 @@ def run_sonar_scanner(ssh, scanner_dir, timeout):
     logger.info('Running sonar scan. This may take a while.')
     logger.info('   timeout=%s', timeout)
     logger.info('   start_time=%s', time.strftime('%T'))
-    scanner_executable = '{}/bin/sonar-scanner'.format(scanner_dir)
+    scanner_executable = f'{scanner_dir}/bin/sonar-scanner'
 
     # It's very important that we run the sonar-scanner from / as this
     # will allow sonar-scanner to have all CFME ruby source code under
     # one directory as sonar-scanner expects a project to contain all its
     # source under one directory.
-    cmd = 'cd /; SONAR_SCANNER_OPTS="-Xmx4096m" {} -X'.format(scanner_executable)
+    cmd = f'cd /; SONAR_SCANNER_OPTS="-Xmx4096m" {scanner_executable} -X'
     ssh_run_cmd(ssh=ssh, cmd=cmd, error_msg='sonar scan failed!', timeout=timeout)
     logger.info('   end_time=%s', time.strftime('%T'))
 
@@ -511,7 +511,7 @@ def get_eligible_builds(jenkins_data, jenkins_job, cfme_version):
     logger.info('Looking for CFME version %s in %s', cfme_version, jenkins_job)
     build_numbers = get_build_numbers(jenkins_data.client, jenkins_job)
     if not build_numbers:
-        raise Exception('No builds for job {}'.format(jenkins_job))
+        raise Exception(f'No builds for job {jenkins_job}')
 
     # Find the builds with appliance version
     eligible_builds = set()
@@ -617,8 +617,8 @@ def setup_appliance_for_merger(appliance, ssh):
     logger.info('Installing simplecov')
     ssh_run_cmd(
         ssh=ssh,
-        cmd='gem install -v{} simplecov'.format(SIMPLECOV_VERSION),
-        error_msg='Could not install simplecov gem version {}'.format(SIMPLECOV_VERSION))
+        cmd=f'gem install -v{SIMPLECOV_VERSION} simplecov',
+        error_msg=f'Could not install simplecov gem version {SIMPLECOV_VERSION}')
 
     # Upload the merger
     logger.info('Installing coverage merger')
@@ -626,7 +626,7 @@ def setup_appliance_for_merger(appliance, ssh):
 
     ssh_run_cmd(
         ssh=ssh,
-        cmd='mkdir -p {}'.format(COVERAGE_DIR),
+        cmd=f'mkdir -p {COVERAGE_DIR}',
         error_msg='Could not create coverage directory on the appliance: {}'.format(
             COVERAGE_DIR))
 
@@ -653,7 +653,7 @@ def cleanup_coverage_data_wave(ssh, coverage_dir):
     # a number under the coverage directory.
     ssh_run_cmd(
         ssh=ssh,
-        cmd='cd {}; rm -rf [0-9]*'.format(coverage_dir),
+        cmd=f'cd {coverage_dir}; rm -rf [0-9]*',
         error_msg='Could not cleanup old resultset files.')
 
     # Move merged resultset where it will be treated like a resultset to be merged.
@@ -662,20 +662,20 @@ def cleanup_coverage_data_wave(ssh, coverage_dir):
     merged_resultset = py.path.local(coverage_dir).join('/merged/.resultset.json')
     ssh_run_cmd(
         ssh=ssh,
-        cmd='mkdir -p {}'.format(merged_data_dir),
-        error_msg='Could not make new merged data dir: {}'.format(merged_data_dir))
+        cmd=f'mkdir -p {merged_data_dir}',
+        error_msg=f'Could not make new merged data dir: {merged_data_dir}')
     ssh_run_cmd(
         ssh=ssh,
-        cmd='mv {} {}'.format(merged_resultset, merged_data_dir),
+        cmd=f'mv {merged_resultset} {merged_data_dir}',
         error_msg='Could not move merged result set, {}, to merged data dir, {}'.format(
             merged_resultset, merged_data_dir))
 
     # Remove merged directory.
-    merged_dir = '{}/merged'.format(coverage_dir)
+    merged_dir = f'{coverage_dir}/merged'
     ssh_run_cmd(
         ssh=ssh,
-        cmd='rm -rf {}'.format(merged_dir),
-        error_msg='Failed removing merged directory, {}'.format(merged_dir))
+        cmd=f'rm -rf {merged_dir}',
+        error_msg=f'Failed removing merged directory, {merged_dir}')
 
 
 def download_and_merge_coverage_data(ssh, builds, jenkins_data, wave_size):
@@ -727,7 +727,7 @@ def download_and_merge_coverage_data(ssh, builds, jenkins_data, wave_size):
 
             logger.info('Extracting the coverage data from build %s', build.number)
             extract_command = ' && '.join([
-                'cd {}'.format(COVERAGE_DIR),
+                f'cd {COVERAGE_DIR}',
                 'tar xf tmp.tgz --strip-components=1',
                 'rm -f tmp.tgz'])
             ssh_run_cmd(

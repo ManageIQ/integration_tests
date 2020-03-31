@@ -48,7 +48,7 @@ def parse_cmd_line():
 # get the domain domain path on the RHV
 def get_domain_path(provider_mgmt, domain):
     domain = provider_mgmt.api.system_service().storage_domains_service().list(
-        search='name={}'.format(domain),
+        search=f'name={domain}',
         follow='storage_connections')[0]
     domain_conn = domain.storage_connections[0]
     return domain_conn.path, domain.id, domain_conn.address
@@ -71,10 +71,10 @@ def cleanup_empty_dir_on_domain(provider_mgmt, domain):
         provider_key = provider_mgmt.kwargs.get('provider_key')
         # get path first
         path, id, addr = get_domain_path(provider_mgmt, domain)
-        domain_path = '{}:{}/{}'.format(addr, path, id)
+        domain_path = f'{addr}:{path}/{id}'
 
         command = ['mkdir -p ~/tmp_filemount &&',
-                   'mount -O tcp {} ~/tmp_filemount &&'.format(domain_path),
+                   f'mount -O tcp {domain_path} ~/tmp_filemount &&',
                    'find ~/tmp_filemount/master/vms/ -maxdepth 1 -type d -empty -delete &&',
                    'cd ~ && umount ~/tmp_filemount &&',
                    'find . -maxdepth 1 -name tmp_filemount -type d -empty -delete']

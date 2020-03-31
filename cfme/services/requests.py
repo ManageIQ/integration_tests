@@ -58,7 +58,7 @@ class Request(BaseEntity):
                     'Retry' not in self.rest.message)
 
         def last_message():
-            logger.info("Last Request message: '{}'".format(self.rest.message))
+            logger.info(f"Last Request message: '{self.rest.message}'")
 
         wait_for(_finished, num_sec=num_sec, delay=delay, fail_func=last_message,
                  message="Request finished")
@@ -71,7 +71,7 @@ class Request(BaseEntity):
                     'Retry' not in self.row.last_message.text)
 
         def last_message():
-            logger.info("Last Request message in UI: '{}'".format(self.row.last_message))
+            logger.info(f"Last Request message in UI: '{self.row.last_message}'")
 
         wait_for(_finished, num_sec=num_sec, delay=delay, fail_func=last_message,
                  message="Request finished")
@@ -204,7 +204,7 @@ class Request(BaseEntity):
             request[0].action.delete()
         else:
             raise NotImplementedError(
-                "{} does not support delete operation via REST".format(self.rest.request_type)
+                f"{self.rest.request_type} does not support delete operation via REST"
             )
 
     @variable(alias='rest')
@@ -302,7 +302,7 @@ class RequestsView(RequestBasicView):
         for key in cells.keys():
             for column_name, column_text in column_list.items():
                 if key == column_text:
-                    cells['{}{}'.format(column_name, contains)] = cells.pop(key)
+                    cells[f'{column_name}{contains}'] = cells.pop(key)
                     break
 
         for _ in self.paginator.pages():

@@ -125,8 +125,8 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
 
 def post_approval(smtp_test, provision_request, vm_type, requester, provider, vm_names):
     # requester includes the trailing space
-    approved_subject = normalize_text("your {} request was approved".format(vm_type))
-    approved_from = normalize_text("{} request from {}was approved".format(vm_type, requester))
+    approved_subject = normalize_text(f"your {vm_type} request was approved")
+    approved_from = normalize_text(f"{vm_type} request from {requester}was approved")
 
     wait_for_messages_with_subjects(smtp_test, [approved_subject, approved_from], num_sec=90)
 
@@ -141,12 +141,12 @@ def post_approval(smtp_test, provision_request, vm_type, requester, provider, vm
     )
 
     provision_request.wait_for_request(method='ui')
-    msg = "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
+    msg = f"Provisioning failed with the message {provision_request.row.last_message.text}"
     assert provision_request.is_succeeded(method='ui'), msg
 
     # account for multiple vms, specific names
     completed_subjects = [
-        normalize_text("your {} request has completed vm name {}".format(vm_type, name))
+        normalize_text(f"your {vm_type} request has completed vm name {name}")
         for name in vm_names
     ]
     wait_for_messages_with_subjects(smtp_test, completed_subjects, num_sec=90)
@@ -229,25 +229,25 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     }
 
     vm = collection.create(vm_name, provider, form_values=inst_args, wait=False)
-    pending_subject = normalize_text("your {} request is pending".format(vm_type))
+    pending_subject = normalize_text(f"your {vm_type} request is pending")
     # requester includes the trailing space
-    pending_from = normalize_text("{} request from {}pending approval".format(vm_type, requester))
+    pending_from = normalize_text(f"{vm_type} request from {requester}pending approval")
 
     wait_for_messages_with_subjects(smtp_test, [pending_subject, pending_from], num_sec=90)
 
     smtp_test.clear_database()
 
-    cells = {'Description': 'Provision from [{}] to [{}###]'.format(vm.template_name, vm.name)}
+    cells = {'Description': f'Provision from [{vm.template_name}] to [{vm.name}###]'}
 
     def action_edit():
         # Automatic approval after editing the request to conform
-        new_vm_name = '{}-xx'.format(vm_name)
+        new_vm_name = f'{vm_name}-xx'
         modifications = {
             'catalog': {
                 'num_vms': "1",
                 'vm_name': new_vm_name
             },
-            'Description': 'Provision from [{}] to [{}]'.format(vm.template_name, new_vm_name)
+            'Description': f'Provision from [{vm.template_name}] to [{new_vm_name}]'
         }
         provision_request = appliance.collections.requests.instantiate(cells=cells)
         provision_request.edit_request(values=modifications)
@@ -272,8 +272,8 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     def action_deny():
         provision_request = appliance.collections.requests.instantiate(cells=cells)
         provision_request.deny_request(method='ui', reason="You stink!")
-        denied_subject = normalize_text("your {} request was denied".format(vm_type))
-        denied_from = normalize_text("{} request from {}was denied".format(vm_type, requester))
+        denied_subject = normalize_text(f"your {vm_type} request was denied")
+        denied_from = normalize_text(f"{vm_type} request from {requester}was denied")
         wait_for_messages_with_subjects(smtp_test, [denied_subject, denied_from], num_sec=90)
 
     # Call function doing what is necessary -- Variation of Strategy design pattern.
@@ -309,7 +309,7 @@ def test_provision_from_template_using_rest(appliance, request, provider, vm_nam
 
     wait_for(
         lambda: instance.exists,
-        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name)
+        num_sec=1000, delay=5, message=f"VM {vm_name} becomes visible"
     )
 
     @request.addfinalizer
@@ -521,7 +521,7 @@ def test_provision_with_boot_volume(request, instance_args, provider, soft_asser
         instance.cleanup_on_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.exists_on_provider, num_sec=180, delay=5)
 
-    request_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
+    request_description = f'Provision from [{image}] to [{instance.name}]'
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
 
@@ -600,13 +600,13 @@ def test_provision_with_additional_volume(request, instance_args, provider, smal
         vm_name, provider, form_values=inst_args)
     request.addfinalizer(cleanup_and_wait_for_instance_gone)
 
-    request_description = 'Provision from [{}] to [{}]'.format(small_template.name, instance.name)
+    request_description = f'Provision from [{small_template.name}] to [{instance.name}]'
     provision_request = appliance.collections.requests.instantiate(request_description)
     try:
         provision_request.wait_for_request(method='ui')
     except Exception as e:
         logger.info(
-            "Provision failed {}: {}".format(e, provision_request.request_state))
+            f"Provision failed {e}: {provision_request.request_state}")
         raise
     assert provision_request.is_succeeded(method='ui'), (
         "Provisioning failed with the message {}".format(
@@ -643,7 +643,7 @@ def test_provision_with_tag(appliance, vm_name, tag, provider, request):
     """
     inst_args = {'purpose': {
         'apply_tags': Check_tree.CheckNode(
-            ['{} *'.format(tag.category.display_name), tag.display_name])}}
+            [f'{tag.category.display_name} *', tag.display_name])}}
     collection = appliance.provider_based_collection(provider)
     instance = collection.create(vm_name, provider, form_values=inst_args)
     request.addfinalizer(instance.cleanup_on_provider)

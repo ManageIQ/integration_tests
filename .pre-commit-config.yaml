@@ -15,6 +15,18 @@ repos:
     args: [--safe, --line-length, '100']
     language_version: python3.7
     <<: *exclude
+- repo: https://github.com/asottile/pyupgrade
+  rev: v1.23.0
+  hooks:
+  - id: pyupgrade
+    language_version: python3.7
+    args: [--py36-plus]
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.7.9
+  hooks:
+  - id: flake8
+    language_version: python3.7
+    additional_dependencies: [polarion-docstrings, bugzilla-docstrings]
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v2.3.0
   hooks:
@@ -23,16 +35,3 @@ repos:
   - id: check-yaml
   - id: debug-statements
     exclude: ^(sprout|scripts|cfme/fixtures/rdb.py)
-- repo: https://gitlab.com/pycqa/flake8
-  rev: 3.7.9
-  hooks:
-  - id: flake8
-    language_version: python3.7
-    additional_dependencies: [polarion-docstrings, bugzilla-docstrings]
-- repo: https://github.com/asottile/pyupgrade
-  rev: v1.23.0
-  hooks:
-  - id: pyupgrade
-    language_version: python3.7
-    args: [--py36-plus]
-    #<<: *exclude

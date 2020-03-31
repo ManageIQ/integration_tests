@@ -110,7 +110,7 @@ class Filedump(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def sanitize(self, test_location, test_name, artifacts, words):
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         filename = None
         try:
             for f in artifacts[test_ident]["files"]:

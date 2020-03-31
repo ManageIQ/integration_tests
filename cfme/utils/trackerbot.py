@@ -184,10 +184,10 @@ def mark_unusable_as_untested(api, template_name, provider_type):
         return
 
     # Now find all tested provider templates. If they are tested BUT unusable, mark untested
-    tested_providers = set(
+    tested_providers = {
         p['key'].lower() for p in get_tested_providers(api, template_name)
         if p['type'] == provider_type
-    )
+    }
 
     tested_unusable_providers = [p for p in tested_providers if p not in usable_providers]
 
@@ -208,7 +208,7 @@ def check_if_tested(api, template_name, provider_type):
         False otherwise
     """
     tested_providers = get_tested_providers(api, template_name)
-    tested_types = set(p['type'].lower() for p in tested_providers)
+    tested_types = {p['type'].lower() for p in tested_providers}
     return provider_type.lower() in tested_types
 
 
@@ -234,7 +234,7 @@ def post_jenkins_result(job_name, number, stream, date, template, build_status, 
         api().build.post({
             'job_name': job_name,
             'number': number,
-            'stream': '/api/group/{}/'.format(stream),
+            'stream': f'/api/group/{stream}/',
             'datestamp': date,
             'template': template,
             'results': artifact_report,
@@ -265,14 +265,14 @@ def add_provider_template(stream, provider, template_name, custom_data=None, mar
             for pt in depaginate(
                 tb_api,
                 tb_api.providertemplate.get(provider=provider, template=template_name))['objects']]
-        if '{}_{}'.format(template_name, provider) in existing_provider_templates:
+        if f'{template_name}_{provider}' in existing_provider_templates:
             return None
         else:
             mark_provider_template(tb_api, provider, template_name, stream=stream,
                                    custom_data=custom_data, **(mark_kwargs or {}))
             return True
     except Exception:
-        logger.exception('{}: Error occurred while template sync to trackerbot'.format(provider))
+        logger.exception(f'{provider}: Error occurred while template sync to trackerbot')
         return False
 
 

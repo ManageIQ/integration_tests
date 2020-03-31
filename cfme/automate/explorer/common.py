@@ -23,7 +23,7 @@ class CopyViewBase(View):
     cancel_button = Button('Cancel')
 
 
-class Copiable(object):
+class Copiable:
     # TODO: Namespace!
     def copy_to(self, domain, new_name=None, replace=None, cancel=False):
         copy_page = navigate_to(self, 'Copy')

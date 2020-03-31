@@ -64,7 +64,7 @@ def latest(api, stream, provider_key=None):
 
 def export(**env_vars):
     for varname, value in env_vars.items():
-        print('export {}="{}";'.format(varname, value))
+        print(f'export {varname}="{value}";')
     print("# to import these into your bash environment: eval $({})".format(' '.join(sys.argv)))
 
 

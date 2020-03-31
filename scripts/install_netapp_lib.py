@@ -31,9 +31,9 @@ def main():
         appliance = get_or_create_current_appliance()
     else:
         appliance = IPAppliance(hostname=args.address)
-    print('Address: {}'.format(appliance.hostname))
-    print('SDK URL: {}'.format(args.sdk_url))
-    print('Restart: {}'.format(args.restart))
+    print(f'Address: {appliance.hostname}')
+    print(f'SDK URL: {args.sdk_url}')
+    print(f'Restart: {args.restart}')
 
     appliance.install_netapp_sdk(sdk_url=args.sdk_url, reboot=args.restart, log_callback=log)
 

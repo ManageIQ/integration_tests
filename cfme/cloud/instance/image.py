@@ -83,7 +83,7 @@ class ImageProviderAllView(CloudInstanceView):
             provider = self.context['object'].provider.name
         except AttributeError:
             provider = self.context['object'].filters['provider'].name
-        expected_title = 'Images under Provider "{}"'.format(provider)
+        expected_title = f'Images under Provider "{provider}"'
         accordion = self.sidebar.images_by_provider
         return (
             self.in_cloud_instance and
@@ -222,7 +222,7 @@ class ImageDetails(CFMENavigateStep):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise ItemNotFound('Failed to locate image with name "{}"'.format(self.obj.name))
+            raise ItemNotFound(f'Failed to locate image with name "{self.obj.name}"')
         row.click()
 
 

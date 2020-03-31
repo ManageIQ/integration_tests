@@ -17,10 +17,10 @@ def main():
     if re.findall('^gpg: Good signature', output, re.M):
         gpg = re.findall('fingerprint: ([A-F0-9 ]+)', output)[0].replace(' ', '')
         if gpg in key_list:
-            print("Good sig and match for {}".format(gpg))
+            print(f"Good sig and match for {gpg}")
             sys.exit(0)
     print("ERROR: Bad signature. Please sign your commits!")
-    print("git output: {}".format(output))
+    print(f"git output: {output}")
     sys.exit(127)
 
 

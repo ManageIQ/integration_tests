@@ -61,7 +61,7 @@ def main():
             psql_cmd = '/opt/rh/rh-postgresql95/root/usr/bin/psql'
             query = 'SELECT numbackends FROM pg_stat_database WHERE datname = \'vmdb_production\''
             db = 'postgres'
-            response = ssh_client.run_command('{} -c "{}" -d "{}" -t'.format(psql_cmd, query, db))
+            response = ssh_client.run_command(f'{psql_cmd} -c "{query}" -d "{db}" -t')
             db_connections = int(response.output.strip())
             return db_connections == 0
 
@@ -75,7 +75,7 @@ def main():
         hostname = ssh_client._connect_kwargs['hostname']
 
     print('Waiting for appliance UI...')
-    args = [scripts_path.join('wait_for_appliance_ui.py').strpath, 'http://{}'.format(hostname)]
+    args = [scripts_path.join('wait_for_appliance_ui.py').strpath, f'http://{hostname}']
     return subprocess.call(args)
 
 

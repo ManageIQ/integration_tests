@@ -45,7 +45,7 @@ class Kebab(Widget):
     ITEMS = './ul/li/a'
 
     def __init__(self, parent, button_id=None, logger=None):
-        super(Kebab, self).__init__(parent, logger=logger)
+        super().__init__(parent, logger=logger)
         if button_id is not None:
             self.locator = (
                 './/div[contains(@class, "dropdown-kebab-pf") and ./button[@id={}]]'.format(
@@ -230,7 +230,7 @@ class ParticularDashboardView(DashboardView):
     @property
     def is_displayed(self):
         return (
-            super(ParticularDashboardView, self).is_displayed and
+            super().is_displayed and
             self.dashboards(title=self.context['object'].name).is_active)
 
 
@@ -324,7 +324,7 @@ class DashboardWidget(BaseEntity):
         self.close_zoom()
         view = self.widget_view
         if 'Maximize' not in view.menu.items and 'Minimize' not in view.menu.items:
-            raise ValueError('The widget {} cannot be maximized or minimized'.format(self.name))
+            raise ValueError(f'The widget {self.name} cannot be maximized or minimized')
         if 'Minimize' in view.menu.items:
             view.menu.select('Minimize')
 
@@ -334,7 +334,7 @@ class DashboardWidget(BaseEntity):
         view = self.widget_view
         view.parent.parent.ensure_zoom_closed()
         if 'Maximize' not in view.menu.items and 'Minimize' not in view.menu.items:
-            raise ValueError('The widget {} cannot be maximized or minimized'.format(self.name))
+            raise ValueError(f'The widget {self.name} cannot be maximized or minimized')
         if 'Maximize' in view.menu.items:
             view.menu.select('Maximize')
 

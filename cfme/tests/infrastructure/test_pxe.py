@@ -31,5 +31,5 @@ def test_pxe_server_crud(pxe_name, pxe_server_crud):
     """
     pxe_server_crud.create(refresh_timeout=300)
     with update(pxe_server_crud):
-        pxe_server_crud.name = "{}_update".format(pxe_server_crud.name)
+        pxe_server_crud.name = f"{pxe_server_crud.name}_update"
     pxe_server_crud.delete(cancel=False)

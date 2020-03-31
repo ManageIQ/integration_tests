@@ -14,7 +14,7 @@ def main():
     parser.add_argument('topic', nargs='?', default='downstream-stable',
         help='topic branch')
     args = parser.parse_args()
-    print("{}\t{}".format(args.topic, args.master))
+    print(f"{args.topic}\t{args.master}")
     cmd_params = ['git', 'cherry', args.topic, args.master, '-v']
     proc = subprocess.Popen(cmd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     proc.wait()
@@ -26,7 +26,7 @@ def main():
     PRs = defaultdict(list)
     for commit in commits:
         cmd = ['git', 'log', '--merges', '--ancestry-path', '--oneline',
-            '{}..master'.format(commit)]
+            f'{commit}..master']
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         proc.wait()
         lcinfo = proc.stdout.readlines()
@@ -38,9 +38,9 @@ def main():
                 break
 
     for PR in PRs:
-        print("{} missing, contains:".format(PR))
+        print(f"{PR} missing, contains:")
         for commit in PRs[PR]:
-            print("  {}".format(commit))
+            print(f"  {commit}")
 
 
 if __name__ == '__main__':

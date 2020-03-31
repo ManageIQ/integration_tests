@@ -79,10 +79,10 @@ class BaseDashboardReportWidget(BaseEntity, Updateable, Pretty):
         view = self.create_view(DashboardWidgetDetailsView, override=updates, wait='10s')
         view.flash.assert_no_error()
         if changed:
-            view.flash.assert_message('Widget "{}" was saved'.format(self.title))
+            view.flash.assert_message(f'Widget "{self.title}" was saved')
         else:
             view.flash.assert_message(
-                'Edit of Widget "{}" was cancelled by the user'.format(self.description))
+                f'Edit of Widget "{self.description}" was cancelled by the user')
 
     def delete(self, cancel=False):
         """Delete this Widget in the UI.

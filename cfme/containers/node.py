@@ -52,7 +52,7 @@ class NodeAllView(NodeView):
 
     @property
     def is_displayed(self):
-        return self.in_node and super(NodeAllView, self).is_displayed
+        return self.in_node and super().is_displayed
 
 
 class NodeDetailsView(ContainerObjectDetailsBaseView):

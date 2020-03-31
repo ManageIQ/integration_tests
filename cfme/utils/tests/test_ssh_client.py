@@ -24,10 +24,10 @@ def test_scp_client_can_put_a_file(appliance, tmpdir):
     tmpfile = tmpdir.mkdir("sub").join("temp.txt")
     tmpfile.write("content")
     appliance.ssh_client.put_file(str(tmpfile), '/tmp')
-    result = appliance.ssh_client.run_command("ls /tmp/{}".format(tmpfile.basename))
+    result = appliance.ssh_client.run_command(f"ls /tmp/{tmpfile.basename}")
     assert result.success
     assert tmpfile.basename in result.output
-    appliance.ssh_client.get_file("/tmp/{}".format(tmpfile.basename), str(tmpdir))
+    appliance.ssh_client.get_file(f"/tmp/{tmpfile.basename}", str(tmpdir))
     assert "content" in tmpfile.read()
     # Clean up the server
-    appliance.ssh_client.run_command("rm -f /tmp/{}".format(tmpfile.basename))
+    appliance.ssh_client.run_command(f"rm -f /tmp/{tmpfile.basename}")

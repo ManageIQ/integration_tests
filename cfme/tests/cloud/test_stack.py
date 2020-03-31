@@ -43,7 +43,7 @@ def test_security_group_link(stack):
     else:
         # Navigation successful, stack had security groups
         assert view.is_displayed
-        assert view.entities.title.text == '{} (All Security Groups)'.format(stack.name)
+        assert view.entities.title.text == f'{stack.name} (All Security Groups)'
 
 
 @pytest.mark.tier(3)
@@ -63,7 +63,7 @@ def test_parameters_link(stack):
     else:
         # Navigation successful, stack had parameters
         assert view.is_displayed
-        assert view.entities.title.text == '{} (Parameters)'.format(stack.name)
+        assert view.entities.title.text == f'{stack.name} (Parameters)'
 
 
 @pytest.mark.tier(3)
@@ -82,7 +82,7 @@ def test_outputs_link(stack):
         assert view.sidebar.relationships.nav.is_disabled('Outputs (0)')
     else:
         assert view.is_displayed
-        assert view.entities.title.text == '{} (Outputs)'.format(stack.name)
+        assert view.entities.title.text == f'{stack.name} (Outputs)'
 
 
 @pytest.mark.tier(3)
@@ -123,7 +123,7 @@ def test_resources_link(stack):
         assert view.sidebar.relationships.nav.is_disabled('Resources (0)')
     else:
         assert view.is_displayed is True
-        assert view.entities.title.text == '{} (Resources)'.format(stack.name)
+        assert view.entities.title.text == f'{stack.name} (Resources)'
 
 
 @pytest.mark.tier(3)

@@ -33,7 +33,7 @@ OPERATIONS = ["Add", "Edit", "Delete", "Copy"]
 # RBAC for roles
 PRODUCT_FEATURES_DIALOG = [
     ["Everything", "Automation", "Automate", "Customization", "Dialogs", "Modify"]
-    + [op, "{operation} ({tenant})".format(operation=op, tenant=TENANT_NAME)]
+    + [op, f"{op} ({TENANT_NAME})"]
     for op in OPERATIONS
 ]
 
@@ -49,7 +49,7 @@ PRODUCT_FEATURES_QUOTA = [
         "Modify",
         "Manage Quotas",
     ]
-    + ["Manage Quotas ({tenant})".format(tenant=tenant)]
+    + [f"Manage Quotas ({tenant})"]
     for tenant in ["My Company", TENANT_NAME]
 ]
 
@@ -93,36 +93,36 @@ def test_vm_analysis_profile_crud(appliance, soft_assert, analysis_profile_colle
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
     vm_flash = vm_profile.name if appliance.version < '5.10' else vm_profile.description
-    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_flash))
+    view.flash.assert_message(f'Analysis Profile "{vm_flash}" was saved')
 
     assert vm_profile.exists
 
     with update(vm_profile):
         vm_profile.files = updated_files
     view = appliance.browser.create_view(navigator.get_class(vm_profile, 'Details').VIEW)
-    view.flash.assert_success_message('Analysis Profile "{}" was saved'.format(vm_flash))
+    view.flash.assert_success_message(f'Analysis Profile "{vm_flash}" was saved')
     soft_assert(vm_profile.files == updated_files,
-                'Files update failed on profile: {}, {}'.format(vm_profile.name, vm_profile.files))
+                f'Files update failed on profile: {vm_profile.name}, {vm_profile.files}')
 
     with update(vm_profile):
         vm_profile.categories = ['System']
     soft_assert(vm_profile.categories == ['System'],
-                'Categories update failed on profile: {}'.format(vm_profile.name))
-    copied_profile = vm_profile.copy(new_name='copied-{}'.format(vm_profile.name))
+                f'Categories update failed on profile: {vm_profile.name}')
+    copied_profile = vm_profile.copy(new_name=f'copied-{vm_profile.name}')
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
     # yep, not copy specific
     vm_copied_flash = (
         copied_profile.name if appliance.version < '5.10' else copied_profile.description
     )
-    view.flash.assert_message('Analysis Profile "{}" was saved'.format(vm_copied_flash))
+    view.flash.assert_message(f'Analysis Profile "{vm_copied_flash}" was saved')
     assert copied_profile.exists
 
     copied_profile.delete()
     assert not copied_profile.exists
 
     vm_profile.delete()
-    view.flash.assert_success_message('Analysis Profile "{}": Delete successful'.format(vm_flash))
+    view.flash.assert_success_message(f'Analysis Profile "{vm_flash}": Delete successful')
     assert not vm_profile.exists
 
 
@@ -147,7 +147,7 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
     host_flash = host_profile.name if appliance.version < '5.10' else host_profile.description
-    view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_flash))
+    view.flash.assert_message(f'Analysis Profile "{host_flash}" was saved')
     assert host_profile.exists
 
     with update(host_profile):
@@ -155,20 +155,20 @@ def test_host_analysis_profile_crud(appliance, soft_assert, analysis_profile_col
     soft_assert(host_profile.files == updated_files,
                 'Files update failed on profile: {}, {}'
                 .format(host_profile.name, host_profile.files))
-    copied_profile = host_profile.copy(new_name='copied-{}'.format(host_profile.name))
+    copied_profile = host_profile.copy(new_name=f'copied-{host_profile.name}')
     view = appliance.browser.create_view(
         navigator.get_class(analysis_profile_collection, 'All').VIEW)
     host_copied_flash = (
         copied_profile.name if appliance.version < '5.10' else copied_profile.description
     )
-    view.flash.assert_message('Analysis Profile "{}" was saved'.format(host_copied_flash))
+    view.flash.assert_message(f'Analysis Profile "{host_copied_flash}" was saved')
     assert copied_profile.exists
 
     copied_profile.delete()
     assert not copied_profile.exists
 
     host_profile.delete()
-    view.flash.assert_success_message('Analysis Profile "{}": Delete successful'.format(host_flash))
+    view.flash.assert_success_message(f'Analysis Profile "{host_flash}": Delete successful')
     assert not host_profile.exists
 
 

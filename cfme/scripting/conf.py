@@ -74,7 +74,7 @@ def encrypt(conf_name, delete):
     """Function to encrypt a given conf file"""
     conf_name = conf_name.strip()
     yaycl_crypt.encrypt_yaml(conf, conf_name, delete=delete)
-    print('{} conf encrypted'.format(conf_name))
+    print(f'{conf_name} conf encrypted')
     if not delete:
         print('WARNING: unencrypted file left which will override encrypted')
 
@@ -92,12 +92,12 @@ def decrypt(conf_name, delete, skip):
         yaycl_crypt.decrypt_yaml(conf, conf_name, delete=delete)
     except yaycl_crypt.YayclCryptError as ex:
         if skip and 'overwrite' in str(ex):
-            print('SKIPPED {} conf decrypt, decrypted file already exists'.format(conf_name))
+            print(f'SKIPPED {conf_name} conf decrypt, decrypted file already exists')
             return
         else:
             raise
 
-    print('{} conf decrypted'.format(conf_name))
+    print(f'{conf_name} conf decrypted')
 
 
 if __name__ == "__main__":

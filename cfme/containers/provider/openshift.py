@@ -22,7 +22,7 @@ from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 
-class CustomAttribute(object):
+class CustomAttribute:
     def __init__(self, name, value, field_type=None, href=None):
         self.name = name
         self.value = value
@@ -122,7 +122,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
             for profile in [provider_profile, node_profile]:
                 profile.assign_to("The Enterprise")
 
-        super(OpenshiftProvider, self).create(**kwargs)
+        super().create(**kwargs)
 
     @cached_property
     def cli(self):
@@ -203,7 +203,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
             elif AlertsEndpoint.name == endp:
                 endpoints[endp] = AlertsEndpoint(**prov_config['endpoints'][endp])
             else:
-                raise Exception('Unsupported endpoint type "{}".'.format(endp))
+                raise Exception(f'Unsupported endpoint type "{endp}".')
 
         settings = prov_config.get('settings', {})
         advanced = settings.get('advanced', {})
@@ -404,7 +404,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
             name=self.name, id=mgmt_system_id))
 
         if filters:
-            logger.info("Filtering by: {f}".format(f=filters))
+            logger.info(f"Filtering by: {filters}")
 
         filters["parent_ems_id"] = mgmt_system_id
         return self.appliance.db.client.session.query(metrics_tbl).filter_by(**filters)
@@ -420,7 +420,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
 
         def is_collected():
             metrics_count = self.get_metrics(table=table_name).count()
-            logger.info("Current metrics found count is {count}".format(count=metrics_count))
+            logger.info(f"Current metrics found count is {metrics_count}")
             return metrics_count > 0
 
         logger.info("Monitoring DB for metrics collection")

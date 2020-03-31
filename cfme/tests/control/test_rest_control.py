@@ -17,7 +17,7 @@ pytestmark = [
 ]
 
 
-class TestConditionsRESTAPI(object):
+class TestConditionsRESTAPI:
     @pytest.fixture(scope='function')
     def conditions(self, request, appliance):
         num_conditions = 2
@@ -102,7 +102,7 @@ class TestConditionsRESTAPI(object):
         """
         num_conditions = len(conditions)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_conditions)]
-        new = [{'description': 'Edited Test Condition {}'.format(u)} for u in uniq]
+        new = [{'description': f'Edited Test Condition {u}'} for u in uniq]
         if from_detail:
             edited = []
             for index in range(num_conditions):
@@ -126,7 +126,7 @@ class TestConditionsRESTAPI(object):
             assert condition.description == edited[index].description == record[0].description
 
 
-class TestPoliciesRESTAPI(object):
+class TestPoliciesRESTAPI:
     @pytest.fixture(scope='function')
     def policies(self, request, appliance):
         num_policies = 2
@@ -229,7 +229,7 @@ class TestPoliciesRESTAPI(object):
         """
         num_policies = len(policies)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_policies)]
-        new = [{'description': 'Edited Test Policy {}'.format(u)} for u in uniq]
+        new = [{'description': f'Edited Test Policy {u}'} for u in uniq]
         if from_detail:
             edited = []
             for index in range(num_policies):
@@ -270,8 +270,8 @@ class TestPoliciesRESTAPI(object):
         """
         policy_name = fauxfactory.gen_alphanumeric(5)
         data = {
-            "name": "test_policy_{}".format(policy_name),
-            "description": "Test Policy {}".format(policy_name),
+            "name": f"test_policy_{policy_name}",
+            "description": f"Test Policy {policy_name}",
             "mode": "bar",
             "towhat": "baz",
             "conditions_ids": [2000, 3000],

@@ -44,7 +44,7 @@ def main(args):
     :return:
     """
     for provider_key in args.providers:
-        logger.info("Cleaning up {}".format(provider_key))
+        logger.info(f"Cleaning up {provider_key}")
         provider_obj = get_mgmt(provider_key)
 
         try:
@@ -55,11 +55,11 @@ def main(args):
 
         for img in images:
             if img.name.startswith(args.name) and img.creation_time < TIME_LIMIT:
-                logger.info("Deleting {}".format(img.name))
+                logger.info(f"Deleting {img.name}")
                 try:
                     img.delete()
                 except Exception:
-                    logger.exception("Snapshot {} Deletion failed".format(img.name))
+                    logger.exception(f"Snapshot {img.name} Deletion failed")
 
 
 if __name__ == "__main__":

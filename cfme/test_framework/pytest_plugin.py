@@ -26,7 +26,7 @@ def pytest_collection_finish(session):
 
     for reason, value in store.uncollection_stats.items():
         store.terminalreporter.write(
-            " {}: {}\n".format(reason, value), bold=True)
+            f" {reason}: {value}\n", bold=True)
     store.terminalreporter.write(
         " {} tests left after all uncollections\n".format(len(session.items)),
         bold=True)

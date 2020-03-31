@@ -107,7 +107,7 @@ def test_copy_template(created_template):
     """
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
     template = created_template
-    template_copy = template.copy_template("{}_copied".format(template.template_name),
+    template_copy = template.copy_template(f"{template.template_name}_copied",
                                            copied_method)
     assert template_copy.exists
     template_copy.delete()
@@ -202,7 +202,7 @@ def test_duplicated_content_error_validation(appliance, created_template, templa
     """
     collection = appliance.collections.orchestration_templates
     if action == "copy":
-        copy_name = "{}_copied".format(created_template.template_name)
+        copy_name = f"{created_template.template_name}_copied"
         flash_msg = ("Unable to create a new template copy \"{}\": old and new template content "
                      "have to differ.".format(copy_name))
         with pytest.raises(AssertionError, match=flash_msg):

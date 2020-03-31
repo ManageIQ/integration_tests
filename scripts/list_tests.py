@@ -17,16 +17,16 @@ def parser(filename, exp=None):
     try:
         with open(filename, 'r') as f:
             data = f.read()
-    except IOError:
+    except OSError:
         data = ""
 
     if not exp:
         exp = ""
 
-    p = re.findall(r'\s*def\s*[a-zA-Z0-9_]*?(test_.*?{}.*?)\('.format(exp), data)
+    p = re.findall(fr'\s*def\s*[a-zA-Z0-9_]*?(test_.*?{exp}.*?)\(', data)
     for test in p:
         if isinstance(test, str):
-            print("{} :: {}".format(filename, test))
+            print(f"{filename} :: {test}")
         else:
             print("{} :: {}".format(filename, test[0]))
 

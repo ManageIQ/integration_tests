@@ -89,7 +89,7 @@ def collect_logs(app):
 
     with app.ssh_client as ssh_client:
         logger.info(f'Starting log collection on appliance {app.hostname}')
-        tarred_dir_name = 'log-collector-{}'.format(app.hostname)
+        tarred_dir_name = f'log-collector-{app.hostname}'
         # wrap the files in ls, redirecting stderr, to ignore files that don't exist
         tar_dir_path = os.path.join(local_dir.strpath, tarred_dir_name)
         tarball_path = f'{tar_dir_path}.tar.gz'

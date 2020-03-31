@@ -13,62 +13,62 @@ class LinksView(View):
     @View.nested
     class policies(View):  # noqa
         TEXT = 'Defining Policies Profiles Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class general(View):  # noqa
         TEXT = 'General Configuration Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class inventory(View):  # noqa
         TEXT = 'Infrastructure Inventory Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class automation(View):  # noqa
         TEXT = 'Methods For Automation Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class monitoring(View):  # noqa
         TEXT = 'Monitoring Alerts Reporting Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class providers(View):  # noqa
         TEXT = 'Providers Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class rest(View):  # noqa
         TEXT = 'Rest Api Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class scripting(View):  # noqa
         TEXT = 'Scripting Actions Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class vm_instances(View):  # noqa
         # TODO: title must be changed once BZ 1723813 is resolved.
         TEXT = 'Virtual Machines Hosts Guide'
-        link = img_anchor = Text('//a[@title="View the {}"]'.format(TEXT))
-        img = Image(locator='//img[@alt="View the {}"]'.format(TEXT))
+        link = img_anchor = Text(f'//a[@title="View the {TEXT}"]')
+        img = Image(locator=f'//img[@alt="View the {TEXT}"]')
 
     @View.nested
     class customer_portal(View):  # noqa
         TEXT = 'Red Hat Customer Portal'
-        link = Text('//a[normalize-space(.)="{}"]'.format(TEXT))
+        link = Text(f'//a[normalize-space(.)="{TEXT}"]')
 
 
 class DocView(View):

@@ -154,7 +154,7 @@ def test_host_graph_screen(provider, interval, graph_type, host, enable_candu):
     # zoom in button not available with normal graph in Host Utilization page.
     # We have to use vm average graph for zoom in operation.
     try:
-        vm_avg_graph = getattr(view.interval_type, "{}_vm_avg".format(graph_type))
+        vm_avg_graph = getattr(view.interval_type, f"{graph_type}_vm_avg")
     except AttributeError as e:
         logger.error(e)
     vm_avg_graph.zoom_in()

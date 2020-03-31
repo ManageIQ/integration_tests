@@ -45,7 +45,7 @@ def new_vm(provider):
 def mark_vm_as_appliance(new_vm, appliance):
     # set diagnostics vm
     relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship', wait_for_view=0)
-    server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
+    server_name = f"{appliance.server.name} ({appliance.server.sid})"
     relations_view.form.server.select_by_visible_text(server_name)
     relations_view.form.save_button.click()
 
@@ -69,7 +69,7 @@ def control_policy(appliance, new_vm):
         action.delete()
 
 
-class VMEvent(object):
+class VMEvent:
     """Class for generating  events on a VM in order to check it on Timelines.
     Args:
         vm: A VM object (Object)
@@ -329,7 +329,7 @@ def test_infra_timeline_create_event(new_vm, soft_assert):
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {evt}failed'.format(evt=event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event}failed')
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
@@ -354,7 +354,7 @@ def test_infra_timeline_policy_event(new_vm, control_policy, soft_assert):
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {} did timeout'.format(event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} did timeout')
     vm_event.catch_in_timelines(soft_assert, targets, policy_events=True)
 
 
@@ -377,7 +377,7 @@ def test_infra_timeline_stop_event(new_vm, soft_assert):
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {} failed'.format(event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} failed')
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
@@ -400,7 +400,7 @@ def test_infra_timeline_start_event(new_vm, soft_assert):
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {} failed'.format(event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} failed')
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
@@ -423,7 +423,7 @@ def test_infra_timeline_suspend_event(new_vm, soft_assert):
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     vm_event = VMEvent(new_vm, event)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {} failed'.format(event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} failed')
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
@@ -468,7 +468,7 @@ def test_infra_timeline_clone_event(new_vm, soft_assert):
     vm_event = VMEvent(new_vm, event)
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} failed')
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
@@ -491,7 +491,7 @@ def test_infra_timeline_migrate_event(new_vm, soft_assert):
     vm_event = VMEvent(new_vm, event)
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} failed')
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
@@ -516,7 +516,7 @@ def test_infra_timeline_rename_event(new_vm, soft_assert):
     vm_event = VMEvent(new_vm, event)
     targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} failed')
     vm_event.catch_in_timelines(soft_assert, targets)
 
 
@@ -546,6 +546,6 @@ def test_infra_timeline_delete_event(new_vm, soft_assert):
     else:
         targets = (new_vm, new_vm.cluster, new_vm.host, new_vm.provider)
     logger.info('Will generate event %r on machine %r', event, new_vm.name)
-    wait_for(vm_event.emit, timeout='7m', message='Event {evt} failed'.format(evt=event))
+    wait_for(vm_event.emit, timeout='7m', message=f'Event {event} failed')
     navigate_to(new_vm, 'ArchiveDetails')
     vm_event.catch_in_timelines(soft_assert, targets)

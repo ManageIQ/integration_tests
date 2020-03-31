@@ -55,7 +55,7 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
 
     def _mail_arrived():
         for mail in smtp.get_emails():
-            if "Alert Triggered: {}".format(alert.description) in mail["subject"]:
+            if f"Alert Triggered: {alert.description}" in mail["subject"]:
                 if not additional_checks:
                     return True
                 else:
@@ -91,7 +91,7 @@ def setup_for_alerts(appliance):
         """
         alert_profile = appliance.collections.alert_profiles.create(
             alert_profiles.VMInstanceAlertProfile,
-            "Alert profile for {}".format(vm_name),
+            f"Alert profile for {vm_name}",
             alerts=alerts_list
         )
         request.addfinalizer(alert_profile.delete)
@@ -107,19 +107,19 @@ def setup_for_alerts(appliance):
             view.flash.assert_message('Edit Alert Profile assignments cancelled by user')
         if event is not None:
             action = appliance.collections.actions.create(
-                "Evaluate Alerts for {}".format(vm_name),
+                f"Evaluate Alerts for {vm_name}",
                 "Evaluate Alerts",
                 action_values={"alerts_to_evaluate": [str(alert) for alert in alerts_list]}
             )
             request.addfinalizer(action.delete)
             policy = appliance.collections.policies.create(
                 policies.VMControlPolicy,
-                "Evaluate Alerts policy for {}".format(vm_name),
-                scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
+                f"Evaluate Alerts policy for {vm_name}",
+                scope=f"fill_field(VM and Instance : Name, INCLUDES, {vm_name})"
             )
             request.addfinalizer(policy.delete)
             policy_profile = appliance.collections.policy_profiles.create(
-                "Policy profile for {}".format(vm_name), policies=[policy]
+                f"Policy profile for {vm_name}", policies=[policy]
             )
             request.addfinalizer(policy_profile.delete)
             policy.assign_actions_to_event(event, [action])
@@ -299,7 +299,7 @@ def test_alert_timeline_cpu(request, appliance, create_vm,
         if alert.description in event.message:
             break
     else:
-        pytest.fail("The event has not been found on the timeline. Event list: {}".format(events))
+        pytest.fail(f"The event has not been found on the timeline. Event list: {events}")
 
 
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
@@ -337,7 +337,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, creat
             "version": "v2",
             "id": "info",
             "traps": [
-                ("1.2.3", "OctetString", "{}".format(match_string))]},
+                ("1.2.3", "OctetString", f"{match_string}")]},
     )
     request.addfinalizer(alert.delete)
 
@@ -345,7 +345,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, creat
 
     def _snmp_arrived():
         result = appliance.ssh_client.run_command(
-            "journalctl --no-pager /usr/sbin/snmptrapd | grep {}".format(match_string))
+            f"journalctl --no-pager /usr/sbin/snmptrapd | grep {match_string}")
         if result.failed:
             return False
         elif result.output:

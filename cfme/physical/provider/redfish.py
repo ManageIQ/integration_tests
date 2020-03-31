@@ -85,9 +85,9 @@ class RedfishProvider(PhysicalProvider):
         view = navigate_to(self, 'Details')
         try:
             stat = view.entities.summary('Relationships').get_text_of(label)
-            logger.info("{}: {}".format(label, stat))
+            logger.info(f"{label}: {stat}")
         except NoSuchElementException:
-            logger.error("Couldn't find number of {}".format(label))
+            logger.error(f"Couldn't find number of {label}")
         return stat
 
     @variable(alias='ui')
@@ -117,7 +117,7 @@ class RedfishPhysicalChassis(PhysicalChassis):
     STATS_TO_MATCH = ['num_physical_servers']
 
     def __init__(self):
-        super(RedfishPhysicalChassis, self)
+        super()
 
 
 @attr.s
@@ -131,7 +131,7 @@ class RedfishPhysicalRack(PhysicalRack):
     STATS_TO_MATCH = []
 
     def __init__(self):
-        super(RedfishPhysicalRack, self)
+        super()
 
     def validate_stats(self, ui=False):
         """ Validates that the detail page matches the physical rack's information.
@@ -170,9 +170,9 @@ class RedfishPhysicalRack(PhysicalRack):
                     raise StatsDoNotMatch(msg.format(stat, self.name, rack_stat, cfme_stat))
             except KeyError:
                 raise HostStatsNotContains(
-                    "Server stats information does not contain '{}'".format(stat))
+                    f"Server stats information does not contain '{stat}'")
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
+                raise ProviderHasNoProperty(f"Provider does not know how to get '{stat}'")
 
         # Verify that the inventory retrieved from wrapanapi match those retrieved
         # from the UI
@@ -188,7 +188,7 @@ class RedfishPhysicalRack(PhysicalRack):
                                                      cfme_inventory))
             except KeyError:
                 raise HostStatsNotContains(
-                    "Server inventory information does not contain '{}'".format(inventory))
+                    f"Server inventory information does not contain '{inventory}'")
             except AttributeError:
                 msg = "Provider does not know how to get '{}'"
                 raise ProviderHasNoProperty(msg.format(inventory))

@@ -90,7 +90,7 @@ def install_requirements(venv_path, quiet=False):
         with open(remember_file, 'r') as fp:
             last_hash = fp.read()
     elif os.path.exists(remember_file):
-        sys.exit("ERROR: {} is required to be a file".format(remember_file))
+        sys.exit(f"ERROR: {remember_file} is required to be a file")
     else:
         last_hash = None
     if last_hash == current_hash:

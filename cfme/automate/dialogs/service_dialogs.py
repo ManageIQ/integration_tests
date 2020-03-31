@@ -89,7 +89,7 @@ class Dialog(BaseEntity, Fillable):
         assert view.is_displayed
         view.flash.assert_no_error()
         view.flash.assert_success_message(
-            'Dialog "{}": Delete successful'.format(self.label))
+            f'Dialog "{self.label}": Delete successful')
 
     def copy(self):
         view = navigate_to(self, "Copy")

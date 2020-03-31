@@ -30,7 +30,7 @@ def catalog_item(appliance, request, provider, ansible_tower_dialog, catalog, jo
         display_in=True,
         catalog=catalog,
         dialog=ansible_tower_dialog,
-        provider='{} Automation Manager'.format(provider_name),
+        provider=f'{provider_name} Automation Manager',
         config_template=template)
     request.addfinalizer(catalog_item.delete)
     return catalog_item
@@ -70,7 +70,7 @@ def test_order_tower_catalog_item(appliance, provider, catalog_item, request, jo
     cells = {'Description': catalog_item.name}
     order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
-    msg = 'Request failed with the message {}'.format(order_request.row.last_message.text)
+    msg = f'Request failed with the message {order_request.row.last_message.text}'
     assert order_request.is_succeeded(method='ui'), msg
     appliance.user.my_settings.default_views.set_default_view('Configuration Management Providers',
                                                               'List View')
@@ -95,7 +95,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type,
     cells = {'Description': catalog_item.name}
     order_request = appliance.collections.requests.instantiate(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
-    msg = "Request failed with the message {}".format(order_request.row.last_message.text)
+    msg = f"Request failed with the message {order_request.row.last_message.text}"
     assert order_request.is_succeeded(method='ui'), msg
     myservice = MyService(appliance, catalog_item.name)
     myservice.retire()

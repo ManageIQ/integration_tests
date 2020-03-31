@@ -274,7 +274,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
 
     @property
     def name_for_policy_profile(self):
-        return "{} {}: {}".format(self.PRETTY, self.TYPE, self.description)
+        return f"{self.PRETTY} {self.TYPE}: {self.description}"
 
     def update(self, updates):
         """Update this Policy in UI.
@@ -297,7 +297,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
                 'Policy "{}" was saved'.format(updates.get("description", self.description)))
         else:
             view.flash.assert_message(
-                'Edit of Policy "{}" was cancelled by the user'.format(self.description))
+                f'Edit of Policy "{self.description}" was cancelled by the user')
 
     def delete(self, cancel=False):
         """Delete this Policy in UI.
@@ -307,7 +307,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         """
         view = navigate_to(self, "Details")
         view.configuration.item_select(
-            "Delete this {} Policy".format(self.PRETTY),
+            f"Delete this {self.PRETTY} Policy",
             handle_alert=not cancel
         )
         if cancel:
@@ -322,13 +322,13 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
             cancel: Whether to cancel the copying (default False).
         """
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Copy this {} Policy".format(self.PRETTY),
+        view.configuration.item_select(f"Copy this {self.PRETTY} Policy",
             handle_alert=not cancel)
         view = self.create_view(PolicyDetailsView)
         assert view.is_displayed
-        view.flash.assert_success_message('Policy "Copy of {}" was added'.format(self.description))
+        view.flash.assert_success_message(f'Policy "Copy of {self.description}" was added')
         policy_copy = copy(self)
-        policy_copy.description = "Copy of {}".format(self.description)
+        policy_copy.description = f"Copy of {self.description}"
         return policy_copy
 
     def assign_events(self, *events, **kwargs):
@@ -352,11 +352,11 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         changed = view.fill({"events": events})
         if changed:
             view.save_button.click()
-            view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
+            view.flash.assert_success_message(f'Policy "{self.description}" was saved')
         else:
             view.cancel_button.click()
             view.flash.assert_success_message(
-                'Edit of Policy "{}" was cancelled by the user'.format(self.description)
+                f'Edit of Policy "{self.description}" was cancelled by the user'
             )
 
     def unassign_events(self, *events, **kwargs):
@@ -379,11 +379,11 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         changed = view.fill({"events": events})
         if changed:
             view.save_button.click()
-            view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
+            view.flash.assert_success_message(f'Policy "{self.description}" was saved')
         else:
             view.cancel_button.click()
             view.flash.assert_success_message(
-                'Edit of Policy "{}" was cancelled by the user'.format(self.description)
+                f'Edit of Policy "{self.description}" was cancelled by the user'
             )
 
     def is_event_assigned(self, event):
@@ -401,10 +401,10 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         changed = view.fill({"conditions": [condition.description for condition in conditions]})
         if changed:
             view.save_button.click()
-            flash_message = 'Policy "{}" was saved'.format(self.description)
+            flash_message = f'Policy "{self.description}" was saved'
         else:
             view.cancel_button.click()
-            flash_message = 'Edit of Policy "{}" was cancelled by the user'.format(self.description)
+            flash_message = f'Edit of Policy "{self.description}" was cancelled by the user'
         view.flash.assert_success_message(flash_message)
 
     def is_condition_assigned(self, condition):
@@ -440,7 +440,7 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         # Check whether we have all necessary events assigned
         if not self.is_event_assigned(event):
             self.assign_events(event, extend=True)
-            assert self.is_event_assigned(event), "Could not assign event {}!".format(event)
+            assert self.is_event_assigned(event), f"Could not assign event {event}!"
         # And now we can assign actions
         self.context_event = event
         view = navigate_to(self, "Event Details")
@@ -641,7 +641,7 @@ class PolicyCollection(BaseCollection):
         view.add_button.click()
 
         view = policy.create_view(PolicyDetailsView, o=policy, wait='10s')
-        view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
+        view.flash.assert_success_message(f'Policy "{policy.description}" was added')
         return policy
 
     def all(self):
@@ -670,8 +670,8 @@ class PolicyNew(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.policies.tree.click_path(
             "All Policies",
-            "{} Policies".format(self.obj.TYPE),
-            "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE)
+            f"{self.obj.TYPE} Policies",
+            f"{self.obj.TREE_NODE} {self.obj.TYPE} Policies"
         )
         self.prerequisite_view.configuration.item_select("Add a New {} {} Policy".format(
             self.obj.PRETTY, self.obj.TYPE))
@@ -694,8 +694,8 @@ class PolicyDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.policies.tree.click_path(
             "All Policies",
-            "{} Policies".format(self.obj.TYPE),
-            "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
+            f"{self.obj.TYPE} Policies",
+            f"{self.obj.TREE_NODE} {self.obj.TYPE} Policies",
             self.obj.description
         )
 
@@ -708,8 +708,8 @@ class PolicyEventDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.view.policies.tree.click_path(
             "All Policies",
-            "{} Policies".format(self.obj.TYPE),
-            "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
+            f"{self.obj.TYPE} Policies",
+            f"{self.obj.TREE_NODE} {self.obj.TYPE} Policies",
             self.obj.description,
             self.obj.context_event
         )

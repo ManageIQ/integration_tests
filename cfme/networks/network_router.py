@@ -163,7 +163,7 @@ class NetworkRouterCollection(BaseCollection):
                                 'subnet_name': ext_network_subnet})
         view.fill(form_params)
         view.add.click()
-        view.flash.assert_success_message('Network Router "{}" created'.format(name))
+        view.flash.assert_success_message(f'Network Router "{name}" created')
         router = self.instantiate(name, provider, ext_network)
         # Refresh provider's relationships to have new router displayed
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
@@ -253,6 +253,6 @@ class CloudSubnets(CFMENavigateStep):
     def step(self, *args, **kwargs):
         item = 'Cloud Subnets'
         if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
-            raise DestinationNotFound("This Network router doesn't have {item}".format(item=item))
+            raise DestinationNotFound(f"This Network router doesn't have {item}")
 
         self.prerequisite_view.entities.relationships.click_at(item)

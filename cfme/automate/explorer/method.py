@@ -108,7 +108,7 @@ class Inputs(View, ClickableMixin):
                 new_value['name'] = key
                 self.add_field.wait_displayed()
                 self.add_field.click()
-                super(Inputs, self).fill(new_value)
+                super().fill(new_value)
                 self.finish_add_field.click()
                 changed = True
 
@@ -313,10 +313,10 @@ class MethodEditView(AutomateExplorerView):
     def before_fill(self, values):
         location = self.context['object'].location.lower()
         if 'display_name' in values and location in ['inline', 'playbook']:
-            values['{}_display_name'.format(location)] = values['display_name']
+            values[f'{location}_display_name'] = values['display_name']
             del values['display_name']
         elif 'name' in values and location in ['inline', 'playbook']:
-            values['{}_name'.format(location)] = values['name']
+            values[f'{location}_name'] = values['name']
             del values['name']
 
     @property
@@ -340,7 +340,7 @@ class Method(BaseEntity, Copiable):
                  max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
                  playbook_input_parameters=None, cancel=False, validate=True, inputs=None,
                  embedded_method=None):
-        super(Method, self).__init__(collection)
+        super().__init__(collection)
 
         self.name = name
         if display_name is not None:
@@ -374,7 +374,7 @@ class Method(BaseEntity, Copiable):
                 table.name == self.name,
                 table.class_id == self.klass.db_id)[0]  # noqa
         except IndexError:
-            raise ItemNotFound('Method named {} not found in the database'.format(self.name))
+            raise ItemNotFound(f'Method named {self.name} not found in the database')
 
     @property
     def db_object(self):
@@ -433,7 +433,7 @@ class Method(BaseEntity, Copiable):
             result_view = self.create_view(ClassDetailsView, self.parent_obj, wait='10s')
             result_view.flash.assert_no_error()
             result_view.flash.assert_message(
-                'Automate Method "{}": Delete successful'.format(self.name))
+                f'Automate Method "{self.name}": Delete successful')
 
 
 @attr.s
@@ -502,7 +502,7 @@ class MethodCollection(BaseCollection):
             # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
             if BZ(1704439).blocks:
                 view = self.create_view(ClassDetailsView)
-                view.flash.assert_message('Automate Method "{}" was added'.format(name))
+                view.flash.assert_message(f'Automate Method "{name}" was added')
                 self.browser.refresh()
 
             return self.instantiate(
@@ -556,7 +556,7 @@ class MethodCollection(BaseCollection):
         all_page.flash.assert_no_error()
         for method in checked_methods:
             all_page.flash.assert_message(
-                'Automate Method "{}": Delete successful'.format(method.name))
+                f'Automate Method "{method.name}": Delete successful')
 
         # TODO(BZ-1704439): Remove the work-around once this BZ got fixed
         if BZ(1704439).blocks:

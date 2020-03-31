@@ -167,7 +167,7 @@ class ContainerProviderDetailsView(ProviderDetailsView, LoggingableView):
 
     @property
     def is_displayed(self):
-        return (super(ContainerProviderDetailsView, self).is_displayed and
+        return (super().is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'])
 
     @property
@@ -225,7 +225,7 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     provider_data = attr.ib(default=None)
 
     def __attrs_post_init__(self):
-        super(ContainersProvider, self).__attrs_post_init__()
+        super().__attrs_post_init__()
         self.parent = self.appliance.collections.containers_providers
 
     @property
@@ -653,7 +653,7 @@ class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
 
 # Common methods:
 
-class ContainersTestItem(object):
+class ContainersTestItem:
     """This is a generic test item. Especially used for parametrized functions
     """
     __test__ = False
@@ -693,7 +693,7 @@ class ContainersTestItem(object):
                     return pretty_id
 
 
-class LoadDetailsMixin(object):
+class LoadDetailsMixin:
     """Embed load details functionality for objects -
     required for some classes like PolicyProfileAssignable"""
 
@@ -703,7 +703,7 @@ class LoadDetailsMixin(object):
             view.browser.refresh()
 
 
-class Labelable(object):
+class Labelable:
     """Provide the functionality to set labels"""
     _LABEL_NAMEVAL_PATTERN = re.compile(r'^[A-Za-z0-9_.]+$')
 
@@ -777,7 +777,7 @@ def navigate_and_get_rows(provider, obj, count, silent_failure=False):
     return sample(rows, min(count, len(rows)))
 
 
-class GetRandomInstancesMixin(object):
+class GetRandomInstancesMixin:
 
     def get_random_instances(self, count=1):
         """Getting random instances of the object."""

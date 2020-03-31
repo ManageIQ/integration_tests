@@ -68,7 +68,7 @@ def check_vm_status(appliance, infra_map, filetype='csv', content=False,
                     table_hover=False, alert=False, security_group=False):
     """Function to import csv, select vm and return hover error from migration plan table"""
     plan_view = migration_plan(appliance, infra_map)
-    temp_file = tempfile.NamedTemporaryFile(suffix='.{}'.format(filetype))
+    temp_file = tempfile.NamedTemporaryFile(suffix=f'.{filetype}')
     if content:
         with open(temp_file.name, 'w') as f:
             f.write(content)
@@ -229,7 +229,7 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
         casecomponent: V2V
         initialEstimate: 1/8h
     """
-    content = "Name\n{}".format(valid_vm)
+    content = f"Name\n{valid_vm}"
     error_msg = "VM available for migration"
     hover_error = check_vm_status(
         appliance, infra_map, error_msg, content=content, table_hover=True)
@@ -245,7 +245,7 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
         casecomponent: V2V
         initialEstimate: 1/8h
     """
-    content = "Name\n{}\n{}".format(valid_vm, valid_vm)
+    content = f"Name\n{valid_vm}\n{valid_vm}"
     error_msg = "Duplicate VM"
     hover_error = check_vm_status(
         appliance, infra_map, error_msg, content=content, table_hover='duplicate')
@@ -261,7 +261,7 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
         casecomponent: V2V
         initialEstimate: 1/8h
     """
-    content = "Name\n{}".format(archived_vm)
+    content = f"Name\n{archived_vm}"
     error_msg = "VM is inactive"
     hover_error = check_vm_status(
         appliance, infra_map, error_msg, content=content, table_hover=True)

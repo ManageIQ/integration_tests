@@ -43,7 +43,7 @@ class FlexibleTerminalReporter(TerminalReporter):
         self.currentfspath = None
 
 
-class Store(object):
+class Store:
     """pytest object store
 
     If a property isn't available for any reason (including being accessed outside of a pytest run),

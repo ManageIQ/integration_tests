@@ -30,7 +30,7 @@ from widgetastic_manageiq import Table
 class VolatileBootstrapSelect(BootstrapSelect):
     def fill(self, items):
         try:
-            super(VolatileBootstrapSelect, self).fill(items)
+            super().fill(items)
         except NoSuchElementException:
             logger.warning(
                 "fill() operation was successful, but no options are left in BootstrapSelect to"
@@ -56,9 +56,9 @@ class BootstrapSelectRetry(BootstrapSelect):
     Retrys the open action
     """
     def open(self):
-        super(BootstrapSelectRetry, self).open()
+        super().open()
         if not self.is_open:
-            super(BootstrapSelectRetry, self).open()
+            super().open()
 
 
 class SchedulesFormCommon(CloudIntelReportsView):

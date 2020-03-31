@@ -85,12 +85,12 @@ def resolve_blockers(item, blockers):
     # Check blockers
     use_blockers = []
     # Bugzilla shortcut
-    blockers = ["BZ#{}".format(b) if isinstance(b, int) else b for b in blockers]
+    blockers = [f"BZ#{b}" if isinstance(b, int) else b for b in blockers]
     for blocker in map(Blocker.parse, blockers):
         if blocker.blocks:
             use_blockers.append(blocker)
     # Unblocking
-    discard_blockers = set([])
+    discard_blockers = set()
     for blocker in use_blockers:
         unblock_func = kwargify(blocker.kwargs.get("unblock"))
         local_env = {"blocker": blocker}

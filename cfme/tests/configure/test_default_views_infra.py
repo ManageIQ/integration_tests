@@ -115,7 +115,7 @@ def test_infra_default_view(appliance, group_name, view):
     if group_name == 'VMs':
         dest = 'VMsOnly'
     selected_view = navigate_to(page, dest, use_resetter=False).toolbar.view_selector.selected
-    assert view == selected_view, '{} view setting failed'.format(view)
+    assert view == selected_view, f'{view} view setting failed'
     default_views.set_default_view(group_name, old_default)
 
 
@@ -144,7 +144,7 @@ def test_infra_compare_view(appliance, expected_view):
     [e.ensure_checked() for e in vm_view.entities.get_all(slice=e_slice)]
     vm_view.toolbar.configuration.item_select('Compare Selected items')
     selected_view = getattr(vm_view.actions, selector_type).selected
-    assert expected_view == selected_view, '{} setting failed'.format(expected_view)
+    assert expected_view == selected_view, f'{expected_view} setting failed'
     default_views.set_default_view(group_name, old_default)
 
 

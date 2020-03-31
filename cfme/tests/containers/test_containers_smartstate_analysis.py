@@ -115,7 +115,7 @@ def test_containers_smartstate_analysis(provider, test_item, soft_assert,
         table_data = {k.lower(): v for k, v in table.read().items()}
 
         if not soft_assert(attr.lower() in table_data,
-                '{} table has missing attribute \'{}\''.format(tbl, attr)):
+                f'{tbl} table has missing attribute \'{attr}\''):
             continue
         provider.refresh_provider_relationships()
         wait_for_retval = wait_for(lambda: get_table_attr(random_image_instance, tbl, attr),
@@ -128,7 +128,7 @@ def test_containers_smartstate_analysis(provider, test_item, soft_assert,
             continue
         value = wait_for_retval.out
         soft_assert(verifier(value),
-            '{}.{} attribute has unexpected value ({})'.format(tbl, attr, value))
+            f'{tbl}.{attr} attribute has unexpected value ({value})')
 
 
 @pytest.mark.parametrize(('test_item'), TEST_ITEMS)
@@ -157,7 +157,7 @@ def test_containers_smartstate_analysis_api(provider, test_item, soft_assert,
     random_image_instance.scan()
 
     task = provider.appliance.collections.tasks.instantiate(
-        name="Container Image Analysis: '{}'".format(random_image_instance.name), tab='AllTasks')
+        name=f"Container Image Analysis: '{random_image_instance.name}'", tab='AllTasks')
 
     task.wait_for_finished()
 

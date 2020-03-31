@@ -286,7 +286,7 @@ class Tenant(BaseEntity, Taggable, ValidateStatsMixin):
         except NoSuchElementException as ex:
             # Catch general navigation exceptions and raise
             raise ItemNotFound(
-                'Exception while navigating to Tenant details: {}'.format(ex))
+                f'Exception while navigating to Tenant details: {ex}')
         view.toolbar.configuration.item_select('Delete Cloud Tenant')
 
         result = view.flash.assert_success_message(
@@ -321,7 +321,7 @@ class TenantCollection(BaseCollection):
             all_view.flash.assert_success_message("Add of Cloud Tenant was cancelled by the user")
         else:
             all_view.flash.assert_success_message(
-                'Cloud Tenant "{}" created'.format(name))
+                f'Cloud Tenant "{name}" created')
 
         tenant = self.instantiate(name, provider)
 
@@ -467,7 +467,7 @@ class CloudSubnets(CFMENavigateStep):
         item = 'Cloud Subnets'
         if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
             raise DestinationNotFound(
-                'Cloud Tenant {} has a 0 count for {} relationships'.format(self.obj, item))
+                f'Cloud Tenant {self.obj} has a 0 count for {item} relationships')
 
         self.prerequisite_view.entities.relationships.click_at(item)
 
@@ -481,6 +481,6 @@ class NetworkRouters(CFMENavigateStep):
         item = 'Network Routers'
         if not int(self.prerequisite_view.entities.relationships.get_text_of(item)):
             raise DestinationNotFound(
-                'Cloud Tenant {} has a 0 count for {} relationships'.format(self.obj, item))
+                f'Cloud Tenant {self.obj} has a 0 count for {item} relationships')
 
         self.prerequisite_view.entities.relationships.click_at(item)

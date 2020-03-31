@@ -174,7 +174,7 @@ def setup_disk_usage_alert(appliance):
     )
     alert_profile = appliance.collections.alert_profiles.create(
         ServerAlertProfile,
-        "Alert profile for {}".format(alert.description),
+        f"Alert profile for {alert.description}",
         alerts=[alert]
     )
     alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
@@ -344,7 +344,7 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, ap
         VMCompliancePolicy,
         fauxfactory.gen_alpha(36, start="Check compliance history policy "),
         active=True,
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
+        scope=f"fill_field(VM and Instance : Name, INCLUDES, {vmware_vm.name})"
     )
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)
     policy_profile = appliance.collections.policy_profiles.create(
@@ -522,7 +522,7 @@ def test_alert_for_disk_usage(setup_disk_usage_alert):
         _check_query,
         delay=5,
         num_sec=600,
-        message="Waiting for alert {} to appear in DB".format(alert.description)
+        message=f"Waiting for alert {alert.description} to appear in DB"
     )
 
 
@@ -554,7 +554,7 @@ def test_accordion_after_condition_creation(appliance, condition_class):
     )
     view = condition.create_view(conditions.ConditionDetailsView, wait="10s")
     assert view.conditions.tree.currently_selected == [
-        "All Conditions", "{} Conditions".format(condition_class.TREE_NODE), condition.description
+        "All Conditions", f"{condition_class.TREE_NODE} Conditions", condition.description
     ]
 
 
@@ -608,7 +608,7 @@ def test_policy_condition_multiple_ors(
     vm_name = virtualcenter_provider.data["cap_and_util"]["capandu_vm"]
     # check that it exists on provider
     if not virtualcenter_provider.mgmt.does_vm_exist(vm_name):
-        pytest.skip("No capandu_vm available on virtualcenter_provider of name {}".format(vm_name))
+        pytest.skip(f"No capandu_vm available on virtualcenter_provider of name {vm_name}")
 
     vms = [all_vms.pop(all_vm_names.index(vm_name))]
 
@@ -622,7 +622,7 @@ def test_policy_condition_multiple_ors(
     # Now perform the policy simulation
     view = navigate_to(filtered_collection, "PolicySimulation")
     # Select the correct policy profile
-    view.fill({"form": {"policy_profile": "{}".format(vm_compliance_policy_profile.description)}})
+    view.fill({"form": {"policy_profile": f"{vm_compliance_policy_profile.description}"}})
 
     # Now check each quadicon and ensure that only cu-24x7 is compliant
     for entity in view.form.entities.get_all():

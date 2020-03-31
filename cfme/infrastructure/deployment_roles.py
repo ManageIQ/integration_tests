@@ -228,7 +228,7 @@ class DeploymentRoleCollection(BaseCollection):
                 try:
                     view.entities.get_entity(name=role.name).ensure_checked()
                 except ItemNotFound:
-                    raise ItemNotFound("Deployment role {} not found".format(role.name))
+                    raise ItemNotFound(f"Deployment role {role.name} not found")
 
             view.toolbar.configuration.item_select('Remove selected items',
                                                    handle_alert=True)
@@ -265,7 +265,7 @@ class Details(CFMENavigateStep):
             self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
-            raise ItemNotFound("Deployment Role {} not found".format(self.obj.name))
+            raise ItemNotFound(f"Deployment Role {self.obj.name} not found")
 
 
 @navigator.register(DeploymentRoles, 'AllForProvider')
@@ -290,4 +290,4 @@ class DetailsFromProvider(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
         except ItemNotFound:
-            raise ItemNotFound("Deployment Role {} not found".format(self.obj.name))
+            raise ItemNotFound(f"Deployment Role {self.obj.name} not found")

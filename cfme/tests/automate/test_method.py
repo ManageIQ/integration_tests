@@ -630,8 +630,8 @@ def test_method_for_log_and_notify(request, klass, notify_level, log_level):
     result = LogValidator(
         "/var/www/miq/vmdb/log/automation.log",
         matched_patterns=[
-            ".*Validating Notification type: automate_user_{}.*".format(log_level),
-            ".*Calling Create Notification type: automate_user_{}.*".format(log_level),
+            f".*Validating Notification type: automate_user_{log_level}.*",
+            f".*Calling Create Notification type: automate_user_{log_level}.*",
             ".*Hello Testing Log & Notify.*"
         ],
         failure_patterns=[".*ERROR.*"]

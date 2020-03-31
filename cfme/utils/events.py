@@ -12,7 +12,7 @@ from cfme.utils.log import create_sublogger
 logger = create_sublogger('events')
 
 
-class EventAttr(object):
+class EventAttr:
     """ EventAttr helps to compare event attributes with specific method.
 
     Contains one event attribute and the method for comparing it.
@@ -42,7 +42,7 @@ class EventAttr(object):
                                                              val=self.value, cmp=self.cmp_func)
 
 
-class Event(object):
+class Event:
     """ Event represents either event received by REST API or an expected event.
 
     :var TARGET_TYPES: Mapping of object types to REST API collections.
@@ -62,13 +62,13 @@ class Event(object):
             if isinstance(arg, EventAttr):
                 self.add_attrs(arg)
             else:
-                logger.warning("arg {} doesn't belong to EventAttr. ignoring it".format(arg))
+                logger.warning(f"arg {arg} doesn't belong to EventAttr. ignoring it")
 
     def __repr__(self):
-        params = ", ".join(["{}={}".format(attr.name, attr.value)
+        params = ", ".join([f"{attr.name}={attr.value}"
                             for attr in
                             self.event_attrs.values()])
-        return "BaseEvent({})".format(params)
+        return f"BaseEvent({params})"
 
     def process_id(self):
         """ Resolves target_id by target_type and target name."""
@@ -80,14 +80,14 @@ class Event(object):
                 # Target type should be present in TARGET_TYPES
                 if target_type not in self.TARGET_TYPES:
                     raise TypeError(
-                        'Type {} is not specified in the TARGET_TYPES.'.format(target_type))
+                        f'Type {target_type} is not specified in the TARGET_TYPES.')
 
                 target_rest = self.TARGET_TYPES[target_type]
                 target_collection = getattr(self._appliance.rest_api.collections, target_rest)
                 o = target_collection.filter(Q('name', '=', target_name))
 
                 if not o.resources:
-                    raise ValueError('{} with name {} not found.'.format(target_type, target_name))
+                    raise ValueError(f'{target_type} with name {target_name} not found.')
 
                 # Set target_id if target object was found
                 self.event_attrs['target_id'] = EventAttr(**{'target_id': o[0].id})
@@ -127,7 +127,7 @@ class RestEventListener(Thread):
     FILTER_ATTRS = ['event_type', 'target_type', 'target_id', 'source']
 
     def __init__(self, appliance):
-        super(RestEventListener, self).__init__()
+        super().__init__()
         self._appliance = appliance
         self._events_to_listen = []
         self._last_processed_id = 0  # this is used to filter out old or processed events
@@ -183,14 +183,14 @@ class RestEventListener(Thread):
                              'matched_events': [],
                              'first_event': first_event}
                 self._events_to_listen.append(exp_event)
-                logger.info("event {} is added to listening queue.".format(evt))
+                logger.info(f"event {evt} is added to listening queue.")
             else:
                 raise ValueError("one of events doesn't belong to Event class")
 
     def start(self):
         self._last_processed_id = self.get_max_record_id()
         self._stop_event.clear()
-        super(RestEventListener, self).start()
+        super().start()
         logger.info('Event Listener has been started')
 
     def stop(self):
@@ -199,7 +199,7 @@ class RestEventListener(Thread):
 
     @property
     def started(self):
-        return super(RestEventListener, self).is_alive()
+        return super().is_alive()
 
     def run(self):
         """ Overrides ThreadEvent run to continuously process events"""
@@ -287,5 +287,5 @@ class RestEventListener(Thread):
         else:
             first_event = True
         evt = self.new_event(*args, **kwargs)
-        logger.info("registering event: {}".format(evt))
+        logger.info(f"registering event: {evt}")
         self.listen_to(evt, callback=None, first_event=first_event)

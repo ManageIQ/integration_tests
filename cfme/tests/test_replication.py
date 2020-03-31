@@ -18,7 +18,7 @@ def create_vm(provider, vm_name):
     try:
         template_name = provider.data['templates']['full_template']['name']
     except KeyError:
-        pytest.skip('Unable to identify full_template for provider: {}'.format(provider))
+        pytest.skip(f'Unable to identify full_template for provider: {provider}')
 
     vm = collection.instantiate(
         vm_name,

@@ -56,7 +56,7 @@ def test_edit_bundle_entry_point(appliance, provider, catalog_item, request):
     vm_name = catalog_item.prov_data['catalog']["vm_name"]
     request.addfinalizer(
         lambda: appliance.collections.infra_vms.instantiate(
-            "{}0001".format(vm_name), provider).cleanup_on_provider()
+            f"{vm_name}0001", provider).cleanup_on_provider()
     )
     bundle_name = fauxfactory.gen_alphanumeric(12, start="bundle_")
     catalog_bundle = appliance.collections.catalog_bundles.create(

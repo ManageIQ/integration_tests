@@ -95,7 +95,7 @@ class Db(Mapping):
         try:
             return self._table(table_name)
         except InvalidRequestError:
-            raise KeyError('Table {} could not be found'.format(table_name))
+            raise KeyError(f'Table {table_name} could not be found')
 
     def __iter__(self):
         """Iterator of table names in this db"""
@@ -283,7 +283,7 @@ class Db(Mapping):
                 return table_cls
             except ArgumentError:
                 # This usually happens on join tables with no PKs
-                logger.info('Unable to create table class for table "{}"'.format(table_name))
+                logger.info(f'Unable to create table class for table "{table_name}"')
                 return None
 
 

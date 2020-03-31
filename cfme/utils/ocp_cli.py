@@ -3,7 +3,7 @@ from cfme.utils.log import logger
 from cfme.utils.ssh import SSHClient
 
 
-class OcpCli(object):
+class OcpCli:
     """This class provides CLI functionality for Openshift provider.
     """
     def __init__(self, provider):

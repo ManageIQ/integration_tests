@@ -107,7 +107,7 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
     _collections = {'hosts': HostsCollection}
 
     def __attrs_post_init__(self):
-        super(InfraProvider, self).__attrs_post_init__()
+        super().__attrs_post_init__()
         self.parent = self.appliance.collections.infra_providers
 
     @variable(alias='db')
@@ -277,7 +277,7 @@ class InfraProviderCollection(BaseCollection):
         if start_ip:
             # TODO: add support of IPv6
             for idx, octet in enumerate(start_ip.split('.'), start=1):
-                key = 'from_ip{idx}'.format(idx=idx)
+                key = f'from_ip{idx}'
                 form_data.update({key: octet})
         if end_ip:
             end_octet = end_ip.split('.')[-1]

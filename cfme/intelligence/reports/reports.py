@@ -391,14 +391,14 @@ class Report(BaseEntity, Updateable):
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
-                'Report "{}" was saved'.format(self.menu_name))
+                f'Report "{self.menu_name}" was saved')
         else:
             view.flash.assert_message(
-                'Edit of Report "{}" was cancelled by the user'.format(self.menu_name))
+                f'Edit of Report "{self.menu_name}" was cancelled by the user')
 
     def copy(self):
         """ Copy a report via UI and return a copy of a Report object"""
-        menu_name = "Copy of {}".format(self.menu_name)
+        menu_name = f"Copy of {self.menu_name}"
 
         view = navigate_to(self, "Copy")
         view.add_button.click()
@@ -423,7 +423,7 @@ class Report(BaseEntity, Updateable):
             if custom_reports_number > 1:
                 view = self.create_view(AllCustomReportsView, wait='5s')
             view.flash.assert_no_error()
-            view.flash.assert_message('Report "{}": Delete successful'.format(self.menu_name))
+            view.flash.assert_message(f'Report "{self.menu_name}": Delete successful')
 
     @cached_property
     def saved_reports(self):

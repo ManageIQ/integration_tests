@@ -14,7 +14,7 @@ from cfme.utils.appliance import find_appliance
 SLAVEID = None
 
 
-class SlaveManager(object):
+class SlaveManager:
     """SlaveManager which coordinates with the master process for parallel testing"""
     def __init__(self, config, slaveid, zmq_endpoint):
         self.config = config

@@ -30,7 +30,7 @@ def vm_crud(provider):
     try:
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     except KeyError:
-        msg = 'Missing template for provider {}'.format(provider.key)
+        msg = f'Missing template for provider {provider.key}'
         logger.exception(msg)
         pytest.skip(msg)
     yield vm

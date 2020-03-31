@@ -347,7 +347,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         # Cause failover to occur
         result = apps[0].ssh_client.run_command(
             'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, "Failed to stop APPLIANCE_PG_SERVICE: {}".format(result.output)
+        assert result.success, f"Failed to stop APPLIANCE_PG_SERVICE: {result.output}"
 
     apps[2].evmserverd.wait_for_running()
     apps[2].wait_for_web_ui()
@@ -498,7 +498,7 @@ def test_appliance_console_external_auth(auth_type, ipa_crud, configured_applian
     # TODO it assumes that first switch is to true, then false.
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to true.*'.format(auth_type.option)],
+                            matched_patterns=[f'.*{auth_type.option} to true.*'],
                             hostname=configured_appliance.hostname)
     evm_tail.start_monitoring()
     command_set = ('ap', RETURN, app_con_menu["update_ext_auth_opt"], auth_type.index, '5',
@@ -507,7 +507,7 @@ def test_appliance_console_external_auth(auth_type, ipa_crud, configured_applian
     assert evm_tail.validate(wait="30s")
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to false.*'.format(auth_type.option)],
+                            matched_patterns=[f'.*{auth_type.option} to false.*'],
                             hostname=configured_appliance.hostname)
 
     evm_tail.start_monitoring()

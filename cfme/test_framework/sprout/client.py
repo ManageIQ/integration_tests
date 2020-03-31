@@ -23,7 +23,7 @@ class AuthException(SproutException):
 
 
 @attr.s
-class APIMethodCall(object):
+class APIMethodCall:
     _client = attr.ib()
     _method_name = attr.ib()
 
@@ -32,7 +32,7 @@ class APIMethodCall(object):
 
 
 @attr.s
-class SproutClient(object):
+class SproutClient:
     _proto = attr.ib(default="http")
     _host = attr.ib(default="localhost")
     _port = attr.ib(default=8000)
@@ -41,7 +41,7 @@ class SproutClient(object):
 
     @property
     def api_entry(self):
-        return "{}://{}:{}/{}".format(self._proto, self._host, self._port, self._entry)
+        return f"{self._proto}://{self._host}:{self._port}/{self._entry}"
 
     def _post(self, **data):
         return requests.post(self.api_entry, data=json.dumps(data))
@@ -62,7 +62,7 @@ class SproutClient(object):
             "args": args,
             "kwargs": kwargs,
         }
-        logger.info("SPROUT: Called {} with {} {}".format(name, args, kwargs))
+        logger.info(f"SPROUT: Called {name} with {args} {kwargs}")
         if self._auth is not None:
             req_data["auth"] = self._auth
         result = self._call_post(**req_data)
@@ -127,7 +127,7 @@ class SproutClient(object):
         wait_for(
             lambda: self.call_method('request_check', str(request_id))['finished'],
             num_sec=wait_time,
-            message='provision {} appliance(s) from sprout'.format(count))
+            message=f'provision {count} appliance(s) from sprout')
         data = self.call_method('request_check', str(request_id))
         logger.debug(data)
         appliances = []

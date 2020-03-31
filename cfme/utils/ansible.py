@@ -282,7 +282,7 @@ def run_ansible(script):
     ansible_playbook_cmd = "ansible-playbook -e ansible_python_interpreter="
     interpreter_path = sys.executable
     script_path = path.join(basic_yml_path, script + ".yml")
-    cmd = '{}{} {}'.format(ansible_playbook_cmd, interpreter_path, script_path)
+    cmd = f'{ansible_playbook_cmd}{interpreter_path} {script_path}'
     return run_cmd(cmd)
 
 
@@ -293,7 +293,7 @@ def run_cmd(cmd):
         print("Status : FAIL", exc.returncode, exc.output)
         return exc.output
     else:
-        print("Output: \n{}\n".format(response))
+        print(f"Output: \n{response}\n")
 
 
 # TODO For further usage with reply statuses test. Not being used at the moment

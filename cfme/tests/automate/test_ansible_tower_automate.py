@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
 
@@ -106,7 +105,7 @@ def test_quota_for_ansible_service(request, appliance, ansible_catalog_item, cat
             provision_request.remove_request()
 
         provision_request.wait_for_request()
-        msg = "Provisioning failed with the message {}".format(provision_request.rest.message)
+        msg = f"Provisioning failed with the message {provision_request.rest.message}"
         assert provision_request.is_succeeded(), msg
 
 

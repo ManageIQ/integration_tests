@@ -25,7 +25,7 @@ def search_filter_obj(appliance, request):
     view = navigate_to(appliance.collections.infra_providers, "All")
 
     view.search.save_filter(
-        "fill_field({}, =, {})".format(param_filter, filter_value),
+        f"fill_field({param_filter}, =, {filter_value})",
         filter_name,
         global_search=request.param,
     )

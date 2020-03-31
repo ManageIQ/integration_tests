@@ -116,7 +116,7 @@ class Domain(BaseEntity, Fillable, Updateable):
             git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None):
         from cfme.automate.explorer.namespace import NamespaceCollection
         self._collections = {'namespaces': NamespaceCollection}
-        super(Domain, self).__init__(collection)
+        super().__init__(collection)
         self.name = name
         self.description = description
         if db_id is not None:
@@ -149,7 +149,7 @@ class Domain(BaseEntity, Fillable, Updateable):
                 table.name == self.name,
                 table.parent_id == None)[0]  # noqa
         except IndexError:
-            raise ItemNotFound('Domain named {} not found in the database'.format(self.name))
+            raise ItemNotFound(f'Domain named {self.name} not found in the database')
 
     @cached_property
     def git_repository(self):
@@ -200,27 +200,27 @@ class Domain(BaseEntity, Fillable, Updateable):
             name = self.name
 
         if self.locked and not self.enabled:
-            return '{} (Locked & Disabled)'.format(name)
+            return f'{name} (Locked & Disabled)'
         elif self.locked and self.enabled:
-            return '{} (Locked)'.format(name)
+            return f'{name} (Locked)'
         elif not self.locked and not self.enabled:
-            return '{} (Disabled)'.format(name)
+            return f'{name} (Disabled)'
         else:
             return name
 
     @property
     def table_display_name(self):
         if self.git_repository:
-            name = '{name} ({ref})'.format(name=self.name, ref=self.git_checkout_value)
+            name = f'{self.name} ({self.git_checkout_value})'
         else:
             name = self.name
 
         if self.locked and not self.enabled:
-            return '{} (Locked & Disabled)'.format(name)
+            return f'{name} (Locked & Disabled)'
         elif self.locked and self.enabled:
-            return '{} (Locked)'.format(name)
+            return f'{name} (Locked)'
         elif not self.locked and not self.enabled:
-            return '{} (Disabled)'.format(name)
+            return f'{name} (Disabled)'
         else:
             return name
 

@@ -13,7 +13,7 @@ def dig_code(node):
     lineno = code_data[1]
     offset = len(code_data[0])
     filename = inspect.getfile(node.function)
-    line_param = '-L {},+{}'.format(lineno, offset)
+    line_param = f'-L {lineno},+{offset}'
     cmd_params = ['git', 'blame', line_param, filename, '--show-email']
 
     proc = subprocess.run(cmd_params, stdin=subprocess.DEVNULL, capture_output=True)

@@ -21,7 +21,7 @@ pytestmark = [
 
 
 @test_requirements.rest
-class TestVmOwnershipRESTAPI(object):
+class TestVmOwnershipRESTAPI:
     @pytest.fixture(scope="function")
     def vm(self, request, provider, appliance):
         return _vm(request, provider, appliance)

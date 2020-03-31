@@ -52,7 +52,7 @@ def test_workload_capacity_and_utilization(request, scenario, appliance):
         monitor_thread.join()
         add_workload_quantifiers(quantifiers, scenario_data)
         timediff = time.time() - starttime
-        logger.info('Finished cleaning up monitoring thread in {}'.format(timediff))
+        logger.info(f'Finished cleaning up monitoring thread in {timediff}')
     request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, quantifiers, scenario_data))
 
     monitor_thread.start()

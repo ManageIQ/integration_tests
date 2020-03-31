@@ -54,4 +54,4 @@ def test_report_view(report, view_mode):
         report.browser.refresh()
         view = navigate_to(report, "Details")
     view.view_selector.select(view_mode)
-    assert view.view_selector.selected == view_mode, "View setting failed for {}".format(view)
+    assert view.view_selector.selected == view_mode, f"View setting failed for {view}"

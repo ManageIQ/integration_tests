@@ -82,7 +82,7 @@ class SoftAssertionError(AssertionError):
     """
     def __init__(self, failed_assertions):
         self.failed_assertions = failed_assertions
-        super(SoftAssertionError, self).__init__(str(self))
+        super().__init__(str(self))
 
     def __str__(self):
         failmsgs = ['']
@@ -199,8 +199,8 @@ def _annotate_failure(fail_message=''):
         fail_message = str(frameinfo.code_context[0]).strip()
 
     filename = get_rel_path(frameinfo.filename)
-    path = '{}:{!r}'.format(filename, frameinfo.lineno)
-    return '{} ({})'.format(fail_message, path)
+    path = f'{filename}:{frameinfo.lineno!r}'
+    return f'{fail_message} ({path})'
 
 
 @pytest.fixture

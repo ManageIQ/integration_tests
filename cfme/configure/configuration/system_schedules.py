@@ -352,7 +352,7 @@ class SystemSchedulesCollection(BaseCollection):
         elif updated:
             view.add_button.click()
         view = self.create_view(ScheduleAllView)
-        view.flash.assert_message('Schedule "{}" was saved'.format(name))
+        view.flash.assert_message(f'Schedule "{name}" was saved')
         schedule = self.instantiate(name, description, active=active, action_type=action_type,
                                    run_type=run_type, run_every=run_type, time_zone=time_zone,
                                    start_date=start_date, start_hour=start_hour,

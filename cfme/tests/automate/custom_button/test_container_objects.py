@@ -64,10 +64,10 @@ def setup_obj(appliance, provider, button_group):
         else:
             obj = getattr(appliance.collections, obj_type.lower()).all()[0]
     except IndexError:
-        pytest.skip("Object not found for {obj} type".format(obj=obj_type))
+        pytest.skip(f"Object not found for {obj_type} type")
 
     if not obj.exists:
-        pytest.skip("{obj} object not exist".format(obj=obj_type))
+        pytest.skip(f"{obj_type} object not exist")
     return obj
 
 

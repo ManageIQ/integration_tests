@@ -77,7 +77,7 @@ def test_dup_db_entry_refresh(setup_temp_appliance_provider, temp_appliance_prec
             appliance.db.client.session.add(copied_db_entry)
     except IntegrityError as ex:
         pytest.fail(
-            'Exception while adding DB entry. {}'.format(ex)
+            f'Exception while adding DB entry. {ex}'
         )
 
     new_db_entry = image_query.filter(image_table.id == copied_db_entry.id).all()

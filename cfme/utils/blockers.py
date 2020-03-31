@@ -12,7 +12,7 @@ from cfme.utils.bz import Bugzilla
 from cfme.utils.log import logger
 
 
-class Blocker(object):
+class Blocker:
     """Base class for all blockers
 
     REQUIRED THING! Any subclass' constructors must accept kwargs and after POPping the values
@@ -64,7 +64,7 @@ class Blocker(object):
                 # React to the typical JIRA format of FOO-42
                 return JIRA(blocker)
             # EXTEND: If someone has other ideas, put them here
-            raise ValueError("Could not parse blocker {}".format(blocker))
+            raise ValueError(f"Could not parse blocker {blocker}")
         else:
             raise ValueError("Wrong specification of the blockers!")
 
@@ -84,7 +84,7 @@ class GH(Blocker):
         return cls._github
 
     def __init__(self, description, **kwargs):
-        super(GH, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._repo = None
         self.issue = None
         self.upstream_only = kwargs.get('upstream_only', False)
@@ -109,14 +109,14 @@ class GH(Blocker):
                 raise ValueError(
                     "Could not parse '{}' as a proper GH issue anchor!".format(str(description)))
             else:
-                self._repo = "{}/{}".format(owner, repo)
+                self._repo = f"{owner}/{repo}"
                 self.issue = int(issue_num)
         else:
             raise ValueError("GH issue specified wrong")
 
     @property
     def data(self):
-        identifier = "{}:{}".format(self.repo, self.issue)
+        identifier = f"{self.repo}:{self.issue}"
         if identifier not in self._issue_cache:
             self._issue_cache[identifier] = self.github.get_repo(self.repo).get_issue(self.issue)
         return self._issue_cache[identifier]
@@ -147,11 +147,11 @@ class GH(Blocker):
         return self._repo or self.DEFAULT_REPOSITORY
 
     def __str__(self):
-        return "GitHub Issue https://github.com/{}/issues/{}".format(self.repo, self.issue)
+        return f"GitHub Issue https://github.com/{self.repo}/issues/{self.issue}"
 
     @property
     def url(self):
-        return "https://github.com/{}/issues/{}".format(self.repo, self.issue)
+        return f"https://github.com/{self.repo}/issues/{self.issue}"
 
 
 class BZ(Blocker):
@@ -166,7 +166,7 @@ class BZ(Blocker):
 
     def __init__(self, bug_id, **kwargs):
         self.ignore_bugs = kwargs.pop("ignore_bugs", [])
-        super(BZ, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.bug_id = int(bug_id)
 
     @property
@@ -241,12 +241,12 @@ class BZ(Blocker):
             logger.error("Bugzilla thrown a fault: %s/%s", code, s)
             logger.warning("Ignoring and taking the bug as non-blocking")
             store.terminalreporter.write(
-                "Bugzila made a booboo: {}/{}\n".format(code, s), bold=True)
+                f"Bugzila made a booboo: {code}/{s}\n", bold=True)
             return False
 
     def get_bug_url(self):
         bz_url = urlparse(self.bugzilla.bugzilla.url)
-        return "{}://{}/show_bug.cgi?id={}".format(bz_url.scheme, bz_url.netloc, self.bug_id)
+        return f"{bz_url.scheme}://{bz_url.netloc}/show_bug.cgi?id={self.bug_id}"
 
     @property
     def url(self):
@@ -268,7 +268,7 @@ class JIRA(Blocker):
         return cls._jira
 
     def __init__(self, jira_id, **kwargs):
-        super(JIRA, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.jira_id = jira_id
 
     @property
@@ -289,4 +289,4 @@ class JIRA(Blocker):
         return issue.fields.status.name.lower() != 'done'
 
     def __str__(self):
-        return 'Jira card {}'.format(self.url)
+        return f'Jira card {self.url}'

@@ -16,7 +16,7 @@ def vnc_ready(addr, port):
     """Checks if VNC port is open and ready"""
     try:
         soc = socket.create_connection((addr, int(port)), timeout=2)
-    except socket.error:
+    except OSError:
         return False
     # docker-proxy opens the port immediately after container is started.
     # Receive data from the socket to check if VNC session is really running.
@@ -68,12 +68,12 @@ def main(watch, vnc, webdriver, image, vncviewer, random_ports):
                 viewer = viewer.replace('%I', ip).replace('%P', str(vnc))
                 ipport = None
             else:
-                ipport = '{}:{}'.format(ip, vnc)
+                ipport = f'{ip}:{vnc}'
             cmd = viewer.split()
             if ipport:
                 cmd.append(ipport)
         else:
-            cmd = ['xdg-open', 'vnc://{}:{}'.format(ip, vnc)]
+            cmd = ['xdg-open', f'vnc://{ip}:{vnc}']
         subprocess.Popen(cmd)
 
     print(" Hit Ctrl+C to end container")

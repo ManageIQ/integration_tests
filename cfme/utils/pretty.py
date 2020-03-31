@@ -24,7 +24,7 @@ def pr_obj(attrs):
     return x
 
 
-class Pretty(object):
+class Pretty:
     """A mixin that prints repr as <MyClass field1=..., field2=...>. The
        fields that will be printed should be stored in the class's
        pretty_attrs attribute (none by default).

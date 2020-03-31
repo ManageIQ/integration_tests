@@ -42,12 +42,12 @@ def prov_data(vm_name, provisioning):
 @pytest.fixture
 def set_project_quota(request, appliance, new_project):
     field, value = request.param
-    new_project.set_quota(**{'{}_cb'.format(field): True, field: value})
+    new_project.set_quota(**{f'{field}_cb': True, field: value})
     yield
     # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.login_admin()
     appliance.server.browser.refresh()
-    new_project.set_quota(**{'{}_cb'.format(field): False})
+    new_project.set_quota(**{f'{field}_cb': False})
 
 
 @pytest.fixture(scope='module')
@@ -75,7 +75,7 @@ def new_group(appliance, new_project, new_role):
     collection = appliance.collections.groups
     group = collection.create(description=fauxfactory.gen_alphanumeric(start="group_"),
                               role=new_role.name,
-                              tenant='My Company/{}'.format(new_project.name))
+                              tenant=f'My Company/{new_project.name}')
     yield group
     group.delete()
 

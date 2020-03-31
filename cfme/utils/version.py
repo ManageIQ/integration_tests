@@ -21,7 +21,7 @@ def get_stream(ver):
     if ver.stream() is not None:
         return ver.stream()
     else:
-        raise LookupError("no matching stream found for version {}".format(ver))
+        raise LookupError(f"no matching stream found for version {ver}")
 
 
 def current_version():
@@ -77,7 +77,7 @@ class VersionPicker(VersionPick):
             return self
         # in order to keep widgetastic.utils.VersionPick behaviour
         elif isinstance(obj, Widget):
-            return super(VersionPicker, self).__get__(obj)
+            return super().__get__(obj)
         else:
             return self.pick(obj.appliance.version)
 

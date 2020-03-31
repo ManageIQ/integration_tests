@@ -9,7 +9,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
     vm = appliance.collections.infra_vms.instantiate(name=vm_name,
                                                      provider=provider,
                                                      template_name=template_name)
-    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
+    note = (f'template {template_name} to vm {vm_name} on provider {provider.key}')
     provisioning_data.update({
         'request': {
             'email': email,
@@ -26,7 +26,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
 
     # Provision Re important in this test
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
-    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    request_description = f'Provision from [{template_name}] to [{vm_name}]'
     provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui', num_sec=num_sec)
     assert provision_request.is_succeeded(method='ui'), "Provisioning failed: {}".format(

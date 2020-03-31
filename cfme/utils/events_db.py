@@ -16,7 +16,7 @@ from cfme.utils.log import create_sublogger
 logger = create_sublogger('events')
 
 
-class EventTool(object):
+class EventTool:
     """EventTool serves as a wrapper to getting the events from the database.
     :var OBJECT_TABLE: Mapping of object types to tables and column names.
     """
@@ -83,7 +83,7 @@ class EventTool(object):
         o = self.appliance.db.client.session.query(id_column).filter(
             name_column == target_name).first()
         if not o:
-            raise ValueError('{} with name {} not found.'.format(target_type, target_name))
+            raise ValueError(f'{target_type} with name {target_name} not found.')
         return o[0]
 
     def query_miq_events(self, target_type=None, target_id=None, event_type=None, since=None,
@@ -144,10 +144,10 @@ class EventTool(object):
         events = self.query_miq_events(target_type, target_id, event_type, time_started, time_ended)
         if len(events) == 0:
             raise AssertionError(
-                'Event {}/{}/{} did not happen.'.format(event_type, target_type, target_id))
+                f'Event {event_type}/{target_type}/{target_id} did not happen.')
 
 
-class EventAttr(object):
+class EventAttr:
     """
     contains one event attribute and the method for comparing it.
     """
@@ -179,7 +179,7 @@ class EventAttr(object):
 
 
 # fixme: would it be better to create event prototype and just clone it ?
-class Event(object):
+class Event:
     """
     represents either db event received by CFME and stored in event_streams or an expected event
     """
@@ -196,13 +196,13 @@ class Event(object):
             if isinstance(arg, EventAttr):
                 self.add_attrs(arg)
             else:
-                logger.warning("arg {} doesn't belong to EventAttr. ignoring it".format(arg))
+                logger.warning(f"arg {arg} doesn't belong to EventAttr. ignoring it")
 
     def __repr__(self):
-        params = ", ".join(["{}={}".format(attr.name, attr.value)
+        params = ", ".join([f"{attr.name}={attr.value}"
                             for attr in
                             self.event_attrs.values()])
-        return "BaseEvent({})".format(params)
+        return f"BaseEvent({params})"
 
     def _populate_defaults(self):
         for attr_name, attr_type in self._tool.event_streams_attributes:
@@ -265,7 +265,7 @@ class Event(object):
                     logger.warning('The attribute {} type {} is absent in DB '
                                    'or type mismatch.'.format(attr.name, attr.type))
         else:
-            raise ValueError("incorrect parameters are passed {}".format(attrs))
+            raise ValueError(f"incorrect parameters are passed {attrs}")
         return self
 
     def build_from_raw_event(self, evt):
@@ -284,7 +284,7 @@ class DbEventListener(Thread):
      events. Runs callback function if expected events have it.
     """
     def __init__(self, appliance):
-        super(DbEventListener, self).__init__()
+        super().__init__()
         self._appliance = appliance
         self._tool = EventTool(self._appliance)
 
@@ -352,7 +352,7 @@ class DbEventListener(Thread):
         if isinstance(evts, Iterable):
             for evt in evts:
                 if isinstance(evt, Event):
-                    logger.info("event {} is added to listening queue".format(evt))
+                    logger.info(f"event {evt} is added to listening queue")
                     self._events_to_listen.append({'event': evt,
                                                    'callback': callback,
                                                    'matched_events': [],
@@ -366,7 +366,7 @@ class DbEventListener(Thread):
         logger.info('Event Listener has been started')
         self.set_last_record()
         self._stop_event.clear()
-        super(DbEventListener, self).start()
+        super().start()
 
     def stop(self):
         logger.info('Event Listener has been stopped')
@@ -377,7 +377,7 @@ class DbEventListener(Thread):
 
     @property
     def started(self):
-        return super(DbEventListener, self).is_alive()
+        return super().is_alive()
 
     def process_events(self):
         """
@@ -390,7 +390,7 @@ class DbEventListener(Thread):
                 sleep(0.2)
                 continue
             for got_event in events:
-                logger.debug("processing event id {}".format(got_event.id))
+                logger.debug(f"processing event id {got_event.id}")
                 got_event = Event(event_tool=self._tool).build_from_raw_event(got_event)
                 for exp_event in self._events_to_listen:
                     if exp_event['first_event'] and len(exp_event['matched_events']) > 0:
@@ -440,5 +440,5 @@ class DbEventListener(Thread):
         else:
             first_event = True
         evt = self.new_event(*args, **kwargs)
-        logger.info("registering event: {}".format(evt))
+        logger.info(f"registering event: {evt}")
         self.listen_to(evt, callback=None, first_event=first_event)

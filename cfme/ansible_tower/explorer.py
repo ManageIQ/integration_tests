@@ -218,7 +218,7 @@ class TowerExplorerJobTemplateDetails(CFMENavigateStep):
         try:
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
         except ItemNotFound:
-            raise ItemNotFound('Could not locate template "{}"'.format(self.obj.name))
+            raise ItemNotFound(f'Could not locate template "{self.obj.name}"')
         row.click()
 
 

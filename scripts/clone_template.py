@@ -119,7 +119,7 @@ def attach_gce_disk(vm):
     """
     logger.info("Attaching a DB disk to GCE instance")
     vm.stop()
-    disk_name = "{}-db-disk".format(vm.name)
+    disk_name = f"{vm.name}-db-disk"
     vm.system.create_disk(disk_name, size_gb=5)
     vm.attach_disk(disk_name)
     vm.start()

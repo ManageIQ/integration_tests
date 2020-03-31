@@ -11,7 +11,7 @@ from sphinx.ext import intersphinx
 from conf import intersphinx_mapping
 
 
-class App(object):
+class App:
     # Fake app for passing to fetch_inventory
     srcdir = "."
 
@@ -30,7 +30,7 @@ def main():
         app = App(package_name)
         inventory = intersphinx.fetch_inventory(app, "", inv_uri)
         for k in inventory.keys():
-            print("{} {}".format(app.name, k))
+            print(f"{app.name} {k}")
             for name, value in inventory[k].items():
                 print("{} {} is <{}:{}>".format(k, value[2], app.name, name))
 

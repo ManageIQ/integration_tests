@@ -116,4 +116,4 @@ class DetailsFromParent(Details):
         if is_filtered:
             return navigate_to(filtered, 'NetworkPorts')
         else:
-            raise DestinationNotFound("Parent filter missing on object {obj}".format(obj=self.obj))
+            raise DestinationNotFound(f"Parent filter missing on object {self.obj}")

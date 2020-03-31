@@ -70,7 +70,7 @@ def main():
         if str(e):
             sys.stderr.write('{}: {}\n'.format(exc_type, str(e)))
         else:
-            sys.stderr.write('{}\n'.format(exc_type))
+            sys.stderr.write(f'{exc_type}\n')
     else:
         if output is not None:
             print(output)

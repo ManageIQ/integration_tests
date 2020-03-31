@@ -161,7 +161,7 @@ class StorageManager(BaseEntity, CustomButtonEventsMixin, Taggable, PolicyProfil
         """Delete storage manager"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select(
-            'Remove this {} from Inventory'.format(self.storage_title),
+            f'Remove this {self.storage_title} from Inventory',
             handle_alert=True
         )
 
@@ -255,7 +255,7 @@ class StorageManagerDetails(CFMENavigateStep):
             row = self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True)
             row.click()
         except NoSuchElementException:
-            raise ItemNotFound('Could not locate {}'.format(self.obj.name))
+            raise ItemNotFound(f'Could not locate {self.obj.name}')
 
 
 @navigator.register(StorageManager, 'Volumes')
@@ -269,7 +269,7 @@ class StorageManagerVolumesAll(CFMENavigateStep):
         if volume_count > 0:
             self.prerequisite_view.entities.relationships.click_at("Cloud Volumes")
         else:
-            raise ItemNotFound('{} has no volumes'.format(self.obj.name))
+            raise ItemNotFound(f'{self.obj.name} has no volumes')
 
 
 @navigator.register(StorageManager, 'AddVolume')

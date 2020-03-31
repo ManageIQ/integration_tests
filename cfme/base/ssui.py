@@ -101,7 +101,7 @@ class LoginPage(View):
         elif method == 'press_enter_after_password':
             self.browser.send_keys(Keys.ENTER, self.password)
         else:
-            raise ValueError('Unknown method {}'.format(method))
+            raise ValueError(f'Unknown method {method}')
         if self.flash.is_displayed:
             self.flash.assert_no_error()
 

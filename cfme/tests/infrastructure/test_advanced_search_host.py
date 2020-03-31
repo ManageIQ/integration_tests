@@ -37,7 +37,7 @@ def hosts_with_vm_count(hosts, host_collection):
 
 
 def get_expression(user_input=False, op=">"):
-    expression = "fill_count(Host / Node.VMs, {}".format(op)
+    expression = f"fill_count(Host / Node.VMs, {op}"
     if user_input:
         return expression + ")"
     else:

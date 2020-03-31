@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ The utility_vm is a vm that is meant to serve various services that the
 tests are requiring.
 

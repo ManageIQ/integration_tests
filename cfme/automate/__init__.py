@@ -97,7 +97,7 @@ class EditDialogView(DialogForm):
     def is_displayed(self):
         return (
             self.in_customization and self.service_dialogs.is_opened and
-            self.title.text == "Editing Dialog {}".format(self.label)
+            self.title.text == f"Editing Dialog {self.label}"
         )
 
 

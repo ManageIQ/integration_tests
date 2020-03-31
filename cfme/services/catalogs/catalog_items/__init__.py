@@ -366,7 +366,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         assert view.is_displayed
         view.flash.assert_success_message(VersionPick(
             {LOWEST: 'The selected Catalog Item was deleted',
-             '5.11': 'The catalog item "{}" has been successfully deleted'.format(self.name)}))
+             '5.11': f'The catalog item "{self.name}" has been successfully deleted'}))
 
     def copy(self, name=None):
         view = navigate_to(self, 'Copy')
@@ -408,7 +408,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         path = view.catalog_items.tree.read()
 
         # For 5.11+ no group tagging hover points group or button
-        path.extend(["Actions", "{} (Group)".format(name)])
+        path.extend(["Actions", f"{name} (Group)"])
 
         try:
             view.catalog_items.tree.fill(path)
@@ -421,7 +421,7 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         path = view.catalog_items.tree.read()
 
         # For 5.11+ no group tagging hover points group or button
-        path.extend(["Actions", "{} (Group)".format(name)])
+        path.extend(["Actions", f"{name} (Group)"])
         view.catalog_items.tree.fill(path)
         view.configuration.item_select("Remove this Button Group", handle_alert=True)
         view.flash.assert_no_error()

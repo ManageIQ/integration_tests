@@ -33,7 +33,7 @@ def pytest_generate_tests(metafunc):
     for role_access, context in roles_and_context:
         for group in role_access.keys():
             parameter_list.append((group, role_access, context))
-            id_list.append('{}-{}'.format(group, context))
+            id_list.append(f'{group}-{context}')
     metafunc.parametrize('group_name, role_access, context', parameter_list)
 
 
@@ -67,7 +67,7 @@ def test_group_roles(temp_appliance_preconfig_long, setup_aws_auth_provider, gro
         password = credentials[iam_group_name]['password']
         fullname = credentials[iam_group_name]['fullname']
     except KeyError:
-        pytest.fail('No match in credentials file for group "{}"'.format(iam_group_name))
+        pytest.fail(f'No match in credentials file for group "{iam_group_name}"')
 
     with temp_appliance_preconfig_long.context.use(context):
         # fullname overrides user.name attribute, but doesn't impact login with username credential

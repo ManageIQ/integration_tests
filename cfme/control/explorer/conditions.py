@@ -219,7 +219,7 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
             cancel: Whether to cancel the deletion (default False).
         """
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Delete this {} Condition".format(self.FIELD_VALUE),
+        view.configuration.item_select(f"Delete this {self.FIELD_VALUE} Condition",
             handle_alert=not cancel)
         if cancel:
             assert view.is_displayed
@@ -271,7 +271,7 @@ class ConditionCollection(BaseCollection):
         view.wait_displayed()
         view.add_button.click()
         view = condition.create_view(ConditionDetailsView, wait="10s")
-        view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
+        view.flash.assert_success_message(f'Condition "{condition.description}" was added')
         return condition
 
     def all(self):
@@ -295,10 +295,10 @@ class ConditionNew(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.conditions.tree.click_path(
             "All Conditions",
-            "{} Conditions".format(self.obj.TREE_NODE)
+            f"{self.obj.TREE_NODE} Conditions"
         )
         self.prerequisite_view.configuration.item_select(
-            "Add a New {} Condition".format(self.obj.PRETTY))
+            f"Add a New {self.obj.PRETTY} Condition")
 
 
 @navigator.register(BaseCondition, "Edit")
@@ -309,7 +309,7 @@ class ConditionEdit(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.view.conditions.tree.click_path(
             "All Conditions",
-            "{} Conditions".format(self.obj.TREE_NODE),
+            f"{self.obj.TREE_NODE} Conditions",
             self.obj.description
         )
         self.prerequisite_view.configuration.item_select("Edit this Condition")
@@ -323,7 +323,7 @@ class ConditionDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.conditions.tree.click_path(
             "All Conditions",
-            "{} Conditions".format(self.obj.TREE_NODE),
+            f"{self.obj.TREE_NODE} Conditions",
             self.obj.description
         )
 
@@ -336,7 +336,7 @@ class PolicyConditionDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.policies.tree.click_path(
             "All Policies",
-            "{} Policies".format(self.obj.context_policy.TYPE),
+            f"{self.obj.context_policy.TYPE} Policies",
             "{} {} Policies".format(
                 self.obj.context_policy.TREE_NODE,
                 self.obj.context_policy.TYPE

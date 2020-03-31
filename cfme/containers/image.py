@@ -87,7 +87,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
         if wait_for_finish:
             try:
                 task = self.appliance.collections.tasks.instantiate(
-                    name="Container Image Analysis: '{}'".format(self.name), tab='AllTasks')
+                    name=f"Container Image Analysis: '{self.name}'", tab='AllTasks')
                 task.wait_for_finished(timeout=timeout)
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
@@ -128,7 +128,7 @@ class Image(BaseEntity, Taggable, Labelable, LoadDetailsMixin, PolicyProfileAssi
         elif text.startswith("compliant"):
             return True
         else:
-            raise ValueError("{} is not a known state for compliance".format(text))
+            raise ValueError(f"{text} is not a known state for compliance")
 
     def scan(self):
         """ Start SmartState Analysis Scan of OCP Image.
@@ -243,9 +243,9 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssi
         images_view.toolbar.configuration.item_select(
             'Perform SmartState Analysis', handle_alert=True)
         for image_entity in image_entities:
-            image_entities_names.append("Container Image Analysis: '{}'".format(image_entity.name))
+            image_entities_names.append(f"Container Image Analysis: '{image_entity.name}'")
             images_view.flash.assert_success_message(
-                '"{}": Analysis successfully initiated'.format(image_entity.name), partial=True
+                f'"{image_entity.name}": Analysis successfully initiated', partial=True
             )
 
         if wait_for_finish:

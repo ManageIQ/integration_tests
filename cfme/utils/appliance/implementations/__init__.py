@@ -2,7 +2,7 @@ from cfme.utils.browser import manager
 from cfme.utils.log import logger
 
 
-class Implementation(object):
+class Implementation:
     """UI implementation using the normal ux"""
 
     navigator = None

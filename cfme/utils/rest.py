@@ -62,7 +62,7 @@ def assert_response(
                 last_response.status_code, http_status)
     else:
         # No specific status_code specified, simply check if response was a success
-        assert last_response, 'The request failed with {}'.format(last_response.status_code)
+        assert last_response, f'The request failed with {last_response.status_code}'
 
     try:
         content = last_response.json()
@@ -98,7 +98,7 @@ def assert_response(
             )
             task_message = getattr(task, 'message', '')
             assert task.status.lower() == 'ok', (
-                'Task failed with status "{}", message "{}"'.format(task.status, task_message))
+                f'Task failed with status "{task.status}", message "{task_message}"')
 
     if 'results' in content:
         results = content['results']
@@ -132,7 +132,7 @@ def create_resource(rest_api, col_name, col_data, col_action='create', substr_se
         action = getattr(collection.action, col_action)
     except AttributeError:
         raise OptionNotAvailable(
-            "Action `{}` for {} is not implemented in this version".format(col_action, col_name))
+            f"Action `{col_action}` for {col_name} is not implemented in this version")
 
     entities = action(*col_data)
     action_response = rest_api.response
@@ -217,7 +217,7 @@ def query_resource_attributes(resource, soft_assert=None):
 
     for attr in attrs_to_query:
         try:
-            response = rest_api.get('{}?attributes={}'.format(service_href, attr))
+            response = rest_api.get(f'{service_href}?attributes={attr}')
             assert rest_api.response, 'Failed response'
         except Exception as err:
             failed.append(FailedRecord(attr, 'attribute', err, rest_api.response))
@@ -244,7 +244,7 @@ def query_resource_attributes(resource, soft_assert=None):
 
     if soft_assert:
         for failure in outcome.failed:
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     return outcome

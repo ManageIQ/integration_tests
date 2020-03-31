@@ -27,7 +27,7 @@ def set_default(provider, request):
        be created with specific values for these entries.
     """
     with_prov = (
-        "Datastore", "ManageIQ (Locked)", "{}".format(provider.string_name), "VM", "Provisioning",
+        "Datastore", "ManageIQ (Locked)", f"{provider.string_name}", "VM", "Provisioning",
         "StateMachines", "ProvisionRequestApproval", "Default"
     )
     default = (

@@ -636,7 +636,7 @@ class CompletedPlans(CFMENavigateStep):
         self.prerequisite_view.dashboard_cards.completed_plans.click()
         self.prerequisite_view.wait_displayed()
         self.prerequisite_view.items_on_page.item_select("15")
-        self.prerequisite_view.search_box.fill("{}\n\n".format(self.obj.name))
+        self.prerequisite_view.search_box.fill(f"{self.obj.name}\n\n")
 
 
 @navigator.register(MigrationPlanCollection, "Archived")

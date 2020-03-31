@@ -91,6 +91,6 @@ def add_server_roles(item, server_roles, server_roles_mode="add"):
 
     if not available_roles.issuperset(set(roles_with_vals)):
         unknown_roles = ', '.join(set(roles_with_vals) - available_roles)
-        raise Exception('Unknown server role(s): {}'.format(unknown_roles))
+        raise Exception(f'Unknown server role(s): {unknown_roles}')
 
     server_settings.update_server_roles_db(roles_with_vals)

@@ -29,7 +29,7 @@ def test_get_hardware_attributes(appliance, physical_switch, attribute):
         casecomponent: Rest
         initialEstimate: 1/4h
     """
-    expanded_attribute = 'hardware.{}'.format(attribute)
+    expanded_attribute = f'hardware.{attribute}'
     physical_switch.reload(attributes=[expanded_attribute])
     assert_response(appliance)
     assert physical_switch.hardware[attribute] is not None

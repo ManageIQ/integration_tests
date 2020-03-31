@@ -22,13 +22,13 @@ def rails_delete_filter(request):
     yield
 
     filter_name = getattr(request.function, "filter_name", None)
-    logger.debug('rails_delete_filter: calling rails to delete filter: {}'.format(filter_name))
+    logger.debug(f'rails_delete_filter: calling rails to delete filter: {filter_name}')
     if filter_name:
         try:
             store.current_appliance.ssh_client.run_rails_command(
                 '"MiqSearch.where(:description => {}).first.delete"'.format(repr(filter_name)))
         except Exception as ex:
-            logger.warning('rails_delete_filter: exception during delete. {}'.format(ex))
+            logger.warning(f'rails_delete_filter: exception during delete. {ex}')
             pass
     else:
         logger.warning('rails_delete_filter: failed to get filter_name')
@@ -108,7 +108,7 @@ def test_provider_filter_save_cancel(rails_delete_filter, advanced_search_view):
     """
     # bind filter_name to the function for fixture cleanup
     test_provider_filter_save_cancel.filter_name = fauxfactory.gen_alphanumeric()
-    logger.debug('Set filter_name to: {}'.format(test_provider_filter_save_cancel.filter_name))
+    logger.debug(f'Set filter_name to: {test_provider_filter_save_cancel.filter_name}')
 
     # Try save filter
     assert advanced_search_view.entities.search.save_filter(
@@ -133,7 +133,7 @@ def test_provider_filter_save_and_load(rails_delete_filter, advanced_search_view
     """
     # bind filter_name to the function for fixture cleanup
     test_provider_filter_save_and_load.filter_name = fauxfactory.gen_alphanumeric()
-    logger.debug('Set filter_name to: {}'.format(test_provider_filter_save_and_load.filter_name))
+    logger.debug(f'Set filter_name to: {test_provider_filter_save_and_load.filter_name}')
 
     # Save filter
     assert advanced_search_view.entities.search.save_filter(
@@ -254,7 +254,7 @@ def test_can_delete_provider_filter(advanced_search_view):
         initialEstimate: 1/10h
     """
     filter_name = fauxfactory.gen_alphanumeric()
-    logger.debug('Set filter_name to: {}'.format(filter_name))
+    logger.debug(f'Set filter_name to: {filter_name}')
     assert advanced_search_view.entities.search.save_filter(
         "fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
     advanced_search_view.flash.assert_no_error()

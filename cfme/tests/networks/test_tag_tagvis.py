@@ -42,7 +42,7 @@ network_test_items = [
 def child_visibility(appliance, network_provider, relationship, view):
     network_provider_view = navigate_to(network_provider, 'Details')
     if network_provider_view.entities.relationships.get_text_of(relationship) == "0":
-        pytest.skip("There are no relationships for {}".format(relationship))
+        pytest.skip(f"There are no relationships for {relationship}")
     network_provider_view.entities.relationships.click_at(relationship)
     relationship_view = appliance.browser.create_view(view)
     try:

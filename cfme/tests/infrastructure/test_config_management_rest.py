@@ -21,15 +21,15 @@ def authentications(appliance, provider):
     """Creates and returns authentication resources under /api/authentications."""
     auth_num = 2
     collection = appliance.rest_api.collections.authentications
-    prov = appliance.rest_api.collections.providers.get(name='{} %'.format(provider.name))
+    prov = appliance.rest_api.collections.providers.get(name=f'{provider.name} %')
     data = []
     cred_names = []
     for __ in range(auth_num):
         uniq = fauxfactory.gen_alphanumeric(5)
-        cred_name = 'test_credentials_{}'.format(uniq)
+        cred_name = f'test_credentials_{uniq}'
         cred_names.append(cred_name)
         data.append({
-            'description': 'Test Description {}'.format(uniq),
+            'description': f'Test Description {uniq}',
             'name': cred_name,
             'related': {},
             'user': 1,
@@ -69,7 +69,7 @@ def _check_edited_authentications(appliance, authentications, new_names):
         assert auth.name == record[0].name
 
 
-class TestAuthenticationsRESTAPI(object):
+class TestAuthenticationsRESTAPI:
     def test_query_authentications_attributes(self, authentications, soft_assert):
         """Tests access to authentication attributes.
 

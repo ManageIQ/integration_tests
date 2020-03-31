@@ -253,7 +253,7 @@ class BaseButton(BaseEntity, Updateable):
 
         # Group and User are EVM type objects. workaround for <5.11
         target_type = (
-            "EVM {}".format(self.group.type)
+            f"EVM {self.group.type}"
             if self.group.type in ["Group", "User"] and self.appliance.version < "5.11"
             else self.group.type
         )
@@ -644,9 +644,9 @@ class ButtonGroupDetailView(AutomateCustomizationView):
             expected_title = '{} Button Group "{}"'.format(obj.type, "Unassigned Buttons")
         else:
             expected_title = (
-                'Button Group "{}"'.format(obj.text)
+                f'Button Group "{obj.text}"'
                 if self.browser.product_version < "5.11"
-                else '{} Button Group "{}"'.format(obj.type, obj.text)
+                else f'{obj.type} Button Group "{obj.text}"'
             )
 
         return (

@@ -330,7 +330,7 @@ def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
         endpoints['default'].ca_certs = None
 
         prov.endpoints = endpoints
-        prov.name = "{}-no-tls".format(provider.name)
+        prov.name = f"{provider.name}-no-tls"
 
     prov.create()
     prov.validate_stats(ui=True)

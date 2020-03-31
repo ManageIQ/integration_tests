@@ -10,7 +10,7 @@ from cfme.utils.appliance import IPAppliance
 
 
 def log(message):
-    print("[VDDK-INSTALL] {}".format(message))
+    print(f"[VDDK-INSTALL] {message}")
 
 
 def main():

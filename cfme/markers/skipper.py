@@ -53,11 +53,11 @@ def pytest_configure(config):
             marks_to_skip.append(dest)
 
     # Build all the marks to skip into one flat mark expression rather than nesting
-    skip_mark_expr = ' and '.join(['not {}'.format(mark) for mark in marks_to_skip])
+    skip_mark_expr = ' and '.join([f'not {mark}' for mark in marks_to_skip])
 
     # modify (or set) the mark expression to exclude tests as configured by the commandline flags
     if skip_mark_expr:
         if config.option.markexpr:
-            config.option.markexpr = '({}) and ({})'.format(skip_mark_expr, config.option.markexpr)
+            config.option.markexpr = f'({skip_mark_expr}) and ({config.option.markexpr})'
         else:
             config.option.markexpr = skip_mark_expr

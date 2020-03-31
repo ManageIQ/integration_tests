@@ -173,15 +173,15 @@ def test_updated_tag_name_on_vm(provider, tag, request):
 
 
 @test_requirements.rest
-class TestTagsViaREST(object):
+class TestTagsViaREST:
 
     COLLECTIONS_BULK_TAGS = ("services", "vms", "users")
 
     def _service_body(self, **kwargs):
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
-            'name': 'test_rest_service_{}'.format(uid),
-            'description': 'Test REST Service {}'.format(uid),
+            'name': f'test_rest_service_{uid}',
+            'description': f'Test REST Service {uid}',
         }
         body.update(kwargs)
         return body
@@ -297,7 +297,7 @@ class TestTagsViaREST(object):
             assert_response(appliance)
         for index, name in enumerate(new_names):
             record, _ = wait_for(lambda:
-                appliance.rest_api.collections.tags.find_by(name="%/{}".format(name)) or False,
+                appliance.rest_api.collections.tags.find_by(name=f"%/{name}") or False,
                 num_sec=180,
                 delay=10)
             assert record[0].id == edited[index].id
@@ -383,7 +383,7 @@ class TestTagsViaREST(object):
         collection = getattr(appliance.rest_api.collections, collection_name)
         collection.reload()
         if not collection.all:
-            pytest.skip("No available entity in {} to assign tag".format(collection_name))
+            pytest.skip(f"No available entity in {collection_name} to assign tag")
         entity = collection[-1]
         tag = tags_mod[0]
         try:

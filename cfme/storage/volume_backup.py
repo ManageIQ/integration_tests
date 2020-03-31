@@ -159,7 +159,7 @@ class VolumeBackup(BaseEntity, Taggable):
         view = navigate_to(self, 'Restore')
         view.volume_name.fill(name)
         view.save.click()
-        view.flash.assert_success_message('Restoring Cloud Volume "{}"'.format(self.name))
+        view.flash.assert_success_message(f'Restoring Cloud Volume "{self.name}"')
 
     def refresh(self):
         self.provider.refresh_provider_relationships()
@@ -243,7 +243,7 @@ class VolumeBackupCollection(BaseCollection):
                 try:
                     view.entities.get_entity(name=backup.name).ensure_checked()
                 except ItemNotFound:
-                    raise ItemNotFound("Volume backup {} not found".format(backup.name))
+                    raise ItemNotFound(f"Volume backup {backup.name} not found")
 
             view.toolbar.configuration.item_select('Delete selected Backups', handle_alert=True)
 
@@ -280,7 +280,7 @@ class Details(CFMENavigateStep):
             self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
-            raise ItemNotFound('Could not locate volume backup {}'.format(self.obj.name))
+            raise ItemNotFound(f'Could not locate volume backup {self.obj.name}')
 
 
 @navigator.register(VolumeBackup, 'EditTagsFromDetails')

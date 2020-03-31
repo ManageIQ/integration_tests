@@ -51,8 +51,8 @@ def categories(request, appliance, num=1):
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric().lower()
         ctg_data.append({
-            'name': 'test_category_{}'.format(uniq),
-            'description': 'test_category_{}'.format(uniq)
+            'name': f'test_category_{uniq}',
+            'description': f'test_category_{uniq}'
         })
 
     return _creating_skeleton(request, appliance, 'categories', ctg_data)
@@ -65,8 +65,8 @@ def tags(request, appliance, categories):
         uniq = fauxfactory.gen_alphanumeric().lower()
         refs = [{'id': ctg.id}, {'href': ctg.href}, {'name': ctg.name}]
         tags.append({
-            'name': 'test_tag_{}'.format(uniq),
-            'description': 'test_tag_{}'.format(uniq),
+            'name': f'test_tag_{uniq}',
+            'description': f'test_tag_{uniq}',
             'category': refs[index % 3]
         })
 
@@ -77,23 +77,23 @@ def dialog_rest(request, appliance):
     """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
     data = {
-        "description": "my dialog {}".format(uid),
+        "description": f"my dialog {uid}",
         "label": uid,
         "buttons": "submit,cancel",
         "dialog_tabs": [{
-            "description": "my tab desc {}".format(uid),
+            "description": f"my tab desc {uid}",
             "position": 0,
-            "label": "tab_{}".format(uid),
+            "label": f"tab_{uid}",
             "display": "edit",
             "dialog_groups": [{
-                "description": "my box desc {}".format(uid),
-                "label": "box_{}".format(uid),
+                "description": f"my box desc {uid}",
+                "label": f"box_{uid}",
                 "display": "edit",
                 "position": 0,
                 "dialog_fields": [{
                     "name": "service_name",
-                    "description": "my ele desc {}".format(uid),
-                    "label": "ele_{}".format(uid),
+                    "description": f"my ele desc {uid}",
+                    "label": f"ele_{uid}",
                     "data_type": "string",
                     "display": "edit",
                     "required": False,
@@ -164,7 +164,7 @@ def services(request, appliance, provider, service_dialog=None, service_catalog=
                                                             .format(service_request.message))
 
     service_name = get_dialog_service_name(appliance, service_request, service_template.name)
-    assert '[{}]'.format(service_name) in service_request.message
+    assert f'[{service_name}]' in service_request.message
     provisioned_service = appliance.rest_api.collections.services.get(
         service_template_id=service_template.id)
 
@@ -174,7 +174,7 @@ def services(request, appliance, provider, service_dialog=None, service_catalog=
             provisioned_service.action.delete()
         except Exception:
             # service can be deleted by test
-            logger.warning('Failed to delete service `{}`.'.format(service_name))
+            logger.warning(f'Failed to delete service `{service_name}`.')
 
     # tests expect iterable
     return [provisioned_service]
@@ -300,8 +300,8 @@ def service_templates_rest(request, appliance, service_dialog=None, service_cata
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
         data.append({
-            "name": 'item_{}'.format(uniq),
-            "description": "my catalog {}".format(uniq),
+            "name": f'item_{uniq}',
+            "description": f"my catalog {uniq}",
             "service_type": "atomic",
             "prov_type": "generic",
             "display": True,
@@ -449,8 +449,8 @@ def tenants(request, appliance, num=1, **kwargs):
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric()
         data.append({
-            'description': kwargs.get("description", 'test_tenants_{}'.format(uniq)),
-            'name': kwargs.get("name", 'test_tenants_{}'.format(uniq)),
+            'description': kwargs.get("description", f'test_tenants_{uniq}'),
+            'name': kwargs.get("name", f'test_tenants_{uniq}'),
             'divisible': kwargs.get("divisible", 'true'),
             'use_config_for_attributes': kwargs.get("use_config_for_attributes", 'false'),
             'parent': {'href': parent.href}
@@ -471,10 +471,10 @@ def users(request, appliance, num=1, **kwargs):
         uniq = fauxfactory.gen_alphanumeric(4).lower()
         data.append(
             {
-                "userid": kwargs.get("userid", "user_{}".format(uniq)),
-                "name": kwargs.get("name", "name_{}".format(uniq)),
+                "userid": kwargs.get("userid", f"user_{uniq}"),
+                "name": kwargs.get("name", f"name_{uniq}"),
                 "password": kwargs.get("password", fauxfactory.gen_alphanumeric()),
-                "email": kwargs.get("email", "{}@example.com".format(uniq)),
+                "email": kwargs.get("email", f"{uniq}@example.com"),
                 "group": {"description": kwargs.get("group", "EvmGroup-user_self_service")},
             }
         )
@@ -527,8 +527,8 @@ def orchestration_templates(request, appliance, num=2):
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
         data.append({
-            'name': 'test_{}'.format(uniq),
-            'description': 'Test Template {}'.format(uniq),
+            'name': f'test_{uniq}',
+            'description': f'Test Template {uniq}',
             'type': 'ManageIQ::Providers::Amazon::CloudManager::OrchestrationTemplate',
             'orderable': False,
             'draft': False,
@@ -555,8 +555,8 @@ def conditions(request, appliance, num=2):
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
         data_dict = {
-            'name': 'test_condition_{}'.format(uniq),
-            'description': 'Test Condition {}'.format(uniq),
+            'name': f'test_condition_{uniq}',
+            'description': f'Test Condition {uniq}',
             'expression': {'=': {'field': 'ContainerImage-architecture', 'value': 'dsa'}},
             'towhat': 'ExtManagementSystem'
         }
@@ -573,8 +573,8 @@ def policies(request, appliance, num=2):
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
         data.append({
-            'name': 'test_policy_{}'.format(uniq),
-            'description': 'Test Policy {}'.format(uniq),
+            'name': f'test_policy_{uniq}',
+            'description': f'Test Policy {uniq}',
             'mode': 'compliance',
             'towhat': 'ExtManagementSystem',
             'conditions_ids': [conditions_response[0].id, conditions_response[1].id],
@@ -598,7 +598,7 @@ def get_dialog_service_name(appliance, service_request, *item_names):
     """
     def _regex_parse_name(items, message):
         for item in items:
-            match = re.search(r'\[({}[0-9-]*)\] '.format(item), message)
+            match = re.search(fr'\[({item}[0-9-]*)\] ', message)
             if match:
                 return match.group(1)
             else:
@@ -616,7 +616,7 @@ def custom_button_sets(request, appliance, button_type, icon="fa-user", color="#
             "name": fauxfactory.gen_alphanumeric(start="grp_"),
             "description": fauxfactory.gen_alphanumeric(15, start="grp_desc_"),
             "set_data": {
-                "button_icon": "ff {}".format(icon),
+                "button_icon": f"ff {icon}",
                 "button_color": color,
                 "display": True,
                 "applies_to_class": button_type,
@@ -638,7 +638,7 @@ def custom_buttons(
             "name": fauxfactory.gen_alphanumeric(12, start="btn_desc_"),
             "options": {
                 "button_color": color,
-                "button_icon": "ff {}".format(icon),
+                "button_icon": f"ff {icon}",
                 "display": display,
             },
             "resource_action": {"ae_class": "PROCESS", "ae_namespace": "SYSTEM"},

@@ -42,7 +42,7 @@ class AzureInstance(Instance):
 
     @property
     def vm_default_args(self):
-        inst_args = super(AzureInstance, self).vm_default_args
+        inst_args = super().vm_default_args
         provisioning = self.provider.data['provisioning']
         vm_user = provisioning.get('customize_username')
         vm_password = provisioning.get('customize_password')
@@ -64,7 +64,7 @@ class AzureInstance(Instance):
 
     @property
     def vm_default_args_rest(self):
-        inst_args = super(AzureInstance, self).vm_default_args_rest
+        inst_args = super().vm_default_args_rest
         provisioning = self.provider.data['provisioning']
         vm_user = provisioning.get('customize_username')
         vm_password = provisioning.get('customize_password')

@@ -193,7 +193,7 @@ class InfrastructureMapping(BaseEntity):
     """
 
     @attr.s
-    class InfraMappingComponent(object):
+    class InfraMappingComponent:
         """A datastore/network/cluster mapping component
         Modeling a many:many relationship of a single component mapping
         """
@@ -324,4 +324,4 @@ class EditInfrastructureMapping(CFMENavigateStep):
 
     def step(self):
         if not self.prerequisite_view.infra_mapping_list.edit_mapping(self.obj.name):
-            raise ItemNotFound("Mapping {} not found".format(self.obj.name))
+            raise ItemNotFound(f"Mapping {self.obj.name} not found")

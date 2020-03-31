@@ -422,9 +422,9 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
             KeyError if the region resource isn't found by the filter
             AssertionError if more than one region matches the filter
         """
-        filter_query = '?expand=resources&filter[]=region={}'.format(self.number)
+        filter_query = f'?expand=resources&filter[]=region={self.number}'
         region_filter = self.appliance.rest_api.get(
-            '{}{}'.format(self.appliance.rest_api.collections.regions._href, filter_query)
+            f'{self.appliance.rest_api.collections.regions._href}{filter_query}'
         )
         region, = region_filter['resources']
         return '/'.join([self.appliance.rest_api.collections.regions._href,

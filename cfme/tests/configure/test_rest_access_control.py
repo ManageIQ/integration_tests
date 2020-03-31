@@ -15,7 +15,7 @@ from cfme.utils.wait import wait_for
 pytestmark = [test_requirements.rest]
 
 
-class TestTenantsViaREST(object):
+class TestTenantsViaREST:
     @pytest.fixture(scope="function")
     def tenants(self, request, appliance):
         num_tenants = 3
@@ -137,7 +137,7 @@ class TestTenantsViaREST(object):
         delete_resources_from_collection(tenants)
 
 
-class TestRolesViaREST(object):
+class TestRolesViaREST:
     @pytest.fixture(scope="function")
     def roles(self, request, appliance):
         num_roles = 3
@@ -310,7 +310,7 @@ class TestRolesViaREST(object):
         assert feature.id not in [f.id for f in role.features.all]
 
 
-class TestGroupsViaREST(object):
+class TestGroupsViaREST:
     @pytest.fixture(scope="function")
     def tenants(self, request, appliance):
         return _tenants(request, appliance, num=1)
@@ -443,7 +443,7 @@ class TestGroupsViaREST(object):
         delete_resources_from_collection(groups, not_found=True)
 
 
-class TestUsersViaREST(object):
+class TestUsersViaREST:
     @pytest.fixture(scope="function")
     def users_data(self, request, appliance):
         def _users_data(num=3):
@@ -518,8 +518,8 @@ class TestUsersViaREST(object):
         """
         uniq = fauxfactory.gen_alphanumeric(4).upper()
         data = {
-            "userid": "rest_{}".format(uniq),
-            "name": "REST User {}".format(uniq),
+            "userid": f"rest_{uniq}",
+            "name": f"REST User {uniq}",
             "password": fauxfactory.gen_alphanumeric(),
             "email": "user@example.com",
             "group": "EvmGroup-user_self_service",

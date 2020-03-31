@@ -126,7 +126,7 @@ def edit_requests(collection, rest_api, requests_pending, from_detail):
     else:
         identifiers = []
         for i, resource in enumerate(requests_pending):
-            loc = ({'id': resource.id}, {'href': '{}/{}'.format(collection._href, resource.id)})
+            loc = ({'id': resource.id}, {'href': f'{collection._href}/{resource.id}'})
             identifiers.append(loc[i % 2])
         collection.action.edit(*identifiers, **body)
         assert_response(rest_api)
@@ -136,7 +136,7 @@ def edit_requests(collection, rest_api, requests_pending, from_detail):
         assert request.options['arbitrary_key_allowed'] == 'test_rest'
 
 
-class TestAutomationRequestsRESTAPI(object):
+class TestAutomationRequestsRESTAPI:
     """Tests using /api/automation_requests."""
 
     @pytest.fixture(scope='function')
@@ -276,7 +276,7 @@ class TestAutomationRequestsRESTAPI(object):
         deny_requests(collection, appliance.rest_api, response, from_detail=False)
 
 
-class TestAutomationRequestsCommonRESTAPI(object):
+class TestAutomationRequestsCommonRESTAPI:
     """Tests using /api/requests (common collection for all requests types)."""
 
     @pytest.fixture(scope='function')

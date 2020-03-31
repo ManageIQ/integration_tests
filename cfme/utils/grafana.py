@@ -22,7 +22,7 @@ def get_scenario_dashboard_urls(scenario, from_ts, to_ts, output_to_log=True):
                 stub.format(g_ip, g_port, dashboard_name, from_ts, to_ts,
                             scenario['replication_master']['appliance_name'])
         if output_to_log:
-            logger.info('Grafana URLs: {}'.format(grafana_urls))
+            logger.info(f'Grafana URLs: {grafana_urls}')
         return grafana_urls
     else:
         logger.warning('Grafana integration is not enabled')

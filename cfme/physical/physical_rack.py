@@ -88,7 +88,7 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
 
         def _looking_for_state_change():
             entity = view.entities.get_entity(name=self.name)
-            return "currentstate-{}".format(desired_state) in entity.data['state']
+            return f"currentstate-{desired_state}" in entity.data['state']
 
         wait_for(_looking_for_state_change, fail_func=view.browser.refresh, num_sec=timeout)
 
@@ -130,9 +130,9 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
                     raise StatsDoNotMatch(msg.format(stat, self.name, rack_stat, cfme_stat))
             except KeyError:
                 raise RackStatsDoesNotContain(
-                    "Rack stats information does not contain '{}'".format(stat))
+                    f"Rack stats information does not contain '{stat}'")
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
+                raise ProviderHasNoProperty(f"Provider does not know how to get '{stat}'")
 
         # Verify that the inventory retrieved from wrapanapi match those retrieved
         # from the UI
@@ -148,7 +148,7 @@ class PhysicalRack(BaseEntity, Updateable, Pretty, Taggable):
                                                      cfme_inventory))
             except KeyError:
                 raise RackStatsDoesNotContain(
-                    "Rack inventory information does not contain '{}'".format(inventory))
+                    f"Rack inventory information does not contain '{inventory}'")
             except AttributeError:
                 msg = "Provider does not know how to get '{}'"
                 raise ProviderHasNoProperty(msg.format(inventory))
@@ -206,7 +206,7 @@ class ComputePhysicalInfrastructureRacksView(BaseLoggedInPage):
 class PhysicalRackEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(PhysicalRackEntity, self).data
+        data_dict = super().data
         if 'quadicon' in data_dict and data_dict['quadicon']:
             quad_data = document_fromstring(data_dict['quadicon'])
             data_dict['no_host'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)

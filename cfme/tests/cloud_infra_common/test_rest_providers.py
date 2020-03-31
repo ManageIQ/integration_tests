@@ -66,7 +66,7 @@ def test_query_provider_attributes(provider, provider_rest, soft_assert):
     outcome = query_resource_attributes(provider_rest)
     for failure in outcome.failed:
         # once BZ1546112 is fixed other failure than internal server error is expected
-        soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+        soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
             failure.type, failure.name, failure.response.status_code, failure.error))
 
 
@@ -137,7 +137,7 @@ def test_provider_refresh(provider_rest, appliance):
             fail_func=task.reload,
             num_sec=30,
         )
-        assert task.status.lower() == "ok", "Task failed with status '{}'".format(task.status)
+        assert task.status.lower() == "ok", f"Task failed with status '{task.status}'"
 
 
 @pytest.mark.rhv3

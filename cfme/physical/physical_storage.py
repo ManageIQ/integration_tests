@@ -42,7 +42,7 @@ class ComputePhysicalInfrastructureStoragesView(BaseLoggedInPage):
 class PhysicalStorageEntity(JSBaseEntity):
     @property
     def data(self):
-        data_dict = super(PhysicalStorageEntity, self).data
+        data_dict = super().data
         if 'quadicon' in data_dict and data_dict['quadicon']:
             quad_data = document_fromstring(data_dict['quadicon'])
             data_dict['no_port'] = int(quad_data.xpath(self.QUADRANT.format(pos="a"))[0].text)

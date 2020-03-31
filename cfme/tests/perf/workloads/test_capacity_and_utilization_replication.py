@@ -52,9 +52,9 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
     # under test is cleaned first, followed by master appliance
     sshtail_evm = SSHTail('/var/www/miq/vmdb/log/evm.log')
     sshtail_evm.set_initial_file_end()
-    logger.info('Clean appliance under test ({})'.format(ssh_client))
+    logger.info(f'Clean appliance under test ({ssh_client})')
     appliance.clean_appliance()
-    logger.info('Clean master appliance ({})'.format(ssh_client_master))
+    logger.info(f'Clean master appliance ({ssh_client_master})')
     master_appliance.clean_appliance()  # Clean Replication master appliance
 
     if is_pglogical:
@@ -84,7 +84,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
         monitor_thread.join()
         add_workload_quantifiers(quantifiers, scenario_data)
         timediff = time.time() - starttime
-        logger.info('Finished cleaning up monitoring thread in {}'.format(timediff))
+        logger.info(f'Finished cleaning up monitoring thread in {timediff}')
     request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, quantifiers, scenario_data))
 
     monitor_thread.start()

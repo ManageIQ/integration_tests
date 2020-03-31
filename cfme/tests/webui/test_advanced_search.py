@@ -97,10 +97,10 @@ def _filter_crud(param, appliance):
         filter_value = fauxfactory.gen_numeric_string(3)
         filter_value_updated = fauxfactory.gen_numeric_string(3)
         view.search.save_filter(
-            "fill_count({}, =, {})".format(param.filter, filter_value), filter_name)
+            f"fill_count({param.filter}, =, {filter_value})", filter_name)
     else:
         view.search.save_filter(
-            "fill_field({}, =, {})".format(param.filter, filter_value), filter_name)
+            f"fill_field({param.filter}, =, {filter_value})", filter_name)
     view.search.close_advanced_search()
     view.flash.assert_no_error()
     # read
@@ -193,7 +193,7 @@ def base_pytestmarks(param_values, setup_prov=False):
 
 @inject_tests
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
-class TestCloud(object):
+class TestCloud:
     params_values = [
         SearchParam('cloud_providers', 'All', 'cloudprovider', 'Cloud Provider : Name', None),
         SearchParam('cloud_av_zones', 'All', 'availabilityzone', 'Availability Zone : Name', None),
@@ -213,7 +213,7 @@ class TestCloud(object):
 
 @inject_tests
 @pytest.mark.provider([CloudProvider], selector=ONE_PER_CATEGORY)
-class TestNetwork(object):
+class TestNetwork:
     params_values = [
         SearchParam('network_providers', 'All', 'network_managers', 'Network Manager : Name', None),
         SearchParam('network_providers', 'All', 'network_managers', 'Network Manager : Name', None),
@@ -231,7 +231,7 @@ class TestNetwork(object):
 
 @inject_tests
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY, )
-class TestInfra(object):
+class TestInfra:
     params_values = [
         SearchParam('infra_providers', 'All', 'infraproviders',
                     'Infrastructure Provider : Name', None),
@@ -255,7 +255,7 @@ class TestInfra(object):
 
 @inject_tests
 @pytest.mark.provider([PhysicalProvider], selector=ONE_PER_CATEGORY)
-class TestPhysical(object):
+class TestPhysical:
     params_values = [
         SearchParam('physical_providers', 'All', 'physical_providers',
                     'Physical Infrastructure Provider : Name', None),
@@ -266,7 +266,7 @@ class TestPhysical(object):
 
 @inject_tests
 @pytest.mark.provider([ContainersProvider], selector=ONE_PER_CATEGORY)
-class TestContainers(object):
+class TestContainers:
     params_values = [
         SearchParam(
             'containers_providers', 'All', 'container_providers', 'Containers Provider : Name',
@@ -298,7 +298,7 @@ class TestContainers(object):
 
 @inject_tests
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:9723')])
-class TestAnsibleTower(object):
+class TestAnsibleTower:
     params_values = [
         SearchParam('ansible_tower_providers', 'All', 'ansible_tower_explorer_provider',
                     'Automation Manager (Ansible Tower) : Name',
@@ -316,7 +316,7 @@ class TestAnsibleTower(object):
 
 
 @inject_tests
-class TestStorage(object):
+class TestStorage:
     params_values = [
         SearchParam('volumes', 'All', 'block_store_volumes', 'Cloud Volume : Name', None),
         SearchParam('volume_snapshots', 'All', 'block_store_snapshots',
@@ -333,7 +333,7 @@ class TestStorage(object):
 
 @inject_tests
 @pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:9723')])
-class TestConfigManagement(object):
+class TestConfigManagement:
     params_values = [
         SearchParam(ConfigManagerProvider, 'All', 'configuration_management',
                     'Configuration Manager : Name',
@@ -347,6 +347,6 @@ class TestConfigManagement(object):
 
 @inject_tests
 @pytest.mark.meta(blockers=[BZ(1733489)])
-class TestServices(object):
+class TestServices:
     params_values = [SearchParam(MyService, 'All', 'myservices', 'Service : Name', 'myservice')]
     pytestmark = base_pytestmarks(params_values)

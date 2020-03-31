@@ -30,7 +30,7 @@ def updates(old, new):
     return d
 
 
-class Updateable(object):
+class Updateable:
     """
     A mixin that helps make an object easily updateable. Two Updateables
     are equal if all their public fields are equal.

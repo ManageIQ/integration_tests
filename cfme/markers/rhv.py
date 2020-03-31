@@ -67,7 +67,7 @@ def pytest_runtest_logreport(report):
         return
     reporter = xml.node_reporter(report)
     for tier in RHV_CFME_TIERS:
-        tier_marker = 'rhv{}'.format(tier)
+        tier_marker = f'rhv{tier}'
         if report.keywords.get(tier_marker):
             reporter.add_property('rhv_tier', tier_marker)
             break

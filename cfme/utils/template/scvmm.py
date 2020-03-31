@@ -15,7 +15,7 @@ class SCVMMTemplateUpload(ProviderTemplateUpload):
 
     @property
     def vhd_name(self):
-        return "{}.vhd".format(self.template_name)
+        return f"{self.template_name}.vhd"
 
     @log_wrap("upload VHD image to Library VHD folder")
     def upload_vhd(self):

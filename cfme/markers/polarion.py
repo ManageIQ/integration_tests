@@ -29,7 +29,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 @attr.s(hash=False)
-class ReportPolarionToJunitPlugin(object):
+class ReportPolarionToJunitPlugin:
     xml = attr.ib()
     node_map = attr.ib()
 

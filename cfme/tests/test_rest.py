@@ -630,7 +630,7 @@ def test_rest_paging(appliance, paging):
     limit, offset = paging
     url_string = '{}{}'.format(
         appliance.rest_api.collections.features._href,
-        '?limit={}&offset={}'.format(limit, offset))
+        f'?limit={limit}&offset={offset}')
     if limit == 0:
         # testing BZ1489885
         with pytest.raises(Exception, match='Api::BadRequestError'):
@@ -652,15 +652,15 @@ def test_rest_paging(appliance, paging):
     assert response['pages'] == expected_pages_num
 
     links = response['links']
-    assert 'limit={}&offset={}'.format(limit, offset) in links['self']
+    assert f'limit={limit}&offset={offset}' in links['self']
     if (offset + limit) < response['count']:
         assert 'limit={}&offset={}'.format(limit, offset + limit) in links['next']
     if offset > 0:
         expected_previous_offset = offset - limit if offset > limit else 0
-        assert 'limit={}&offset={}'.format(limit, expected_previous_offset) in links['previous']
+        assert f'limit={limit}&offset={expected_previous_offset}' in links['previous']
     assert 'limit={}&offset={}'.format(limit, 0) in links['first']
     expected_last_offset = (response['pages'] - (1 if response['count'] % limit else 0)) * limit
-    assert 'limit={}&offset={}'.format(limit, expected_last_offset) in links['last']
+    assert f'limit={limit}&offset={expected_last_offset}' in links['last']
 
 
 @pytest.mark.tier(3)
@@ -690,7 +690,7 @@ def test_attributes_present(appliance, collection_name):
     attrs = 'href,id,href_slug'
     collection = getattr(appliance.rest_api.collections, collection_name)
     response = appliance.rest_api.get(
-        '{0}{1}{2}'.format(collection._href, '?expand=resources&attributes=', attrs))
+        '{}{}{}'.format(collection._href, '?expand=resources&attributes=', attrs))
     assert_response(appliance)
     for resource in response.get('resources', []):
         assert 'id' in resource
@@ -716,7 +716,7 @@ def test_collection_class_valid(appliance, provider, vendor):
     collection = appliance.rest_api.collections.vms
     collection.reload()
     resource_type = collection[0].type
-    tested_type = 'ManageIQ::Providers::{}::InfraManager::Vm'.format(vendor)
+    tested_type = f'ManageIQ::Providers::{vendor}::InfraManager::Vm'
 
     response = collection.query_string(collection_class=tested_type)
     if resource_type == tested_type:
@@ -793,11 +793,11 @@ def test_rest_ping(appliance):
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    ping_addr = '{}/ping'.format(appliance.rest_api._entry_point)
+    ping_addr = f'{appliance.rest_api._entry_point}/ping'
     assert appliance.rest_api._session.get(ping_addr).text == 'pong'
 
 
-class TestPicturesRESTAPI(object):
+class TestPicturesRESTAPI:
     def create_picture(self, appliance):
         picture = appliance.rest_api.collections.pictures.action.create({
             "extension": "png",
@@ -824,7 +824,7 @@ class TestPicturesRESTAPI(object):
         # BZ 1547852, some attrs were not working
         # bad_attrs = ('href_slug', 'region_description', 'region_number', 'image_href')
         for failure in outcome.failed:
-            soft_assert(False, '{0} "{1}": status: {2}, error: `{3}`'.format(
+            soft_assert(False, '{} "{}": status: {}, error: `{}`'.format(
                 failure.type, failure.name, failure.response.status_code, failure.error))
 
     def test_add_picture(self, appliance):
@@ -893,7 +893,7 @@ class TestPicturesRESTAPI(object):
         assert collection.count == count
 
 
-class TestBulkQueryRESTAPI(object):
+class TestBulkQueryRESTAPI:
     def test_bulk_query(self, appliance):
         """Tests bulk query referencing resources by attributes id, href and guid
 
@@ -976,7 +976,7 @@ class TestBulkQueryRESTAPI(object):
         assert data0 == response[0]._data and data1 == response[1]._data
 
 
-class TestNotificationsRESTAPI(object):
+class TestNotificationsRESTAPI:
     @pytest.fixture(scope='function')
     def generate_notifications(self, appliance):
         requests_data = automation_requests_data('nonexistent_vm')
@@ -1064,7 +1064,7 @@ class TestNotificationsRESTAPI(object):
         delete_resources_from_collection(notifications)
 
 
-class TestEventStreamsRESTAPI(object):
+class TestEventStreamsRESTAPI:
     @pytest.fixture(scope='function')
     def gen_events(self, appliance, vm_obj, provider):
         vm_name = vm_obj
@@ -1129,7 +1129,7 @@ class TestEventStreamsRESTAPI(object):
             try:
                 evt_col.get(id=found_evts[-1].id)
             except (IndexError, ValueError):
-                soft_assert(False, "Couldn't get event {} for vm {}".format(evt, vm_name))
+                soft_assert(False, f"Couldn't get event {evt} for vm {vm_name}")
 
 
 @pytest.mark.tier(3)
@@ -1252,7 +1252,7 @@ def test_custom_logos_via_api(appliance, image_type, request):
     def _finalize():
         appliance.server.upload_custom_logo(file_type=image_type, enable=False)
 
-    href = "https://{}/api/product_info".format(appliance.hostname)
+    href = f"https://{appliance.hostname}/api/product_info"
     api = appliance.rest_api
 
     # wait until product info is updated

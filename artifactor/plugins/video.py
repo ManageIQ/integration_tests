@@ -19,7 +19,7 @@ from cfme.utils.video import Recorder
 
 
 class Video(ArtifactorBasePlugin):
-    class Test(object):
+    class Test:
         def __init__(self, ident):
             self.ident = ident
             self.in_progress = False
@@ -38,7 +38,7 @@ class Video(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def start_test(self, artifact_path, test_name, test_location, slaveid):
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         if test_ident in self.tests:
             if self.tests[test_ident].in_progress:
                 print("Test already running, can't start another")
@@ -78,7 +78,7 @@ class Video(ArtifactorBasePlugin):
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location):
         """Finish test"""
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = f"{test_location}/{test_name}"
         try:
             self.tests[test_ident].recorder.stop()
         except Exception as e:

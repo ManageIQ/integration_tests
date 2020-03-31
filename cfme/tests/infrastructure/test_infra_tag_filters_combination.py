@@ -38,7 +38,7 @@ def testing_vis_object(request, provider, appliance):
     view = navigate_to(provider, destination) if destination else navigate_to(collection, 'All')
     names = view.entities.entity_names
     if not names:
-        pytest.skip("No content found for test of {}".format(collection))
+        pytest.skip(f"No content found for test of {collection}")
 
     return collection.instantiate(name=names[0], provider=provider)
 

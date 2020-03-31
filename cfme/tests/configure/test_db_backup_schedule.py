@@ -61,7 +61,7 @@ class DbBackupData(Pretty):
             "No 'credentials' key found for machine {machine_id}".format(**self.__dict__)
 
         assert creds_key in conf.credentials and conf.credentials[creds_key],\
-            "No credentials for key '{}' found in credentials yaml".format(creds_key)
+            f"No credentials for key '{creds_key}' found in credentials yaml"
         credentials = conf.credentials[creds_key]
 
         return credentials
@@ -72,7 +72,7 @@ class DbBackupData(Pretty):
         data = {}
         for key in self.required_keys[protocol_type]:
             assert key in protocol_data and protocol_data[key],\
-                "'{}' key must be set for scheduled {} backup to work".format(key, protocol_type)
+                f"'{key}' key must be set for scheduled {protocol_type} backup to work"
             data[key] = protocol_data[key]
         return data
 
@@ -118,7 +118,7 @@ def get_schedulable_datetime():
 def get_ssh_client(hostname, credentials):
     """ Returns fresh ssh client connected to given server using given credentials
     """
-    hostname = urlparse('scheme://{}'.format(hostname)).netloc
+    hostname = urlparse(f'scheme://{hostname}').netloc
     connect_kwargs = {
         'username': credentials['username'],
         'password': credentials['password'],
@@ -132,7 +132,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
     """
     if not path_on_host.endswith('/'):
         path_on_host += '/'
-    full_path = '{}db_backup/region_*/{}'.format(path_on_host, schedule_name)
+    full_path = f'{path_on_host}db_backup/region_*/{schedule_name}'
     return full_path
 
 
@@ -153,7 +153,7 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
     # the dash is there to make strftime not use a leading zero
     hour = dt.strftime('%-H')
     minute = dt.strftime('%-M')
-    db_depot_uri = '{}{}'.format(depot_machine_ip, db_backup_data.sub_folder)
+    db_depot_uri = f'{depot_machine_ip}{db_backup_data.sub_folder}'
     sched_args = {
         'name': db_backup_data.schedule_name,
         'description': db_backup_data.schedule_description,
@@ -181,7 +181,7 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
         })
 
     if db_backup_data.protocol_type == 'nfs':
-        path_on_host = urlparse('nfs://{}'.format(db_depot_uri)).path
+        path_on_host = urlparse(f'nfs://{db_depot_uri}').path
     else:
         path_on_host = db_backup_data.path_on_host
     full_path = get_full_path_to_file(path_on_host, db_backup_data.schedule_name)
@@ -192,7 +192,7 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
     # ---- Add cleanup finalizer
     def delete_sched_and_files():
         with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
-            ssh_client.run_command('rm -rf {}'.format(full_path), ensure_user=True)
+            ssh_client.run_command(f'rm -rf {full_path}', ensure_user=True)
 
         sched.delete()
     request.addfinalizer(delete_sched_and_files)
@@ -214,10 +214,10 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
     # ---- Check if the db backup file exists
     with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
 
-        assert ssh_client.run_command('cd "{}"'.format(path_on_host), ensure_user=True).success, (
-            "Could not cd into '{}' over ssh".format(path_on_host))
+        assert ssh_client.run_command(f'cd "{path_on_host}"', ensure_user=True).success, (
+            f"Could not cd into '{path_on_host}' over ssh")
         # Find files no more than 5 minutes old, count them and remove newline
-        file_check_cmd = "find {}/* -cmin -5 | wc -l | tr -d '\n' ".format(full_path)
+        file_check_cmd = f"find {full_path}/* -cmin -5 | wc -l | tr -d '\n' "
 
         # Note that this check is not sufficient. It seems the file may be
         # present, but there is no check whether it is sane backup. For example
@@ -227,7 +227,7 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
             lambda: ssh_client.run_command(file_check_cmd, ensure_user=True).output == '1',
             delay=5,
             num_sec=60,
-            message="File '{}' not found on share".format(full_path)
+            message=f"File '{full_path}' not found on share"
         )
 
     # ----
