@@ -378,8 +378,11 @@ class ComparableCommonBase:
 class ComparableMixin(ComparableCommonBase):
     """
     Mixin for comparing entities
+    Todo: Update this!!!
     """
-    def compare_entities_col(self, provider, entities_list=None, app_col=False):
+    DROPDOWN_TEXT = 'Compare Selected items'
+
+    def compare_entities_col(self, provider, entities_list=None):
         from cfme.utils.appliance.implementations.ui import navigate_to
         from cfme.common.host_views import HostsCompareView
         from cfme.common.host_views import ProviderHostsCompareView
@@ -390,7 +393,7 @@ class ComparableMixin(ComparableCommonBase):
             v_entity.ensure_checked()
         entity_view.toolbar.configuration.item_select(
             self.DROPDOWN_TEXT, handle_alert=True)
-        if app_col:
+        if self.parent != provider:
             compare_entity_view = provider.create_view(self.COMPARE_APP_VIEW)
         else:
             compare_entity_view = provider.create_view(self.COMPARE_VIEW)
