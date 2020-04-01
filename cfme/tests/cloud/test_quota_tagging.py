@@ -166,7 +166,7 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
         tags: quota
     """
     recursive_update(prov_data, {
-        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
+        'request': {'email': fauxfactory.gen_email()}})
     prov_data.update({'template_name': template_name})
     appliance.collections.cloud_instances.create(vm_name, provider, prov_data, override=True)
     # nav to requests page to check quota validation
@@ -231,7 +231,7 @@ def test_cloud_quota_by_lifecycle(request, appliance, provider, set_entity_quota
             6. Check whether instance provision 'Denied' with reason 'Quota Exceeded'
     """
     recursive_update(prov_data, {
-        'request': {'email': 'test_{}@example.com'.format(fauxfactory.gen_alphanumeric())}})
+        'request': {'email': fauxfactory.gen_email()}})
     prov_data.update({'template_name': template_name})
     appliance.collections.cloud_instances.create(vm_name, provider, prov_data, override=True)
     # nav to requests page to check quota validation

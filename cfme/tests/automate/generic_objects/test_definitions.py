@@ -42,7 +42,7 @@ def test_generic_object_definition_crud(appliance, context, soft_assert):
     """
     with appliance.context.use(context):
         definition = appliance.collections.generic_object_definitions.create(
-            name="{}_generic_class{}".format(context.name.lower(), fauxfactory.gen_alphanumeric()),
+            name=f"{context.name.lower()}_generic_class{fauxfactory.gen_alphanumeric()}",
             description="Generic Object Definition",
             attributes={"addr01": "string"},
             associations={"services": "Service"},

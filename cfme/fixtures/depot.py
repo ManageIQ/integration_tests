@@ -63,7 +63,7 @@ def depot_machine_ipv4_and_ipv6(request, appliance):
         data = cfme_data.log_db_operations
         vm = deploy_template(
             data.log_db_depot_template.provider,
-            "long-test-depot-{}".format(fauxfactory.gen_alphanumeric()),
+            f"long-test-depot-{fauxfactory.gen_alphanumeric()}",
             template_name=data.log_db_depot_template.template_name
         )
         vm.ensure_state(VmState.RUNNING)

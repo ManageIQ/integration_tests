@@ -25,9 +25,9 @@ def main(no_quickstart):
     from cfme.utils.path import conf_path
     custom_import_path = conf_path.join('miq_python_startup.py')
     if custom_import_path.exists():
-        with open(custom_import_path.strpath, 'r') as custom_import_file:
+        with open(custom_import_path.strpath) as custom_import_file:
             custom_import_code = custom_import_file.read()
-        print('Importing custom code:\n{}'.format(custom_import_code.strip()))
+        print(f'Importing custom code:\n{custom_import_code.strip()}')
         ipython.run_cell(custom_import_code)
     else:
         print(

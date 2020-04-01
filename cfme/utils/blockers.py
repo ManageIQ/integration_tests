@@ -253,7 +253,7 @@ class BZ(Blocker):
         return self.get_bug_url()
 
     def __str__(self):
-        return "Bugzilla bug {} (or one of its copies)".format(self.get_bug_url())
+        return f"Bugzilla bug {self.get_bug_url()} (or one of its copies)"
 
 
 class JIRA(Blocker):

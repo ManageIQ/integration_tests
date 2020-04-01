@@ -332,8 +332,8 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
     """Create a Chargeback report based on a custom rate; Queue the report"""
     owner = vm_ownership
     data = {
-        'menu_name': '{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
-        'title': '{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
+        'menu_name': f'{provider.name}_{fauxfactory.gen_alphanumeric()}',
+        'title': f'{provider.name}_{fauxfactory.gen_alphanumeric()}',
         'base_report_on': 'Chargeback for Vms',
         'report_fields': ['Memory Allocated Cost', 'Memory Allocated over Time Period', 'Owner',
         'vCPUs Allocated over Time Period', 'vCPUs Allocated Cost',

@@ -500,7 +500,7 @@ class SSHClient(paramiko.SSHClient):
         ensure_host = kwargs.pop('ensure_host', False)
         logger.info("Transferring local file %r to remote %r", local_file, remote_file)
         if self.is_container and not ensure_host:
-            tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
+            tempfilename = f'/share/temp_{fauxfactory.gen_alpha()}'
             logger.info('For this purpose, temporary file name is %r', tempfilename)
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tempfilename, **kwargs)

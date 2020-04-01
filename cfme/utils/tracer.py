@@ -30,7 +30,7 @@ class FileStore:
             return self._store[name]
         else:
             try:
-                self._store[name] = open(name, "r").readlines()
+                self._store[name] = open(name).readlines()
                 return self._store[name]
             except OSError:
                 return []

@@ -126,7 +126,7 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider,
     prov_data.update(custom_prov_data)
     prov_data['catalog']['vm_name'] = vm_name
     prov_data.update({
-        'request': {'email': f'test_{fauxfactory.gen_alphanumeric()}@example.com'}})
+        'request': {'email': fauxfactory.gen_email()}})
     prov_data.update({'template_name': template_name})
     request_description = f'Provision from [{template_name}] to [{vm_name}{extra_msg}]'
     appliance.collections.cloud_instances.create(vm_name, provider, prov_data, auto_approve=approve,

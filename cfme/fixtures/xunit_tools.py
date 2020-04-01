@@ -1,6 +1,6 @@
 # pylint: disable=broad-except
-import datetime
 import re
+from datetime import datetime
 
 import pytest
 from lxml import etree
@@ -29,7 +29,8 @@ blacklist = [
 compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
 
 
-timestamp = '{:%Y%m%d%H%M%S}'.format(datetime.datetime.now())
+now = datetime.now()
+timestamp = now.strftime("%Y%m%d%H%M%S")
 
 
 default_custom_fields = {

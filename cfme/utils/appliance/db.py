@@ -135,7 +135,7 @@ class ApplianceDB(AppliancePlugin):
             'region': 'select region from miq_regions'
         }
         for data_type, db_query in data_query.items():
-            data_filepath = '/var/www/miq/vmdb/{}'.format(data_type.upper())
+            data_filepath = f'/var/www/miq/vmdb/{data_type.upper()}'
             result = ssh.run_command(
                 f'psql -d vmdb_production -t -c "{db_query}"', timeout=15)
             assert result.success, f"Failed to fetch {data_type}: {result.output}"
@@ -504,7 +504,7 @@ class ApplianceDB(AppliancePlugin):
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # sent rb file over to /tmp
-            remote_file = '/tmp/{}'.format(fauxfactory.gen_alphanumeric())
+            remote_file = f'/tmp/{fauxfactory.gen_alphanumeric()}'
             client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
@@ -543,7 +543,7 @@ class ApplianceDB(AppliancePlugin):
 
             if not appliance_client.is_pod:
                 # copy v2 key
-                rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
+                rand_filename = f"/tmp/v2_key_{fauxfactory.gen_alphanumeric()}"
                 master_client = appliance_client(hostname=key_address)
                 master_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
                 appliance_client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
@@ -569,7 +569,7 @@ class ApplianceDB(AppliancePlugin):
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # Init SSH client and sent rb file over to /tmp
-            remote_file = '/tmp/{}'.format(fauxfactory.gen_alphanumeric())
+            remote_file = f'/tmp/{fauxfactory.gen_alphanumeric()}'
             appliance_client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done

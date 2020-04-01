@@ -84,7 +84,7 @@ def populate(
     polarion_url,
     template_format,
 ):
-    with open(template, 'r') as template_file:
+    with open(template) as template_file:
         input_yaml, indent, block_indent = load_yaml_guess_indent(template_file)
 
     # first update credentials fields

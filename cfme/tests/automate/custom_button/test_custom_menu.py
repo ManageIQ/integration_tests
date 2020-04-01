@@ -96,4 +96,4 @@ def test_custom_menu_display(appliance, request):
     for menu in ["RedHat", "ManageIQ"]:
         view.navigation.select(menu)
         assert view.navigation.currently_selected == [menu]
-        assert "id={}".format(menu.lower()) in view.browser.selenium.current_url
+        assert f"id={menu.lower()}" in view.browser.selenium.current_url

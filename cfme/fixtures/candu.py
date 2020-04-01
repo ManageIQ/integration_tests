@@ -73,7 +73,7 @@ def candu_db_restore(temp_appliance_extended_db):
     # get DB backup file
     db_storage_hostname = conf.cfme_data.bottlenecks.hostname
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials.bottlenecks)
-    rand_filename = "/tmp/db.backup_{}".format(fauxfactory.gen_alphanumeric())
+    rand_filename = f"/tmp/db.backup_{fauxfactory.gen_alphanumeric()}"
     db_storage_ssh.get_file("{}/candu.db.backup".format(
         conf.cfme_data.bottlenecks.backup_path), rand_filename)
     app.ssh_client.put_file(rand_filename, "/tmp/evm_db.backup")

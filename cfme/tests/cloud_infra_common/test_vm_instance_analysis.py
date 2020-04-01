@@ -278,7 +278,7 @@ def ssa_single_vm(request, local_setup_provider, enable_smartproxy_affinity, pro
     """ Fixture to provision instance on the provider """
     def _ssa_single_vm():
         template_name = vm_analysis_provisioning_data['image']
-        vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
+        vm_name = f'test-ssa-{fauxfactory.gen_alphanumeric()}-{analysis_type}'
         collection = provider.appliance.provider_based_collection(provider)
         vm = collection.instantiate(vm_name,
                                     provider,

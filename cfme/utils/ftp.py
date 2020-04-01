@@ -627,7 +627,7 @@ class FTPClientWrapper(FTPClient):
 
         target = target if target else os.path.join("/tmp", name)
         if name not in self.file_names:
-            raise FTPException("{} not found in {}".format(name, self.pwd()))
+            raise FTPException(f"{name} not found in {self.pwd()}")
 
         with open(target, "wb") as output:
             self.retrbinary(name, output.write)
@@ -645,7 +645,7 @@ class FTPClientWrapper(FTPClient):
 
         name = name or os.path.basename(path)
         if name in self.file_names:
-            raise FTPException("{} already available in {}".format(name, self.pwd()))
+            raise FTPException(f"{name} already available in {self.pwd()}")
         with open(path, "rb") as f:
             return self.storbinary(name, f)
 

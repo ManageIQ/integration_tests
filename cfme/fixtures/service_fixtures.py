@@ -251,7 +251,7 @@ def import_dialog(appliance, file_name):
     import_export.import_dialog(file_path)
 
     # Read yml to get the field name
-    with open(file_path, "r") as stream:
+    with open(file_path) as stream:
         dialog = yaml.load(stream, Loader=yaml.BaseLoader)
         # It returns list of dicts
         description = dialog[0].get("description")

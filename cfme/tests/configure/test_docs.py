@@ -73,7 +73,7 @@ def test_links(appliance):
             pytest.fail(str(ex))
 
         assert 200 <= resp.status_code < 400, \
-            "Unable to access URL '{}' from doc link ({})".format(href, link_widget.read())
+            f"Unable to access URL '{href}' from doc link ({link_widget.read()})"
 
 
 @pytest.mark.tier(3)

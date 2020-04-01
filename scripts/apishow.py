@@ -118,7 +118,7 @@ def save_coverage_record(record, store):
 def get_coverage(logfile, store):
     """Read pytest log file and look for RESTAPI coverage log records."""
 
-    with open(logfile, 'r') as infile:
+    with open(logfile) as infile:
         for line in infile:
             if '[RESTAPI]' not in line or 'http' not in line:
                 continue

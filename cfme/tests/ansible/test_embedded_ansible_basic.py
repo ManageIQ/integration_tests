@@ -268,7 +268,7 @@ def test_embedded_ansible_credential_crud(credentials_collection, wait_for_ansib
         tags: ansible_embed
     """
     credential = credentials_collection.create(
-        "{}_credential_{}".format(credential_type, fauxfactory.gen_alpha()),
+        f"{credential_type}_credential_{fauxfactory.gen_alpha()}",
         credential_type,
         **credentials
     )

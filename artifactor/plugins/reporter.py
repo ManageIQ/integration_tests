@@ -169,7 +169,7 @@ class ReporterBase:
                 group_file_list = []
                 for file_dict in file_dicts:
                     if file_dict["file_type"] == "qa_contact":
-                        with open(file_dict["os_filename"], "r") as qafile:
+                        with open(file_dict["os_filename"]) as qafile:
                             qareader = csv.reader(qafile, delimiter=",", quotechar='"')
                             for qacontact in qareader:
                                 test_data["qa_contact"].append(qacontact)
@@ -177,7 +177,7 @@ class ReporterBase:
                                     template_data["qa"].append(qacontact[0])
                         continue  # Do not store, handled a different way :)
                     elif file_dict["file_type"] == "short_tb":
-                        with open(file_dict["os_filename"], "r") as short_tb:
+                        with open(file_dict["os_filename"]) as short_tb:
                             test_data["short_tb"] = short_tb.read()
                         continue
                     file_dict["filename"] = file_dict["os_filename"].replace(log_dir, "")

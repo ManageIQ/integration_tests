@@ -67,7 +67,7 @@ def evm_to_messages(evm_file, filters):
     msg_cmds = {}
 
     runningtime = time()
-    evmlogfile = open(evm_file, 'r')
+    evmlogfile = open(evm_file)
     evm_log_line = evmlogfile.readline()
     while evm_log_line:
         line_count += 1
