@@ -99,7 +99,7 @@ def test_priority(
     """This test checks whether method overriding works across domains with the aspect of priority.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
@@ -203,7 +203,7 @@ def test_automate_disabled_domains_in_domain_priority(request, klass):
        domains. If one domain is disabled it is still displayed in the UI for the domain priority.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/12h
         caseimportance: low
         caseposneg: negative

@@ -60,7 +60,7 @@ def new_user(appliance):
 def test_automate_git_domain_removed_from_disk(appliance, imported_domain):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
@@ -80,7 +80,7 @@ def test_automate_git_domain_displayed_in_service(appliance):
        dialog for creating services.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/20h
@@ -116,7 +116,7 @@ def test_automate_git_import_multiple_domains(request, appliance):
     Importing of multiple domains from a single git repository is not allowed.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/12h
         caseimportance: medium
         caseposneg: negative
@@ -179,7 +179,7 @@ def test_domain_import_git(request, appliance, param_type, param_value, verify_s
        should work with or without the top level domain directory.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/6h
         caseimportance: medium
         caseposneg: positive
@@ -216,7 +216,7 @@ def test_domain_import_git(request, appliance, param_type, param_value, verify_s
 def test_refresh_git_current_user(imported_domain, new_user):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: medium
         caseposneg: positive
@@ -343,7 +343,7 @@ def test_automate_git_import_case_insensitive(request, appliance):
     TestBranch).
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/8h
@@ -371,7 +371,7 @@ def test_automate_git_domain_import_connection(request, temp_appliance_preconfig
         1391208
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
@@ -417,7 +417,7 @@ def test_automate_git_import_without_master(appliance, request):
         1508881
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
@@ -484,7 +484,7 @@ def test_automate_git_verify_ssl(appliance, setup_datastore, imported_domain):
         1470738
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/12h
@@ -525,7 +525,7 @@ def test_automate_git_import_deleted_tag(appliance, imported_domain):
         1394194
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
@@ -561,7 +561,7 @@ def test_git_refresh_with_renamed_yaml(appliance):
         1716443
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         startsin: 5.10
         casecomponent: Automate

@@ -16,7 +16,7 @@ pytestmark = [test_requirements.automate]
 def test_instance_crud(klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
@@ -41,7 +41,7 @@ def test_instance_crud(klass):
 def test_duplicate_instance_disallowed(klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: high
         caseposneg: negative
@@ -59,7 +59,7 @@ def test_duplicate_instance_disallowed(klass):
 def test_instance_display_name_unset_from_ui(klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: high
         initialEstimate: 1/30h
@@ -83,7 +83,7 @@ def test_automate_instance_missing(domain, klass, namespace, appliance):
     called) is then set on $evm.object so it then can be used eg. to resolve methods dynamically.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: high
         initialEstimate: 1/10h
@@ -122,7 +122,7 @@ def test_automate_relationship_trailing_spaces(request, klass, namespace, domain
     Handle trailing whitespaces in automate instance relationships.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/10h
         caseimportance: medium
         caseposneg: positive
@@ -245,7 +245,7 @@ def copy_instance(domain):
 def test_check_system_request_calls_depr_conf_mgmt(appliance, copy_instance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: low
         caseposneg: positive
@@ -319,7 +319,7 @@ def copy_quota_instance(domain):
 def test_quota_source_value(request, entity, search, copy_quota_instance, generic_catalog_item):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         startsin: 5.10
@@ -409,7 +409,7 @@ def test_miq_stop_abort_with_state_machines(request, setup, process, domain, kla
         1441353
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: high
         caseposneg: positive
