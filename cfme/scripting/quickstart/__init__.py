@@ -87,7 +87,7 @@ def install_requirements(venv_path, quiet=False):
     remember_file = os.path.join(venv_path, '.cfme_requirements_hash')
     current_hash = hash_file(REQUIREMENT_FILE)
     if os.path.isfile(remember_file):
-        with open(remember_file, 'r') as fp:
+        with open(remember_file) as fp:
             last_hash = fp.read()
     elif os.path.exists(remember_file):
         sys.exit(f"ERROR: {remember_file} is required to be a file")

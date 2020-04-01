@@ -2551,7 +2551,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         USE WITH CAUTION as it mangles /etc/hosts,
         recommended only for seal_for_templatizing with sprout appliances
         """
-        hosts_grep_cmd = 'grep {} /etc/hosts'.format(self.get_resolvable_hostname())
+        hosts_grep_cmd = f'grep {self.get_resolvable_hostname()} /etc/hosts'
         with self.ssh_client as ssh_client:
             if ssh_client.run_command(hosts_grep_cmd, ensure_host=True).success:
                 # remove resolvable hostname from /etc/hosts

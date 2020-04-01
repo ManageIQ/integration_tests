@@ -58,7 +58,7 @@ def get_report(directory):
     ])
     # read the generated yaml
     try:
-        with open("bz-report.yaml", "r") as stream:
+        with open("bz-report.yaml") as stream:
             info = yaml.load(stream, Loader=yaml.BaseLoader)
     except OSError:
         msg = (

@@ -172,8 +172,8 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
 
 def fetch_v2key(appl1, appl2):
     # Fetch v2_key and database.yml from the first appliance
-    rand_v2_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
-    rand_yml_filename = "/tmp/database_yml_{}".format(fauxfactory.gen_alphanumeric())
+    rand_v2_filename = f"/tmp/v2_key_{fauxfactory.gen_alphanumeric()}"
+    rand_yml_filename = f"/tmp/database_yml_{fauxfactory.gen_alphanumeric()}"
     appl1.ssh_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_v2_filename)
     appl2.ssh_client.put_file(rand_v2_filename, "/var/www/miq/vmdb/certs/v2_key")
     appl1.ssh_client.get_file("/var/www/miq/vmdb/config/database.yml", rand_yml_filename)
@@ -182,7 +182,7 @@ def fetch_v2key(appl1, appl2):
 
 def fetch_db_local(appl1, appl2, file_name):
     # Fetch db from the first appliance
-    dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
+    dump_filename = f"/tmp/db_dump_{fauxfactory.gen_alphanumeric()}"
     appl1.ssh_client.get_file(file_name, dump_filename)
     appl2.ssh_client.put_file(dump_filename, file_name)
 
@@ -264,7 +264,7 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
         initialEstimate: 1/2h
     """
     appl1, appl2 = two_appliances_one_with_providers
-    backup_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+    backup_file_name = f'/tmp/backup.{fauxfactory.gen_alphanumeric()}.dump'
 
     appl1.db.backup(backup_file_name)
 
@@ -574,7 +574,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
     vm, _, data = utility_vm
     host = utility_vm_nfs_ip
     loc = data['network_share']['nfs']['path']
-    nfs_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+    nfs_dump_file_name = f'/tmp/backup.{fauxfactory.gen_alphanumeric()}.dump'
     nfs_restore_dir_path = f'nfs://{host}{loc}'
     nfs_restore_file_path = f'{nfs_restore_dir_path}/db_backup/{nfs_dump_file_name}'
     # Transfer v2_key and db backup from first appliance to second appliance
@@ -650,7 +650,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
     _, _, data = utility_vm
     host = utility_vm_samba_ip
     loc = data['network_share']['smb']['path']
-    smb_dump_file_name = '/tmp/backup.{}.dump'.format(fauxfactory.gen_alphanumeric())
+    smb_dump_file_name = f'/tmp/backup.{fauxfactory.gen_alphanumeric()}.dump'
     smb_restore_dir_path = f'smb://{host}{loc}'
     smb_restore_file_path = f'{smb_restore_dir_path}/db_backup/{smb_dump_file_name}'
 

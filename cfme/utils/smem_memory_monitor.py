@@ -236,12 +236,12 @@ class SmemMemoryMonitor(Thread):
     def get_miq_server_id(self):
         # Obtain the Miq Server GUID:
         result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
-        logger.info('Obtained appliance GUID: {}'.format(result.output.strip()))
+        logger.info(f'Obtained appliance GUID: {result.output.strip()}')
         # Get server id:
         result = self.ssh_client.run_command(
             'psql -t -q -d vmdb_production -c "select id from miq_servers where guid = \'{}\'"'
             ''.format(result.output.strip()))
-        logger.info('Obtained miq_server_id: {}'.format(result.output.strip()))
+        logger.info(f'Obtained miq_server_id: {result.output.strip()}')
         self.miq_server_id = result.output.strip()
 
     def get_pids_memory(self):
@@ -357,7 +357,7 @@ class SmemMemoryMonitor(Thread):
             self._real_run()
         except Exception as e:
             logger.error(f'Error in Monitoring Thread: {e}')
-            logger.error('{}'.format(traceback.format_exc()))
+            logger.error(traceback.format_exc())
 
 
 def install_smem(ssh_client):
@@ -1305,7 +1305,7 @@ def graph_same_miq_workers(graph_file_path, process_results, provider_names):
 
 def summary_csv_measurement_dump(csv_file, process_results, measurement):
     csv_file.write('---------------------------------------------\n')
-    csv_file.write('Per Process {} Memory Usage\n'.format(measurement.upper()))
+    csv_file.write(f'Per Process {measurement.upper()} Memory Usage\n')
     csv_file.write('---------------------------------------------\n')
     csv_file.write('Process/Worker Type,PID,Start of test,End of test\n')
     for ordered_name in process_order:

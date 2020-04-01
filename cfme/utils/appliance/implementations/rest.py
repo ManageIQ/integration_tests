@@ -1,5 +1,3 @@
-
-
 class ViaREST:
 
     name = "REST"

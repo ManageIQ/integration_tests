@@ -11,7 +11,7 @@ def default_alerts(appliance):
     file_name = data_path.join('ui/control/default_alerts.yaml').strpath
     alerts = {}
     if os.path.exists(file_name):
-        with open(file_name, 'r') as f:
+        with open(file_name) as f:
             all_alerts = yaml.safe_load(f)
             alerts = (all_alerts.get('v5.10'))
     else:

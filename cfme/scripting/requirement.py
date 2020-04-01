@@ -29,7 +29,7 @@ DEFAULT_PACKAGE_MAP_FILE = requirements_path.join("package_map.yaml")
 def get_package_map(package_map_file):
     package_map = None
     try:
-        with open(package_map_file, 'r') as f:
+        with open(package_map_file) as f:
             package_map = yaml.safe_load(f).get("packages")
     except FileNotFoundError:
         pass
@@ -59,7 +59,7 @@ def add_package_to_file(file_name, package):
     click.echo(f"Adding {package} to {file_name}")
 
     # get the lines
-    with open(file_name, "r") as f:
+    with open(file_name) as f:
         lines = f.readlines()
 
     # add newline character, if needed
@@ -86,7 +86,7 @@ def remove_package_from_file(file_name, package, is_constraint_file=False):
     """ Removes a package from a requirements file. If the package is not present, does nothing """
 
     # get the lines
-    with open(file_name, "r") as f:
+    with open(file_name) as f:
         lines = f.readlines()
 
     if is_constraint_file:
@@ -192,7 +192,7 @@ def scan(scan_template, constraint_file, package_map):
     # add '-c <constraints-file>' to top of the file
     constraint_short_name = constraint_file.split("/")[-1]
     newlines = [f"-c {constraint_short_name}\n"]
-    with open(scan_template, "r") as f:
+    with open(scan_template) as f:
         lines = f.readlines()
     newlines.extend(lines)
     with open(scan_template, "w") as f:

@@ -15,7 +15,7 @@ e.g. list_test file.py
 
 def parser(filename, exp=None):
     try:
-        with open(filename, 'r') as f:
+        with open(filename) as f:
             data = f.read()
     except OSError:
         data = ""
