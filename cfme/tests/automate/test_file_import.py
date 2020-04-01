@@ -25,7 +25,7 @@ def test_domain_import_file(import_datastore, import_data):
     """This test case Verifies that a domain can be imported from file.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/6h
         caseimportance: medium
         startsin: 5.7
@@ -58,7 +58,7 @@ def test_upload_blank_file(appliance, upload_file):
         1720611
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: negative
         startsin: 5.10
@@ -117,7 +117,7 @@ def test_crud_imported_domains(import_data, temp_appliance_preconfig):
         1753586
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
@@ -187,7 +187,7 @@ def test_automate_import_attributes_updated(setup_automate_model, import_datasto
         1440226
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/12h
@@ -231,7 +231,7 @@ def test_overwrite_import_domain(local_domain, appliance, file_name):
         1753860
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate

@@ -566,7 +566,7 @@ def test_dialog_element_values_passed_to_button(appliance, import_datastore, imp
         1717501
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         startsin: 5.10
         casecomponent: Automate

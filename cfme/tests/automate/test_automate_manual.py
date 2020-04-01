@@ -10,7 +10,7 @@ pytestmark = [test_requirements.automate, pytest.mark.manual]
 def test_customize_request_security_group():
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -41,7 +41,7 @@ def test_automate_engine_database_connection():
     All steps in: https://bugzilla.redhat.com/show_bug.cgi?id=1334909
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: medium
         caseposneg: positive
@@ -72,7 +72,7 @@ def test_automate_check_quota_regression():
     provisioned_storage.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
@@ -116,7 +116,7 @@ def test_button_can_trigger_events():
     System/Process entry.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/60h
@@ -153,7 +153,7 @@ def test_automate_requests_tab_exposed():
     section (i.e. Explorer, Customization, etc).
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
@@ -186,7 +186,7 @@ def test_automate_requests_tab_exposed():
 def test_automate_git_credentials_changed():
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
@@ -211,7 +211,7 @@ def test_automate_git_credentials_changed():
 def test_automate_buttons_requests():
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/18h
@@ -227,7 +227,7 @@ def test_automate_buttons_requests():
 def test_vm_naming_number_padding():
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: high
         caseposneg: positive
@@ -253,7 +253,7 @@ def test_vm_naming_number_padding():
 def test_git_refresh_with_rapid_updates():
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         startsin: 5.10
@@ -292,7 +292,7 @@ def test_git_refresh_with_rapid_updates():
 def test_automate_task_schedule():
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
@@ -331,7 +331,7 @@ def test_queue_up_schedule_run_now():
         1743227
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
@@ -362,7 +362,7 @@ def test_copy_automate_method_without_edit():
         1741259
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate

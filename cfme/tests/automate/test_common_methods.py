@@ -48,7 +48,7 @@ def test_vm_retire_extend(appliance, request, create_vm, soft_assert):
     """ Tests extending a retirement using an AE method.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/3h
         setup:
@@ -119,7 +119,7 @@ def test_vm_retire_extend(appliance, request, create_vm, soft_assert):
 def test_miq_password_decrypt(appliance, klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/3h
 
@@ -183,7 +183,7 @@ def test_service_retirement_from_automate_method(request, generic_catalog_item, 
         1753669
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         startsin: 5.11
@@ -268,7 +268,7 @@ def test_automate_quota_units(setup_provider, provider, request, appliance, set_
         1334318
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/4h
@@ -331,7 +331,7 @@ def test_move_vm_into_folder(appliance, vm_folder, create_vm, custom_instance):
          1716858
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/4h
         tags: automate
@@ -388,7 +388,7 @@ def test_list_of_diff_vm_storages_via_rails(appliance, setup_provider, provider,
         1574444
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: medium
         caseposneg: positive
@@ -397,7 +397,7 @@ def test_list_of_diff_vm_storages_via_rails(appliance, setup_provider, provider,
         casecomponent: Automate
         testSteps:
             1. vmware = $evm.vmdb('ems').find_by_name('vmware 6.5 (nested)') ;
-            2. vm = vmware.vms.select { |v| v.name == 'ghubale-cfme510' }.first ;
+            2. vm = vmware.vms.select { |v| v.name == 'dgaikwad-cfme510' }.first ;
             3. vm.storage
             4. vm.storages
         expectedResults:

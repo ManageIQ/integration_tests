@@ -32,7 +32,7 @@ pytestmark = [test_requirements.automate]
 def test_domain_crud(request, enabled, appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/30h
@@ -65,7 +65,7 @@ def test_domain_crud(request, enabled, appliance):
 def test_domain_edit_enabled(domain, appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/16h
         caseimportance: high
@@ -84,7 +84,7 @@ def test_domain_edit_enabled(domain, appliance):
 def test_domain_lock_disabled(klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/16h
@@ -146,7 +146,7 @@ def test_domain_lock_disabled(klass):
 def test_domain_delete_from_table(request, appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/30h
@@ -170,7 +170,7 @@ def test_domain_delete_from_table(request, appliance):
 def test_duplicate_domain_disallowed(domain, appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
@@ -190,7 +190,7 @@ def test_duplicate_domain_disallowed(domain, appliance):
 def test_domain_cannot_delete_builtin(appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         caseposneg: negative
@@ -207,7 +207,7 @@ def test_domain_cannot_delete_builtin(appliance):
 def test_domain_cannot_edit_builtin(appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         caseposneg: negative
@@ -226,7 +226,7 @@ def test_wrong_domain_name(request, appliance):
        in the name)
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
@@ -248,7 +248,7 @@ def test_wrong_domain_name(request, appliance):
 def test_domain_lock_unlock(domain, appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/16h
         caseimportance: medium
@@ -303,7 +303,7 @@ def test_domain_lock_unlock(domain, appliance):
 def test_object_attribute_type_in_automate_schedule(appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/15h
         startsin: 5.9
@@ -345,7 +345,7 @@ def test_copy_to_domain(domain):
     domain.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: low
         initialEstimate: 1/15h
@@ -428,7 +428,7 @@ def test_tenant_attached_with_domain(request, new_user, domain):
         1678122
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         startsin: 5.11
@@ -504,7 +504,7 @@ def test_automate_restrict_domain_crud(user, custom_instance):
         1365493
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
@@ -533,7 +533,7 @@ def test_redhat_domain_sync_after_upgrade(temp_appliance_preconfig, file_name):
         1693362
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
@@ -602,7 +602,7 @@ def test_existing_domain_child_override(appliance, custom_domain, import_data):
         1752875
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate

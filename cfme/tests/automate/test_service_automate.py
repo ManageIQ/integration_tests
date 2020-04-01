@@ -88,7 +88,7 @@ def test_user_requester_for_lifecycle_provision(request, appliance, provider, se
                                                 provisioning):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: high
         initialEstimate: 1/6h
@@ -191,7 +191,7 @@ def setup_dynamic_dialog(appliance, custom_instance):
 def test_automate_method_with_dialog(request, appliance, catalog, setup_dynamic_dialog):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/15h
         caseimportance: medium
         caseposneg: positive
@@ -366,7 +366,7 @@ def test_service_retire_automate():
         1748353
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
@@ -439,7 +439,7 @@ def test_retire_vm_now(setup_provider, create_vm, new_user):
         1747159
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
