@@ -5,18 +5,18 @@ substitutions:
     exclude: ^(cfme|scripts) # for now disable - we shall gradually reenable it
 repos:
 - repo: https://github.com/asottile/reorder_python_imports
-  rev: v1.6.1
+  rev: v2.1.0
   hooks:
   - id: reorder-python-imports
 - repo: https://github.com/ambv/black
-  rev: 19.3b0
+  rev: 19.10b0
   hooks:
   - id: black
     args: [--safe, --line-length, '100']
     language_version: python3.7
     <<: *exclude
 - repo: https://github.com/asottile/pyupgrade
-  rev: v1.23.0
+  rev: v2.1.0
   hooks:
   - id: pyupgrade
     language_version: python3.7
@@ -28,7 +28,7 @@ repos:
     language_version: python3.7
     additional_dependencies: [polarion-docstrings, bugzilla-docstrings]
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.3.0
+  rev: v2.5.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
