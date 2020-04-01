@@ -134,13 +134,7 @@ def test_dual_vm_cancel_migration(request, appliance, soft_assert, provider,
 
 
 @pytest.mark.tier(2)
-@pytest.mark.parametrize(
-    "source_type, dest_type, template_type",
-    [["nfs", "nfs", Templates.RHEL7_MINIMAL]])
-def test_cancel_migration_attachments(
-        request, appliance, soft_assert, provider,
-        source_type, dest_type, template_type,
-        mapping_data_vm_obj_single_datastore):
+def test_cancel_migration_attachments(cancel_migration_plan, soft_assert, provider):
     """
     Test to cancel migration and check attached instance, volume and port is removed from provider
     Polarion:
@@ -152,52 +146,20 @@ def test_cancel_migration_attachments(
         startsin: 5.10
         casecomponent: V2V
     """
-    infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
-    mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
-    mapping = infrastructure_mapping_collection.create(**mapping_data)
-    vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
-
-    @request.addfinalizer
-    def _cleanup():
-        infrastructure_mapping_collection.delete(mapping)
-
-    migration_plan_collection = appliance.collections.v2v_migration_plans
-    migration_plan = migration_plan_collection.create(
-        name=fauxfactory.gen_alphanumeric(start="plan_"),
-        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
-        infra_map=mapping.name,
-        target_provider=provider,
-        vm_list=[vm_obj])
-
-    migration_plan.wait_for_state("In_Progress")
+    migration_plan = cancel_migration_plan
     request_details_list = migration_plan.get_plan_vm_list(wait_for_migration=False)
-    vm_detail = request_details_list.read()[0]
-    request_details_list.cancel_migration(vm_detail, confirmed=True)  # Cancel migration
-
-    def get_plan_status_and_cancel():
-        return not request_details_list.is_in_progress(vm_detail)
-
-    wait_for(
-        func=get_plan_status_and_cancel,
-        delay=10,
-        num_sec=600,
-        message="migration plan is in progress, be patient please")
-
-    soft_assert(request_details_list.is_cancelled(vm_detail))
-    soft_assert(request_details_list.progress_percent(vm_detail) < 100.0 or
-                "Virtual machine migrated" not in request_details_list.get_message_text(vm_detail))
-
-    vm_on_dest = provider.mgmt.find_vms(name=vm_obj.name)
+    vm_name = request_details_list.read()[0]
+    vm_on_dest = provider.mgmt.find_vms(name=vm_name)
     # Test1: Check if instance is on openstack/rhevm provider
     soft_assert(not vm_on_dest)
 
     if provider.one_of(OpenStackProvider) and vm_on_dest:
         # Test2: Check if instance has any volumes attached
-        server = provider.mgmt.get_vm(name=vm_obj.name)
+        server = provider.mgmt.get_vm(name=vm_name)
         soft_assert(not server.attached_volumes)
 
         # Test3: Check if instance has any ports attached
-        soft_assert(provider.mgmt.get_ports(uuid=server.uuid))
+        assert provider.mgmt.get_ports(uuid=server.uuid)
 
 
 @pytest.mark.tier(1)
