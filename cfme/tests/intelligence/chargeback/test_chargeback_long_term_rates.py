@@ -59,7 +59,7 @@ def vm_ownership(enable_candu, provider, appliance):
     # don't assume collection is infra, in case test collected against other provider types
     # No vm creation or cleanup
     user = appliance.collections.users.create(
-        name='{}_{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
+        name=f'{provider.name}_{fauxfactory.gen_alphanumeric()}',
         credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
             secret='secret'),
         email='abc@example.com',

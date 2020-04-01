@@ -32,7 +32,7 @@ class ApplianceHooks:
               it's applied on all.
         """
         logger.debug("Checking appliance's /etc/hosts for a resolvable hostname")
-        hosts_grep_cmd = 'grep {} /etc/hosts'.format(appliance.get_resolvable_hostname())
+        hosts_grep_cmd = f'grep {appliance.get_resolvable_hostname()} /etc/hosts'
         with appliance.ssh_client as ssh_client:
             if ssh_client.run_command(hosts_grep_cmd).failed:
                 logger.info('Setting appliance hostname')

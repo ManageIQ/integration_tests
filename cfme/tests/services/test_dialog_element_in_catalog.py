@@ -1015,7 +1015,7 @@ def test_dialog_default_value_integer(appliance, generic_catalog_item_with_impor
     # download yaml file
     fs = FTPClientWrapper(cfme_data.ftpserver.entities.dialogs)
     file_path = fs.download(file_name)
-    with open(file_path, "r") as stream:
+    with open(file_path) as stream:
         dialog_data = yaml.load(stream, Loader=yaml.BaseLoader)
         default_drop = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][0][
             "default_value"
@@ -1056,7 +1056,7 @@ def test_dialog_default_value_selection(appliance, custom_categories, import_dat
     # download yaml file
     fs = FTPClientWrapper(cfme_data.ftpserver.entities.dialogs)
     file_path = fs.download(file_name)
-    with open(file_path, "r") as stream:
+    with open(file_path) as stream:
         dialog_data = yaml.load(stream, Loader=yaml.BaseLoader)
 
         environment = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][0][
@@ -1136,7 +1136,7 @@ def test_dialog_not_required_default_value(appliance, generic_catalog_item_with_
     # download yaml file
     fs = FTPClientWrapper(cfme_data.ftpserver.entities.dialogs)
     file_path = fs.download(file_name)
-    with open(file_path, "r") as stream:
+    with open(file_path) as stream:
         dialog_data = yaml.load(stream, Loader=yaml.BaseLoader)
         default_drop = dialog_data[0]["dialog_tabs"][0]["dialog_groups"][0]["dialog_fields"][0][
             "default_value"

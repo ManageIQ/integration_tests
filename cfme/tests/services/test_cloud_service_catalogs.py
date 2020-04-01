@@ -48,7 +48,7 @@ def test_cloud_catalog_item(appliance, vm_name, setup_provider, provider, dialog
 
     request.addfinalizer(lambda: vm.cleanup_on_provider())
     image = provisioning['image']['name']
-    item_name = "{}-service-{}".format(provider.name, fauxfactory.gen_alphanumeric())
+    item_name = f"{provider.name}-service-{fauxfactory.gen_alphanumeric()}"
 
     inst_args = {
         'catalog': {'catalog_name': {'name': image, 'provider': provider.name},

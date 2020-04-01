@@ -198,7 +198,7 @@ def provider_credentials(appliance, provider, credential):
         credentials[hostname] = f"https://{provider.hostname}/ovirt-engine/api"
 
     credential = appliance.collections.ansible_credentials.create(
-        "{}_credential_{}".format(cred_type, fauxfactory.gen_alpha()),
+        f"{cred_type}_credential_{fauxfactory.gen_alpha()}",
         cred_type,
         **credentials
     )

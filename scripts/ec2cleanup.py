@@ -262,7 +262,7 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, exclud
     with open(output, 'w') as report:
         report.write('ec2cleanup.py, Address, Volume, LoadBalancer, Snapshot and '
                      'Network Interface Cleanup')
-        report.write("\nDate: {}\n".format(datetime.now()))
+        report.write(f"\nDate: {datetime.now()}\n")
     for provider_key in list_provider_keys('ec2'):
         provider_mgmt = get_mgmt(provider_key)
         logger.info("----- Provider: %r -----", provider_key)

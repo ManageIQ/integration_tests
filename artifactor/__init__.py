@@ -159,7 +159,7 @@ class Artifactor(Rigger):
         if not self.artifact_dir:
             print("!!! Artifact dir must be specified in yaml")
             sys.exit(127)
-        self.config["zmq_socket_address"] = "tcp://127.0.0.1:{}".format(random_port())
+        self.config["zmq_socket_address"] = f"tcp://127.0.0.1:{random_port()}"
         self.setup_plugin_instances()
         self.start_server()
         self.global_data = {

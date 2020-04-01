@@ -1141,14 +1141,14 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
                 try:
                     action_thunk(appliance)
                 except Exception:
-                    fails[name] = "{}: {}".format(name, traceback.format_exc())
+                    fails[name] = f"{name}: {traceback.format_exc()}"
 
             for name, action_thunk in sorted(disallowed_actions.items()):
                 try:
                     with pytest.raises(Exception):
                         action_thunk(appliance)
                 except pytest.fail.Exception:
-                    fails[name] = "{}: {}".format(name, traceback.format_exc())
+                    fails[name] = f"{name}: {traceback.format_exc()}"
 
             if fails:
                 message = ''

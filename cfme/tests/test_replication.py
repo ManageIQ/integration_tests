@@ -33,7 +33,7 @@ def create_vm(provider, vm_name):
 
 
 def are_dicts_same(dict1, dict2):
-    logger.info("Comparing two dictionaries dict1: {%s}\n dict2:{%s}" % (dict1, dict2))
+    logger.info(f"Comparing two dictionaries\n dict1:{dict1}\n dict2:{dict2}")
     if set(dict1) != set(dict2):
         return False
     for key in dict1.keys():

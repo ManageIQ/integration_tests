@@ -29,7 +29,7 @@ def parse_cmd_line():
 
 def azure_cleanup(nic_template, pip_template, days_old):
     logger.info('azure_cleanup.py, NICs, PIPs, Disks and Stack Cleanup')
-    logger.info("Date: {}".format(datetime.now()))
+    logger.info(f"Date: {datetime.now()}")
     errors = []
     for prov_key in list_provider_keys('azure'):
         logger.info("----- Provider: '%s' -----", prov_key)

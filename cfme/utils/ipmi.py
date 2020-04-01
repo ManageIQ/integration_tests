@@ -134,7 +134,7 @@ class IPMI():
         if proc.returncode == 0:
             return proc.stdout.read()
         else:
-            raise IPMIException("Unexpected failure: {}".format(proc.stderr.read()))
+            raise IPMIException(f"Unexpected failure: {proc.stderr.read()}")
 
 
 class IPMIException(Exception):

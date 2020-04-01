@@ -67,7 +67,7 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
         :py:type:`str` rate_desc: The rate description as it appears in the report
         :py:type:`str` rate_interval: The rate interval, (Hourly/Daily/Weekly/Monthly)
     """
-    title = 'report_{}_{}'.format(obj_type.lower(), rate_desc)
+    title = f'report_{obj_type.lower()}_{rate_desc}'
     if obj_type == 'Project':
         data = {
             'menu_name': title,
@@ -121,7 +121,7 @@ def gen_report_base(appliance, obj_type, provider, rate_desc, rate_interval):
                         '(Hourly/Daily/Weekly/Monthly)')
     report = appliance.collections.reports.create(is_candu=True, **data)
 
-    logger.info('QUEUING CUSTOM CHARGEBACK REPORT FOR CONTAINER {}'.format(obj_type.upper()))
+    logger.info(f'QUEUING CUSTOM CHARGEBACK REPORT FOR CONTAINER {obj_type.upper()}')
     report.queue(wait_for_finish=True)
 
     return report
