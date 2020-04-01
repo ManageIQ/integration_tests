@@ -27,7 +27,6 @@ from widgetastic_patternfly import Input as WInput
 
 from cfme.common import BaseLoggedInPage
 from cfme.common import ComparableMixin
-from cfme.common import CompareView
 from cfme.common import TimelinesView
 from cfme.common.provider_views import TemplatesCompareView
 from cfme.common.vm import Template
@@ -1314,8 +1313,11 @@ class InfraVm(VM):
 
 
 @attr.s
-class InfraVmCollection(VMCollection):
+class InfraVmCollection(ComparableMixin, VMCollection):
     ENTITY = InfraVm
+
+    # COMPARE_VIEW = ProviderInfraVmCompareView # I'll need to create this.
+    # COMPARE_APP_VIEW = InfraVmCompareView
 
     def all(self):
         """Return entities for all items in collection"""
@@ -1370,6 +1372,9 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     def NAV_STRING(self):
         parent = self.filters.get('parent')  # None if no filter
         return 'ProviderTemplates' if parent else 'TemplatesOnly'
+
+    # COMPARE_VIEW = ProviderInfraTemplateCompareView  # I'll need to create this.
+    # COMPARE_APP_VIEW = InfraTemplateCompareView
 
     def all(self):
         """Return entities for all items in collection"""

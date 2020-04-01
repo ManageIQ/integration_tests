@@ -13,7 +13,6 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import partial_match
 
 from cfme.common import BaseLoggedInPage
-from cfme.common import ComparableMixin
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
@@ -811,7 +810,7 @@ class BaseVMCollection(BaseCollection):
 
 
 @attr.s
-class VM(ComparableMixin, BaseVM, RetirementMixin):
+class VM(BaseVM, RetirementMixin):
     template_name = attr.ib(default=None)
 
     TO_RETIRE = None
@@ -821,8 +820,6 @@ class VM(ComparableMixin, BaseVM, RetirementMixin):
     STATE_OFF = "off"
     STATE_PAUSED = "paused"
     STATE_SUSPENDED = "suspended"
-
-    DROPDOWN_TEXT = 'Compare Selected items'
 
     @cached_property
     def mgmt(self):
