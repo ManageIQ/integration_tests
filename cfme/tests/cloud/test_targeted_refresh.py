@@ -37,7 +37,7 @@ def cleanup_if_exists(entity):
         if entity.exists:
             return entity.cleanup()
     except Exception:
-        return True
+        return False
 
 
 def test_targeted_refresh_instance(appliance, provider, request):
@@ -202,8 +202,8 @@ def test_ec2_targeted_refresh_stack():
     """
     pass
 
-
-def test_targeted_refresh_volume(appliance, provider, request):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_targeted_refresh_volume(appliance, create_vm, provider, request):
     """
     AWS naming is EBS
 
@@ -219,17 +219,18 @@ def test_targeted_refresh_volume(appliance, provider, request):
             4. Volume DETACH
             5. Volume DELETE
     """
-    template_id = provider.mgmt.get_template(
-        provider.data.templates.get('small_template').name).uuid
-    instance = provider.mgmt.create_vm(template_id, vm_name=random_vm_name('refr'))
-    if not instance:
-        pytest.fail("Instance wasn't successfully created using API!")
-    request.addfinalizer(lambda: cleanup_if_exists(instance))
+    # template_id = provider.mgmt.get_template(
+    #     provider.data.templates.get('small_template').name).uuid
+    # instance = provider.mgmt.create_vm(template_id, vm_name=random_vm_name('refr'))
+    # if not instance:
+    #     pytest.fail("Instance wasn't successfully created using API!")
+    # request.addfinalizer(lambda: cleanup_if_exists(instance))
+    instance = create_vm
 
     volume_name = fauxfactory.gen_alpha()
     volume_collection = appliance.rest_api.collections.cloud_volumes
     # create
-    volume = provider.mgmt.create_volume(instance.az, name=volume_name)
+    volume = provider.mgmt.create_volume(instance.mgmt.az, name=volume_name)
     if not volume:
         pytest.fail("Volume wasn't successfully created using API!")
     request.addfinalizer(lambda: cleanup_if_exists(volume))
@@ -247,11 +248,11 @@ def test_targeted_refresh_volume(appliance, provider, request):
         wait_for(lambda: volume_collection.get(name=new_volume_name).size ==
                 (new_size * 1024 * 1024 * 1024), delay=15, timeout=TIMEOUT, handle_exception=True)
     # attach
-    volume.attach(instance.uuid)
+    volume.attach(instance.mgmt.uuid)
     wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
              handle_exception=True)
     # detach
-    volume.detach(instance.uuid)
+    volume.detach(instance.mgmt.uuid)
     wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
              handle_exception=True)
     # delete
