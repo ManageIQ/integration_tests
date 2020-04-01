@@ -367,7 +367,7 @@ class ManagePolicies(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
-class ComparableCommonBase(object):
+class ComparableCommonBase:
     """
     This will be the base class for a Mixin for comparing entities.
     Not sure yet what will go here versus Comparable
@@ -375,7 +375,7 @@ class ComparableCommonBase(object):
     pass
 
 
-class Comparable(ComparableCommonBase):
+class ComparableMixin(ComparableCommonBase):
     """
     Mixin for comparing entities
     """
