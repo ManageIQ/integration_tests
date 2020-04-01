@@ -197,7 +197,7 @@ def test_update_scap_webui(appliance_with_providers, appliance, request, old_ver
         initialEstimate: 1/4h
     """
     appliance_with_providers.appliance_console.scap_harden_appliance()
-    rules_failures = appliance_with_providers.appliance_console.scap_check_rules()
+    rules_failures = appliance_with_providers.appliance_console.scap_failures()
     assert not rules_failures, "Some rules have failed, check log"
     update_appliance(appliance_with_providers)
 
@@ -205,7 +205,7 @@ def test_update_scap_webui(appliance_with_providers, appliance, request, old_ver
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
     # Re-harden appliance and confirm rules are applied.
-    rules_failures = appliance_with_providers.appliance_console.scap_check_rules()
+    rules_failures = appliance_with_providers.appliance_console.scap_failures()
     assert not rules_failures, "Some rules have failed, check log"
     # Verify that existing provider can detect new VMs on the second appliance
     virtual_crud = provider_app_crud(VMwareProvider, appliance_with_providers)

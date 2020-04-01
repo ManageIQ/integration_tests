@@ -80,8 +80,8 @@ class ApplianceConsole(AppliancePlugin):
             }))
             interaction.answer('Press any key to continue.', '', timeout=AP_WELCOME_SCREEN_TIMEOUT)
 
-    def scap_check_rules(self):
-        """Check that rules have been applied correctly."""
+    def scap_failures(self):
+        """Return applied scap rules failure list."""
         rules_failures = []
 
         self.appliance.ssh_client.put_file(scripts_path.join('scap.rb'), '/tmp/scap.rb')
