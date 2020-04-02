@@ -91,7 +91,7 @@ def test_template_clone(request, appliance, provider, clone_vm_name):
         provision_type = 'Native Clone'
 
     @request.addfinalizer
-    def template_clone_deltion():
+    def template_clone_cleanup():
         collections = appliance.collections
         if BZ(1797733).blocks:
             cloned_template = collections.infra_vms.instantiate(clone_vm_name, provider)

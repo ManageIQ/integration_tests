@@ -144,24 +144,27 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
 
 def check_all_tabs(provision_request, provider):
     view = navigate_to(provision_request, "Details")
-    widgets_names = 'request', 'purpose', 'catalog', 'environment', 'schedule'
+
+    widget_names = 'request', 'purpose', 'catalog', 'environment', 'schedule'
+    # Note the order of these branch checks is important as, for example,
+    # EC2Provider is subclass of CloudProvider and thus incorrect branch may
+    # get executed.
     if provider.one_of(EC2Provider):
-        widgets_names += 'properties', 'customize'
+        widget_names += 'properties', 'customize'
     elif provider.one_of(CloudProvider):
-        widgets_names += 'properties', 'volumes', 'customize'
+        widget_names += 'properties', 'volumes', 'customize'
     elif provider.one_of(SCVMMProvider):
-        widgets_names += 'environment', 'hardware', 'network'
+        widget_names += 'environment', 'hardware', 'network'
     elif provider.one_of(InfraProvider):
-        widgets_names += 'hardware', 'network', 'customize'
+        widget_names += 'hardware', 'network', 'customize'
     else:
         raise NotImplementedError(f"Couldn't determine which tabs to check for "
                                   "this provider: {provider}")
 
-    for name in widgets_names:
+    for name in widget_names:
         widget = getattr(view, name)
         widget.click()
-        bz_1726590_in_effect = BZ(1797706).blocks and provider.one_of(RHEVMProvider)
-        if bz_1726590_in_effect:
+        if BZ(1797706).blocks and provider.one_of(RHEVMProvider):
             pytest.skip('Skipping as this fails due to BZ 1797706')
         assert widget.is_displayed
 
