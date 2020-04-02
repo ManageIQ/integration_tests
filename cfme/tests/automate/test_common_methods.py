@@ -67,7 +67,7 @@ def test_vm_retire_extend(appliance, request, create_vm, soft_assert):
     num_days = 5
     soft_assert(create_vm.retirement_date == 'Never', "The retirement date is not 'Never'!")
     retirement_date = generate_retirement_date(delta=num_days)
-    create_vm.set_retirement_date(retirement_date)
+    create_vm.set_retirement_date(when=retirement_date)
     wait_for(lambda: create_vm.retirement_date != 'Never', message="retirement date set")
     set_date = create_vm.retirement_date
     vm_retire_date_fmt = create_vm.RETIRE_DATE_FMT
