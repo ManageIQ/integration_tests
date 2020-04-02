@@ -12,10 +12,7 @@ pytestmark = [
     test_requirements.ec2,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.provider(
-        [EC2Provider],
-        scope='module'
-    )
+    pytest.mark.provider([EC2Provider], scope='module')
 ]
 
 DELAY = 15
@@ -23,13 +20,13 @@ TIMEOUT = 1500
 
 
 def wait_for_power_state(vms_collection, instance_name, power_state):
-    wait_for(lambda: vms_collection.get(name=instance_name)["power_state"] == power_state, delay=15,
-             timeout=TIMEOUT, handle_exception=True)
+    wait_for(lambda: vms_collection.get(name=instance_name)["power_state"] == power_state,
+             delay=DELAY, timeout=TIMEOUT, handle_exception=True)
 
 
 def wait_for_deleted(collection, entity_name):
-    wait_for(lambda: all([False if e.name == entity_name else True for e in collection.all]),
-             delay=15, timeout=TIMEOUT, handle_exception=True)
+    wait_for(lambda: all([e.name != entity_name for e in collection.all]),
+             delay=DELAY, timeout=TIMEOUT, handle_exception=True)
 
 
 def cleanup_if_exists(entity):
@@ -40,7 +37,8 @@ def cleanup_if_exists(entity):
         return False
 
 
-def test_targeted_refresh_instance(appliance, provider, request):
+@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
+def test_targeted_refresh_instance(appliance, create_vm, provider, request):
     """
     Polarion:
         assignee: mmojzis
@@ -57,35 +55,29 @@ def test_targeted_refresh_instance(appliance, provider, request):
     """
     vms_collection = appliance.rest_api.collections.vms
     flavors_collection = appliance.rest_api.collections.flavors
-
-    # create
-    template_id = provider.mgmt.get_template(
-        provider.data.templates.get('small_template').name).uuid
-    instance = provider.mgmt.create_vm(template_id, vm_name=random_vm_name('refr'))
-    if not instance:
-        pytest.fail("Instance wasn't successfully created using API!")
-    request.addfinalizer(lambda: cleanup_if_exists(instance))
+    instance = create_vm
 
     # running
-    wait_for_power_state(vms_collection, instance.name, "on")
+    wait_for_power_state(vms_collection, instance.mgmt.name, "on")
 
     # stopped
-    instance.stop()
-    wait_for_power_state(vms_collection, instance.name, "off")
+    instance.mgmt.stop()
+    wait_for_power_state(vms_collection, instance.mgmt.name, "off")
 
     # update
-    instance.rename(random_vm_name('refr'))
-    instance.change_type('t1.small')
-    wait_for(lambda: flavors_collection.get(id=vms_collection.get(name=instance.name)["flavor_id"])
-        ["name"] == instance.type, delay=15, timeout=TIMEOUT, handle_exception=True)
+    instance.mgmt.rename(random_vm_name('refr'))
+    instance.mgmt.change_type('t1.small')
+    wait_for(lambda: flavors_collection.get(id=vms_collection.get(
+        name=instance.mgmt.name)["flavor_id"])["name"] == instance.mgmt.type, delay=DELAY,
+        timeout=TIMEOUT, handle_exception=True)
 
     # start
-    instance.start()
-    wait_for_power_state(vms_collection, instance.name, "on")
+    instance.mgmt.start()
+    wait_for_power_state(vms_collection, instance.mgmt.name, "on")
 
     # delete
-    instance.delete()
-    wait_for_power_state(vms_collection, instance.name, "terminated")
+    instance.mgmt.delete()
+    wait_for_power_state(vms_collection, instance.mgmt.name, "terminated")
 
 
 @pytest.mark.manual
@@ -133,13 +125,13 @@ def test_targeted_refresh_network(appliance, provider, request):
         pytest.fail("Network wasn't successfully created using API!")
     request.addfinalizer(lambda: cleanup_if_exists(network))
     network_collection = appliance.rest_api.collections.cloud_networks
-    wait_for(lambda: network_collection.get(ems_ref=network.uuid), delay=15, timeout=TIMEOUT,
+    wait_for(lambda: network_collection.get(ems_ref=network.uuid), delay=DELAY, timeout=TIMEOUT,
              handle_exception=True)
 
     # update - change name
-    new_name = fauxfactory.gen_alpha()
+    new_name = (f"test-network-{fauxfactory.gen_alpha()}")
     network.rename(new_name)
-    wait_for(lambda: network_collection.get(name=new_name), delay=15, timeout=TIMEOUT,
+    wait_for(lambda: network_collection.get(name=new_name), delay=DELAY, timeout=TIMEOUT,
              handle_exception=True)
 
     # delete
@@ -202,6 +194,7 @@ def test_ec2_targeted_refresh_stack():
     """
     pass
 
+
 @pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
 def test_targeted_refresh_volume(appliance, create_vm, provider, request):
     """
@@ -219,44 +212,38 @@ def test_targeted_refresh_volume(appliance, create_vm, provider, request):
             4. Volume DETACH
             5. Volume DELETE
     """
-    # template_id = provider.mgmt.get_template(
-    #     provider.data.templates.get('small_template').name).uuid
-    # instance = provider.mgmt.create_vm(template_id, vm_name=random_vm_name('refr'))
-    # if not instance:
-    #     pytest.fail("Instance wasn't successfully created using API!")
-    # request.addfinalizer(lambda: cleanup_if_exists(instance))
-    instance = create_vm
-
     volume_name = fauxfactory.gen_alpha()
     volume_collection = appliance.rest_api.collections.cloud_volumes
+    instance = create_vm
+
     # create
     volume = provider.mgmt.create_volume(instance.mgmt.az, name=volume_name)
     if not volume:
         pytest.fail("Volume wasn't successfully created using API!")
     request.addfinalizer(lambda: cleanup_if_exists(volume))
-    wait_for(lambda: volume_collection.get(name=volume_name), delay=15, timeout=TIMEOUT,
+    wait_for(lambda: volume_collection.get(name=volume_name), delay=DELAY, timeout=TIMEOUT,
              handle_exception=True)
     # update name
     new_volume_name = fauxfactory.gen_alpha()
     volume.rename(new_volume_name)
-    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
+    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=DELAY, timeout=TIMEOUT,
              handle_exception=True)
     # update size
     if not BZ(1754874, forced_streams=["5.10", "5.11"]).blocks:
         new_size = 20
         volume.resize(new_size)
         wait_for(lambda: volume_collection.get(name=new_volume_name).size ==
-                (new_size * 1024 * 1024 * 1024), delay=15, timeout=TIMEOUT, handle_exception=True)
+            (new_size * 1024 * 1024 * 1024), delay=DELAY, timeout=TIMEOUT, handle_exception=True)
     # attach
     volume.attach(instance.mgmt.uuid)
-    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
+    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=DELAY, timeout=TIMEOUT,
              handle_exception=True)
     # detach
     volume.detach(instance.mgmt.uuid)
-    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=15, timeout=TIMEOUT,
+    wait_for(lambda: volume_collection.get(name=new_volume_name), delay=DELAY, timeout=TIMEOUT,
              handle_exception=True)
     # delete
-    wait_for(lambda: volume.cleanup(), delay=15, timeout=TIMEOUT, handle_exception=True)
+    wait_for(lambda: volume.cleanup(), delay=DELAY, timeout=TIMEOUT, handle_exception=True)
     wait_for_deleted(volume_collection, new_volume_name)
 
 
