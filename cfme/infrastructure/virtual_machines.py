@@ -307,6 +307,18 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
             self.entities.title.text == title
         )
 
+class VmTemplatesCompareView(TemplatesCompareView):
+    """Compare Templates page."""
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
+    comparison_table = Table(locator='//div[@id="compare-grid"]/table')
+
+    @property
+    def is_displayed(self):
+        title = "Compare VM Template and Image"
+        return (self.navigation.currently_selected ==
+                ['Compute', 'Infrastructure', 'Virtual Machines']
+                and self.title.text == title)
+
 
 class VmTemplatesCompareView(TemplatesCompareView):
     """Compare Templates page."""
@@ -1373,8 +1385,12 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
         parent = self.filters.get('parent')  # None if no filter
         return 'ProviderTemplates' if parent else 'TemplatesOnly'
 
-    # COMPARE_VIEW = ProviderInfraTemplateCompareView  # I'll need to create this.
-    # COMPARE_APP_VIEW = InfraTemplateCompareView
+    from cfme.common.provider_views import TemplatesCompareView
+    COMPARE_VIEW = TemplatesCompareView
+    COMPARE_APP_VIEW = VmTemplatesCompareView
+    DROPDOWN_TEXT = 'Compare Selected Templates'
+    #NAV_STRING = 'ProviderTemplates'
+    NAV_STRING = 'TemplatesOnly'
 
     def all(self):
         """Return entities for all items in collection"""
