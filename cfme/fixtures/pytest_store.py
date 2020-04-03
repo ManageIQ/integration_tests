@@ -37,7 +37,7 @@ class FlexibleTerminalReporter(TerminalReporter):
         if file is None:
             file = sys.stdout
 
-        self._tw = self.writer = TerminalWriter(file)
+        self._tw = TerminalWriter(file)
         self.hasmarkup = self._tw.hasmarkup
         self.reportchars = ''
         self.currentfspath = None
