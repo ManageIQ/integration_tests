@@ -13,22 +13,24 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def dialog_cat_item(appliance, catalog):
+def dialog_cat_item(appliance, catalog, request):
+
     service_dialog = appliance.collections.service_dialogs
     dialog = fauxfactory.gen_alphanumeric(12, start="dialog_")
-    ele_name = fauxfactory.gen_alphanumeric(start="ele_")
+
     element_data = {
         'element_information': {
             'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
-            'ele_name': ele_name,
+            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
             'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
             'choose_type': "Text Box"
         },
         'options': {
             'validation_switch': True,
-            'validation': "^([a-z0-9]+_*)*[a-z0-9]+$"
+            'validation': request.param["validation"]
         }
     }
+
     if appliance.version < '5.10':
         element_data["options"].pop("validation_switch", None)
     sd = service_dialog.create(label=dialog, description="my dialog")
@@ -45,12 +47,14 @@ def dialog_cat_item(appliance, catalog):
         display_in=True,
         catalog=catalog,
         dialog=sd)
-    yield catalog_item, ele_name
+    yield catalog_item, element_data, sd
     if catalog_item.exists:
         catalog_item.delete()
     sd.delete_if_exists()
 
 
+@pytest.mark.parametrize("dialog_cat_item", [{"validation": "^([a-z0-9]+_*)*[a-z0-9]+$"}],
+                         indirect=True)
 def test_dialog_element_regex_validation(appliance, dialog_cat_item):
     """Tests Service Dialog Elements with regex validation.
 
@@ -62,7 +66,8 @@ def test_dialog_element_regex_validation(appliance, dialog_cat_item):
         caseimportance: high
         initialEstimate: 1/16h
     """
-    catalog_item, ele_name = dialog_cat_item
+    catalog_item, element_data, sd = dialog_cat_item
+    ele_name = element_data["element_information"]["ele_name"]
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     view = navigate_to(service_catalogs, 'Order')
     view.fields(ele_name).fill("!@#%&")
@@ -94,11 +99,12 @@ def test_dialog_text_area_element_regex_validation():
     pass
 
 
-@pytest.mark.meta(coverage=[1720245])
-@pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
+@pytest.mark.meta(automates=[1720245])
+@pytest.mark.ignore_stream("5.10")
 @pytest.mark.tier(2)
-def test_dialog_regex_validation_button():
+@pytest.mark.parametrize("dialog_cat_item", [{"validation": "^[0-9]*$"}],
+                         indirect=True)
+def test_dialog_regex_validation_button(appliance, dialog_cat_item):
     """
     Bugzilla:
         1720245
@@ -120,7 +126,19 @@ def test_dialog_regex_validation_button():
             4.
             5. Submit button should have become active when the validate field cleared
     """
-    pass
+    catalog_item, element_data, sd = dialog_cat_item
+    ele_name = element_data["element_information"]["ele_name"]
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, 'Order')
+
+    view.fields(ele_name).fill("a")
+    element = view.fields(ele_name).input
+    msg = f"""Entered text should match the format: {element_data["options"]["validation"]}"""
+    assert element.warning == msg
+    wait_for(lambda: view.submit_button.disabled, timeout=10)
+
+    view.fields(ele_name).fill("")
+    wait_for(lambda: view.submit_button.is_enabled, timeout=10)
 
 
 @pytest.mark.meta(coverage=[1721814])
