@@ -11,7 +11,6 @@ from widgetastic_patternfly import CheckableBootstrapTreeview as CbTree
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common import BaseLoggedInPage
 from cfme.infrastructure.provider import InfraProvider
@@ -145,23 +144,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
 def check_all_tabs(provision_request, provider):
     view = navigate_to(provision_request, "Details")
 
-    widget_names = 'request', 'purpose', 'catalog', 'environment', 'schedule'
-    # Note the order of these branch checks is important as, for example,
-    # EC2Provider is subclass of CloudProvider and thus incorrect branch may
-    # get executed.
-    if provider.one_of(EC2Provider):
-        widget_names += 'properties', 'customize'
-    elif provider.one_of(CloudProvider):
-        widget_names += 'properties', 'volumes', 'customize'
-    elif provider.one_of(SCVMMProvider):
-        widget_names += 'environment', 'hardware', 'network'
-    elif provider.one_of(InfraProvider):
-        widget_names += 'hardware', 'network', 'customize'
-    else:
-        raise NotImplementedError(f"Couldn't determine which tabs to check for "
-                                  "this provider: {provider}")
-
-    for name in widget_names:
+    for name in provider.provisioning_dialog_widget_names:
         widget = getattr(view, name)
         widget.click()
         if BZ(1797706).blocks and provider.one_of(RHEVMProvider):

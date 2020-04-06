@@ -93,6 +93,9 @@ class EC2Provider(CloudProvider):
     region = attr.ib(default=None)
     region_name = attr.ib(default=None)
 
+    provisioning_dialog_widget_names = CloudProvider.provisioning_dialog_widget_names.difference(
+        {'volumes'})
+
     @property
     def view_value_mapping(self):
         """Maps values to view attrs"""

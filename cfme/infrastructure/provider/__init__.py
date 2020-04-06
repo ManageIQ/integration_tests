@@ -96,6 +96,8 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
     hosts_menu_item = "Hosts"
     vm_name = "Virtual Machines"
     collection_name = 'infra_providers'
+    provisioning_dialog_widget_names = BaseProvider.provisioning_dialog_widget_names.union(
+        {'hardware', 'network', 'customize'})
 
     name = attr.ib(default=None)
     key = attr.ib(default=None)

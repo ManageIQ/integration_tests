@@ -40,6 +40,8 @@ class SCVMMProvider(InfraProvider):
     settings_key = 'ems_scvmm'
     ui_prov_type = 'Microsoft System Center VMM'
     log_name = 'scvmm'
+    provisioning_dialog_widget_names = (InfraProvider.provisioning_dialog_widget_names
+        - {'environment'} | {'customize'})
 
     @property
     def view_value_mapping(self):

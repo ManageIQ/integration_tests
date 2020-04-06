@@ -101,6 +101,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
     db_types = ["Providers"]
+    provisioning_dialog_widget_names = {'request', 'purpose', 'catalog', 'environment', 'schedule'}
     ems_events = []
     settings_key = None
     vm_class = None  # Set on type specific provider classes for VM/instance class
