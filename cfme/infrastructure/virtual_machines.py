@@ -491,7 +491,7 @@ class InfraVmSnapshotAddView(InfraVmView):
 
 
 class InfraVmGenealogyToolbar(View):
-    """The toolbar on the genalogy page"""
+    """The toolbar on the genealogy page"""
     history = Dropdown(title='History')
     reload = Button(title='Refresh this page')
     edit_tags = Button(title='Edit Tags for this VM')
@@ -510,6 +510,18 @@ class InfraVmGenealogyView(InfraVmView):
         """Is this view being displayed"""
         expected_title = '"Genealogy" for Virtual Machine "{}"'.format(self.context['object'].name)
         return self.in_infra_vms and self.title.text == expected_title
+
+
+class InfraVmCompareToolbar(View):
+    """The toolbar on the compare page"""
+    all = Button(title='All Attributes')
+    different = Button(title='Attributes with different values')
+    same = Button(title='Attributes with same values')
+
+
+class InfraVmCompareView(InfraVmView):
+    """The Compare page"""
+    toolbar = View.nested(InfraVmCompareToolbar)
 
 
 class VMDisk(
@@ -1414,15 +1426,15 @@ class Genealogy:
                 path = find_path(view.tree, obj)
             view.tree.check_node(*path)
         view.toolbar.compare.click()
-        view.flash.assert_no_errors()
+        view.flash.assert_no_error()
         # COMPARE PAGE
-        compare_view = self.obj.create_view('Compare')
+        compare_view = self.obj.create_view(InfraVmCompareView)
         if sections is not None:
             list(map(lambda path: compare_view.tree.check_node(*path), sections))
             compare_view.apply.click()
             compare_view.flash.assert_no_errors()
         # Set requested attributes sets
-        getattr(compare_view.toolbar, self.attr_mapping[attributes]).click()
+        getattr(compare_view.toolbar, attributes).click()
         # Set the requested mode
         getattr(compare_view.toolbar, self.mode_mapping[mode]).click()
 
