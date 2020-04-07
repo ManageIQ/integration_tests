@@ -1390,7 +1390,14 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     COMPARE_APP_VIEW = VmTemplatesCompareView
     DROPDOWN_TEXT = 'Compare Selected Templates'
     #NAV_STRING = 'ProviderTemplates'
-    NAV_STRING = 'TemplatesOnly'
+    NAV_STRING = 'TemplatesOnly2'
+
+    @property
+    def name(self):
+        try:
+            return self.filters.get('provider').name
+        except Exception:
+            pass
 
     def all(self):
         """Return entities for all items in collection"""
@@ -1738,12 +1745,45 @@ class TemplatesAll(CFMENavigateStep):
     VIEW = TemplatesOnlyAllView
     prerequisite = NavigateToSibling('All')
 
+
     def step(self, *args, **kwargs):
         if 'filter_folder' not in kwargs:
             self.view.sidebar.templates.tree.click_path('All Templates')
         elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
             self.view.sidebar.templates.tree.click_path('All Templates',
                                                         kwargs['filter_folder'],
+                                                        kwargs['filter_name'])
+        else:
+            raise DestinationNotFound("the destination isn't found")
+
+@navigator.register(InfraTemplateCollection, 'TemplatesOnly2')
+class TemplatesAll2(CFMENavigateStep):
+    #VIEW = TemplatesOnlyAllView
+    prerequisite = NavigateToSibling('All')
+
+    @property
+    def VIEW(self):  # noqa
+        from cfme.infrastructure.provider import ProviderTemplatesView
+        from cfme.infrastructure.provider import InfraProvider
+        try:
+            if self.obj.parent.one_of(InfraProvider):
+                return ProviderTemplatesView # ProviderTemplatesOnlyAllView?? What is this?
+        except Exception:
+            pass
+        return TemplatesOnlyAllView
+
+    def step(self, *args, **kwargs):
+        from cfme.infrastructure.provider import InfraProvider
+        try:
+            if self.obj.parent.one_of(InfraProvider):
+                navigate_to(self.obj.parent, 'ProviderTemplates')
+                return
+        except Exception:
+            pass
+        if 'filter_folder' not in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates')
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates', kwargs['filter_folder'],
                                                         kwargs['filter_name'])
         else:
             raise DestinationNotFound("the destination isn't found")
