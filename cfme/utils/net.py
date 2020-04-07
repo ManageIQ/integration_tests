@@ -60,14 +60,14 @@ def ip_echo_socket(port=32123):
             conn.close()
 
 
-def _trying_fresh_ips(vm, delay, rounds=3):
+def _trying_fresh_ips(vm, delay, rounds):
     """ Iterates over IPs from vm for which connection attempts will be made.
     After all all IPs tried out, this will sleep a while and return next round.
 
-    If rounds is -1, then keep generating ips forever.
+    If rounds is math.inf, then keep generating ips forever.
     """
     _round = 0
-    while _round < rounds or rounds == -1:
+    while _round < rounds:
         _round += 1
         yield from vm.all_ips
         time.sleep(delay)

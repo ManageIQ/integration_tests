@@ -1,3 +1,4 @@
+import math
 import re
 import socket
 import sys
@@ -870,7 +871,7 @@ def connect_ssh(vm, creds,
     timestamp = time.monotonic()
     # Note we do need to be sure we get the fresh list of IPs for every cycle.
     # The provider may be updating it.
-    for ip in _trying_fresh_ips(vm, delay=delay, rounds=-1):
+    for ip in _trying_fresh_ips(vm, delay=delay, rounds=math.inf):
         # Timeout handling.
         total_duration = (time.monotonic() - timestamp)
         if total_duration > num_sec:
