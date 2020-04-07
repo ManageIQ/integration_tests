@@ -307,6 +307,7 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
             self.entities.title.text == title
         )
 
+
 class VmTemplatesCompareView(TemplatesCompareView):
     """Compare Templates page."""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
@@ -1389,7 +1390,6 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     COMPARE_VIEW = TemplatesCompareView
     COMPARE_APP_VIEW = VmTemplatesCompareView
     DROPDOWN_TEXT = 'Compare Selected Templates'
-    #NAV_STRING = 'ProviderTemplates'
     NAV_STRING = 'TemplatesOnly2'
 
     @property
@@ -1745,7 +1745,6 @@ class TemplatesAll(CFMENavigateStep):
     VIEW = TemplatesOnlyAllView
     prerequisite = NavigateToSibling('All')
 
-
     def step(self, *args, **kwargs):
         if 'filter_folder' not in kwargs:
             self.view.sidebar.templates.tree.click_path('All Templates')
@@ -1756,9 +1755,9 @@ class TemplatesAll(CFMENavigateStep):
         else:
             raise DestinationNotFound("the destination isn't found")
 
+
 @navigator.register(InfraTemplateCollection, 'TemplatesOnly2')
 class TemplatesAll2(CFMENavigateStep):
-    #VIEW = TemplatesOnlyAllView
     prerequisite = NavigateToSibling('All')
 
     @property
@@ -1767,7 +1766,7 @@ class TemplatesAll2(CFMENavigateStep):
         from cfme.infrastructure.provider import InfraProvider
         try:
             if self.obj.parent.one_of(InfraProvider):
-                return ProviderTemplatesView # ProviderTemplatesOnlyAllView?? What is this?
+                return ProviderTemplatesView  # ProviderTemplatesOnlyAllView?? What is this?
         except Exception:
             pass
         return TemplatesOnlyAllView
