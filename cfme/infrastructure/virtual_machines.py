@@ -321,17 +321,6 @@ class VmTemplatesCompareView(TemplatesCompareView):
                 and self.title.text == title)
 
 
-class VmTemplatesCompareView(TemplatesCompareView):
-    """Compare Templates page."""
-
-    @property
-    def is_displayed(self):
-        title = "Compare VM Template and Image"
-        return (self.navigation.currently_selected ==
-                ['Compute', 'Infrastructure', 'Virtual Machines']
-                and self.title.text == title)
-
-
 class InfraVmSummaryView(VMDetailsEntities):
     operating_ranges = SummaryTable(title="Normal Operating Ranges (over 30 days)")
     datastore_allocation = SummaryTable(title="Datastore Allocation Summary")
@@ -1390,7 +1379,7 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     COMPARE_VIEW = TemplatesCompareView
     COMPARE_APP_VIEW = VmTemplatesCompareView
     DROPDOWN_TEXT = 'Compare Selected Templates'
-    NAV_STRING = 'TemplatesOnly2'
+    NAV_STRING = 'TemplatesOnly'
 
     @property
     def name(self):
