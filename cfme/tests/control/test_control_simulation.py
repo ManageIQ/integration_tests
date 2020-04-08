@@ -30,7 +30,7 @@ def test_control_icons_simulation(appliance):
         1690572
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/15h

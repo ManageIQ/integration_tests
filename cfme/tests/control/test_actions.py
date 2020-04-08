@@ -197,7 +197,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -230,7 +230,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -262,7 +262,7 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -296,7 +296,7 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -332,7 +332,7 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
         1702018
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -374,7 +374,7 @@ def test_action_prevent_ssa(request, configure_fleecing, vm, vm_on, policy_for_t
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Control
     """
@@ -417,7 +417,7 @@ def test_action_prevent_host_ssa(request, host, host_policy):
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Control
     """
@@ -471,7 +471,7 @@ def test_action_power_on_logged(request, vm, vm_off, policy_for_testing):
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -512,7 +512,7 @@ def test_action_power_on_audit(request, vm, vm_off, policy_for_testing):
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -553,7 +553,7 @@ def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, p
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -613,7 +613,7 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, 
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -676,7 +676,7 @@ def test_action_initiate_smartstate_analysis(
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -744,7 +744,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -791,7 +791,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
         test_flag: actions, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
     """
@@ -855,7 +855,7 @@ def test_action_cancel_clone(
         1685201
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Control
     """
@@ -909,7 +909,7 @@ def test_action_check_compliance(
         test_flag: policy, actions
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Control
     """

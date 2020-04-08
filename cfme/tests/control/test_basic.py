@@ -450,7 +450,7 @@ def setup_for_monitor_alerts(appliance):
 def test_condition_crud(appliance, condition_prerequisites):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -474,7 +474,7 @@ def test_condition_crud(appliance, condition_prerequisites):
 def test_action_crud(appliance):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
@@ -497,7 +497,7 @@ def test_action_crud(appliance):
 def test_policy_crud(appliance, policy_class):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         initialEstimate: 1/4h
     """
@@ -514,7 +514,7 @@ def test_policy_crud(appliance, policy_class):
 def test_policy_copy(policy_class, policy):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -529,7 +529,7 @@ def test_assign_two_random_events_to_control_policy(control_policy, control_poli
                                                     soft_assert):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         initialEstimate: 1/4h
     """
@@ -546,7 +546,7 @@ def test_control_assign_actions_to_event(request, policy_class, policy, action):
         1700070
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
@@ -577,7 +577,7 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
         * Assign a condition to the created policy.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -593,7 +593,7 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
 def test_policy_profile_crud(appliance, two_random_policies):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
@@ -613,7 +613,7 @@ def test_policy_profile_crud(appliance, two_random_policies):
 def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: low
         initialEstimate: 1/12h
@@ -630,7 +630,7 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
 def test_alert_crud(appliance):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         initialEstimate: 1/12h
     """
@@ -650,7 +650,7 @@ def test_alert_crud(appliance):
 def test_control_alert_copy(alert):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -666,7 +666,7 @@ def test_control_alert_copy(alert):
 def test_alert_profile_crud(request, appliance, alert_profile_class):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: critical
         initialEstimate: 1/12h
@@ -695,7 +695,7 @@ def test_alert_profile_crud(request, appliance, alert_profile_class):
 def test_alert_profile_assigning(alert_profile, appliance):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         initialEstimate: 1/12h
     """
@@ -721,7 +721,7 @@ def test_alert_profile_assigning(alert_profile, appliance):
 def test_control_is_ansible_playbook_available_in_actions_dropdown(appliance):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         initialEstimate: 1/12h
     """
@@ -733,7 +733,7 @@ def test_control_is_ansible_playbook_available_in_actions_dropdown(appliance):
 def test_alerts_monitor_overview_page(appliance, virtualcenter_provider, setup_for_monitor_alerts):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
@@ -757,7 +757,7 @@ def test_default_policy_events(policy_for_event_test, soft_assert):
     Test to ensure that the events listed on the Event Assignment page for policies do not change
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/12h
