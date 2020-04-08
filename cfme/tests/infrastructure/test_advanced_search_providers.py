@@ -46,7 +46,7 @@ def advanced_search_view():
 def test_can_open_provider_advanced_search(advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -57,7 +57,7 @@ def test_can_open_provider_advanced_search(advanced_search_view):
 def test_provider_filter_without_user_input(advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -71,7 +71,7 @@ def test_provider_filter_without_user_input(advanced_search_view):
 def test_provider_filter_with_user_input(advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -86,7 +86,7 @@ def test_provider_filter_with_user_input(advanced_search_view):
 def test_provider_filter_with_user_input_and_cancellation(advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -101,7 +101,7 @@ def test_provider_filter_with_user_input_and_cancellation(advanced_search_view):
 def test_provider_filter_save_cancel(rails_delete_filter, advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -126,7 +126,7 @@ def test_provider_filter_save_cancel(rails_delete_filter, advanced_search_view):
 def test_provider_filter_save_and_load(rails_delete_filter, advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -154,7 +154,7 @@ def test_provider_filter_save_and_load(rails_delete_filter, advanced_search_view
 def test_provider_filter_save_and_cancel_load(rails_delete_filter, advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -183,7 +183,7 @@ def test_provider_filter_save_and_cancel_load_with_user_input(
         rails_delete_filter, advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -213,7 +213,7 @@ def test_provider_filter_save_and_cancel_load_with_user_input(
 def test_quick_search_without_provider_filter(request):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -229,7 +229,7 @@ def test_quick_search_without_provider_filter(request):
 def test_quick_search_with_provider_filter(request):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -248,7 +248,7 @@ def test_quick_search_with_provider_filter(request):
 def test_can_delete_provider_filter(advanced_search_view):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -271,7 +271,7 @@ def test_delete_button_should_appear_after_save_provider(rails_delete_filter, ad
     """Delete button appears only after load, not after save
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -292,7 +292,7 @@ def test_cannot_delete_provider_filter_more_than_once(advanced_search_view):
     """When Delete button appars, it does not want to go away
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h

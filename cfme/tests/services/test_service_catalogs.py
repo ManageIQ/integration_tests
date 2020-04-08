@@ -189,7 +189,7 @@ def test_advanced_search_registry_element(request, appliance):
         Element types select bar shouldn't disappear.
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: WebUI
     """

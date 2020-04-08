@@ -19,7 +19,7 @@ def test_exp_editor_delete_operator(appliance, operator):
     Bugzilla:
         1720216
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/30h
@@ -49,7 +49,7 @@ def test_apply_after_save():
     There are a few ways to reproduce this BZ but this is the most reliable
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/10h

@@ -62,7 +62,7 @@ def hosts_advanced_search(host_collection):
 def test_can_open_host_advanced_search(hosts_advanced_search):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -74,7 +74,7 @@ def test_host_filter_without_user_input(host_collection, hosts, hosts_with_vm_co
                                    host_with_median_vm, infra_provider, hosts_advanced_search):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -97,7 +97,7 @@ def test_host_filter_with_user_input(host_collection, hosts, hosts_with_vm_count
                                      host_with_median_vm, infra_provider, hosts_advanced_search):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -120,7 +120,7 @@ def test_host_filter_with_user_input_and_cancellation(host_collection, hosts, ho
                                                       host_with_median_vm, hosts_advanced_search):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -140,7 +140,7 @@ def test_host_filter_save_cancel(hosts_advanced_search,
                                  hosts, hosts_with_vm_count, host_with_median_vm):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -160,7 +160,7 @@ def test_host_filter_save_and_load(host_collection, request, hosts, hosts_with_v
                                    host_with_median_vm, infra_provider, hosts_advanced_search):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -186,7 +186,7 @@ def test_host_filter_save_and_cancel_load(host_collection, request, hosts, hosts
                                      host_with_median_vm, hosts_advanced_search):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -214,7 +214,7 @@ def test_host_filter_save_and_load_cancel(
         hosts_with_vm_count, host_with_median_vm):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -246,7 +246,7 @@ def test_quick_search_without_host_filter(host_collection, request, hosts, hosts
                                           host_with_median_vm, infra_provider):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -268,7 +268,7 @@ def test_quick_search_with_host_filter(host_collection, request, hosts, hosts_wi
                                        host_with_median_vm, infra_provider):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -290,7 +290,7 @@ def test_quick_search_with_host_filter(host_collection, request, hosts, hosts_wi
 def test_can_delete_host_filter(host_collection, hosts_advanced_search):
     """
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -312,7 +312,7 @@ def test_delete_button_should_appear_after_save_host(host_collection,
     """Delete button appears only after load, not after save
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
@@ -333,7 +333,7 @@ def test_cannot_delete_host_filter_more_than_once(host_collection, hosts_advance
     """When Delete button appars, it does not want to go away
 
     Polarion:
-        assignee: anikifor
+        assignee: gtalreja
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
