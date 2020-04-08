@@ -307,3 +307,55 @@ def test_instance_quota_reconfigure_with_flavors(request, instance, set_roottena
     assert provision_request.is_succeeded(method="ui"), "Instance reconfigure failed: {}".format(
         provision_request.row.last_message.text
     )
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1455844])
+@pytest.mark.parametrize(
+    ("set_roottenant_quota"),
+    [("storage", 0.01)],
+    indirect=["set_roottenant_quota"],
+    ids=["max_storage"],
+)
+def test_quota_enforcement_for_cloud_volumes(appliance, set_root_tenant_quota, request, provider):
+    """
+    This test case is to test quota enforcement for cloud volumes
+    Bugzilla:
+        1455349
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.8
+        casecomponent: Provisioning
+        tags: quota
+        testSteps:
+            1. Add openstack provider
+            2. Set quota for storage
+            3. While provisioning instance; add cloud volume with values
+            4. Submit the request and see the last message in request info row
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Last message should show requested storage value is equal to
+               instance type's default storage + volume storage value added while provisioning.
+    """
+    prov_data.update(custom_prov_data)
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data.update({
+        'request': {'email': f'test_{fauxfactory.gen_alphanumeric()}@example.com'}})
+    prov_data.update({'template_name': template_name})
+    request_description = f'Provision from [{template_name}] to [{vm_name}]'
+    appliance.collections.cloud_instances.create(vm_name, provider, prov_data, auto_approve=True,
+                                                 override=True,
+                                                 request_description=request_description)
+
+    # nav to requests page to check quota validation
+    provision_request = appliance.collections.requests.instantiate(request_description)
+    provision_request.wait_for_request(method='ui')
+    request.addfinalizer(provision_request.remove_request)
+    assert provision_request.row.reason.text == "Quota Exceeded"
