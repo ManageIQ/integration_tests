@@ -150,7 +150,7 @@ def test_login_evm_group(
         Test will configure auth and login
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         initialEstimate: 1/4h
     """
@@ -225,7 +225,7 @@ def test_login_retrieve_group(
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         initialEstimate: 1/4h
     """
@@ -327,7 +327,7 @@ def test_login_local_group(temp_appliance_preconfig_long, local_user, local_grou
 
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Auth
     """
@@ -359,7 +359,7 @@ def test_user_group_switching(
         1759291
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Auth
     """

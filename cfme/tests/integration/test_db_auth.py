@@ -55,7 +55,7 @@ def nonexistent_user(appliance):
 def test_db_user_pwd(appliance, user, pwd, soft_assert):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Appliance
         initialEstimate: 1/6h
     """
@@ -95,7 +95,7 @@ def test_login_invalid_user(appliance, nonexistent_user):
         1632718
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         casecomponent: Auth
         caseimportance: medium
         caseposneg: negative
