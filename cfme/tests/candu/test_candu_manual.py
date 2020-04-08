@@ -506,3 +506,37 @@ def test_cluster_tagged_crosshair_op_vsphere65():
         startsin: 5.7
     """
     pass
+
+
+@pytest.mark.manual
+@test_requirements.c_and_u
+def test_ec2_instance_memory_metrics():
+    """
+        Bugzilla:
+            1684525
+
+        Polarion:
+            assignee: mmojzis
+            casecomponent: Cloud
+            initialEstimate: 1h
+            caseimportance: medium
+            casecomponent: CandU
+            testSteps:
+                1. Setup EC2 instance with CloudWatch Metrics Agent(https://docs.aws.amazon.com/
+                AmazonCloudWatch/latest/monitoring/metrics-collected-by-CloudWatch-agent.html)
+                2. Enable Memory metrics
+                3. Add EC2 Provider to CFME
+                4. Wait at least 30 minutes
+                5. Go to Compute -> Cloud -> Instances
+                6. Select instance with CloudWatch Metrics Agent
+                7. Go to its memory metrics.
+            expectedResults:
+                1.
+                2.
+                3.
+                4.
+                5.
+                6.
+                7. Memory metrics should have data.
+    """
+    pass
