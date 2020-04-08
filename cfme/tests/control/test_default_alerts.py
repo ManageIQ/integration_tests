@@ -41,7 +41,7 @@ def test_default_alerts(appliance, default_alerts):
         ensures that they have not changed between versions.
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Control
     """
