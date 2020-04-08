@@ -160,7 +160,7 @@ def test_quota_tagging_cloud_via_lifecycle(request, appliance, provider, prov_da
     """Test Group and User Quota in UI using tagging
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Cloud
         initialEstimate: 1/6h
         tags: quota
@@ -194,7 +194,7 @@ def test_quota_tagging_cloud_via_services(appliance, request, context, admin_ema
     """Test Group and User Quota in UI and SSUI using tagging
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Cloud
         initialEstimate: 1/6h
         tags: quota
@@ -217,7 +217,7 @@ def test_cloud_quota_by_lifecycle(request, appliance, provider, set_entity_quota
     """Testing cloud quota for user and group by provisioning instance via lifecycle
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Cloud
         tags: quota
@@ -250,7 +250,7 @@ def test_quota_cloud_via_services(appliance, request, admin_email, entities, pro
        is working correctly for the cloud providers.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Cloud
         tags: quota

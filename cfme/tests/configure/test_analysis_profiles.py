@@ -368,7 +368,7 @@ def test_analysis_profile_description_validation(analysis_profile_collection):
 def test_custom_role_modify_for_dynamic_product_feature(request, appliance, product_features):
     """
     Polarion:
-        assignee: apagac
+        assignee: gaikwad
         initialEstimate: 1/12h
         caseimportance: high
         caseposneg: positive

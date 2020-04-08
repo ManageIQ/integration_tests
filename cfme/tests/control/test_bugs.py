@@ -474,7 +474,7 @@ def test_alert_for_disk_usage(setup_disk_usage_alert):
         1672698
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         casecomponent: Control
         caseimportance: medium
         initialEstimate: 1/6h

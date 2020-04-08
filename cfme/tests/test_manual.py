@@ -99,14 +99,14 @@ def test_orchestration_link_mismatch():
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
+@test_requirements.service_chargeback
 @pytest.mark.tier(2)
 def test_service_chargeback_multiple_vms():
     """
     Validate Chargeback costs for a service with multiple VMs
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: CandU
         initialEstimate: 1/2h
     """
@@ -114,13 +114,13 @@ def test_service_chargeback_multiple_vms():
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
+@test_requirements.service_chargeback
 def test_service_chargeback_bundled_service():
     """
     Validate Chargeback costs for a bundled service
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: Reporting
         caseimportance: medium
         initialEstimate: 1/2h
@@ -164,13 +164,13 @@ def test_delete_orchestration_template_in_use():
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
+@test_requirements.service_chargeback
 def test_service_chargeback_retired_service():
     """
     Validate Chargeback costs for a retired service
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/2h
@@ -376,14 +376,14 @@ def test_button_groups_created_on_orchestration_type_heat_service_catalog_items_
 
 
 @pytest.mark.manual
-@test_requirements.chargeback
+@test_requirements.service_chargeback
 def test_service_chargeback_vm_poweredoff():
     """
     Validate Chargeback costs for a service with a VM that has been
     powered off
 
     Polarion:
-        assignee: nachandr
+        assignee: tpapaioa
         casecomponent: Reporting
         caseimportance: low
         initialEstimate: 1/2h

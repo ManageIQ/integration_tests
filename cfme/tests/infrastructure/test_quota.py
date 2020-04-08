@@ -199,7 +199,7 @@ def test_quota(appliance, provider, custom_prov_data, vm_name, admin_email, enti
     """This test case checks quota limit using the automate's predefine method 'quota source'
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Quota
         caseimportance: medium
         initialEstimate: 1/6h
@@ -232,7 +232,7 @@ def test_user_quota_diff_groups(appliance, provider, new_user, set_parent_tenant
                                 custom_prov_data, approve, prov_data, vm_name, template_name):
     """
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Quota
         caseimportance: high
