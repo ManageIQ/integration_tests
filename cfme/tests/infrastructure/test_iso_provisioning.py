@@ -77,7 +77,6 @@ def vm_name():
     return vm_name
 
 
-@pytest.mark.rhv1
 @pytest.mark.tier(2)
 @test_requirements.provision
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init, request):

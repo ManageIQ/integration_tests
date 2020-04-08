@@ -37,7 +37,6 @@ def new_snapshot(test_vm, has_name=True, memory=False, create_description=True):
     )
 
 
-@pytest.mark.rhv2
 def test_memory_checkbox(create_vm, provider, soft_assert):
     """Tests snapshot memory checkbox
 
@@ -70,8 +69,6 @@ def test_memory_checkbox(create_vm, provider, soft_assert):
         "Memory checkbox is displayed when VM is stopped")
 
 
-@pytest.mark.rhv1
-@pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.meta(automates=[1571291, 1608475])
 def test_snapshot_crud(create_vm, provider):
@@ -101,7 +98,6 @@ def test_snapshot_crud(create_vm, provider):
     assert result.validate(wait="60s")
 
 
-@pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1443411)])
@@ -124,7 +120,6 @@ def test_delete_active_vm_snapshot(create_vm):
     assert not view.toolbar.delete.is_displayed
 
 
-@pytest.mark.rhv3
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider])
 def test_create_without_description(create_vm):
@@ -245,7 +240,6 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     ssh_client.close()
 
 
-@pytest.mark.rhv1
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
@@ -284,7 +278,6 @@ def test_revert_active_snapshot(create_vm, provider, soft_assert, register_event
                            active_snapshot=True)
 
 
-@pytest.mark.rhv2
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1552732)])
 def test_revert_to_active_vm(create_vm, provider):
@@ -312,7 +305,6 @@ def test_revert_to_active_vm(create_vm, provider):
     assert not view.toolbar.revert.is_displayed
 
 
-@pytest.mark.rhv3
 @pytest.mark.provider([RHEVMProvider])
 @pytest.mark.meta(automates=[BZ(1375544)])
 def test_revert_on_running_vm(create_vm):
@@ -459,7 +451,6 @@ def test_operations_powered_off_vm(create_vm):
     snapshot2.delete()
 
 
-@pytest.mark.rhv3
 def test_snapshot_history_btn(create_vm, provider):
     """Tests snapshot history button
     Metadata:

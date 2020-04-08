@@ -38,7 +38,6 @@ def network(provider, appliance):
         ovn_network.delete()
 
 
-@pytest.mark.rhv1
 @test_requirements.rhev
 @pytest.mark.meta(
     blockers=[

@@ -150,7 +150,6 @@ def check_vm_exists(vm_ownership):
         return False
 
 
-@pytest.mark.rhv3
 def test_form_button_validation(user1, vm_crud):
     """Tests group ownership
 
@@ -173,7 +172,6 @@ def test_form_button_validation(user1, vm_crud):
     vm_crud.unset_ownership()
 
 
-@pytest.mark.rhv2
 def test_user_ownership_crud(user1, vm_crud):
     """Tests user ownership
 
@@ -195,7 +193,6 @@ def test_user_ownership_crud(user1, vm_crud):
         assert not check_vm_exists(vm_crud), "vm exists! but shouldn't exist"
 
 
-@pytest.mark.rhv3
 def test_group_ownership_on_user_only_role(user2, vm_crud):
     """Tests group ownership
 
@@ -218,7 +215,6 @@ def test_group_ownership_on_user_only_role(user2, vm_crud):
         assert vm_crud.exists, "vm exists"
 
 
-@pytest.mark.rhv3
 def test_group_ownership_on_user_or_group_role(user3, vm_crud):
     """Tests group ownership
 

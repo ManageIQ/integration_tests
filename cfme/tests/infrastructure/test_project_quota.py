@@ -94,7 +94,6 @@ def new_user(appliance, new_group, new_credential):
     user.delete()
 
 
-@pytest.mark.rhv2
 # first arg of parametrize is the list of fixtures or parameters,
 # second arg is a list of lists, with each one a test is to be generated
 # sequence is important here

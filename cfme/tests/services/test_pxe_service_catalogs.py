@@ -116,7 +116,6 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning,
         dialog=dialog, prov_data=provisioning_data)
 
 
-@pytest.mark.rhv1
 @pytest.mark.meta(blockers=[BZ(1633516, forced_streams=['5.10'],
                             unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')

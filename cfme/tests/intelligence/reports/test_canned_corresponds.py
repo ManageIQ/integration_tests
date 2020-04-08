@@ -24,7 +24,6 @@ def compare(db_item, report_item):
         return db_item is None and report_item == ''
 
 
-@pytest.mark.rhv3
 def test_providers_summary(appliance, soft_assert, request, setup_provider):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding.
@@ -68,7 +67,6 @@ def test_providers_summary(appliance, soft_assert, request, setup_provider):
                     "Physical CPU count does not match at {}".format(provider["Name"]))
 
 
-@pytest.mark.rhv3
 def test_cluster_relationships(appliance, request, soft_assert, setup_provider):
     """Tests vm power options from on
 
@@ -131,7 +129,6 @@ def test_cluster_relationships(appliance, request, soft_assert, setup_provider):
             soft_assert(False, f"Hostname {host_name} not found in {provider_name}")
 
 
-@pytest.mark.rhv2
 def test_operations_vm_on(
         soft_assert, temp_appliance_preconfig_funcscope, request, setup_provider_temp_appliance
 ):
@@ -189,7 +186,6 @@ def test_operations_vm_on(
                 assert compare(vm.vm_last_scan, item['Last Analysis Time'])
 
 
-@pytest.mark.rhv3
 def test_datastores_summary(
         soft_assert, temp_appliance_preconfig_funcscope, request, setup_provider_temp_appliance
 ):

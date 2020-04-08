@@ -35,7 +35,6 @@ def test_html5_console_ports_present(appliance, setup_provider, provider):
     assert edit_view.vnc_end_port.is_displayed
 
 
-@pytest.mark.rhv1
 @test_requirements.html5
 @pytest.mark.provider([CloudProvider, InfraProvider], required_flags=['html5_console'])
 @pytest.mark.parametrize('create_vm', ['console_template'], indirect=True)

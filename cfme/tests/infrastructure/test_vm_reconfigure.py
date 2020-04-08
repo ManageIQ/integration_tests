@@ -119,7 +119,6 @@ def enable_hot_plugin(provider, full_vm, ensure_vm_stopped):
         vm.memory_hot_plug = True
 
 
-@pytest.mark.rhv1
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(provider, full_vm, ensure_vm_stopped, change_type):
     """
@@ -139,7 +138,6 @@ def test_vm_reconfig_add_remove_hw_cold(provider, full_vm, ensure_vm_stopped, ch
     reconfigure_vm(full_vm, orig_config)
 
 
-@pytest.mark.rhv1
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
@@ -198,7 +196,6 @@ def test_vm_reconfig_add_remove_disk(provider, full_vm, vm_state, disk_type, dis
     assert full_vm.configuration.num_disks == orig_config.num_disks, msg
 
 
-@pytest.mark.rhv3
 def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
     """ Cancel reconfiguration changes
 
@@ -221,7 +218,6 @@ def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
     full_vm.reconfigure(config_vm, cancel=True)
 
 
-@pytest.mark.rhv1
 @pytest.mark.meta(
     blockers=[BZ(1697967, unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])

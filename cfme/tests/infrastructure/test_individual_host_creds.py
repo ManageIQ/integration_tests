@@ -44,7 +44,6 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-@pytest.mark.rhv1
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(lambda provider, creds:
@@ -104,7 +103,6 @@ def test_host_good_creds(appliance, request, setup_provider, provider, creds):
              message='Waiting for \'{}\' state change'.format(credentials_type[creds]))
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize("creds", ["default", "remote_login", "web_services"],
                          ids=["default", "remote", "web"])
 @pytest.mark.uncollectif(lambda provider, creds:

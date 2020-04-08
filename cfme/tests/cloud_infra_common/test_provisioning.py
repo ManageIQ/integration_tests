@@ -169,7 +169,6 @@ def wait_for_messages_with_subjects(smtp_test, expected_subjects, num_sec):
              message='Some expected subjects not found in the received emails subjects.')
 
 
-@pytest.mark.rhv2
 @pytest.mark.meta(automates=[1472844, 1676910])
 @pytest.mark.parametrize("action", ["edit", "approve", "deny"])
 def test_provision_approval(appliance, provider, vm_name, smtp_test, request,

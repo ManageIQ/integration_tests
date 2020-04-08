@@ -41,7 +41,6 @@ def generate_retirement_date(delta=None):
     return gen_date
 
 
-@pytest.mark.rhv3
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
 def test_vm_retire_extend(appliance, request, create_vm, soft_assert):

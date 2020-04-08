@@ -25,7 +25,6 @@ def report(appliance):
     report.delete_if_exists()
 
 
-@pytest.mark.rhv3
 @pytest.mark.parametrize(
     "view_mode",
     ["Hybrid View", "Graph View", "Tabular View"],
