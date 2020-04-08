@@ -42,7 +42,7 @@ def test_datastore_graph_screen(provider, interval, graph_type, enable_candu):
         * Compare table and graph data
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         casecomponent: CandU
         initialEstimate: 1/4h

@@ -132,7 +132,7 @@ def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         initialEstimate: 1/12h
     """
@@ -161,7 +161,7 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
 def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         casecomponent: CandU
         initialEstimate: 1/12h
@@ -192,7 +192,7 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         initialEstimate: 1/12h
         casecomponent: CandU
     """
@@ -220,7 +220,7 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         initialEstimate: 1/8h
         casecomponent: CandU
@@ -244,7 +244,7 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
 def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         initialEstimate: 1/12h
     """
@@ -267,7 +267,7 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
 def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: low
         casecomponent: CandU
         initialEstimate: 1/12h
@@ -291,7 +291,7 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
 def test_raw_metric_host_network(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         initialEstimate: 1/12h
         casecomponent: CandU
     """
@@ -314,7 +314,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: high
         casecomponent: CandU
         initialEstimate: 1/12h
@@ -384,7 +384,7 @@ class TestAzone:
     def test_azone_cpu_usage(metrics_collection, appliance, provider):
         """
         Polarion:
-            assignee: nachandr
+            assignee: gtalreja
             caseimportance: high
             casecomponent: CandU
             initialEstimate: 1/12h
@@ -394,7 +394,7 @@ class TestAzone:
     def test_azone_memory_usage(metrics_collection, appliance, provider):
         """
         Polarion:
-            assignee: nachandr
+            assignee: gtalreja
             caseimportance: high
             casecomponent: CandU
             initialEstimate: 1/12h
@@ -404,7 +404,7 @@ class TestAzone:
     def test_azone_network_io(metrics_collection, appliance, provider):
         """
         Polarion:
-            assignee: nachandr
+            assignee: gtalreja
             caseimportance: high
             casecomponent: CandU
             initialEstimate: 1/12h
@@ -414,7 +414,7 @@ class TestAzone:
     def test_azone_disk_io(metrics_collection, appliance, provider):
         """
         Polarion:
-            assignee: nachandr
+            assignee: gtalreja
             caseimportance: high
             casecomponent: CandU
             initialEstimate: 1/12h

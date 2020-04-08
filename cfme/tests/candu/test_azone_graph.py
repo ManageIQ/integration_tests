@@ -60,7 +60,7 @@ def test_azone_graph_screen(provider, azone, graph_type, interval, enable_candu)
         * Compare table and graph data
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         caseimportance: medium
         casecomponent: CandU
         initialEstimate: 1/4h

@@ -13,7 +13,7 @@ def test_bottleneck_datastore():
     Verify bottleneck events from host
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
@@ -30,7 +30,7 @@ def test_bottleneck_provider():
     Verify bottleneck events from providers
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
@@ -47,7 +47,7 @@ def test_bottleneck_host():
     Verify bottleneck events from host
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
@@ -64,7 +64,7 @@ def test_bottleneck_cluster():
     Verify bottleneck events from cluster
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 3/4h
@@ -81,7 +81,7 @@ def test_bottleneck_summary_graph():
     test_bottleneck_summary_graph
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         initialEstimate: 1/4h
         testSteps:
@@ -98,7 +98,7 @@ def test_bottleneck_summary_graph():
 def test_utilization_utilization_graphs():
     """
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         initialEstimate: 1/4h
         testSteps:
@@ -121,7 +121,7 @@ def test_utilization_provider():
     Verify гutilication data from providers
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
@@ -138,7 +138,7 @@ def test_utilization_cluster():
     Verify гutilication data from cluster
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
@@ -155,7 +155,7 @@ def test_utilization_host():
     Verify utilication data from host
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: Optimize
         caseimportance: medium
         initialEstimate: 1/8h
@@ -182,7 +182,7 @@ def test_crosshair_op_cluster_vsphere65():
     or not.
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -198,7 +198,7 @@ def test_crosshair_op_azone_azure():
     Utilization Test
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -214,7 +214,7 @@ def test_crosshair_op_azone_ec2():
     test_crosshair_op_azone[ec2]
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -233,7 +233,7 @@ def test_host_tagged_crosshair_op_vsphere65():
     3. try to drill graph for VM
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
@@ -250,7 +250,7 @@ def test_cluster_graph_by_vm_tag_vsphere65():
     test_cluster_graph_by_vm_tag[vsphere65]
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -266,7 +266,7 @@ def test_cluster_graph_by_host_tag_vsphere65():
     test_cluster_graph_by_host_tag[vsphere65]
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -282,7 +282,7 @@ def test_candu_graphs_vm_compare_host_vsphere65():
     test_candu_graphs_vm_compare_host[vsphere65]
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
@@ -298,7 +298,7 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
     test_candu_graphs_vm_compare_cluster[vsphere65]
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/6h
@@ -322,7 +322,7 @@ def test_crosshair_op_vm_vsphere65():
     5.  check "chart" and "timeline" options working properly or not.
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -338,7 +338,7 @@ def test_crosshair_op_instance_azure():
     Utilization Test
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -385,7 +385,7 @@ def test_crosshair_op_datastore_vsphere65():
     5.  check "chart" and "display" option working properly or not.
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -401,7 +401,7 @@ def test_group_by_tag_azone_azure():
     Utilization Test
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
@@ -417,7 +417,7 @@ def test_azone_group_by_tag_ec2():
     test_azone_group_by_tag[ec2]
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
@@ -434,7 +434,7 @@ def test_candu_graphs_datastore_vsphere6():
     test_candu_graphs_datastore[vsphere6]
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: low
         initialEstimate: 1/12h
@@ -459,7 +459,7 @@ def test_crosshair_op_host_vsphere65():
     not.
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -482,7 +482,7 @@ def test_candu_collection_tab():
     into this race conditions."
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/4h
@@ -500,7 +500,7 @@ def test_cluster_tagged_crosshair_op_vsphere65():
     3. try to drill graph for VM/Host
 
     Polarion:
-        assignee: nachandr
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/8h
