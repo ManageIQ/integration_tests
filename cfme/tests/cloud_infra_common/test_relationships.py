@@ -138,7 +138,7 @@ def test_host_relationships(appliance, provider, setup_provider, host, relations
     """Tests relationship navigation for a host
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
@@ -161,7 +161,7 @@ def test_infra_provider_relationships(appliance, provider, setup_provider, relat
     """Tests relationship navigation for an infrastructure provider
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/10h
@@ -183,7 +183,7 @@ def test_cloud_provider_relationships(appliance, provider, setup_provider, relat
     """Tests relationship navigation for a cloud provider
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/8h
@@ -299,7 +299,7 @@ def test_provider_refresh_relationship(provider, setup_provider):
         1756984
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
@@ -317,7 +317,7 @@ def test_host_refresh_relationships(provider, setup_provider):
     """ Test that host refresh doesn't fail
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
@@ -341,7 +341,7 @@ def test_template_refresh_relationships(appliance, provider, setup_provider):
     """ Test that template refresh doesn't fail
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
@@ -389,7 +389,7 @@ def test_change_network_security_groups_per_page_items(setup_provider, appliance
         1524443
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
@@ -434,7 +434,7 @@ def test_datastore_relationships(setup_provider, testing_vm):
         1729953
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
@@ -496,7 +496,7 @@ def test_ssa_cluster_relationships(appliance, setup_provider, cluster, testing_v
         1732370
 
     Polarion:
-        assignee: ghubale
+        assignee: pvala
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
