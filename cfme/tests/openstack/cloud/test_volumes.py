@@ -21,11 +21,14 @@ VOLUME_SIZE = 1
 @pytest.fixture(scope='function')
 def volume(appliance, provider):
     collection = appliance.collections.volumes
-    storage_manager = f'{provider.name} Cinder Manager'
+    az = None if appliance.version < '5.11' else provider.data['provisioning']['availability_zone']
+
     volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
-                               storage_manager=storage_manager,
+                               # TODO (jhenner) Not sure what to set this to.
+                               from_manager=False,
+                               az=az,
                                tenant=provider.data['provisioning']['cloud_tenant'],
-                               size=VOLUME_SIZE,
+                               volume_size=VOLUME_SIZE,
                                provider=provider)
     yield volume
 
@@ -41,6 +44,7 @@ def volume(appliance, provider):
 def volume_with_type(appliance, provider):
     vol_type = provider.mgmt.capi.volume_types.create(name=fauxfactory.gen_alpha(start="type_"))
     volume_type = appliance.collections.volume_types.instantiate(vol_type.name, provider)
+    az = None if appliance.version < '5.11' else provider.data['provisioning']['availability_zone']
 
     @wait_for_decorator(delay=10, timeout=300,
                         message="Waiting for volume type to appear")
@@ -49,12 +53,14 @@ def volume_with_type(appliance, provider):
         return volume_type.exists
 
     collection = appliance.collections.volumes
-    storage_manager = f'{provider.name} Cinder Manager'
+
     volume = collection.create(name=fauxfactory.gen_alpha(start="vol_"),
-                               storage_manager=storage_manager,
+                               # TODO (jhenner) Not sure what to set this to.
+                               from_manager=False,
+                               az=az,
                                tenant=provider.data['provisioning']['cloud_tenant'],
                                volume_type=volume_type.name,
-                               size=VOLUME_SIZE,
+                               volume_size=VOLUME_SIZE,
                                provider=provider)
     yield volume
 
