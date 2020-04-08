@@ -108,7 +108,7 @@ def test_check_package_presence(request, appliance, compliance_vm, analysis_prof
         1730805
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Control
         caseimportance: high
@@ -149,7 +149,7 @@ def test_check_files(request, appliance, compliance_vm, analysis_profile):
         1730805
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Control
         caseimportance: high
@@ -193,7 +193,7 @@ def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
         test_flag: policy
 
     Polarion:
-        assignee: jdupuy
+        assignee: dgaikwad
         initialEstimate: 1/6h
         casecomponent: Control
         caseimportance: high
