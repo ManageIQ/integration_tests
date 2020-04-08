@@ -115,7 +115,7 @@ def test_project_quota_enforce_via_lifecycle_infra(appliance, provider, new_user
     """Test project quota via lifecycle method
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Configuration
         initialEstimate: 1/4h
         tags: quota

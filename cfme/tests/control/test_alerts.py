@@ -184,7 +184,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         test_flag: alerts, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         casecomponent: Control
         initialEstimate: 1/4h
     """
@@ -222,7 +222,7 @@ def test_alert_rtp(request, appliance, create_vm, smtp_test, provider,
         test_flag: alerts, provision, metrics_collection
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         casecomponent: Control
         initialEstimate: 1/6h
     """
@@ -261,7 +261,7 @@ def test_alert_timeline_cpu(request, appliance, create_vm,
         test_flag: alerts, provision, metrics_collection
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         casecomponent: Control
         initialEstimate: 1/6h
     """
@@ -312,7 +312,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, creat
         test_flag: alerts, provision, metrics_collection
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         casecomponent: Control
         initialEstimate: 1/6h
     """
@@ -379,7 +379,7 @@ def test_alert_hardware_reconfigured(request, appliance, configure_fleecing, smt
         test_flag: alerts, provision
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         casecomponent: Control
         initialEstimate: 1/4h
     """

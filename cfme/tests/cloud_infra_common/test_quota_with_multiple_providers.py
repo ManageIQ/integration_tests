@@ -28,7 +28,7 @@ def test_show_quota_used_on_tenant_screen(appliance, v2v_provider_setup):
     """Test show quota used on tenant quota screen even when no quotas are set.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: low
         caseposneg: positive

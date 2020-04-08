@@ -122,7 +122,7 @@ def test_child_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, new
     """Test child tenant feature via lifecycle method.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h

@@ -91,7 +91,7 @@ def test_custom_group_on_generic_class_crud(appliance, generic_definition):
         1753289
 
     Polarion:
-        assignee: ndhandre
+        assignee: tpapaioa
         initialEstimate: 1/8h
         caseimportance: critical
         startsin: 5.10
@@ -148,7 +148,7 @@ def test_custom_button_on_generic_class_crud(appliance, button_group, is_undefin
         1753289
 
     Polarion:
-        assignee: ndhandre
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: critical
         startsin: 5.10
@@ -214,7 +214,7 @@ def test_generic_objects_with_buttons_ui(appliance, add_generic_object_to_servic
             test_flag: ui
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: GenericObjects
     """
@@ -242,7 +242,7 @@ def test_ansible_playbook_generic_object_button(appliance, generic_definition):
         1650559
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: GenericObjects
         testSteps:
@@ -280,7 +280,7 @@ def test_generic_object_button_edited_request(button_without_group):
         1753237
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/6h
         casecomponent: GenericObjects
         testSteps:
@@ -311,7 +311,7 @@ def test_generic_object_button_delete_flash(button_without_group):
         1753289
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/6h
         casecomponent: GenericObjects
         testSteps:
@@ -341,7 +341,7 @@ def test_generic_object_button_delete_multiple():
         1753388
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/30h
         casecomponent: GenericObjects
         testSteps:
@@ -367,7 +367,7 @@ def test_generic_object_button_execute_playbook():
         1753338
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/30h
         casecomponent: GenericObjects
         testSteps:
