@@ -17,7 +17,7 @@ def test_domain_present(domain_name, soft_assert, appliance):
     """This test verifies presence of domains that are included in the appliance.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/60h

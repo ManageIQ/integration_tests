@@ -17,7 +17,7 @@ pytestmark = [test_requirements.automate, pytest.mark.tier(2)]
 def test_object_attributes(appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/16h
@@ -57,7 +57,7 @@ def copy_class(domain):
 def test_assert_failed_substitution(copy_class):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
@@ -102,7 +102,7 @@ def test_automate_simulation_result_has_hash_data(custom_instance):
         1445089
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/6h
@@ -157,7 +157,7 @@ def test_simulation_copy_button(appliance):
         1630800
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         startsin: 5.10
@@ -197,7 +197,7 @@ def test_attribute_value_message(custom_instance):
         1753523
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
@@ -241,7 +241,7 @@ def test_action_invoke_custom_automation(request, appliance):
         1672007
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate

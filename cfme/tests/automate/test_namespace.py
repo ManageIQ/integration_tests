@@ -27,7 +27,7 @@ def parent_namespace(request, domain):
 def test_namespace_crud(parent_namespace):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
@@ -51,7 +51,7 @@ def test_namespace_crud(parent_namespace):
 def test_namespace_delete_from_table(parent_namespace):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/30h
@@ -73,7 +73,7 @@ def test_namespace_delete_from_table(parent_namespace):
 def test_duplicate_namespace_disallowed(parent_namespace):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/16h
@@ -95,7 +95,7 @@ def test_wrong_namespace_name(request, domain):
        in the name)
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
@@ -129,7 +129,7 @@ def test_remove_openshift_deployment_in_automate(appliance):
     ManageIQ.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/20h
         caseimportance: high
         caseposneg: negative

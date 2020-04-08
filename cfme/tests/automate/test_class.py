@@ -36,7 +36,7 @@ def get_namespace(request, domain):
 def test_class_crud(get_namespace):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/30h
@@ -61,7 +61,7 @@ def test_class_crud(get_namespace):
 def test_schema_crud(get_namespace):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/20h
@@ -88,7 +88,7 @@ def test_schema_crud(get_namespace):
 def test_schema_duplicate_field_disallowed(klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/16h
@@ -104,7 +104,7 @@ def test_schema_duplicate_field_disallowed(klass):
 def test_duplicate_class_disallowed(get_namespace):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/30h
@@ -120,7 +120,7 @@ def test_duplicate_class_disallowed(get_namespace):
 def test_same_class_name_different_namespace(domain):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/16h
         tags: automate
@@ -157,7 +157,7 @@ def test_same_class_name_different_namespace(domain):
 def test_class_display_name_unset_from_ui(get_namespace):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/30h
         tags: automate
@@ -180,7 +180,7 @@ def test_automate_schema_field_without_type(klass):
     """It shouldn't be possible to add a field without specifying a type.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         caseposneg: negative
@@ -213,7 +213,7 @@ def test_state_machine_variable(klass):
     available in another state.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h

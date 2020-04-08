@@ -53,7 +53,7 @@ def test_vmware_vimapi_hotadd_disk(
        located in `/Integration/VMware/VimApi`
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Automate
         caseimportance: critical

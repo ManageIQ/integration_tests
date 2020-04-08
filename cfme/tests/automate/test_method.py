@@ -35,13 +35,13 @@ def original_class(domain):
 def test_method_crud(klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: critical
         initialEstimate: 1/16h
         tags: automate
     """
-    # TODO(ghubale@redhat.com): Update this test case for other types of automate methods like
+    # TODO(dgaikwad@redhat.com): Update this test case for other types of automate methods like
     #  builtin, expression, uri, playbook, Ansible Tower Job Template and Ansible Tower Workflow
     #  Template
     method = klass.methods.create(
@@ -69,7 +69,7 @@ def test_method_crud(klass):
 def test_automate_method_inputs_crud(appliance, klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/8h
         caseimportance: critical
@@ -108,7 +108,7 @@ def test_automate_method_inputs_crud(appliance, klass):
 def test_duplicate_method_disallowed(klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseposneg: negative
         initialEstimate: 1/10h
@@ -134,7 +134,7 @@ def test_automate_simulate_retry(klass, domain, namespace, original_class):
     """Automate simulation now supports simulating the state machines.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -240,7 +240,7 @@ def test_automate_simulate_retry(klass, domain, namespace, original_class):
 def test_task_id_for_method_automation_log(request, generic_catalog_item):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/30h
         caseimportance: medium
         caseposneg: positive
@@ -280,7 +280,7 @@ def test_task_id_for_method_automation_log(request, generic_catalog_item):
 def test_send_email_method(smtp_test, klass):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/20h
         startsin: 5.10
         casecomponent: Automate
@@ -385,7 +385,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
                                                       generic_object_definition):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/10h
         caseimportance: medium
         startsin: 5.7
@@ -457,7 +457,7 @@ def test_automate_generic_object_service_associations(appliance, klass, go_servi
 def test_automate_service_quota_runs_only_once(appliance, generic_catalog_item):
     """
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
@@ -489,7 +489,7 @@ def test_embedded_method_selection(klass):
         1523379
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Automate
         testSteps:
@@ -513,7 +513,7 @@ def test_automate_state_method(klass):
     METHOD:: prefix
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/4h
@@ -584,7 +584,7 @@ def test_method_for_log_and_notify(request, klass, notify_level, log_level):
         https://github.com/ManageIQ/manageiq-content/pull/362
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         startsin: 5.9
         casecomponent: Automate
@@ -666,7 +666,7 @@ def test_null_coalescing_fields(request, klass):
         1698184
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: high
         caseposneg: positive
@@ -762,7 +762,7 @@ def test_automate_user_has_groups(request, appliance, custom_instance):
         1411424
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         caseimportance: medium
         initialEstimate: 1/12h
@@ -809,7 +809,7 @@ def test_copy_with_embedded_method(request, appliance, klass):
         1592140
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/2h
         testSteps:
@@ -854,7 +854,7 @@ def test_delete_tag_from_category(custom_instance):
         1767901
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/12h
     """
