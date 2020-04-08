@@ -1,5 +1,3 @@
-# pylint: disable=E1101
-# pylint: disable=W0621
 import os
 import uuid
 from urllib.parse import urljoin
