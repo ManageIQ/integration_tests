@@ -181,7 +181,7 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set_roott
     """Test Tenant Quota in UI and SSUI
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
@@ -224,7 +224,7 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set
     """Tests quota enforcement via service infra
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
@@ -266,7 +266,7 @@ def test_tenant_quota_vm_reconfigure(request, appliance, set_roottenant_quota, s
         1467644
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/6h
@@ -310,7 +310,7 @@ def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_q
                                               flash_text):
     """
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Provisioning
         caseimportance: high
         initialEstimate: 1/12h
@@ -353,7 +353,7 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, small_vm, set_root
                                                    custom_prov_data, provider):
     """
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/6h
@@ -402,7 +402,7 @@ def test_service_infra_tenant_quota_with_default_entry_point(request, appliance,
        Quota has to be checked if it is working with field entry points also.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/12h
@@ -478,7 +478,7 @@ def test_quota_exceed_mail_with_more_info_link(configure_mail, appliance, provid
         1759123
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/12h
         caseimportance: high
         caseposneg: positive
@@ -529,7 +529,7 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, cr
         1644351
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: high
         caseposneg: positive
@@ -692,7 +692,7 @@ def test_simultaneous_tenant_quota(request, appliance, context, new_project, new
         1401251
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/6h
         caseimportance: medium
         caseposneg: positive
@@ -733,7 +733,7 @@ def test_quota_with_reconfigure_resize_disks(setup_provider_modscope, small_vm, 
     """Test that Quota gets checked against the resize of the disk of VMs.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         initialEstimate: 1/6h
         setup:

@@ -192,7 +192,7 @@ def test_child_tenant_quota_enforce_via_lifecycle_cloud(
     """Test Child Quota in UI
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Cloud
         caseimportance: high
         initialEstimate: 1/8h

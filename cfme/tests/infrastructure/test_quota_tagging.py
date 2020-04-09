@@ -176,7 +176,7 @@ def test_quota_tagging_infra_via_lifecycle(request, appliance, provider,
     """
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Quota
         caseimportance: medium
         initialEstimate: 1/6h
@@ -214,7 +214,7 @@ def test_quota_tagging_infra_via_services(request, appliance, admin_email, conte
     """This test case verifies the quota tagging is working correctly for the infra providers.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Quota
         caseimportance: medium
         initialEstimate: 1/6h
@@ -285,7 +285,7 @@ def test_quota_vm_reconfigure(
     """Tests quota with vm reconfigure
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Quota
         caseimportance: high
@@ -337,7 +337,7 @@ def test_quota_infra(request, appliance, admin_email, entities,
        is working correctly for the infra providers.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Quota
         caseimportance: medium
@@ -385,7 +385,7 @@ def test_quota_catalog_bundle_infra(request, appliance, admin_email, entities, c
        is working correctly for the infra providers by ordering catalog bundle.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: Quota
         caseimportance: high

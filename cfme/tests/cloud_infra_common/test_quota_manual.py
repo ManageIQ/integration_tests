@@ -14,7 +14,7 @@ def test_quota_for_simultaneous_service_catalog_request_with_different_users():
     This test case is to test quota for simultaneous service catalog request with different users.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: low
         caseposneg: positive
@@ -48,7 +48,7 @@ def test_service_template_provisioning_quota_for_number_of_vms_using_custom_dial
     dialog.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -79,7 +79,7 @@ def test_quota_enforcement_for_cloud_volumes():
     This test case is to test quota enforcement for cloud volumes
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -115,7 +115,7 @@ def test_quota_with_invalid_service_request():
     domain)
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -159,7 +159,7 @@ def test_notification_show_notification_when_quota_is_exceed():
     This test case is to check when quota is exceeded, CFME should notify with reason.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -186,7 +186,7 @@ def test_orphaned_archived_vms_get_excluded_from_used_quota_counts():
        orphaned/archived.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h

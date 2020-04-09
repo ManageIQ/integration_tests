@@ -99,7 +99,7 @@ def check_permissions(appliance, assigned_tenant):
 def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant, child_tenant):
     """
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/12h
         caseimportance: high
         caseposneg: positive
@@ -218,7 +218,7 @@ def test_dynamic_product_feature_for_tenant_quota(request, appliance, new_tenant
 def test_tenant_quota_input_validate(appliance):
     """
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/8h

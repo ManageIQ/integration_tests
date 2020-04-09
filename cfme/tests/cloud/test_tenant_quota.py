@@ -118,7 +118,7 @@ def test_tenant_quota_enforce_via_lifecycle_cloud(request, appliance, provider,
     """Test Tenant Quota in UI
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Cloud
         initialEstimate: 1/10h
         tags: quota
@@ -162,7 +162,7 @@ def test_tenant_quota_enforce_via_service_cloud(request, appliance, context, set
     """Test Tenant Quota in UI and SSUI
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Cloud
         initialEstimate: 1/10h
         tags: quota
@@ -205,7 +205,7 @@ def test_service_cloud_tenant_quota_with_default_entry_point(request, appliance,
        Quota has to be checked if it is working with field entry points also.
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/12h
@@ -271,7 +271,7 @@ def test_instance_quota_reconfigure_with_flavors(request, instance, set_roottena
         1506471
 
     Polarion:
-        assignee: ghubale
+        assignee: tpapaioa
         initialEstimate: 1/6h
         caseimportance: low
         caseposneg: positive
