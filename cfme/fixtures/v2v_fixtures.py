@@ -213,14 +213,27 @@ def vddk_url():
 
 
 def get_conversion_data(appliance, target_provider):
+    tls_ca_certs = None
+
     if target_provider.one_of(RHEVMProvider):
         # Support for UCI hosts for RHV would be added in 5.11.6.
         if appliance.version >= '5.11.6':
+        engine_key = conf.credentials[target_provider.data["ssh_creds"]]
+        ssh_client = ssh.SSHClient(
+            hostname=target_provider.hostname,
+            username=engine_key.username,
+            password=engine_key.password,
+        )
+        tls_ca_certs = ssh_client.run_command(
+            "cat /etc/pki/ovirt-engine/apache-ca.pem").output
+
             resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
             vm_key = conf.credentials[
                 target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
             auth_user = vm_key.username
-            private_key = vm_key.password
+            # private_key = vm_key.password
+            private_key = ssh_client.run_command(
+                "cat /root/.ssh/id_rsa").output
             try:
                 hosts = target_provider.data["conversion_instances"]
             except KeyError:
@@ -228,13 +241,7 @@ def get_conversion_data(appliance, target_provider):
 
         else:
             resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
-            engine_key = conf.credentials[target_provider.data["ssh_creds"]]
             auth_user = engine_key.username
-            ssh_client = ssh.SSHClient(
-                hostname=target_provider.hostname,
-                username=engine_key.username,
-                password=engine_key.password,
-            )
             private_key = ssh_client.run_command(
                 "cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
             try:
@@ -257,7 +264,8 @@ def get_conversion_data(appliance, target_provider):
         "resource_type": resource_type,
         "private_key": private_key,
         "auth_user": auth_user,
-        "hosts": hosts
+        "hosts": hosts,
+        "tls_ca_certs": tls_ca_certs
     }
 
 
@@ -300,6 +308,7 @@ def set_conversion_host_api(
             vmware_vddk_package_url=vmware_vddk_package_url,
             vmware_ssh_private_key=vmware_ssh_private_key,
             conversion_host_ssh_private_key=conversion_data["private_key"],
+            tls_ca_certs=conversion_data["tls_ca_certs"],
             auth_user=conversion_data["auth_user"])[0]
         response.reload()
         wait_for(
