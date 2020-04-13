@@ -159,7 +159,7 @@ class TestControlOnQuadicons:
             test_flag: power_control, provision
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             casecomponent: Infra
             initialEstimate: 1/10h
         """
@@ -177,7 +177,7 @@ class TestControlOnQuadicons:
         """Tests power off
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             initialEstimate: 1/6h
             casecomponent: Infra
             caseimportance: high
@@ -199,7 +199,7 @@ class TestControlOnQuadicons:
         """Tests power on cancel
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             initialEstimate: 1/4h
             casecomponent: Infra
             caseimportance: high
@@ -221,7 +221,7 @@ class TestControlOnQuadicons:
             test_flag: power_control, provision
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             initialEstimate: 1/6h
             casecomponent: Infra
             caseimportance: high
@@ -249,7 +249,7 @@ class TestVmDetailsPowerControlPerProvider:
             test_flag: power_control, provision
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             initialEstimate: 1/6h
             casecomponent: Infra
             caseimportance: high
@@ -282,7 +282,7 @@ class TestVmDetailsPowerControlPerProvider:
             test_flag: power_control, provision
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             initialEstimate: 1/6h
             casecomponent: Infra
             caseimportance: high
@@ -306,7 +306,7 @@ class TestVmDetailsPowerControlPerProvider:
         """Tests suspend
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             initialEstimate: 1/6h
             casecomponent: Infra
             caseimportance: high
@@ -340,7 +340,7 @@ class TestVmDetailsPowerControlPerProvider:
         """Tests start from suspend
 
         Polarion:
-            assignee: ghubale
+            assignee: prichard
             initialEstimate: 1/6h
             casecomponent: Infra
             caseimportance: high
@@ -374,7 +374,7 @@ def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/10h
         setup:
@@ -432,7 +432,7 @@ def test_no_power_controls_on_archived_vm(appliance, testing_vm, archived_vm, so
     """ Ensures that no power button is displayed from details view of archived vm
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/10h
         setup:
@@ -457,7 +457,7 @@ def test_archived_vm_status(testing_vm, archived_vm):
         test_flag: inventory
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/8h
@@ -471,7 +471,7 @@ def test_orphaned_vm_status(testing_vm, orphaned_vm):
     """Tests orphaned vm status
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/10h
         casecomponent: Infra
         tags: power
@@ -487,7 +487,7 @@ def test_vm_power_options_from_on(provider, soft_assert, testing_vm, ensure_vm_r
         test_flag: power_control
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/4h
     """
@@ -504,7 +504,7 @@ def test_vm_power_options_from_off(provider, soft_assert, testing_vm, ensure_vm_
         test_flag: power_control
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/4h
 
@@ -527,7 +527,7 @@ def test_guest_os_reset(appliance, provider, testing_vm_tools, ensure_vm_running
         test_flag: power_control
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/6h
         casecomponent: Infra
         tags: power
@@ -565,7 +565,7 @@ def test_guest_os_shutdown(appliance, provider, testing_vm_tools, ensure_vm_runn
     """Tests vm guest os reset
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/6h
         caseimportance: high
         casecomponent: Infra
@@ -667,7 +667,7 @@ def test_power_options_on_archived_orphaned_vms_all_page(appliance, archive_orph
         1686015
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/2h
         caseimportance: low
         caseposneg: positive
