@@ -24,7 +24,7 @@ def test_vm_reconfigure_from_global_region(context):
     reconfigure a VM via CA
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         caseimportance: medium
         casecomponent: Infra
         initialEstimate: 1/3h
