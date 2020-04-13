@@ -548,7 +548,7 @@ def test_tagvis_user(user_restricted, check_item_visibility):
         4. Login as restricted user, group is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         initialEstimate: 1/8h
         casecomponent: Tagging
     """
@@ -808,7 +808,7 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
         4. Login as restricted user, group is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         initialEstimate: 1/8h
     """

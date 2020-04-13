@@ -66,7 +66,7 @@ def test_tagvis_network_provider_children(provider, appliance, request, relation
                                           tag, user_restricted):
     """
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         initialEstimate: 1/8h
         casecomponent: Tagging
     """
@@ -108,7 +108,7 @@ def test_network_tagvis(check_item_visibility, entity, visibility):
         4. Login as restricted user, iten is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Tagging
     """

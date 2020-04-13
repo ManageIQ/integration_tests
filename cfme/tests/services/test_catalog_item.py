@@ -235,7 +235,7 @@ def test_tagvis_catalog_items(check_catalog_visibility, catalog_item):
         4. Login as restricted user, catalog item is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Configuration
         initialEstimate: 1/8h
     """
@@ -255,7 +255,7 @@ def test_tagvis_catalog_bundle(check_catalog_visibility, catalog_bundle):
             4. Login as restricted user, catalog bundle is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Configuration
         initialEstimate: 1/8h
     """

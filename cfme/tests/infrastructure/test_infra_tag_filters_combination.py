@@ -66,7 +66,7 @@ def test_tagvis_tag_datacenter_combination(testing_vis_object, group_tag_datacen
             4. Login as restricted user, iten is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         initialEstimate: 1/8h
     """
