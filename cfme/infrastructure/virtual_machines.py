@@ -1520,11 +1520,11 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
             raise ItemNotFound(f'Failed to locate VM/Template with name "{self.obj.name}"')
         entity_item.click()
 
-    def resetter(self, *args, **kwargs):
+    # def resetter(self, *args, **kwargs):
         # https://bugzilla.redhat.com/show_bug.cgi?id=1821974#c5
         # History & Refresh buttons have been removed from explorer screens on upstream only.
-        if self.context["object"].appliance.is_downstream:
-            self.view.toolbar.reload.click()
+        # if self.context["object"].appliance.is_downstream:
+        #    self.view.toolbar.reload.click()
 
 
 @navigator.register(InfraTemplate, 'ArchiveDetails')
