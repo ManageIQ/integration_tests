@@ -20,7 +20,7 @@ def test_shutdown_guest_scvmm():
     gracefully exits the Windows OS rather than just powering off.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -47,7 +47,7 @@ def test_vm_relationship_datastore_fileshare_scvmm():
     This test case is valid for SCVMM with Host which have Fileshare storage
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -75,7 +75,7 @@ def test_suspend_scvmm2016_from_collection():
     Test the a VM can be Suspended, or Saved, from the Collection Page
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/8h
         caseimportance: medium
         caseposneg: positive
@@ -105,7 +105,7 @@ def test_restart_guest_scvmm2016():
     off and back on.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/8h
         caseimportance: medium
         caseposneg: positive
@@ -137,7 +137,7 @@ def test_restart_guest_scvmm():
     off and back on.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         caseimportance: medium
         caseposneg: positive
@@ -166,7 +166,7 @@ def test_power_controls_on_archived_vm():
     This test case is to check power operations are not working on archived VM.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/10h
         caseimportance: medium
         caseposneg: positive
@@ -196,7 +196,7 @@ def test_power_controls_on_vm_in_stack_cloud():
     This test case is to check power controls on vm in stack cloud.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/3h
         caseimportance: medium
         caseposneg: positive
@@ -264,7 +264,7 @@ def test_power_operations_from_global_region(provider, context):
 def test_check_compliance_policy_option_on_vm_summery_page():
     """
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/12h
         caseimportance: medium
         caseposneg: positive
@@ -298,7 +298,7 @@ def test_power_operations_on_paused_provider():
         1740285
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Infra
@@ -329,7 +329,7 @@ def test_suspend_action_on_off_vm():
         1704221
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Services

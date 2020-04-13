@@ -131,7 +131,7 @@ def test_rename_vm(small_vm):
     """Test for rename the VM.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Infra
         startsin: 5.10

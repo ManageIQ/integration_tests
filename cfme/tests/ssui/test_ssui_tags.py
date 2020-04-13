@@ -10,7 +10,7 @@ pytestmark = [test_requirements.tag]
 def test_tagvis_ssui_catalog_items():
     """
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: SelfServiceUI
         caseimportance: medium
         initialEstimate: 1/8h

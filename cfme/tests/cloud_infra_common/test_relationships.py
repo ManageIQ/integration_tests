@@ -251,7 +251,7 @@ def test_tagvis_infra_provider_children(prov_child_visibility, setup_provider, r
         2. Login as restricted user, providers child not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         initialEstimate: 1/4h
     """
@@ -267,7 +267,7 @@ def test_tagvis_cloud_provider_children(prov_child_visibility, setup_provider, r
         Catalog, tag, role, group and restricted user should be created
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         initialEstimate: 1/8h
         casecomponent: Cloud
         caseimportance: high

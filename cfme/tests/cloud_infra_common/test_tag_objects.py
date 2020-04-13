@@ -160,7 +160,7 @@ def test_tagvis_cloud_object(check_item_visibility, cloud_test_item, visibility,
         4. Login as restricted user, item is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         initialEstimate: 1/4h
     """
@@ -213,7 +213,7 @@ def test_tagvis_infra_object(infra_test_item, check_item_visibility, visibility,
         4. Login as restricted user, iten is not visible for user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         initialEstimate: 1/12h
     """
@@ -230,7 +230,7 @@ def test_tagvis_tag_host_vm_combination():
     User should be restricted to see tagged host and vm, template
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -243,7 +243,7 @@ def test_tagvis_tag_host_vm_combination():
 def test_tagvis_config_manager_provider():
     """
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -264,7 +264,7 @@ def test_tagvis_storage_provider_children():
     restricted user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -283,7 +283,7 @@ def test_tagvis_cluster_change():
     Enable / Disable a Cluster in the group and check its visibility
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -299,7 +299,7 @@ def test_tagvis_vm_and_template_modified():
     visibility
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -314,7 +314,7 @@ def test_tagvis_host_change():
     Enable / Disable a host in the group and check its visibility
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -330,7 +330,7 @@ def test_tagvis_tag_and_cluster_combination():
     Visible cluster should match both tab restrictions
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -346,7 +346,7 @@ def test_tagvis_tag_cluster_vm_combination():
     All restriction should be applied for vm and template
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -363,7 +363,7 @@ def test_tagvis_cluster_and_vm_combination():
     this cluster
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -379,7 +379,7 @@ def test_tagvis_tag_and_host_combination():
     Visible host should match both tab restrictions
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -396,7 +396,7 @@ def test_tagvis_tag_and_vm_combination():
     Vm , template should match both tab restrictions
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -411,7 +411,7 @@ def test_tagvis_ldap_group_host():
     Add LDAP group, assign a host permission and check for the visibility
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -427,7 +427,7 @@ def test_tagvis_configuration_management_configured_system():
     visibility
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -440,7 +440,7 @@ def test_tagvis_configuration_management_configured_system():
 def test_tagvis_group_filter_network_provider():
     """
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/8h
@@ -461,7 +461,7 @@ def test_tagvis_group_filter_network_provider():
 def test_tagvis_infra_networking_switch():
     """
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: low
         initialEstimate: 1/8h
@@ -482,7 +482,7 @@ def test_tagvis_infra_networking_switch():
 def test_tagvis_performance_reports():
     """
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/3h

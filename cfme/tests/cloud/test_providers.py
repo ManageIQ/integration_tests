@@ -907,7 +907,7 @@ def test_tagvis_provision_fields(setup_provider, request, appliance, user_restri
     """Test for network environment fields for restricted user
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         caseimportance: medium
         initialEstimate: 1/3h
