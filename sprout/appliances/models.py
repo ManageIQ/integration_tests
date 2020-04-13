@@ -900,7 +900,7 @@ class Appliance(MetadataMixin):
                 appliance = type(self).objects.get(pk=self.pk)
                 appliance.cpu = params['cpu']
                 appliance.ram = params['ram']
-                appliance.save(update_fields=['cpu', ['ram']])
+                appliance.save(update_fields=['cpu', 'ram'])
 
     @property
     def serialized(self):
