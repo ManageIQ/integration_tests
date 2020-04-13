@@ -22,7 +22,7 @@ def test_vm_discovery(provider, create_vm):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/4h
         tags: power

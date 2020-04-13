@@ -91,7 +91,7 @@ def test_sdn_balancers_tagvis(check_item_visibility, visibility, network_prov_wi
         test_flag: tag, sdn
 
     Polarion:
-        assignee: anikifor
+        assignee: prichard
         casecomponent: Tagging
         initialEstimate: 1/4h
         endsin: 5.10

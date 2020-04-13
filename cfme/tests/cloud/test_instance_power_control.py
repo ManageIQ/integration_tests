@@ -191,7 +191,7 @@ def test_quadicon_terminate_cancel(provider, testing_instance, ensure_vm_running
     """ Tests terminate cancel
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -207,7 +207,7 @@ def test_quadicon_terminate(appliance, provider, testing_instance, ensure_vm_run
     """ Tests terminate instance
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -240,7 +240,7 @@ def test_stop(appliance, provider, testing_instance, ensure_vm_running, soft_ass
         test_flag: power_control, provision
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
@@ -257,7 +257,7 @@ def test_start(appliance, provider, testing_instance, ensure_vm_stopped, soft_as
     """ Tests instance start
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -282,7 +282,7 @@ def test_soft_reboot(appliance, provider, testing_instance, ensure_vm_running, s
         test_flag: power_control, provision
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Cloud
         initialEstimate: 1/4h
     """
@@ -316,7 +316,7 @@ def test_power_on_or_off_multiple(provider, testing_instance, testing_instance2,
         test_flag: power_control, provision
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Cloud
         initialEstimate: 1/8h
     """
@@ -354,7 +354,7 @@ def test_hard_reboot(appliance, provider, testing_instance, ensure_vm_running, s
     """ Tests instance hard reboot
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -378,7 +378,7 @@ def test_hard_reboot_unsupported(appliance, testing_instance):
     Tests that hard reboot throws an 'unsupported' error message on an Azure instance
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/8h
         casecomponent: Cloud
         caseimportance: high
@@ -400,7 +400,7 @@ def test_suspend(appliance, provider, testing_instance, ensure_vm_running, soft_
     """ Tests instance suspend
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -422,7 +422,7 @@ def test_unpause(appliance, provider, testing_instance, ensure_vm_paused, soft_a
     """ Tests instance unpause
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -442,7 +442,7 @@ def test_resume(appliance, provider, testing_instance, ensure_vm_suspended, soft
     """ Tests instance resume
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -461,7 +461,7 @@ def test_terminate(provider, testing_instance, ensure_vm_running, soft_assert, a
     """Tests instance terminate
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -480,7 +480,7 @@ def test_instance_power_options_from_on(provider, testing_instance, ensure_vm_ru
     """ Tests available power options from ON state
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Cloud
         initialEstimate: 1/10h
         caseimportance: high
@@ -495,7 +495,7 @@ def test_instance_power_options_from_off(provider, testing_instance,
     """Tests available power options from OFF state
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         casecomponent: Cloud
         initialEstimate: 1/10h
         caseimportance: high
@@ -776,7 +776,7 @@ def test_power_options_on_archived_instance_all_page(testing_instance):
         1738584
 
     Polarion:
-        assignee: ghubale
+        assignee: prichard
         initialEstimate: 1/2h
         caseimportance: low
         caseposneg: positive
