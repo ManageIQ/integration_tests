@@ -562,36 +562,6 @@ def test_request_details_page_tagcontrol_field(request, appliance, import_dialog
     assert details_view.is_displayed
 
 
-@pytest.mark.meta(coverage=[1694737])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_regex_validation_should_work():
-    """
-
-    Bugzilla:
-        1694737
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testSteps:
-            1. Import DataStore and Dynamic Dialog
-            2. Add catalog item with above dialog
-            3. Navigate to order page of service
-            4. In service Order page
-            5. Add values
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Regex validation should work
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1696474])
 @pytest.mark.customer_scenario
