@@ -4,11 +4,11 @@ from cfme import test_requirements
 
 pytestmark = [
     pytest.mark.tier(0),
-    test_requirements.containers
+    test_requirements.containers,
+    pytest.mark.manual('manualonly')
 ]
 
 
-@pytest.mark.manual
 def test_cmqe_add_new_resource_quota():
     """
     Add new resource quota
@@ -41,7 +41,6 @@ def test_cmqe_add_new_resource_quota():
     pass
 
 
-@pytest.mark.manual
 def test_cmqe_modify_existing_resource_quota():
     """
     Modify Existing Quota
@@ -78,7 +77,6 @@ def test_cmqe_modify_existing_resource_quota():
     pass
 
 
-@pytest.mark.manual
 def test_cmqe_delete_existing_resource_quota():
     """
     Delete existing Resource Quota
