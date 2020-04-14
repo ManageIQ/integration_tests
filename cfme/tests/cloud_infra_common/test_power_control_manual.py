@@ -234,7 +234,7 @@ def test_power_operations_from_global_region(provider, context):
     is Global region, others are Remote. To get this working enable Central Admin.
 
     Polarion:
-        assignee: izapolsk
+        assignee: tpapaioa
         initialEstimate: 1/2h
         caseimportance: high
         caseposneg: positive
