@@ -1,3 +1,5 @@
+from contextlib import closing
+
 import fauxfactory
 import pytest
 from wrapanapi import VmState
@@ -5,6 +7,7 @@ from wrapanapi import VmState
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
+from cfme.base.credential import SSHCredential
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
@@ -12,11 +15,10 @@ from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView
 from cfme.infrastructure.virtual_machines import InfraVmSnapshotView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.path import data_path
-from cfme.utils.ssh import SSHClient
+from cfme.utils.ssh import connect_ssh
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -174,31 +176,25 @@ def test_delete_all_snapshots(create_vm, provider):
 
 def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request,
                            active_snapshot=False):
+    SSH_READY_TIMEOUT = 300
     if provider.one_of(RHEVMProvider):
         # RHV snapshots have only description, no name
         snapshot1 = new_snapshot(full_test_vm, has_name=False)
     else:
         snapshot1 = new_snapshot(full_test_vm)
     full_template = getattr(provider.data.templates, 'full_template')
-    # Define parameters of the ssh connection
-    ssh_kwargs = {
-        'hostname': snapshot1.parent_vm.mgmt.ip,
-        'username': credentials[full_template.creds]['username'],
-        'password': credentials[full_template.creds]['password']
-    }
-    ssh_client = SSHClient(**ssh_kwargs)
-    # We need to wait for ssh to become available on the vm, it can take a while. Without
-    # this wait, the ssh command would fail with 'port 22 not available' error.
-    # Easiest way to solve this is just mask the exception with 'handle_exception = True'
-    # and wait for successful completition of the ssh command.
-    # The 'fail_func' ensures we close the connection that failed with exception.
-    # Without this, the connection would hang there and wait_for would fail with timeout.
-    wait_for(lambda: ssh_client.run_command('touch snapshot1.txt').success, num_sec=400,
-             delay=20, handle_exception=True, fail_func=ssh_client.close(),
-             message="Waiting for successful SSH connection")
-    # Create first snapshot
-    snapshot1.create()
-    ssh_client.run_command('touch snapshot2.txt')
+    creds = SSHCredential.from_config(full_template.creds)
+
+    # We need to wait for ssh to become available on the vm, it can take a while.
+    # connect_ssh will iterate over "all_ips" on the VM and return a client when it can connect
+
+    with closing(connect_ssh(full_test_vm.mgmt, creds, num_sec=SSH_READY_TIMEOUT)) as ssh_client:
+        ssh_client.run_command('touch snapshot1.txt').success
+        # Create first snapshot
+        snapshot1.create()
+
+        # Assuming creating snapshot shouldn't break the ssh connection...
+        ssh_client.run_command('touch snapshot2.txt')
 
     # If we are not testing 'revert to active snapshot' situation, we create another snapshot
     if not active_snapshot:
@@ -212,34 +208,30 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     if provider.one_of(RHEVMProvider):
         full_test_vm.power_control_from_cfme(option=full_test_vm.POWER_OFF, cancel=False)
         full_test_vm.wait_for_vm_state_change(
-            desired_state=full_test_vm.STATE_OFF, timeout=900)
+            desired_state=full_test_vm.STATE_OFF, timeout=400)
 
     snapshot1.revert_to()
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
-    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=provider.browser.refresh,
+    wait_for(lambda: snapshot1.active, num_sec=700, delay=30, fail_func=provider.browser.refresh,
              message="Waiting for the first snapshot to become active")
     # VM state after revert should be OFF
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_OFF, timeout=720)
     # Let's power it ON again
     full_test_vm.power_control_from_cfme(option=full_test_vm.POWER_ON, cancel=False)
-    full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=900)
+    full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=400)
     soft_assert(full_test_vm.mgmt.is_running, "vm not running")
     # Wait for successful ssh connection
-    wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').success,
-             num_sec=400, delay=10, handle_exception=True, fail_func=ssh_client.close(),
-             message="Waiting for successful SSH connection after revert")
-    try:
-        result = ssh_client.run_command('test -e snapshot1.txt')
-        assert result.success  # file found, RC=0
-        result = ssh_client.run_command('test -e snapshot2.txt')
-        assert result.failed  # file not found, RC=1
-        logger.info('Revert to snapshot %s successful', snapshot1.name)
-    except Exception:
-        logger.exception('Revert to snapshot %s Failed', snapshot1.name)
-    ssh_client.close()
+    with closing(connect_ssh(full_test_vm.mgmt, creds, num_sec=SSH_READY_TIMEOUT)) as ssh_client:
+        assert ssh_client.run_command('test -e snapshot1.txt').success
+        # This checks the exit status is 1 -- file doesn't exist.
+        assert ssh_client.run_command('test -e snapshot2.txt') == 1
 
 
+@pytest.mark.rhv1
+@pytest.mark.meta(
+    blockers=[BZ(1805803, unblock=lambda provider: not provider.one_of(RHEVMProvider),
+                 ignore_bugs={1745065})], automates=[1805803])
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
