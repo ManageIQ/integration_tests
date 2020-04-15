@@ -96,7 +96,7 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
         test_flag: datastore_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/3h

@@ -227,7 +227,7 @@ distributed = pytest.mark.requirement(
 drift = pytest.mark.requirement(
     "Drift Analysis",
     description='Drift benchmarking and analysis of MIQ entities (host, instance)',
-    assignee_id='sbulage',
+    assignee_id='nansari',
     priority='lowest',
 )
 

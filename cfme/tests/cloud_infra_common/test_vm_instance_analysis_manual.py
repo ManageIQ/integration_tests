@@ -15,7 +15,7 @@ def test_provider_refresh_after_ssa():
     Verify that system info obtained by ssa isn't wiped out after provider refresh
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         initialEstimate: 1/2h
         tags: smartstate
@@ -40,7 +40,7 @@ def test_ssa_vm_ec2_agent_tracker():
         1557452
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         initialEstimate: 1/3h
         startsin: 5.9

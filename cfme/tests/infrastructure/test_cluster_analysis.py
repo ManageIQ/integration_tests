@@ -22,7 +22,7 @@ def test_run_cluster_analysis(appliance, provider):
         test_flag: cluster_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         initialEstimate: 1/3h
     """
