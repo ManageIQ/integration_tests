@@ -1523,7 +1523,10 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
     def resetter(self, *args, **kwargs):
         # https://bugzilla.redhat.com/show_bug.cgi?id=1821974#c5
         # History & Refresh buttons have been removed from explorer screens on upstream only.
-        self.view.toolbar.reload.click()
+        if not self.context["object"].appliance.is_downstream:
+            pass
+        else:
+            self.view.toolbar.reload.click()
 
 
 @navigator.register(InfraTemplate, 'ArchiveDetails')
