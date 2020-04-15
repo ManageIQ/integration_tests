@@ -5,6 +5,7 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.widget import NoSuchElementException
 from widgetastic.widget import Text
+from widgetastic.widget import TextInput
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav
 from widgetastic_patternfly import BootstrapSelect
@@ -132,6 +133,7 @@ class VolumeRestoreView(VolumeBackupView):
                 self.entities.breadcrumb.active_location == expected_title)
 
     volume_name = BootstrapSelect(name='volume_id')
+    restored_volume_name = TextInput(name='name')
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('cancel')
@@ -150,14 +152,26 @@ class VolumeBackup(BaseEntity, Taggable):
     name = attr.ib()
     provider = attr.ib()
 
-    def restore(self, name):
+    def restore(self, name, new_volume=False, from_all_backups=False):
         """Restore the volume backup.
 
         Args:
-            name: volume name
+            name: restored volume name
+            new_volume: Whether to create new volume from backup
+            from_all_backups: Whether to navigate from All Backups page
+
         """
-        view = navigate_to(self, 'Restore')
-        view.volume_name.fill(name)
+        if from_all_backups:
+            view = navigate_to(self.parent, 'All')
+            view.entities.get_entity(surf_pages=True, name=self.name).ensure_checked()
+            view.toolbar.configuration.item_select('Restore backup to Cloud Volume',
+                                                   handle_alert=True)
+            view = view.browser.create_view(VolumeRestoreView, additional_context={'object': self})
+        else:
+            view = navigate_to(self, 'Restore')
+        view.volume_name.fill('<New Volume>') if new_volume else view.volume_name.fill(name)
+        if new_volume:
+            view.restored_volume_name.fill(name)
         view.save.click()
         view.flash.assert_success_message(f'Restoring Cloud Volume "{self.name}"')
 

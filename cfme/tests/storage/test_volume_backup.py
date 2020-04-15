@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -103,9 +104,8 @@ def test_storage_volume_backup_delete(backup):
     assert not backup.exists
 
 
-@pytest.mark.manual
 @test_requirements.storage
-def test_storage_volume_backup_restore(backup):
+def test_storage_volume_backup_restore(appliance, backup, provider, request):
     """
     Requires:
         test_storage_volume_backup[openstack]
@@ -125,12 +125,18 @@ def test_storage_volume_backup_restore(backup):
             1.
             2. check in Task whether restored
     """
-    pass
+    restored_volume_name = fauxfactory.gen_alpha(start="vol_")
+    backup.restore(name=restored_volume_name, new_volume=True)
+    backup.refresh()
+    volumes_collection = appliance.collections.volumes
+    restored_volume = volumes_collection.instantiate(name=restored_volume_name, provider=provider)
+    request.addfinalizer(lambda: restored_volume.delete())
+    wait_for(lambda: restored_volume.status == 'available', fail_func=backup.refresh, delay=30,
+             timeout=600)
 
 
-@pytest.mark.manual
 @test_requirements.storage
-def test_storage_volume_backup_restore_from_backup_page(backup):
+def test_storage_volume_backup_restore_from_backup_page(appliance, backup, provider, request):
     """
     Requires:
         test_storage_volume_backup[openstack]
@@ -153,4 +159,11 @@ def test_storage_volume_backup_restore_from_backup_page(backup):
             3.
             4. check in Task whether restored
     """
-    pass
+    restored_volume_name = fauxfactory.gen_alpha(start="vol_")
+    backup.restore(name=restored_volume_name, new_volume=True, from_all_backups=True)
+    backup.refresh()
+    volumes_collection = appliance.collections.volumes
+    restored_volume = volumes_collection.instantiate(name=restored_volume_name, provider=provider)
+    request.addfinalizer(lambda: restored_volume.delete())
+    wait_for(lambda: restored_volume.status == 'available', fail_func=backup.refresh, delay=30,
+             timeout=600)
