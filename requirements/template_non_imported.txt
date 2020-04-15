@@ -9,5 +9,6 @@ pdfminer.six
 polarion-docstrings
 polarion-tools-common
 pre-commit
+pytest-mock
 pytest-polarion-collect
 pytest-report-parameters

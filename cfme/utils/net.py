@@ -1,10 +1,12 @@
 import os
 import re
 import socket
+import time
 from collections import defaultdict
 
 from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 _ports = defaultdict(dict)
@@ -56,6 +58,38 @@ def ip_echo_socket(port=32123):
             conn, addr = s.accept()
             conn.sendall(addr[0])
             conn.close()
+
+
+def _trying_fresh_ips(vm, delay, rounds=3):
+    """ Iterates over IPs from vm for which connection attempts will be made.
+    After all all IPs tried out, this will sleep a while and return next round.
+
+    If rounds is -1, then keep generating ips forever.
+    """
+    _round = 0
+    while _round < rounds or rounds == -1:
+        _round += 1
+        yield from vm.all_ips
+        time.sleep(delay)
+
+
+def pick_responding_ip(vm, port, rounds, rounds_delay_seconds, attempt_timeout):
+    """
+    Given a vm and port, pick one of the vm's addresses that is connectible
+    on the given port
+
+    Args:
+        vm: mgmt vm
+        port: port number to attempt connecting to
+        attempt_timeout: A connection timeout for every connection attempt.
+
+    Raise TimedOutError if no such IP is found.
+    """
+    for ip in _trying_fresh_ips(vm, rounds_delay_seconds, rounds):
+        if net_check(port, ip, attempt_timeout):
+            return ip
+    else:
+        raise TimedOutError(f"Coudln't find an IP of vm {vm} with port {port} responding")
 
 
 def net_check(port, addr=None, force=False, timeout=10):
