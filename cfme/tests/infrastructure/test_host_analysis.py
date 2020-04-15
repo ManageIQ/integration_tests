@@ -72,7 +72,7 @@ def test_run_host_analysis(setup_provider_modscope, provider, host_type, host_na
         test_flag: host_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         initialEstimate: 1/3h
     """

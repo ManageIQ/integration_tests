@@ -547,7 +547,7 @@ def test_ssa_template(local_setup_provider, provider, soft_assert, vm_analysis_p
         test_flag: vm_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -594,7 +594,7 @@ def test_ssa_compliance(local_setup_provider, ssa_compliance_profile, ssa_vm,
         test_flag: vm_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -633,7 +633,7 @@ def test_ssa_schedule(ssa_vm, schedule_ssa, soft_assert, vm_system_type,
         test_flag: vm_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: critical
         initialEstimate: 1/2h
@@ -670,7 +670,7 @@ def test_ssa_vm(ssa_vm, scanned_vm, soft_assert, vm_system_type,
         test_flag: vm_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -705,7 +705,7 @@ def test_ssa_users(ssa_vm):
         test_flag: vm_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -749,7 +749,7 @@ def test_ssa_groups(ssa_vm):
         test_flag: vm_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -795,7 +795,7 @@ def test_ssa_packages(ssa_vm):
         1551273
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -839,7 +839,7 @@ def test_ssa_files(ssa_vm):
     """Tests that instances can be scanned for specific file.
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -871,7 +871,7 @@ def test_drift_analysis(request, ssa_vm, soft_assert, appliance):
         test_flag: vm_analysis
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h
@@ -954,7 +954,7 @@ def test_ssa_multiple_vms(ssa_multiple_vms, soft_assert, appliance, compare_linu
         1551273
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         caseimportance: high
         initialEstimate: 1/2h

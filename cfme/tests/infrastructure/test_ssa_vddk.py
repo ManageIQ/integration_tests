@@ -101,7 +101,7 @@ def test_ssa_vddk(vm, configure_vddk):
 
 
     Polarion:
-        assignee: sbulage
+        assignee: nansari
         casecomponent: SmartState
         initialEstimate: 1/2h
     """
