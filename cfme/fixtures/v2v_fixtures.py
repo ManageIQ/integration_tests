@@ -213,6 +213,9 @@ def vddk_url():
 
 
 def get_conversion_data(appliance, target_provider):
+    # SSL certificate verification is required while configuring conversion hosts only if RHV-M
+    # uses SSL. It's not related to the SSL certificate verification in the provider configuration
+    # and there is no way to link them because they are not used in the same way.
     tls_ca_certs = None
 
     if target_provider.one_of(RHEVMProvider):
@@ -231,7 +234,6 @@ def get_conversion_data(appliance, target_provider):
             vm_key = conf.credentials[
                 target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
             auth_user = vm_key.username
-            # private_key = vm_key.password
             private_key = ssh_client.run_command(
                 "cat /root/.ssh/id_rsa").output
             try:
