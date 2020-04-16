@@ -51,7 +51,7 @@ def button_with_dialog(appliance, generic_object, dialog):
 def test_generic_objects_crud(appliance, context, request):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/4h
         tags: 5.9
         casecomponent: GenericObjects
@@ -114,19 +114,19 @@ def test_generic_objects_tag_ui(appliance, generic_object, tag_place):
             test_flag: ui
 
     Polarion:
-        assignee: anikifor
+        assignee: tpapaioa
         initialEstimate: 1/4h
         casecomponent: GenericObjects
     """
     with appliance.context.use(ViaUI):
         assigned_tag = generic_object.add_tag(details=tag_place)
-        # TODO uncomment when tags aria added to details
+        # TODO uncomment when tags are added to details
         # tag_available = instance.get_tags()
         # assert any(tag.category.display_name == assigned_tag.category.display_name and
         #            tag.display_name == assigned_tag.display_name
         #            for tag in tag_available), 'Assigned tag was not found on the details page'
         generic_object.remove_tag(assigned_tag, details=tag_place)
-        # TODO uncomment when tags aria added to details
+        # TODO uncomment when tags are added to details
         # assert not(tag.category.display_name == assigned_tag.category.display_name and
         #            tag.display_name == assigned_tag.display_name
         #            for tag in tag_available), 'Assigned tag was not removed from the details page'
@@ -141,7 +141,7 @@ def test_generic_objects_tag_rest(appliance, generic_object, tags):
 
     Polarion:
         initialEstimate: 1/4h
-        assignee: pvala
+        assignee: tpapaioa
         casecomponent: Tagging
         caseimportance: high
     """
@@ -164,7 +164,7 @@ def test_generic_object_with_service_button(appliance, generic_object, button_wi
         1743266
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/6h
         caseimportance: high
         caseposneg: positive
@@ -199,7 +199,7 @@ def test_generic_object_on_service_breadcrumb(appliance, generic_object):
         1741050
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/6h
         casecomponent: GenericObjects
         testSteps:
@@ -224,7 +224,7 @@ def test_generic_object_on_service_breadcrumb(appliance, generic_object):
     # now navigate to the details of the generic_object
     with appliance.context.use(ViaUI):
         view = navigate_to(generic_object, "MyServiceDetails")
-        view.breadcrumb.click_location("Active Services")
+        view.breadcrumb.click_location(myservice.name)
         assert not view.is_displayed
         view = myservice.create_view(MyServicesView)
         assert view.is_displayed
