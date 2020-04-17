@@ -4768,7 +4768,12 @@ class MigrationPlansList(Widget):
         './div[contains(@class,"list-view-pf-actions")]'
         '//button[text()="Migrate" or text()="Retry"]'
     )
-    ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
+    ITEM_IS_SUCCESSFUL_LOCATOR = VersionPick(
+        {
+            Version.lowest(): './/div/span[contains(@class,"pficon-ok")]',
+            "5.11": './/td/span[contains(@class,"pficon-ok")]',
+        }
+    )
     ITEM_KEBAB_DROPDOWN_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/button'
     ITEM_ARCHIVE_BUTTON_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/ul/li/a'
     ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR = (
