@@ -33,20 +33,6 @@ def clone_vm_name():
     return clone_vm_name
 
 
-@pytest.fixture
-def create_vm(appliance, provider, request):
-    """Fixture to provision vm to the provider being tested"""
-    vm_name = fauxfactory.gen_alphanumeric(15, start="test_clone_")
-    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
-    logger.info("provider_key: %s", provider.key)
-
-    if not provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    yield vm
-    vm.cleanup_on_provider()
-
-
 @pytest.mark.provider([VMwareProvider], **filter_fields)
 @pytest.mark.meta(blockers=[BZ(1685201)])
 @test_requirements.provision
