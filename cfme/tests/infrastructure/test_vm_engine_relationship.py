@@ -14,7 +14,7 @@ pytestmark = [
     test_requirements.general_ui
 ]
 
-
+'''
 @pytest.fixture
 def new_vm(provider, appliance):
     """Get a random vm to mark relationship"""
@@ -24,10 +24,10 @@ def new_vm(provider, appliance):
         return appliance.collections.infra_vms.instantiate(name=all_names[0], provider=provider)
     except IndexError:
         pytest.skip(f"No VMs found on provider {provider.name}")
-
+'''
 
 @pytest.mark.meta(automates=[1534400])
-def test_edit_management_relationship(appliance, new_vm):
+def test_edit_management_relationship(appliance, create_vm):
     """
     check that Edit Management Relationship works for the VM
 
@@ -40,7 +40,7 @@ def test_edit_management_relationship(appliance, new_vm):
         caseimportance: high
         initialEstimate: 1/6h
     """
-    vm_relationship = InfraVm.CfmeRelationship(new_vm)
+    vm_relationship = InfraVm.CfmeRelationship(create_vm)
 
     for i in range(2):  # do it 2 times and leave the vm w/o relationship
         # set relationship
