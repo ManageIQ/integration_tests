@@ -5179,7 +5179,13 @@ class MigrationPlanRequestDetailsList(Widget):
     ITEM_IS_ERRORED_LOCATOR = './/div[contains(@class,"pficon-error-circle-o")]'
     ITEM_IS_CANCELLED_LOCATOR = './/span[contains(@class,"list-view-pf-icon-md")]'
     ITEM_PROGRESS_SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
-    ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
+    # ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
+    ITEM_IS_SUCCESSFUL_LOCATOR = VersionPick(
+        {
+            Version.lowest(): './/div/span[contains(@class,"pficon-ok")]',
+            "5.11": './/td/span[contains(@class,"pficon-ok")]',
+        }
+    )
     ITEM_ADDITIONAL_INFO_POPUP_LOCATOR = '//div[contains(@class,"task-info-popover")]'
     ITEM_CANCEL_MIGRATION_CHECKBOX_LOCATOR = './/input[@type="checkbox"]'
     ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR = (
