@@ -6,7 +6,7 @@ import pytest
 from wait_for import wait_for
 
 from cfme import test_requirements
-from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.console import configure_appliances_ha
@@ -59,7 +59,7 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     appl2.wait_for_web_ui()
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     appl1.db.backup()
     return temp_appliances_unconfig_funcscope_rhevm
 
@@ -95,7 +95,7 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
     appl2.wait_for_web_ui()
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     appl1.db.backup()
     return temp_appliances_unconfig_funcscope_rhevm
 
@@ -164,7 +164,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
 
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(EC2Provider, appl3).setup()
+    provider_app_crud(OpenStackProvider, appl3).setup()
     appl1.db.backup()
 
     return unconfigured_appliances
@@ -194,7 +194,7 @@ def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
 
     # Add infra/cloud providers
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     return appl1, appl2
 
 
@@ -509,7 +509,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(EC2Provider, appl3).setup()
+    provider_app_crud(OpenStackProvider, appl3).setup()
     appl1.db.backup()
 
     providers_before_restore = set(appl3.managed_provider_names)
