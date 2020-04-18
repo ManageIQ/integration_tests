@@ -4754,7 +4754,15 @@ class MigrationPlansList(Widget):
     """Represents the list of Migration Plans."""
 
     ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
-    ITEM_LOCATOR = ParametrizedLocator('.//div[contains(@class,"{@list_class}__list-item")]')
+    ITEM_LOCATOR = VersionPick(
+        {
+            Version.lowest(): ParametrizedLocator(
+                './/div[contains(@class,"{@list_class}__list-item")]'
+            ),
+            "5.11": ParametrizedLocator('.//tr[contains(@class,"{@list_class}__list-item")]'),
+        }
+    )
+    # ITEM_LOCATOR = ParametrizedLocator('.//div[contains(@class,"{@list_class}__list-item")]')
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
@@ -5179,13 +5187,7 @@ class MigrationPlanRequestDetailsList(Widget):
     ITEM_IS_ERRORED_LOCATOR = './/div[contains(@class,"pficon-error-circle-o")]'
     ITEM_IS_CANCELLED_LOCATOR = './/span[contains(@class,"list-view-pf-icon-md")]'
     ITEM_PROGRESS_SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
-    # ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
-    ITEM_IS_SUCCESSFUL_LOCATOR = VersionPick(
-        {
-            Version.lowest(): './/div/span[contains(@class,"pficon-ok")]',
-            "5.11": './/td/span[contains(@class,"pficon-ok")]',
-        }
-    )
+    ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
     ITEM_ADDITIONAL_INFO_POPUP_LOCATOR = '//div[contains(@class,"task-info-popover")]'
     ITEM_CANCEL_MIGRATION_CHECKBOX_LOCATOR = './/input[@type="checkbox"]'
     ITEM_CANCEL_MIGRATION_BUTTON_LOCATOR = (
