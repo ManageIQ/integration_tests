@@ -162,6 +162,20 @@ class DataProvider:
     version = attr.ib()
     klass = attr.ib(default=attr.Factory(data_provider_types, takes_self=True))
 
+    @classmethod
+    def get_instance(cls, *args):
+        """Create only one provider instance per unique args tuple (category, type_name, version).
+        The private _instances attribute on the class maintains a dictionary of instances, with the
+        tuple as key. Create the instance if it does not yet exist, and then store it in _instances
+        so that any future requests will return the same instance."""
+        if not hasattr(cls, '_instances'):
+            cls._instances = {}
+        if args in cls._instances:
+            return cls._instances[args]
+        inst = cls(*args)
+        cls._instances[args] = inst
+        return inst
+
     @cached_property
     def the_id(self):
         if self.version:
@@ -207,12 +221,12 @@ def all_required(miq_version, filters=None):
     for cat, prov_type_or_dict in types:
         if isinstance(prov_type_or_dict, str):
             # If the provider is versionless, ie, EC2, GCE, set the version number to 0
-            dprovs.append(DataProvider(cat, prov_type_or_dict, 0))
+            dprovs.append(DataProvider.get_instance(cat, prov_type_or_dict, 0))
         else:
             # If the prov_type_or_dict is not just a string, then we have versions and need
             # to iterate and extend the list
             dprovs.extend([
-                DataProvider(cat, prov, ver)
+                DataProvider.get_instance(cat, prov, ver)
                 for prov, vers in prov_type_or_dict.items()
                 for ver in vers
             ])

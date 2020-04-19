@@ -357,7 +357,8 @@ def pytest_fixture_setup(fixturedef, request):
                 fixturefunc = getimfunc(fixturedef.func)
                 if fixturefunc != fixturedef.func:
                     fixturefunc = fixturefunc.__get__(request.instance)
-            my_cache_key = request.param_index
+            # Use the DataProvider instance as the cache key.
+            my_cache_key = request.param
             try:
                 provider_data = call_fixture_func(fixturefunc, request, kwargs)
             except TEST_OUTCOME:
@@ -365,9 +366,10 @@ def pytest_fixture_setup(fixturedef, request):
                 raise
             from cfme.utils.providers import get_crud
             provider = get_crud(provider_data.key)
-            fixturedef.cached_result = (provider, my_cache_key, None)
             request.param = provider
             yield provider
+            # Store the cached_result after we have yielded to other pytest_fixture_setup methods.
+            fixturedef.cached_result = (provider, my_cache_key, None)
             break
     else:
         yield
