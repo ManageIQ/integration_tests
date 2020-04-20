@@ -7,7 +7,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
 

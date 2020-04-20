@@ -4,7 +4,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -14,17 +13,6 @@ pytestmark = [
     test_requirements.general_ui
 ]
 
-'''
-@pytest.fixture
-def new_vm(provider, appliance):
-    """Get a random vm to mark relationship"""
-    view = navigate_to(provider, 'ProviderVms')
-    all_names = view.entities.all_entity_names
-    try:
-        return appliance.collections.infra_vms.instantiate(name=all_names[0], provider=provider)
-    except IndexError:
-        pytest.skip(f"No VMs found on provider {provider.name}")
-'''
 
 @pytest.mark.meta(automates=[1534400])
 def test_edit_management_relationship(appliance, create_vm):

@@ -2,7 +2,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
