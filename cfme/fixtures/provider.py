@@ -97,8 +97,8 @@ def enable_provider_regions(provider):
         try:
             provider.appliance.set_disabled_regions(provider, *disabled_regions)
         except (ApplianceException, AssertionError) as ex:
-            pytest.skip('Exception setting disabled regions for provider: {}: {}'
-                        .format(provider, ex.message))
+            pytest.skip("Exception setting disabled regions for provider:"
+                f" {provider}: {ex.message}")
 
 
 def _setup_provider_verbose(request, provider, appliance=None):
@@ -117,8 +117,7 @@ def _setup_provider_verbose(request, provider, appliance=None):
             if len(existing_providers) > maximum_current_providers:
                 providers_to_remove = existing_providers[maximum_current_providers:]
                 store.terminalreporter.write_line(
-                    'Removing extra providers: {}'.format(', '.join(
-                        [p.key for p in providers_to_remove])))
+                    "Removing extra providers: {', '.join([p.key for p in providers_to_remove])}")
                 for p in providers_to_remove:
                     logger.info('removing provider %r', p.key)
                     p.delete_rest()
@@ -136,16 +135,17 @@ def _setup_provider_verbose(request, provider, appliance=None):
         _setup_failures[provider] += 1
         if _setup_failures[provider] >= SETUP_FAIL_LIMIT:
             _problematic_providers.add(provider)
-            message = "Provider {} is now marked as problematic and won't be used again."\
-                      " {}: {}".format(provider.key, type(e).__name__, str(e))
+            message = (
+                f"Provider {provider.key} is now marked as problematic and won't be used again."
+                f" {type(e).__name__}: {e!s}"
+            )
             logger.warning(message)
             store.terminalreporter.write_line(message + "\n", red=True)
         if provider.exists:
             # Remove it in order to not explode on next calls
             provider.delete_rest()
             provider.wait_for_delete()
-            message = "Provider {} was deleted because it failed to set up.".format(
-                provider.key)
+            message = f"Provider {provider.key} was deleted because it failed to set up."
             logger.warning(message)
             store.terminalreporter.write_line(message + "\n", red=True)
         return False
@@ -190,7 +190,7 @@ def setup_one_or_skip(request, filters=None, use_global_filters=True):
 
     # Are all providers marked as problematic?
     if _problematic_providers.issuperset(providers):
-        skip_msg = "All providers marked as problematic: {}".format([p.key for p in providers])
+        skip_msg = f"All providers marked as problematic: {[p.key for p in providers]}"
         _artifactor_skip_providers(request, providers, skip_msg)
 
     # If there is a provider already set up matching the user's requirements, reuse it
@@ -216,7 +216,7 @@ def setup_one_or_skip(request, filters=None, use_global_filters=True):
         if _setup_provider_verbose(request, provider):
             return provider
 
-    skip_msg = "Failed to set up any matching providers: {}", [p.key for p in providers]
+    skip_msg = f"Failed to set up any matching providers: {[p.key for p in providers]}"
     _artifactor_skip_providers(request, non_existing, skip_msg)
 
 
