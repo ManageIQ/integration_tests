@@ -4754,14 +4754,7 @@ class MigrationPlansList(Widget):
     """Represents the list of Migration Plans."""
 
     ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
-    ITEM_LOCATOR = VersionPick(
-        {
-            Version.lowest(): ParametrizedLocator(
-                './/div[contains(@class,"{@list_class}__list-item")]'
-            ),
-            "5.11": ParametrizedLocator('.//tr[contains(@class,"{@list_class}__list-item")]'),
-        }
-    )
+    ITEM_LOCATOR = ParametrizedLocator('.//*[contains(@class,"{@list_class}__list-item")]')
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
