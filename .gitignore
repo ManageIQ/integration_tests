@@ -21,6 +21,7 @@ lib64
 # logs
 pip-log.txt
 log/*
+tests_data.json
 
 # docs inventories
 docs/*.inv
