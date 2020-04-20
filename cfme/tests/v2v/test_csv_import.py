@@ -140,7 +140,7 @@ def test_non_csv(appliance, infra_map):
         initialEstimate: 1/8h
     """
     error_text = "Invalid file extension. Only .csv files are accepted."
-    hover_error = check_vm_status(appliance, infra_map, error_text, filetype='txt', alert=True)
+    hover_error = check_vm_status(appliance, infra_map, filetype='txt', alert=True)
     assert error_text == hover_error
 
 
@@ -154,7 +154,7 @@ def test_blank_csv(appliance, infra_map):
         initialEstimate: 1/8h
     """
     error_msg = "Error: Possibly a blank .CSV file"
-    hover_error = check_vm_status(appliance, infra_map, error_msg)
+    hover_error = check_vm_status(appliance, infra_map)
     assert error_msg == hover_error
 
 
@@ -169,7 +169,7 @@ def test_column_headers(appliance, infra_map):
     """
     content = fauxfactory.gen_alpha(10)
     error_msg = "Error: Required column 'Name' does not exist in the .CSV file"
-    hover_error = check_vm_status(appliance, infra_map, error_msg, content=content)
+    hover_error = check_vm_status(appliance, infra_map, content=content)
     assert error_msg == hover_error
 
 
@@ -184,7 +184,7 @@ def test_inconsistent_columns(appliance, infra_map):
     """
     content = "Name\n{}, {}".format(fauxfactory.gen_alpha(10), fauxfactory.gen_alpha(10))
     error_msg = "Error: Number of columns is inconsistent on line 2"
-    hover_error = check_vm_status(appliance, infra_map, error_msg, content=content)
+    hover_error = check_vm_status(appliance, infra_map, content=content)
     assert error_msg == hover_error
 
 
@@ -200,7 +200,7 @@ def test_csv_empty_vm(appliance, infra_map):
     content = "Name\n\n"
     error_msg = "Empty name specified"
     hover_error = check_vm_status(
-        appliance, infra_map, error_msg, content=content, table_hover=True)
+        appliance, infra_map, content=content, table_hover=True)
     assert error_msg == hover_error
 
 
@@ -216,7 +216,7 @@ def test_csv_invalid_vm(appliance, infra_map):
     content = "Name\n{}".format(fauxfactory.gen_alpha(10))
     error_msg = "VM does not exist"
     hover_error = check_vm_status(
-        appliance, infra_map, error_msg, content=content, table_hover=True)
+        appliance, infra_map, content=content, table_hover=True)
     assert error_msg == hover_error
 
 
@@ -232,7 +232,7 @@ def test_csv_valid_vm(appliance, infra_map, valid_vm):
     content = f"Name\n{valid_vm}"
     error_msg = "VM available for migration"
     hover_error = check_vm_status(
-        appliance, infra_map, error_msg, content=content, table_hover=True)
+        appliance, infra_map, content=content, table_hover=True)
     assert error_msg == hover_error
 
 
@@ -248,7 +248,7 @@ def test_csv_duplicate_vm(appliance, infra_map, valid_vm):
     content = f"Name\n{valid_vm}\n{valid_vm}"
     error_msg = "Duplicate VM"
     hover_error = check_vm_status(
-        appliance, infra_map, error_msg, content=content, table_hover='duplicate')
+        appliance, infra_map, content=content, table_hover='duplicate')
     assert error_msg == hover_error
 
 
@@ -264,7 +264,7 @@ def test_csv_archived_vm(appliance, infra_map, archived_vm):
     content = f"Name\n{archived_vm}"
     error_msg = "VM is inactive"
     hover_error = check_vm_status(
-        appliance, infra_map, error_msg, content=content, table_hover=True)
+        appliance, infra_map, content=content, table_hover=True)
     assert error_msg == hover_error
 
 
