@@ -1307,7 +1307,7 @@ def test_create_sns_topic(has_no_cloud_providers, provider, request):
 
 
 @test_requirements.ec2
-@pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
 def test_add_delete_add_provider(setup_provider, provider, request):
     """
     Polarion:
@@ -1332,7 +1332,7 @@ def test_add_delete_add_provider(setup_provider, provider, request):
 
 
 @test_requirements.ec2
-@pytest.mark.provider([EC2Provider], scope="function", override=True, selector=ONE)
+@pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
 def test_deploy_instance_with_ssh_addition_template(setup_provider,
                                                     instance_with_ssh_addition_template):
     """
