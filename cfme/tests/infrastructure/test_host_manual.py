@@ -524,31 +524,6 @@ def test_host_removal():
 
 
 @test_requirements.infra_hosts
-def test_host_refresh():
-    """
-    Testing refreshing single host.
-
-
-    Polarion:
-        assignee: prichard
-        casecomponent: Infra
-        caseimportance: high
-        initialEstimate: 1/4h
-        testSteps:
-            1. Navigate to the Compute > Infrastructure > Hosts view.
-            2. Select a host by checking the box in upper left of quadicons.
-            3. Click "Refresh Relationships and Power States" under the Configuration dropdowm,
-               and then click "OK" when prompted.
-        expectedResults:
-            1. Hosts view is displayed.
-            2. The selected hosts should be displayed with a blue border and checked checkbox.
-            3. "Refresh initiated for 1 Host from the CFME Database" is displayed in green
-               banner. Properties for each host are refreshed.
-    """
-    pass
-
-
-@test_requirements.infra_hosts
 def test_host_view_device_info():
     """
     Testing the viewing of host device information.
