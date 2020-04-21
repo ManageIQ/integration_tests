@@ -78,16 +78,26 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope):
 
     register and attach the system to RHN
     # SERVER=...redhat.com
-    # yum --downloadonly --downloaddir /therepo install -y rpm-build
-    # yum install -y rpm-build createrepo
+    # CFME_STREAM=5.10
+    #
+    # # Download the stuff for creating the repo
+    # yum --downloadonly --downloaddir /tmp/therepo install createrepo rpm-build rpmrebuild
+    #
+    # # Copy the downloaded stuff to prevent you to delete it after next
+    # # finished transaction
+    # cp /tmp/therepo/* /therepo/
+    #
+    # # Install the stuff we need now and create repo
+    # yum install -y rpm-build createrepo make rsync
     # rpmbuild  --rebuild http://$SERVER/~jhenner/rpmrebuild/rpmrebuild-2.14-1.src.rpm
     # cp rpmbuild/RPMS/noarch/rpmrebuild-2.14-1.noarch.rpm /therepo
     # createrepo /therepo
 
-    # curl 'http://$SERVER/~jhenner/rpmrebuild_repo/5.XX/rpmrebuild.repo' \
+    # # Get the repo file and publish the repo dir.
+    # curl "http://$SERVER/~jhenner/rpmrebuild_repo/$CFME_STREAM/rpmrebuild.repo" \
         -o /therepo/rpmrebuild.repo
-    # vim /therepo/rpmrebuild.repo
-    # rsync -avP /therepo/ jhenner@$SERVER:public_html/rpmrebuild_repo/5.XX
+    # vim /therepo/rpmrebuild.repo   # Check you got what you expected to get.
+    # rsync -avP /therepo/ "jhenner@$SERVER:public_html/rpmrebuild_repo/$CFME_STREAM"
     """
     appliance = temp_appliance_preconfig_funcscope
 
