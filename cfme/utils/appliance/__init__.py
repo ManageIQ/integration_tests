@@ -1510,6 +1510,34 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             fail_condition=not running, delay=10)
         return result
 
+    def wait_for_api_available(self, num_sec=600):
+        """Waits for the web UI to be running / to not be running
+
+        Args:
+            num_sec: Number of seconds to wait until num_sec(default ``600``)
+        """
+
+        def _check_appliance_api_ready():
+            try:
+                # Try invalidating stale cached api object if exists
+                try:
+                    del self.__dict__['rest_api']
+                except KeyError:
+                    pass
+                api = self.rest_api
+
+                # Make sure we really make a new request.
+                assert api.server_info['server_href']
+
+                self.log.info("Appliance REST API ready")
+                return api
+            except APIException as exc:
+                self.log.warning('Appliance rest API not ready: %s', exc)
+                return None
+
+        api, _ = wait_for(func=_check_appliance_api_ready, num_sec=num_sec, delay=10)
+        return api
+
     @logger_wrap("Install VDDK: {}")
     def install_vddk(self, force=False, vddk_url=None, log_callback=None):
         """Install the vddk on a appliance"""
