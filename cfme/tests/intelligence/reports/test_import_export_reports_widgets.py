@@ -182,9 +182,9 @@ def test_reports_invalid_file(appliance, yaml_name):
             2. Import `invalid_yaml` yaml that has no yaml data.
     """
     if yaml_name == "invalid_yaml":
-        message = "Error during 'upload': undefined method `keys' for \"i\":String"
+        message = r".*Error during.*upload.*: undefined method `keys.* for.*i.*:String.*"
     else:
-        message = "Error during 'upload': Invalid YAML file"
+        message = r".*Error during.*upload.*: Invalid YAML file"
 
     with pytest.raises(AssertionError, match=message):
         appliance.collections.reports.import_report(yaml_path(yaml_name))

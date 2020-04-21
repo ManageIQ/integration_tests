@@ -9,6 +9,8 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
+from cfme.utils.version import Version
+from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -16,6 +18,11 @@ pytestmark = [
     pytest.mark.provider(classes=[InfraProvider], selector=ONE),
     pytest.mark.usefixtures("setup_provider"),
 ]
+
+
+@pytest.fixture
+def retire_action(appliance):
+    return VersionPicker({Version.lowest(): 'retire', '5.11': 'request_retire'}).pick()
 
 
 @pytest.fixture(scope="function")
@@ -65,8 +72,8 @@ def vm_retirement_report(appliance, retire_vm):
 @pytest.mark.parametrize(
     "from_collection", [True, False], ids=["from_collection", "from_detail"]
 )
-@pytest.mark.meta(automates=[BZ(1805119)], blockers=[BZ(1805119)])
-def test_retire_vm_now(appliance, vm, from_collection):
+@pytest.mark.meta(automates=[BZ(1805119)], blockers=[BZ(1805119, forced_streams=["5.10"])])
+def test_retire_vm_now(appliance, vm, from_collection, retire_action):
     """Test retirement of vm
 
     Prerequisities:
@@ -94,9 +101,9 @@ def test_retire_vm_now(appliance, vm, from_collection):
     """
     retire_vm = appliance.rest_api.collections.vms.get(name=vm)
     if from_collection:
-        appliance.rest_api.collections.vms.action.retire(retire_vm)
+        getattr(appliance.rest_api.collections.vms.action, retire_action)(retire_vm)
     else:
-        retire_vm.action.retire()
+        getattr(retire_vm.action, retire_action)()
     assert_response(appliance)
 
     def _finished():
@@ -116,8 +123,10 @@ def test_retire_vm_now(appliance, vm, from_collection):
 @pytest.mark.parametrize(
     "from_collection", [True, False], ids=["from_collection", "from_detail"]
 )
-@pytest.mark.meta(automates=[BZ(1805119)], blockers=[BZ(1805119)])
-def test_retire_vm_future(appliance, vm, from_collection):
+@pytest.mark.meta(
+    automates=[BZ(1805119), BZ(1827787)], blockers=[BZ(1827787, forced_streams=["5.10", "5.11"])]
+)
+def test_retire_vm_future(appliance, vm, from_collection, retire_action):
     """Test retirement of vm
 
     Prerequisities:
@@ -136,6 +145,7 @@ def test_retire_vm_future(appliance, vm, from_collection):
 
     Bugzilla:
         1805119
+        1827787
 
     Polarion:
         assignee: pvala
@@ -148,9 +158,9 @@ def test_retire_vm_future(appliance, vm, from_collection):
     future = {"date": date, "warn": "4"}
     if from_collection:
         future.update(retire_vm._ref_repr())
-        appliance.rest_api.collections.vms.action.retire(future)
+        getattr(appliance.rest_api.collections.vms.action, retire_action)(future)
     else:
-        retire_vm.action.retire(**future)
+        getattr(retire_vm.action, retire_action)(**future)
     assert_response(appliance)
 
     def _finished():
@@ -159,13 +169,15 @@ def test_retire_vm_future(appliance, vm, from_collection):
             return False
         if not hasattr(retire_vm, "retirement_warn"):
             return False
+        if not hasattr(retire_vm, "retirement_state"):
+            return False
         return True
 
     wait_for(_finished, num_sec=1500, delay=10, message="REST vm retire future")
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(automates=[BZ(1805119), BZ(1638502)], blockers=[BZ(1805119)])
+@pytest.mark.meta(automates=[BZ(1805119), BZ(1638502)])
 def test_check_vm_retirement_requester(
     appliance, request, provider, vm_retirement_report
 ):

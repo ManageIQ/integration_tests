@@ -487,7 +487,7 @@ def test_compliance_column_header(appliance, setup_provider, provider):
 
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(blockers=[BZ(1741310)], automates=[1741310])
-@pytest.mark.provider([AnsibleTowerProvider, SatelliteProvider])
+@pytest.mark.provider([AnsibleTowerProvider, SatelliteProvider], selector=ONE_PER_TYPE)
 def test_add_provider_button_accordion(has_no_providers, provider):
     """
     Test that add_provider button is visible after clicking accordion on
@@ -687,51 +687,6 @@ def test_compare_vm_from_datastore_relationships(appliance, setup_provider, prov
     view.toolbar.configuration.item_select("Compare Selected items")
     compare_view = datastore.create_view(DatastoresCompareView)
     assert compare_view.is_displayed
-
-
-@pytest.mark.manual("manualonly")
-@pytest.mark.tier(1)
-def test_ui_pinning_after_relog():
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/12h
-        testSteps:
-            1. Go to Automate -> Explorer
-            2. Pin this menu
-            3. Logout
-            4. Log in
-            5. No menu should be pinned
-    """
-    pass
-
-
-@pytest.mark.manual
-def test_ui_notification_icon():
-    """
-    Bugzilla:
-        1489798
-
-    Polarion:
-        assignee: pvala
-        casecomponent: WebUI
-        caseimportance: low
-        initialEstimate: 1/6h
-        startsin: 5.9
-        testSteps:
-            1. Go to rails console and type:
-            Notification.create(:type => :automate_user_error, :initiator =>
-            User.first, :options => { :message => "test" })
-            2. Check in UI whether notification icon was displayed
-            3. Go to rails console and type:
-            Notification.create(:type => :automate_global_error, :initiator =>
-            User.first, :options => { :message => "test" })
-            4. Check in UI whether notification icon was displayed
-    """
-    pass
 
 
 @pytest.mark.tier(1)
