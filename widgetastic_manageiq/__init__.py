@@ -4754,7 +4754,7 @@ class MigrationPlansList(Widget):
     """Represents the list of Migration Plans."""
 
     ROOT = ParametrizedLocator(".//div[contains(@class,{@list_class|quote})]")
-    ITEM_LOCATOR = ParametrizedLocator('.//div[contains(@class,"{@list_class}__list-item")]')
+    ITEM_LOCATOR = ParametrizedLocator('.//*[contains(@class,"{@list_class}__list-item")]')
     # ITEM_TEXT_LOCATOR helps locate name of the Migration plan. ITEM_LOCATOR.text does not suffice.
     # Also, ITEM_LOCATOR does not yield element which can be clicked to navigate to details page.
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
@@ -4768,7 +4768,7 @@ class MigrationPlansList(Widget):
         './div[contains(@class,"list-view-pf-actions")]'
         '//button[text()="Migrate" or text()="Retry"]'
     )
-    ITEM_IS_SUCCESSFUL_LOCATOR = './/div/span[contains(@class,"pficon-ok")]'
+    ITEM_IS_SUCCESSFUL_LOCATOR = './/*[contains(@class,"pficon-ok")]'
     ITEM_KEBAB_DROPDOWN_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/button'
     ITEM_ARCHIVE_BUTTON_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/ul/li/a'
     ITEM_MODAL_ARCHIVE_BUTTON_LOCATOR = (
