@@ -214,8 +214,8 @@ def vddk_url():
 
 def get_conversion_data(appliance, target_provider):
     if target_provider.one_of(RHEVMProvider):
-        # Support for UCI hosts for RHV would be added in 5.11.5.
-        if appliance.version >= '5.11.5':
+        # Support for UCI hosts for RHV would be added in 5.11.6.
+        if appliance.version >= '5.11.6':
             resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
             vm_key = conf.credentials[
                 target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
@@ -266,7 +266,7 @@ def set_conversion_host_api(
     """
     Setting conversion host for RHV and OSP provider via REST
 
-    Note: Support for using VMs as UCI conversion hosts will be added for RHV in 5.11.5.
+    Note: Support for using VMs as UCI conversion hosts will be added for RHV in 5.11.6.
     """
     vmware_ssh_private_key = None
     vmware_vddk_package_url = None
@@ -288,7 +288,7 @@ def set_conversion_host_api(
     for host in conversion_data["hosts"]:
         conversion_entity = (
             "hosts"
-            if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11.5'
+            if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11.6'
             else "vms"
         )
         host_id = (
