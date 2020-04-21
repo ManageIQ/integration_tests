@@ -62,7 +62,7 @@ def template_name(provisioning):
 
 
 @pytest.fixture(scope="module")
-def roottenant(appliance):
+def root_tenant(appliance):
     return appliance.collections.tenants.get_root_tenant()
 
 
@@ -99,13 +99,13 @@ def custom_prov_data(request, prov_data, vm_name, template_name):
 
 
 @pytest.fixture
-def set_roottenant_quota(request, roottenant, appliance):
+def set_root_tenant_quota(request, root_tenant, appliance):
     field, value = request.param
-    roottenant.set_quota(**{f'{field}_cb': True, field: value})
+    root_tenant.set_quota(**{f'{field}_cb': True, field: value})
     yield
     # will refresh page as navigation to configuration is blocked if alerts are on the page
     appliance.server.browser.refresh()
-    roottenant.set_quota(**{f'{field}_cb': False})
+    root_tenant.set_quota(**{f'{field}_cb': False})
 
 
 @pytest.fixture(scope='function')
@@ -126,56 +126,42 @@ def catalog_item(appliance, provider, dialog, catalog, prov_data, set_default):
         catalog_item.delete()
 
 
-@pytest.fixture(scope='module')
-def small_vm(provider, small_template_modscope):
-    vm = provider.appliance.collections.infra_vms.instantiate(random_vm_name(context='reconfig'),
-                                                              provider,
-                                                              small_template_modscope.name)
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    vm.refresh_relationships()
-    yield vm
-    vm.cleanup_on_provider()
-
-
 @pytest.fixture()
-def check_hosts(small_vm, provider):
+def migration_destination_host(create_vm_modscope, provider):
     """Fixture to return host"""
-    if len(provider.hosts.all()) != 1:
-        view = navigate_to(small_vm, 'Details')
+    hosts = provider.hosts.all()
+    if len(hosts) > 1:
+        view = navigate_to(create_vm_modscope, 'Details')
         vm_host = view.entities.summary('Relationships').get_text_of('Host')
-        hosts = [vds.name for vds in provider.hosts.all() if vds.name not in vm_host]
-        return hosts[0]
+        dest_hosts = [vds.name for vds in hosts if vds.name != vm_host]
+        return dest_hosts[0]
     else:
-        pytest.skip("There is only one host in the provider")
+        pytest.skip(f"Not enough hosts exist on provider {provider.name!r} for VM migration.")
 
 
 @pytest.fixture
-def quota_limit(roottenant):
-    in_use_storage = int(float(roottenant.quota["storage"]["in_use"].strip(" GB")))
+def quota_limit(root_tenant):
+    in_use_storage = int(root_tenant.quota["storage"]["in_use"].strip(" GB"))
     # set storage quota limit to something more than the in_use_storage space
-    roottenant.set_quota(**{"storage_cb": True, "storage": in_use_storage + 3})
+    root_tenant.set_quota(storage_cb=True, storage=(in_use_storage + 3))
 
-    yield int(float(roottenant.quota["storage"]["available"].strip(" GB")))
+    yield int(root_tenant.quota["storage"]["available"].strip(" GB"))
 
-    roottenant.set_quota(**{"storage_cb": False})
+    root_tenant.set_quota(storage_cb=False)
 
 
-# first arg of parametrize is the list of fixtures or parameters,
-# second arg is a list of lists, with each one a test is to be generated
-# sequence is important here
-# indirect is the list where we define which fixtures are to be passed values indirectly.
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'approve'],
+    ['set_root_tenant_quota', 'custom_prov_data', 'extra_msg', 'approve'],
     [
         [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, '', False],
         [('storage', '0.01'), {}, '', False],
         [('memory', '2'), {'hardware': {'memory': '4096'}}, '', False],
         [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', True]
     ],
-    indirect=['set_roottenant_quota'],
+    indirect=['set_root_tenant_quota'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set_roottenant_quota,
+def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set_root_tenant_quota,
                                                   extra_msg, custom_prov_data, approve, prov_data,
                                                   vm_name, template_name):
     """Test Tenant Quota in UI and SSUI
@@ -193,8 +179,7 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set_roott
                        provisioning_data=prov_data, wait=False, request=None)
 
     # nav to requests page to check quota validation
-    request_description = 'Provision from [{template}] to [{vm}{msg}]'.format(
-        template=template_name, vm=vm_name, msg=extra_msg)
+    request_description = f"Provision from [{template_name}] to [{vm_name}{extra_msg}]"
     provision_request = appliance.collections.requests.instantiate(request_description)
     if approve:
         provision_request.approve_request(method='ui', reason="Approved")
@@ -202,23 +187,19 @@ def test_tenant_quota_enforce_via_lifecycle_infra(appliance, provider, set_roott
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
-# first arg of parametrize is the list of fixtures or parameters,
-# second arg is a list of lists, with each one a test is to be generated
-# sequence is important here
-# indirect is the list where we define which fixtures are to be passed values indirectly.
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'set_default'],
+    ['set_root_tenant_quota', 'custom_prov_data', 'extra_msg', 'set_default'],
     [
         [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, '', False],
         [('storage', '0.01'), {}, '', False],
         [('memory', '2'), {'hardware': {'memory': '4096'}}, '', False],
         [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', False],
     ],
-    indirect=['set_roottenant_quota', 'custom_prov_data', 'set_default'],
+    indirect=['set_root_tenant_quota', 'custom_prov_data', 'set_default'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
-def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set_roottenant_quota,
+def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set_root_tenant_quota,
                                                 extra_msg, set_default, custom_prov_data,
                                                 catalog_item):
     """Tests quota enforcement via service infra
@@ -243,23 +224,19 @@ def test_tenant_quota_enforce_via_service_infra(request, appliance, context, set
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
-# first arg of parametrize is the list of fixtures or parameters,
-# second arg is a list of lists, with each one a test is to be generated
-# sequence is important here
-# indirect is the list where we define which fixtures are to be passed values indirectly.
 @pytest.mark.meta(automates=[1467644])
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data'],
+    ['set_root_tenant_quota', 'custom_prov_data'],
     [
         [('cpu', '2'), {'change': 'cores_per_socket', 'value': '4'}],
         [('cpu', '2'), {'change': 'sockets', 'value': '4'}],
         [('memory', '2'), {'change': 'mem_size', 'value': '4096'}]
     ],
-    indirect=['set_roottenant_quota'],
+    indirect=['set_root_tenant_quota'],
     ids=['max_cores', 'max_sockets', 'max_memory']
 )
-def test_tenant_quota_vm_reconfigure(request, appliance, set_roottenant_quota, small_vm,
-                                     custom_prov_data):
+def test_tenant_quota_vm_reconfigure(request, appliance, set_root_tenant_quota, create_vm_modscope,
+        custom_prov_data):
     """Tests quota with vm reconfigure
 
     Bugzilla:
@@ -272,18 +249,19 @@ def test_tenant_quota_vm_reconfigure(request, appliance, set_roottenant_quota, s
         initialEstimate: 1/6h
         tags: quota
     """
-    new_config = small_vm.configuration.copy()
+    vm = create_vm_modscope
+    new_config = vm.configuration.copy()
     setattr(new_config.hw, custom_prov_data['change'], custom_prov_data['value'])
-    small_vm.reconfigure(new_config)
+    vm.reconfigure(new_config)
 
     # Description of reconfigure request changes with new configuration
     if custom_prov_data['change'] == 'mem_size':
         request_description = (
-            f'VM Reconfigure for: {small_vm.name} - Memory: {new_config.hw.mem_size} MB'
+            f'VM Reconfigure for: {vm.name} - Memory: {new_config.hw.mem_size} MB'
         )
     else:
         request_description = (
-            f'VM Reconfigure for: {small_vm.name} - Processor Sockets: {new_config.hw.sockets}, '
+            f'VM Reconfigure for: {vm.name} - Processor Sockets: {new_config.hw.sockets}, '
             f'Processor Cores Per Socket: {new_config.hw.cores_per_socket}, Total Processors: '
             f'{new_config.hw.cores_per_socket * new_config.hw.sockets}'
         )
@@ -325,11 +303,7 @@ def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_q
     view.form.fill({'{}_cb'.format(child_quota[0]): True,
                     '{}_txt'.format(child_quota[0]): child_quota[1]})
     view.save_button.click()
-    message = (
-        "Error when saving tenant quota: Validation failed:"
-        if appliance.version < "5.10"
-        else "Error when saving tenant quota: Validation failed: TenantQuota:"
-    )
+    message = "Error when saving tenant quota: Validation failed: TenantQuota:"
     view.flash.assert_message(
         "{message} {flash_text} allocated "
         "quota is over allocated, parent tenant does not have enough quota".format(
@@ -342,15 +316,15 @@ def test_setting_child_quota_more_than_parent(appliance, tenants_setup, parent_q
 @pytest.mark.provider([VMwareProvider], scope="module",
                       required_fields=[['templates', 'small_template']], selector=ONE_PER_TYPE)
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data'],
+    ['set_root_tenant_quota', 'custom_prov_data'],
     [
         [('cpu', '2'), {'change': 'cores_per_socket', 'value': '4'}]
     ],
-    indirect=['set_roottenant_quota'],
+    indirect=['set_root_tenant_quota'],
     ids=['max_cores']
 )
-def test_vm_migration_after_assigning_tenant_quota(appliance, small_vm, set_roottenant_quota,
-                                                   custom_prov_data, provider):
+def test_vm_migration_after_assigning_tenant_quota(appliance, create_vm_modscope,
+        set_root_tenant_quota, custom_prov_data, migration_destination_host):
     """
     Polarion:
         assignee: tpapaioa
@@ -364,11 +338,10 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, small_vm, set_root
             3. Migrate VM
             4. Check whether migration is successfully done
     """
-
-    migrate_to = check_hosts(small_vm, provider)
-    small_vm.migrate_vm(fauxfactory.gen_email(), fauxfactory.gen_alpha(),
-                        fauxfactory.gen_alpha(), host=migrate_to)
-    request_description = small_vm.name
+    vm = create_vm_modscope
+    vm.migrate_vm(fauxfactory.gen_email(), fauxfactory.gen_alpha(),
+        fauxfactory.gen_alpha(), host=migration_destination_host)
+    request_description = vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
     migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
                                                                  partial_check=True)
@@ -377,25 +350,20 @@ def test_vm_migration_after_assigning_tenant_quota(appliance, small_vm, set_root
     assert migrate_request.is_succeeded(method='ui'), msg
 
 
-# Args of parametrize is the list of navigation parameters to order catalog item.
-# first arg of parametrize is the list of fixtures or parameters,
-# second arg is a list of lists, with each one a test is to be generated
-# sequence is important here
-# indirect is the list where we define which fixtures are to be passed values indirectly.
 @pytest.mark.parametrize('context', [ViaSSUI, ViaUI])
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg', 'set_default'],
+    ['set_root_tenant_quota', 'custom_prov_data', 'extra_msg', 'set_default'],
     [
         [('cpu', '2'), {'hardware': {'num_sockets': '8'}}, '', True],
         [('storage', '0.01'), {}, '', True],
         [('memory', '2'), {'hardware': {'memory': '4096'}}, '', True],
         [('vm', '1'), {'catalog': {'num_vms': '4'}}, '###', True],
     ],
-    indirect=['set_roottenant_quota', 'custom_prov_data', 'set_default'],
+    indirect=['set_root_tenant_quota', 'custom_prov_data', 'set_default'],
     ids=['max_cpu', 'max_storage', 'max_memory', 'max_vms']
 )
 def test_service_infra_tenant_quota_with_default_entry_point(request, appliance, context,
-                                                             set_roottenant_quota, extra_msg,
+                                                             set_root_tenant_quota, extra_msg,
                                                              set_default, custom_prov_data,
                                                              catalog_item):
     """Test Tenant Quota in UI and SSUI by selecting field entry points.
@@ -462,15 +430,15 @@ def configure_mail(domain):
 @pytest.mark.tier(1)
 @pytest.mark.provider([RHEVMProvider], selector=ONE)
 @pytest.mark.parametrize(
-    ['set_roottenant_quota', 'custom_prov_data', 'extra_msg'],
+    ['set_root_tenant_quota', 'custom_prov_data', 'extra_msg'],
     [
         [('memory', '2'), {'hardware': {'memory': '4096'}}, ''],
     ],
-    indirect=['set_roottenant_quota'],
+    indirect=['set_root_tenant_quota'],
     ids=['max_memory']
 )
 def test_quota_exceed_mail_with_more_info_link(configure_mail, appliance, provider,
-                                               set_roottenant_quota, custom_prov_data, prov_data,
+                                               set_root_tenant_quota, custom_prov_data, prov_data,
                                                extra_msg, vm_name, template_name):
     """
     Bugzilla:
@@ -512,7 +480,7 @@ def test_quota_exceed_mail_with_more_info_link(configure_mail, appliance, provid
                            vm_name=vm_name, provisioning_data=prov_data, wait=False, request=None,
                            email=mail_to)
 
-        # nav to requests page to check quota validation
+        # Navigate to Requests page to check quota validation
         request_description = f'Provision from [{template_name}] to [{vm_name}{extra_msg}]'
         provision_request = appliance.collections.requests.instantiate(request_description)
         provision_request.wait_for_request(method='ui')
@@ -572,7 +540,7 @@ def test_quota_not_fails_after_vm_reconfigure_disk_remove(request, appliance, cr
     root_tenant = appliance.collections.tenants.get_root_tenant()
     view = navigate_to(root_tenant, "ManageQuotas")
     reset_data = view.form.read()
-    root_tenant.set_quota(**{'storage_cb': True, "storage": "2"})
+    root_tenant.set_quota(storage_cb=True, storage='2')
     request.addfinalizer(lambda: root_tenant.set_quota(**reset_data))
 
     with LogValidator(
@@ -729,7 +697,7 @@ def test_simultaneous_tenant_quota(request, appliance, context, new_project, new
 @pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(automates=[1533263])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY, scope="module")
-def test_quota_with_reconfigure_resize_disks(setup_provider_modscope, small_vm, quota_limit):
+def test_quota_with_reconfigure_resize_disks(create_vm_modscope, quota_limit):
     """Test that Quota gets checked against the resize of the disk of VMs.
 
     Polarion:
@@ -750,14 +718,15 @@ def test_quota_with_reconfigure_resize_disks(setup_provider_modscope, small_vm, 
     Bugzilla:
         1533263
     """
-    config = small_vm.configuration.copy()
+    vm = create_vm_modscope
+    config = vm.configuration.copy()
     disk = config.disks[0]
 
     # set the resize value to a little more than the quota limit
     resize_value = disk.size + quota_limit + 3
     config.resize_disk(resize_value, disk.filename)
 
-    request = small_vm.reconfigure(config)
+    request = vm.reconfigure(config)
     request.wait_for_request(method="ui")
     assert request.status == "Denied"
     assert request.row.reason.text == "Quota Exceeded"
