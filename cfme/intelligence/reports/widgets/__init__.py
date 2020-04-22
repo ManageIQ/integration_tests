@@ -9,6 +9,7 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Input
 
+from cfme.exceptions import RestLookupError
 from cfme.intelligence.reports import CloudIntelReportsView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
@@ -99,6 +100,15 @@ class BaseDashboardReportWidget(BaseEntity, Updateable, Pretty):
             view = self.create_view(AllDashboardWidgetsView)
         assert view.is_displayed
         view.flash.assert_no_error()
+
+    @property
+    def rest_api_entity(self):
+        try:
+            return self.appliance.rest_api.collections.widgets.get(description=self.description)
+        except ValueError:
+            raise RestLookupError(
+                f"No widget rest entity found matching description {self.description}"
+            )
 
 
 @attr.s
