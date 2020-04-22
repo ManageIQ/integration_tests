@@ -34,7 +34,7 @@ def gen_obj_def_import_export(appliance):
 def test_generic_object_definition_crud(appliance, context, soft_assert):
     """
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         casecomponent: GenericObjects
         caseimportance: high
         initialEstimate: 1/12h
@@ -81,7 +81,7 @@ def test_generic_object_definition_crud(appliance, context, soft_assert):
 def test_generic_objects_class_accordion_should_display_when_locale_is_french():
     """ Generic objects class accordion should display when locale is french
     Polarion:
-        assignee: nansari
+        assignee: tpapaioa
         casecomponent: Services
         testtype: functional
         initialEstimate: 1/6h
@@ -101,7 +101,7 @@ def test_upload_image_generic_object_definition(appliance):
         1650104
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/30h
         caseimportance: medium
         caseposneg: negative
@@ -127,7 +127,7 @@ def test_import_export_generic_object_definition(request, appliance, gen_obj_def
         1595259
 
     Polarion:
-        assignee: jdupuy
+        assignee: tpapaioa
         initialEstimate: 1/6h
         caseimportance: high
         caseposneg: positive
