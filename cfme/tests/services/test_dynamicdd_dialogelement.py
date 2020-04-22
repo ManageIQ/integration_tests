@@ -462,21 +462,46 @@ def test_dynamic_dropdown_values_should_load_correctly():
     pass
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_child_dialog_should_update_with_new_options_based_on_option_of_parent_dialog_upon_ref():
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1580535, 1694737])
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1580535.zip", "bz_1580535", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1580535.yml"], ids=["refresh_dialog"])
+def test_dynamic_field_update_on_refresh(appliance, import_datastore, import_data, file_name,
+                                         generic_catalog_item_with_imported_dialog):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
     Bugzilla:
         1580535
+        1694737
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/16h
+        testSteps:
+            1. Import Datastore and dialog
+            2. Add service catalog with above created dialog
+            3. Navigate to order page of service
+            4. In service Order page
+        expectedResults:
+            1.
+            2.
+            3.
+            4. dynamic field should update correctly
     """
-    pass
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+    view.fields("Menu").refresh.click()
+    menu = view.fields("menu").read()
+    topping = view.fields("dropdown_list_1").read()
+
+    data = {"Burger": "Black Bean", "Fries": "Sweet Potato", "Shake": "Vanilla",
+            "Empty Set": "Nothing selected for parent dialog"}
+    assert topping == data[menu]
 
 
 @pytest.mark.customer_scenario

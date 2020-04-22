@@ -144,23 +144,6 @@ def test_custom_image_on_item_bundle_crud():
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_catalog_item_changing_the_provider_template_after_filling_all_tabs():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.5
-        tags: service
-    Bugzilla:
-        1240443
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_request_filter_on_request_page():
     """
     Polarion:
@@ -172,21 +155,6 @@ def test_request_filter_on_request_page():
         tags: service
     Bugzilla:
         1498237
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_check_all_availability_zones_for_amazon_provider():
-    """ Check if all availability zones can be selected while creating catalog item.
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/8h
-        startsin: 5.5
-        tags: service
     """
     pass
 
@@ -213,23 +181,6 @@ def test_edit_catalog_item_after_remove_resource_pool():
             2.
             3.
             4. Validation message should be shown
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_generic_object_details_displayed_from_a_service_do_not_include_associations():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Automate
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1576828
     """
     pass
 
@@ -354,39 +305,6 @@ def test_cui_should_check_dialog_field_associations():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_generic_object_should_be_visible_in_service_view():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        testtype: functional
-        startsin: 5.8
-        tags: service
-    Bugzilla:
-        1515945
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_reconfigure_service_for_dialogs_with_timeout_values():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.7
-    Bugzilla:
-        1442920
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_timepicker_should_pass_correct_timing_on_service_order():
     """
@@ -397,23 +315,6 @@ def test_timepicker_should_pass_correct_timing_on_service_order():
         initialEstimate: 1/4h
         startsin: 5.9
         tags: service
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_should_be_able_to_see_requests_if_our_users_are_in_groups_with_managed_tags():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1596738
     """
     pass
 
@@ -465,20 +366,5 @@ def test_entries_shouldnt_be_mislabeled_for_dropdown_element_in_dialog_editor():
         tags: service
     Bugzilla:
         1597802
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_reconfigure_existing_duplicate_orders():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
     """
     pass
