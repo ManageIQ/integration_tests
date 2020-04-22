@@ -343,11 +343,13 @@ def test_login_local_group(temp_appliance_preconfig_long, local_user, local_grou
 
 @pytest.mark.tier(1)
 @pytest.mark.ignore_stream('5.8')
-@pytest.mark.uncollectif(lambda auth_mode, auth_user:
+@pytest.mark.uncollectif(lambda prov_key, auth_mode, auth_user:
                          auth_mode == 'amazon' or
-                         len(auth_user.groups or []) < 2,
+                         len(auth_user.groups or []) < 2 or
+                         prov_key == 'cfme_openldap',
                          reason='Amazon auth_data needed for group switch testing or'
-                         'user does not have multiple groups')
+                         'user does not have multiple groups or CFME_OPENLDAP provider'
+                                ' needs some fixes for this test to work on it.')
 @pytest.mark.meta(blockers=[BZ(1759291)], automates=[1759291])
 def test_user_group_switching(
         temp_appliance_preconfig_long, auth_user, auth_mode, auth_provider,
@@ -373,7 +375,8 @@ def test_user_group_switching(
                                                    auth_mode,
                                                    auth_user.username,
                                                    group,
-                                                   auth_provider))
+                                                   auth_provider,
+                                                   "My Company"))
     else:
         logger.info('All user groups for group switching are evm built-in: {}'
                     .format(auth_user.groups))
