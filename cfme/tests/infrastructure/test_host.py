@@ -1,11 +1,9 @@
 import random
 import socket
-from datetime import datetime
 
 import fauxfactory
 import pytest
 from wait_for import TimedOutError
-from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -13,8 +11,8 @@ from cfme.common.host_views import HostDetailsView
 from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
+from cfme.common.host_views import ProviderHostsCompareView
 from cfme.common.provider_views import InfraProviderDetailsView
-from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -575,7 +573,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     hosts_view.toolbar.configuration.item_select('Edit this item',
                                                  handle_alert=False)
     edit_view = provider.create_view(HostEditView)
-    stamp = datetime.now()
+    stamp = fauxfactory.gen_alphanumeric()
     edit_string = f'Edit host data. {stamp}'
     edit_view.custom_ident.fill(edit_string)
     edit_view.save_button.click()
@@ -592,7 +590,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     hosts_view.toolbar.configuration.item_select('Edit Selected items',
                                                  handle_alert=False)
     edit_view = provider.create_view(HostEditView)
-    stamp = datetime.now()
+    stamp = fauxfactory.gen_alphanumeric()
     cancel_string = f'Edit host data. {stamp}'
     edit_view.custom_ident.fill(cancel_string)
     edit_view.cancel_button.click()
@@ -610,13 +608,13 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
     hosts_view.toolbar.configuration.item_select('Edit Selected items',
                                                  handle_alert=False)
     edit_view = provider.create_view(HostEditView)
-    stamp = datetime.now()
+    stamp = fauxfactory.gen_alphanumeric()
     reset_string = f'Edit host data. {stamp}'
     edit_view.custom_ident.fill(reset_string)
     edit_view.reset_button.click()
     edit_view.flash.assert_message(f'All changes have been reset')
     # update after reset and save
-    stamp = datetime.now()
+    stamp = fauxfactory.gen_alphanumeric()
     reset_edit_string = f'Reset host data. {stamp}'
     edit_view.custom_ident.fill(reset_edit_string)
     edit_view.save_button.click()
