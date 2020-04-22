@@ -184,9 +184,8 @@ class DashboardWidgetsView(CloudIntelReportsView):
         return self.in_dashboard_widgets
 
     def correct_tree_menu_item_selected(self):
-        # The bug is currently targeted only to 5.10, but we have the
-        # problem on 5.11 as well, so we probably need to use
-        # forced_streams.
+        # This workaround is needed for the test_menuwidget_crud and perhaps
+        # some other tests.
         if BZ(1667064, forced_streams=['5.11']).blocks:
             return True
 

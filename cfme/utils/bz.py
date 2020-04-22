@@ -150,8 +150,10 @@ class Bugzilla:
             if b.status == "CLOSED" and b.resolution == "DUPLICATE":
                 b = self.get_bug(b.dupe_of)
             found.add(b)
+
             if b.copy_of:
                 stack.add(self.get_bug(b.copy_of))
+
             if b not in expanded:
                 for cp in map(self.get_bug, b.copies):
                     found.add(cp)
@@ -171,6 +173,7 @@ class Bugzilla:
             version = current_version()
         if version == LATEST:
             version = bug.product.latest_version
+
         is_upstream = version == bug.product.latest_version
         variants = self.get_bug_variants(bug)
         filtered = set()
@@ -180,6 +183,7 @@ class Bugzilla:
                 continue
             if variant.version is not None and variant.version > version:
                 continue
+
             if variant.release_flag is not None and version.is_in_series(variant.release_flag):
                 logger.info('Found matching bug for %d by release - #%d', bug.id, variant.id)
                 filtered.clear()
@@ -197,6 +201,7 @@ class Bugzilla:
             else:
                 logger.warning(
                     "ATTENTION!!: No release flags, wrong versions, ignoring %s", variant.id)
+
         if not filtered:
             # No appropriate bug was found
             for forced_stream in force_block_streams:
@@ -206,6 +211,7 @@ class Bugzilla:
             else:
                 # No bug, yipee :)
                 return None
+
         # First, use versions
         for bug in filtered:
             if (isinstance(bug.version, Version) and
@@ -214,10 +220,12 @@ class Bugzilla:
                 (bug.version.is_in_series(version_series) or
                  bug.target_release.is_in_series(version_series))):
                 return bug
+
         # Otherwise prefer release_flag
         for bug in filtered:
             if bug.release_flag and version.is_in_series(bug.release_flag):
                 return bug
+
         return None
 
     def set_flags(self, idlist, flags):
@@ -388,6 +396,10 @@ class BugWrapper:
         states.add('POST')
         states.add('MODIFIED')
         return self.status in states
+
+    @property
+    def is_deferred(self):
+        return self.resolution == 'DEFERRED'
 
     @property
     def product(self):
