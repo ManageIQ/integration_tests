@@ -7,7 +7,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.blockers import BZ
-from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
 
@@ -31,20 +30,6 @@ pytestmark = [
 def clone_vm_name():
     clone_vm_name = fauxfactory.gen_alphanumeric(18, start="test_cloning_")
     return clone_vm_name
-
-
-@pytest.fixture
-def create_vm(appliance, provider, request):
-    """Fixture to provision vm to the provider being tested"""
-    vm_name = fauxfactory.gen_alphanumeric(15, start="test_clone_")
-    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
-    logger.info("provider_key: %s", provider.key)
-
-    if not provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    yield vm
-    vm.cleanup_on_provider()
 
 
 @pytest.mark.provider([VMwareProvider], **filter_fields)
