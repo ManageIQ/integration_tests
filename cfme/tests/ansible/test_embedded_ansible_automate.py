@@ -218,8 +218,8 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
 
 
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
-def test_embedded_ansible_custom_button_localhost(create_vm_modscope, custom_vm_button,
-        appliance, ansible_service_request, ansible_service, ansible_catalog_item):
+def test_embedded_ansible_custom_button_localhost(request, create_vm_modscope, custom_vm_button,
+        appliance, ansible_service_request, ansible_service_funcscope, ansible_catalog_item):
     """
     Polarion:
         assignee: gtalreja
@@ -236,15 +236,33 @@ def test_embedded_ansible_custom_button_localhost(create_vm_modscope, custom_vm_
     order_dialog_view.submit_button.click()
     wait_for(ansible_service_request.exists, num_sec=600)
     ansible_service_request.wait_for_request()
-    view = navigate_to(ansible_service, "Details")
+
+    @request.addfinalizer
+    def _revert():
+        if ansible_service_request.exists:
+            ansible_service_request.wait_for_request()
+            ansible_service_request.remove_request()
+
+    view = navigate_to(ansible_service_funcscope, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == "localhost"
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
 
 
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
-def test_embedded_ansible_custom_button_target_machine(create_vm_modscope, custom_vm_button,
-        ansible_credential, appliance, ansible_service_request, ansible_service):
+def test_embedded_ansible_custom_button_target_machine(
+    request,
+    create_vm_modscope,
+    custom_vm_button,
+    ansible_credential,
+    appliance,
+    ansible_service_request,
+    ansible_service_funcscope,
+):
     """
     Polarion:
         assignee: gtalreja
@@ -261,15 +279,33 @@ def test_embedded_ansible_custom_button_target_machine(create_vm_modscope, custo
     order_dialog_view.submit_button.click()
     wait_for(ansible_service_request.exists, num_sec=600)
     ansible_service_request.wait_for_request()
-    view = navigate_to(ansible_service, "Details")
+
+    @request.addfinalizer
+    def _revert():
+        if ansible_service_request.exists:
+            ansible_service_request.wait_for_request()
+            ansible_service_request.remove_request()
+
+    view = navigate_to(ansible_service_funcscope, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == create_vm_modscope.ip_address
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
 
 
-@pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
-def test_embedded_ansible_custom_button_specific_hosts(create_vm_modscope, custom_vm_button,
-        ansible_credential, appliance, ansible_service_request, ansible_service):
+@pytest.mark.parametrize("create_vm_modscope", ["full_template"], indirect=True)
+def test_embedded_ansible_custom_button_specific_hosts(
+    request,
+    create_vm_modscope,
+    custom_vm_button,
+    ansible_credential,
+    appliance,
+    ansible_service_request,
+    ansible_service_funcscope,
+):
     """
     Polarion:
         assignee: gtalreja
@@ -287,10 +323,21 @@ def test_embedded_ansible_custom_button_specific_hosts(create_vm_modscope, custo
     order_dialog_view.submit_button.click()
     wait_for(ansible_service_request.exists, num_sec=600)
     ansible_service_request.wait_for_request()
-    view = navigate_to(ansible_service, "Details")
+
+    @request.addfinalizer
+    def _revert():
+        if ansible_service_request.exists:
+            ansible_service_request.wait_for_request()
+            ansible_service_request.remove_request()
+
+    view = navigate_to(ansible_service_funcscope, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == create_vm_modscope.ip_address
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    assert (
+        view.provisioning.results.get_text_of("Status") == "successful"
+        if appliance.version < "5.11"
+        else "Finished"
+    )
 
 
 @test_requirements.alert
