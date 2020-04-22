@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.rhel_testing]
@@ -56,11 +55,11 @@ def test_restart_workers(appliance):
     # Wait for all original workers to be gone
     wait_for(worker.check_workers_finished, func_args=[pids],
              fail_func=worker.parent.reload_workers_page,
-             num_sec=1800, delay=10, message="Wait for all original workers to be gone")
+             num_sec=1800, delay=10, message="Wait for all original workers to be stopped")
     # And now check whether the same number of workers is back online
     wait_for(lambda: len(pids) == len(worker.get_all_worker_pids()),
              fail_func=worker.parent.reload_workers_page, num_sec=1800, delay=10,
-             message="Wait for all original workers are back online")
+             message="Wait for all original workers to be running")
 
 
 v510 = {
@@ -107,19 +106,19 @@ def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold):
 
 @test_requirements.settings
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1787350),
-                            BZ(1799443, unblock=lambda worker, set_memory_threshold:
-                            worker.path != QUEUE_WORKER_DEFAULTS_PATH or
-                            set_memory_threshold != set_memory_threshold_in_ui)],
-                  automates=[1658373, 1715633])
-@pytest.mark.parametrize("set_memory_threshold",
-                         [set_memory_threshold_in_ui, set_memory_threshold_in_advanced_settings],
-                         ids=["in_UI", "in_advanced_setting"])
-@pytest.mark.parametrize("worker", WORKERS, ids=[x.id for x in WORKERS])
+@pytest.mark.meta(automates=[1658373, 1715633, 1787350, 1799443, 1805845])
+@pytest.mark.parametrize('set_memory_threshold',
+    [set_memory_threshold_in_ui, set_memory_threshold_in_advanced_settings],
+    ids=['in_UI', 'in_advanced_setting'])
+@pytest.mark.parametrize('worker', WORKERS, ids=[x.id for x in WORKERS])
 def test_set_memory_threshold(appliance, worker, request, set_memory_threshold):
     """
     Bugzilla:
         1656873
+        1715633
+        1787350
+        1799443
+        1805845
 
     Polarion:
         assignee: tpapaioa
