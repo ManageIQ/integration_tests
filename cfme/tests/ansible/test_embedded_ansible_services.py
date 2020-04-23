@@ -885,10 +885,10 @@ def test_ansible_service_linked_vm(
 def test_ansible_service_order_vault_credentials(
     appliance,
     request,
-    local_ansible_catalog_item,
+    ansible_catalog_item,
     ansible_service_catalog,
-    ansible_service_request,
-    ansible_service,
+    ansible_service_request_funcscope,
+    ansible_service_funcscope
 ):
     """
     Add vault password and test in the playbook that encrypted yml can be
@@ -902,19 +902,19 @@ def test_ansible_service_order_vault_credentials(
     creds = conf.credentials['vault_creds']['password']
     creds_dict = {"vault_password": creds}
     vault_creds = appliance.collections.ansible_credentials.create(
-        fauxfactory.gen_alpha(22, start="Vault_Credentials_"), "Vault", **creds_dict
+        f"Vault_Credentials_{fauxfactory.gen_alpha()}", "Vault", **creds_dict
     )
 
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
             "playbook": "dump_secret_variable_from_vault.yml",
             "vault_credential": vault_creds.name,
         }
 
     @request.addfinalizer
     def _revert():
-        with update(local_ansible_catalog_item):
-            local_ansible_catalog_item.provisioning = {
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning = {
                 "playbook": "dump_all_variables.yml",
                 "vault_credential": "<Choose>",
             }
@@ -922,11 +922,12 @@ def test_ansible_service_order_vault_credentials(
         vault_creds.delete_if_exists()
 
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
+    ansible_service_request_funcscope.wait_for_request()
 
-    view = navigate_to(ansible_service, "Details")
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    status = "successful" if appliance.version < "5.11" else "Finished"
+    assert view.provisioning.results.get_text_of("Status") == status
 
 
 @pytest.mark.tier(3)
