@@ -5400,9 +5400,16 @@ class ConversionHost(Widget):
 class MigrationProgressBar(Widget):
     """Represents in-progress plan widget for v2v migration"""
 
-    ROOT = './/div[contains(@class,"migrations")]/div/div/div/div/div'
+    ROOT = (
+        './/div[contains(@class,"plans-in-progress-list")] | '
+        './/div[contains(@class,"migrations")]/div/div/div/div/div'
+    )
 
-    ITEM_LOCATOR = './/div[contains(@class,"card-pf-match-height")]'
+    ITEM_LOCATOR = (
+        './/*[contains(@class,"plans-in-progress-list__list-item")] | '
+        './/div[contains(@class,"card-pf-match-height")]'
+    )
+    ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
     TITLE_LOCATOR = './/div[h3[contains(@class,"card-pf-title")]]'
     TIMER_LOCATOR = './div/div[contains(@class,"active-migration-elapsed-time")]'
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
@@ -5412,6 +5419,16 @@ class MigrationProgressBar(Widget):
     ERROR_TXT = './/p[contains(@class, "blank-slate-pf-info")]'
     PROGRESS_BARS = './/div[@class="progress-bar"]'
     PROGRESS_DESCRIPTION = './/div[contains(@class,"progress-description")]'
+    ITEM_CUTOVER_BUTTON_LOCATOR = './/button[text()="Schedule Cutover"]'
+    IMMEDIATE_BTN = './/input[contains(@value="schedule_migration_now")]'
+
+    ITEM_SCHEDULE_INPUT_LOCATOR = './/input[@id="dateTimeInput"]'
+    ITEM_MODAL_SCHEDULE_LOCATOR = './/button[text()="Schedule"]'
+    ITEM_MODAL_CANCEL_BUTTON_LOCATOR = './/button[contains(@class,"btn-cancel btn")]'
+    ITEM_MODAL_MINUTE_INCREMENT_LOCATOR = (
+        './/*[@id="dateTimePicker"]/div/div/div[2]/div[1]' "/table/tbody/tr[1]/td[3]"
+    )
+    TITLE_MODAL_LOCATOR = './/h4[@class="modal-title"]'
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -5512,6 +5529,53 @@ class MigrationProgressBar(Widget):
             for div in self.browser.elements(self.PROGRESS_BARS, parent=el)
         ]
         return dict(list(zip(desc, val)))
+
+    def schedule_cutover(self, plan_name, cancel=False, immediate=False, after_mins=5):
+        try:
+            el = self._get_card_element(plan_name)
+            cutover_button = self.browser.element(self.ITEM_CUTOVER_BUTTON_LOCATOR, parent=el)
+            wait_for(
+                lambda: cutover_button.is_enabled(),
+                delay=5,
+                num_sec=120,
+                message="waiting for cutover button to be enabled.",
+            )
+            cutover_button.click()
+            if immediate:
+                self.parent_browser.click(self.IMMEDIATE_BTN)
+            else:
+
+                self.browser.click(self.ITEM_SCHEDULE_INPUT_LOCATOR)
+                try:
+                    for i in range(after_mins):
+                        self.parent_browser.click(self.ITEM_MODAL_MINUTE_INCREMENT_LOCATOR)
+                except NoSuchElementException:  # Throws this in FF browser
+                    self.logger.info(
+                        "Schedule using dateTimePicker failed, using datetime and timedelta."
+                    )
+                    cutover_time_input = self.parent_browser.element(
+                        self.ITEM_SCHEDULE_INPUT_LOCATOR
+                    )
+                    current_time = datetime.strptime(
+                        cutover_time_input.get_attribute("value"), "%m/%d/%Y %I:%M %p"
+                    )
+                    cutover_time_input.clear()
+                    cutover_time_input.send_keys(
+                        datetime.strftime(
+                            current_time + timedelta(minutes=after_mins), "%m/%d/%Y %I:%M %p"
+                        )
+                    )
+                    # clicking on title to lose focus from dateTimePicker & activate schedule button
+                    self.parent_browser.click(self.TITLE_MODAL_LOCATOR)
+
+            if not cancel:
+                self.parent_browser.click(self.ITEM_MODAL_SCHEDULE_LOCATOR)
+            else:
+                self.parent_browser.click(self.ITEM_MODAL_CANCEL_BUTTON_LOCATOR)
+            return True
+        except NoSuchElementException as e:
+            self.logger.error(e)
+            return False
 
 
 class MigrationDashboardStatusCard(AggregateStatusCard):
