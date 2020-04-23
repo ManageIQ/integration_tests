@@ -7,8 +7,6 @@ from wait_for import TimedOutError
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.host_views import HostDetailsView
-from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import ProviderHostsCompareView
@@ -542,8 +540,8 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("num_hosts", [1, ])
-def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider, num_hosts):
+@pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'remove'])
+def test_infrastructure_hosts_crud(appliance, setup_provider, provider, crud_action):
     """
     Polarion:
         assignee: prichard
@@ -551,84 +549,20 @@ def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider
         caseimportance: low
         initialEstimate: 1/6h
     """
-    # edit host from provider hosts view
-    my_slice = slice(0, num_hosts, None)
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    for h in hosts_view.entities.get_all(slice=my_slice):
-        hostname = h.name
-        h.ensure_checked()
-    hosts_view.toolbar.configuration.item_select('Edit Selected items',
-                                                handle_alert=False)
-    edit_view = provider.create_view(HostEditView)
-    stamp = fauxfactory.gen_alphanumeric()
-    edit_string = f'Edit host data. {stamp}'
-    edit_view.custom_ident.fill(edit_string)
-    edit_view.save_button.click()
-    # now verify the change is displayed.
-    host_view = provider.create_view(HostDetailsView)
-    host_view.flash.assert_success_message(f'Host / Node "{hostname}" was saved')
-    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
-    assert custom_id == edit_string
-    # edit host from host detail view
-    hosts_view.toolbar.configuration.item_select('Edit this item',
-                                                 handle_alert=False)
-    edit_view = provider.create_view(HostEditView)
-    stamp = fauxfactory.gen_alphanumeric()
-    edit_string = f'Edit host data. {stamp}'
-    edit_view.custom_ident.fill(edit_string)
-    edit_view.save_button.click()
-    # now verify the change is displayed.
-    host_view = provider.create_view(HostDetailsView)
-    host_view.flash.assert_success_message(f'Host / Node "{hostname}" was saved')
-    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
-    assert custom_id == edit_string
-    # cancel edit host
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    for h in hosts_view.entities.get_all(slice=my_slice):
-        hostname = h.name
-        h.ensure_checked()
-    hosts_view.toolbar.configuration.item_select('Edit Selected items',
-                                                 handle_alert=False)
-    edit_view = provider.create_view(HostEditView)
-    stamp = fauxfactory.gen_alphanumeric()
-    cancel_string = f'Edit host data. {stamp}'
-    edit_view.custom_ident.fill(cancel_string)
-    edit_view.cancel_button.click()
-    # now verify the change is displayed.
-    host_view = provider.create_view(HostDetailsView)
-    host_view.flash.assert_success_message(f'Edit of Host / Node "{hostname}" was cancelled by '
-                                           f'the user')
-    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
-    assert custom_id == edit_string
-    # reset
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    for h in hosts_view.entities.get_all(slice=my_slice):
-        hostname = h.name
-        h.ensure_checked()
-    hosts_view.toolbar.configuration.item_select('Edit Selected items',
-                                                 handle_alert=False)
-    edit_view = provider.create_view(HostEditView)
-    stamp = fauxfactory.gen_alphanumeric()
-    reset_string = f'Edit host data. {stamp}'
-    edit_view.custom_ident.fill(reset_string)
-    edit_view.reset_button.click()
-    edit_view.flash.assert_message(f'All changes have been reset')
-    # update after reset and save
-    stamp = fauxfactory.gen_alphanumeric()
-    reset_edit_string = f'Reset host data. {stamp}'
-    edit_view.custom_ident.fill(reset_edit_string)
-    edit_view.save_button.click()
-    # now verify the change is displayed.
-    host_view = provider.create_view(HostDetailsView)
-    host_view.flash.assert_success_message(f'Host / Node "{hostname}" was saved')
-    custom_id = host_view.entities.summary("Properties").get_text_of("Custom Identifier")
-    assert custom_id == reset_edit_string
-    # delete
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    for h in hosts_view.entities.get_all(slice=my_slice):
-        h.ensure_checked()
-    hosts_view.toolbar.configuration.item_select('Remove items from Inventory',
-                                                 handle_alert=True)
-    host_view.flash.assert_success_message(f'Delete initiated for 1 Hosts / Nodes from the CFME '
-                                           f'Database')
-    # TODO add appliance host cases
+    from cfme.utils.update import update
+
+    host = appliance.collections.hosts.all()[0]
+    if crud_action != 'remove':
+        stamp = fauxfactory.gen_alphanumeric()
+        new_custom_id = f'Edit host data. {stamp}'
+
+        # with update(host, from_details=lambda crud_action: crud_action=='edit_from_details'):
+        with update(host, from_details=(crud_action == 'edit_from_details')):
+            host.custom_ident = new_custom_id
+
+        assert host.custom_ident == new_custom_id
+        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+            "Custom Identifier") == new_custom_id
+    else:
+        host.delete()
+        host.delete(cancel=False)
