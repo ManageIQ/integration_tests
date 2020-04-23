@@ -103,6 +103,8 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
         """
         if from_details:
             view = navigate_to(self, "Details")
+        else:
+            view = navigate_to(self.parent, "All")
         view = navigate_to(self, "Edit")
         changed = view.fill({
             "name": updates.get("name"),
