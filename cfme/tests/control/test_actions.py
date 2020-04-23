@@ -22,6 +22,7 @@ from cfme.control.explorer import policies
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.tests.control import do_scan
 from cfme.tests.control import wait_for_ssa_enabled
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -180,7 +181,9 @@ def vm_off(vm):
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 @pytest.mark.meta(blockers=[BZ(1531547)], automates=[1531547])
 def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_for_testing):
@@ -217,7 +220,9 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Stop Virtual Machine'
@@ -250,7 +255,9 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
@@ -284,7 +291,9 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Prevent current event from proceeding'
@@ -319,7 +328,9 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 @pytest.mark.meta(blockers=[BZ(1702018, forced_streams=["5.11"])], automates=[1702018])
 def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
@@ -360,7 +371,7 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
         pytest.fail(f"CFME did not prevent retire of the VM {vm.name}")
 
 
-@pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.provider([VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 @pytest.mark.meta(automates=[1433084])
 def test_action_prevent_ssa(request, configure_fleecing, vm, vm_on, policy_for_testing):
     """Tests preventing Smart State Analysis.
@@ -403,7 +414,7 @@ def test_action_prevent_ssa(request, configure_fleecing, vm, vm_on, policy_for_t
         pytest.fail(f"CFME did not prevent analysing the VM {vm.name}")
 
 
-@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 @pytest.mark.meta(automates=[1437910])
 def test_action_prevent_host_ssa(request, host, host_policy):
     """Tests preventing Smart State Analysis on a host.
@@ -459,7 +470,9 @@ def test_action_prevent_host_ssa(request, host, host_policy):
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_power_on_logged(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Generate log message'.
@@ -500,7 +513,9 @@ def test_action_power_on_logged(request, vm, vm_off, policy_for_testing):
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_power_on_audit(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Generate Audit Event'.
@@ -539,7 +554,7 @@ def test_action_power_on_audit(request, vm, vm_off, policy_for_testing):
     assert policy_result.validate("180s")
 
 
-@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
@@ -593,7 +608,7 @@ def test_action_create_snapshot_and_delete_last(appliance, request, vm, vm_on, p
     )
 
 
-@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module")
+@pytest.mark.provider([VMwareProvider, RHEVMProvider], scope="module", selector=ONE_PER_TYPE)
 @pytest.mark.meta(blockers=[BZ(1748410, forced_streams=["5.10"],
                                unblock=lambda provider: provider.one_of(VMwareProvider))],
                   automates=[1748410])
@@ -663,7 +678,7 @@ def test_action_create_snapshots_and_delete_them(request, appliance, vm, vm_on, 
     )
 
 
-@pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.provider([VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 def test_action_initiate_smartstate_analysis(
     request, configure_fleecing, vm, vm_off, policy_for_testing
 ):
@@ -735,7 +750,9 @@ def test_action_initiate_smartstate_analysis(
 
 # Purely custom actions
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
     """ Tests action tag
@@ -782,7 +799,9 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
     """ Tests action untag
@@ -838,7 +857,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
         pytest.fail("Tags were not unassigned!")
 
 
-@pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.provider([VMwareProvider], scope="module", selector=ONE_PER_TYPE)
 @pytest.mark.meta(blockers=[BZ(1685201)])
 def test_action_cancel_clone(
     appliance, request, provider, vm_big, policy_for_testing, compliance_policy
@@ -896,7 +915,9 @@ def test_action_cancel_clone(
 
 
 @pytest.mark.provider(
-    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider], scope="module"
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module",
+    selector=ONE_PER_TYPE
 )
 def test_action_check_compliance(
     request, vm, policy_for_testing, compliance_policy, compliance_condition, compliance_tag
