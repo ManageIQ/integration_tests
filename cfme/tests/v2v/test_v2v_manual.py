@@ -194,3 +194,50 @@ def test_osp_migration_request_details_page_shows_vms_for_not_started_plans():
             3. Details page shows VM
     """
     pass
+
+
+@pytest.mark.tier(2)
+def test_migration_with_alternative_ip_address_for_vmware_host():
+    """
+    title: Test migration with alternative ip address for vmware host
+    plans
+
+    Bugzilla:
+        1812685
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: V2V
+        initialEstimate: 1/4h
+        startsin: 5.11
+        testSteps:
+            1. Update transformation ip address for vmware host through Rails console
+            2. Start migration
+        expectedResults:
+            1. Alternative ip address should be used for migration
+            2. Migration should succeed
+    """
+    pass
+
+
+@pytest.mark.tier(3)
+def test_migration_for_vm_without_ip_address():
+    """
+    title: Test migration for VM without IP address
+    plans
+
+    Bugzilla:
+        1814876
+
+    Polarion:
+        assignee: nachandr
+        casecomponent: V2V
+        initialEstimate: 1/4h
+        startsin: 5.11
+        testSteps:
+            1. Disconnect VM NIC in vCenter so that the VM doesn't have an IP address
+            2. Start migration
+        expectedResults:
+            1. Migration should succeed
+    """
+    pass
