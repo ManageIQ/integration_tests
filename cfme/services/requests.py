@@ -3,6 +3,7 @@ from copy import copy
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from varmeth import variable
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Table
 from widgetastic.widget import Text
@@ -23,7 +24,6 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
-from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Button
 from widgetastic_manageiq import PaginationPane

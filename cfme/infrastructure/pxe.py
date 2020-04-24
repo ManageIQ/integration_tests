@@ -4,6 +4,7 @@ import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
+from varmeth import variable
 from widgetastic.widget import Checkbox
 from widgetastic.widget import Text
 from widgetastic.widget import View
@@ -26,7 +27,6 @@ from cfme.utils.datafile import load_data_file
 from cfme.utils.path import project_path
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Input
 from widgetastic_manageiq import ManageIQTree

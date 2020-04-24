@@ -2,6 +2,7 @@
 import attr
 from lxml.html import document_fromstring
 from navmazing import NavigateToAttribute
+from varmeth import variable
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import Accordion
@@ -23,7 +24,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
-from cfme.utils.varmeth import variable
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import BreadCrumb
 from widgetastic_manageiq import ItemsToolBarViewSelector

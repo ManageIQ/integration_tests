@@ -1,6 +1,7 @@
 import copy
 
 import attr
+from varmeth import variable
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Input
@@ -20,7 +21,6 @@ from cfme.physical.physical_server import PhysicalServerCollection
 from cfme.physical.provider import PhysicalProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.utils.varmeth import variable
 
 
 class RedfishEndpoint(DefaultEndpoint):

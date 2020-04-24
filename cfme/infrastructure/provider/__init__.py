@@ -3,6 +3,7 @@
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from varmeth import variable
 from widgetastic.exceptions import MoveTargetOutOfBoundsException
 from widgetastic.utils import Fillable
 from widgetastic_patternfly import BreadCrumb
@@ -39,7 +40,6 @@ from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import update
-from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseEntitiesView
 from widgetastic_manageiq import NoSuchElementException
