@@ -3,8 +3,10 @@ import pytest
 from wait_for import wait_for
 
 from cfme import test_requirements
+from cfme.automate.dialogs.dialog_element import EditElementView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 
 pytestmark = [
     test_requirements.dialog,
@@ -141,11 +143,9 @@ def test_dialog_regex_validation_button(appliance, dialog_cat_item):
     wait_for(lambda: view.submit_button.is_enabled, timeout=10)
 
 
-@pytest.mark.meta(coverage=[1721814])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1721814])
 @pytest.mark.ignore_stream('5.10')
-@pytest.mark.tier(2)
-def test_regex_dialog_validation_error():
+def test_regex_dialog_disabled_validation(appliance, catalog, request):
     """
     Bugzilla:
         1721814
@@ -169,4 +169,65 @@ def test_regex_dialog_validation_error():
             5.
             6. It shouldn't gives the validation error
     """
-    pass
+    service_dialog = appliance.collections.service_dialogs
+    element_data = {
+        "element_information": {
+            "ele_label": fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            "ele_name": fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            "ele_desc": fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
+            "choose_type": "Text Box",
+        },
+        "options": {"validation_switch": True, "validation": "^[0-9]*$"},
+    }
+    sd = service_dialog.create(
+        label=fauxfactory.gen_alphanumeric(start="dialog_"), description="my dialog"
+    )
+    tab = sd.tabs.create(
+        tab_label=fauxfactory.gen_alphanumeric(start="tab_"), tab_desc="my tab desc"
+    )
+    box = tab.boxes.create(
+        box_label=fauxfactory.gen_alphanumeric(start="box_"), box_desc="my box desc"
+    )
+    box.elements.create(element_data=[element_data])
+
+    navigate_to(sd, "Edit")
+    view = appliance.browser.create_view(EditElementView)
+    label = element_data["element_information"]["ele_label"]
+    view.element.edit_element(label)
+    view.options.click()
+    assert view.options.validation_switch.fill(False)
+    view.ele_save_button.click()
+    view.save_button.click()
+
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
+        description="my catalog",
+        display_in=True,
+        catalog=catalog,
+        dialog=sd)
+
+    @request.addfinalizer
+    def _cleanup():
+        if catalog_item.exists:
+            catalog_item.delete()
+        sd.delete_if_exists()
+
+    ele_name = element_data["element_information"]["ele_name"]
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, 'Order')
+
+    input_data_list = [fauxfactory.gen_alpha(length=3),
+                       fauxfactory.gen_number(),
+                       fauxfactory.gen_special(length=5),
+                       fauxfactory.gen_alphanumeric(length=5)
+                       ]
+
+    msg = f"""Entered text should match the format: {element_data["options"]["validation"]}"""
+
+    for input_data in input_data_list:
+        logger.info('Entering input data: %s ' % input_data)
+        view.fields(ele_name).fill(input_data)
+        element = view.fields(ele_name).input
+        assert element.warning != msg
+        assert view.submit_button.is_enabled
