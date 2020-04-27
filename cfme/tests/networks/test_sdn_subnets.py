@@ -13,7 +13,11 @@ pytestmark = [
 
 @pytest.fixture()
 def network_manager(appliance, provider):
-    network_manager, = appliance.collections.network_providers.filter({"provider": provider}).all()
+    try:
+        network_manager, = appliance.collections.network_providers.filter(
+            {"provider": provider}).all()
+    except ValueError:
+        pytest.skip("No network manager found in collections!")
     yield network_manager
 
 
