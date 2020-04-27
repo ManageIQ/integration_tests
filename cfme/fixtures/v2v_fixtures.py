@@ -221,14 +221,14 @@ def get_conversion_data(appliance, target_provider):
     if target_provider.one_of(RHEVMProvider):
         # Support for UCI hosts for RHV would be added in 5.11.6.
         if appliance.version >= '5.11.6':
-        engine_key = conf.credentials[target_provider.data["ssh_creds"]]
-        ssh_client = ssh.SSHClient(
-            hostname=target_provider.hostname,
-            username=engine_key.username,
-            password=engine_key.password,
-        )
-        tls_ca_certs = ssh_client.run_command(
-            "cat /etc/pki/ovirt-engine/apache-ca.pem").output
+            engine_key = conf.credentials[target_provider.data["ssh_creds"]]
+            ssh_client = ssh.SSHClient(
+                hostname=target_provider.hostname,
+                username=engine_key.username,
+                password=engine_key.password,
+            )
+            tls_ca_certs = ssh_client.run_command(
+                "cat /etc/pki/ovirt-engine/apache-ca.pem").output
 
             resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
             vm_key = conf.credentials[
