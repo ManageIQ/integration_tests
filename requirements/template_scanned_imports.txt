@@ -15,7 +15,7 @@ dateparser
 debtcollector
 deepdiff
 diaper
-docker-py
+docker
 fauxfactory
 gevent
 humanfriendly
