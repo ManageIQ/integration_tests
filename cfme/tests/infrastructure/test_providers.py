@@ -16,7 +16,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import InfraTemplateCollection
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -515,18 +514,12 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
     Bugzilla:
         1746449
     """
-    if templates_collection == 'provider':
-        provider.collections.templates = InfraTemplateCollection(provider,
-                                                                 filters={'provider': provider})
-        t_coll = provider.collections.templates.all()[:min_templates]
-        compare_view = provider.collections.templates.compare_entities(provider,
-                                                                       entities_list=t_coll)
-    elif templates_collection == 'appliance':
-        appliance.collections.templates = InfraTemplateCollection(appliance)
-        t_coll = appliance.collections.templates.all()[:min_templates]
-        compare_view = appliance.collections.templates.compare_entities(provider,
-                                                                        entities_list=t_coll)
+    t_coll = appliance.collections.infra_templates.all()[:min_templates]
+    compare_view = locals()[templates_collection].collections.infra_templates.compare_entities(
+        provider,
+        entities_list=t_coll)
     assert compare_view.is_displayed
+
     t_list = []
     for t in t_coll:
         t_list.append(t.name)
