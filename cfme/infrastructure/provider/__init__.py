@@ -105,7 +105,7 @@ class InfraProvider(BaseProvider, CloudInfraProviderMixin, Pretty, Fillable,
     end_ip = attr.ib(default=None)
     provider_data = attr.ib(default=None)
 
-    _collections = {'hosts': HostsCollection, 'templates': InfraTemplateCollection}
+    _collections = {'hosts': HostsCollection, 'infra_templates': InfraTemplateCollection}
 
     def __attrs_post_init__(self):
         super().__attrs_post_init__()
