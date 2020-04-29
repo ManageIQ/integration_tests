@@ -1691,7 +1691,13 @@ class SetRetirement(CFMENavigateStep):
 
 @navigator.register(InfraTemplateCollection, 'TemplatesOnly')
 class TemplatesAll(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+
+    def prerequisite(self):
+        from cfme.infrastructure.provider import InfraProvider
+        if isinstance(self.obj.parent, InfraProvider):
+            return navigate_to(self.obj.parent, 'Details')
+        elif isinstance(self.obj.parent, IPAppliance):
+            return navigate_to(self.obj, 'All')
 
     @property
     def VIEW(self):  # noqa
@@ -1711,6 +1717,8 @@ class TemplatesAll(CFMENavigateStep):
                                                             kwargs['filter_name'])
             else:
                 raise DestinationNotFound("the destination isn't found")
+        else:
+            self.prerequisite_view.entities.summary("Relationships").click_at("Templates")
 
 
 @navigator.register(InfraVmCollection, 'Provision')
