@@ -117,7 +117,7 @@ def _setup_provider_verbose(request, provider, appliance=None):
             if len(existing_providers) > maximum_current_providers:
                 providers_to_remove = existing_providers[maximum_current_providers:]
                 store.terminalreporter.write_line(
-                    "Removing extra providers: {', '.join([p.key for p in providers_to_remove])}")
+                    f"Removing extra providers: {', '.join([p.key for p in providers_to_remove])}")
                 for p in providers_to_remove:
                     logger.info('removing provider %r', p.key)
                     p.delete_rest()
