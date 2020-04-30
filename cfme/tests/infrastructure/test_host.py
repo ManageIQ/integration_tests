@@ -222,7 +222,6 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
         initialEstimate: 1/8h
         casecomponent: Tagging
     """
-    # TODO: prichard pass in slice kwarg instead of slicing output.
     host_on_provider = provider.hosts.all()[0]
     provider.delete()
     provider.wait_for_delete()
@@ -288,7 +287,6 @@ def test_infrastructure_hosts_icons_states(
                 `UPDATE hosts SET power_state = ':power_state' WHERE name=':host_name';`
     """
     # get host and host details
-    # TODO: prichard pass in slice kwarg instead of slicing output.
     host = provider.hosts.all()[0]
     host_name = host.name
     reset_state = host.rest_api_entity.power_state
