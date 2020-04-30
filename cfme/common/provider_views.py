@@ -261,9 +261,12 @@ class ProviderTemplatesView(ProviderVmsTemplatesView):
     @property
     def is_displayed(self):
         title = VersionPicker({
-            Version.lowest(): '{name} (All VM Templates)'.format(name=self.context['object'].name),
-            '5.10': '{name} (All VM Templates and Images)'.format(name=self.context[
-                'object'].name or self.context['object'].parent.name),
+            Version.lowest(): '{name} (All VM Templates)'.format(
+                name=getattr(self.context['object'], 'name', None) or getattr(
+                    self.context['object'].parent, 'name', None)),
+            '5.10': '{name} (All VM Templates and Images)'.format(
+                name=getattr(self.context['object'], 'name', None) or getattr(
+                    self.context['object'].parent, 'name', None)),
         }).pick(self.extra.appliance.version)
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and

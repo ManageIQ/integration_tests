@@ -1362,11 +1362,6 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     DROPDOWN_TEXT = 'Compare Selected Templates'
     NAV_STRING = 'TemplatesOnly'
 
-    @property
-    def name(self):
-        provider = self.filters.get('provider')
-        return provider.name if provider else None
-
     def all(self):
         """Return entities for all items in collection"""
         # provider filter means we're viewing templates through provider details relationships
