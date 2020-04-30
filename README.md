@@ -16,6 +16,21 @@ Docs and guides
 - [Setting up Emacs](http://cfme-tests.readthedocs.org/guides/editors.html)
 - [PR Review Process](https://github.com/ManageIQ/integration_tests/wiki/PR-Process)
 
+--Ubuntu Evironment Notes:
+Missing Dependencies for quick start script
+ #python3 -m cfme.scripting.quickstart
+Issues encountered after running quickstart on Ubuntu.
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/root/repos/integration_tests/.cfme_venv/lib/python3.6/site-packages/curl/__init__.py", line 7, in <module>
+    import sys, pycurl
+ImportError: pycurl: libcurl link-time ssl backend (openssl) is different from compile-time ssl backend (gnutls)
+Running command failed!
+CalledProcessError(1, ['/root/repos/integration_tests/.cfme_venv/bin/python3', '-c', 'import curl'])
+#pip uninstall pycurl
+#export PYCURL_SSL_LIBRARY=openssl
+#pip install pycurl
+
 Legal
 -----
 
