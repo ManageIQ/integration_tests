@@ -87,6 +87,7 @@ def navigate_and_select_quads(provider):
 
     Returns:
         view: the provider nodes view, quadicons already selected"""
+    # TODO: prichard navigate instead of creating views and consider creaing EditableMixin
     hosts_view = navigate_to(provider, 'ProviderNodes')
     assert hosts_view.is_displayed
     [h.ensure_checked() for h in hosts_view.entities.get_all()]
@@ -221,6 +222,7 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
         initialEstimate: 1/8h
         casecomponent: Tagging
     """
+    # TODO: prichard pass in slice kwarg instead of slicing output.
     host_on_provider = provider.hosts.all()[0]
     provider.delete()
     provider.wait_for_delete()
@@ -286,6 +288,7 @@ def test_infrastructure_hosts_icons_states(
                 `UPDATE hosts SET power_state = ':power_state' WHERE name=':host_name';`
     """
     # get host and host details
+    # TODO: prichard pass in slice kwarg instead of slicing output.
     host = provider.hosts.all()[0]
     host_name = host.name
     reset_state = host.rest_api_entity.power_state
@@ -430,6 +433,8 @@ def test_infrastructure_hosts_navigation_after_download(
     Bugzilla:
         1738664
     """
+    # TODO: prichard use locals()
+    # TODO: prichard consider putting download functionality into it's own function
     if hosts_collection == "provider":
         hosts_view = navigate_to(provider.collections.hosts, "All")
     elif hosts_collection == "appliance":

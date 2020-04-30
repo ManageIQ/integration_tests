@@ -1319,6 +1319,7 @@ class InfraVmCollection(VMCollection):
         """Return entities for all items in collection"""
         # provider filter means we're viewing vms through provider details relationships
         # provider filtered 'All' view includes vms and templates, can't be used
+        # TODO: prichard add support for slicing as in host collections
         provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
         view = navigate_to(provider or self,
                            'ProviderVms' if provider else 'VMsOnly')
@@ -1366,6 +1367,7 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
         """Return entities for all items in collection"""
         # provider filter means we're viewing templates through provider details relationships
         # provider filtered 'All' view includes vms and templates, can't be used
+        # TODO: prichard add support for slicing as in host collections
         provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
         view = navigate_to(provider or self,
                            'ProviderTemplates' if provider else 'TemplatesOnly')
