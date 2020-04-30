@@ -518,6 +518,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             # restarted:
             restart_evm = False
             self.wait_for_web_ui(log_callback=log_callback)
+            self.wait_for_api_available()
             if self.version < '5.11':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
@@ -529,6 +530,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
                 self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+                self.wait_for_api_available()
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
