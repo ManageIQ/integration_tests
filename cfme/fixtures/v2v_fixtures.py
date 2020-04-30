@@ -304,14 +304,23 @@ def set_conversion_host_api(
         host_id = (
             getattr(appliance.rest_api.collections, conversion_entity).filter(
                 Q.from_dict({"name": host})).resources[0].id)
-        response = appliance.rest_api.collections.conversion_hosts.action.create(
-            resource_id=host_id,
-            resource_type=conversion_data["resource_type"],
-            vmware_vddk_package_url=vmware_vddk_package_url,
-            vmware_ssh_private_key=vmware_ssh_private_key,
-            conversion_host_ssh_private_key=conversion_data["private_key"],
-            tls_ca_certs=conversion_data["tls_ca_certs"],
-            auth_user=conversion_data["auth_user"])[0]
+        if target_provider.one_of(RHEVMProvider) and appliance.version >= '5.11.6':
+            response = appliance.rest_api.collections.conversion_hosts.action.create(
+                resource_id=host_id,
+                resource_type=conversion_data["resource_type"],
+                vmware_vddk_package_url=vmware_vddk_package_url,
+                vmware_ssh_private_key=vmware_ssh_private_key,
+                conversion_host_ssh_private_key=conversion_data["private_key"],
+                tls_ca_certs=conversion_data["tls_ca_certs"],
+                auth_user=conversion_data["auth_user"])[0]
+        else:
+            response = appliance.rest_api.collections.conversion_hosts.action.create(
+                resource_id=host_id,
+                resource_type=conversion_data["resource_type"],
+                vmware_vddk_package_url=vmware_vddk_package_url,
+                vmware_ssh_private_key=vmware_ssh_private_key,
+                conversion_host_ssh_private_key=conversion_data["private_key"],
+                auth_user=conversion_data["auth_user"])[0]
         response.reload()
         wait_for(
             lambda: response.task.state == "Finished",
