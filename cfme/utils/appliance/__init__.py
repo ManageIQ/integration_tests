@@ -1521,6 +1521,10 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
 
         def _check_appliance_api_ready():
             try:
+                # There are 2 hard problems in computer science: cache
+                # invalidation, naming things, and off-by-1 errors.
+                # -- Leon Bambrick
+                #
                 # Try invalidating stale cached api object if exists
                 try:
                     del self.__dict__['rest_api']
@@ -1682,6 +1686,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             assert result.success, 'Failed to generate UUID'
         log_callback('Updated UUID: {}'.format(str(result)))
         try:
+            # There are 2 hard problems in computer science: cache
+            # invalidation, naming things, and off-by-1 errors.
+            # -- Leon Bambrick
             del self.__dict__['guid']  # invalidate cached_property
         except KeyError:
             logger.exception('Exception clearing cached_property "guid"')
