@@ -21,6 +21,7 @@ def vm_mock():
     all_ips_mock = PropertyMock()
     type(vm).all_ips = all_ips_mock
     all_ips_mock.side_effect = [
+        [None],
         ['NOT_WORKING_IP_MOCK'],
         ['NOT_WORKING_IP_MOCK', 'OTHER_NOT_WORKING_IP_MOCK',
             'WORKING_IP_MOCK', 'SHOULD_NOT_REACH_THIS_MOCK'],

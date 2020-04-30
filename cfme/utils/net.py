@@ -85,11 +85,47 @@ def pick_responding_ip(vm, port, rounds, rounds_delay_seconds, attempt_timeout):
 
     Raise TimedOutError if no such IP is found.
     """
-    for ip in _trying_fresh_ips(vm, rounds_delay_seconds, rounds):
+
+    def connection_factory(ip):
         if net_check(port, ip, attempt_timeout):
             return ip
+
+    return retry_connect_rounds(vm, connection_factory, rounds, rounds_delay_seconds)
+
+
+def retry_connect_rounds(vm, connection_factory, rounds, rounds_delay_seconds):
+    # TODO (jhenner) get rid of this
+    round = 0
+    while round < rounds:
+        round += 1
+        for ip in vm.all_ips:
+            connection = connection_factory(ip)
+            if connection:
+                return connection
+        time.sleep(rounds_delay_seconds)
     else:
-        raise TimedOutError(f"Coudln't find an IP of vm {vm} with port {port} responding")
+        raise TimedOutError(f"Coudln't find an IP of vm {vm} that would satisfy the {connection}")
+
+
+def retry_connect(ips_getter, connection_factory, num_sec, delay):
+    def try_batch_of_ips():
+        for ip in ips_getter():
+            try:
+                connection = connection_factory(ip)
+            except Exception as ex:
+                logger.warning(f"Failed to connect {ip}: {ex}")
+                continue
+            else:
+                logger.info(f"Connected to IP {ip}")
+                # No other IPs should be attempted, so return.
+                return connection
+        return False
+    connection, _ = wait_for(try_batch_of_ips, num_sec=num_sec, delay=delay)
+    return connection
+
+
+def retry_connect_vm(vm, connection_factory, num_sec, delay):
+    return retry_connect(lambda: vm.all_ips, connection_factory, num_sec, delay)
 
 
 def net_check(port, addr=None, force=False, timeout=10):
