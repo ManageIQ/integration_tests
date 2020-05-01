@@ -106,6 +106,7 @@ class Host(
             view.entities.get_entity(name=self.name, surf_pages=True).ensure_checked()
             view.toolbar.configuration.item_select('Edit Selected items')
             view = self.create_view(HostEditView)
+            assert view.is_displayed
         changed = view.fill({
             "name": updates.get("name"),
             "hostname": updates.get("hostname") or updates.get("ip_address"),
