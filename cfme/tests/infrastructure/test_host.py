@@ -541,7 +541,7 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 
 @test_requirements.infra_hosts
 @pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'remove'])
-def test_infrastructure_hosts_crud(appliance, setup_provider, provider, crud_action):
+def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
     """
     Polarion:
         assignee: prichard
@@ -549,14 +549,11 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, provider, crud_act
         caseimportance: low
         initialEstimate: 1/6h
     """
-    from cfme.utils.update import update
-
     host = appliance.collections.hosts.all()[0]
     if crud_action != 'remove':
         stamp = fauxfactory.gen_alphanumeric()
         new_custom_id = f'Edit host data. {stamp}'
 
-        # with update(host, from_details=lambda crud_action: crud_action=='edit_from_details'):
         with update(host, from_details=(crud_action == 'edit_from_details')):
             host.custom_ident = new_custom_id
 
