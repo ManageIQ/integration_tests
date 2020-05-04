@@ -1538,8 +1538,8 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                 self.log.info("Appliance REST API ready")
                 return api
             except APIException as exc:
-                self.log.warning('Appliance rest API not ready: %s', exc)
-                return None
+                self.log.warning('Appliance RESTAPI not ready: %s', exc)
+                return False
 
         api, _ = wait_for(func=_check_appliance_api_ready, num_sec=num_sec, delay=10)
         return api
