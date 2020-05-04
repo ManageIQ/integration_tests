@@ -145,6 +145,34 @@ def ansible_catalog_item(appliance, ansible_repository):
     cat_item.delete_if_exists()
 
 
+@pytest.fixture(scope="function")
+def ansible_catalog_item_funcscope(appliance, ansible_repository):
+    collection = appliance.collections.catalog_items
+    cat_item = collection.create(
+        collection.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        display_in_catalog=True,
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+            "extra_vars": [("some_var", "some_value")]
+        },
+        retirement={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "extra_vars": [("some_var", "some_value")]
+        }
+    )
+    yield cat_item
+
+    cat_item.delete_if_exists()
+
+
 @pytest.fixture(scope="module")
 def ansible_catalog(appliance, ansible_catalog_item):
     catalog = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
@@ -165,8 +193,9 @@ def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
 
 
 @pytest.fixture(scope="function")
-def ansible_service_request_funcscope(appliance, ansible_catalog_item):
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+def ansible_service_request_funcscope(appliance, ansible_catalog_item_funcscope):
+    request_descr = (f"Provisioning Service [{ansible_catalog_item_funcscope}]"
+        "from [{ansible_catalog_item_funcscope}]")
     service_request = appliance.collections.requests.instantiate(description=request_descr)
     yield service_request
 
@@ -176,8 +205,8 @@ def ansible_service_request_funcscope(appliance, ansible_catalog_item):
 
 
 @pytest.fixture(scope="function")
-def ansible_service_funcscope(appliance, ansible_catalog_item):
-    service = MyService(appliance, ansible_catalog_item.name)
+def ansible_service_funcscope(appliance, ansible_catalog_item_funcscope):
+    service = MyService(appliance, ansible_catalog_item_funcscope.name)
     yield service
 
     if service.exists:

@@ -135,13 +135,13 @@ def dialog_with_catalog_item(appliance, request, ansible_repository, ansible_cat
 
 
 @pytest.fixture()
-def ansible_linked_vm_action(appliance, local_ansible_catalog_item, create_vm):
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
+def ansible_linked_vm_action(appliance, ansible_catalog_item_funcscope, create_vm):
+    with update(ansible_catalog_item_funcscope):
+        ansible_catalog_item_funcscope.provisioning = {"playbook": "add_single_vm_to_service.yml"}
 
     action_values = {
         "run_ansible_playbook": {
-            "playbook_catalog_item": local_ansible_catalog_item.name,
+            "playbook_catalog_item": ansible_catalog_item_funcscope.name,
             "inventory": {"specific_hosts": True, "hosts": create_vm.ip_address},
         }
     }
@@ -858,8 +858,8 @@ def test_ansible_service_linked_vm(
     appliance,
     create_vm,
     ansible_policy_linked_vm,
-    ansible_service_request,
-    ansible_service,
+    ansible_service_request_funcscope,
+    ansible_service_funcscope,
     request,
 ):
     """Check Whether service has associated VM attached to it.
@@ -874,10 +874,10 @@ def test_ansible_service_linked_vm(
         tags: ansible_embed
     """
     create_vm.add_tag()
-    wait_for(ansible_service_request.exists, num_sec=600)
-    ansible_service_request.wait_for_request()
+    wait_for(ansible_service_request_funcscope.exists, num_sec=600)
+    ansible_service_request_funcscope.wait_for_request()
 
-    view = navigate_to(ansible_service, "Details")
+    view = navigate_to(ansible_service_funcscope, "Details")
     assert create_vm.name in view.entities.vms.all_entity_names
 
 
