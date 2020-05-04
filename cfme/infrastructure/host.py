@@ -1,11 +1,13 @@
 """A model of an Infrastructure Host in CFME."""
 import json
+import pytest
 
 import attr
 from manageiq_client.api import APIException
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
+from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import ComparableMixin
@@ -94,14 +96,16 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def update(self, updates, validate_credentials=False, from_details=True):
+    def update(self, updates, validate_credentials=False, action='edit_from_details'):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
         Args:
            updates (dict): fields that are changing.
+           action (str): denotes additional functionality. Expecting edit_from_details,
+           edit_from_hosts, delete, cancel, or nav_away.
         """
-        if from_details:
+        if 'from_details' in action:
             view = navigate_to(self, "Edit")
         else:
             view = navigate_to(self.parent, "All")
@@ -136,7 +140,21 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
         view.flash.assert_no_error()
-        changed = any([changed, credentials_changed, ipmi_credentials_changed])
+        if action == 'nav_away':
+            try:
+                '''
+                view.navigation.select('Compute', 'Infrastructure', 'Providers',
+                                             handle_alert=False)
+                final_view = self.create_view(InfraProvidersView)
+                assert final_view.is_displayed
+                '''
+                view = navigate_to(self.parent, "All", handle_alert=False)
+                assert view.is_displayed
+                return
+            except UnexpectedAlertPresentException:
+                pytest.fail("Abandon changes alert displayed, but no changes made.")
+        changed = False if 'cancel' in action else any([changed, credentials_changed,
+                                                        ipmi_credentials_changed])
         if changed:
             view.save_button.click()
             logger.debug("Trying to save update for host with id: %s", str(self.get_db_id))

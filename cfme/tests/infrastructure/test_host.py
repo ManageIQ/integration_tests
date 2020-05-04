@@ -535,7 +535,8 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'remove'])
+@pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'cancel',
+                                         'nav_away', 'remove'])
 def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
     """
     Polarion:
@@ -545,16 +546,29 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
         initialEstimate: 1/6h
     """
     host = appliance.collections.hosts.all()[0]
+    if crud_action in ['cancel', 'nav_away']:
+        try:
+            existing_custom_id = navigate_to(host, 'Details').entities.summary(
+                "Properties").get_text_of("Custom Identifier")
+        except NameError:
+            existing_custom_id = None
     if crud_action != 'remove':
         stamp = fauxfactory.gen_alphanumeric()
         new_custom_id = f'Edit host data. {stamp}'
-
-        with update(host, from_details=(crud_action == 'edit_from_details')):
+        with update(host, action=crud_action):
             host.custom_ident = new_custom_id
-
-        assert host.custom_ident == new_custom_id
-        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
-            "Custom Identifier") == new_custom_id
+        if crud_action not in ['cancel', 'nav_away']:
+            assert host.custom_ident == new_custom_id  # is this actually doing anything here
+            # different from the line below ?
+            assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+                "Custom Identifier") == new_custom_id
+        else:
+            try:
+                assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+                    "Custom Identifier") == existing_custom_id
+            except NameError:
+                if existing_custom_id:
+                    raise
     else:
         host.delete()
         host.delete(cancel=False)
