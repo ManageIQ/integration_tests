@@ -43,6 +43,7 @@ from widgetastic.widget import Text
 from widgetastic.widget import TextInput
 from widgetastic.widget import View
 from widgetastic.widget import Widget
+from widgetastic.widget.base import ParametrizedViewRequest
 from widgetastic.xpath import quote
 from widgetastic_patternfly import Accordion as PFAccordion
 from widgetastic_patternfly import AggregateStatusCard
@@ -4224,7 +4225,11 @@ class WaitTab(Tab):
                 if _tries >= _to_try:  # raise the TimedOutError if we've tried enough times
                     raise
         try:
-            widget.wait_displayed(timeout=2)
+
+            if isinstance(widget, ParametrizedViewRequest):
+                pass
+            else:
+                widget.wait_displayed(timeout=2)
         except TimedOutError:
             self.logger.warning("Tab widget not displayed, continuing...")
 
