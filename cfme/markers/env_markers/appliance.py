@@ -21,29 +21,22 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
             metafunc.function.uncollect
         except AttributeError:
             pytest.mark.uncollect(
-                reason="provider was not parametrized did you forget --use-provider?"
+                reason="appliance was not parametrized"
             )(metafunc.function)
 
 
 def appliances(metafunc, app_types, fixture_name='appliance'):
-    """ Gets appliances based on given (+ global) filters
+    """Get appliances based on given (+ global) filters
 
     Note:
         Using the default 'function' scope, each test will be run individually for each appliance
         before moving on to the next test. To group all tests related to single appliance together,
         parametrize tests in the 'module' scope.
-
-    Note:
-        testgen for providers now requires the usage of test_flags for collection to work.
-        Please visit http://cfme-tests.readthedocs.org/guides/documenting.html#documenting-tests
-        for more details.
     """
     argnames = []
     argvalues = []
     idlist = []
 
-    # supported_providers are the ones "supported" in the supportability.yaml file. It will
-    # be a list of DataProvider objects and will be filtered based upon what the test has asked for
     holder = metafunc.config.pluginmanager.get_plugin('appliance-holder')
     current_appliance = holder.held_appliance
     argnames.append(fixture_name)
@@ -52,8 +45,8 @@ def appliances(metafunc, app_types, fixture_name='appliance'):
         if app_type == current_appliance.type:
             argvalues.append([current_appliance])
         else:
-            msg = (f'No appliance of such type available. needed {app_type}, '
-                   f'exists {current_appliance.type}')
+            msg = (f"No appliance of type {app_type} available."
+                   f" Current appliance type: {current_appliance.type}.")
             argvalues.append(pytest.param(None, marks=pytest.mark.uncollect(reason=msg)))
     return argnames, argvalues, idlist
 

@@ -102,7 +102,7 @@ class ApplianceException(Exception):
     pass
 
 
-class BaseAppliance(object):
+class BaseAppliance:
     """ Represents base appliance class intended to hold base properties existing in every appliance
     """
     type = None
@@ -279,13 +279,13 @@ class IPAppliance(BaseAppliance):
 
     @property
     def name(self):
-        """Appliance name from advanced settings, equivalent to master server name"""
+        """Appliance server name"""
         try:
-            return self.advanced_settings['server']['name']
-        except KeyError:
-            logger.exception('Appliance name attribute not where it was expected in %r',
-                             self.advanced_settings.get('server'))
-            raise ApplianceException('Failed to find appliance server name key in settings')
+            return self.server.name
+        except Exception:
+            msg = 'Appliance server name could not be found.'
+            logger.exception(msg)
+            raise ApplianceException(msg)
 
     @property
     def server(self):
