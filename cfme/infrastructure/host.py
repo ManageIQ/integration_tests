@@ -1,8 +1,8 @@
 """A model of an Infrastructure Host in CFME."""
 import json
-import pytest
 
 import attr
+import pytest
 from manageiq_client.api import APIException
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
