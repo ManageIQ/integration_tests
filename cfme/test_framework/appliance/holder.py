@@ -1,12 +1,11 @@
-
 import attr
 import pytest
 
+from .default import APP_TYPE as DEFAULT_APP_TYPE
 from cfme.fixtures.pytest_store import store
 from cfme.utils.appliance import DummyAppliance
 from cfme.utils.appliance import stack
 from cfme.utils.path import log_path
-from .default import APP_TYPE as DEFAULT_APP_TYPE
 
 PLUGIN_KEY = "appliance-holder"
 
@@ -38,7 +37,7 @@ def pytest_sessionstart(session):
 
 
 @attr.s(eq=False)
-class ApplianceHolderPlugin(object):
+class ApplianceHolderPlugin:
     held_appliance = attr.ib()
     pool = attr.ib(type=list)
     stack = attr.ib(default=stack)

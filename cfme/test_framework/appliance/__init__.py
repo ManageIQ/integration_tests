@@ -10,7 +10,7 @@ def appliances_from_cli(cli_appliances, appliance_version):
         parsed_url = urlparse(appliance_data['hostname'])
         if not parsed_url.hostname:
             raise ValueError(
-                "Invalid appliance url: {}".format(appliance_data)
+                f"Invalid appliance url: {appliance_data}"
             )
 
         appliance = appliance_data.copy()

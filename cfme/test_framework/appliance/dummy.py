@@ -2,7 +2,6 @@ import attr
 import pytest
 
 from cfme.fixtures import terminalreporter
-
 from cfme.utils.appliance import DummyAppliance
 
 
@@ -24,7 +23,7 @@ def pytest_configure(config):
         ]
         reporter.write_line('Retrieved Dummy Appliances', red=True)
         for appliance in appliances:
-            reporter.write_line('* {!r}'.format(appliance), cyan=True)
+            reporter.write_line(f'* {appliance!r}', cyan=True)
 
         holder = config.pluginmanager.getplugin('appliance-holder')
         holder.stack.push(appliances[0])
@@ -41,5 +40,5 @@ def pytest_unconfigure(config):
 
 
 @attr.s(eq=False)
-class DummyAppliancePlugin(object):
+class DummyAppliancePlugin:
     pass

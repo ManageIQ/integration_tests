@@ -27,7 +27,7 @@ def pytest_configure(config):
         holder = config.pluginmanager.getplugin('appliance-holder')
         reporter.write_line('Retrieved following regular appliances:', cyan=True)
         for appliance in appliances:
-            reporter.write_line('* {!r}'.format(appliance), cyan=True)
+            reporter.write_line(f'* {appliance!r}', cyan=True)
 
         holder.stack.push(appliances[0])
         holder.held_appliance = appliances[0]
@@ -43,5 +43,5 @@ def pytest_unconfigure(config):
 
 
 @attr.s(eq=False)
-class PodAppliancePlugin(object):
+class PodAppliancePlugin:
     pass

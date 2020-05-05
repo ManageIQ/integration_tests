@@ -13,12 +13,7 @@ Options in env.yaml will define what files to collect, will default to the set b
 
 Log files will be tarred and written to log_path
 """
-import os.path
-import shutil
-import subprocess
-
 import pytest
-import scp
 
 from cfme.utils.conf import env
 from cfme.utils.log import logger

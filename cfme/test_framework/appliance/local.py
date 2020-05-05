@@ -22,7 +22,7 @@ def pytest_configure(config):
 
         reporter.write_line('Retrieved Local Appliance', red=True)
         for appliance in appliances:
-            reporter.write_line('* {!r}'.format(appliance), cyan=True)
+            reporter.write_line(f'* {appliance!r}', cyan=True)
 
         holder = config.pluginmanager.getplugin('appliance-holder')
         holder.stack.push(appliances[0])
@@ -39,5 +39,5 @@ def pytest_unconfigure(config):
 
 
 @attr.s(eq=False)
-class LocalAppliancePlugin(object):
+class LocalAppliancePlugin:
     pass
