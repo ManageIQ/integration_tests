@@ -6,11 +6,13 @@ from cfme.rest import gen_data
 from cfme.tests.automate.custom_button import CLASS_MAP
 from cfme.tests.automate.custom_button import OBJ_TYPE
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.tier(3),
@@ -45,6 +47,9 @@ def buttons_rest(request, appliance, obj_type):
 class TestCustomButtonRESTAPI:
     @pytest.fixture(params=["custom_button_sets", "custom_buttons"], ids=["Group", "Button"])
     def buttons_groups(self, request, appliance, obj_type):
+        if BZ(1827818, forced_streams=["5.11"]).blocks and request.param == "custom_buttons":
+            pytest.skip(f"Setup fails BZ-1827818; unable to create custom button with rest")
+
         button_type = CLASS_MAP[obj_type]["rest"]
         num_conditions = 2
         response = getattr(gen_data, request.param)(
@@ -73,6 +78,7 @@ class TestCustomButtonRESTAPI:
         response, _ = buttons_groups
         query_resource_attributes(response[0], soft_assert=soft_assert)
 
+    @pytest.mark.meta(automates=[1827818])
     def test_create(self, appliance, buttons_groups):
         """Tests create custom button/group.
 
@@ -88,6 +94,9 @@ class TestCustomButtonRESTAPI:
             startsin: 5.9
             casecomponent: Rest
             tags: custom_button
+
+        Bugzilla:
+            1827818
         """
         entities, _type = buttons_groups
 
@@ -181,7 +190,7 @@ class TestCustomButtonRESTAPI:
             assert condition.description == edited[index].description == record[0].description
 
 
-@pytest.mark.meta(automates=[1737449, 1745198])
+@pytest.mark.meta(blockers=[BZ(1827818, forced_streams=["5.11"])], automates=[1737449, 1745198])
 def test_associate_unassigned_buttons_rest(appliance, group_rest, buttons_rest):
     """Test associate unassigned button with group
 
