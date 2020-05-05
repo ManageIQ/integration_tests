@@ -3,6 +3,7 @@ import attr
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from varmeth import variable
 from wrapanapi.systems import LenovoSystem
 
 from cfme.common import PolicyProfileAssignable
@@ -28,7 +29,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils.update import Updateable
-from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 
 

@@ -1,4 +1,5 @@
 import attr
+from varmeth import variable
 from widgetastic.widget import View
 from widgetastic_patternfly import Input
 from wrapanapi.systems import VmwareCloudSystem
@@ -9,7 +10,6 @@ from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.varmeth import variable
 from widgetastic_manageiq import WaitTab
 
 

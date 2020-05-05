@@ -4,6 +4,7 @@ from collections.abc import Iterable
 
 import attr
 from manageiq_client.api import APIException
+from varmeth import variable
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import Button
@@ -31,7 +32,6 @@ from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
-from cfme.utils.varmeth import variable
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import RefreshTimer
 from cfme.utils.wait import wait_for

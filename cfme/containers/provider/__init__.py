@@ -6,6 +6,7 @@ from traceback import format_exc
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from varmeth import variable
 from widgetastic.widget import Text
 from widgetastic.widget import TextInput
 from widgetastic.widget import View
@@ -45,7 +46,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.browser import browser
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
-from cfme.utils.varmeth import variable
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for

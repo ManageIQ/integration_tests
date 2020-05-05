@@ -3,6 +3,7 @@ from urllib.error import URLError
 
 import attr
 from cached_property import cached_property
+from varmeth import variable
 from wrapanapi.systems.container import Openshift
 
 from cfme.common import Taggable
@@ -17,7 +18,6 @@ from cfme.utils import ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.ocp_cli import OcpCli
-from cfme.utils.varmeth import variable
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 

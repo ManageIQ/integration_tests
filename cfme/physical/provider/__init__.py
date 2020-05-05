@@ -1,6 +1,7 @@
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
+from varmeth import variable
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Fillable
 
@@ -19,7 +20,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.pretty import Pretty
-from cfme.utils.varmeth import variable
 from widgetastic_manageiq import StatusBox
 
 
