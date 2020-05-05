@@ -556,8 +556,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
         except NameError:
             existing_custom_id = None
     if crud_action != 'remove':
-        stamp = fauxfactory.gen_alphanumeric()
-        new_custom_id = f'Edit host data. {stamp}'
+        new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
         try:
             with update(host, action=crud_action):
                 host.custom_ident = new_custom_id
@@ -579,5 +578,5 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
                 if existing_custom_id:
                     raise
     else:
-        host.delete()
+        host.delete(cancel=True)
         host.delete(cancel=False)
