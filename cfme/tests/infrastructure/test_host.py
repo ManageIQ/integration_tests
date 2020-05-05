@@ -537,7 +537,7 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 @test_requirements.infra_hosts
 @pytest.mark.meta(automates=[1634794])
 @pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'cancel',
-                                         'nav_away_changes, nav_away_no_changes', 'remove'])
+                                         'nav_away_changes', 'nav_away_no_changes', 'remove'])
 def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
     """
     Polarion:
