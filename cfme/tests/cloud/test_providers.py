@@ -1224,52 +1224,53 @@ def test_refresh_with_stack_without_parameters(provider, request, stack_without_
     provider.validate_stats(ui=True)
 
 
-@test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_public_images():
+@test_requirements.cloud
+@pytest.mark.long_running
+@pytest.mark.ignore_stream("5.10", "5.11")
+@pytest.mark.meta(automates=[1491330, 1612086])
+@pytest.mark.provider([AzureProvider, EC2Provider], scope="function")
+def test_public_images_enable_disable(setup_provider, request, appliance, provider):
     """
+    Bugzilla:
+        1491330
+        1612086
+    The easiest way to simulate AWS API Limit for > 200 items is to enable
+    and disable public images.
+    So test for testing public images and for testing AWS API Limit is combined in this test.
     Polarion:
         assignee: mmojzis
         caseimportance: critical
-        initialEstimate: 2/3h
+        initialEstimate: 1 1/2h
         casecomponent: Cloud
         testSteps:
             1. Enable public images for ec2
             2. Add ec2 provider
             3. Wait for its refresh(It can take more than 30 minutes)
+            4. Disable public images for ec2
+            5. Wait for its refresh(It can take more than 30 minutes)
         expectedResults:
             1.
             2.
-            3. Refresh should be successful and images collected
+            3. Refresh should be successful and public images collected
+            4.
+            5. Refresh should be successful and public images uncollected
     """
-    pass
-
-
-@test_requirements.ec2
-@pytest.mark.manual
-def test_ec2_api_filter_limit():
-    """
-    Bugzilla:
-        1612086
-
-    The easiest way to simulate AWS API Limit for > 200 items is to enable
-    and disable public images:
-    Requirement: Have an ec2 provider
-
-    Polarion:
-        assignee: mmojzis
-        casecomponent: Cloud
-        initialEstimate: 1 1/3h
-        startsin: 5.9
-        caseimportance: critical
-        testSteps:
-            1. Enable public images for ec2 in Advanced Settings
-            2. Disable public images for ec2 in Advanced Settings
-        expectedResults:
-            1. Wait for public images to be refreshed
-            2. Wait for public images to be refreshed (cleared)
-    """
-    pass
+    # if provider gets stuck loading images it could take more than two hours to be in operating
+    # state which can cause other test to fail so better to delete provider for safety
+    request.addfinalizer(lambda: provider.delete_if_exists())
+    request.addfinalizer(lambda: appliance.set_public_images(provider, enabled=False))
+    # enable
+    public_provider_images_min = 20000 if provider.one_of(AzureProvider) else 40000
+    private_provider_images_max = 5000
+    appliance.set_public_images(provider, enabled=True)
+    provider.refresh_provider_relationships(method='ui')
+    wait_for(lambda: int(provider.load_details(refresh=True).entities.summary("Relationships")
+        .get_text_of("Images")) > public_provider_images_min, delay=120, timeout=3600 * 3)
+    # disable
+    appliance.set_public_images(provider, enabled=False)
+    provider.refresh_provider_relationships(method='ui')
+    wait_for(lambda: int(provider.load_details(refresh=True).entities.summary("Relationships")
+        .get_text_of("Images")) < private_provider_images_max, delay=120, timeout=3600 * 3)
 
 
 @test_requirements.ec2

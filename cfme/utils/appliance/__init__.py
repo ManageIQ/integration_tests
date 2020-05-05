@@ -2611,6 +2611,16 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
         if self.advanced_settings.get('product', {}).get('transformation'):
             self. _switch_migration_ui(False)
 
+    def set_public_images(self, provider, enabled=False):
+        from cfme.cloud.provider.azure import AzureProvider
+        provider_type = provider.type_name
+        public_image_field = 'get_public_images'
+        if provider.one_of(AzureProvider):
+            public_image_field = 'get_market_images'
+        self.update_advanced_settings({'ems_refresh': {provider_type: {
+            public_image_field: enabled}}})
+        return True
+
 
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
