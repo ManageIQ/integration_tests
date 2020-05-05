@@ -74,3 +74,46 @@ def test_schedule_migration(appliance, provider, mapping_data_vm_obj_mini, soft_
         cleanup_target(provider, migrated_vm)
 
     soft_assert(src_vm_obj.mac_address == migrated_vm.mac_address)
+
+
+@pytest.mark.tier(3)
+def test_schedule_warm_migration(
+        appliance, provider, mapping_data_vm_obj_mini, soft_assert, request):
+    """
+    Test to validate schedule migration plan
+    Polarion:
+        assignee: mnadeem
+        initialEstimate: 1/2h
+        caseimportance: medium
+        caseposneg: positive
+        testtype: functional
+        startsin: 5.11
+        casecomponent: V2V
+        testSteps:
+            1. Add source and target provider
+            2. Create infra map and migration plan
+            3. Schedule migration plan
+    """
+    migration_plan_collection = appliance.collections.v2v_migration_plans
+    src_vm_obj = mapping_data_vm_obj_mini.vm_list[0]
+    migration_plan = migration_plan_collection.create(
+        name=fauxfactory.gen_alphanumeric(start="plan_"),
+        description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
+        infra_map=mapping_data_vm_obj_mini.infra_mapping_data.get("name"),
+        target_provider=provider,
+        vm_list=mapping_data_vm_obj_mini.vm_list,
+        start_migration=False,
+        warm_migration=True
+    )
+    view = navigate_to(migration_plan, "InProgress")
+    view.progress_card.schedule_cutover(migration_plan.name)
+    soft_assert("Cutover scheduled" in view.progress_card.get_clock(migration_plan.name))
+
+    assert migration_plan.wait_for_state("In_Progress")
+    assert migration_plan.wait_for_state("Completed")
+    assert migration_plan.wait_for_state("Successful")
+    migrated_vm = get_migrated_vm(src_vm_obj, provider)
+
+    @request.addfinalizer
+    def _cleanup():
+        cleanup_target(provider, migrated_vm)
