@@ -1532,9 +1532,11 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
                     pass
                 api = self.rest_api
 
-                # Make sure we really make a new request.
+                # Make sure we really make a new request. Perhaps accessing the
+                # rest_api property just creates a client object but no network
+                # communicatin is done until we access some property of the
+                # client.
                 assert api.server_info['server_href']
-
                 self.log.info("Appliance REST API ready")
                 return api
             except APIException as exc:
