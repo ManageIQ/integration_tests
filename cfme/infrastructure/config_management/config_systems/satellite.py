@@ -12,3 +12,4 @@ class SatelliteSystem(ConfigSystem):
 @attr.s
 class SatelliteSystemsCollection(ConfigSystemsCollection):
     ENTITY = SatelliteSystem
+    type_name = "satellite"

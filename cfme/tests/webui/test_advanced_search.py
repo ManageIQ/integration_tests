@@ -7,8 +7,6 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.containers.provider import ContainersProvider
-from cfme.infrastructure.config_management import ConfigManagerProvider
-from cfme.infrastructure.config_management import ConfigSystem
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.physical.provider import PhysicalProvider
@@ -17,18 +15,16 @@ from cfme.services.workloads import TemplatesImages
 from cfme.services.workloads import VmsInstances
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.blockers import GH
 
 SearchParam = namedtuple("SearchParam",
-                         ["collection", "destination", "entity", "filter", "my_filters"])
+                         ["collection", "destination", "entity", "filter", "my_filters", ])
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda param, appliance:
-        (param.collection in [ConfigManagerProvider, 'config_managers'] or
-         param.filter == 'Job Template (Ansible Tower) : Name') or
+    pytest.mark.uncollectif(
+        lambda param, appliance:
         (appliance.version >= '5.11' and param.entity == 'network_load_balancers'),
-        reason='load balancers are no longer supported in 5.11 -> BZ 1672949'),
-    pytest.mark.meta(automates=[BZ(1402392)])  # should be only on test_filter_crud
+        reason='load balancers are no longer supported in 5.11 -> BZ 1672949 '),
+    pytest.mark.meta(automates=[BZ(1402392), BZ(1777493)])
 ]
 
 
@@ -297,25 +293,6 @@ class TestContainers:
 
 
 @inject_tests
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:9723')])
-class TestAnsibleTower:
-    params_values = [
-        SearchParam('ansible_tower_providers', 'All', 'ansible_tower_explorer_provider',
-                    'Automation Manager (Ansible Tower) : Name',
-                    ('sidebar.providers', 'All Ansible Tower Providers')),
-
-        SearchParam('ansible_tower_systems', 'All', 'ansible_tower_explorer_system',
-                    'Configured System (Ansible Tower) : Hostname',
-                    ('sidebar.configured_systems', 'All Ansible Tower Configured Systems')),
-        SearchParam('ansible_tower_job_templates', 'All', 'ansible_tower_explorer_job_templates',
-                    'Job Template (Ansible Tower) : Name',
-                    ('sidebar.job_templates', 'All Ansible Tower Job Templates')),
-        SearchParam('ansible_tower_jobs', 'All', 'ansible_tower_jobs',
-                    'Ansible Tower Job : Name', None)]
-    pytestmark = base_pytestmarks(params_values)
-
-
-@inject_tests
 class TestStorage:
     params_values = [
         SearchParam('volumes', 'All', 'block_store_volumes', 'Cloud Volume : Name', None),
@@ -332,15 +309,16 @@ class TestStorage:
 
 
 @inject_tests
-@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:9723')])
 class TestConfigManagement:
     params_values = [
-        SearchParam(ConfigManagerProvider, 'All', 'configuration_management',
-                    'Configuration Manager : Name',
-                    ('sidebar.providers', "All Configuration Management Providers")),
-        SearchParam(ConfigSystem, 'All', 'configuration_management_systems',
+        SearchParam('satellite_systems', 'All', 'configuration_management_systems',
                     'Configured System (Red Hat Satellite) : Hostname',
                     ('sidebar.configured_systems', "All Configured Systems")),
+        SearchParam('ansible_tower_systems', 'All', 'ansible_tower_explorer_system',
+                    'Configured System (Ansible Tower) : Hostname',
+                    ('sidebar.configured_systems', 'All Ansible Tower Configured Systems')),
+        SearchParam('ansible_tower_jobs', 'All', 'ansible_tower_jobs', 'Ansible Tower Job : Name',
+                    None)
     ]
     pytestmark = base_pytestmarks(params_values)
 
