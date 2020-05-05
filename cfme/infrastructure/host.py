@@ -2,12 +2,10 @@
 import json
 
 import attr
-import pytest
 from manageiq_client.api import APIException
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
-from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import ComparableMixin
@@ -105,7 +103,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
            action (str): denotes additional functionality. Expecting edit_from_details,
            edit_from_hosts, delete, cancel, or nav_away.
         """
-        if 'from_details' in action:
+        if 'from_hosts' not in action:
             view = navigate_to(self, "Edit")
         else:
             view = navigate_to(self.parent, "All")
@@ -113,6 +111,12 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             view.toolbar.configuration.item_select('Edit Selected items')
             view = self.create_view(HostEditView)
             assert view.is_displayed
+        if action == 'nav_away_no_changes':
+            view.navigation.select('Compute', 'Infrastructure', 'Hosts',
+                                  handle_alert=False)
+            view = self.create_view(HostsView)
+            assert view.is_displayed
+            return
         changed = view.fill({
             "name": updates.get("name"),
             "hostname": updates.get("hostname") or updates.get("ip_address"),
@@ -140,19 +144,10 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
         view.flash.assert_no_error()
-        if action == 'nav_away':
-            try:
-                '''
-                view.navigation.select('Compute', 'Infrastructure', 'Providers',
-                                             handle_alert=False)
-                final_view = self.create_view(InfraProvidersView)
-                assert final_view.is_displayed
-                '''
-                view = navigate_to(self.parent, "All", handle_alert=False)
-                assert view.is_displayed
-                return
-            except UnexpectedAlertPresentException:
-                pytest.fail("Abandon changes alert displayed, but no changes made.")
+        if action == 'nav_away_changes':
+            view = navigate_to(self.parent, "All")
+            assert view.is_displayed
+            return
         changed = False if 'cancel' in action else any([changed, credentials_changed,
                                                         ipmi_credentials_changed])
         if changed:
