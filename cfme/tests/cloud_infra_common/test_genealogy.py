@@ -56,7 +56,6 @@ def test_vm_genealogy_detected(
         caseimportance: medium
         initialEstimate: 1/4h
     """
-
     if from_edit:
         create_vm.open_edit()
         view = navigate_to(create_vm, 'Edit')
@@ -68,7 +67,7 @@ def test_vm_genealogy_detected(
             vm_crud_ancestors = create_vm.genealogy.ancestors
         except NameError:
             logger.exception("The parent template not detected!")
-            raise pytest.fail("The parent template not detected!")
+            pytest.fail("The parent template not detected!")
         assert small_template.name in vm_crud_ancestors, \
             f"{small_template.name} is not in {create_vm.name}'s ancestors"
 
