@@ -30,7 +30,7 @@ from cfme.utils.virtual_machines import deploy_template
 
 ATTEMPT_TIMEOUT = 10
 """ How long to wait until connection is determined as not successful. """
-ROUNDS = 60
+IP_PICK_TIMEOUT = 600
 """ How many rounds to connect all the vm IPs. """
 ROUNDS_DELAY = 10
 """ How long to delay after unsucessful connection round. """
@@ -40,26 +40,30 @@ ROUNDS_DELAY = 10
 def utility_vm_nfs_ip(utility_vm):
     vm, _, _ = utility_vm
     one_of_the_nfs_ports = 111
-    yield pick_responding_ip(vm, one_of_the_nfs_ports, ROUNDS, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
+    yield pick_responding_ip(lambda: vm.all_ips, one_of_the_nfs_ports,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
 
 
 @pytest.fixture
 def utility_vm_samba_ip(utility_vm):
     vm, _, _ = utility_vm
-    yield pick_responding_ip(vm, 445, ROUNDS, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
+    yield pick_responding_ip(lambda: vm.all_ips, 445,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
 
 
 @pytest.fixture(scope='module')
 def utility_vm_proxy_data(utility_vm):
     vm, __, data = utility_vm
-    ip = pick_responding_ip(vm, data.proxy.port, ROUNDS, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
+    ip = pick_responding_ip(lambda: vm.all_ips, data.proxy.port,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
     yield ip, data.proxy.port
 
 
 @pytest.fixture(scope='module')
 def utility_vm_ssh(utility_vm):
     vm, injected_user_cred, __ = utility_vm
-    ip = pick_responding_ip(vm, 22, ROUNDS, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
+    ip = pick_responding_ip(lambda: vm.all_ips, 22,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
 
     with SSHClient(
             hostname=ip,

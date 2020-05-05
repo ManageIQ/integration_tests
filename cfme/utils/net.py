@@ -1,12 +1,10 @@
 import os
 import re
 import socket
-import time
 from collections import defaultdict
 
 from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
-from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 _ports = defaultdict(dict)
@@ -60,20 +58,7 @@ def ip_echo_socket(port=32123):
             conn.close()
 
 
-def _trying_fresh_ips(vm, delay, rounds):
-    """ Iterates over IPs from vm for which connection attempts will be made.
-    After all all IPs tried out, this will sleep a while and return next round.
-
-    If rounds is math.inf, then keep generating ips forever.
-    """
-    _round = 0
-    while _round < rounds:
-        _round += 1
-        yield from vm.all_ips
-        time.sleep(delay)
-
-
-def pick_responding_ip(vm, port, rounds, rounds_delay_seconds, attempt_timeout):
+def pick_responding_ip(vm, port, num_sec, rounds_delay_second, attempt_timeout):
     """
     Given a vm and port, pick one of the vm's addresses that is connectible
     on the given port
@@ -81,6 +66,10 @@ def pick_responding_ip(vm, port, rounds, rounds_delay_seconds, attempt_timeout):
     Args:
         vm: mgmt vm
         port: port number to attempt connecting to
+        num_sec: Minimal ammount of time how long to keep checking (slight
+                 variation may happen -- approximately the attempt_timeout).
+        rounds_delay_second: The delay to wait after checking each IP round in
+                             immediate succession.
         attempt_timeout: A connection timeout for every connection attempt.
 
     Raise TimedOutError if no such IP is found.
@@ -90,21 +79,7 @@ def pick_responding_ip(vm, port, rounds, rounds_delay_seconds, attempt_timeout):
         if net_check(port, ip, attempt_timeout):
             return ip
 
-    return retry_connect_rounds(vm, connection_factory, rounds, rounds_delay_seconds)
-
-
-def retry_connect_rounds(vm, connection_factory, rounds, rounds_delay_seconds):
-    # TODO (jhenner) get rid of this
-    round = 0
-    while round < rounds:
-        round += 1
-        for ip in vm.all_ips:
-            connection = connection_factory(ip)
-            if connection:
-                return connection
-        time.sleep(rounds_delay_seconds)
-    else:
-        raise TimedOutError(f"Coudln't find an IP of vm {vm} that would satisfy the {connection}")
+    return retry_connect(vm, connection_factory, num_sec, rounds_delay_second)
 
 
 def retry_connect(ips_getter, connection_factory, num_sec, delay):
