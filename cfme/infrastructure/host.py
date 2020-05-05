@@ -101,7 +101,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
         Args:
            updates (dict): fields that are changing.
            action (str): denotes additional functionality. Expecting edit_from_details,
-           edit_from_hosts, delete, cancel, or nav_away.
+           edit_from_hosts, cancel, or nav_away.
         """
         if 'from_hosts' not in action:
             view = navigate_to(self, "Edit")
