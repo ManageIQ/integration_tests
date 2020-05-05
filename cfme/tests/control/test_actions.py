@@ -224,6 +224,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
     scope="module",
     selector=ONE_PER_TYPE
 )
+@pytest.mark.meta(blockers=[BZ(1531547)], automates=[1531547])
 def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Stop Virtual Machine'
 
@@ -259,6 +260,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
     scope="module",
     selector=ONE_PER_TYPE
 )
+@pytest.mark.meta(blockers=[BZ(1531547)], automates=[1531547])
 def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
 
