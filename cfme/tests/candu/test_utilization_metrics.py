@@ -14,6 +14,7 @@ from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -25,6 +26,13 @@ pytestmark = [
         [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider],
         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')], scope="module")
 ]
+
+BREADCRUMB_LOCATIONS = dict(
+    OverviewUtilization=["Overview", "Utilization", "Utilization", "Enterprise"],
+    OverviewChargeback=["Overview", "Chargeback", 'Reports', 'All Saved Chargeback Reports'],
+    OverviewReports=["Overview", "Reports", "Saved Reports", "All Saved Reports"],
+    OverviewOptimization=["Overview", "Optimization"]
+)
 
 
 @pytest.fixture(scope="module")
@@ -412,3 +420,21 @@ class TestAzone:
             initialEstimate: 1/12h
         """
         generic_test_azone_rollup(appliance, provider, 'disk_usage_rate_average')
+
+
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(automates=[1741188])
+def test_utilization_breadcrumbs(appliance):
+    """
+    Bugzilla:
+        1741188
+
+    Polarion:
+        assignee: gtalreja
+        casecomponent: CandU
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    view = navigate_to(appliance.collections.utilization, "All")
+    assert view.breadcrumb.locations == BREADCRUMB_LOCATIONS["OverviewUtilization"]
+    assert view.breadcrumb.is_displayed
