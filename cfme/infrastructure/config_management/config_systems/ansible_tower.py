@@ -12,3 +12,4 @@ class AnsibleTowerSystem(ConfigSystem):
 @attr.s
 class AnsibleTowerSystemsCollection(ConfigSystemsCollection):
     ENTITY = AnsibleTowerSystem
+    type_name = "ansible_tower"
