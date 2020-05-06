@@ -57,22 +57,19 @@ class ApplianceEnvironmentMarker(EnvironmentMarker):
     CHOICES = ['default', 'multi-region', 'dummy', 'dev', 'pod', 'upgraded']
 
     def process_env_mark(self, metafunc):
-
-        # organize by fixture_name kwarg to the marker
-        # iter_markers returns most local mark first, maybe don't need override
+        # Organize by fixture_name kwarg to the marker.
+        # iter_markers returns the most local mark first, allowing for override if re-parametrized
+        # on a test.
         marks_by_fixture = self.get_closest_kwarg_markers(metafunc.definition)
         if marks_by_fixture is None:
-            # let's add appliance marker if it's absent
-
-            # dummy is added here in order to be collected/uncollected in order to test
-            # collection and integrity
+            # Add appliance marker if it's absent.
+            # Add 'dummy' for collection and integrity testing.
             marks_by_fixture = {self.DEFAULT: pytest.mark.appliance([self.DEFAULT, 'dummy'],
                                                                     scope='module')}
-        # process each mark, defaulting fixture_name
+        # Process each mark, defaulting fixture_name.
         for fixture_name, mark in marks_by_fixture.items():
-
-            # mark is either the lowest marker (automatic override), or has custom fixture_name
-            logger.debug(f'Parametrizing appliance env mark {mark}')
+            # mark is either the lowest marker (automatic override), or has a custom fixture_name.
+            logger.debug(f"Parametrizing appliance environment marker {mark}")
             args = mark.args
             kwargs = mark.kwargs.copy()
             scope = kwargs.pop('scope', 'function')

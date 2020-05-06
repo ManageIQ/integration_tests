@@ -103,8 +103,7 @@ class ApplianceException(Exception):
 
 
 class BaseAppliance:
-    """ Represents base appliance class intended to hold base properties existing in every appliance
-    """
+    """Base class intended to hold properties that exist in every appliance."""
     type = None
     CONFIG_MAPPING = {
         'hostname': 'hostname',
@@ -139,24 +138,23 @@ class BaseAppliance:
 
 
 class IPAppliance(BaseAppliance):
-    """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
-    but who has an IP address. This has a lot of core functionality that Appliance uses, since
-    it knows both the provider, vm_name and can there for derive the IP address.
+    """Represent an already-provisioned appliance with a known IP address but whose provider is
+    unknown. This has a lot of core functionality that Appliance uses, since Appliance knows both
+    the provider and vm_name and can therefore derive the IP address.
 
     Args:
-        hostname: The IP address  or host name of the provider
-        ui_protocol: The protocol used in the URL
-        ui_port: The port where the UI runs.
-        browser_steal: If True then then current browser is killed and the new appliance
+        hostname: The IP address or hostname of the VM.
+        ui_protocol: The protocol used in the URL (default: 'https').
+        ui_port: The port where the UI runs (default: 443).
+        browser_steal: If True then the current browser is killed and the new appliance
             is used to generate a new session.
         container: If the appliance is running as a container or as a pod, specifies its name.
-        project: openshift's project where the appliance is deployed
-        openshift_creds: If the appliance runs as a project on openshift, provides credentials for
-            the openshift host so the framework can interact with the project.
-        db_host: If the database is located somewhere else than on the appliance itself, specify
-            the host here.
-        db_port: Database port.
-        ssh_port: SSH port.
+        project: The OpenShift project where the appliance is deployed.
+        openshift_creds: If the appliance runs as a project on OpenShift, provides credentials for
+            the OpenShift host so that the framework can interact with the project.
+        db_host: The IP address or hostname of the database server, if external to the appliance.
+        db_port: Database port number (default: 5432).
+        ssh_port: SSH port number (default: 22).
     """
     _nav_steps = {}
 
@@ -224,12 +222,12 @@ class IPAppliance(BaseAppliance):
             is_dev=False, version=None, type=None
     ):
         if not isinstance(hostname, str):
-            raise TypeError('Appliance\'s hostname must be a string!')
+            raise TypeError("Appliance hostname must be a string.")
         self.hostname = hostname
         if ui_protocol not in self.PROTOCOL_PORT_MAPPING:
             raise TypeError(
-                'Wrong protocol {!r} passed, expected {!r}'.format(
-                    ui_protocol, list(self.PROTOCOL_PORT_MAPPING.keys())))
+                f"Invalid UI protocol {ui_protocol!r}. "
+                f"Allowed values: {list(self.PROTOCOL_PORT_MAPPING.keys())!r}.")
         self.ui_protocol = ui_protocol
         self.ui_port = ui_port or self.PROTOCOL_PORT_MAPPING[ui_protocol]
         self.ssh_port = ssh_port or ports.SSH
@@ -2659,17 +2657,12 @@ class MultiRegionAppliance(BaseAppliance):
 
 
 class Appliance(IPAppliance):
-    """Appliance represents an already provisioned cfme appliance vm
+    """Appliance represents a provisioned appliance VM.
 
     **DO NOT INSTANTIATE DIRECTLY - USE :py:meth:`from_provider`**
     """
 
     _default_name = 'EVM'
-
-    @property
-    def ipapp(self):
-        # For backwards compat
-        return self
 
     @classmethod
     def from_provider(cls, provider_key, vm_name, **kwargs):
@@ -3089,7 +3082,7 @@ def collections_for_appliance(appliance):
 
 @attr.s
 class DummyAppliance(BaseAppliance):
-    """a dummy with minimal attribute set"""
+    """A dummy appliance with minimal attribute set"""
     hostname = attr.ib(default='DummyApplianceHostname')
     browser_steal = attr.ib(default=False)
     version = attr.ib(default=Version('5.11.0'), converter=_version_for_version_or_stream)
@@ -3123,12 +3116,12 @@ class DummyAppliance(BaseAppliance):
         pass
 
     def __enter__(self):
-        """ This method will replace the current appliance in the store """
+        """Replace the current appliance in the store"""
         stack.push(self)
         return self
 
     def __exit__(self, *args, **kwargs):
-        """This method will remove the appliance from the store"""
+        """Remove the appliance from the store"""
         assert stack.pop() is self, 'Dummy appliance on stack inconsistent'
 
 
@@ -3158,7 +3151,7 @@ def load_appliances_from_config(config):
         config: A dictionary with the configuration
     """
     if config.get('appliances', None) is None:
-        raise ValueError("Invalid config: missing an 'appliances' section, or its empty")
+        raise ValueError("Invalid config: missing an 'appliances' section, or it's empty.")
     appliances = config['appliances']
 
     global_kwargs = {
@@ -3171,6 +3164,7 @@ def load_appliances_from_config(config):
 
 class ApplianceSummoningWarning(PendingDeprecationWarning):
     """to ease filtering/erroring on magical appliance creation based on script vs code"""
+    pass
 
 
 def get_or_create_current_appliance():

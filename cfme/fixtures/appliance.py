@@ -14,6 +14,7 @@ from contextlib import contextmanager
 
 import pytest
 
+from cfme.markers.env_markers.appliance import ApplianceEnvironmentMarker
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
 from cfme.utils import periodic_call
@@ -338,29 +339,27 @@ def _walk_to_obj_parent(obj):
 
 @pytest.mark.hookwrapper
 def pytest_fixture_setup(fixturedef, request):
-    # this hack is necessary for dynamic scope
-    if hasattr(_walk_to_obj_parent(request).function, 'appliance'):
-        marks = _walk_to_obj_parent(request).function.provider._marks
+    # Get the nearest appliance marker from this request or its parent.
+    parent = _walk_to_obj_parent(request)
+    item_marks = ApplianceEnvironmentMarker.get_closest_kwarg_markers(parent.node) or {}
 
-        for mark in marks:
-            if mark.kwargs.get('fixture_name', 'appliance') == fixturedef.argname:
-                kwargs = {}
-                for argname in fixturedef.argnames:
-                    fixdef = request._get_active_fixturedef(argname)
-                    result, arg_cache_key, exc = fixdef.cached_result
-                    request._check_scope(argname, request.scope, fixdef.scope)
-                    kwargs[argname] = result
+    for fixture_name, mark in item_marks.items():
+        if fixture_name == fixturedef.argname:
+            kwargs = {}
+            for argname in fixturedef.argnames:
+                fixdef = request._get_active_fixturedef(argname)
+                result, arg_cache_key, exc = fixdef.cached_result
+                request._check_scope(argname, request.scope, fixdef.scope)
+                kwargs[argname] = result
 
-                my_cache_key = request.param_index
+            my_cache_key = request.param_index
 
-                holder = request.config.pluginmanager.get_plugin('appliance-holder')
-                current_appliance = holder.held_appliance
+            holder = request.config.pluginmanager.get_plugin('appliance-holder')
+            current_appliance = holder.held_appliance
 
-                fixturedef.cached_result = (current_appliance, my_cache_key, None)
-                request.param = current_appliance
-                yield current_appliance
-                break
-        else:
-            yield
+            request.param = current_appliance
+            yield current_appliance
+            fixturedef.cached_result = (current_appliance, my_cache_key, None)
+            break
     else:
         yield
