@@ -203,23 +203,6 @@ def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mod
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dialogs_should_only_run_once():
-    """ Dialogs should only run once
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        startsin: 5.9
-        initialEstimate: 1/4h
-        tags: service
-    Bugzilla:
-        1595776
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_triggered_refresh_shouldnt_occurs_for_dialog_after_changing_type_to_static():
     """ Triggered Refresh shouldn't Occurs for Dialog After Changing Type to Static
