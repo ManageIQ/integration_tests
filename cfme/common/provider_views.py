@@ -92,12 +92,20 @@ class ProviderDetailsView(BaseLoggedInPage):
         summary = ParametrizedSummaryTable()
         sidebar = View.nested(SummaryAccordionView)
 
+        @property
+        def is_displayed(self):
+            return self.summary("Properties").is_displayed
+
     @entities.register('Dashboard View')
     class ProviderDetailsDashboardView(View):
         """
          represents Details page when it is switched to Dashboard aka Widgets view
         """
         cards = ParametrizedStatusBox()
+
+        @property
+        def is_displayed(self):
+            return self.cards("Instances").is_displayed
 
     @property
     def is_displayed(self):
@@ -109,7 +117,8 @@ class ProviderDetailsView(BaseLoggedInPage):
             name=self.context['object'].name,
             subtitle=subtitle
         )
-        return (self.logged_in_as_current_user and
+        return (self.entities.is_displayed and
+                self.logged_in_as_current_user and
                 self.breadcrumb.is_displayed and
                 self.breadcrumb.active_location == title)  # BZ 1703744
 
