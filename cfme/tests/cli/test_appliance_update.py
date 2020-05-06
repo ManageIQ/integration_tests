@@ -117,6 +117,7 @@ def do_yum_update(appliance):
         assert result.success, f"update failed {result.output}"
     appliance.evmserverd.start()
     appliance.wait_for_web_ui()
+    return result
 
 
 @pytest.mark.meta(automates=[1714236])
@@ -137,9 +138,8 @@ def test_update_yum(appliance_preupdate, appliance):
     assert result.output in appliance.version
 
 
-@pytest.mark.manual
 @pytest.mark.meta(coverage=[1674055])
-def test_update_yum_no_errors(old_version):
+def test_update_yum_no_errors(appliance_preupdate):
     """ Test that the yum update doesn't spill any erros or warnings.
 
     Polarion:
@@ -155,12 +155,15 @@ def test_update_yum_no_errors(old_version):
         expectedResults:
             1.
             2.
-            3. No erros in the stderr and stdout, yum exit status is 0
+            3. No errors in the stderr and stdout, yum exit status is 0
 
     Bugzilla:
         1674055
     """
-    pass
+    result = do_yum_update(appliance_preupdate)
+    for phrase in ["fail", "error", "warning"]:
+        assert phrase not in result.output.lower(), f"update output contains {phrase}\n\
+        n{result.output}"
 
 
 @pytest.mark.ignore_stream("upstream")
