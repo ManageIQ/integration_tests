@@ -390,8 +390,7 @@ class ComparableMixin:
     Constants:
             DROPDOWN_TEXT: (str) the text in the Configuration dropdown for comparing entities
             NAV_STRING: (str) used as second arg in call to navigate_to()
-            COMPARE_VIEW_PROVIDER: (VIEW) view class to create and return when filtering on provider
-            COMPARE_VIEW_ALL: (VIEW) view class to create and return when no provider filtering
+            COMPARE_VIEW: (VIEW) view class to create and return
     Usage:
         If added to collection's class,
 
@@ -404,8 +403,7 @@ class ComparableMixin:
     """
     DROPDOWN_TEXT = 'Compare Selected items'
     NAV_STRING = 'All'
-    COMPARE_VIEW_PROVIDER = CompareView
-    COMPARE_VIEW_ALL = CompareView
+    COMPARE_VIEW = CompareView
 
     def compare_entities(self, provider, entities_list=None):
         """
@@ -421,10 +419,7 @@ class ComparableMixin:
             v_entity.ensure_checked()
         entity_view.toolbar.configuration.item_select(
             self.DROPDOWN_TEXT, handle_alert=True)
-        if self.parent is provider:
-            compare_entity_view = provider.create_view(self.COMPARE_VIEW_PROVIDER)
-        else:
-            compare_entity_view = provider.create_view(self.COMPARE_VIEW_ALL)
+        compare_entity_view = provider.create_view(self.COMPARE_VIEW)
         return compare_entity_view
 
 
