@@ -67,6 +67,10 @@ class ElementForm(AddBoxView):
         validation_switch = DialogBootstrapSwitch(label='Validation')
         validation = Input(name='validator_rule')
         visible = DialogBootstrapSwitch(label='Visible')
+        refresh_fields_dropdown = BootstrapSelect(
+            locator='//label[contains(normalize-space(.), '
+                    '"Fields to refresh")]/following-sibling::div/span/div'
+        )
 
     @View.nested
     class advanced(WaitTab):  # noqa
