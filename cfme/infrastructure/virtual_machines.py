@@ -51,7 +51,6 @@ from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.provider import ProviderTemplatesView
 from cfme.services.requests import RequestsView
-from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
@@ -1690,22 +1689,24 @@ class SetRetirement(CFMENavigateStep):
 class TemplatesAll(CFMENavigateStep):
 
     def prerequisite(self):
-        from cfme.infrastructure.provider import InfraProvider
-        if isinstance(self.obj.parent, InfraProvider):
-            return navigate_to(self.obj.parent, 'Details')
-        elif isinstance(self.obj.parent, IPAppliance):
-            return navigate_to(self.obj, 'All')
+        if self.obj.parent is self.obj.appliance:
+            nav_inst = self.obj
+            nav_dest = 'All'
+        else:
+            nav_inst = self.obj.parent
+            nav_dest = 'Details'
+        return navigate_to(nav_inst, nav_dest)
 
     @property
     def VIEW(self):  # noqa
-        from cfme.infrastructure.provider import InfraProvider
-        if isinstance(self.obj.parent, InfraProvider):
-            return ProviderTemplatesView
-        elif isinstance(self.obj.parent, IPAppliance):
-            return TemplatesOnlyAllView
+        if self.obj.parent is self.obj.appliance:
+            view_class = TemplatesOnlyAllView
+        else:
+            view_class = ProviderTemplatesView
+        return view_class
 
     def step(self, *args, **kwargs):
-        if isinstance(self.obj.parent, IPAppliance):
+        if self.obj.parent is self.obj.appliance:
             if 'filter_folder' not in kwargs:
                 self.view.sidebar.templates.tree.click_path('All Templates')
             elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
