@@ -11,7 +11,6 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.common import BaseLoggedInPage
 from cfme.common import TimelinesView
-from cfme.exceptions import displayed_not_implemented
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
@@ -302,8 +301,13 @@ class HostEditView(HostFormView):
     breadcrumb = BreadCrumb()
     save_button = Button("Save")
     reset_button = Button("Reset")
+    cancel_button = Button("Cancel")
 
-    is_displayed = displayed_not_implemented
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and self.navigation.currently_selected == [
+                'Compute', 'Infrastructure', 'Hosts'] and self.title.text == 'Info/Settings')
 
 
 class HostsEditView(HostEditView):

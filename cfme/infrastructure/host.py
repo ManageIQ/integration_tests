@@ -92,15 +92,21 @@ class Host(
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def update(self, updates, validate_credentials=False):
+    def update(self, updates, validate_credentials=False, from_details=True):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
         Args:
            updates (dict): fields that are changing.
         """
-
-        view = navigate_to(self, "Edit")
+        if from_details:
+            view = navigate_to(self, "Edit")
+        else:
+            view = navigate_to(self.parent, "All")
+            view.entities.get_entity(name=self.name, surf_pages=True).ensure_checked()
+            view.toolbar.configuration.item_select('Edit Selected items')
+            view = self.create_view(HostEditView)
+            assert view.is_displayed
         changed = view.fill({
             "name": updates.get("name"),
             "hostname": updates.get("hostname") or updates.get("ip_address"),

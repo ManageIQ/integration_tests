@@ -1,9 +1,9 @@
 import random
 import socket
 
+import fauxfactory
 import pytest
 from wait_for import TimedOutError
-from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -11,7 +11,6 @@ from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import ProviderHostsCompareView
 from cfme.common.provider_views import InfraProviderDetailsView
-from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -541,28 +540,26 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("num_hosts", [1, 2, 4])
-@pytest.mark.meta(blockers=[BZ(1634794, forced_streams=["5.10"])], automates=[1634794])
-def test_infrastructure_hosts_crud(appliance, setup_provider_min_hosts, provider, num_hosts):
+@pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'remove'])
+def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
     """
     Polarion:
         assignee: prichard
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/6h
-    Bugzilla:
-        1634794
     """
-    my_slice = slice(0, num_hosts, None)
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    for h in hosts_view.entities.get_all(slice=my_slice):
-        h.ensure_checked()
-    hosts_view.toolbar.configuration.item_select('Edit Selected items',
-                                                handle_alert=False)
-    try:
-        hosts_view.navigation.select('Compute', 'Infrastructure', 'Providers', handle_alert=False)
-        final_view = provider.create_view(InfraProvidersView)
-        assert final_view.is_displayed
-    except UnexpectedAlertPresentException:
-        pytest.fail("Abandon changes alert displayed, but no changes made.")
-    # TODO add additional crud functionality.
+    host = appliance.collections.hosts.all()[0]
+    if crud_action != 'remove':
+        stamp = fauxfactory.gen_alphanumeric()
+        new_custom_id = f'Edit host data. {stamp}'
+
+        with update(host, from_details=(crud_action == 'edit_from_details')):
+            host.custom_ident = new_custom_id
+
+        assert host.custom_ident == new_custom_id
+        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+            "Custom Identifier") == new_custom_id
+    else:
+        host.delete()
+        host.delete(cancel=False)
