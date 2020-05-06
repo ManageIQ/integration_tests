@@ -392,27 +392,6 @@ class IPAppliance:
     def rest_logger(self):
         return create_sublogger('rest-api')
 
-    @logger_wrap('Modifying httpd service config for semaphore workaround: {}')
-    def fix_httpd_issue(self, log_callback=None):
-        # This is workaround for issue when httpd cannot start after restart because
-        # it didn't properly clean up semaphores
-        if not self.is_pod:
-            with self.ssh_client as ssh:
-                filename = 'httpd.service'
-                src = os.path.join('/usr/lib/systemd/system', filename)
-                dst = os.path.join('/etc/systemd/system', filename)
-                copy_cmd = f'cp {src} {dst}'
-                assert ssh.run_command(copy_cmd).success
-                exec_pre = r"""
-[Service]
-ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line; \
-                               do ipcrm sem $line; done"
-        """
-                full_cmd = f"""echo '{exec_pre}' >> {dst}"""
-                assert ssh.run_command(full_cmd).success
-                log_callback('systemd httpd.service file written')
-                self.httpd.daemon_reload()
-
     def set_rails_deprecation(self, filename='production.rb', behavior=':notify'):
         """Update config/environments/production.rb to control rails deprecation message behavior
 
@@ -492,8 +471,6 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             ipapp.wait_for_ssh()
 
             self.set_rails_deprecation(behavior=rails_deprecations)
-
-            self.fix_httpd_issue(log_callback=log_callback)
 
             # TODO: Handle external DB setup
             # This is workaround for appliances to use only one disk for the VMDB
