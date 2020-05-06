@@ -288,23 +288,6 @@ def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_v
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_cui_should_check_dialog_field_associations():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/6h
-        startsin: 5.10
-        tags: service
-    Bugzilla:
-        1559382
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_timepicker_should_pass_correct_timing_on_service_order():
     """

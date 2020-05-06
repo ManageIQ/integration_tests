@@ -1114,3 +1114,38 @@ def test_dialog_not_required_default_value(appliance, generic_catalog_item_with_
 
     view = navigate_to(service_catalogs, "Order")
     assert view.fields("dropdown_list_1").read() == default_drop
+
+
+@pytest.mark.meta(automates=[1559382])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data", [DatastoreImport("bz_1559382.zip", "bz_1559382", None)], ids=["domain"], )
+@pytest.mark.parametrize("file_name", ["bz_1559382.yml"], ids=["dialog"])
+def test_dynamic_dialog_field_associations(appliance, import_datastore, import_dialog,
+                                           import_data):
+    """ Tests dynamic service dialog field associations
+    Bugzilla:
+        1559382
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.10
+    """
+    sd, ele_label = import_dialog
+    navigate_to(sd, "Edit")
+    # update dialog element
+    view = appliance.browser.create_view(EditElementView)
+    view.element.edit_element(ele_label)
+    view.options.click()
+
+    # Select text_area field to refresh
+    view.options.refresh_fields_dropdown.fill("text-area")
+    view.ele_save_button.click()
+    view.save_button.click()
+
+    # check warning flash message
+    view.flash.assert_message([
+        'There was an error editing this dialog: Failed to update service dialog -'
+        'text-box already exists in ["text-box", "textarea"]'])
