@@ -12,7 +12,9 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.markers.env_markers.provider import providers
+from cfme.tests.infrastructure.test_provisioning_dialog import check_all_tabs
 from cfme.utils import ssh
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -59,6 +61,7 @@ def vm_name():
 
 @pytest.mark.tier(3)
 @test_requirements.provision
+@pytest.mark.meta(automates=[BZ(1797706)])
 def test_provision_cloud_init(appliance, request, setup_provider, provider, provisioning,
                         setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
@@ -68,6 +71,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
     Bugzilla:
         1619744
+        1797706
 
     Polarion:
         assignee: jhenner
@@ -88,6 +92,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
     # for image selection in before_fill
     inst_args['template_name'] = image
 
+    # TODO Perhaps merge this with stuff in test_provisioning_dialog.prov_data
     if provider.one_of(AzureProvider):
         inst_args['environment'] = {'public_ip_address': "New"}
     if provider.one_of(OpenStackProvider):
@@ -97,6 +102,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
         inst_args['environment'] = {'public_ip_address': floating_ip}
         inst_arg_props = inst_args.setdefault('properties', {})
         inst_arg_props['instance_type'] = partial_match(provisioning['ci-flavor-name'])
+
     if provider.one_of(InfraProvider) and appliance.version > '5.9':
         inst_args['customize']['customize_type'] = 'Specification'
 
@@ -104,9 +110,11 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
     collection = appliance.provider_based_collection(provider)
     instance = collection.create(vm_name, provider, form_values=inst_args)
+
     request.addfinalizer(instance.cleanup_on_provider)
     provision_request = provider.appliance.collections.requests.instantiate(vm_name,
                                                                    partial_check=True)
+    check_all_tabs(provision_request, provider)
     provision_request.wait_for_request()
     wait_for(lambda: instance.ip_address is not None, num_sec=600)
     connect_ip = instance.ip_address
@@ -122,6 +130,7 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
 @test_requirements.provision
 @pytest.mark.provider([RHEVMProvider])
+@pytest.mark.meta(automates=[1797706])
 def test_provision_cloud_init_payload(appliance, request, setup_provider, provider, provisioning,
                                       vm_name):
     """
@@ -170,6 +179,7 @@ def test_provision_cloud_init_payload(appliance, request, setup_provider, provid
     request.addfinalizer(instance.cleanup_on_provider)
     provision_request = provider.appliance.collections.requests.instantiate(vm_name,
                                                                             partial_check=True)
+    check_all_tabs(provision_request, provider)
     provision_request.wait_for_request()
 
     connect_ip = wait_for(find_global_ipv6, func_args=[instance], num_sec=600, delay=20).out

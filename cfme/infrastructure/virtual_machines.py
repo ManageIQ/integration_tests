@@ -948,26 +948,7 @@ class InfraVm(VM):
     def clone_vm(self, email=None, first_name=None, last_name=None,
                  vm_name=None, provision_type=None):
         view = navigate_to(self, 'Clone')
-        first_name = first_name or fauxfactory.gen_alphanumeric()
-        last_name = last_name or fauxfactory.gen_alphanumeric()
-        email = email or f"{first_name}@{last_name}.test"
-        try:
-            prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
-        except (KeyError, IndexError):
-            raise ValueError("You have to specify the correct options in cfme_data.yaml")
-
-        provisioning_data = {
-            'catalog': {'vm_name': vm_name,
-                        'provision_type': provision_type},
-            'request': {
-                'email': email,
-                'first_name': first_name,
-                'last_name': last_name},
-            'environment': {"host_name": {'name': prov_data.get("host")},
-                            "datastore_name": {"name": prov_data.get("datastore")}},
-            'network': {'vlan': partial_match(prov_data.get("vlan"))},
-        }
-        view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
+        self._fill_clone_form(view, email, first_name, last_name, vm_name, provision_type)
 
     def publish_to_template(self, template_name, email=None, first_name=None, last_name=None):
         view = navigate_to(self, 'Publish')
@@ -1739,6 +1720,15 @@ class SetOwnership(CFMENavigateStep):
     # No am_i_here because the page only indicates name and not provider
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
+
+
+@navigator.register(InfraTemplate, 'CloneTemplate')
+class TemplateClone(CFMENavigateStep):
+    VIEW = CloneVmView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.lifecycle.item_select("Clone this Template")
 
 
 @navigator.register(InfraVm, 'Rename')

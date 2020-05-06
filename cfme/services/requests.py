@@ -431,6 +431,12 @@ class RequestDetailsView(RequestsView):
         retirement = SummaryFormItem('Lifespan', 'Time until Retirement')
         retirement_warning = SummaryFormItem('Lifespan', 'Retirement Warning')
 
+    @View.nested
+    class volumes(WaitTab):  # noqa
+        volume_name = SummaryFormItem('Volumes', 'Volume Name')
+        volume_size = SummaryFormItem('Volumes', 'Size (gigabytes)')
+        delete_on_terminate = Checkbox(name='volumes__delete_on_terminate_1')
+
     @property
     def is_displayed(self):
         expected_description = self.context['object'].rest.description

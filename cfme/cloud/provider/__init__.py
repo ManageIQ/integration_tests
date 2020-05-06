@@ -139,6 +139,8 @@ class CloudProvider(BaseProvider, CloudInfraProviderMixin, Pretty, PolicyProfile
     db_types = ["CloudManager"]
     template_class = Image
     collection_name = 'cloud_providers'
+    provisioning_dialog_widget_names = BaseProvider.provisioning_dialog_widget_names.union({
+        'properties', 'volumes', 'customize'})
 
     name = attr.ib(default=None)
     key = attr.ib(default=None)
