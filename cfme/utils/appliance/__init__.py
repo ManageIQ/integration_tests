@@ -518,6 +518,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             # restarted:
             restart_evm = False
             self.wait_for_web_ui(log_callback=log_callback)
+            self.wait_for_api_available()
             if self.version < '5.11':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
@@ -529,6 +530,7 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
                 self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+                self.wait_for_api_available()
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -1510,6 +1512,40 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             fail_condition=not running, delay=10)
         return result
 
+    def wait_for_api_available(self, num_sec=600):
+        """Waits for the web UI to be running / to not be running
+
+        Args:
+            num_sec: Number of seconds to wait until num_sec(default ``600``)
+        """
+
+        def _check_appliance_api_ready():
+            try:
+                # There are 2 hard problems in computer science: cache
+                # invalidation, naming things, and off-by-1 errors.
+                # -- Leon Bambrick
+                #
+                # Try invalidating stale cached api object if exists
+                try:
+                    del self.__dict__['rest_api']
+                except KeyError:
+                    pass
+                api = self.rest_api
+
+                # Make sure we really make a new request. Perhaps accessing the
+                # rest_api property just creates a client object but no network
+                # communicatin is done until we access some property of the
+                # client.
+                assert api.server_info['server_href']
+                self.log.info("Appliance REST API ready")
+                return api
+            except APIException as exc:
+                self.log.warning('Appliance RESTAPI not ready: %s', exc)
+                return False
+
+        api, _ = wait_for(func=_check_appliance_api_ready, num_sec=num_sec, delay=10)
+        return api
+
     @logger_wrap("Install VDDK: {}")
     def install_vddk(self, force=False, vddk_url=None, log_callback=None):
         """Install the vddk on a appliance"""
@@ -1652,6 +1688,9 @@ ExecStartPre=/usr/bin/bash -c "ipcs -s|grep apache|cut -d\  -f2|while read line;
             assert result.success, 'Failed to generate UUID'
         log_callback('Updated UUID: {}'.format(str(result)))
         try:
+            # There are 2 hard problems in computer science: cache
+            # invalidation, naming things, and off-by-1 errors.
+            # -- Leon Bambrick
             del self.__dict__['guid']  # invalidate cached_property
         except KeyError:
             logger.exception('Exception clearing cached_property "guid"')

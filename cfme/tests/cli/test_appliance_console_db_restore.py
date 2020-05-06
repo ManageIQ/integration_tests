@@ -6,7 +6,7 @@ import pytest
 from wait_for import wait_for
 
 from cfme import test_requirements
-from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.console import configure_appliances_ha
@@ -48,19 +48,23 @@ def provision_vm(request, provider):
 @pytest.fixture
 def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     """Returns two database-owning appliances, configures first appliance with providers and
-    takes a backup prior to running tests.
-
+    takes a backup on the first one prior to running tests.
     """
     appl1, appl2 = temp_appliances_unconfig_funcscope_rhevm
     # configure appliances
     appl1.configure(region=0)
-    appl1.wait_for_web_ui()
     appl2.configure(region=0)
-    appl2.wait_for_web_ui()
+
+    for app in temp_appliances_unconfig_funcscope_rhevm:
+        app.wait_for_web_ui()
+        app.wait_for_api_available()
+
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     appl1.db.backup()
+    appl1.wait_for_web_ui()
+    appl1.wait_for_api_available()
     return temp_appliances_unconfig_funcscope_rhevm
 
 
@@ -75,6 +79,8 @@ def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     appl1.enable_embedded_ansible_role()
     appl1.wait_for_embedded_ansible()
     appl1.db.backup()
+    appl1.wait_for_web_ui()
+    appl1.wait_for_api_available()
     return temp_appliance_preconfig_funcscope
 
 
@@ -89,13 +95,15 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
     # configure appliances
     appl1.configure(region=0)
     appl1.wait_for_web_ui()
+    appl1.wait_for_api_available()
+
     appl2.appliance_console_cli.configure_appliance_external_join(
         app_ip, app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
         app_ip, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])
     appl2.wait_for_web_ui()
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     appl1.db.backup()
     return temp_appliances_unconfig_funcscope_rhevm
 
@@ -164,7 +172,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
 
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(EC2Provider, appl3).setup()
+    provider_app_crud(OpenStackProvider, appl3).setup()
     appl1.db.backup()
 
     return unconfigured_appliances
@@ -194,7 +202,7 @@ def two_appliances_one_with_providers(temp_appliances_preconfig_funcscope):
 
     # Add infra/cloud providers
     provider_app_crud(VMwareProvider, appl1).setup()
-    provider_app_crud(EC2Provider, appl1).setup()
+    provider_app_crud(OpenStackProvider, appl1).setup()
     return appl1, appl2
 
 
@@ -240,6 +248,8 @@ def test_appliance_console_dump_restore_db_local(request, get_appliances_with_pr
     restore_db(appl2)
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
+    appl2.wait_for_api_available()
+
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -264,8 +274,9 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
         initialEstimate: 1/2h
     """
     appl1, appl2 = two_appliances_one_with_providers
-    backup_file_name = f'/tmp/backup.{fauxfactory.gen_alphanumeric()}.dump'
+    appl1_provider_names = set(appl1.managed_provider_names)
 
+    backup_file_name = f'/tmp/backup.{fauxfactory.gen_alphanumeric()}.dump'
     appl1.db.backup(backup_file_name)
 
     # Transfer v2_key and db backup from first appliance to second appliance
@@ -297,8 +308,9 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
+    appl2.wait_for_api_available()
     # Assert providers on the second appliance
-    assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
+    assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
     )
     # Verify that existing provider can detect new VMs on the second appliance
@@ -325,6 +337,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     manager.quit()
     appl1.evmserverd.start()
     appl1.wait_for_web_ui()
+    appl1.wait_for_api_available()
     appl1.wait_for_embedded_ansible()
     repositories = appl1.collections.ansible_repositories
     try:
@@ -374,6 +387,8 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.wait_for_web_ui()
+    appl1.wait_for_api_available()
+    appl2.wait_for_api_available()
     # Assert providers exist after restore and replicated to second appliances
     assert providers_before_restore == set(appl1.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -461,6 +476,8 @@ def test_appliance_console_restore_db_replicated(
     appl2.evmserverd.start()
     appl1.wait_for_web_ui()
     appl2.wait_for_web_ui()
+    appl1.wait_for_api_available()
+    appl2.wait_for_api_available()
 
     # reconfigure replication between appliances which switches to "disabled"
     # during restore
@@ -509,7 +526,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(EC2Provider, appl3).setup()
+    provider_app_crud(OpenStackProvider, appl3).setup()
     appl1.db.backup()
 
     providers_before_restore = set(appl3.managed_provider_names)
@@ -530,6 +547,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 
     appl3.evmserverd.start()
     appl3.wait_for_web_ui()
+    appl3.wait_for_api_available()
     # Assert providers still exist after restore
     assert providers_before_restore == set(appl3.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -543,6 +561,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
 
     appl3.evmserverd.wait_for_running()
     appl3.wait_for_web_ui()
+    appl3.wait_for_api_available()
     # Assert providers still exist after ha failover
     assert providers_before_restore == set(appl3.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -623,6 +642,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
+    appl2.wait_for_api_available()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
@@ -709,6 +729,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
 
     appl2.evmserverd.start()
     appl2.wait_for_web_ui()
+    appl2.wait_for_api_available()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
