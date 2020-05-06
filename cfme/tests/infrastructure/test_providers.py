@@ -520,7 +520,5 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
         entities_list=t_coll)
     assert compare_view.is_displayed
 
-    t_list = []
-    for t in t_coll:
-        t_list.append(t.name)
+    t_list = [t.name for t in t_coll]
     assert compare_view.verify_checked_items_compared(t_list, compare_view)
