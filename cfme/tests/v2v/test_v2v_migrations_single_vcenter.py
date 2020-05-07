@@ -137,10 +137,12 @@ def test_multi_host_multi_vm_migration(request, appliance, provider,
     vms = request_details_list.read()
     # testing multi-host utilization
 
+    match = ['Converting', 'Migrating']
+
     def _is_migration_started(vm):
-        if 'Converting' not in request_details_list.get_message_text(vm):
-            return False
-        return True
+        if any(string in request_details_list.get_message_text(vm) for string in match):
+            return True
+        return False
 
     for vm in vms:
         wait_for(func=_is_migration_started, func_args=[vm],
