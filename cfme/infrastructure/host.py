@@ -486,7 +486,7 @@ class HostsCollection(ComparableMixin, BaseCollection):
     @property
     def COMPARE_VIEW(self):
         provider = self.filters.get('provider')  # None if no filter
-        return ProviderHostsCompareView if provider else HostsCompareView
+        return HostsCompareView if provider else ProviderHostsCompareView
 
     def check_hosts(self, hosts):
         hosts = list(hosts)
