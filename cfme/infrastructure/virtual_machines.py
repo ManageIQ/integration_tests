@@ -1410,7 +1410,7 @@ class Genealogy:
     def ancestors(self):
         """Returns list of ancestors of the represented object."""
         view = self.navigate()
-        path = find_path(view.tree, '(Selected)')
+        path = find_path(view.tree, self.obj.name)
         if not path:
             raise ValueError("Something wrong happened, path not found!")
         processed_path = []
