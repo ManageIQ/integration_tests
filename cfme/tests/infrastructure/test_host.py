@@ -558,7 +558,12 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
     if crud_action != 'remove':
         new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
         try:
-            with update(host, action=crud_action):
+            with update(host,
+                        from_details=(crud_action == 'edit_from_details'),
+                        cancel=(crud_action == 'cancel'),
+                        nav_away=(crud_action == 'nav_away'),
+                        changes=(crud_action == 'changes')
+                        ):
                 host.custom_ident = new_custom_id
         except UnexpectedAlertPresentException as e:
             if crud_action in ['cancel', 'nav_away_no_changes'] and "Abandon changes" in e.msg:
@@ -566,8 +571,6 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
             else:
                 raise
         if crud_action not in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
-            assert host.custom_ident == new_custom_id  # is this actually doing anything here
-            # different from the line below ?
             assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
                 "Custom Identifier") == new_custom_id
         else:

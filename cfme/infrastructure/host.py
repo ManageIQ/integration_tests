@@ -94,7 +94,8 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def update(self, updates, validate_credentials=False, action='edit_from_details'):
+    def update(self, updates, validate_credentials=False, from_details=True,
+               cancel=False, nav_away=False, changes=True):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
@@ -103,7 +104,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
            action (str): denotes additional functionality. Expecting edit_from_details,
            edit_from_hosts, cancel, or nav_away.
         """
-        if 'from_hosts' not in action:
+        if from_details:
             view = navigate_to(self, "Edit")
         else:
             view = navigate_to(self.parent, "All")
@@ -111,7 +112,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             view.toolbar.configuration.item_select('Edit Selected items')
             view = self.create_view(HostEditView)
             assert view.is_displayed
-        if action == 'nav_away_no_changes':
+        if nav_away and not changes:
             view.navigation.select('Compute', 'Infrastructure', 'Hosts',
                                   handle_alert=False)
             view = self.create_view(HostsView)
@@ -144,12 +145,12 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
         view.flash.assert_no_error()
-        if action == 'nav_away_changes':
+        if nav_away and changes:
             view = navigate_to(self.parent, "All")
             assert view.is_displayed
             return
-        changed = False if 'cancel' in action else any([changed, credentials_changed,
-                                                        ipmi_credentials_changed])
+        changed = False if cancel else any([changed, credentials_changed,
+                                            ipmi_credentials_changed])
         if changed:
             view.save_button.click()
             logger.debug("Trying to save update for host with id: %s", str(self.get_db_id))
