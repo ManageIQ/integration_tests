@@ -49,7 +49,6 @@ from cfme.common.vm_views import VMToolbar
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
-from cfme.infrastructure.provider import ProviderTemplatesView
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -1356,11 +1355,17 @@ class InfraTemplate(Template):
 @attr.s
 class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     ENTITY = InfraTemplate
-
-    COMPARE_VIEW_PROVIDER = TemplatesCompareView
-    COMPARE_VIEW_ALL = VmTemplatesCompareView
     DROPDOWN_TEXT = 'Compare Selected Templates'
-    NAV_STRING = 'TemplatesOnly'
+
+    @property
+    def COMPARE_VIEW(self):
+        provider = self.filters.get('provider')  # None if no filter
+        return TemplatesCompareView if provider else VmTemplatesCompareView
+
+    @property
+    def NAV_STRING(self):
+        provider = self.filters.get('provider')  # None if no filter
+        return 'ProviderTemplates' if provider else 'TemplatesOnly'
 
     def all(self):
         """Return entities for all items in collection"""
@@ -1687,23 +1692,8 @@ class SetRetirement(CFMENavigateStep):
 
 @navigator.register(InfraTemplateCollection, 'TemplatesOnly')
 class TemplatesAll(CFMENavigateStep):
-
-    def prerequisite(self):
-        if self.obj.parent is self.obj.appliance:
-            nav_inst = self.obj
-            nav_dest = 'All'
-        else:
-            nav_inst = self.obj.parent
-            nav_dest = 'Details'
-        return navigate_to(nav_inst, nav_dest)
-
-    @property
-    def VIEW(self):  # noqa
-        if self.obj.parent is self.obj.appliance:
-            view_class = TemplatesOnlyAllView
-        else:
-            view_class = ProviderTemplatesView
-        return view_class
+    VIEW = TemplatesOnlyAllView
+    prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
         if self.obj.parent is self.obj.appliance:
