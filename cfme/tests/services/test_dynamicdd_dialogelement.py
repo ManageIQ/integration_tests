@@ -426,23 +426,6 @@ def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_d
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_dynamic_drop_down_dialog_should_work_with_automate_expression_method():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1583694
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_dynamic_dropdown_values_should_load_correctly():
     """
     Polarion:
