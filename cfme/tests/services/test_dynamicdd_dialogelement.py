@@ -243,23 +243,6 @@ def test_dynamic_dropdowns_should_show_value_only_once():
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_dd_multiselect_default_element_is_shouldnt_be_blank_when_loaded_by_another_element():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1645555
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_ssui_dd_values_are_not_loaded_in_dropdown_unless_refresh_button_is_pressed():
     """
@@ -516,3 +499,36 @@ def test_update_dynamic_field_on_refresh(appliance, import_datastore, import_dat
         lambda: view.fields("dynamic_1").read() == 'reboot' and
         view.fields("dynamic_2").read() == 'reboot', timeout=7
     )
+
+
+@pytest.mark.meta(automates=[1595776])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1595776.zip", "bz_1595776", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1595776.yml"], ids=["sample_dialog"],)
+def test_load_service_dialog(appliance, import_datastore,
+                             generic_catalog_item_with_imported_dialog):
+    """
+    Bugzilla:
+        1595776
+
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/16h
+    """
+    auto_log = '/var/www/miq/vmdb/log/automation.log'
+    catalog_item, _, _ = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
+    with LogValidator(auto_log, matched_patterns=["Service dialog load - Begin"]
+                      ).waiting(timeout=120):
+        view = navigate_to(service_catalogs, "Order")
+
+    with LogValidator(auto_log, failure_patterns=["Service dialog load - Begin"]
+                      ).waiting(timeout=120):
+        view.submit_button.click()
+        description = f'Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]'
+        provision_request = appliance.collections.requests.instantiate(description)
+        provision_request.wait_for_request(method='ui')
