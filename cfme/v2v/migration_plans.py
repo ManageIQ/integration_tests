@@ -188,7 +188,7 @@ class AddMigrationPlanView(View):
         @property
         def is_displayed(self):
             return self.table.is_displayed and (
-                len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0
+                not self.browser.elements(".//h3[contains(text(),'Discovering VMs')]")
             )
 
         def csv_import(self, vm_list):
@@ -245,8 +245,9 @@ class AddMigrationPlanView(View):
 
         @property
         def is_displayed(self):
-            return (self.table.is_displayed and
-                    (len(self.browser.elements(".//div[contains(@class,'spinner')]")) == 0))
+            return self.table.is_displayed and (
+                not self.browser.elements(".//h3[contains(text(),'Discovering VMs')]")
+            )
 
         def fill(self, values):
             """
