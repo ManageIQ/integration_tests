@@ -1696,17 +1696,14 @@ class TemplatesAll(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        if self.obj.parent is self.obj.appliance:
-            if 'filter_folder' not in kwargs:
-                self.view.sidebar.templates.tree.click_path('All Templates')
-            elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-                self.view.sidebar.templates.tree.click_path('All Templates',
-                                                            kwargs['filter_folder'],
-                                                            kwargs['filter_name'])
-            else:
-                raise DestinationNotFound("the destination isn't found")
+        if 'filter_folder' not in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates')
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates',
+                                                        kwargs['filter_folder'],
+                                                        kwargs['filter_name'])
         else:
-            self.prerequisite_view.entities.summary("Relationships").click_at("Templates")
+            raise DestinationNotFound("the destination isn't found")
 
 
 @navigator.register(InfraVmCollection, 'Provision')
