@@ -2561,28 +2561,6 @@ def test_requests_in_ui_and_api():
 @pytest.mark.manual
 @test_requirements.rbac
 @pytest.mark.tier(2)
-def test_authorized_users_can_login():
-    """
-    Verify that authorized users can login successfully with a valid password
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Appliance
-        caseimportance: critical
-        initialEstimate: 1/8h
-        testSteps:
-            1. As admin, create a user with password with uppercase letters
-            2. Login with created user
-        expectedResults:
-            1. User created
-            2. User logged in
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rbac
-@pytest.mark.tier(2)
 def test_view_quotas_without_manage_quota_permisson():
     """
     Verify that user can see quotas without having the Manage Quota permission.
