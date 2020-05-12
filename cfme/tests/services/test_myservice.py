@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.rest.gen_data import services as _services
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 from cfme.services.service_catalogs import ServiceCatalogs
@@ -265,11 +266,31 @@ def test_service_load():
     pass
 
 
-@pytest.mark.meta(coverage=[1722194])
-@pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
+@pytest.fixture
+def services_vms_list(appliance, request, provider, catalog_item):
+    ui_services, vms = [], []
+    service_template = appliance.rest_api.collections.service_templates.get(name=catalog_item.name)
+
+    for num in range(1, 3):
+        rest_service = _services(
+            request, appliance, provider=provider, service_template=service_template
+        )[0]
+        ui_services.append(
+            MyService(appliance, name=rest_service.name, description=rest_service.description)
+        )
+        vms.append(
+            appliance.rest_api.collections.vms.get(
+                name=f'{catalog_item.prov_data["catalog"]["vm_name"]}000{num}'
+            )
+        )
+
+    return ui_services, vms
+
+
+@pytest.mark.meta(automates=[1722194])
+@pytest.mark.ignore_stream("5.10")
 @pytest.mark.tier(2)
-def test_retire_multiple_services():
+def test_retire_multiple_services(services_vms_list):
     """
     Bugzilla:
         1722194
@@ -289,7 +310,16 @@ def test_retire_multiple_services():
             3.
             4. Services should retire and vms as well
     """
-    pass
+    services, vms = services_vms_list
+    view = navigate_to(services[0], "All")
+    [entity.check() for entity in view.entities.get_all(services[0].name)]
+    view.toolbar.lifecycle.item_select("Retire selected items", handle_alert=True)
+    wait_for(
+        lambda: all([service.rest_api_entity.retired for service in services]),
+        delay=5,
+        timeout=600,
+    )
+    assert all([vm.retired for vm in vms])
 
 
 @pytest.mark.meta(coverage=[1718102, 1718898, 1741327])

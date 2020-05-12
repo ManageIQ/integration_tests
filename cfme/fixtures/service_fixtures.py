@@ -46,8 +46,9 @@ def catalog_modscope(request, appliance):
 
 
 @pytest.fixture(scope="function")
-def catalog_item(appliance, provider, provisioning, dialog, catalog):
+def catalog_item(appliance, provider, provisioning, dialog, catalog, request):
     catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
+    request.addfinalizer(catalog_item.delete_if_exists)
     return catalog_item
 
 

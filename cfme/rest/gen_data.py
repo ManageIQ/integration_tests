@@ -129,20 +129,22 @@ def dialog(request, appliance):
     return service_dialog
 
 
-def services(request, appliance, provider, service_dialog=None, service_catalog=None):
+def services(
+    request, appliance, provider, service_dialog=None, service_catalog=None, service_template=None
+):
     """
     The attempt to add the service entities via web
     """
-    service_template = service_templates_ui(
-        request,
-        appliance,
-        service_dialog=service_dialog,
-        service_catalog=service_catalog,
-        provider=provider,
-        num=1
-    )
+    if not service_template:
+        service_template = service_templates_ui(
+            request,
+            appliance,
+            service_dialog=service_dialog,
+            service_catalog=service_catalog,
+            provider=provider,
+            num=1
+        )[0]
 
-    service_template = service_template[0]
     service_catalog = appliance.rest_api.get_entity(
         'service_catalogs',
         service_template.service_template_catalog_id
@@ -229,7 +231,6 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
     cat_items_col = appliance.collections.catalog_items
     catalog_item_type = provider.catalog_item_type if provider else cat_items_col.GENERIC
 
-    catalog_items = []
     new_names = []
     for _ in range(num):
         if provider:
@@ -266,9 +267,6 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
             dialog=service_dialog,
             prov_data=provisioning_data
         )
-
-    for catalog_item in catalog_items:
-        catalog_item.create()
 
     collection = appliance.rest_api.collections.service_templates
 
@@ -323,8 +321,6 @@ def service_templates_rest(request, appliance, service_dialog=None, service_cata
 
 
 def service_templates(request, appliance, service_dialog=None, service_catalog=None, num=4):
-    # TODO: remove, because it copies service_templates_rest for supported versions.
-    # tmplt = service_templates_ui if appliance.version < '5.8' else service_templates_rest
     return service_templates_rest(
         request, appliance, service_dialog=service_dialog, service_catalog=service_catalog, num=num)
 

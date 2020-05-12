@@ -592,6 +592,7 @@ class BaseVM(
 
     @property
     def rest_api_entity(self):
+        # This will not work if the VM has retired since we filter using provider
         collection = "instances" if self.VM_TYPE == "Instance" else "vms"
         try:
             return (
