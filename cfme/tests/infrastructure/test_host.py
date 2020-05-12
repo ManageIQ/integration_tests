@@ -466,7 +466,7 @@ def test_infrastructure_hosts_compare(appliance, setup_provider_min_hosts, provi
     """
 
     h_coll = locals()[hosts_collection].collections.hosts
-    compare_view = h_coll.compare_entities(provider, entities_list=h_coll.all()[:num_hosts])
+    compare_view = h_coll.compare_entities(entities_list=h_coll.all()[:num_hosts])
     assert compare_view.is_displayed
 
 

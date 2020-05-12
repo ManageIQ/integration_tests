@@ -405,7 +405,7 @@ class ComparableMixin:
     NAV_STRING = 'All'
     COMPARE_VIEW = CompareView
 
-    def compare_entities(self, provider, entities_list=None):
+    def compare_entities(self, entities_list=None):
         """
         Args:
             provider: (InfraProvider) Provider for the entities
@@ -422,7 +422,7 @@ class ComparableMixin:
             v_entity.ensure_checked()
         entity_view.toolbar.configuration.item_select(
             self.DROPDOWN_TEXT, handle_alert=True)
-        compare_entity_view = provider.create_view(self.COMPARE_VIEW)
+        compare_entity_view = self.create_view(self.COMPARE_VIEW)
         return compare_entity_view
 
 
