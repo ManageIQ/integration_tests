@@ -408,7 +408,6 @@ class ComparableMixin:
     def compare_entities(self, entities_list=None):
         """
         Args:
-            provider: (InfraProvider) Provider for the entities
             entities_list: (list) Entities to compare
         Returns:
             (View) View object displayed for compare
