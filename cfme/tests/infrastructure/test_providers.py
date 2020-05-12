@@ -514,7 +514,7 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
     Bugzilla:
         1746449
     """
-    t_coll = appliance.collections.infra_templates.all()[:min_templates]
+    t_coll = locals()[templates_collection].collections.infra_templates.all()[:min_templates]
     compare_view = locals()[templates_collection].collections.infra_templates.compare_entities(
         provider,
         entities_list=t_coll)
