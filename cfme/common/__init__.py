@@ -413,7 +413,10 @@ class ComparableMixin:
         Returns:
             (View) View object displayed for compare
         """
-        entity_view = navigate_to(self, self.NAV_STRING)
+        try:
+            entity_view = navigate_to(self, self.NAV_STRING)
+        except NavigationDestinationNotFound:
+            entity_view = navigate_to(self.parent, self.NAV_STRING)
         for item in entities_list:
             v_entity = entity_view.entities.get_entity(name=item.name)
             v_entity.ensure_checked()
