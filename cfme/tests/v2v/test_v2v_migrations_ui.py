@@ -555,8 +555,8 @@ def test_duplicate_mapping_name(appliance, mapping_data_vm_obj_mini):
     view.general.cancel_btn.click()
 
 
-def test_migration_with_no_conversion(appliance, delete_conversion_hosts, source_provider,
-                                      request, provider, mapping_data_vm_obj_mini):
+def test_migration_with_no_conversion(appliance, source_provider, request, provider,
+                                      mapping_data_vm_obj_mini, delete_conversion_hosts):
     """
     Test Migration plan without setting conversion hosts
     Polarion:
