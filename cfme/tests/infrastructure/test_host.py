@@ -540,6 +540,13 @@ def test_add_ipmi_refresh(appliance, setup_provider):
                                          'nav_away_changes', 'nav_away_no_changes', 'remove'])
 def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
     """
+    crud_action: (All are edit actions except for 'remove')
+        'edit_from_hosts'  : select host and click edit dropdown from the hosts view
+        'edit_from_details' : click edit dropdown from the details view of host to edit
+        'cancel' : click the cancel button before saving edits
+        'nav_away_changes' : navigate away from the edit view after making changes (not saved)
+        'nav_away_no_changes' : navigate away from the edit view without having made changes
+        'remove' : remove the host
     Polarion:
         assignee: prichard
         casecomponent: Infra
@@ -567,7 +574,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
                 host.custom_ident = new_custom_id
         except UnexpectedAlertPresentException as e:
             if crud_action in ['cancel', 'nav_away_no_changes'] and "Abandon changes" in e.msg:
-                pytest.fail("Abandon changes alert displayed, but no changes made.")
+                pytest.fail("Abandon changes alert displayed, but no changes made. BZ1634794")
             else:
                 raise
         if crud_action not in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
