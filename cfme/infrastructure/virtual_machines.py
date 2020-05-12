@@ -1359,20 +1359,21 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
 
     @property
     def COMPARE_VIEW(self):
-        provider = self.filters.get('provider')  # None if no filter
-        return TemplatesCompareView if provider else VmTemplatesCompareView
+        parent = self.filters.get('parent')  # None if no filter
+        return TemplatesCompareView if parent else VmTemplatesCompareView
 
     @property
     def NAV_STRING(self):
-        provider = self.filters.get('provider')  # None if no filter
-        return 'ProviderTemplates' if provider else 'TemplatesOnly'
+        parent = self.filters.get('parent')  # None if no filter
+        return 'ProviderTemplates' if parent else 'TemplatesOnly'
 
     def all(self):
         """Return entities for all items in collection"""
         # provider filter means we're viewing templates through provider details relationships
         # provider filtered 'All' view includes vms and templates, can't be used
         # TODO: prichard add support for slicing as in host collections
-        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        provider = self.filters.get('parent')
+        # instantiation
         view = navigate_to(provider or self,
                            'ProviderTemplates' if provider else 'TemplatesOnly')
         # iterate pages here instead of use surf_pages=True because data is needed
