@@ -10,6 +10,7 @@ from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Dropdown
 
 from cfme.common import BaseLoggedInPage
+from cfme.common import CompareView
 from cfme.common import TimelinesView
 from cfme.utils.log import logger
 from cfme.utils.version import Version
@@ -323,7 +324,7 @@ class HostsEditView(HostEditView):
         return self.in_compute_infrastructure_hosts and self.title.text == 'Credentials/Settings'
 
 
-class HostsCompareView(ComputeInfrastructureHostsView):
+class HostsCompareView(CompareView, ComputeInfrastructureHostsView):
     """Compare Host / Node page."""
 
     @property
@@ -335,9 +336,8 @@ class HostsCompareView(ComputeInfrastructureHostsView):
                 )
 
 
-class ProviderHostsCompareView(ComputeInfrastructureHostsView):
+class ProviderHostsCompareView(HostsCompareView):
     """Compare Host / Node page, but for a specific provider."""
-
     @property
     def is_displayed(self):
         title = "Compare Host / Node"

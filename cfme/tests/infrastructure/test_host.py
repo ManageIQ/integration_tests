@@ -7,9 +7,7 @@ from wait_for import TimedOutError
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
-from cfme.common.host_views import ProviderHostsCompareView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
@@ -88,6 +86,7 @@ def navigate_and_select_quads(provider):
 
     Returns:
         view: the provider nodes view, quadicons already selected"""
+    # TODO: prichard navigate instead of creating views and consider creaing EditableMixin
     hosts_view = navigate_to(provider, 'ProviderNodes')
     assert hosts_view.is_displayed
     [h.ensure_checked() for h in hosts_view.entities.get_all()]
@@ -431,6 +430,8 @@ def test_infrastructure_hosts_navigation_after_download(
     Bugzilla:
         1738664
     """
+    # TODO: prichard use locals()
+    # TODO: prichard consider putting download functionality into it's own function
     if hosts_collection == "provider":
         hosts_view = navigate_to(provider.collections.hosts, "All")
     elif hosts_collection == "appliance":
@@ -448,30 +449,24 @@ def test_infrastructure_hosts_navigation_after_download(
 
 @test_requirements.infra_hosts
 @pytest.mark.parametrize("num_hosts", [2, 4])
+@pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
 @pytest.mark.uncollectif(
     lambda provider, num_hosts: provider.one_of(RHEVMProvider, SCVMMProvider) and num_hosts > 2,
     reason=UNCOLLECT_REASON)
 @pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214, 1784181])
-def test_compare_hosts_from_provider_allhosts(appliance, setup_provider_min_hosts, provider,
-                                              num_hosts):
+def test_infrastructure_hosts_compare(appliance, setup_provider_min_hosts, provider, num_hosts,
+                        hosts_collection):
     """
     Polarion:
         assignee: prichard
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/6h
-    Bugzilla:
-        1746214
-
     """
-    ent_slice = slice(0, num_hosts, None)
-    hosts_view = navigate_to(provider.collections.hosts, "All")
-    for h in hosts_view.entities.get_all(slice=ent_slice):
-        h.ensure_checked()
-    hosts_view.toolbar.configuration.item_select('Compare Selected items',
-                                                 handle_alert=True)
-    compare_hosts_view = provider.create_view(ProviderHostsCompareView)
-    assert compare_hosts_view.is_displayed
+
+    h_coll = locals()[hosts_collection].collections.hosts
+    compare_view = h_coll.compare_entities(entities_list=h_coll.all()[:num_hosts])
+    assert compare_view.is_displayed
 
 
 @test_requirements.infra_hosts
@@ -492,23 +487,14 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         initialEstimate: 1/3h
     Bugzilla:
         1747545
-
     """
-    ent_slice = slice(0, num_hosts, None)
-    if hosts_collection == "provider":
-        hosts_view = navigate_to(provider.collections.hosts, "All")
-    elif hosts_collection == "appliance":
-        hosts_view = navigate_to(appliance.collections.hosts, "All")
-    for h in hosts_view.entities.get_all(slice=ent_slice):
-        h.ensure_checked()
-    hosts_view.toolbar.configuration.item_select('Compare Selected items',
-                                                 handle_alert=True)
+    h_coll = locals()[hosts_collection].collections.hosts
+    hosts_view = h_coll.compare_entities(provider, entities_list=h_coll.all()[:num_hosts])
     hosts_view.toolbar.download.item_select(report_format.value)
     if report_format == DownloadOptions.PDF:
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
-    compare_hosts_view = provider.create_view(HostsCompareView)
-    assert compare_hosts_view.is_displayed
+    assert hosts_view.is_displayed
 
 
 @test_requirements.rhev

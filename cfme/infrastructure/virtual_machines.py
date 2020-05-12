@@ -26,7 +26,9 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input as WInput
 
 from cfme.common import BaseLoggedInPage
+from cfme.common import ComparableMixin
 from cfme.common import TimelinesView
+from cfme.common.provider_views import TemplatesCompareView
 from cfme.common.vm import Template
 from cfme.common.vm import TemplateCollection
 from cfme.common.vm import VM
@@ -303,6 +305,17 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Hosts'] and
             self.entities.title.text == title
         )
+
+
+class VmTemplatesCompareView(TemplatesCompareView):
+    """Compare Templates page."""
+
+    @property
+    def is_displayed(self):
+        title = "Compare VM Template and Image"
+        return (self.navigation.currently_selected ==
+                ['Compute', 'Infrastructure', 'Virtual Machines']
+                and self.title.text == title)
 
 
 class InfraVmSummaryView(VMDetailsEntities):
@@ -1285,6 +1298,7 @@ class InfraVmCollection(VMCollection):
         """Return entities for all items in collection"""
         # provider filter means we're viewing vms through provider details relationships
         # provider filtered 'All' view includes vms and templates, can't be used
+        # TODO: prichard add support for slicing as in host collections
         provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
         view = navigate_to(provider or self,
                            'ProviderVms' if provider else 'VMsOnly')
@@ -1320,14 +1334,27 @@ class InfraTemplate(Template):
 
 
 @attr.s
-class InfraTemplateCollection(TemplateCollection):
+class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     ENTITY = InfraTemplate
+    DROPDOWN_TEXT = 'Compare Selected Templates'
+
+    @property
+    def COMPARE_VIEW(self):
+        parent = self.filters.get('parent')  # None if no filter
+        return TemplatesCompareView if parent else VmTemplatesCompareView
+
+    @property
+    def NAV_STRING(self):
+        parent = self.filters.get('parent')  # None if no filter
+        return 'ProviderTemplates' if parent else 'TemplatesOnly'
 
     def all(self):
         """Return entities for all items in collection"""
         # provider filter means we're viewing templates through provider details relationships
         # provider filtered 'All' view includes vms and templates, can't be used
-        provider = self.filters.get('provider')  # None if no filter, need for entity instantiation
+        # TODO: prichard add support for slicing as in host collections
+        provider = self.filters.get('parent')
+        # instantiation
         view = navigate_to(provider or self,
                            'ProviderTemplates' if provider else 'TemplatesOnly')
         # iterate pages here instead of use surf_pages=True because data is needed
@@ -1659,7 +1686,8 @@ class TemplatesAll(CFMENavigateStep):
         if 'filter_folder' not in kwargs:
             self.view.sidebar.templates.tree.click_path('All Templates')
         elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            self.view.sidebar.templates.tree.click_path('All Templates', kwargs['filter_folder'],
+            self.view.sidebar.templates.tree.click_path('All Templates',
+                                                        kwargs['filter_folder'],
                                                         kwargs['filter_name'])
         else:
             raise DestinationNotFound("the destination isn't found")

@@ -10,7 +10,6 @@ from cfme.base.credential import Credential
 from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersDiscoverView
 from cfme.common.provider_views import InfraProvidersView
-from cfme.common.provider_views import TemplatesCompareView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
@@ -502,9 +501,10 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
 
 @pytest.mark.provider([InfraProvider], selector=ONE, scope="function")
 @pytest.mark.parametrize("min_templates", [2, 4])
+@pytest.mark.parametrize("templates_collection", ["provider", "appliance"])
 @pytest.mark.meta(blockers=[BZ(1784180, forced_streams=["5.10"])], automates=[1784180])
-def test_compare_provider_templates(appliance, setup_provider_min_templates, provider,
-                                    min_templates):
+def test_compare_templates(appliance, setup_provider_min_templates, provider, min_templates,
+                           templates_collection):
     """
     Polarion:
         assignee: prichard
@@ -514,14 +514,10 @@ def test_compare_provider_templates(appliance, setup_provider_min_templates, pro
     Bugzilla:
         1746449
     """
-    templateList = []
-    my_slice = slice(0, min_templates, None)
-    view = navigate_to(provider, 'ProviderTemplates')
-    for t in view.entities.get_all(slice=my_slice):
-        t.ensure_checked()
-        templateList.append(t.name)
-    view.toolbar.configuration.item_select('Compare Selected Templates', handle_alert=True)
-    compare_templates_view = provider.create_view(TemplatesCompareView)
-    assert compare_templates_view.is_displayed
-    assert compare_templates_view.verify_checked_items_compared(templateList,
-                                                                compare_templates_view)
+    t_coll = locals()[templates_collection].collections.infra_templates.all()[:min_templates]
+    compare_view = locals()[templates_collection].collections.infra_templates.compare_entities(
+        entities_list=t_coll)
+    assert compare_view.is_displayed
+
+    t_list = [t.name for t in t_coll]
+    assert compare_view.verify_checked_items_compared(t_list, compare_view)

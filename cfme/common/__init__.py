@@ -13,6 +13,7 @@ from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import CheckableBootstrapTreeview
+from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import DropdownItemNotFound
 from widgetastic_patternfly import FlashMessages
 from widgetastic_patternfly import NavDropdown
@@ -35,6 +36,7 @@ from cfme.utils.version import VersionPicker
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView
+from widgetastic_manageiq import ItemsToolBarViewSelector
 from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import ServerTimelinesView
 from widgetastic_manageiq import SettingsNavDropdown
@@ -363,6 +365,64 @@ class ManagePolicies(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=True).ensure_checked()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
+
+
+class CompareView(BaseLoggedInPage):
+    """generic class for compare views"""
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
+    comparison_table = Table(locator='//div[@id="compare-grid"]/table')
+
+    @View.nested
+    class toolbar(View):
+        all_attributes = Button(title="All attributes")
+        different_values_attributes = Button(title="Attributes with different values")
+        same_values_attributes = Button(title="Attributes with same values")
+        details_mode = Button(title="Details Mode")
+        exists_mode = Button(title="Exists Mode")
+        # add expanded view, compressed view buttons.
+        download = Dropdown('Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class ComparableMixin:
+    """
+    Mixin for comparing entities. Should be added to Collection class.
+    Constants:
+            DROPDOWN_TEXT: (str) the text in the Configuration dropdown for comparing entities
+            NAV_STRING: (str) used as second arg in call to navigate_to()
+            COMPARE_VIEW: (VIEW) view class to create and return
+    Usage:
+        If added to collection's class,
+
+        entity_coll = collection.all()[:2]
+        compare_view = collection.compare_entities(provider, entities_list=entity_coll)
+
+        will navigate to the correct view, select the items in entity_col (first two items returned
+        from all()), click on the compare dropdown item and verify the compare view is
+        displayed. It then returns the compare view.
+    """
+    DROPDOWN_TEXT = 'Compare Selected items'
+    NAV_STRING = 'All'
+    COMPARE_VIEW = CompareView
+
+    def compare_entities(self, entities_list=None):
+        """
+        Args:
+            entities_list: (list) Entities to compare
+        Returns:
+            (View) View object displayed for compare
+        """
+        try:
+            entity_view = navigate_to(self, self.NAV_STRING)
+        except NavigationDestinationNotFound:
+            entity_view = navigate_to(self.parent, self.NAV_STRING)
+        for item in entities_list:
+            v_entity = entity_view.entities.get_entity(name=item.name)
+            v_entity.ensure_checked()
+        entity_view.toolbar.configuration.item_select(
+            self.DROPDOWN_TEXT, handle_alert=True)
+        compare_entity_view = self.create_view(self.COMPARE_VIEW)
+        return compare_entity_view
 
 
 class AssignedTags(ParametrizedView):
