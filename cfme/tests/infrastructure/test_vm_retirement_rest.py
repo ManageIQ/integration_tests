@@ -20,11 +20,6 @@ pytestmark = [
 ]
 
 
-@pytest.fixture
-def retire_action(appliance):
-    return VersionPicker({Version.lowest(): 'retire', '5.11': 'request_retire'}).pick()
-
-
 @pytest.fixture(scope="function")
 def vm(request, provider, appliance):
     return _vm(request, provider, appliance)
@@ -73,7 +68,7 @@ def vm_retirement_report(appliance, retire_vm):
     "from_collection", [True, False], ids=["from_collection", "from_detail"]
 )
 @pytest.mark.meta(automates=[BZ(1805119)], blockers=[BZ(1805119, forced_streams=["5.10"])])
-def test_retire_vm_now(appliance, vm, from_collection, retire_action):
+def test_retire_vm_now(appliance, vm, from_collection):
     """Test retirement of vm
 
     Prerequisities:
@@ -99,6 +94,7 @@ def test_retire_vm_now(appliance, vm, from_collection, retire_action):
         caseimportance: high
         initialEstimate: 1/3h
     """
+    retire_action = VersionPicker({Version.lowest(): 'retire', '5.11': 'request_retire'}).pick()
     retire_vm = appliance.rest_api.collections.vms.get(name=vm)
     if from_collection:
         getattr(appliance.rest_api.collections.vms.action, retire_action)(retire_vm)
@@ -126,7 +122,7 @@ def test_retire_vm_now(appliance, vm, from_collection, retire_action):
 @pytest.mark.meta(
     automates=[BZ(1805119), BZ(1827787)], blockers=[BZ(1827787, forced_streams=["5.10", "5.11"])]
 )
-def test_retire_vm_future(appliance, vm, from_collection, retire_action):
+def test_retire_vm_future(appliance, vm, from_collection):
     """Test retirement of vm
 
     Prerequisities:
@@ -153,6 +149,7 @@ def test_retire_vm_future(appliance, vm, from_collection, retire_action):
         caseimportance: high
         initialEstimate: 1/3h
     """
+    retire_action = VersionPicker({Version.lowest(): 'retire', '5.11': 'request_retire'}).pick()
     retire_vm = appliance.rest_api.collections.vms.get(name=vm)
     date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%Y/%m/%d")
     future = {"date": date, "warn": "4"}
