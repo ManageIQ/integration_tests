@@ -292,6 +292,7 @@ class AddMigrationPlanView(View):
     @View.nested
     class schedule(View):  # noqa
         create = Button("Create")
+        select_migration = RadioGroup('.//div[contains(@id,"migration_plan_type_radio")]')
         run_migration = RadioGroup('.//div[contains(@id,"migration_plan_choice_radio")]')
 
         @property
@@ -300,7 +301,12 @@ class AddMigrationPlanView(View):
 
         def fill(self, values):
             was_change = True
-            self.run_migration.select(values)
+            warm_migration = values.get('warm_migration', False)
+            value = values.get('start_selection')
+            if warm_migration:
+                self.select_migration.select(value)
+            else:
+                self.run_migration.select(value)
             self.after_fill(was_change)
             return was_change
 
@@ -511,7 +517,8 @@ class MigrationPlanCollection(BaseCollection):
         post_playbook=None,
         pre_checkbox=False,
         post_checkbox=False,
-        start_migration=True
+        start_migration=True,
+        warm_migration=False
     ):
         """Create new migration plan in UI
         Args:
@@ -562,9 +569,15 @@ class MigrationPlanCollection(BaseCollection):
 
         # Schedule migration check
         view.schedule.wait_displayed()
-        start_selection = ("Start migration immediately"
-                           if start_migration else "Save migration plan to run later")
-        view.schedule.fill(start_selection)
+        if warm_migration:
+            start_selection = ("Warm Migration - VM data is iteratively pre-copied. "
+                               "A final, cutover migration is scheduled and run later.")
+        else:
+            start_selection = ("Start migration immediately"
+                               if start_migration else "Save migration plan to run later")
+        view.schedule.fill({
+            'start_selection': start_selection,
+            'warm_migration': warm_migration})
 
         return self.instantiate(
             name=name,
