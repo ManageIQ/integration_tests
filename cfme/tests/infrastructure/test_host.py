@@ -1,6 +1,5 @@
 import random
 import socket
-from datetime import datetime
 
 import fauxfactory
 import pytest
@@ -9,12 +8,8 @@ from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.common.host_views import HostDetailsView
-from cfme.common.host_views import HostEditView
-from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import InfraProviderDetailsView
-from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -540,7 +535,7 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
     """
     crud_action: (All are edit actions except for 'remove')
-        'edit_from_hosts'  : select host and click edit dropdown from the hosts view
+        'edit_from_hosts'  : select host and click edit dropdown from the hosts view to edit
         'edit_from_details' : click edit dropdown from the details view of host to edit
         'cancel' : click the cancel button before saving edits
         'nav_away_changes' : navigate away from the edit view after making changes (not saved)
@@ -555,13 +550,19 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
         1634794
     """
     host = appliance.collections.hosts.all()[0]
-    if crud_action in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
-        try:
-            existing_custom_id = navigate_to(host, 'Details').entities.summary(
-                "Properties").get_text_of("Custom Identifier")
-        except NameError:
-            existing_custom_id = None
-    if crud_action != 'remove':
+    if crud_action == 'remove':
+        host.delete(cancel=True)
+        host.delete(cancel=False)
+    else:
+        if crud_action in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
+            # In these cases we need to capture the existing/initial custom id to check later that
+            # no changes were made.
+            try:
+                existing_custom_id = navigate_to(host, 'Details').entities.summary(
+                    "Properties").get_text_of("Custom Identifier")
+            except NameError:
+                existing_custom_id = None
+        # begin core/common edit steps
         new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
         try:
             with update(host,
@@ -576,16 +577,16 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
                 pytest.fail("Abandon changes alert displayed, but no changes made. BZ1634794")
             else:
                 raise
-        if crud_action not in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
-            assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
-                "Custom Identifier") == new_custom_id
-        else:
+        # now verify changes were made or not made according to scenario
+        if crud_action in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
+            # No changes are expected. Comparing to existing value captured above.
             try:
                 assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
                     "Custom Identifier") == existing_custom_id
             except NameError:
                 if existing_custom_id:
                     raise
-    else:
-        host.delete(cancel=True)
-        host.delete(cancel=False)
+        else:
+            # Changes are expected so compare to edited value.
+            assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+                "Custom Identifier") == new_custom_id
