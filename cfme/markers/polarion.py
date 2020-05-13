@@ -16,7 +16,7 @@ def extract_polarion_ids(item):
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(session, config, items):
     xml = getattr(config, '_xml', None)
     if xml is None:
         return

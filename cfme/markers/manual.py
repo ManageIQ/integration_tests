@@ -17,7 +17,7 @@ def pytest_addoption(parser):
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(session, config, items):
     if config.getvalue('include_manual'):
         return
     is_manual = config.getvalue('manual')

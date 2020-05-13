@@ -265,7 +265,7 @@ class UiCoveragePlugin:
             conf.save('.ui-coverage')
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_collection_finish(self):
+    def pytest_collection_finish(session):
         yield
         # Install coverage after collection finishes
         if store.parallelizer_role != 'master':
