@@ -83,7 +83,7 @@ def pick_responding_ip(vm, port, num_sec, rounds_delay_second, attempt_timeout):
 
 
 def retry_connect(ips_getter, connection_factory, num_sec, delay):
-    def try_batch_of_ips():
+    def _try_batch_of_ips():
         for ip in ips_getter():
             try:
                 connection = connection_factory(ip)
@@ -95,7 +95,7 @@ def retry_connect(ips_getter, connection_factory, num_sec, delay):
                 # No other IPs should be attempted, so return.
                 return connection
         return False
-    connection, _ = wait_for(try_batch_of_ips, num_sec=num_sec, delay=delay)
+    connection, _ = wait_for(_try_batch_of_ips, num_sec=num_sec, delay=delay)
     return connection
 
 
