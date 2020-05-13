@@ -469,7 +469,6 @@ def test_infrastructure_hosts_compare(appliance, setup_provider_min_hosts, provi
         initialEstimate: 1/6h
     Bugzilla:
         1746214
-
     """
 
     h_coll = locals()[hosts_collection].collections.hosts
