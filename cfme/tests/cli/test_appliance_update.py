@@ -1,3 +1,4 @@
+import re
 from collections import namedtuple
 
 import fauxfactory
@@ -120,9 +121,9 @@ def do_yum_update(appliance):
     return result
 
 
-@pytest.mark.meta(automates=[1714236])
+@pytest.mark.meta(automates=[1714236], coverage=[1674055])
 def test_update_yum(appliance_preupdate, appliance):
-    """Tests appliance update between versions
+    """Tests appliance update between versions - version changed no warnings or errors
 
     Polarion:
         assignee: jhenner
@@ -133,37 +134,11 @@ def test_update_yum(appliance_preupdate, appliance):
     Bugzilla:
         1714236
     """
-    do_yum_update(appliance_preupdate)
+    update_output = do_yum_update(appliance_preupdate).output
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version
-
-
-@pytest.mark.meta(coverage=[1674055])
-def test_update_yum_no_errors(appliance_preupdate):
-    """ Test that the yum update doesn't spill any erros or warnings.
-
-    Polarion:
-        assignee: jhenner
-        caseimportance: high
-        casecomponent: Appliance
-        initialEstimate: 1/4h
-        testSteps:
-            1. Boot preupdate CFME
-            2. Add repos to update to.
-            3. Do the yum update, check there are no errors in the stderr and
-               perhaps also in stdout.
-        expectedResults:
-            1.
-            2.
-            3. No errors in the stderr and stdout, yum exit status is 0
-
-    Bugzilla:
-        1674055
-    """
-    result = do_yum_update(appliance_preupdate)
-    for phrase in ["fail", "error", "warning"]:
-        assert phrase not in result.output.lower(), f"update output contains {phrase}\n\
-        n{result.output}"
+    matches = re.search(r'error|warning|fail', update_output, re.IGNORECASE)
+    assert not matches, f"update output contains {matches.group()}\n\n{update_output}"
 
 
 @pytest.mark.ignore_stream("upstream")
