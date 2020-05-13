@@ -100,9 +100,13 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
         this directly.
 
         Args:
-           updates (dict): fields that are changing.
-           action (str): denotes additional functionality. Expecting edit_from_details,
-           edit_from_hosts, cancel, or nav_away.
+            updates (dict): fields that are changing.
+            validate_credentials (bool): if True, validate host credentials
+            from_details (bool): if True, select 'Edit Selected items' from details view
+                else,  select 'Edit Selected items' from hosts view
+            cancel (bool): click cancel button to cancel the edit if True
+            nav_away (bool): navigate away from edit view before saving if True
+            changes (bool): expecting saved changes if True
         """
         if from_details:
             view = navigate_to(self, "Edit")
@@ -113,6 +117,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             view = self.create_view(HostEditView)
             assert view.is_displayed
         if nav_away and not changes:
+            # navigate away before any changes have been made in the edit view
             view.navigation.select('Compute', 'Infrastructure', 'Hosts',
                                   handle_alert=False)
             view = self.create_view(HostsView)
@@ -146,6 +151,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
                 view.endpoints.ipmi.validate_button.click()
         view.flash.assert_no_error()
         if nav_away and changes:
+            # navigate away here after changes have been made in the edit view
             view = navigate_to(self.parent, "All")
             assert view.is_displayed
             return

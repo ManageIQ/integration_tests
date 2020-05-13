@@ -568,8 +568,8 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
             with update(host,
                         from_details=(crud_action == 'edit_from_details'),
                         cancel=(crud_action == 'cancel'),
-                        nav_away=('nav_away' in crud_action),
-                        changes=('changes' in crud_action and 'no' not in crud_action)
+                        nav_away=(crud_action in ['nav_away_changes', 'nav_away_no_changes']),
+                        changes=(crud_action == 'nav_away_changes')
                         ):
                 host.custom_ident = new_custom_id
         except UnexpectedAlertPresentException as e:
