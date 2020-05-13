@@ -94,7 +94,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def update(self, updates, validate_credentials=False, from_details=True,
+    def update(self, updates, validate_credentials=False, from_hosts=False,
                cancel=False, nav_away=False, changes=True):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
@@ -102,20 +102,20 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
         Args:
             updates (dict): fields that are changing.
             validate_credentials (bool): if True, validate host credentials
-            from_details (bool): if True, select 'Edit Selected items' from details view
-                else,  select 'Edit Selected items' from hosts view
+            from_hosts (bool): if True, select 'Edit Selected items' from hosts view
+                else, select 'Edit Selected items' from details view
             cancel (bool): click cancel button to cancel the edit if True
             nav_away (bool): navigate away from edit view before saving if True
             changes (bool): expecting saved changes if True
         """
-        if from_details:
-            view = navigate_to(self, "Edit")
-        else:
+        if from_hosts:
             view = navigate_to(self.parent, "All")
             view.entities.get_entity(name=self.name, surf_pages=True).ensure_checked()
             view.toolbar.configuration.item_select('Edit Selected items')
             view = self.create_view(HostEditView)
             assert view.is_displayed
+        else:
+            view = navigate_to(self, "Edit")
         if nav_away and not changes:
             # navigate away before any changes have been made in the edit view
             view.navigation.select('Compute', 'Infrastructure', 'Hosts',

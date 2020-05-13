@@ -566,7 +566,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
         new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
         try:
             with update(host,
-                        from_details=(crud_action == 'edit_from_details'),
+                        from_hosts=(crud_action == 'edit_from_hosts'),
                         cancel=(crud_action == 'cancel'),
                         nav_away=(crud_action in ['nav_away_changes', 'nav_away_no_changes']),
                         changes=(crud_action == 'nav_away_changes')
