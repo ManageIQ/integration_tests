@@ -498,32 +498,6 @@ def test_host_discover_multiple_valid_ips():
 
 
 @test_requirements.infra_hosts
-def test_host_removal():
-    """
-    Testing removing a host.
-
-
-    Polarion:
-        assignee: prichard
-        casecomponent: Infra
-        caseimportance: high
-        initialEstimate: 1/4h
-        testSteps:
-            1. Navigate to the Compute > Infrastructure > Hosts view.
-            2. Click checkbox to select host(s).
-            3. Click "Remove items from inventory" in the Configuration accordion.
-            4. Click OK.
-        expectedResults:
-            1. Hosts view is displayed.
-            2.
-            3.
-            4. The host(s) is/are removed. The virtual machines remain in the VMDB, but are no
-               longer associated with their respective hosts.
-    """
-    pass
-
-
-@test_requirements.infra_hosts
 def test_host_view_device_info():
     """
     Testing the viewing of host device information.
