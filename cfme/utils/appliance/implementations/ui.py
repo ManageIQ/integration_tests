@@ -538,7 +538,8 @@ class CFMENavigateStep(NavigateStep):
         )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True, 'wait_for_view': 10, 'force': False}
+        nav_args = {'use_resetter': True, 'wait_for_view': kwargs.get('wait_for_view', 10),
+                    'force': False}
         self.log_message("Beginning Navigation...", level="info")
         start_time = time.time()
         if _tries > 2:
