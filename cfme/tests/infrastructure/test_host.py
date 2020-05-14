@@ -9,6 +9,7 @@ from widgetastic.exceptions import UnexpectedAlertPresentException
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
+from cfme.common.host_views import HostsView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
@@ -530,17 +531,8 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 
 @test_requirements.infra_hosts
 @pytest.mark.meta(automates=[1634794])
-@pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'cancel',
-                                         'nav_away_changes', 'nav_away_no_changes', 'remove'])
-def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
+def test_infrastructure_hosts_crud(appliance, setup_provider):
     """
-    crud_action: (All are edit actions except for 'remove')
-        'edit_from_hosts'  : select host and click edit dropdown from the hosts view to edit
-        'edit_from_details' : click edit dropdown from the details view of host to edit
-        'cancel' : click the cancel button before saving edits
-        'nav_away_changes' : navigate away from the edit view after making changes (not saved)
-        'nav_away_no_changes' : navigate away from the edit view without having made changes
-        'remove' : remove the host
     Polarion:
         assignee: prichard
         casecomponent: Infra
@@ -550,43 +542,88 @@ def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
         1634794
     """
     host = appliance.collections.hosts.all()[0]
-    if crud_action == 'remove':
-        host.delete(cancel=True)
-        host.delete(cancel=False)
-    else:
-        if crud_action in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
-            # In these cases we need to capture the existing/initial custom id to check later that
-            # no changes were made.
-            try:
-                existing_custom_id = navigate_to(host, 'Details').entities.summary(
-                    "Properties").get_text_of("Custom Identifier")
-            except NameError:
-                existing_custom_id = None
-        # begin core/common edit steps
-        new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
-        try:
-            with update(host,
-                        from_hosts=(crud_action == 'edit_from_hosts'),
-                        cancel=(crud_action == 'cancel'),
-                        nav_away=(crud_action in ['nav_away_changes', 'nav_away_no_changes']),
-                        changes=(crud_action == 'nav_away_changes')
-                        ):
-                host.custom_ident = new_custom_id
-        except UnexpectedAlertPresentException as e:
-            if crud_action in ['cancel', 'nav_away_no_changes'] and "Abandon changes" in e.msg:
-                pytest.fail("Abandon changes alert displayed, but no changes made. BZ1634794")
-            else:
-                raise
-        # now verify changes were made or not made according to scenario
-        if crud_action in ['cancel', 'nav_away_changes', 'nav_away_no_changes']:
-            # No changes are expected. Comparing to existing value captured above.
-            try:
-                assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
-                    "Custom Identifier") == existing_custom_id
-            except NameError:
-                if existing_custom_id:
-                    raise
+
+    # Case1 - edit from Hosts
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    with update(host,
+                from_details=False,
+                cancel=False,
+                ):
+        host.custom_ident = new_custom_id
+    # verify edit
+    assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+        "Custom Identifier") == new_custom_id
+
+    # Case2 - edit from Details
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    with update(host,
+                from_details=True,
+                cancel=False,
+                ):
+        host.custom_ident = new_custom_id
+    # verify edit
+    assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+        "Custom Identifier") == new_custom_id
+
+    # Case3 - canceling the edit
+    # get the existing value
+    try:
+        existing_custom_id = navigate_to(host, 'Details').entities.summary(
+            "Properties").get_text_of("Custom Identifier")
+    except NameError:
+        existing_custom_id = None
+    # start edit and cancel
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    with update(host,
+                from_details=False,
+                cancel=True,
+                ):
+        host.custom_ident = new_custom_id
+    # verify edit
+    # No changes are expected. Comparing to existing value captured above.
+    try:
+        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+            "Custom Identifier") == existing_custom_id
+    except NameError:
+        if existing_custom_id:
+            raise
+
+    # Case4 - navigate away from edit view before making any updates in UI.
+    view = navigate_to(host, "Edit")
+    # navigate away before any changes have been made in the edit view
+    try:
+        view.navigation.select('Compute', 'Infrastructure', 'Hosts',
+                               handle_alert=False)
+    except UnexpectedAlertPresentException as e:
+        if "Abandon changes" in e.msg:
+            pytest.fail("Abandon changes alert displayed, but no changes made. BZ1634794")
         else:
-            # Changes are expected so compare to edited value.
-            assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
-                "Custom Identifier") == new_custom_id
+            raise
+    view = host.create_view(HostsView)
+    assert view.is_displayed
+    # No changes are expected. Comparing to existing value captured above.
+    try:
+        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+            "Custom Identifier") == existing_custom_id
+    except NameError:
+        if existing_custom_id:
+            raise
+
+    # Case5 -Nav away from edit view after making updates in UI(not saved).
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    view = navigate_to(host, "Edit")
+    view.fill({"custom_ident": new_custom_id})
+    # navigate away here after changes have been made in the edit view(not saved)
+    view = navigate_to(host.parent, "All")
+    assert view.is_displayed
+    # No changes are expected. Comparing to existing value captured above.
+    try:
+        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+            "Custom Identifier") == existing_custom_id
+    except NameError:
+        if existing_custom_id:
+            raise
+
+    # Case6 - lastly do the delete. First try is canceled.
+    host.delete(cancel=True)
+    host.delete(cancel=False)
