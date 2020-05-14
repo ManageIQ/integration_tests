@@ -455,6 +455,16 @@ class ProviderTemplateUpload:
             self.execute_ssh_command(f'rm -rf {cleanup}', client_args=client_args)
 
         check_pgsql = self.execute_ssh_command('ls /var/lib/pgsql/data/', client_args=client_args)
+        logger.info(f'NANDINI: check_pgsql.output is {check_pgsql.output}')
+        check_REGION = self.execute_ssh_command(
+            'ls /var/www/miq/vmdb/REGION', client_args=client_args)
+        logger.info(f'NANDINI: check_region.output is {check_REGION.output}')
+        check_GUID = self.execute_ssh_command('ls /var/www/miq/vmdb/check_GUID',
+            client_args=client_args)
+        logger.info(f'NANDINI: check_region.output is {check_GUID.output}')
+        check_certs = self.execute_ssh_command('ls /var/www/miq/vmdb/certs',
+            client_args=client_args)
+        logger.info(f'NANDINI: check_region.output is {check_certs.output}')
 
         if not check_pgsql.output:
             logger.info('Finished cleaning out the default setup of a ManageIQ appliance')
