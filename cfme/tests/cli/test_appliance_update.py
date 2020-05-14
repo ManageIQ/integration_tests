@@ -128,9 +128,9 @@ def do_yum_update(appliance):
     return output
 
 
-@pytest.mark.meta(automates=[1714236], coverage=[1674055])
+@pytest.mark.meta(automates=[1714236, 1674055])
 def test_update_yum(appliance_preupdate, appliance):
-    """Tests appliance update between versions - version changed no warnings or errors
+    """Tests appliance update between versions - version changed and there are no warnings or errors
 
     Polarion:
         assignee: jhenner
