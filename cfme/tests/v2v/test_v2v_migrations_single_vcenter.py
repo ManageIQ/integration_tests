@@ -42,6 +42,11 @@ pytestmark = [
 
 
 @pytest.mark.parametrize('power_state', ['RUNNING', 'STOPPED'])
+@pytest.mark.uncollectif(
+    lambda provider, power_state:
+    provider.one_of(OpenStackProvider) and power_state == 'STOPPED',
+    reason='VM state should not be stopped while migrating to Openstack provider.'
+)
 def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
                                                          mapping_data_vm_obj_mini,
                                                          power_state):
@@ -83,11 +88,11 @@ def test_single_vm_migration_power_state_tags_retirement(appliance, provider,
     assert migration_plan.wait_for_state("Successful")
 
     # check power state on migrated VM
-    rhv_prov = provider
-    migrated_vm = rhv_prov.mgmt.get_vm(src_vm.name)
-    assert power_state in migrated_vm.state
+    migrated_vm = get_migrated_vm(src_vm, provider)
+    assert power_state in migrated_vm.mgmt.state
     # check tags
-    vm_obj = appliance.collections.infra_vms.instantiate(migrated_vm.name, rhv_prov)
+    collection = provider.appliance.provider_based_collection(provider)
+    vm_obj = collection.instantiate(migrated_vm.name, provider)
     owner_tag = None
     for t in vm_obj.get_tags():
         if tag.display_name in t.display_name:
