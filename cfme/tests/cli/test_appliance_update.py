@@ -116,9 +116,16 @@ def do_yum_update(appliance):
     with appliance.ssh_client as ssh:
         result = ssh.run_command('yum update -y', timeout=3600)
         assert result.success, f"update failed {result.output}"
+
+    output = str(result)
+    rpmnew_regex = r'warning: (.*) created as (.*\.rpmnew)'
+    groups = re.findall(rpmnew_regex, output)
+    map(lambda rpmold, rpmnew: ssh.run_command(f'mv {rpmnew} {rpmold}'), groups)
+    output = '\n'.join(filter(lambda x: not re.match(rpmnew_regex, x), result.output.splitlines()))
+
     appliance.evmserverd.start()
     appliance.wait_for_web_ui()
-    return result
+    return output
 
 
 @pytest.mark.meta(automates=[1714236], coverage=[1674055])
@@ -134,7 +141,7 @@ def test_update_yum(appliance_preupdate, appliance):
     Bugzilla:
         1714236
     """
-    update_output = do_yum_update(appliance_preupdate).output
+    update_output = do_yum_update(appliance_preupdate)
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version
     matches = re.search(r'error|warning|fail', update_output, re.IGNORECASE)
