@@ -12,6 +12,9 @@ from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.exceptions import RBACOperationBlocked
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.roles import FEATURES_510
+from cfme.roles import FEATURES_511
 from cfme.services.myservice import MyService
 from cfme.tests.integration.test_cfme_auth import retrieve_group
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -2102,11 +2105,42 @@ def test_tenant_visibility_miq_ae_namespaces_all_parents():
     pass
 
 
-@pytest.mark.manual
+@pytest.fixture()
+def create_user(appliance):
+    """This fixture will create user, group, and role with all product feature
+    by clicking individually"""
+    features = FEATURES_511 if appliance.version > "5.11" else FEATURES_510
+    product_features = [[["Everything", feature], True] for feature in features]
+    role = appliance.collections.roles.create(
+        name=fauxfactory.gen_alpha(15, start="API-role-"),
+        product_features=[[["Everything"], False]] + product_features,
+    )
+    # creating group
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(22, "group_description_"),
+        role=role.name,
+    )
+
+    creds = Credential(
+        principal=fauxfactory.gen_alphanumeric(start="user_"),
+        secret=fauxfactory.gen_alphanumeric(),
+    )
+    # user with above group
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(start="user_"),
+        credential=creds,
+        email=fauxfactory.gen_email(),
+        groups=group,
+    )
+    return role, group, user
+
+
 @test_requirements.rbac
-@pytest.mark.meta(coverage=[1684472, 1693720])
+@pytest.mark.meta(automates=[1684472, 1693720])
 @pytest.mark.tier(2)
-def test_tags_manual_features():
+@pytest.mark.provider([InfraProvider], selector=ONE_PER_TYPE)
+def test_tags_manual_features(create_vm, request, appliance, create_user):
+
     """
     Test that user can edit tags of an VM when he has role created by disabling 'Everything'
     and then enabling every other checkbox.
@@ -2132,8 +2166,20 @@ def test_tags_manual_features():
             4. Edit Tags screen displayed; no error in evm.log
     Bugzilla:
         1684472
+        1693720
     """
-    pass
+    role, group, user = create_user
+
+    @request.addfinalizer
+    def clean_up():
+        user.delete_if_exists()
+        group.delete_if_exists()
+        role.delete_if_exists()
+
+    with user:
+        view = navigate_to(create_vm, 'Details')
+        view.toolbar.policy.open()
+        assert view.toolbar.policy.item_enabled('Edit Tags')
 
 
 @pytest.mark.manual
