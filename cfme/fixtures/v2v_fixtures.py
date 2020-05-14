@@ -44,7 +44,7 @@ def set_skip_event_history_flag(appliance):
 
 def _start_event_workers_for_osp(appliance, provider):
     """This is a workaround to start event catchers until BZ 1753364 is fixed"""
-    provider_edit_view = navigate_to(provider, 'Edit')
+    provider_edit_view = navigate_to(provider, 'Edit', wait_for_view=30)
     endpoint_view = provider.endpoints_form(parent=provider_edit_view)
     endpoint_view.events.event_stream.select("AMQP")
     endpoint_view.events.event_stream.select("Ceilometer")
