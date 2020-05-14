@@ -4764,10 +4764,7 @@ class MigrationPlansList(Widget):
         './/div[./span[contains(@class,"pficon-virtual-machine") '
         'or contains(@class,"pficon-screen")]]'
     )
-    ITEM_BUTTON_LOCATOR = (
-        './div[contains(@class,"list-view-pf-actions")]'
-        '//button[text()="Migrate" or text()="Retry"]'
-    )
+    ITEM_BUTTON_LOCATOR = '//button[text()="Migrate" or text()="Retry"]'
     ITEM_IS_SUCCESSFUL_LOCATOR = './/*[contains(@class,"pficon-ok")]'
     ITEM_KEBAB_DROPDOWN_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/button'
     ITEM_ARCHIVE_BUTTON_LOCATOR = './/div[contains(@class,"dropdown-kebab-pf")]/ul/li/a'
