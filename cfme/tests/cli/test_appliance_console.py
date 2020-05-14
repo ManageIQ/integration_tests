@@ -1796,3 +1796,58 @@ def test_appliance_console_logfile_config_reboot():
             5. logfiles should use new disk
       """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(0)
+@pytest.mark.meta(coverage=[1790995])
+def test_appliance_console_menubar():
+    """
+    There should not be error on menubar on appliance console
+    Bugzilla:
+        1790995
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Appliance
+        caseimportance: critical
+        initialEstimate: 1/3h
+        testSteps:
+            1. execute command on shell "ap"
+            2. press any key
+            3. check console
+        expectedResults:
+            1.
+            2.
+            3. "translation missing: en.advanced_settings.timezone" should not be displayed
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(0)
+@pytest.mark.meta(coverage=[1625377])
+def test_appliance_console_db_fail_log():
+    """
+    Error information gets logged to appliance_console.log on db configuration failure
+    Bugzilla:
+        1625377
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Appliance
+        caseimportance: low
+        initialEstimate: 1/3h
+        caseposneg: negative
+        testSteps:
+            1. Execute "ap" command on shell
+            2. press any key
+            3. select "configure database"
+            4. select "Join Region in External Database"
+            5. enter invalid database name
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Error information gets logged to appliance_console.log
+    """
+    pass

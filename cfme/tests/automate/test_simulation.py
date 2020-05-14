@@ -190,11 +190,12 @@ def test_simulation_copy_button(appliance):
     assert not view.copy.is_enabled
 
 
-@pytest.mark.meta(automates=[1753523], blockers=[BZ(1753523, forced_streams=['5.10'])])
+@pytest.mark.meta(automates=[1753523, 1740761], blockers=[BZ(1753523, forced_streams=['5.10'])])
 def test_attribute_value_message(custom_instance):
     """
     Bugzilla:
         1753523
+        1740761
 
     Polarion:
         assignee: dgaikwad

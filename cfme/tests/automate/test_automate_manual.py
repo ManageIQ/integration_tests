@@ -376,3 +376,35 @@ def test_copy_automate_method_without_edit():
             3. You should be able to copy the highlighted text
     """
     pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1789806])
+def test_retire_vm_error_on_new_user():
+    """
+    There should not be any log error in evm.log file while retiring the vm by new user
+    Bugzilla:
+        1789806
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Automate
+        caseimportance: medium
+        initialEstimate: 1/4h
+        caseposneg: negative
+        tags: automate
+        testSteps:
+            1. Add infrastructure provider(e.g. vsphere67-nested)
+            2. Provision VM
+            3. Create new user with group EvmGroup-vm_user
+            4. Login with new user and go to VM's details page
+            5. Select 'Retire this vm' from 'Lifecycle' dropdown to retire the VM
+            6. Check evm.logs
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. Error in evm.log should not be present
+    """
+    pass

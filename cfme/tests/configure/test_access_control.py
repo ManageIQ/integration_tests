@@ -2349,11 +2349,13 @@ def test_ssui_group_switch():
 @test_requirements.rbac
 @test_requirements.ssui
 @pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1790817])
 def test_ssui_update_dashboard():
     """
     Verify that switching Groups in SSUI changes the dashboard items to
     match the new groups permissions
-
+    Bugzilla:
+        1790817
     Polarion:
         assignee: dgaikwad
         casecomponent: SelfServiceUI
@@ -2833,5 +2835,56 @@ def test_tenant_template_visibility():
         casecomponent: Configuration
         caseimportance: medium
         initialEstimate: 1/10h
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@test_requirements.multi_tenancy
+@pytest.mark.meta(coverage=[1650484])
+def test_check_provider_count():
+    """
+        after adding one cloud provider it should show only one provider name in list
+    Bugzilla:
+        1650484
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Navigate to compute -> Cloud -> Tenants
+            2. Go to Configuration -> Create cloud tenant
+        expectedResults:
+            1.
+            2. It should show only one provider name.
+
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(2)
+@test_requirements.multi_tenancy
+@pytest.mark.meta(coverage=[1654718])
+def test_default_tenat_name_rail_console():
+    """
+        Default tenent nme should be updated after setting up it
+    Bugzilla:
+        1654718
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. Set a new default tenant name, e.g. 'Bit63'
+            2. From Rails console, lookup the corresponding tenant object, i.e.
+            execute to check updated tenant name on rail console example:
+            "Tenant.where(:name => 'Bit63').first"
+        expectedResults:
+            1.
+            2. tenant name should be updated on rail console
     """
     pass

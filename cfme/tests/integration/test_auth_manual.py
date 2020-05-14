@@ -607,3 +607,114 @@ def test_openid_auth_provider():
             5. User should be logged in with appropriate permissions
     """
     pass
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1793532])
+def test_login_self_service_ui():
+    """
+    Should be getting error on first attempt while clicked on login button without
+    entering credentials on self service UI
+    Bugzilla:
+        1793532
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Auth
+        caseposneg: negative
+        caseimportance: medium
+        initialEstimate: 1/2h
+        testSteps:
+            1. Navigate to self service UI login page
+            2. Click login without entering any creds
+        expectedResults:
+            1.
+            2. Clicking the login button without entering credentials should have the
+            error flash message appear immediately
+    """
+    pass
+
+
+@test_requirements.rbac
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1813375])
+def test_create_group_console_no():
+    """
+    Should able to create group if atleast one 'Show in Console' category to NO
+    Bugzilla:
+        1813375
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/4h
+        testSteps:
+            1. Go to Configuration > Settings accordion > Region node in accordion > Tags tab >
+            My Company Categories tab
+            2. For a new/an existing category set 'Show in Console' to 'No' and save the category
+            3. Go to Configuration > Access Control accordion > Groups
+            4. Toolbar: Configuration > Add a new Group
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Should able to create group and there should not be error in production.log
+
+    """
+    pass
+
+
+@test_requirements.rbac
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1803952])
+def test_select_edit_group():
+    """
+    Should be able to see "edit group" option for existing group after selecting the group
+    also check error in production.log log file
+    Bugzilla:
+        1803952
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/4h
+        testSteps:
+            1. Go to Configuration--> Acesss controls
+            2. Select existing custom group and Configure
+        expectedResults:
+            1.
+            2. Able to see Edit Group option
+    """
+    pass
+
+
+@test_requirements.rbac
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1730066])
+def test_aws_keypair_list():
+    """
+    Should able to view AWS keypair list as tenant_administrator
+    Bugzilla:
+        1730066
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/4h
+        testSteps:
+            1. Copy the EvmRole_tenant_admin role to a new role (Since this role does not have
+             the Auth Key Pairs feature enabled)
+            2. In the role, enable the Auth Key Pairs feature
+            3. Add either new or existing groups to the newly created tenant admin role
+            4. If the added groups belong to the Top-Level Tenant (Parent Tenant),
+            then users in that group will be able to see the WAS Key Pairs
+            5. Otherwise, if the added groups belong to one of the sub-tenant (Children tenant),
+             users in those groups will not be able to see the AWS Key Pairs
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5. Users in groups that belong to either the top-level tenant or any of the
+            children tenants (sub-tenants) should be able to see the key Pairs.
+    """
+    pass
