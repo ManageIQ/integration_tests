@@ -94,21 +94,18 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def update(self, updates, validate_credentials=False, from_hosts=False,
-               cancel=False, nav_away=False, changes=True):
+    def update(self, updates, validate_credentials=False, from_details=False, cancel=False):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
         Args:
             updates (dict): fields that are changing.
             validate_credentials (bool): if True, validate host credentials
-            from_hosts (bool): if True, select 'Edit Selected items' from hosts view
-                else, select 'Edit Selected items' from details view
+            from_details (bool): if True, select 'Edit Selected items' from details view
+                else, select 'Edit Selected items' from hosts view
             cancel (bool): click cancel button to cancel the edit if True
-            nav_away (bool): navigate away from edit view before saving if True
-            changes (bool): expecting saved changes if True
         """
-        if from_hosts:
+        if not from_details:
             view = navigate_to(self.parent, "All")
             view.entities.get_entity(name=self.name, surf_pages=True).ensure_checked()
             view.toolbar.configuration.item_select('Edit Selected items')
@@ -116,13 +113,6 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             assert view.is_displayed
         else:
             view = navigate_to(self, "Edit")
-        if nav_away and not changes:
-            # navigate away before any changes have been made in the edit view
-            view.navigation.select('Compute', 'Infrastructure', 'Hosts',
-                                  handle_alert=False)
-            view = self.create_view(HostsView)
-            assert view.is_displayed
-            return
         changed = view.fill({
             "name": updates.get("name"),
             "hostname": updates.get("hostname") or updates.get("ip_address"),
@@ -150,11 +140,6 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
         view.flash.assert_no_error()
-        if nav_away and changes:
-            # navigate away here after changes have been made in the edit view
-            view = navigate_to(self.parent, "All")
-            assert view.is_displayed
-            return
         changed = False if cancel else any([changed, credentials_changed,
                                             ipmi_credentials_changed])
         if changed:
