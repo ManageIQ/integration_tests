@@ -94,7 +94,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def update(self, updates, validate_credentials=False, from_details=False, cancel=False):
+    def update(self, updates, validate_credentials=False, from_details=True, cancel=False):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
