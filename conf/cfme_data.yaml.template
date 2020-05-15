@@ -1,133 +1,282 @@
+# This serves as an example for cfme_data.yaml, with keys that are used in the framework and tests
+# all *creds_key maps are primary key lookups for credentials.yaml
+# This does not capture all configuration data needed to run all tests in the repository
 basic_info:
-    app_version: 5.2.0
+    app_version: <productized appliance version, x.y.z>
     cfme_images_url:
-        downstream-59z: http://some-host.com/builds/
+        downstream-511z: <productized appliance images URL>
+        upstream: <upstream appliance images URL>
+    vddk_url:
+        v6_5: <url for VMware-vix RPM>
+        v6_7: <url for VMware-vix RPM>
+    wheelhouse:
+        host: <hosted python wheelhouse host>
+        url: <hosted python wheelhouse url endpoint>
 ansible_links:
   playbook_repositories:
-    v2v: https://github.com/v2v-test/ansible_playbooks.git
+      v2v: https://github.com/v2v-test/ansible_playbooks.git
+      embedded_ansible: https://github.com/ManageIQ/integration_tests_playbooks.git
+  private_repository:
+      private_repo: <private repo url.git>
+      scm_credentials: scm_creds_key
+  vault_credentials: vault_creds_key
+automate_links:
+    datastore_repositories:
+      manageiq_automate: https://github.com/RedHatQE/ManageIQ-automate-git.git
+
+ftpserver:
+  host: <ftp server for hosting miq components for import>
+  credentials: ftp_creds_key
+  entrypoint: "/mnt/poolparty/files"
+  entities:
+    # Storage path on FTP Server.
+    databases: "miq/Databases"
+    datastores: "miq/Datastores"
+    dialogs: "miq/Dialogs"
+    others: "miq/Others"
+    reports: "miq/Reports"
+
+test_flags: alerts, actions, cloud_init, crud, cmqe_logging, cockpit, datastore_analysis,
+  cluster_analysis, delete_object, discovery, drift_analysis, events, genealogy, host_analysis,
+  host_drift_analysis, host_provision, hotdisk, inventory, iso, log, metrics_collection, migrate,
+  policy, power_control, prometheus_alerts, provision, pxe, quota, relationship, replication,
+  report, rest, retire, retire_extend, services, sdn, snapshot, soap, ssui, tag, tenant, timelines,
+  v2v, visuals, vm_analysis, vmware_methods, volumes, html5_console, webmks_console, podtesting, rbac
+
 management_systems:
-    vsphere5:
-        name: vsphere 5
-        default_name: Virtual Center (10.0.0.2)
-        endpoints:
-            default:
-                credentials: vsphere5
-                hostname: vsphere5.example.com
-                ipaddress: 10.0.0.1
-        host_vnc_port:
-            start: 5900
-            end: 5980
+    vsphere67-nested:
+        tags:
+            - vsphere
+        excluded_test_flags: volumes, html5_console, v2v
+        name: vSphere 6.7 (nested)
+        default_name: Virtual Center (<ip>)
+        credentials: vsphere65-nested
+        hostname: <vsphere domain name>
+        ipaddress: <vsphere ip>
         server_zone: default
         type: virtualcenter
-        discovery_range:
-            start: 10.0.0.1
-            end: 10.0.0.2
+        version: 6.7
         datacenters:
-            - default
+            - Datacenter Name
         clusters:
-            - iscsi
+            - Cluster Name
+        vlans:
+            - VM Network Name
+            - DPortGroup Network Name
         hosts:
-            - name: myhost
-              credentials:
-                  default: myhost
-                  remote_login: remote_login_cred
-                  web_services: web_services_cred
-              type: esxi
-              test_fleece: True
+            -   name: <vsphere host domain name>
+                credentials:
+                    default: vspherehost-cred_key
+                    remote_login: vspherehost-cred_key
+                    web_services: vspherehost-cred_key
+                type: esxi
+                test_fleece: True
         datastores:
-            - type: iscsi
-              name: iscsi_storage
-              test_fleece: True
-            - type: vmfs
-              name: vmfs_storage
-              test_fleece: False
-        tags:
-            Provisioning Scope: All
-        policy_profiles:
-            - example policy profile x
-        test_vm_power_control:
-            - vm_name
+            -   name: NFS_Datastore_Name
+                type: nfs
+                test_fleece: True
+            -   name: iSCSI_Datastore_Name
+                type: iscsi
+                test_fleece: True
+            -   name: ISO_Datastore_Name
+                type: iso
+                test_fleece: False
+                tag: ssa
         provisioning:
             pxe_template: pxe_prov_template
-            pxe_server: pxe_server
-            pxe_image: image
-            pxe_kickstart: customizationscript
+            pxe_server: new_sub_syslinux
+            pxe_image: RHEL8.1
+            pxe_image_type: RHEL-8
+            pxe_kickstart: rhel81
             pxe_root_password: password
-            template: provisioning_template_name
-            host: target provisioning host name (from hosts above)
-            datastore: target provisioning datastore name (from datastores above)
+            vlan: VM Network Name
+            template: template_name
+            host: <vsphere provisionion target host domain name>
+            datastore: iSCSI_Datastore_Name
+            catalog_item_type: VMware
+            test_pxe: False
+            provision_type: "VMware"
+        template_upload:
+            block_upload: True  # don't upload MIQ/CFME templates here
+        cleanup: True  # used for vm cleanup scripts
+        endpoints:
+            default:
+                hostname: <vsphere domain name>
+                ipaddress: <vsphere ip>
+                credentials: vsphere67-creds_key
+            vmrc:
+                credentials: vsphere67-creds_key
+        cap_and_util:
+            capandu_vm: cu-24x7
+            chargeback_vm: cu-24x7
+            test_chargeback: True
+            cluster: Cluster Name
+        vm_analysis_new:
+            provisioning:
+                vlan: DPortGroup (DSwitch)
+                host: <vsphere host domain name>
+                datastore: iSCSI_Datastore_Name
+            vms:
+                centos-xfs:
+                    image: env-tpl-centos7-xfs-dnd
+                    fs-type: xfs
+                    credentials: ssa_centos_creds_key
+                ubuntu16-04:
+                    image: env-ubuntu16.04-tpl
+                    fs-type: ext4
+                    credentials: ssa_ubuntu_creds_key
+                fedora26-xfs:
+                    image: env-fedora26-xfs-tpl
+                    fs-type: xfs
+                    credentials: ssa_fedora_creds_key
+                win2012:
+                    image: env-win2012-tpl
+                    fs-type: ntfs
+                win2016:
+                    image: env-win2016-tpl
+                    fs-type: ntfs
+                rhel74:
+                    image: env-rhel74-tpl
+                    fs-type: xfs
+                    credentials: ssa_rhel_creds_key
         templates:
             console_template:
-                name: template1
-                creds: template1Creds
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+                prompt_text: root@host  # used for console detection
             small_template:
-                name: template2
-                creds: template2Creds
-    rhevm31:
-        name: RHEV 3.1
-        default_name: RHEV-M (10.0.0.3)
-        endpoints:
-            default:
-                credentials: rhevm31
-                hostname: rhevm.example.com
-                ipaddress: 10.0.0.1
-                api_port: 3000
-                verify_tls: False
-                cat_certs:
-            candu:
-                cu_credentials: rhevm31-cu_db_cred_name_from_credentials.yaml
-                api_port:
-                database: ovirt_engine_history
-                hostname: rhevm.example.com
-        server_zone: default
-        type: rhevm
-        discovery_range:
-            start: 10.0.0.3
-            end: 10.0.0.3
-        clusters:
-            - iscsi
-        hosts:
-            - name: myhost
-              credentials:
-                  default: myhost
-                  remote_login: remote_login_cred
-                  web_services: web_services_cred
-              type: rhel
-              test_fleece: False
-        datastores:
-            - type: iscsi
-              name: rhevm_iscsi
-              test_fleece: True
-        tags:
-            Provisioning Scope: All
-        policy_profiles:
-            - example policy profile y
-        test_vm_power_control:
-            - vm_name
-        provisioning:
-            template: provisioning_template_name
-            host: target provisioning host name (from hosts above)
-            datastore: target provisioning datastore name (from datastores above)
-            vlan: name of vlan to attach to vm (required only for rhevm providers)
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            full_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            big_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            ubuntu16_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            rhel81_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            win7_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            win10_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            win2012_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+            win2016_template:
+                name: <specific template name for this type of test>
+                creds: this_template_creds_key
+        ansible_target:
+            name: ansible_target
+            template: v2v-rhel7-mini
+            credentials: ssa_rhel
     ec2:
-        name: EC2 US East
-        default_name: EC2 US East
+        tags:
+            - ec2
+            - default
+        excluded_test_flags: volumes, actions, html5_console, webmks_console, cockpit
+        name: ec2-west
         region: us-west-1
-        region_name: US West
-        endpoints:
-            default:
-                credentials: aws
-        hostname: ec2.us-east-1.amazonaws.com
-        ipaddress: 207.171.162.181
+        region_name: US West (N. California)
+        credentials: amazon_creds_key
         server_zone: default
         type: ec2
-        clusters:
-            - us-east-1
-        tags:
-            Provisioning Scope: All
-        # EC2 Power Control is currently broken
-        #test_vm_power_control:
-        #    - instance_id_or_name
+        small_template: small_template_name  # TODO Remove
+        registry: <docker registry url>
+        test_power_control: True
+        ownership_vm: cu-9-5
+        upload_bucket_name: <bucket for appliance image uploads>
+        template_upload:
+            block_upload: False
+        provisioning:
+            instance_type: "t1.micro"
+            security_group: "default: default VPC security group"
+            item_type: "Amazon"
+            guest_keypair: "shared"
+            ssh_location: "0.0.0.0/0"
+            availability_zone: us-west-1c
+            cloud_tenant:
+            cloud_network: <vpc network id>
+            cloud_subnet: <vpc subnet id>
+            stacks:
+                - stack_name
+            boot_disk_size:
+            image:
+                id: <ami image id>
+                name: <ami image name>
+            stack_provisioning:
+                key_name: stack_key_name
+                db_user: stack_db_user
+                db_password: stack_db_cred_key
+                db_root_password: stack_root_cred_key
+                instance_type: t2.micro
+                template_type: "CloudFormation Templates"
+                template_type_dd: "Amazon CloudFormation"
+                template_name: stack_name
+                data_file: aws_vm_template.json
+                template_without_parameters: https://s3-us-west-2.amazonaws.com/cloudformation-templates-us-west-2/Managed_EC2_Batch_Environment.template
+            ci-image: <template name>
+            ci-template: cloudinit
+            ci-username: fedora
+            ci-pass:
+                inherit: customization_templates/cloudinit/replacements/pass
+        vm_analysis_new:
+            provisioning:
+                instance_type: "t2.micro"
+                security_group: "default: default VPC security group"
+                guest_keypair: "shared"
+                ssh_location: "0.0.0.0/0"
+                availability_zone: us-west-1c
+                cloud_tenant:
+                cloud_network: <vpc id>
+                cloud_subnet: <subnet id>
+            vms:
+                ws-server-16:
+                    image: <ami id>
+                    fs-type: ntfs
+                ws-server-12:
+                    image: <ami id>
+                    fs-type: ntfs
+                fedora-31:
+                    image: <ami id>
+                    fs-type: ext4
+                ubuntu16-04:
+                    image: <ami id>
+                    fs-type: ext4
+                rhel-8:
+                    image: <ami id>
+                    fs-type: xfs
+        remove_test:
+            instance: cu-9-5
+            image: template_name
+            stack: stack_name
+        cap_and_util:
+            capandu_vm: cu-24x7
+            chargeback_vm: cu-24x7
+            test_chargeback: True
+            capandu_azone: us-west-1a
+        cleanup: True
+        endpoints:
+            default:
+                credentials: ec2_creds_key  # AMI user
+            smartstate:
+                credentials: ec2_creds_key  # AMI user
+        templates:
+            small_template:
+                name: <template name>
+                creds:   # image doesn't seem to have password auth enabled
+            s3_template:
+                name: amzn-ami-pv-2018.03.0.20190826-x86_64-s3
+                creds:   # image doesn't seem to have password auth enabled
+                instance_type: m1.small
+        sts_assume_role:
+            role_arn: <sts role arn>
+            credentials: ec2_sts_creds_key
     openstack:
         name: rhos-01
         hostname: rhos-01i
@@ -662,6 +811,28 @@ resources:
             db_allocate_url: url for allocation
             db_deallocate_url: url for deallocation
 
+customization_templates:
+    rhel81:
+        name: rhel69
+        description: rhel69descrip
+        image_type: RHEL-6
+        script_type: Kickstart
+        script_file: data/rhel6.cfg
+        replacements:
+            url1: <pxe sources misc url>
+            file1: <rhev agent RPM>
+            url2: <rhel server OS download url>
+            url3: <rhel server OS optional download url>
+
+    cloudinit:
+        name: cloudinit
+        description: BasicCloudInitTemplate
+        image_type: RHEL-6
+        script_type: CloudInit
+        script_file: data/basiccloudinit.cfg
+        replacements:
+            pass: mysecret
+
 cfme_annotations_path: data/testcase_tiers_and_types.csv
 
 clock_servers:
@@ -677,6 +848,3 @@ vm_console:
         city: Durham
         organization: CFME
         organizational_unit: QE
-automate_links:
-    datastore_repositories:
-        manageiq_automate: https://github.com/RedHatQE/ManageIQ-automate-git.git
