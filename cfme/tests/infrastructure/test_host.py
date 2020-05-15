@@ -453,7 +453,7 @@ def test_infrastructure_hosts_navigation_after_download(
 @pytest.mark.uncollectif(
     lambda provider, num_hosts: provider.one_of(RHEVMProvider, SCVMMProvider) and num_hosts > 2,
     reason=UNCOLLECT_REASON)
-@pytest.mark.meta(blockers=[BZ(1746214, forced_streams=["5.10"])], automates=[1746214, 1784181])
+@pytest.mark.meta(automates=[1746214, 1784181, 1794438])
 def test_infrastructure_hosts_compare(appliance, setup_provider_min_hosts, provider, num_hosts,
                         hosts_collection):
     """
@@ -470,8 +470,8 @@ def test_infrastructure_hosts_compare(appliance, setup_provider_min_hosts, provi
 
 
 @test_requirements.infra_hosts
-@pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"]), BZ(1746214, forced_streams=[
-    "5.10"])], automates=[1747545])
+@pytest.mark.meta(blockers=[BZ(1747545, forced_streams=["5.10"])], automates=[1747545, 1738664,
+                                                                             1746214])
 @pytest.mark.parametrize("num_hosts", [2, 4])
 @pytest.mark.parametrize("hosts_collection", ["provider", "appliance"])
 @pytest.mark.parametrize('report_format', DownloadOptions, ids=[fmt.name for fmt in
@@ -489,7 +489,7 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         1747545
     """
     h_coll = locals()[hosts_collection].collections.hosts
-    hosts_view = h_coll.compare_entities(provider, entities_list=h_coll.all()[:num_hosts])
+    hosts_view = h_coll.compare_entities(entities_list=h_coll.all()[:num_hosts])
     hosts_view.toolbar.download.item_select(report_format.value)
     if report_format == DownloadOptions.PDF:
         handle_extra_tabs(hosts_view)
