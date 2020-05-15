@@ -19,7 +19,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -502,7 +501,7 @@ def setup_provider_min_templates(request, appliance, provider, min_templates):
 @pytest.mark.provider([InfraProvider], selector=ONE, scope="function")
 @pytest.mark.parametrize("min_templates", [2, 4])
 @pytest.mark.parametrize("templates_collection", ["provider", "appliance"])
-@pytest.mark.meta(blockers=[BZ(1784180, forced_streams=["5.10"])], automates=[1784180])
+@pytest.mark.meta(automates=[1784180, 1794434, 1746449])
 def test_compare_templates(appliance, setup_provider_min_templates, provider, min_templates,
                            templates_collection):
     """
@@ -513,6 +512,8 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
         initialEstimate: 1/6h
     Bugzilla:
         1746449
+        1784180
+        1794434
     """
     t_coll = locals()[templates_collection].collections.infra_templates.all()[:min_templates]
     compare_view = locals()[templates_collection].collections.infra_templates.compare_entities(
