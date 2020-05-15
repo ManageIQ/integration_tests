@@ -545,9 +545,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
 
     # Case1 - edit from Hosts
     new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
-    with update(host,
-                from_details=False,
-                ):
+    with update(host, from_details=False):
         host.custom_ident = new_custom_id
     # verify edit
     assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
@@ -555,9 +553,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
 
     # Case2 - edit from Details
     new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
-    with update(host,
-                from_details=True,
-                ):
+    with update(host, from_details=True):
         host.custom_ident = new_custom_id
     # verify edit
     assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
@@ -572,10 +568,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
         existing_custom_id = None
     # start edit and cancel
     new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
-    with update(host,
-                from_details=True,
-                cancel=True,
-                ):
+    with update(host, from_details=True, cancel=True):
         host.custom_ident = new_custom_id
     # verify edit
     # No changes are expected. Comparing to existing value captured above.
@@ -590,8 +583,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
     view = navigate_to(host, "Edit")
     # navigate away before any changes have been made in the edit view
     try:
-        view.navigation.select('Compute', 'Infrastructure', 'Hosts',
-                               handle_alert=False)
+        view.navigation.select('Compute', 'Infrastructure', 'Hosts', handle_alert=False)
     except UnexpectedAlertPresentException as e:
         if "Abandon changes" in e.msg:
             pytest.fail("Abandon changes alert displayed, but no changes made. BZ1634794")
