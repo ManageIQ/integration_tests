@@ -7,6 +7,9 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.fixtures.automate import DatastoreImport
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.tests.automate.custom_button import DropdownDialogView
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
+from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
@@ -227,53 +230,40 @@ def test_dropdown_dialog_descending_values(appliance, generic_catalog_item_with_
     assert options_list == value
 
 
-@pytest.mark.manual
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1322594, 1581996])
 @pytest.mark.tier(2)
-def test_dynamic_dropdowns_should_show_value_only_once():
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1322594.zip", "bz_1322594", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1322594.yml"], ids=["dynamic_dialog"])
+@pytest.mark.parametrize('context', [ViaUI, ViaSSUI])
+def test_dynamic_dropdown_load_value_on_init(appliance, import_datastore, import_data,
+                                             generic_catalog_item_with_imported_dialog, context):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_ssui_dd_values_are_not_loaded_in_dropdown_unless_refresh_button_is_pressed():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/8h
-        startsin: 5.8
-        tags: service
     Bugzilla:
         1322594
-    """
-    pass
+        1581996
 
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_in_dynamic_multi_select_dialog_elements_the_first_element_shouldnt_be_selected():
-    """
     Polarion:
         assignee: nansari
+        startsin: 5.10
         casecomponent: Services
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1322594
+        initialEstimate: 1/16h
     """
-    pass
+    catalog_item, _, _ = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    with appliance.context.use(context):
+        if context == ViaSSUI:
+            view = ssui_nav(service_catalogs, "Details")
+        else:
+            view = navigate_to(service_catalogs, "Order")
+
+        # Dynamic drop_downs should load the values on init
+        wait_for(
+            lambda: view.fields("dropdown_list_1").read() == 'fifty' and
+            view.fields("dropdown_list_2_1_1").read() == '10', timeout=60
+        )
 
 
 @pytest.mark.customer_scenario
@@ -403,27 +393,6 @@ def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_d
 
     Bugzilla:
         1576873
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_dynamic_dropdown_values_should_load_correctly():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-        testSteps:
-            1. Import the dialog and domain attached
-            2. Select Contract A . Contract B gets selected
-            3. In Location no values are loaded
-    Bugzilla:
-        1581996
     """
     pass
 
