@@ -2800,30 +2800,6 @@ def test_service_non_admin_user():
 @pytest.mark.manual
 @test_requirements.rbac
 @pytest.mark.tier(2)
-def test_self_service_users_ssui():
-    """
-    Verify that a user in the assigned to the EVMRole-self_service and
-    EVMRole-self_service can login to the SSUI
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: SelfServiceUI
-        caseimportance: critical
-        initialEstimate: 1/4h
-        startsin: 5.8
-        testSteps:
-            1. Create a user assigned to the default role of EVMRole-self_service
-            2. Login to the SSUI with the user
-        expectedResults:
-            1. User created successfully
-            2. SSUI access granted
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rbac
-@pytest.mark.tier(2)
 def test_tenant_template_visibility():
     """
     Create group with role "user owned only"
