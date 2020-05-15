@@ -634,30 +634,6 @@ def test_login_self_service_ui():
     pass
 
 
-@test_requirements.rbac
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1803952])
-def test_select_edit_group():
-    """
-    Should be able to see "edit group" option for existing group after selecting the group
-    also check error in production.log log file
-    Bugzilla:
-        1803952
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: critical
-        initialEstimate: 1/4h
-        testSteps:
-            1. Go to Configuration--> Acesss controls
-            2. Select existing custom group and Configure
-        expectedResults:
-            1.
-            2. Able to see Edit Group option
-    """
-    pass
-
-
 @pytest.mark.customer_scenario
 @test_requirements.rbac
 @pytest.mark.tier(2)
