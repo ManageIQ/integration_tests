@@ -547,7 +547,6 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
     new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
     with update(host,
                 from_details=False,
-                cancel=False,
                 ):
         host.custom_ident = new_custom_id
     # verify edit
@@ -558,7 +557,6 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
     new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
     with update(host,
                 from_details=True,
-                cancel=False,
                 ):
         host.custom_ident = new_custom_id
     # verify edit
@@ -626,4 +624,4 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
 
     # Case6 - lastly do the delete. First try is canceled.
     host.delete(cancel=True)
-    host.delete(cancel=False)
+    host.delete

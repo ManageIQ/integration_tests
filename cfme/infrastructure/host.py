@@ -105,14 +105,14 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
                 else, select 'Edit Selected items' from hosts view
             cancel (bool): click cancel button to cancel the edit if True
         """
-        if not from_details:
+        if from_details:
+            view = navigate_to(self, "Edit")
+        else:
             view = navigate_to(self.parent, "All")
             view.entities.get_entity(name=self.name, surf_pages=True).ensure_checked()
             view.toolbar.configuration.item_select('Edit Selected items')
             view = self.create_view(HostEditView)
             assert view.is_displayed
-        else:
-            view = navigate_to(self, "Edit")
         changed = view.fill({
             "name": updates.get("name"),
             "hostname": updates.get("hostname") or updates.get("ip_address"),
@@ -140,9 +140,8 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
         view.flash.assert_no_error()
-        changed = False if cancel else any([changed, credentials_changed,
-                                            ipmi_credentials_changed])
-        if changed:
+        changed = any([changed, credentials_changed, ipmi_credentials_changed])
+        if changed and not cancel:
             view.save_button.click()
             logger.debug("Trying to save update for host with id: %s", str(self.get_db_id))
             view = self.create_view(HostDetailsView)
