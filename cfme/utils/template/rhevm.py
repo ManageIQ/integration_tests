@@ -111,9 +111,9 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
     @log_wrap('cleanup temp resources')
     def teardown(self):
         """Cleans up all the mess that the previous functions left behind."""
-        logger.info('%s Deleting temp_vm "%s"', self.provider_key, self.temp_vm_name)
-        if self.mgmt.does_vm_exist(self.temp_vm_name):
-            self.mgmt.get_vm(self.temp_vm_name).cleanup()
+        # logger.info('%s Deleting temp_vm "%s"', self.provider_key, self.temp_vm_name)
+        # if self.mgmt.does_vm_exist(self.temp_vm_name):
+        #    self.mgmt.get_vm(self.temp_vm_name).cleanup()
 
         logger.info('%s Deleting temp_template "%s"on storage domain',
                     self.provider_key, self.temp_template_name)
