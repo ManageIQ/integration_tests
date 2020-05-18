@@ -307,15 +307,13 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         """
 
         def config_profiles_loaded():
-            # Workaround - without this, validation of provider failed
-            config_profiles_names = [prof.name for prof in self.config_profiles]
+            config_profiles_names = {prof.name for prof in self.config_profiles}
             logger.info(
                 "UI: %s\nYAML: %s",
-                set(config_profiles_names), set(self.data['config_profiles'])
+                config_profiles_names, set(self.data['config_profiles'])
             )
             # Just validate any profiles from yaml are in UI - not all are displayed
-            return any(
-                [cp in config_profiles_names for cp in self.data['config_profiles']])
+            return any(config_profiles_names.intersection(self.data['config_profiles']))
 
         if not force and self.exists:
             return
