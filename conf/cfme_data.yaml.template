@@ -50,7 +50,7 @@ management_systems:
         excluded_test_flags: volumes, html5_console, v2v
         name: vSphere 6.7 (nested)
         default_name: Virtual Center (<ip>)
-        credentials: vsphere65-nested
+        credentials: vsphere65-nested_creds_key
         hostname: <vsphere domain name>
         ipaddress: <vsphere ip>
         server_zone: default
@@ -174,7 +174,7 @@ management_systems:
         ansible_target:
             name: ansible_target
             template: v2v-rhel7-mini
-            credentials: ssa_rhel
+            credentials: ssa_rhel_creds_key
     ec2:
         tags:
             - ec2
@@ -278,29 +278,183 @@ management_systems:
             role_arn: <sts role arn>
             credentials: ec2_sts_creds_key
     openstack:
-        name: rhos-01
-        hostname: rhos-01i
-        ipaddress: 10.0.0.4
-        port: 5000
+        tags:
+            - openstack
+            - default
+            name: RHOS13
+            excluded_test_flags: alerts
+            hostname: <openstack domain name>
+            ipaddress: <openstack controller ip>
+            auth_url: http://<openstack keystone ip:5000/v3
+            domain_id: default
+            keystone_version: 3
+            api_version: 'Keystone v3'
+            port: 5000
+            credentials: openstack_creds_key
+            amqp_credentials: rabbitmq
+            server_zone: default
+            type: openstack
+            version: 16
+            small_template: cirros
+            network: 'default-int-net'
+            public_network: 'default-ext-net'
+            test_power_control: True
+            tenant: admin
+            provisioning:
+                instance_type: m1.tiny
+                instance_type2: m1.small
+                security_group: "default: Default security group"
+                item_type: OpenStack
+                guest_keypair:
+                availability_zone: nova
+                cloud_tenant: admin
+                cloud_network: 'default-int-net'
+                cloud_object_store: cloud_object_store_container
+                stacks:
+                    - heatstack_name
+                    - customstack_name
+                boot_disk_size:
+                image:
+                    id: <uuid>
+                    name: cirros
+                    os_distro: linux_generic
+                stack_provisioning:
+                    key_name: default_key
+                    instance_type: m1.small
+                    template_type: "Heat Templates"
+                    template_type_dd: "OpenStack Heat"
+                    template_name: "heatstack"
+                    data_file: rhos13_vm_template.data
+                use_for_sprout: false
+                ci-template: cloudinit-rhv
+                ci-username: root
+                ci-image: <cloud init image name>
+                ci-flavor-name: m1.small
+                ci-pass:
+                    inherit: customization_templates/cloudinit-rhv/replacements/pass
+            networks:
+                network_manager: RHOS13 Network Manager
+                cloud_tenant: admin
+            cap_and_util:
+                capandu_vm: cu-24x7
+            vm_analysis_new:
+                provisioning:
+                    instance_type: m1.small
+                    security_group: "default: Default security group"
+                    availability_zone: nova
+                    cloud_tenant: admin
+                    cloud_network: 'default-int-net'
+                vms:
+                    fedora-29-ext4:
+                        image: fedora-guest-image-29
+                        fs-type: ext4
+                        credentials: random_vm_ssh_creds_key
+            cleanup: True
+            endpoints:
+                default:
+                    hostname: <openstack domain name>
+                    api_port:
+                    security_protocol: Non-SSL
+                    credentials: openstack_creds_key
+                events:
+                    event_stream: Ceilometer
+            templates:
+                console_template:
+                    name: cirros
+                    creds: cirros_creds_key
+                small_template:
+                    name: cirros
+                    creds: cirros_creds_key
+            ansible_target:
+                name: ansible_target
+                template: cirros
+                credentials: cirros_creds_key
+    azure:
+        tags:
+            - azure
+            - default
+        excluded_test_flags: actions, metrics_collection, volumes, html5_console, webmks_console, cockpit
+        test_power_control: True
+        do_not_prefer: true
+        name: azure
+        type: azure
+        version: common
+        powershell_host: <host with powershell installed>
+        credentials: azure_creds_key
+        tenant_id: <tenant id>
+        subscription_id: <subscription id>
+        storage_account: <storage account name
+        small_template: fedora-tmpl-sm.vhd  # TODO Remove
+        region: East US 2
+        region_name: East US 2
+        provisioning:
+            resource_group: <resource group name>
+            storage_account: <storage account name>
+            template_container: <storage container name>
+            storage_container: <storage container name>
+            mode: Incremental (Default)
+            cloud_network: <cloud network name and IP range string>
+            cloud_subnet:  <cloud subnet name and IP range string>
+            security_group: <security group name>
+            user_vhd: <vhd blob OS image>
+            template_dir: <blob URL for templates>
+            vm_dir: <blob URL for vms>
+            vm_size: Standard_A1
+            instance_type: Standard_A1
+            item_type: "Azure"
+            customize_password: Pass4Azure1234
+            customize_username: qeuser
+            # Backend attributes
+            virtual_net: <virtual network name>
+            address_space: <virtual CIDR range>
+            subnet_range: <virtual CIDR range>
+            region_api: eastus2
+            image:
+                name: centos-tmpl
+            stack_provisioning:
+                template_type: "Azure Templates"
+                template_type_dd: "Microsoft Azure"
+                template_name: <template name>
+                data_file: azure_vm_template.json
+            ci-template: cloudinit
+            ci-username: root
+            ci-image: <cloud init image name>
+            ci-pass:
+                inherit: customization_templates/cloudinit/replacements/pass
+        cap_and_util:
+            capandu_vm: cu-24x7
+            chargeback_vm: cu-24x7
+            test_chargeback: True
+            capandu_azone: azure
+        cleanup: True
         endpoints:
             default:
-                hostname: rhos-01
-                ipaddress: 10.0.0.4
-                api_port:
-                credentials: rhos
-            events:
-                event_stream: AMQP
-                hostname: 10.0.0.4
-                api_port:
-                security_protocol: Non-SSL
-                credentials: rhos
-        auth_url: http://10.0.0.4:35357/v2.0/
-        tenant: demo
-        server_zone: default
-        type: openstack
-        network: defaultnetwork
-        test_vm_power_control:
-            - pwr-ctl-vm-1-dnd
+                credentials: azure_creds_key
+        templates:
+            small_template:
+                name: small-template-name.vhd
+                creds: azure_instance_creds_key
+            big_template:
+                name: 'Microsoft.Compute/Images/templates/tmpl-osDisk'
+                creds: azure_instance_creds_key
+        vm_analysis_new:
+            vms:
+                fedora:
+                    image: fedora-sm-tmpl
+                    credentials: azure_instance_creds_key
+                ubuntu18-04:
+                    image: ubuntu18-04tls
+                    credentials: azure_instance_creds_key
+                centos-7:
+                    image: centos-tmpl
+                    credentials: azure_instance_creds_key
+                windows2012:
+                    image: WS12R2Base-tmpl
+                    credentials: azure_instance_creds_key
+                windows2016:
+                    image: WS16Base-tmpl
+                    credentials: azure_instance_creds_key
+
     lenovo:
         name: lenovo
         type: lenovo
