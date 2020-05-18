@@ -12,6 +12,7 @@ from cfme.utils.appliance.plugin import AppliancePlugin
 from cfme.utils.appliance.plugin import AppliancePluginException
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
+from cfme.utils.log import logger
 from cfme.utils.path import scripts_path
 from cfme.utils.ssh_expect import SSHExpect
 from cfme.utils.version import LOWEST
@@ -456,6 +457,9 @@ class ApplianceDB(AppliancePlugin):
             except IndexError:
                 db_disk = None
 
+        result = client.run_command("ls /var/lib/pgsql/data/")
+        logger.info(f'NANDINI: pgsql.output is {result.output}')
+        logger.info(f'NANDINI: pgsql.success is {result.success}')
         db_mounted = False
         if not db_disk:
             # If we still don't have a db disk to use, see if a db disk/partition has already
