@@ -12,6 +12,7 @@ from cfme.infrastructure.config_management.config_systems import ConfigSystem
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Search
 
 
@@ -108,8 +109,17 @@ class MgrAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
+        # Workaround for a CFME behaviour, probably a bug:
+        # In case we are already in Explorer, but not on the overall table, we
+        # need to change here and back. This seems to be helping to get to the
+        # page with all providers displayed.
+        self.prerequisite_view.navigation.select('Compute')
+
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
-        self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
+        all_providers = 'All Ansible Tower Providers'
+        wait_for(lambda: all_providers in self.view.sidebar.providers.tree.read(),
+                 handle_exception=True)
+        self.view.sidebar.providers.tree.click_path(all_providers)
 
     def resetter(self, *args, **kwargs):
         # Reset view and selection
