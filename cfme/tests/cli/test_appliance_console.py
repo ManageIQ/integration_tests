@@ -9,6 +9,7 @@ from widgetastic.utils import VersionPick
 
 import cfme.utils.auth as authutil
 from cfme import test_requirements
+from cfme.exceptions import SSHExpectTimeoutError
 from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
 from cfme.utils.appliance.console import waiting_for_ha_monitor_started
@@ -18,6 +19,7 @@ from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.net import net_check
+from cfme.utils.ssh_expect import SSHExpect
 from cfme.utils.version import LOWEST
 
 SECONDARY_DNS_REGEX = r'(Secondary DNS:\s*)(?P<secondary_dns>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
@@ -1798,10 +1800,9 @@ def test_appliance_console_logfile_config_reboot():
     pass
 
 
-@pytest.mark.manual
 @pytest.mark.tier(0)
-@pytest.mark.meta(coverage=[1790995])
-def test_appliance_console_menubar():
+@pytest.mark.meta(automates=[1790995])
+def test_appliance_console_menubar(appliance):
     """
     There should not be error on menubar on appliance console
     Bugzilla:
@@ -1820,7 +1821,12 @@ def test_appliance_console_menubar():
             2.
             3. "translation missing: en.advanced_settings.timezone" should not be displayed
     """
-    pass
+    with SSHExpect(appliance) as interaction:
+        interaction.send('ap')
+        interaction.answer('Press any key to continue.', '', timeout=20)
+        interaction.expect('Choose the advanced setting: ', timeout=60)
+        with pytest.raises(SSHExpectTimeoutError):
+            interaction.expect('translation missing: ', timeout=60)
 
 
 @pytest.mark.manual
