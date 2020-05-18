@@ -861,7 +861,7 @@ def unquirked_ssh_client(**kwargs):
     * The SSHClient does not connect in the object creation time.
     """
     if kwargs['hostname'] is None:
-        raise ValueError(f'The hostname argument cannot be None!')
+        raise ValueError('The hostname argument cannot be None!')
     client = SSHClient(use_check_port=False, **kwargs)
     client.connect()
     return client
