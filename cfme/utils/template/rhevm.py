@@ -32,14 +32,25 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
     @log_wrap("import template from Glance server")
     def import_template_from_glance(self):
         """Import the template from glance to local rhevm datastore, sucks."""
-        self.mgmt.import_glance_image(
-            source_storage_domain_name=self.glance_key,
-            target_cluster_name=self.provider_data.template_upload.cluster,
-            source_template_name=self.image_name,
-            target_template_name=self.temp_template_name,
-            target_storage_domain_name=self.provider_data.template_upload.storage_domain)
-        mgmt_network = self.provider_data.template_upload.get('management_network')
-        rv_tmpl = self.mgmt.get_template(self.temp_template_name)
+        if self.stream == 'upstream':
+            self.mgmt.import_glance_image(
+                source_storage_domain_name=self.glance_key,
+                target_cluster_name=self.provider_data.template_upload.cluster,
+                source_template_name=self.image_name,
+                target_template_name=self.template_name,
+                target_storage_domain_name=self.provider_data.template_upload.storage_domain)
+            mgmt_network = self.provider_data.template_upload.get('management_network')
+            rv_tmpl = self.mgmt.get_template(self.template_name)
+
+        else:
+            self.mgmt.import_glance_image(
+                source_storage_domain_name=self.glance_key,
+                target_cluster_name=self.provider_data.template_upload.cluster,
+                source_template_name=self.image_name,
+                target_template_name=self.temp_template_name,
+                target_storage_domain_name=self.provider_data.template_upload.storage_domain)
+            mgmt_network = self.provider_data.template_upload.get('management_network')
+            rv_tmpl = self.mgmt.get_template(self.temp_template_name)
         if mgmt_network:
             # network devices, qcow template doesn't have any
             temp_nics = rv_tmpl.get_nics()
@@ -127,11 +138,12 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
             self.glance_upload()
             self.add_glance_to_provider()
             self.import_template_from_glance()
-            self.deploy_vm_from_template()
-            if self.stream == 'upstream':
-                self.manageiq_cleanup()
-            self.add_disk_to_vm()
-            self.templatize_vm()
+            if self.stream == 'downstream':
+                self.deploy_vm_from_template()
+            # if self.stream == 'upstream':
+            #    self.manageiq_cleanup()
+                self.add_disk_to_vm()
+                self.templatize_vm()
             return True
         except Exception:
             logger.exception('template creation failed for provider {}'.format(
