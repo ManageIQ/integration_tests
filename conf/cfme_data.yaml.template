@@ -454,7 +454,50 @@ management_systems:
                 windows2016:
                     image: WS16Base-tmpl
                     credentials: azure_instance_creds_key
-
+    gce_central:
+        since_version: "5.6"
+        tags:
+            - gce
+            - default
+        excluded_test_flags: vm_analysis, actions, timelines, html5_console, webmks_console, cockpit
+        name: gce_central
+        zone: us-central1-a
+        region: us-central1
+        region_name: Central US
+        credentials: gce_creds_key
+        type: gce
+        project: <project id>
+        small_template:  auto-damn-small-linux
+        test_power_control: True
+        provisioning:
+            instance_type: "f1-micro"
+            security_group:
+            item_type: "Google"
+            availability_zone: us-central1-a
+            cloud_tenant:
+            boot_disk_size: "10 GB"
+            cloud_network: default
+            guest_keypair:
+            image:
+                name: auto-damn-small-linux
+            ci-template: cloudinit
+            ci-username: ubuntu
+            ci-image: ubuntu-1710-artful-v20180405
+            ci-pass:
+                inherit: customization_templates/cloudinit/replacements/pass
+        cap_and_util:
+            capandu_vm: cu-24x7
+            chargeback_vm: cu-24x7
+            test_chargeback: True
+            capandu_azone: us-east1-b
+        cleanup: True
+        endpoints:
+            default:
+                credentials: gce_creds_key
+        templates:
+            small_template:
+                name: auto-damn-small-linux
+                creds: random_vm_ssh_creds_key
     lenovo:
         name: lenovo
         type: lenovo
