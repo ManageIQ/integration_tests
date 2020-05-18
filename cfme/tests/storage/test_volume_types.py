@@ -31,7 +31,7 @@ def test_storage_volume_type_present(appliance, provider, request):
     Bugzilla:
         1650082
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         caseimportance: medium
         initialEstimate: 1/4h
         casecomponent: Cloud

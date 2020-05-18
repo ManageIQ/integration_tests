@@ -359,7 +359,7 @@ def test_crosshair_op_instance_ec2():
     2.2 Hourly events for this VM
 
     Polarion:
-        assignee: mshriver
+        assignee: gtalreja
         casecomponent: CandU
         caseimportance: medium
         initialEstimate: 1/12h
@@ -516,7 +516,7 @@ def test_ec2_instance_memory_metrics():
             1684525
 
         Polarion:
-            assignee: mmojzis
+            assignee: gtalreja
             casecomponent: Cloud
             initialEstimate: 1h
             caseimportance: medium

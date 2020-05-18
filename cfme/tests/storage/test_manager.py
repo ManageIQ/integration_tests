@@ -40,7 +40,7 @@ def manager(request, appliance, provider):
 def test_manager_navigation(manager):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: critical
@@ -61,7 +61,7 @@ def test_storage_manager_edit_tag(manager):
         * Storage provider
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: medium
@@ -89,7 +89,7 @@ def test_storage_manager_delete(manager, provider_cleanup):
         * Storage provider
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: medium
@@ -113,7 +113,7 @@ def test_storage_manager_navigation_from_cloudprovider(manager, provider):
         * Storage provider
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -144,7 +144,7 @@ def test_storage_manager_quadicon_numbers(manager, provider, provider_cleanup, r
         * Storage provider
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/8h
         casecomponent: Cloud
         caseimportance: high
