@@ -17,6 +17,7 @@ TEST_PASSWORDS = [
     f"$#!{fauxfactory.gen_alpha()}",  # spec char
     f"{fauxfactory.gen_alpha(17)}",  # pw > 16 char
     "",  # blank
+    fauxfactory.gen_alpha().upper(),  # uppercase char
 ]
 
 
@@ -50,7 +51,8 @@ def nonexistent_user(appliance):
 @pytest.mark.parametrize(
     "pwd",
     TEST_PASSWORDS,
-    ids=["trailing_whitspace", "leading_whitespace", "spec_char", "gt_16char", "blank"]
+    ids=["trailing_whitspace", "leading_whitespace", "spec_char", "gt_16char",
+         "blank", "upper_case"]
 )
 def test_db_user_pwd(appliance, user, pwd, soft_assert):
     """
