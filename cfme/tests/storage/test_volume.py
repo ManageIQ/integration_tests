@@ -123,7 +123,7 @@ def test_storage_volume_create_cancelled_validation(appliance, provider, from_ma
         * Storage provider
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
         testSteps:
@@ -145,7 +145,7 @@ def test_storage_volume_crud(appliance, provider, from_manager):
         * Storage provider
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
         caseimportance: high
@@ -188,7 +188,7 @@ def test_storage_volume_attach_detach(appliance, provider, instance_fixture, fro
         * Instance
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
         startsin: 5.7
@@ -226,7 +226,7 @@ def test_storage_volume_attached_delete(appliance, provider, instance_fixture, r
         RHCF3-21779 - test_storage_volume_attach[openstack]
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/16h

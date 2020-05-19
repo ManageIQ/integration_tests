@@ -60,7 +60,7 @@ def backup(appliance, provider):
 def test_storage_volume_backup_create(backup):
     """
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
     """
@@ -95,7 +95,7 @@ def test_storage_volume_backup_delete(backup):
     """ Volume backup deletion method not support by 5.8
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         initialEstimate: 1/4h
         casecomponent: Cloud
     """
@@ -111,7 +111,7 @@ def test_storage_volume_backup_restore(appliance, backup, provider, request):
         test_storage_volume_backup[openstack]
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/5h
@@ -141,7 +141,7 @@ def test_storage_volume_backup_restore_new_volume(appliance, backup, provider, r
         test_storage_volume_backup[openstack]
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/5h
@@ -172,7 +172,7 @@ def test_storage_volume_backup_restore_from_backup_page(appliance, backup, provi
         test_storage_volume_backup[openstack]
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/5h
@@ -206,7 +206,7 @@ def test_storage_volume_backup_restore_new_volume_from_backup_page(appliance, ba
         test_storage_volume_backup[openstack]
 
     Polarion:
-        assignee: mmojzis
+        assignee: gtalreja
         casecomponent: Cloud
         caseimportance: medium
         initialEstimate: 1/5h

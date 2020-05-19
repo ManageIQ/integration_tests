@@ -508,7 +508,7 @@ stack = pytest.mark.requirement(
 storage = pytest.mark.requirement(
     "Block/Object Storage",
     description='Cloud provider storage management for volumes and blocks',
-    assignee_id='mmojzis',
+    assignee_id='gtalreja',
     priority='low',  # OSP only
 )
 
