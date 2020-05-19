@@ -4,10 +4,12 @@ import socket
 import fauxfactory
 import pytest
 from wait_for import TimedOutError
+from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
+from cfme.common.host_views import HostsView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
@@ -86,7 +88,6 @@ def navigate_and_select_quads(provider):
 
     Returns:
         view: the provider nodes view, quadicons already selected"""
-    # TODO: prichard navigate instead of creating views and consider creaing EditableMixin
     hosts_view = navigate_to(provider, 'ProviderNodes')
     assert hosts_view.is_displayed
     [h.ensure_checked() for h in hosts_view.entities.get_all()]
@@ -462,6 +463,8 @@ def test_infrastructure_hosts_compare(appliance, setup_provider_min_hosts, provi
         casecomponent: Infra
         caseimportance: high
         initialEstimate: 1/6h
+    Bugzilla:
+        1746214
     """
 
     h_coll = locals()[hosts_collection].collections.hosts
@@ -487,6 +490,7 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         initialEstimate: 1/3h
     Bugzilla:
         1747545
+
     """
     h_coll = locals()[hosts_collection].collections.hosts
     hosts_view = h_coll.compare_entities(entities_list=h_coll.all()[:num_hosts])
@@ -526,26 +530,90 @@ def test_add_ipmi_refresh(appliance, setup_provider):
 
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("crud_action", ['edit_from_hosts', 'edit_from_details', 'remove'])
-def test_infrastructure_hosts_crud(appliance, setup_provider, crud_action):
+@pytest.mark.meta(automates=[1634794])
+def test_infrastructure_hosts_crud(appliance, setup_provider):
     """
     Polarion:
         assignee: prichard
         casecomponent: Infra
         caseimportance: low
         initialEstimate: 1/6h
+    Bugzilla:
+        1634794
     """
     host = appliance.collections.hosts.all()[0]
-    if crud_action != 'remove':
-        stamp = fauxfactory.gen_alphanumeric()
-        new_custom_id = f'Edit host data. {stamp}'
 
-        with update(host, from_details=(crud_action == 'edit_from_details')):
-            host.custom_ident = new_custom_id
+    # Case1 - edit from Hosts
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    with update(host, from_details=False):
+        host.custom_ident = new_custom_id
+    # verify edit
+    assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+        "Custom Identifier") == new_custom_id
 
-        assert host.custom_ident == new_custom_id
+    # Case2 - edit from Details
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    with update(host, from_details=True):
+        host.custom_ident = new_custom_id
+    # verify edit
+    assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+        "Custom Identifier") == new_custom_id
+
+    # Case3 - canceling the edit
+    # get the existing value
+    try:
+        existing_custom_id = navigate_to(host, 'Details').entities.summary(
+            "Properties").get_text_of("Custom Identifier")
+    except NameError:
+        existing_custom_id = None
+    # start edit and cancel
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    with update(host, from_details=True, cancel=True):
+        host.custom_ident = new_custom_id
+    # verify edit
+    # No changes are expected. Comparing to existing value captured above.
+    try:
         assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
-            "Custom Identifier") == new_custom_id
-    else:
-        host.delete()
-        host.delete(cancel=False)
+            "Custom Identifier") == existing_custom_id
+    except NameError:
+        if existing_custom_id:
+            raise
+
+    # Case4 - navigate away from edit view before making any updates in UI.
+    view = navigate_to(host, "Edit")
+    # navigate away before any changes have been made in the edit view
+    try:
+        view.navigation.select('Compute', 'Infrastructure', 'Hosts', handle_alert=False)
+    except UnexpectedAlertPresentException as e:
+        if "Abandon changes" in e.msg:
+            pytest.fail("Abandon changes alert displayed, but no changes made. BZ1634794")
+        else:
+            raise
+    view = host.create_view(HostsView)
+    assert view.is_displayed
+    # No changes are expected. Comparing to existing value captured above.
+    try:
+        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+            "Custom Identifier") == existing_custom_id
+    except NameError:
+        if existing_custom_id:
+            raise
+
+    # Case5 -Nav away from edit view after making updates in UI(not saved).
+    new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
+    view = navigate_to(host, "Edit")
+    view.fill({"custom_ident": new_custom_id})
+    # navigate away here after changes have been made in the edit view(not saved)
+    view = navigate_to(host.parent, "All")
+    assert view.is_displayed
+    # No changes are expected. Comparing to existing value captured above.
+    try:
+        assert navigate_to(host, 'Details').entities.summary("Properties").get_text_of(
+            "Custom Identifier") == existing_custom_id
+    except NameError:
+        if existing_custom_id:
+            raise
+
+    # Case6 - lastly do the delete. First try is canceled.
+    host.delete(cancel=True)
+    host.delete

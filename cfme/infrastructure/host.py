@@ -94,12 +94,16 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def update(self, updates, validate_credentials=False, from_details=True):
+    def update(self, updates, validate_credentials=False, from_details=True, cancel=False):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
         Args:
-           updates (dict): fields that are changing.
+            updates (dict): fields that are changing.
+            validate_credentials (bool): if True, validate host credentials
+            from_details (bool): if True, select 'Edit Selected items' from details view
+                else, select 'Edit Selected items' from hosts view
+            cancel (bool): click cancel button to cancel the edit if True
         """
         if from_details:
             view = navigate_to(self, "Edit")
@@ -137,7 +141,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, Taggable,
                 view.endpoints.ipmi.validate_button.click()
         view.flash.assert_no_error()
         changed = any([changed, credentials_changed, ipmi_credentials_changed])
-        if changed:
+        if changed and not cancel:
             view.save_button.click()
             logger.debug("Trying to save update for host with id: %s", str(self.get_db_id))
             view = self.create_view(HostDetailsView)

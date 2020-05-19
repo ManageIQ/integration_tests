@@ -307,7 +307,7 @@ class HostEditView(HostFormView):
     @property
     def is_displayed(self):
         return (
-            self.logged_in_as_current_user and self.navigation.currently_selected == [
+            self.in_compute_infrastructure_hosts and self.navigation.currently_selected == [
                 'Compute', 'Infrastructure', 'Hosts'] and self.title.text == 'Info/Settings')
 
 
