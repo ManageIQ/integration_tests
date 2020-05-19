@@ -16,7 +16,7 @@ def pytest_addoption(parser):
         action='store_true',
         default=False,
         dest='generate_bz_report',
-        help='Generate a BZ report based on the automates/coverage metadata of test cases.'
+        help='Generate a BZ report based on the automates metadata of test cases.'
     )
 
 
@@ -42,6 +42,6 @@ def pytest_collection_modifyitems(session, config, items):
             yaml.dump(info, outfile, default_flow_style=False)
     else:
         store.terminalreporter.write(
-            "ERROR: No BZs marked with 'automates'/'coverage' in that test module. A report will "
+            "ERROR: No BZs marked with 'automates' in that test module. A report will "
             "not be generated.\n", bold=True
         )
