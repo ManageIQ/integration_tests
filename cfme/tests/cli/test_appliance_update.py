@@ -1,3 +1,4 @@
+import re
 from collections import namedtuple
 
 import fauxfactory
@@ -115,13 +116,21 @@ def do_yum_update(appliance):
     with appliance.ssh_client as ssh:
         result = ssh.run_command('yum update -y', timeout=3600)
         assert result.success, f"update failed {result.output}"
+
+    output = str(result)
+    rpmnew_regex = r'warning: (.*) created as (.*\.rpmnew)'
+    groups = re.findall(rpmnew_regex, output)
+    map(lambda rpmold, rpmnew: ssh.run_command(f'mv {rpmnew} {rpmold}'), groups)
+    output = '\n'.join(filter(lambda x: not re.match(rpmnew_regex, x), result.output.splitlines()))
+
     appliance.evmserverd.start()
     appliance.wait_for_web_ui()
+    return output
 
 
-@pytest.mark.meta(automates=[1714236])
+@pytest.mark.meta(automates=[1714236, 1674055])
 def test_update_yum(appliance_preupdate, appliance):
-    """Tests appliance update between versions
+    """Tests appliance update between versions - version changed and there are no warnings or errors
 
     Polarion:
         assignee: jhenner
@@ -132,35 +141,11 @@ def test_update_yum(appliance_preupdate, appliance):
     Bugzilla:
         1714236
     """
-    do_yum_update(appliance_preupdate)
+    update_output = do_yum_update(appliance_preupdate)
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version
-
-
-@pytest.mark.manual
-@pytest.mark.meta(coverage=[1674055])
-def test_update_yum_no_errors(old_version):
-    """ Test that the yum update doesn't spill any erros or warnings.
-
-    Polarion:
-        assignee: jhenner
-        caseimportance: high
-        casecomponent: Appliance
-        initialEstimate: 1/4h
-        testSteps:
-            1. Boot preupdate CFME
-            2. Add repos to update to.
-            3. Do the yum update, check there are no errors in the stderr and
-               perhaps also in stdout.
-        expectedResults:
-            1.
-            2.
-            3. No erros in the stderr and stdout, yum exit status is 0
-
-    Bugzilla:
-        1674055
-    """
-    pass
+    matches = re.search(r'error|warning|fail', update_output, re.IGNORECASE)
+    assert not matches, f"update output contains {matches.group()}\n\n{update_output}"
 
 
 @pytest.mark.ignore_stream("upstream")
