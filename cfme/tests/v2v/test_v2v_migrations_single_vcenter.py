@@ -148,7 +148,11 @@ def test_multi_host_multi_vm_migration(request, appliance, provider,
         wait_for(func=_is_migration_started, func_args=[vm],
             message="migration has not started for all VMs", delay=5, num_sec=300)
 
-    host_creds = provider.hosts.all()
+    if provider.one_of(OpenStackProvider):
+        host_creds = provider.appliance.collections.openstack_nodes.all()
+    else:
+        host_creds = provider.hosts.all()
+
     hosts_dict = {key.name: [] for key in host_creds}
     for vm in vms:
         popup_text = request_details_list.read_additional_info_popup(vm)
