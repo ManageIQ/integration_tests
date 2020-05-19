@@ -97,23 +97,6 @@ def test_notification_banner_service_event_should_be_shown_in_notification_bell(
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_reconfigure_service_fields_empty_after_deploying_service():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: service
-    Bugzilla:
-        1580987
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
 def test_custom_image_on_item_bundle_crud():
     """
     Polarion:
@@ -298,23 +281,6 @@ def test_user_should_be_able_to_change_the_order_of_values_of_the_drop_down_list
         tags: service
     Bugzilla:
         1594301
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_search_field_at_the_top_of_a_dynamic_drop_down_dialog_element_should_display():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1553347
     """
     pass
 

@@ -10,6 +10,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ssui import navigate_to as ssui_nav
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
@@ -1149,3 +1150,37 @@ def test_dynamic_dialog_field_associations(appliance, import_datastore, import_d
     view.flash.assert_message([
         'There was an error editing this dialog: Failed to update service dialog -'
         'text-box already exists in ["text-box", "textarea"]'])
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1576873])
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1576873.zip", "bz_1576873", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1576873.yml"], ids=["dynamic_dialog"])
+@pytest.mark.parametrize('context', [ViaUI, ViaSSUI])
+def test_dynamic_dropdown_refresh_load(appliance, import_datastore, import_data,
+                                       generic_catalog_item_with_imported_dialog, context):
+    """
+    Bugzilla:
+        1576873
+    Polarion:
+        assignee: nansari
+        startsin: 5.10
+        casecomponent: Services
+        initialEstimate: 1/16h
+    """
+    catalog_item, _, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
+    with appliance.context.use(context):
+        if context == ViaSSUI:
+            view = ssui_nav(service_catalogs, "Details")
+        else:
+            view = navigate_to(service_catalogs, "Order")
+        with LogValidator(
+                "/var/www/miq/vmdb/log/automation.log",
+                matched_patterns=['We are in B'],
+                failure_patterns=["We are in A"]).waiting(timeout=120):
+            view.fields(ele_label).dropdown.fill("b")

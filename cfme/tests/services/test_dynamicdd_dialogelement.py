@@ -381,22 +381,6 @@ def test_read_dynamic_textbox_dialog_element(appliance, import_datastore, import
     wait_for(lambda: view.fields("dyna_txtbox2").read() == 'YES', timeout=7)
 
 
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_automation_executed_on_field_refresh_are_called_twice_in_self_service_dialogs():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-
-    Bugzilla:
-        1576873
-    """
-    pass
-
-
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1580535, 1694737])
 @pytest.mark.tier(2)
