@@ -23,16 +23,12 @@ def pytest_addoption(parser):
 def pytest_collection_modifyitems(session, config, items):
     if not config.getvalue("generate_bz_report"):
         return
-    store.terminalreporter.write("Loading automated/covered BZs ...\n", bold=True)
+    store.terminalreporter.write("Loading automated BZs ...\n", bold=True)
     bz_list = []
     for item in items:
-        if "automates" not in item._metadata and "coverage" not in item._metadata:
-            continue
         # get list of bzs with coverage
         if "automates" in item._metadata:
             bz_list.extend(item._metadata["automates"])
-        if "coverage" in item._metadata:
-            bz_list.extend(item._metadata["coverage"])
 
     if bz_list:
         # remove duplicate BZs

@@ -106,9 +106,9 @@ class Bugzilla:
                 logger.info('Using api key for Bugzilla authentication')
                 bz_kwargs.update(dict(api_key=bz_creds.get('api_key')))
             else:
-                logger.error('Credentials key for bugzilla does not have username or api key')
+                raise Exception('Credentials key for bugzilla does not have username or api key')
         else:
-            logger.warn('No credentials found for bugzilla')
+            raise Exception('No credentials found for bugzilla')  # where should I catch these???^
 
         return cls(**bz_kwargs)
 
