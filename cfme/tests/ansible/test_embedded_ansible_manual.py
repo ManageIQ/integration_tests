@@ -361,3 +361,43 @@ def test_embed_tower_playbook_with_retry_method():
             9. Check automation.log to make sure the playbook retried 3 times and then ended OK.
     """
     pass
+
+
+@pytest.mark.tier(3)
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.meta(coverage=[1807928])
+@pytest.mark.parametrize("username, auth",
+                         [
+                             ('username', 'password'),
+                             ('username', 'access_token'),
+                             ('username', 'ssh-key')
+                         ],
+                         ids=['basic', 'access_token', 'ssh_key']
+                         )
+def test_embed_tower_exec_play_with_diff_auth(appliance, provider, username, auth):
+    """
+
+    Bugzilla:
+        1807928
+
+    Polarion:
+        assignee: gtalreja
+        casecomponent: Ansible
+        caseimportance: high
+        initialEstimate: 1h
+        tags: ansible_embed
+        startsin: 5.11
+        testSteps:
+            1. Enable Embedded Ansible role.
+            2. Add private repo (which is bare repo with `git submodule`).
+            3. Add Credentials as per different `auth_type`.
+            4. Add Catalog Item and Catalog.
+            5. Order a Playbook.
+        expectedResults:
+            1. Check Embedded Ansible Role is started.
+            2. Check repo is added.
+            3. Check Credentials are added
+            4.
+            5. Playbook should execute.
+    """
+    pass

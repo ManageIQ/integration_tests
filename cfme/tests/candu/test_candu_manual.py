@@ -3,8 +3,11 @@ import pytest
 
 from cfme import test_requirements
 
+pytestmark = [
+    pytest.mark.manual,
+]
 
-@pytest.mark.manual
+
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_datastore():
@@ -21,7 +24,6 @@ def test_bottleneck_datastore():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_provider():
@@ -38,7 +40,6 @@ def test_bottleneck_provider():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_host():
@@ -55,7 +56,6 @@ def test_bottleneck_host():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(2)
 def test_bottleneck_cluster():
@@ -72,7 +72,6 @@ def test_bottleneck_cluster():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.bottleneck
 @pytest.mark.tier(1)
 def test_bottleneck_summary_graph():
@@ -91,9 +90,8 @@ def test_bottleneck_summary_graph():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(1)
+@test_requirements.c_and_u
 def test_utilization_utilization_graphs():
     """
     Polarion:
@@ -112,9 +110,8 @@ def test_utilization_utilization_graphs():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_utilization_provider():
     """
     Verify гutilication data from providers
@@ -129,9 +126,8 @@ def test_utilization_provider():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_utilization_cluster():
     """
     Verify гutilication data from cluster
@@ -146,9 +142,8 @@ def test_utilization_cluster():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_utilization_host():
     """
     Verify utilication data from host
@@ -163,9 +158,8 @@ def test_utilization_host():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_crosshair_op_cluster_vsphere65():
     """
     Requires:
@@ -189,9 +183,8 @@ def test_crosshair_op_cluster_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_crosshair_op_azone_azure():
     """
     Utilization Test
@@ -205,9 +198,8 @@ def test_crosshair_op_azone_azure():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_crosshair_op_azone_ec2():
     """
     test_crosshair_op_azone[ec2]
@@ -222,9 +214,8 @@ def test_crosshair_op_azone_ec2():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_host_tagged_crosshair_op_vsphere65():
     """
     Required C&U enabled application:1. Navigate to host C&U graphs
@@ -241,9 +232,8 @@ def test_host_tagged_crosshair_op_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_cluster_graph_by_vm_tag_vsphere65():
     """
     test_cluster_graph_by_vm_tag[vsphere65]
@@ -257,9 +247,8 @@ def test_cluster_graph_by_vm_tag_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_cluster_graph_by_host_tag_vsphere65():
     """
     test_cluster_graph_by_host_tag[vsphere65]
@@ -273,9 +262,8 @@ def test_cluster_graph_by_host_tag_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_candu_graphs_vm_compare_host_vsphere65():
     """
     test_candu_graphs_vm_compare_host[vsphere65]
@@ -289,9 +277,8 @@ def test_candu_graphs_vm_compare_host_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_candu_graphs_vm_compare_cluster_vsphere65():
     """
     test_candu_graphs_vm_compare_cluster[vsphere65]
@@ -305,9 +292,8 @@ def test_candu_graphs_vm_compare_cluster_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_crosshair_op_vm_vsphere65():
     """
     Requires:
@@ -329,9 +315,8 @@ def test_crosshair_op_vm_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_crosshair_op_instance_azure():
     """
     Utilization Test
@@ -345,9 +330,8 @@ def test_crosshair_op_instance_azure():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_crosshair_op_instance_ec2():
     """
     Verify that the following cross-hair operations can be performed on
@@ -368,9 +352,8 @@ def test_crosshair_op_instance_ec2():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_crosshair_op_datastore_vsphere65():
     """
     Requires:
@@ -392,9 +375,8 @@ def test_crosshair_op_datastore_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_group_by_tag_azone_azure():
     """
     Utilization Test
@@ -408,9 +390,8 @@ def test_group_by_tag_azone_azure():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_azone_group_by_tag_ec2():
     """
     test_azone_group_by_tag[ec2]
@@ -425,9 +406,8 @@ def test_azone_group_by_tag_ec2():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(2)
+@test_requirements.c_and_u
 def test_candu_graphs_datastore_vsphere6():
     """
     test_candu_graphs_datastore[vsphere6]
@@ -441,9 +421,8 @@ def test_candu_graphs_datastore_vsphere6():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_crosshair_op_host_vsphere65():
     """
     Requires:
@@ -466,9 +445,8 @@ def test_crosshair_op_host_vsphere65():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_candu_collection_tab():
     """
     Test case to cover -
@@ -489,9 +467,8 @@ def test_candu_collection_tab():
     pass
 
 
-@pytest.mark.manual
-@test_requirements.c_and_u
 @pytest.mark.tier(3)
+@test_requirements.c_and_u
 def test_cluster_tagged_crosshair_op_vsphere65():
     """
     Required C&U enabled application:1. Navigate to cluster C&U graphs
@@ -508,7 +485,7 @@ def test_cluster_tagged_crosshair_op_vsphere65():
     pass
 
 
-@pytest.mark.manual
+@pytest.mark.tier(3)
 @test_requirements.c_and_u
 def test_ec2_instance_memory_metrics():
     """
@@ -516,7 +493,7 @@ def test_ec2_instance_memory_metrics():
             1684525
 
         Polarion:
-            assignee: mmojzis
+            assignee: gtalreja
             casecomponent: Cloud
             initialEstimate: 1h
             caseimportance: medium
@@ -538,5 +515,35 @@ def test_ec2_instance_memory_metrics():
                 5.
                 6.
                 7. Memory metrics should have data.
+    """
+    pass
+
+
+@pytest.mark.tier(3)
+@test_requirements.c_and_u
+@pytest.mark.meta(coverage=[1776684])
+def test_candu_verify_global_utilization_metrics():
+    """
+        Bugzilla:
+            1776684
+
+        Polarion:
+            assignee: gtalreja
+            casecomponent: CandU
+            initialEstimate: 1h
+            caseimportance: medium
+            startsin: 5.10
+            testSteps:
+                1. Set up replication with 2 appliances global and remote
+                2. Enable C&U data on both appliances
+                3. Add provider on the remote, check data on the provider's dashboard
+                4. Add same provider on the global, check data on the provider's dashboard
+                5. Wait for at least 1 day for "Global Utilization" tab for providers
+            expectedResults:
+                1.
+                2.
+                3.
+                4.
+                5. Metrics should be same for Global and Remote regions.
     """
     pass
