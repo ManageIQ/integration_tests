@@ -1510,7 +1510,7 @@ def test_add_second_provider(setup_provider, provider, request):
 
 
 @test_requirements.ec2
-@pytest.mark.automates([1710599, 1710623])
+@pytest.mark.meta(automates=[1710599, 1710623])
 @pytest.mark.ignore_stream("5.10")  # BZ 1710623 was not merged into 5.10
 def test_provider_compare_ec2_provider_and_backup_regions(appliance):
     """
