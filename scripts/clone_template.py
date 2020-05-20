@@ -346,7 +346,8 @@ def main(**kwargs):
                 # openshift appliances don't need any additional configuration
                 pass
             else:
-                app.configure(timeout=600)
+                # app.configure(timeout=600)
+                pass
             logger.info('Successfully Configured the appliance.')
     except Exception as e:
         logger.exception(e)

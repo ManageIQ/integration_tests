@@ -29,7 +29,7 @@ from cfme.utils.path import project_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import TimedOutError
-# from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 NUM_OF_TRIES = 3
 lock = Lock()
@@ -444,14 +444,12 @@ class ProviderTemplateUpload:
         # Get SSH Client args
         client_args = self.raw_vm_ssh_client_args
         # Check to make sure appliance-initialization has run
-        """
         wait_for(func=check_appliance_init,
                  func_args=[client_args],
                  fail_condition=False,
                  delay=5,
                  timeout=300,
                  message='Waiting for appliance-initialization to complete')
-        """
         for service in upstream_services:
             self.execute_ssh_command(f'{service}', client_args=client_args)
         for cleanup in upstream_cleanup:
