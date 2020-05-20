@@ -434,7 +434,6 @@ class ProviderTemplateUpload:
         ]
 
         upstream_services = [
-            "systemctl stop appliance-initialize"
             "systemctl stop evmserverd",
             "systemctl disable evmserverd",
             "systemctl stop postgresql.service",
