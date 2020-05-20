@@ -30,6 +30,7 @@ from bugzilla_data import BugzillaData
 
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
+from cfme.utils.bz import Bugzilla
 from cfme.utils.log import logger
 from cfme.utils.path import data_path
 from cfme.utils.version import current_version
@@ -45,6 +46,11 @@ BZ_URL = conf.env.bugzilla.url
 
 
 def get_report(directory, inc_manual=True):
+    bz_instance = Bugzilla.from_config()
+    if not (bz_instance.user or bz_instance.key):
+        msg = ("ERROR: Credentials key for bugzilla does not have username or api key.")
+        click.secho(msg, err=True, bold=True, fg="red")
+        sys.exit(0)
     click.echo("Generating a BZ report in bz-report.yaml")
     options = ["--use-provider", "complete",
         "--long-running",
@@ -227,7 +233,7 @@ def list(directory, bz_status):
 @click.argument("directory", default="cfme/tests")
 @click.option(
     "-m",
-    "--inc_man",
+    "--inc_manual",
     "inc_manual",
     is_flag=True,
     help="Include BZs that are marked in coverage test metadata for manual tests",
