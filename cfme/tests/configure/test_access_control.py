@@ -19,6 +19,7 @@ from cfme.utils.auth import auth_user_data
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
@@ -2842,3 +2843,51 @@ def test_default_tenat_name_rail_console():
             2. tenant name should be updated on rail console
     """
     pass
+
+
+@pytest.mark.customer_scenario
+@test_requirements.rbac
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1813375])
+def test_create_group_console_no(appliance, request):
+    """
+    Should able to create group if atleast one 'Show in Console' category to NO
+    Bugzilla:
+        1813375
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/4h
+        testSteps:
+            1. Go to Configuration > Settings accordion > Region node in accordion > Tags tab >
+            My Company Categories tab
+            2. For a new/an existing category set 'Show in Console' to 'No' and save the category
+            3. Go to Configuration > Access Control accordion > Groups
+            4. Toolbar: Configuration > Add a new Group
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Should able to create group and there should not be error in production.log
+
+    """
+    # creating new category with show_in_console is "No"
+    cg = appliance.collections.categories.create(
+        name=fauxfactory.gen_alphanumeric(10, start="name_").lower(),
+        description=fauxfactory.gen_alphanumeric(32, start="long_desc_"),
+        display_name=fauxfactory.gen_alphanumeric(32, start="desc_"),
+        show_in_console=False
+    )
+    request.addfinalizer(cg.delete_if_exists)
+    msg = ".*FATAL -- : Error caught: [NoMethodError] undefined method.*"
+    with LogValidator(
+            "/var/www/miq/vmdb/log/production.log",
+            failure_patterns=[msg],
+    ).waiting(timeout=120):
+        # creating group
+        group = appliance.collections.groups.create(
+            description=fauxfactory.gen_alphanumeric(22, "group_description_"),
+            role="EvmRole-vm_user",
+        )
+        request.addfinalizer(group.delete_if_exists)
