@@ -8,6 +8,7 @@ from cfme.automate.dialogs.service_dialogs import DetailsDialogView
 from cfme.fixtures.automate import DatastoreImport
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.rest.gen_data import services as _services
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance import ViaUI
@@ -87,6 +88,13 @@ def custom_categories(appliance):
     )
     yield category
     category.delete_if_exists()
+
+
+@pytest.fixture
+def service(appliance, request, generic_catalog_item_with_imported_dialog):
+    catalog_item, dialog, ele_label = generic_catalog_item_with_imported_dialog
+    service_template = appliance.rest_api.collections.service_templates.get(name=catalog_item.name)
+    return _services(request, appliance, provider=None, service_template=service_template)[0]
 
 
 @pytest.mark.tier(1)
@@ -613,10 +621,15 @@ def test_dynamic_dialogs(appliance, import_datastore, generic_catalog_item_with_
     assert view.fields("param_database").checkbox.read()
 
 
-@pytest.mark.meta(coverage=[1706600])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1706600])
 @pytest.mark.tier(2)
-def test_dynamic_dialogs_on_service_request():
+@pytest.mark.parametrize(
+    "import_data", [DatastoreImport("bz_1706600.zip", "billy", None)], ids=["datastore"]
+)
+@pytest.mark.parametrize("file_name", ["bz_1706600.yml"], ids=["sample_dialog"])
+def test_dynamic_dialogs_on_service_request(
+    appliance, import_datastore, generic_catalog_item_with_imported_dialog, service
+):
     """
 
     Bugzilla:
@@ -643,7 +656,12 @@ def test_dynamic_dialogs_on_service_request():
             5.
             6. Dialog Fields should populate in the System Request
     """
-    pass
+    import time; time.sleep(300)
+    request = appliance.collections.requests.instantiate(
+        f"Provisioning Service [{service.name}] from [{service.name}]"
+    )
+    view = navigate_to(request, "Details")
+    assert view.details.request_details.read()["Text Box"] == "data text displays yada yada yada"
 
 
 @pytest.mark.meta(coverage=[1693264])
