@@ -1,10 +1,12 @@
 import fauxfactory
 import pytest
 from selenium.common.exceptions import NoSuchElementException
+from widgetastic_patternfly import CheckableBootstrapTreeview
 
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
 from cfme.common import BaseLoggedInPage
+from cfme.rest.gen_data import tenants as _tenants
 from cfme.services.catalogs.catalog_items import AddCatalogItemView
 from cfme.services.catalogs.catalog_items import AllCatalogItemView
 from cfme.services.catalogs.catalog_items import DetailsCatalogItemView
@@ -77,6 +79,11 @@ def check_catalog_visibility(user_restricted, tag):
         with user_restricted:
             assert not test_item_object.exists
     return _check_catalog_visibility
+
+
+@pytest.fixture
+def tenant(appliance, request):
+    return _tenants(request, appliance)
 
 
 def test_catalog_item_crud(appliance, dialog, catalog):
@@ -419,28 +426,49 @@ def test_copy_catalog_item(request, generic_catalog_item):
     assert new_cat_item.exists
 
 
-@pytest.mark.meta(coverage=[1678123])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1678123])
 @pytest.mark.tier(2)
-def test_service_select_tenants():
+@pytest.mark.ignore_stream("5.10")
+def test_service_select_tenants(appliance, request, tenant):
     """
     Bugzilla:
         1678123
+
     Polarion:
         assignee: nansari
         casecomponent: Services
         initialEstimate: 1/6h
         startsin: 5.11
+        setup:
+            1. Create a tenant.
         testSteps:
-            1. Create catalog
-            2. Create catalog item with tenants
-            3. login with tenant and check the services
+            1. Create catalog item with the given tenant
         expectedResults:
-            1.
-            2.
-            3. Services Should be visible to Tenant
+            1.  Catalog item is created successfully
+                and tenant is visible under catalog items's Details page
     """
-    pass
+    tenants_path = ("All Tenants", "My Company", tenant.name)
+    data = {
+        "name": fauxfactory.gen_alphanumeric(start="cat_item_", length=15),
+        "description": fauxfactory.gen_alphanumeric(start="cat_item_desc_", length=20),
+        "zone": "Default Zone",
+        "currency": "$ [Australian Dollar]",
+        "price_per_month": 100,
+        "additional_tenants": [(tenants_path, True)],
+    }
+
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC, **data
+    )
+    request.addfinalizer(catalog_item.delete)
+
+    view = navigate_to(catalog_item, "Details")
+
+    # Defining this widget so that we can expand the required tenants path
+    additional_tenants = CheckableBootstrapTreeview(view, tree_id="tenants_treebox")
+    # Make sure the required path is visible i.e not collapsed
+    additional_tenants.expand_path(*tenants_path)
+    assert tenant.name in view.basic_info.get_text_of("Additional Tenants")
 
 
 @test_requirements.service

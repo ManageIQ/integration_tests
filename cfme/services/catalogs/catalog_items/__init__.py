@@ -16,6 +16,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import CheckableBootstrapTreeview
 from widgetastic_patternfly import Input
 
 from cfme.common import Taggable
@@ -38,6 +39,7 @@ from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import FileInput
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import SummaryTable
 from widgetastic_manageiq import Table
@@ -75,6 +77,10 @@ class BasicInfoForm(ServicesCatalogView):
         "5.11": EntryPoint(name='reconfigure_fqname', tree_id="automate_catalog_treebox")
     })
     select_resource = BootstrapSelect('resource_id')
+    additional_tenants = CheckableBootstrapTreeview(tree_id="tenants_treebox")
+    zone = BootstrapSelect("zone_id")
+    currency = BootstrapSelect("currency")
+    price_per_month = Input(name="price")
 
     @View.nested
     class modal(View):  # noqa
@@ -162,6 +168,7 @@ class DetailsEntitiesCatalogItemView(View):
 
 class DetailsCatalogItemView(ServicesCatalogView):
     title = Text('#explorer_title_text')
+    basic_info = SummaryForm("Basic Information")
 
     @property
     def is_displayed(self):
@@ -492,6 +499,44 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         cat_name = 'My Company/{}'.format(getattr(self.catalog, 'name', None))
         return cat_name
 
+    @staticmethod
+    def set_additional_tenants(view, tenants):
+        """ Sets additional tenants
+
+        Args:
+            view: AddCatalogItemView or EditCatalogItemView
+            tenants: list of tenants with options to select
+
+        Usage:
+            set True to the path which needs to be checked
+            and False for the path that needs to be unchecked
+
+        catalog_item = appliance.collections.catalog_items.create(
+            catalog_item_class,
+            additional_tenants=[
+                (("All Tenants"), False),
+                (("All Tenants", "My Company"), True),
+                (("All Tenants", "My Company", "Child", "Grandchild"), True),
+            ],
+            *args,
+            **kwargs
+        )
+        """
+        if tenants is not None and isinstance(tenants, (list, tuple, set)):
+            changes = [
+                view.fill(
+                    {
+                        "additional_tenants": CheckableBootstrapTreeview.CheckNode(path)
+                        if option
+                        else CheckableBootstrapTreeview.UncheckNode(path)
+                    }
+                )
+                for path, option in tenants
+            ]
+            return True in changes
+        else:
+            return False
+
 
 @attr.s
 class CloudInfraCatalogItem(BaseCatalogItem):
@@ -508,6 +553,10 @@ class CloudInfraCatalogItem(BaseCatalogItem):
     provisioning_entry_point = attr.ib(default=None)
     retirement_entry_point = attr.ib(default=None)
     reconfigure_entry_point = attr.ib(default=None)
+    zone = attr.ib(default=None)
+    currency = attr.ib(default=None)
+    price_per_month = attr.ib(default=None)
+    additional_tenants = attr.ib(default=None)
 
     @property
     def fill_dict(self):
@@ -516,11 +565,15 @@ class CloudInfraCatalogItem(BaseCatalogItem):
                 'name': self.name,
                 'description': self.description,
                 'display': self.display_in,
-                'select_catalog': self.catalog_name,
+                'select_catalog': self.catalog_name if self.catalog else "<Unassigned>",
                 'select_dialog': self.dialog,
                 'provisioning_entry_point': self.provisioning_entry_point,
                 'retirement_entry_point': self.retirement_entry_point,
-                'reconfigure_entry_point': self.reconfigure_entry_point
+                'reconfigure_entry_point': self.reconfigure_entry_point,
+                "additional_tenants": self.additional_tenants,
+                "zone": self.zone,
+                "currency": self.currency,
+                "price_per_month": self.price_per_month
             },
             'request_info': {'provisioning': self.prov_data}
         }
@@ -540,6 +593,10 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
     provisioning_entry_point = attr.ib(default=None)
     retirement_entry_point = attr.ib(default=None)
     reconfigure_entry_point = attr.ib(default=None)
+    zone = attr.ib(default=None)
+    currency = attr.ib(default=None)
+    price_per_month = attr.ib(default=None)
+    additional_tenants = attr.ib(default=None)
 
     @cached_property
     def _fill_dict(self):
@@ -547,11 +604,15 @@ class NonCloudInfraCatalogItem(BaseCatalogItem):
             'name': self.name,
             'description': self.description,
             'display': self.display_in,
-            'select_catalog': self.catalog_name,
+            'select_catalog': self.catalog_name if self.catalog else "<Unassigned>",
             'select_dialog': self.dialog,
             'provisioning_entry_point': self.provisioning_entry_point,
             'retirement_entry_point': self.retirement_entry_point,
-            'reconfigure_entry_point': self.reconfigure_entry_point
+            'reconfigure_entry_point': self.reconfigure_entry_point,
+            "additional_tenants": self.additional_tenants,
+            "zone": self.zone,
+            "currency": self.currency,
+            "price_per_month": self.price_per_month
         }
 
 
@@ -668,11 +729,16 @@ class CatalogItemsCollection(BaseCollection):
         Returns:
             An instance of catalog_item_class
         """
-        cat_item = self.instantiate(catalog_item_class, *args, **kwargs)
+        additional_tenants = kwargs.pop("additional_tenants", None)
+
+        cat_item = self.instantiate(catalog_item_class, * args, **kwargs)
         view = navigate_to(cat_item, "Add")
+        if additional_tenants:
+            cat_item.set_additional_tenants(view, additional_tenants)
         view.fill(cat_item.fill_dict)
+        cat_item.additional_tenants = additional_tenants
         view.add.click()
-        view = self.create_view(AllCatalogItemView, wait='10s')
+        view = self.create_view(AllCatalogItemView, wait="10s")
         view.flash.assert_no_error()
         return cat_item
 
