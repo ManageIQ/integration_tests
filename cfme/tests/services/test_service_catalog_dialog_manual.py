@@ -27,23 +27,6 @@ def test_notification_banner_vm_provisioning_notification_and_service_request_sh
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_database_wildcard_should_work_and_be_included_in_the_query():
-    """ Database wildcard should work and be included in the query
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.10
-        tags: service
-    Bugzilla:
-        1581853
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_user_should_be_able_to_see_requests_irrespective_of_tags_assigned():
     """ User should be able to see requests irrespective of tags assigned
     Polarion:
