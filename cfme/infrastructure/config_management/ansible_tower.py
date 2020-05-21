@@ -12,8 +12,8 @@ from cfme.infrastructure.config_management.config_systems import ConfigSystem
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Search
+# from cfme.utils.wait import wait_for
 
 
 class AnsibleTowerProvidersAllView(ConfigManagementCollectionView):
@@ -117,8 +117,8 @@ class MgrAll(CFMENavigateStep):
 
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
         all_providers = 'All Ansible Tower Providers'
-        wait_for(lambda: all_providers in self.view.sidebar.providers.tree.read(),
-                 handle_exception=True)
+        # wait_for(lambda: all_providers in self.view.sidebar.providers.tree.read(),
+        #          handle_exception=True)
         self.view.sidebar.providers.tree.click_path(all_providers)
 
     def resetter(self, *args, **kwargs):
