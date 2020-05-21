@@ -234,7 +234,7 @@ def list(directory, bz_status):
 @click.option(
     "-m",
     "--include-manual",
-    "inc_manual",
+    "include_manual",
     is_flag=True,
     help="Include BZs that are marked in coverage test metadata for manual tests",
     default=False,
