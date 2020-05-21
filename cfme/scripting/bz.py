@@ -30,6 +30,7 @@ from bugzilla_data import BugzillaData
 
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
+from cfme.utils.bz import Bugzilla
 from cfme.utils.log import logger
 from cfme.utils.path import data_path
 from cfme.utils.version import current_version
@@ -44,18 +45,24 @@ QUERY_PATH = data_path.join("/bugzilla-queries/")
 BZ_URL = conf.env.bugzilla.url
 
 
-def get_report(directory):
+def get_report(directory, include_manual=True):
+    bz_instance = Bugzilla.from_config()
+    if not (bz_instance.user or bz_instance.key):
+        msg = ("ERROR: Credentials key for bugzilla does not have username or api key.")
+        click.secho(msg, err=True, bold=True, fg="red")
+        sys.exit(0)
     click.echo("Generating a BZ report in bz-report.yaml")
-    pytest.main([
-        "--use-provider", "complete",
+    options = ["--use-provider", "complete",
         "--long-running",
         "--use-template-cache",
         "--collect-only",
         "--dummy-appliance",
-        "--include-manual",
         "-q",
-        "--generate-bz-report", directory
-    ])
+        "--generate-bz-report"
+               ]
+    if include_manual:
+        options.append("--include-manual")
+    pytest.main(options.append(directory))
     # read the generated yaml
     try:
         with open("bz-report.yaml") as stream:
@@ -225,6 +232,15 @@ def list(directory, bz_status):
 @main.command(help="Set QE test coverage flag based on automates/coverage metadata")
 @click.argument("directory", default="cfme/tests")
 @click.option(
+    "-m",
+    "--include-manual",
+    "include_manual",
+    is_flag=True,
+    help="Include BZs that are marked in coverage test metadata for manual tests",
+    default=False,
+    show_default=True
+)
+@click.option(
     "-s",
     "--set",
     "set_bzs",
@@ -263,8 +279,8 @@ def list(directory, bz_status):
     show_default=True,
     flag_value="closed_bzs"
 )
-def coverage(directory, set_bzs, bz_status):
-    info = get_report(directory)
+def coverage(directory, include_manual, set_bzs, bz_status):
+    info = get_report(directory, include_manual=include_manual)
 
     # get list of bzs that should have test coverage set
     bz_list = get_qe_test_coverage(info, bz_status)
