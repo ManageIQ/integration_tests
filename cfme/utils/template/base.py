@@ -1,6 +1,7 @@
 import hashlib
 import os
 import re
+import time
 from contextlib import closing
 from os import path
 from threading import Lock
@@ -450,7 +451,9 @@ class ProviderTemplateUpload:
                  timeout=300,
                  message='Waiting for appliance-initialization to complete')
         for service in upstream_services:
-            self.execute_ssh_command(f'{service}', client_args=client_args)
+            result = self.execute_ssh_command(f'{service}', client_args=client_args)
+            logger.info(f'NANDINI: output of {service} is {result.output}')
+            logger.info(f'NANDINI: rc {service} is {result.rc}, success is {result.success}')
         for cleanup in upstream_cleanup:
             self.execute_ssh_command(f'rm -rf {cleanup}', client_args=client_args)
 
@@ -465,6 +468,7 @@ class ProviderTemplateUpload:
         check_certs = self.execute_ssh_command('ls /var/www/miq/vmdb/certs',
             client_args=client_args)
         logger.info(f'NANDINI: check_region.output is {check_certs.output}')
+        time.sleep(600)
 
         if not check_pgsql.output:
             logger.info('Finished cleaning out the default setup of a ManageIQ appliance')
