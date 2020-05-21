@@ -58,6 +58,51 @@ def ip_echo_socket(port=32123):
             conn.close()
 
 
+def pick_responding_ip(vm, port, num_sec, rounds_delay_second, attempt_timeout):
+    """
+    Given a vm and port, pick one of the vm's addresses that is connectible
+    on the given port
+
+    Args:
+        vm: mgmt vm
+        port: port number to attempt connecting to
+        num_sec: Minimal ammount of time how long to keep checking (slight
+                 variation may happen -- approximately the attempt_timeout).
+        rounds_delay_second: The delay to wait after checking each IP round in
+                             immediate succession.
+        attempt_timeout: A connection timeout for every connection attempt.
+
+    Raise TimedOutError if no such IP is found.
+    """
+
+    def connection_factory(ip):
+        if net_check(port, ip, attempt_timeout):
+            return ip
+
+    return retry_connect(vm, connection_factory, num_sec, rounds_delay_second)
+
+
+def retry_connect(ips_getter, connection_factory, num_sec, delay):
+    def _try_batch_of_ips():
+        for ip in ips_getter():
+            try:
+                connection = connection_factory(ip)
+            except Exception as ex:
+                logger.warning(f"Failed to connect {ip}: {ex}")
+                continue
+            else:
+                logger.info(f"Connected to IP {ip}")
+                # No other IPs should be attempted, so return.
+                return connection
+        return False
+    connection, _ = wait_for(_try_batch_of_ips, num_sec=num_sec, delay=delay)
+    return connection
+
+
+def retry_connect_vm(vm, connection_factory, num_sec, delay):
+    return retry_connect(lambda: vm.all_ips, connection_factory, num_sec, delay)
+
+
 def net_check(port, addr=None, force=False, timeout=10):
     """Checks the availablility of a port"""
     port = int(port)

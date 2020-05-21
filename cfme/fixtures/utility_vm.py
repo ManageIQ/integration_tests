@@ -16,8 +16,6 @@ Note that using ping is also problematic because the OS may be responing on
 ping, but the required service may not be up and ready.
 """
 import os.path
-import time
-from contextlib import contextmanager
 
 import pytest
 
@@ -25,68 +23,47 @@ from cfme.base.credential import SSHCredential
 from cfme.utils.conf import cfme_data
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.net import net_check
+from cfme.utils.net import pick_responding_ip
 from cfme.utils.ssh import SSHClient
 from cfme.utils.virtual_machines import deploy_template
-from cfme.utils.wait import TimedOutError
 
 
-def _trying_ips(vm, attempts=60, interval=10):
-    for attempt in range(attempts):
-        for ip in getattr(vm, 'all_ips', []):
-            yield ip
-            return
-        time.sleep(interval)
-
-
-@contextmanager
-def connect_ssh(vm, creds):
-    for ip in _trying_ips(vm):
-        try:
-            with SSHClient(hostname=ip, username=creds.principal, password=creds.secret) as client:
-                logger.info("SSH connected to IP %s", ip)
-                result = client.run_command("true")
-                if not result.success:
-                    raise Exception(f"Command `true` failed on ip {ip}.")
-                yield client
-                return
-        except Exception as ex:
-            logger.info("Failed to connect with SSH to %s: %s", ip, ex)
-    else:
-        raise TimedOutError(f"Coudln't find an IP responding to ssh for vm {vm}")
-
-
-def _pick_responding_ip(vm, port):
-    for ip in _trying_ips(vm):
-        if net_check(port, ip):
-            return ip
-    else:
-        raise TimedOutError(f"Coudln't find an IP of vm {vm} with port {port} responding")
+ATTEMPT_TIMEOUT = 10
+""" How long to wait until connection is determined as not successful. """
+IP_PICK_TIMEOUT = 600
+""" How many rounds to connect all the vm IPs. """
+ROUNDS_DELAY = 10
+""" How long to delay after unsucessful connection round. """
 
 
 @pytest.fixture
 def utility_vm_nfs_ip(utility_vm):
     vm, _, _ = utility_vm
     one_of_the_nfs_ports = 111
-    yield _pick_responding_ip(vm, one_of_the_nfs_ports)
+    yield pick_responding_ip(lambda: vm.all_ips, one_of_the_nfs_ports,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
 
 
 @pytest.fixture
 def utility_vm_samba_ip(utility_vm):
     vm, _, _ = utility_vm
-    yield _pick_responding_ip(vm, 445)
+    yield pick_responding_ip(lambda: vm.all_ips, 445,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
 
 
 @pytest.fixture(scope='module')
 def utility_vm_proxy_data(utility_vm):
     vm, __, data = utility_vm
-    yield _pick_responding_ip(vm, data.proxy.port), data.proxy.port
+    ip = pick_responding_ip(lambda: vm.all_ips, data.proxy.port,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
+    yield ip, data.proxy.port
 
 
 @pytest.fixture(scope='module')
 def utility_vm_ssh(utility_vm):
     vm, injected_user_cred, __ = utility_vm
-    ip = _pick_responding_ip(vm, 22)
+    ip = pick_responding_ip(lambda: vm.all_ips, 22,
+        IP_PICK_TIMEOUT, ROUNDS_DELAY, ATTEMPT_TIMEOUT)
 
     with SSHClient(
             hostname=ip,
