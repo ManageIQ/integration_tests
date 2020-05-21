@@ -318,7 +318,7 @@ def gen_duplicates_log(items):
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(session, config, items):
     """Generates the XML files using collected items."""
     if not (config.getoption('generate_xmls') or config.getoption('generate_legacy_xmls')):
         return

@@ -23,7 +23,7 @@ def get_meta(obj):
     return p.metadata
 
 
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(session, config, items):
     output = {}
     for item in items:
         item_class = item.location[0]
