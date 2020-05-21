@@ -4777,10 +4777,7 @@ class MigrationPlansList(Widget):
     ITEM_PROMPT_DELETE_BUTTON_LOCATOR = './/div[@role="document"]//button[@class="btn btn-primary"]'
     ITEM_MODAL_CANCEL_BUTTON_LOCATOR = './/button[contains(@class,"btn-cancel btn")]'
     ITEM_MODAL_TEXT_LOCATOR = './/div[ contains(@class,"modal-body")]'
-    ITEM_SCHEDULE_BUTTON_LOCATOR = (
-        './div[contains(@class,"list-view-pf-actions")]'
-        '//button[text()="Schedule" or text()="Unschedule"]'
-    )
+    ITEM_SCHEDULE_BUTTON_LOCATOR = './/button[text()="Schedule" or text()="Unschedule"]'
     ITEM_SCHEDULE_INPUT_LOCATOR = './/input[@id="dateTimeInput"]'
     ITEM_MODAL_SCHEDULE_LOCATOR = (
         './/div[@class="modal-footer"]/' 'button[text()="Schedule" or text()="Unschedule"]'
