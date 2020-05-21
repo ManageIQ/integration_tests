@@ -189,7 +189,7 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
     # connect_ssh will iterate over "all_ips" on the VM and return a client when it can connect
 
     with closing(connect_ssh(full_test_vm.mgmt, creds, num_sec=SSH_READY_TIMEOUT)) as ssh_client:
-        ssh_client.run_command('touch snapshot1.txt').success
+        ssh_client.run_command('touch snapshot1.txt')
         # Create first snapshot
         snapshot1.create()
 
