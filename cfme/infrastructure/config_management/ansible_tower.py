@@ -113,7 +113,7 @@ class MgrAll(CFMENavigateStep):
         # In case we are already in Explorer, but not on the overall table, we
         # need to change here and back. This seems to be helping to get to the
         # page with all providers displayed.
-        self.prerequisite_view.navigation.select('Compute')
+        # self.prerequisite_view.navigation.select('Compute')
 
         self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
         all_providers = 'All Ansible Tower Providers'
