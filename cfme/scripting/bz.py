@@ -45,7 +45,7 @@ QUERY_PATH = data_path.join("/bugzilla-queries/")
 BZ_URL = conf.env.bugzilla.url
 
 
-def get_report(directory, inc_manual=True):
+def get_report(directory, include_manual=True):
     bz_instance = Bugzilla.from_config()
     if not (bz_instance.user or bz_instance.key):
         msg = ("ERROR: Credentials key for bugzilla does not have username or api key.")
@@ -60,7 +60,7 @@ def get_report(directory, inc_manual=True):
         "-q",
         "--generate-bz-report"
                ]
-    if inc_manual:
+    if include_manual:
         options.append("--include-manual")
     pytest.main(options.append(directory))
     # read the generated yaml
@@ -233,7 +233,7 @@ def list(directory, bz_status):
 @click.argument("directory", default="cfme/tests")
 @click.option(
     "-m",
-    "--inc_manual",
+    "--include-manual",
     "inc_manual",
     is_flag=True,
     help="Include BZs that are marked in coverage test metadata for manual tests",
@@ -279,8 +279,8 @@ def list(directory, bz_status):
     show_default=True,
     flag_value="closed_bzs"
 )
-def coverage(directory, inc_manual, set_bzs, bz_status):
-    info = get_report(directory, inc_manual=inc_manual)
+def coverage(directory, include_manual, set_bzs, bz_status):
+    info = get_report(directory, include_manual=include_manual)
 
     # get list of bzs that should have test coverage set
     bz_list = get_qe_test_coverage(info, bz_status)
