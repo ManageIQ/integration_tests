@@ -210,7 +210,7 @@ def test_appliance_console_internal_db(app_creds, unconfigured_appliance):
                    TimedCommand(pwd, 360), RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set, timeout=20)
     unconfigured_appliance.evmserverd.wait_for_running()
-    unconfigured_appliance.wait_for_web_ui()
+    unconfigured_appliance.wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)
@@ -236,7 +236,7 @@ def test_appliance_console_internal_db_reset(temp_appliance_preconfig_funcscope)
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.evmserverd.wait_for_running()
-    temp_appliance_preconfig_funcscope.wait_for_web_ui()
+    temp_appliance_preconfig_funcscope.wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)
@@ -327,7 +327,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
                    RETURN, RETURN, RETURN, pwd, TimedCommand(pwd, 360), RETURN)
     apps[2].appliance_console.run_commands(command_set)
     apps[2].evmserverd.wait_for_running()
-    apps[2].wait_for_web_ui()
+    apps[2].wait_for_miq_ready()
     # Configure primary replication node
     command_set = ('ap', RETURN, '8', '1', '1', RETURN, RETURN, pwd, pwd, app0_ip, 'y',
                    TimedCommand('y', 60), RETURN)
@@ -352,7 +352,7 @@ def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
         assert result.success, f"Failed to stop APPLIANCE_PG_SERVICE: {result.output}"
 
     apps[2].evmserverd.wait_for_running()
-    apps[2].wait_for_web_ui()
+    apps[2].wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)
@@ -389,7 +389,7 @@ def test_appliance_console_external_db(temp_appliance_unconfig_funcscope, app_cr
 
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set, timeout=20)
     temp_appliance_unconfig_funcscope.evmserverd.wait_for_running()
-    temp_appliance_unconfig_funcscope.wait_for_web_ui()
+    temp_appliance_unconfig_funcscope.wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)
@@ -423,7 +423,7 @@ def test_appliance_console_external_db_create(
                    RETURN, RETURN, RETURN, pwd, TimedCommand(pwd, 300), RETURN)
     unconfigured_appliance_secondary.appliance_console.run_commands(command_set)
     unconfigured_appliance_secondary.evmserverd.wait_for_running(timeout=900)
-    unconfigured_appliance_secondary.wait_for_web_ui()
+    unconfigured_appliance_secondary.wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)
@@ -620,7 +620,7 @@ def test_appliance_console_dhcp(unconfigured_appliance, soft_assert):
     """
     command_set = ('ap', RETURN, '1', '1', 'y', TimedCommand('y', 90), RETURN, RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set)
-    unconfigured_appliance.reboot(wait_for_web_ui=False)
+    unconfigured_appliance.reboot(wait_for_miq_ready=False)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
         r"ip a show dev eth0 | grep 'inet\s.*dynamic'").success)
@@ -653,7 +653,7 @@ def test_appliance_console_static_ipv4(unconfigured_appliance, soft_assert):
     """
     command_set = ('ap', RETURN, '1', '2', RETURN, RETURN, RETURN, RETURN, RETURN, RETURN, 'y')
     unconfigured_appliance.appliance_console.run_commands(command_set, timeout=90)
-    unconfigured_appliance.reboot(wait_for_web_ui=False)
+    unconfigured_appliance.reboot(wait_for_miq_ready=False)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
         "ip -4 a show dev eth0 | grep 'inet .*scope global eth0'"))
@@ -684,7 +684,7 @@ def test_appliance_console_static_ipv6(unconfigured_appliance, soft_assert):
     """
     command_set = ('ap', RETURN, '1', '3', '1::1', RETURN, '1::f', RETURN, RETURN, RETURN, 'y', '')
     unconfigured_appliance.appliance_console.run_commands(command_set, timeout=90)
-    unconfigured_appliance.reboot(wait_for_web_ui=False)
+    unconfigured_appliance.reboot(wait_for_miq_ready=False)
 
     soft_assert(unconfigured_appliance.ssh_client.run_command(
         "ip -6 a show dev eth0 | grep 'inet6 1::1.*scope global'"))
@@ -785,7 +785,7 @@ def test_appliance_console_restart(temp_appliance_preconfig_funcscope):
         fail_condition=True
     )
 
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
     navigate_to(appliance.server, "LoggedIn")
 
 
@@ -886,7 +886,7 @@ def test_appliance_console_evm_start(request, temp_appliance_preconfig_funcscope
     start_evm_command = ("ap", RETURN, app_con_menu["start_evm"], "Y", RETURN,
                          RETURN, app_con_menu["quit"])
     appliance.appliance_console.run_commands(start_evm_command, timeout=30)
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
     logged_in_page = appliance.server.login()
     request.addfinalizer(appliance.server.logout)
     assert logged_in_page.is_displayed, "UI is not working after starting the EVM service."
@@ -1242,7 +1242,7 @@ def test_appliance_console_vmdb_httpd(temp_appliance_preconfig_funcscope):
     # Starting the EVM service
     command_set = ("ap", RETURN, app_con_menu["start_evm"], TimedCommand("Y", 120))
     appliance.appliance_console.run_commands(command_set, timeout=30)
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)

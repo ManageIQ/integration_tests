@@ -7,10 +7,10 @@ from cfme.utils.wait import wait_for_decorator
 @pytest.fixture(scope="module")
 def start_evmserverd_after_module(appliance):
     appliance.evmserverd.start()
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
     yield
     appliance.evmserverd.restart()
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
 
 pytestmark = [

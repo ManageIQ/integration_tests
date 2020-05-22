@@ -54,7 +54,7 @@ def temp_appliance_global_region(temp_appliance_unconfig_funcscope_rhevm):
         99, 'localhost', credentials['database']['username'], credentials['database']['password'],
         'vmdb_production', temp_appliance_unconfig_funcscope_rhevm.unpartitioned_disks[0])
     temp_appliance_unconfig_funcscope_rhevm.evmserverd.wait_for_running()
-    temp_appliance_unconfig_funcscope_rhevm.wait_for_web_ui()
+    temp_appliance_unconfig_funcscope_rhevm.wait_for_miq_ready()
     return temp_appliance_unconfig_funcscope_rhevm
 
 
@@ -150,7 +150,7 @@ def download_and_migrate_db(app, db_url):
     except ApplianceException:
         result = app.ssh_client.run_rake_command("evm:start")
         assert result.success, f"Couldn't start evmserverd: {result.output}"
-    app.wait_for_web_ui(timeout=600)
+    app.wait_for_miq_ready(timeout=600)
     app.db.reset_user_pass()
     wait_for(navigate_to, (app.server, 'LoginScreen'), handle_exception=True, timeout='5m')
     app.server.login(app.user)
@@ -224,7 +224,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     except ApplianceException:
         result = app.ssh_client.run_rake_command("evm:start")
         assert result.success, f"Couldn't start evmserverd: {result.output}"
-    app.wait_for_web_ui(timeout=600)
+    app.wait_for_miq_ready(timeout=600)
     # Reset user's password, just in case (necessary for customer DBs)
     app.db.reset_user_pass()
     app.server.login(app.user)
@@ -258,7 +258,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
     appliance_preupdate.db.automate_reset()
     appliance_preupdate.db_service.restart()
     appliance_preupdate.evmserverd.start()
-    appliance_preupdate.wait_for_web_ui()
+    appliance_preupdate.wait_for_miq_ready()
     result = appliance_preupdate.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
     assert result.output in appliance.version
 

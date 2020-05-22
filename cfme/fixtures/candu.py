@@ -89,4 +89,4 @@ def candu_db_restore(temp_appliance_extended_db):
     app.db.fix_auth_key()
     app.db.fix_auth_dbyml()
     app.evmserverd.start()
-    app.wait_for_web_ui()
+    app.wait_for_miq_ready()

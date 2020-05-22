@@ -496,7 +496,7 @@ class IPAppliance:
             # Some conditionally ran items require the evm service be
             # restarted:
             restart_evm = False
-            self.wait_for_web_ui(log_callback=log_callback)
+            self.wait_for_miq_ready(log_callback=log_callback)
             if self.version < '5.11':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
@@ -507,7 +507,7 @@ class IPAppliance:
 
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
-                self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+                self.wait_for_miq_ready(timeout=1800, log_callback=log_callback)
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -1074,7 +1074,7 @@ class IPAppliance:
             return  # All OK!
         client.run_command('echo "export BUNDLE_GEMFILE=/var/www/miq/vmdb/Gemfile" >> /etc/bashrc')
         # To be 100% sure
-        self.reboot(wait_for_web_ui=False, log_callback=log_callback)
+        self.reboot(wait_for_miq_ready=False, log_callback=log_callback)
 
     @logger_wrap("Precompile assets: {}")
     def precompile_assets(self, log_callback=None):
@@ -1322,7 +1322,7 @@ class IPAppliance:
             raise ApplianceException(msg)
 
         if reboot:
-            self.reboot(wait_for_web_ui=False, log_callback=log_callback)
+            self.reboot(wait_for_miq_ready=False, log_callback=log_callback)
 
         return result
 
@@ -1377,7 +1377,7 @@ class IPAppliance:
             self.db_service.restart()
             self.evmserverd.start()
 
-        self.wait_for_web_ui()
+        self.wait_for_miq_ready()
         logger.info("Appliance upgrade completed")
 
     def utc_time(self):
@@ -1462,7 +1462,7 @@ class IPAppliance:
             self.evmserverd.start()
 
     @logger_wrap("Rebooting Appliance: {}")
-    def reboot(self, wait_for_web_ui=True, log_callback=None):
+    def reboot(self, wait_for_miq_ready=True, log_callback=None):
         log_callback('Rebooting appliance')
         client = self.ssh_client
 
@@ -1472,12 +1472,12 @@ class IPAppliance:
         wait_for(lambda: client.uptime() < old_uptime, handle_exception=True,
             num_sec=600, message='appliance to reboot', delay=10)
 
-        if wait_for_web_ui:
-            self.wait_for_web_ui()
+        if wait_for_miq_ready:
+            self.wait_for_miq_ready()
 
     @logger_wrap("Waiting for web_ui: {}")
-    def wait_for_web_ui(self, timeout=900, running=True, log_callback=None):
-        """Waits for the web UI to be running / to not be running
+    def wait_for_miq_ready(self, timeout=900, running=True, log_callback=None):
+        """Waits for the web UI and API server to be ready / to not ready
 
         Args:
             timeout: Number of seconds to wait until timeout (default ``600``)
@@ -2217,7 +2217,7 @@ class IPAppliance:
             ssh_client.run_command('cd /var/www/miq/vmdb; bin/update')
             self.evmserverd.start()
             self.evmserverd.wait_for_running()
-            self.wait_for_web_ui()
+            self.wait_for_miq_ready()
 
     def check_domain_enabled(self, domain):
         namespaces = self.db.client["miq_ae_namespaces"]
@@ -2271,7 +2271,7 @@ class IPAppliance:
         assert self.ssh_client.run_command('setenforce 0')
         self.sssd.restart()
         self.httpd.restart()
-        self.wait_for_web_ui()
+        self.wait_for_miq_ready()
 
         # UI configuration of auth provider type
         self.server.authentication.configure(auth_mode='external', auth_provider=auth_provider)
@@ -2289,7 +2289,7 @@ class IPAppliance:
             assert self.ssh_client.run_command(f'rm -f $(ls {conf_file})')
         self.evmserverd.restart()
         self.httpd.restart()
-        self.wait_for_web_ui()
+        self.wait_for_miq_ready()
         self.server.authentication.configure_auth(auth_mode='database')
 
     @logger_wrap('Configuring freeipa external auth provider')
@@ -2309,7 +2309,7 @@ class IPAppliance:
 
         # First, clear any existing ipa config, runs clean if not configured
         self.appliance_console_cli.uninstall_ipa_client()
-        self.wait_for_web_ui()  # httpd restart in uninstall-ipa
+        self.wait_for_miq_ready()  # httpd restart in uninstall-ipa
 
         # ext auth ipa requires NTP sync
         if auth_provider.host1 not in self.server.settings.ntp_servers_values:
@@ -2318,7 +2318,7 @@ class IPAppliance:
         # the evmserverd restart is necessary for the NTP sync to properly go through
         # in the subsequent command (appliance console IPA configuration)
         self.evmserverd.restart()
-        self.wait_for_web_ui()
+        self.wait_for_miq_ready()
         # since the browser will be stuck on the server settings page, and logout on next click
         # after the evmserverd restart, quit the browser before the next step.
         self.browser.quit_browser()
@@ -2339,7 +2339,7 @@ class IPAppliance:
         self.server.authentication.configure(auth_mode='database')
         # reset ntp servers
         self.server.settings.update_ntp_servers({'ntp_server_1': 'clock.corp.redhat.com'})
-        self.wait_for_web_ui()  # httpd restart in uninstall-ipa
+        self.wait_for_miq_ready()  # httpd restart in uninstall-ipa
 
     @logger_wrap('Configuring SAML external auth provider')
     def configure_saml(self, auth_provider, log_callback=None):
@@ -2421,7 +2421,7 @@ class IPAppliance:
         )
         # 6) Restart httpd
         self.httpd.restart()
-        self.wait_for_web_ui()
+        self.wait_for_miq_ready()
         # 7) UI configuration of auth provider type
         self.server.authentication.configure(auth_mode='external', auth_provider=auth_provider)
 
@@ -2456,7 +2456,7 @@ class IPAppliance:
         _delete_client()
         # 4) restart httpd
         self.httpd.restart()
-        self.wait_for_web_ui()
+        self.wait_for_miq_ready()
         # 5) change back to database auth_mode
         self.server.authentication.configure(auth_mode='database')
 
@@ -2619,7 +2619,7 @@ class IPAppliance:
         self.appliance.server.logout()
         self.evmserverd.restart()
         self.evmserverd.wait_for_running()
-        self.wait_for_web_ui()
+        self.wait_for_miq_ready()
 
     def enable_migration_ui(self):
         if not self.advanced_settings.get('product', {}).get('transformation'):
@@ -2748,7 +2748,7 @@ class Appliance(IPAppliance):
         with self(browser_steal=True):
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
-                self.wait_for_web_ui(log_callback=log_callback)
+                self.wait_for_miq_ready(log_callback=log_callback)
 
             if self.is_on_rhev:
                 self.add_rhev_direct_lun_disk()
@@ -2917,7 +2917,7 @@ def provision_appliance(
         my_appliance = provision_appliance('rhv-43-prov', '5.10.1.8', 'my_tests')
         ...other configuration...
         my_appliance.db.enable_internal()
-        my_appliance.wait_for_web_ui()
+        my_appliance.wait_for_miq_ready()
         my_appliance.set_ntp_sources()
 
         or

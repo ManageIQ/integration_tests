@@ -67,13 +67,13 @@ def setup_distributed_env(cfme_version, provider_type, provider, lease, desc):
         TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
     apps[0].evmserverd.wait_for_running()
-    apps[0].wait_for_web_ui()
+    apps[0].wait_for_miq_ready()
     print(f"VMDB appliance provisioned and configured {ip0}")
     command_set1 = ('ap', '', opt, '2', ip0, '', pwd, '', '3') + port + ('', '',
         pwd, TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].evmserverd.wait_for_running()
-    apps[1].wait_for_web_ui()
+    apps[1].wait_for_miq_ready()
     print(f"Non-VMDB appliance provisioned and configured {ip1}")
     print(f"Appliance pool lease time is {lease}")
 
@@ -108,7 +108,7 @@ def setup_ha_env(cfme_version, provider_type, provider, lease, desc):
         TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].evmserverd.wait_for_running()
-    apps[1].wait_for_web_ui()
+    apps[1].wait_for_miq_ready()
     print(f"Non-VMDB appliance provisioned and region created {ip1}")
 
     command_set2 = ('ap', '', '8', '1', '1', '', '', pwd, pwd, ip0, 'y', '')
@@ -178,7 +178,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
         TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
     apps[0].evmserverd.wait_for_running()
-    apps[0].wait_for_web_ui()
+    apps[0].wait_for_miq_ready()
     print(f"Done: Global @ {ip0}")
 
     print("Remote Appliance Configuration")
@@ -186,7 +186,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
         TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].evmserverd.wait_for_running()
-    apps[1].wait_for_web_ui()
+    apps[1].wait_for_miq_ready()
     print(f"Done: Remote @ {ip1}")
 
     if remote_worker:
@@ -195,7 +195,7 @@ def setup_replication_env(cfme_version, provider_type, provider, lease, sprout_p
         command_set2 = ['ap', '', opt, '2', ip1, '', pwd, '', '3', ip1, '', '', '', pwd, pwd]
         apps[2].appliance_console.run_commands(command_set2)
         apps[2].evmserverd.wait_for_running()
-        apps[2].wait_for_web_ui()
+        apps[2].wait_for_miq_ready()
         print(f"Done: Remote Worker @ {ip2}")
 
     print("Configuring Replication")
@@ -270,7 +270,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
                       dbdisk=global_app.unpartitioned_disks[0])
     global_app.appliance_console_cli.configure_appliance_internal(**app_params)
     global_app.evmserverd.wait_for_running()
-    global_app.wait_for_web_ui()
+    global_app.wait_for_miq_ready()
 
     print(f"Done: Global @ {gip}")
 
@@ -289,7 +289,7 @@ def setup_multiregion_env(cfme_version, provider_type, provider, lease, sprout_p
 
         app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
         app.evmserverd.wait_for_running()
-        app.wait_for_web_ui()
+        app.wait_for_miq_ready()
         print(f"Done: Remote @ {app.hostname}, region: {region_n}")
 
         print("Configuring Replication")

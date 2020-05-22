@@ -124,7 +124,7 @@ def do_yum_update(appliance):
     output = '\n'.join(filter(lambda x: not re.match(rpmnew_regex, x), result.output.splitlines()))
 
     appliance.evmserverd.start()
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
     return output
 
 
@@ -220,7 +220,7 @@ def test_update_embedded_ansible_webui(enabled_embedded_appliance, appliance, ol
                             num_sec=60)
             assert wait_for(func=lambda: enabled_embedded_appliance.nginx.running,
                             num_sec=60)
-    enabled_embedded_appliance.wait_for_web_ui()
+    enabled_embedded_appliance.wait_for_miq_ready()
 
     with enabled_embedded_appliance:
         repositories = enabled_embedded_appliance.collections.ansible_repositories
@@ -260,7 +260,7 @@ def test_update_distributed_webui(ext_appliances_with_providers, appliance,
                 num_sec=900, delay=20, handle_exception=True,
                 message='Waiting for appliance to update')
         updated_appliance.evmserverd.wait_for_running()
-        updated_appliance.wait_for_web_ui()
+        updated_appliance.wait_for_miq_ready()
 
     # Verify that existing provider can detect new VMs on both apps
     virtual_crud_appl1 = provider_app_crud(VMwareProvider, ext_appliances_with_providers[0])
@@ -297,8 +297,8 @@ def test_update_replicated_webui(replicated_appliances_preupdate_with_providers,
              message='Waiting for appliance to update')
     preupdate_appls[0].evmserverd.wait_for_running()
     preupdate_appls[1].evmserverd.wait_for_running()
-    preupdate_appls[0].wait_for_web_ui()
-    preupdate_appls[1].wait_for_web_ui()
+    preupdate_appls[0].wait_for_miq_ready()
+    preupdate_appls[1].wait_for_miq_ready()
 
     # Assert providers exist after upgrade and replicated to second preupdate_appls
     assert providers_before_upgrade == set(
@@ -347,7 +347,7 @@ def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, req
         ha_appliances_with_providers[0].db_service.stop()
 
     ha_appliances_with_providers[2].evmserverd.wait_for_running()
-    ha_appliances_with_providers[2].wait_for_web_ui()
+    ha_appliances_with_providers[2].wait_for_miq_ready()
     # Verify that existing provider can detect new VMs
     virtual_crud = provider_app_crud(VMwareProvider, ha_appliances_with_providers[2])
     vm = provision_vm(request, virtual_crud)

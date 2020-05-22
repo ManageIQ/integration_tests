@@ -33,7 +33,7 @@ def setup_global_appliance(multi_region_cluster, app_creds_modscope):
                       dbdisk=global_app.unpartitioned_disks[0])
     global_app.appliance_console_cli.configure_appliance_internal(**app_params)
     global_app.evmserverd.wait_for_running()
-    global_app.wait_for_web_ui()
+    global_app.wait_for_miq_ready()
 
 
 @pytest.fixture(scope='module')
@@ -52,7 +52,7 @@ def setup_remote_appliances(multi_region_cluster, setup_global_appliance, app_cr
                           sshpass=app_creds_modscope['sshpass'])
         app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
         app.evmserverd.wait_for_running()
-        app.wait_for_web_ui()
+        app.wait_for_miq_ready()
         app.set_pglogical_replication(replication_type=':remote')
 
 

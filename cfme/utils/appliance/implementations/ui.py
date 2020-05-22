@@ -352,7 +352,7 @@ class CFMENavigateStep(NavigateStep):
                 ssh.run_rails_command("\"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill\"")
             logger.info("Waiting for web UI to come back alive.")
             sleep(10)   # Give it some rest
-            self.appliance.wait_for_web_ui()
+            self.appliance.wait_for_miq_ready()
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
             self.go(_tries, *args, **go_kwargs)
@@ -500,7 +500,7 @@ class CFMENavigateStep(NavigateStep):
         if restart_evmserverd:
             logger.info("evmserverd restart requested")
             self.appliance.evmserverd.restart()
-            self.appliance.wait_for_web_ui()
+            self.appliance.wait_for_miq_ready()
             self.go(_tries, *args, **go_kwargs)
 
         if recycle or restart_evmserverd:

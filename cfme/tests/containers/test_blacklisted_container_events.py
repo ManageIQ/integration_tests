@@ -112,7 +112,7 @@ def appliance_cleanup(provider, appliance, namespace):
     appliance.ssh_client.run_rails_console(
         "BlacklistedEvent.where(:event_name => 'POD_CREATED').destroy_all")
     appliance.evmserverd.restart()
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
     try:
         delete_pod(provider=provider, namespace=namespace)
@@ -173,7 +173,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
         {"ems": {"ems_openshift": {"blacklisted_event_names": ["POD_CREATED"]}}}
     )
     appliance.evmserverd.restart()
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
     rails_result_blacklist = get_blacklisted_event_names(appliance)
 
@@ -203,7 +203,7 @@ def test_blacklisted_container_events(request, appliance, provider, app_creds):
     assert "POD_CREATED" not in rails_result_default
 
     appliance.evmserverd.restart()
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
     evm_tail_no_blacklist.start_monitoring()
 

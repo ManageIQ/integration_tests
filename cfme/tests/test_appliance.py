@@ -440,7 +440,7 @@ def test_codename_in_log(appliance):
     lv.start_monitoring()
     appliance.ssh_client.run_command('appliance_console_cli --server=restart')
     assert lv.validate(wait="60s")
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
 
 def test_codename_in_stdout(appliance):
@@ -462,7 +462,7 @@ def test_codename_in_stdout(appliance):
             fr'journalctl -u evmserverd -c "{cursor}" | egrep -i "codename: \w+$"')
         return r.success
 
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
 
 @test_requirements.distributed
