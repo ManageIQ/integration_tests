@@ -29,7 +29,7 @@ def test_login(context, method, appliance):
     """ Tests that the appliance can be logged into and shows dashboard page.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         initialEstimate: 1/8h
         tags: rbac
@@ -55,7 +55,7 @@ def test_bad_password(context, request, appliance):
     """ Tests logging in with a bad password.
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: WebUI
         initialEstimate: 1/8h
         tags: rbac
@@ -81,7 +81,7 @@ def test_credentials_change_password_with_special_characters():
     Password with only special characters
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Appliance
         caseimportance: medium
         initialEstimate: 1/8h

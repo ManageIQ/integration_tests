@@ -160,7 +160,7 @@ def catalog_obj(appliance):
 def test_user_crud(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -187,7 +187,7 @@ def test_user_assign_multiple_groups(appliance, request):
         * Confirm that the user has each group visible in the Settings menu
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -216,7 +216,7 @@ def test_user_change_groups(appliance):
     """Assign a user to multiple groups and confirm that the user can successfully change groups
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Configuration
     """
@@ -252,7 +252,7 @@ def test_user_login(appliance):
         1035399
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -279,7 +279,7 @@ def test_user_duplicate_username(appliance):
         * Create another user with same credential
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -309,7 +309,7 @@ def test_user_allow_duplicate_name(appliance):
         * Create another user with same full name
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -332,7 +332,7 @@ def test_user_allow_duplicate_name(appliance):
 def test_username_required_error_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -354,7 +354,7 @@ def test_username_required_error_validation(appliance):
 def test_userid_required_error_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -379,7 +379,7 @@ def test_userid_required_error_validation(appliance):
 def test_user_password_required_error_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -406,7 +406,7 @@ def test_user_password_required_error_validation(appliance):
 def test_user_group_error_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -423,7 +423,7 @@ def test_user_group_error_validation(appliance):
 def test_user_email_error_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -496,7 +496,7 @@ def test_delete_default_user(appliance):
         * Try deleting the user
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -518,7 +518,7 @@ def test_current_user_login_delete(appliance, request):
         * Try deleting the user
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -562,7 +562,7 @@ def test_tagvis_user(user_restricted, check_item_visibility):
 def test_group_crud(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -621,7 +621,7 @@ def test_group_duplicate_name(appliance):
     """ Verify that two groups can't have the same name
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         tags: rbac
         casecomponent: Configuration
@@ -692,7 +692,7 @@ def test_group_remove_tag(appliance):
 def test_group_description_required_error_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -717,7 +717,7 @@ def test_delete_default_group(appliance):
         * Try deleting the group EvmGroup-adminstrator
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -734,7 +734,7 @@ def test_delete_group_with_assigned_user(appliance):
     """Test that CFME prevents deletion of a group that has users assigned
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -757,7 +757,7 @@ def test_edit_default_group(appliance):
         * Try editing the group EvmGroup-adminstrator
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -781,7 +781,7 @@ def test_edit_sequence_usergroups(appliance, request):
         * Verify the changed sequence
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         initialEstimate: 1/8h
         tags: rbac
@@ -822,7 +822,7 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 def test_role_crud(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -854,7 +854,7 @@ def test_role_crud(appliance):
 def test_rolename_required_error_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -875,7 +875,7 @@ def test_rolename_required_error_validation(appliance):
 def test_rolename_duplicate_validation(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: Configuration
         initialEstimate: 1/8h
         tags: rbac
@@ -901,7 +901,7 @@ def test_delete_default_roles(appliance):
         * Try editing the group EvmRole-approver
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -922,7 +922,7 @@ def test_edit_default_roles(appliance):
         * Try editing the group EvmRole-auditor
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -939,7 +939,7 @@ def test_edit_default_roles(appliance):
 def test_delete_roles_with_assigned_group(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -957,7 +957,7 @@ def test_delete_roles_with_assigned_group(appliance):
 def test_assign_user_to_new_group(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -1011,7 +1011,7 @@ def test_permission_edit(appliance, request, product_features):
         action: reference to a function to execute under the test user context
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         caseimportance: medium
         casecomponent: Configuration
         initialEstimate: 1h
@@ -1121,7 +1121,7 @@ def test_permissions(appliance, product_features, allowed_actions, disallowed_ac
             object: [ { "Action Name": function_reference_action }, ...]
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         caseimportance: medium
         casecomponent: Configuration
         initialEstimate: 1h
@@ -1176,7 +1176,7 @@ def single_task_permission_test(appliance, product_features, actions):
 def test_permissions_role_crud(appliance):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/5h
         casecomponent: Configuration
         tags: rbac
@@ -1198,7 +1198,7 @@ def test_permissions_role_crud(appliance):
 def test_permissions_vm_provisioning(appliance, provider, setup_provider):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         caseimportance: medium
         casecomponent: Configuration
         initialEstimate: 1/5h
@@ -1254,7 +1254,7 @@ def test_permissions_vm_provisioning(appliance, provider, setup_provider):
 def test_user_change_password(appliance, request):
     """
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/8h
         casecomponent: Configuration
         tags: rbac
@@ -1289,7 +1289,7 @@ def test_copied_user_password_inheritance(appliance, request):
     empty
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         casecomponent: WebUI
         caseimportance: high
         initialEstimate: 1/15h
@@ -2346,6 +2346,7 @@ def test_ssui_group_switch():
     pass
 
 
+@pytest.mark.customer_scenario
 @pytest.mark.manual
 @test_requirements.rbac
 @test_requirements.ssui

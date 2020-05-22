@@ -57,7 +57,7 @@ def test_service_rbac_no_permission(appliance, role_user_group):
     """ Test service rbac without user permission
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Services
     """
@@ -73,7 +73,7 @@ def test_service_rbac_catalog(appliance, role_user_group, catalog):
     """ Test service rbac with catalog
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Services
     """
@@ -93,7 +93,7 @@ def test_service_rbac_service_catalog(
     """ Test service rbac with service catalog
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Services
     """
@@ -138,7 +138,7 @@ def test_service_rbac_catalog_item(request, appliance, role_user_group, catalog_
     """ Test service rbac with catalog item
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Services
     """
@@ -156,7 +156,7 @@ def test_service_rbac_orchestration(appliance, role_user_group):
     """ Test service rbac with orchestration
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Services
     """
@@ -182,7 +182,7 @@ def test_service_rbac_request(appliance, role_user_group, catalog_item, request,
     """ Test service rbac with only request module permissions
 
     Polarion:
-        assignee: apagac
+        assignee: dgaikwad
         initialEstimate: 1/4h
         casecomponent: Services
     """
