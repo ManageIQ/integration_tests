@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import fauxfactory
 import pytest
+from cinderclient.exceptions import BadRequest
 from manageiq_client.filters import Q
 from riggerlib import recursive_update
 from widgetastic.utils import partial_match
@@ -349,7 +350,10 @@ def cleanup_target(provider, migrated_vm):
         for vol in vm.raw._info['os-extended-volumes:volumes_attached']:
             volumes.append(vol['id'])
         migrated_vm.cleanup_on_provider()
-        provider.mgmt.delete_volume(*volumes)
+        try:
+            provider.mgmt.delete_volume(*volumes)
+        except BadRequest as e:
+            logger.warning(e)
 
 
 def get_vm(request, appliance, source_provider, template_type, datastore='nfs'):
