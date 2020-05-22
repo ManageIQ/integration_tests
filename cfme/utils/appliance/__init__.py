@@ -497,7 +497,6 @@ class IPAppliance:
             # restarted:
             restart_evm = False
             self.wait_for_web_ui(log_callback=log_callback)
-            self.wait_for_api_available()
             if self.version < '5.11':
                 self.configure_vm_console_cert(log_callback=log_callback)
                 restart_evm = True
@@ -509,7 +508,6 @@ class IPAppliance:
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
                 self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-                self.wait_for_api_available()
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -1490,10 +1488,11 @@ class IPAppliance:
         (log_callback or self.log.info)('Waiting for web UI to ' + prefix + 'appear')
         result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
             fail_condition=not running, delay=10)
+        self.wait_for_api_available()  # TODO deal with timeout and the running parameter
         return result
 
     def wait_for_api_available(self, num_sec=600):
-        """Waits for the web UI to be running / to not be running
+        """ Waits for the MIQ API to be available. Invalidates the cached client.
 
         Args:
             num_sec: Number of seconds to wait until num_sec(default ``600``)

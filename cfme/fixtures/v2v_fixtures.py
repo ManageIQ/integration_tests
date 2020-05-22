@@ -41,7 +41,6 @@ def set_skip_event_history_flag(appliance):
         appliance.evmserverd.restart()
         appliance.evmserverd.wait_for_running()
         appliance.wait_for_web_ui()
-        appliance.wait_for_api_available()
 
 
 def _start_event_workers_for_osp(appliance, provider):
