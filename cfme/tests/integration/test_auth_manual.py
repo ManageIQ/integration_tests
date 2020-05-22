@@ -636,35 +636,6 @@ def test_login_self_service_ui():
 
 @test_requirements.rbac
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1813375])
-def test_create_group_console_no():
-    """
-    Should able to create group if atleast one 'Show in Console' category to NO
-    Bugzilla:
-        1813375
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: critical
-        initialEstimate: 1/4h
-        testSteps:
-            1. Go to Configuration > Settings accordion > Region node in accordion > Tags tab >
-            My Company Categories tab
-            2. For a new/an existing category set 'Show in Console' to 'No' and save the category
-            3. Go to Configuration > Access Control accordion > Groups
-            4. Toolbar: Configuration > Add a new Group
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Should able to create group and there should not be error in production.log
-
-    """
-    pass
-
-
-@test_requirements.rbac
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1803952])
 def test_select_edit_group():
     """
