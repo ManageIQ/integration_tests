@@ -687,6 +687,7 @@ def test_select_edit_group():
     pass
 
 
+@pytest.mark.customer_scenario
 @test_requirements.rbac
 @pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1730066])
