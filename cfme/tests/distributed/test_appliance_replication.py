@@ -9,6 +9,7 @@ from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import cfme_data
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
@@ -319,6 +320,56 @@ def test_appliance_reporting_role(distributed_appliances):
         subtype="EVM",
         menu_name="EVM Server UserID Usage Report"
     ).queue(wait_for_finish=True)
+
+
+@pytest.mark.ignore_stream('upstream')
+def test_server_role_failover(distributed_appliances):
+    """Test that server roles failover successfully to a secondary appliance if evmserverd stops
+    on the primary appliance.
+
+    Metadata:
+        test_flag: configuration
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Appliance
+        caseimportance: medium
+        initialEstimate: 1/12h
+    """
+    primary_appliance, secondary_appliance = distributed_appliances
+
+    all_server_roles = cfme_data.get('server_roles', {'all': []})['all']
+    if not all_server_roles:
+        pytest.skip('Empty server_roles dictionary in cfme_data, skipping test')
+
+    if primary_appliance.version < '5.11':
+        remove_roles = ['internet_connectivity', 'remote_console']
+    else:
+        remove_roles = ['websocket']
+    server_roles = [r for r in all_server_roles if r not in remove_roles]
+    fill_values = {k: True for k in server_roles}
+
+    # Enable all roles on both appliances.
+    for appliance in distributed_appliances:
+        appliance.browser_steal = True
+        with appliance:
+            view = navigate_to(appliance.server, 'Server')
+            view.server_roles.fill(fill_values)
+            view.save.click()
+            view.flash.assert_no_error()
+
+    # Stop evmserverd on secondary appliance.
+    secondary_appliance.evmserverd.stop()
+
+    # Verify that all roles are active on primary appliance.
+    wait_for(lambda: primary_appliance.server_roles == fill_values)
+
+    # Stop evmserverd on primary appliance and restart it on secondary appliance.
+    secondary_appliance.evmserverd.start()
+    primary_appliance.evmserverd.stop()
+
+    # Verify that all roles are now active on secondary appliance.
+    wait_for(lambda: secondary_appliance.server_roles == fill_values)
 
 
 @pytest.mark.ignore_stream("upstream")

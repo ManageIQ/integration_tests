@@ -9,28 +9,6 @@ pytestmark = [
     test_requirements.distributed
 ]
 
-ROLES = ['automate',
-         'cockpit_ws',
-         'database_operations',
-         'database_owner',
-         'embedded_ansible',
-         'ems_inventory',
-         'ems_metrics_collector',
-         'ems_metrics_coordinator',
-         'ems_metrics_processor',
-         'ems_operations',
-         'event',
-         'git_owner',
-         'internet_connectivity',
-         'notifier',
-         'reporting',
-         'scheduler',
-         'smartproxy',
-         'smartstate',
-         'user_interface',
-         'remote_console',
-         'web_services']
-
 
 def test_distributed_add_provider_to_remote_zone():
     """
@@ -67,19 +45,6 @@ def test_distributed_zone_delete_occupied():
         assignee: tpapaioa
         casecomponent: Appliance
         caseimportance: critical
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-@pytest.mark.parametrize('role', ROLES)
-def test_server_role_failover(role):
-    """
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        caseimportance: medium
         initialEstimate: 1/12h
     """
     pass
