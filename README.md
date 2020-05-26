@@ -16,6 +16,17 @@ Docs and guides
 - [Setting up Emacs](http://cfme-tests.readthedocs.org/guides/editors.html)
 - [PR Review Process](https://github.com/ManageIQ/integration_tests/wiki/PR-Process)
 
+Downstream and Upstream version support
+---------------------------------------
+Integration_tests was developed for the upstream MIQ community largely with contributions from Red Hat CloudForms quality engineers.
+
+The master and downstream-stable branches of the integration_tests repository are written to always support MIQ 'master' branch builds.
+
+Downstream CloudForms builds are supported by the framework as well, with a rolling window of active version support
+
+Contributions to the master branch must support MIQ master and the following versions of Red Hat CloudForms:
+- 5.11.z
+
 Legal
 -----
 
