@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import partial_match
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -609,11 +608,6 @@ def test_v2v_custom_attribute(request, appliance, provider,
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_vm_obj_single_datastore.infra_mapping_data
 
-    component = mapping_data["clusters"][0]
-    # Changing target project to other than default(admin to qe-auto)
-    component.targets = [partial_match(provider.data.clusters[1])]
-    map_cluster = component.targets[0]
-    # create mapping with 'qe-auto' project
     mapping = infrastructure_mapping_collection.create(**mapping_data)
     src_vm_obj = mapping_data_vm_obj_single_datastore.vm_list[0]
 
@@ -651,8 +645,4 @@ def test_v2v_custom_attribute(request, appliance, provider,
     # Test1: Checking map's flavor with openstack server flavor
     assert map_flavor == osp_vm.flavor.name
     # Test2: Checking map's security group with openstack server security group
-    assert map_security_group == osp_vm.security_groups[0]
-
-    new_view = navigate_to(src_vm_obj, "Details")
-    osp_project = new_view.entities.summary("Relationships").get_text_of("Cloud Tenants")
-    assert map_cluster == osp_project
+    assert map_security_group == osp_vm.raw.security_groups[0]['name']
