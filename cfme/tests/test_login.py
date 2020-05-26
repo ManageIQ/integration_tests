@@ -73,23 +73,6 @@ def test_bad_password(context, request, appliance):
         assert view.password.read() == '' and view.username.read() == ''
 
 
-@pytest.mark.manual
-@test_requirements.rbac
-@pytest.mark.tier(2)
-def test_credentials_change_password_with_special_characters():
-    """
-    Password with only special characters
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Appliance
-        caseimportance: medium
-        initialEstimate: 1/8h
-        tags: rbac
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 @pytest.mark.ignore_stream("5.10")
 @test_requirements.multi_region
