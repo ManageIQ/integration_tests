@@ -150,7 +150,7 @@ def download_and_migrate_db(app, db_url):
     except ApplianceException:
         result = app.ssh_client.run_rake_command("evm:start")
         assert result.success, f"Couldn't start evmserverd: {result.output}"
-    app.wait_for_miq_ready(timeout=600)
+    app.wait_for_miq_ready(num_sec=600)
     app.db.reset_user_pass()
     wait_for(navigate_to, (app.server, 'LoginScreen'), handle_exception=True, timeout='5m')
     app.server.login(app.user)
@@ -224,7 +224,7 @@ def test_db_migrate_replication(temp_appliance_remote, dbversion, temp_appliance
     except ApplianceException:
         result = app.ssh_client.run_rake_command("evm:start")
         assert result.success, f"Couldn't start evmserverd: {result.output}"
-    app.wait_for_miq_ready(timeout=600)
+    app.wait_for_miq_ready(num_sec=600)
     # Reset user's password, just in case (necessary for customer DBs)
     app.db.reset_user_pass()
     app.server.login(app.user)

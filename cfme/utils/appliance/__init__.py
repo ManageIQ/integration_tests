@@ -507,7 +507,7 @@ class IPAppliance:
 
             if restart_evm:
                 self.evmserverd.restart(log_callback=log_callback)
-                self.wait_for_miq_ready(timeout=1800, log_callback=log_callback)
+                self.wait_for_miq_ready(num_sec=1800, log_callback=log_callback)
 
     def configure_gce(self, log_callback=None):
         # Force use of IPAppliance's configure method
@@ -1476,19 +1476,17 @@ class IPAppliance:
             self.wait_for_miq_ready()
 
     @logger_wrap("Waiting for web_ui: {}")
-    def wait_for_miq_ready(self, timeout=900, running=True, log_callback=None):
+    def wait_for_miq_ready(self, num_sec: int = 900, log_callback=None):
         """Waits for the web UI and API server to be ready / to not ready
 
         Args:
-            timeout: Number of seconds to wait until timeout (default ``600``)
-            running: Specifies if we wait for web UI to start or stop (default ``True``)
-                     ``True`` == start, ``False`` == stop
+            num_secs: Number of seconds to wait until timeout (default ``900``)
+            log_callback: Function to use for writing log messages.
         """
-        prefix = "" if running else "dis"
-        (log_callback or self.log.info)('Waiting for web UI to ' + prefix + 'appear')
-        result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
-            fail_condition=not running, delay=10)
-        self.wait_for_api_available()  # TODO deal with timeout and the running parameter
+        (log_callback or self.log.info)('Waiting for web UI to appear')
+        result, secs_taken = wait_for(self._check_appliance_ui_wait_fn,
+                                      num_sec=num_sec, fail_condition=False, delay=10)
+        self.wait_for_api_available(num_sec - secs_taken)
         return result
 
     def wait_for_api_available(self, num_sec=600):

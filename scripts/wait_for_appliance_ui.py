@@ -19,7 +19,7 @@ def main():
 
     args = parser.parse_args()
     ip_a = IPAppliance.from_url(args.url)
-    result = ip_a.wait_for_miq_ready(timeout=args.num_sec)
+    result = ip_a.wait_for_miq_ready(num_sec=args.num_sec)
 
     if not result:
         return 1

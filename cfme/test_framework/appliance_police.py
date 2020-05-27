@@ -54,7 +54,7 @@ def appliance_police(appliance):
             # and (sadly) the only fix is a rude restart
             appliance.restart_evm_rude()
             try:
-                appliance.wait_for_miq_ready(900)
+                appliance.wait_for_miq_ready()
                 store.write_line('EVM was frozen and had to be restarted.', purple=True)
                 return
             except TimedOutError:
