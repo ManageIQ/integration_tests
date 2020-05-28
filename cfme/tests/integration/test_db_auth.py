@@ -14,10 +14,11 @@ pytestmark = [test_requirements.auth]
 TEST_PASSWORDS = [
     f"{fauxfactory.gen_alpha()} ",  # trailing whitespace
     f" {fauxfactory.gen_alpha()}",  # leading whitespace
-    f"$#!{fauxfactory.gen_alpha()}",  # spec char
+    f"$#!{fauxfactory.gen_alpha()}",  # leading spec char
     f"{fauxfactory.gen_alpha(17)}",  # pw > 16 char
     "",  # blank
     fauxfactory.gen_alpha().upper(),  # uppercase char
+    r"$%&'()*+,-./:;<=>?@[\]^_{|}~",  # special char only
 ]
 
 
@@ -52,7 +53,7 @@ def nonexistent_user(appliance):
     "pwd",
     TEST_PASSWORDS,
     ids=["trailing_whitspace", "leading_whitespace", "spec_char", "gt_16char",
-         "blank", "upper_case"]
+         "blank", "upper_case", "special_char_only"]
 )
 def test_db_user_pwd(appliance, user, pwd, soft_assert):
     """
