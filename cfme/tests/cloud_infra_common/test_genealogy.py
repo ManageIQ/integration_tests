@@ -11,6 +11,7 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
@@ -26,24 +27,25 @@ pytestmark = [
     test_requirements.genealogy
 ]
 
-@pytest.fixture("function")
-def clone_vm_name():
-    clone_vm_name = fauxfactory.gen_alphanumeric(18, start="test_genealogy_")
-    return clone_vm_name
-
 
 @pytest.fixture
-def create_vm_with_clone(create_vm, clone_vm_name, provider, appliance):
+def create_vm_with_clone(request, create_vm, provider, appliance):
     """Fixture to provision a VM and clone it"""
-
     first_name = fauxfactory.gen_alphanumeric()
     last_name = fauxfactory.gen_alphanumeric()
-    email = "{}.{}@test.com".format(first_name, last_name)
+    email = "{first_name}.{last_name}@test.com"
     provision_type = 'VMware'
 
-    create_vm.clone_vm(email, first_name, last_name, clone_vm_name, provision_type)
-    vm2 = appliance.collections.infra_vms.instantiate(clone_vm_name, provider)
+    vm_name = random_vm_name(context=None, max_length=15)
+
+    create_vm.clone_vm(email, first_name, last_name, vm_name, provision_type)
+    vm2 = appliance.collections.infra_vms.instantiate(vm_name, provider)
     wait_for(lambda: vm2.exists, timeout=10)
+
+    @request.addfinalizer
+    def _cleanup():
+        vm2.cleanup_on_provider()
+        provider.refresh_provider_relationships()
 
     return create_vm, vm2
 
@@ -122,8 +124,7 @@ def test_compare_button_enabled(create_vm_with_clone, soft_assert):
     Bugzilla:
         1694712
     """
-
-    create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone)
+    assert create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone).is_displayed
 
 
 @pytest.mark.manual

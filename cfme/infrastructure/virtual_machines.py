@@ -27,6 +27,7 @@ from widgetastic_patternfly import Input as WInput
 
 from cfme.common import BaseLoggedInPage
 from cfme.common import ComparableMixin
+from cfme.common import CompareView
 from cfme.common import TimelinesView
 from cfme.common.provider_views import TemplatesCompareView
 from cfme.common.vm import Template
@@ -519,9 +520,15 @@ class InfraVmCompareToolbar(View):
     same = Button(title='Attributes with same values')
 
 
-class InfraVmCompareView(InfraVmView):
-    """The Compare page"""
-    toolbar = View.nested(InfraVmCompareToolbar)
+class InfraVmCompareView(CompareView):
+    @property
+    def is_displayed(self):
+        title = "Compare VM or Template"
+        return (self.logged_in_as_current_user and
+                self.title.text == title and
+                self.navigation.currently_selected == ['Compute',
+                                                       'Infrastructure', 'Virtual Machines']
+                )
 
 
 class VMDisk(
@@ -1416,8 +1423,6 @@ class Genealogy:
             attributes: `all`, `different` or `same`. Default: `all`.
             mode: `exists` or `details`. Default: `exists`."""
         sections = kwargs.get('sections')
-        attributes = kwargs.get('attributes', 'all').lower()
-        mode = kwargs.get('mode', 'exists').lower()
         assert len(objects) >= 2, 'You must specify at least two objects'
         objects = [o.name if isinstance(o, (InfraVm, InfraTemplate)) else o for o in objects]
         view = self.navigate()
@@ -1426,17 +1431,20 @@ class Genealogy:
                 path = find_path(view.tree, obj)
             view.tree.check_node(*path)
         view.toolbar.compare.click()
-        view.flash.assert_no_error()
+        compare_view = self.obj.create_view(InfraVmCompareView, wait=20)
+        compare_view.flash.assert_no_error()
         # COMPARE PAGE
-        compare_view = self.obj.create_view(InfraVmCompareView)
+
         if sections is not None:
             list(map(lambda path: compare_view.tree.check_node(*path), sections))
             compare_view.apply.click()
             compare_view.flash.assert_no_errors()
         # Set requested attributes sets
-        getattr(compare_view.toolbar, attributes).click()
+        getattr(compare_view.toolbar, "all_attributes").click()
         # Set the requested mode
-        getattr(compare_view.toolbar, self.mode_mapping[mode]).click()
+        getattr(compare_view.toolbar, "exists_mode").click()
+
+        return compare_view
 
     @property
     def tree(self):
