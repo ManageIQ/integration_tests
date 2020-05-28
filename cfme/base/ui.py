@@ -29,8 +29,7 @@ from cfme.common import BaseLoggedInPage
 from cfme.configure.about import AboutView
 from cfme.configure.configuration.server_settings import ServerAuthenticationView
 from cfme.configure.configuration.server_settings import ServerInformationView
-from cfme.configure.configuration.server_settings import ServerWorkersTab510
-from cfme.configure.configuration.server_settings import ServerWorkersTab511
+from cfme.configure.configuration.server_settings import ServerWorkersView
 from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
@@ -46,8 +45,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.log import logger
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Checkbox
 from widgetastic_manageiq import DiagnosticsTreeView
@@ -484,10 +481,10 @@ class ServerView(ConfigurationView):
         TAB_NAME = "Authentication"
         including_view = View.include(ServerAuthenticationView, use_parent=True)
 
-    workers = VersionPicker({
-        '5.11': View.nested(ServerWorkersTab511),
-        Version.lowest(): View.nested(ServerWorkersTab510)
-    })
+    @View.nested
+    class workers(WaitTab):  # noqa
+        TAB_NAME = "Workers"
+        including_view = View.include(ServerWorkersView, use_parent=True)
 
     @View.nested
     class customlogos(WaitTab):  # noqa

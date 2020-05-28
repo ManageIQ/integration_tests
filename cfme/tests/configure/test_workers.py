@@ -62,20 +62,10 @@ def test_restart_workers(appliance):
              message="Wait for all original workers to be running")
 
 
-v510 = {
-    "1.1.gigabytes": 1178599424,
-    1178599424: "1.1.gigabytes",
-    "1.2.gigabytes": 1283457024,
-    1283457024: "1.2.gigabytes"
-}
-
-
 def set_memory_threshold_in_ui(appliance, worker, new_threshold):
     view = navigate_to(appliance.server, 'Workers')
     view.browser.refresh()
     mem_threshold = getattr(view.workers, worker.dropdown)
-    if appliance.version < '5.11' and new_threshold in v510:
-        new_threshold = v510[new_threshold]
     mem_threshold.select_by_visible_text(new_threshold.replace('.gigabytes', ' GB'))
     view.workers.save.click()
     return new_threshold
@@ -99,8 +89,6 @@ def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold):
     for step in steps[::-1]:
         patch = {step: patch}
     appliance.server.update_advanced_settings(patch)
-    if appliance.version < '5.11' and new_threshold in v510:
-        new_threshold = v510[new_threshold]
     return new_threshold
 
 
@@ -132,10 +120,8 @@ def test_set_memory_threshold(appliance, worker, request, set_memory_threshold):
     other_change = "1.2.gigabytes"
     if set_memory_threshold == set_memory_threshold_in_advanced_settings:
         threshold_change, other_change = other_change, threshold_change
-    if threshold_change in [before, v510.get(before)]:
+    if threshold_change == before:
         threshold_change = other_change
-    if appliance.version < "5.11":
-        threshold_change = v510[threshold_change]
     change = set_memory_threshold(appliance, worker, threshold_change)
     request.addfinalizer(
         lambda: set_memory_threshold_in_advanced_settings(appliance, worker, before)
@@ -152,10 +138,4 @@ def test_set_memory_threshold(appliance, worker, request, set_memory_threshold):
     change_val = float(change.replace('.gigabytes', ''))
     mem_threshold_real = get_memory_threshold_in_advanced_settings(appliance, worker)
     MESSAGE = "memory threshold have changed incorrectly in advanced settings"
-    if appliance.version >= "5.11":
-        assert mem_threshold_real == f"{change_val}.gigabytes", MESSAGE
-    else:
-        GB = 2 ** 30
-        expected_value = change_val * GB
-        # this tests if memory threshold has changed and is approximately correct
-        assert abs(mem_threshold_real - expected_value) < expected_value * 0.01, MESSAGE
+    assert mem_threshold_real == f"{change_val}.gigabytes", MESSAGE
