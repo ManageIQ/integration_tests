@@ -72,6 +72,8 @@ REDHAT_PACKAGES_SPECS = [
     ("Fedora release 28", "openssl", RH_BASE_NEW + DNF_EXTRA),
     ("Fedora release 29", "openssl", RH_BASE_NEW + DNF_EXTRA),
     ("Fedora release 30", "openssl", RH_BASE_NEW + DNF_EXTRA),
+    ("Fedora release 31", "openssl", RH_BASE_NEW + DNF_EXTRA),
+    ("Fedora release 32", "openssl", RH_BASE_NEW + DNF_EXTRA),
     ("CentOS Linux release 7", "nss", RH_BASE + YUM_EXTRA),
     ("Red Hat Enterprise Linux Server release 7", "nss", RH_BASE + YUM_EXTRA),
     ("Red Hat Enterprise Linux Workstation release 7", "nss",
@@ -92,7 +94,7 @@ OS_PACKAGES_SPECS = [
     ("Ubuntu", "16.04", "openssl", DEB_PKGS),  # as it appears in travis
     ("Ubuntu", "16.04.4 LTS (Xenial Xerus)", "openssl", DEB_PKGS),
     ("Ubuntu", "17.10 (Artful Aardvark)", "openssl", DEB_PKGS),
-    ("Ubuntu", "18.04", "gnutls", DEB_PKGS),  # as it appears in travis
+    ("Ubuntu", "18.04", "openssl", DEB_PKGS),  # as it appears in travis
     ("Ubuntu", "18.04.1 LTS (Bionic Beaver)", "openssl", DEB_PKGS),
     ("Debian GNU/Linux", "9 (stretch)", "openssl", DEB_PKGS),
 ]
