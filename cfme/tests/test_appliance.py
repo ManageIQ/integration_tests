@@ -497,3 +497,29 @@ def test_ec2_deploy_cfme_image():
             4. CFME appliance should work
     """
     pass
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[BZ(1749494)])
+def test_appliance_top_output_log(appliance):
+    """
+    check logs contains usable process names
+
+    Bugzilla:
+        1749494
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Appliance
+        caseimportance: high
+        initialEstimate: 1/4h
+    """
+
+    some_expected_processes = (
+        "MIQ Server",
+        "MIQ: MiqGenericWorker",
+        "MIQ: MiqPriorityWorker",
+        "MIQ: MiqScheduleWorker")
+    for process_name in some_expected_processes:
+        assert appliance.ssh_client.run_command(
+            f'grep -q "{process_name}" /var/www/miq/vmdb/log/top_output.log')
