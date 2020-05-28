@@ -2,9 +2,10 @@ name: 🕵️ Test suite
 
 on:
   push:
+  pull_request:
   schedule:
-    # Run every Friday at 23:59 UTC
-    - cron: 59 23 * * 5
+    # Run every day at 23:59 UTC
+    - cron: 59 23 * * *
 
 jobs:
   linting:
@@ -18,7 +19,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.7'
           architecture: 'x64'
 
       - name: pre-commit Checks
