@@ -2892,3 +2892,44 @@ def test_create_group_console_no(appliance, request):
             role="EvmRole-vm_user",
         )
         request.addfinalizer(group.delete_if_exists)
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(blockers=[BZ(1803952, forced_streams=["5.10"])], automates=[1803952])
+@test_requirements.rbac
+@pytest.mark.tier(2)
+def test_select_edit_group(appliance, request):
+    """
+    Should able to see "Edit the selected Group" option for custom group after selecting the group
+    also check error in production.log log file
+    Bugzilla:
+        1803952
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/4h
+        testSteps:
+            1. Go to Configuration--> Access controls
+            2. Select existing custom group and Configure
+        expectedResults:
+            1.
+            2. Able to see "Edit the selected Group"
+    """
+    # creating group
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(22, "group_description_"),
+        role="EvmRole-vm_user",
+    )
+    request.addfinalizer(group.delete_if_exists)
+    view = navigate_to(appliance.collections.groups, "All")
+    view.paginator.set_items_per_page(100)
+
+    msg = ".*FATAL.*Error caught: [NoMethodError].*"
+    with LogValidator("/var/www/miq/vmdb/log/production.log",
+                      failure_patterns=[msg]).waiting(timeout=120):
+        # Selecting created group
+        view.table.row(description=group.description)[0].click()
+        view.toolbar.configuration.open()
+        assert view.toolbar.configuration.item_enabled(
+            "Edit the selected Group"), '"Edit the selected Group" button is disabled'
