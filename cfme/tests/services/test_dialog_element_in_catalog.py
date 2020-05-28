@@ -613,10 +613,15 @@ def test_dynamic_dialogs(appliance, import_datastore, generic_catalog_item_with_
     assert view.fields("param_database").checkbox.read()
 
 
-@pytest.mark.meta(coverage=[1706600])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1706600])
 @pytest.mark.tier(2)
-def test_dynamic_dialogs_on_service_request():
+@pytest.mark.parametrize(
+    "import_data", [DatastoreImport("bz_1706600.zip", "billy", None)], ids=["datastore"]
+)
+@pytest.mark.parametrize("file_name", ["bz_1706600.yml"], ids=["sample_dialog"])
+def test_dynamic_dialogs_on_service_request(
+    import_datastore, generic_catalog_item_with_imported_dialog
+):
     """
 
     Bugzilla:
@@ -643,7 +648,12 @@ def test_dynamic_dialogs_on_service_request():
             5.
             6. Dialog Fields should populate in the System Request
     """
-    pass
+    catalog_item = generic_catalog_item_with_imported_dialog[0]
+    request = ServiceCatalogs(
+        catalog_item.appliance, catalog=catalog_item.catalog, name=catalog_item.name
+    ).order()
+    view = navigate_to(request, "Details")
+    assert view.details.request_details.read()["Text Box"] == "data text displays yada yada yada"
 
 
 @pytest.mark.meta(coverage=[1693264])
