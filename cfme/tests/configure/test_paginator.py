@@ -7,16 +7,7 @@ from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.appliance.implementations.ui import navigate_to
 
-general_db = [
-    ('servers', None, 'DatabaseSummary', False),
-    ('servers', None, 'DatabaseTables', True),
-    ('servers', None, 'DatabaseIndexes', True),
-    ('servers', None, 'DatabaseSettings', True),
-    ('servers', None, 'DatabaseClientConnections', True),
-    ('servers', None, 'DatabaseUtilization', False),
-]
-
-general_non_db = [
+general_list_pages = [
     ('servers', None, 'Details', False),
     ('servers', None, 'Authentication', False),
     ('servers', None, 'Workers', False),
@@ -60,8 +51,6 @@ general_non_db = [
     ('tenants', None, 'All', True),
 ]
 
-general_list_pages = general_db + general_non_db
-
 details_pages = [
     ('users', None, 'Details', False),
     ('groups', None, 'Details', False),
@@ -72,8 +61,6 @@ details_pages = [
     ('system_schedules', None, 'Details', False),
     ('tag', None, 'All', False),
 ]
-
-items_selection_5_10 = ['5 Items', '10 Items', '20 Items', '50 Items', '100 Items', '1000 Items']
 
 items_selection = ['5 Items', '10 Items', '20 Items', '50 Items', '100 Items', '200 Items',
                    '500 Items', '1000 Items']
@@ -101,12 +88,8 @@ def schedule(appliance):
 @pytest.mark.parametrize('place_info', general_list_pages,
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in general_list_pages])
-@pytest.mark.uncollectif(lambda appliance, place_info:
-                         appliance.version >= '5.11' and place_info in general_db,
-                         reason="This page is disabled in 5.11 and later.")
 def test_paginator_config_pages(appliance, place_info):
-    """
-        Check paginator is visible for config pages
+    """Check paginator is visible for config pages.
 
     Polarion:
         assignee: tpapaioa
@@ -133,17 +116,17 @@ def test_paginator_config_pages(appliance, place_info):
                          ids=['{}_{}'.format(set_type[0], set_type[2].lower())
                               for set_type in details_pages])
 def test_paginator_details_page(appliance, place_info, schedule):
-    """
-        Check paginator is visible for access control pages + schedules.
-        If paginator is present, check that all options are present in items per page.
+    """Check paginator is visible for access control pages + schedules.
+    If paginator is present, check that all options are present in items per page.
+
+    Bugzilla:
+        1515952
 
     Polarion:
         assignee: tpapaioa
         casecomponent: WebUI
         caseimportance: medium
         initialEstimate: 1/10h
-    Bugzilla:
-        1515952
     """
     place_name, place_class, place_navigation, paginator_expected_result = place_info
     if place_name == 'tag':
@@ -163,10 +146,7 @@ def test_paginator_details_page(appliance, place_info, schedule):
         paginator = view.paginator
         items_selector = Dropdown(view, f'{paginator.items_per_page} Items')
         msg = 'Not all options are present in items per page'
-        if view.extra.appliance.version < '5.11':
-            assert set(items_selection_5_10) == set(items_selector.items), msg
-        else:
-            assert set(items_selection) == set(items_selector.items), msg
+        assert set(items_selection) == set(items_selector.items), msg
 
 
 @pytest.mark.manual
