@@ -35,6 +35,7 @@ class OpenStackInstance(Instance):
     HARD_REBOOT = "Hard Reboot"
     # Provider-only power control options
     STOP = "Stop"
+    POWER_OFF = STOP  # For compatibility with the infra objects.
     PAUSE = "Pause"
     RESTART = "Restart"
     SHELVE = "Shelve"

@@ -4,18 +4,20 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.ui import LoginPage
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,
-    test_requirements.distributed,
-    pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
+    pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE)
 ]
 
 HTTPD_ROLES = ('cockpit_ws', 'user_interface', 'remote_console', 'web_services')
@@ -23,6 +25,7 @@ HTTPD_ROLES = ('cockpit_ws', 'user_interface', 'remote_console', 'web_services')
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_region
 def test_appliance_replicate_between_regions(provider, replicated_appliances):
     """Test that a provider added to the remote appliance is replicated to the global
     appliance.
@@ -50,6 +53,7 @@ def test_appliance_replicate_between_regions(provider, replicated_appliances):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.distributed
 def test_external_database_appliance(provider, distributed_appliances):
     """Test that a second appliance can be configured to join the region of the first,
     database-owning appliance, and that a provider created in the first appliance is
@@ -78,6 +82,7 @@ def test_external_database_appliance(provider, distributed_appliances):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_region
 def test_appliance_replicate_database_disconnection(provider, replicated_appliances):
     """Test that a provider created on the remote appliance *after* a database restart on the
     global appliance is still successfully replicated to the global appliance.
@@ -109,6 +114,7 @@ def test_appliance_replicate_database_disconnection(provider, replicated_applian
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_region
 def test_appliance_replicate_database_disconnection_with_backlog(provider, replicated_appliances):
     """Test that a provider created on the remote appliance *before* a database restart on the
     global appliance is still successfully replicated to the global appliance.
@@ -140,9 +146,11 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider, repli
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
-def test_replication_vm_power_control(provider, create_vm, register_event, soft_assert,
-        replicated_appliances):
+@pytest.mark.parametrize('context', [ViaUI])
+@pytest.mark.provider([CloudProvider, InfraProvider], selector=ONE_PER_TYPE)
+@test_requirements.multi_region
+@test_requirements.power
+def test_replication_vm_power_control(provider, create_vm, context, replicated_appliances):
     """Test that the global appliance can power off a VM managed by the remote appliance.
 
     Metadata:
@@ -157,29 +165,22 @@ def test_replication_vm_power_control(provider, create_vm, register_event, soft_
 
     remote_appliance.browser_steal = True
     with remote_appliance:
-        provider.create()
-        remote_appliance.collections.infra_providers.wait_for_a_provider()
+        assert provider.create(validate_inventory=True), "Could not create provider."
 
     global_appliance.browser_steal = True
     with global_appliance:
-        register_event(target_type='VmOrTemplate', target_name=create_vm.name,
-                       event_type='request_vm_poweroff')
-        register_event(target_type='VmOrTemplate', target_name=create_vm.name,
-                       event_type='vm_poweroff')
-
         create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
         navigate_to(create_vm.provider, 'Details')
         create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF, timeout=900)
-        soft_assert(create_vm.find_quadicon().data['state'] == 'off')
-        soft_assert(
-            not create_vm.mgmt.is_running,
-            "vm running")
+        assert create_vm.find_quadicon().data['state'] == 'off', "Incorrect VM quadicon state"
+        assert not create_vm.mgmt.is_running, "VM is still running"
 
 
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1678142])
 @pytest.mark.ignore_stream('upstream')
+@test_requirements.multi_region
 def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
     """Test that the user can view the VM in the global appliance UI, click on the
     "Connect to VM in its Region" button, and be redirected to the VM in the remote appliance UI.
@@ -237,6 +238,7 @@ def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
 
 
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.distributed
 def test_appliance_httpd_roles(distributed_appliances):
     """Test that a secondary appliance only runs httpd if a server role requires it.
     Disable all server roles that require httpd, and verify that httpd is stopped. For each server
@@ -284,6 +286,7 @@ def test_appliance_httpd_roles(distributed_appliances):
 
 
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.distributed
 def test_appliance_reporting_role(distributed_appliances):
     """Test that a report queued from an appliance with the User Interface role but not the
     Reporting role gets successfully run by a worker appliance that does have the Reporting
@@ -318,6 +321,7 @@ def test_appliance_reporting_role(distributed_appliances):
 
 
 @pytest.mark.ignore_stream('upstream')
+@test_requirements.distributed
 def test_server_role_failover(distributed_appliances):
     """Test that server roles failover successfully to a secondary appliance if evmserverd stops
     on the primary appliance.
@@ -366,6 +370,7 @@ def test_server_role_failover(distributed_appliances):
 
 
 @pytest.mark.ignore_stream("upstream")
+@test_requirements.multi_region
 def test_appliance_replicate_zones(replicated_appliances):
     """
     Verify that no remote zones can be selected when changing the server's zone
@@ -396,6 +401,7 @@ def test_appliance_replicate_zones(replicated_appliances):
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(automates=[1796681])
+@test_requirements.multi_region
 def test_appliance_replicate_remote_down(replicated_appliances):
     """Test that the Replication tab displays in the global appliance UI when the remote appliance
     database cannot be reached.

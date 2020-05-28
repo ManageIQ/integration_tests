@@ -6,8 +6,6 @@ from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance import ViaREST
-from cfme.utils.appliance import ViaUI
-
 
 pytestmark = [test_requirements.power, pytest.mark.manual]
 
@@ -222,7 +220,7 @@ def test_power_controls_on_vm_in_stack_cloud():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@pytest.mark.parametrize('context', [ViaREST])
 @pytest.mark.provider([CloudProvider, InfraProvider], required_fields=['templates'],
                       selector=ONE_PER_TYPE)
 @test_requirements.multi_region
