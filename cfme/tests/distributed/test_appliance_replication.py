@@ -10,8 +10,6 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -20,9 +18,7 @@ pytestmark = [
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE),
 ]
 
-_HTTPD_ROLES_510 = ('cockpit_ws', 'user_interface', 'web_services', 'websocket')
-_HTTPD_ROLES_511 = ('cockpit_ws', 'user_interface', 'remote_console', 'web_services')
-HTTPD_ROLES = VersionPicker({Version.lowest(): _HTTPD_ROLES_510, '5.11': _HTTPD_ROLES_511})
+HTTPD_ROLES = ('cockpit_ws', 'user_interface', 'remote_console', 'web_services')
 
 
 @pytest.mark.tier(2)
@@ -183,7 +179,7 @@ def test_replication_vm_power_control(provider, create_vm, register_event, soft_
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1678142])
-@pytest.mark.ignore_stream('upstream', '5.10')
+@pytest.mark.ignore_stream('upstream')
 def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
     """Test that the user can view the VM in the global appliance UI, click on the
     "Connect to VM in its Region" button, and be redirected to the VM in the remote appliance UI.
@@ -261,8 +257,7 @@ def test_appliance_httpd_roles(distributed_appliances):
     """
     primary_appliance, secondary_appliance = distributed_appliances
 
-    roles = HTTPD_ROLES.pick(secondary_appliance.version)
-    fill_values = {k: False for k in roles}
+    fill_values = {k: False for k in HTTPD_ROLES}
 
     # Change roles through primary appliance to guarantee UI availability.
     sid = secondary_appliance.server.sid
@@ -272,7 +267,7 @@ def test_appliance_httpd_roles(distributed_appliances):
     with primary_appliance:
         view = navigate_to(secondary_server, 'Server')
 
-        for role in roles:
+        for role in HTTPD_ROLES:
             # Disable all httpd roles and verify that httpd is stopped.
             view.server_roles.fill(fill_values)
             view.save.click()
@@ -342,10 +337,8 @@ def test_server_role_failover(distributed_appliances):
     if not all_server_roles:
         pytest.skip('Empty server_roles dictionary in cfme_data, skipping test')
 
-    if primary_appliance.version < '5.11':
-        remove_roles = ['internet_connectivity', 'remote_console']
-    else:
-        remove_roles = ['websocket']
+    # Remove roles in cfme_data that are not in 5.11 or later.
+    remove_roles = ['websocket']
     server_roles = [r for r in all_server_roles if r not in remove_roles]
     fill_values = {k: True for k in server_roles}
 
