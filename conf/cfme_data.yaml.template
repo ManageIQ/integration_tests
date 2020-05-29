@@ -1045,3 +1045,37 @@ vm_console:
         city: Durham
         organization: CFME
         organizational_unit: QE
+
+template_upload:
+    automatic_name_strategy: True
+    stream:
+    provider_type:
+    provider_version:
+    tool_client:
+        hostname: <template upload tool host>
+        credentials: host_cred_key
+    template_upload_vsphere:
+        template: True
+        upload: True
+        disk: True
+        ovf_tool_client: <template upload tool host>
+        ovf_tool_creds: host_cred_key
+    template_upload_rhevm:
+        disk_size: 5000000000
+        disk_format: cow
+        disk_interface: VIRTIO
+    template_upload_rhos:
+    template_upload_openshift:
+        upload_folder: /exports/builds
+    template_upload_ec2:
+        aws_cli_tool_client: <template upload tool host>
+        aws_cli_tool_creds: host_cred_key
+    hardware:
+        downstream:
+            cores: 4
+            sockets: 1
+            memory: 12
+        upstream:
+            cores: 4
+            sockets: 1
+            memory: 6
