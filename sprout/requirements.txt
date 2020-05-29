@@ -10,6 +10,6 @@ kombu==4.5.0
 pika
 python-memcached
 redis==3.3.8
-miq-version==0.2.0
+miq-version==0.4.0
 yaycl
 werkzeug
