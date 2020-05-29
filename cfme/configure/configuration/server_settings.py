@@ -23,8 +23,6 @@ from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import RadioGroup
 from widgetastic_manageiq import ReactSelect
-from widgetastic_manageiq import WaitTab
-
 
 AUTH_MODES = {
     'database': 'Database',
@@ -729,36 +727,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             logger.info('No authentication settings changed, not saving form.')
 
 
-class ServerWorkersTab510(WaitTab):
-    TAB_NAME = "Workers"
-    generic_worker_count = BootstrapSelect("generic_worker_count")
-    generic_worker_threshold = BootstrapSelect("generic_worker_threshold")
-    cu_data_collector_worker_count = BootstrapSelect("ems_metrics_collector_worker_count")
-    cu_data_collector_worker_threshold = BootstrapSelect(
-        "ems_metrics_collector_worker_threshold")
-    event_monitor_worker_threshold = BootstrapSelect("event_catcher_threshold")
-    connection_broker_worker_threshold = BootstrapSelect("vim_broker_worker_threshold")
-    ui_worker_count = BootstrapSelect("ui_worker_count")
-    reporting_worker_count = BootstrapSelect("reporting_worker_count")
-    reporting_worker_threshold = BootstrapSelect("reporting_worker_threshold")
-    web_service_worker_count = BootstrapSelect("web_service_worker_count")
-    web_service_worker_threshold = BootstrapSelect("web_service_worker_threshold")
-    priority_worker_count = BootstrapSelect("priority_worker_count")
-    priority_worker_threshold = BootstrapSelect("priority_worker_threshold")
-    cu_data_processor_worker_count = BootstrapSelect("ems_metrics_processor_worker_count")
-    cu_data_processor_worker_threshold = BootstrapSelect(
-        "ems_metrics_processor_worker_threshold")
-    refresh_worker_threshold = BootstrapSelect("ems_refresh_worker_threshold")
-    vm_analysis_collectors_worker_count = BootstrapSelect("proxy_worker_count")
-    vm_analysis_collectors_worker_threshold = BootstrapSelect("proxy_worker_threshold")
-    websocket_worker_count = BootstrapSelect("websocket_worker_count")
-
-    save = Button('Save')
-    reset = Button('Reset')
-
-
-class ServerWorkersTab511(WaitTab):
-    TAB_NAME = "Workers"
+class ServerWorkersView(View):
     generic_worker_count = ReactSelect("generic_worker.count")
     generic_worker_threshold = ReactSelect("generic_worker.memory_threshold")
     priority_worker_count = ReactSelect("priority_worker.count")
