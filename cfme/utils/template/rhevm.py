@@ -125,7 +125,7 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
             self.add_glance_to_provider()
             self.import_template_from_glance()
             self.deploy_vm_from_template()
-            if self.stream == 'upstream':
+            if 'upstream' in self.stream:
                 self.manageiq_cleanup()
             self.add_disk_to_vm()
             self.templatize_vm()
