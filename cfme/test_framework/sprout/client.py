@@ -3,7 +3,7 @@ import os
 
 import attr
 import requests
-from miq_version import LATEST_DOWN_STREAM
+from miq_version.constants import LATEST_DOWN_STREAM
 
 from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import credentials

@@ -1,6 +1,3 @@
-"""
-NOT TESTED YET
-"""
 import re
 
 from cfme.utils.conf import cfme_data
@@ -53,7 +50,7 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
     @log_wrap('Deploy template to vm - before templatizing')
     def deploy_vm_from_template(self):
         """Deploy a VM from the raw template with resource limits set from yaml"""
-        stream_hardware = cfme_data.template_upload.hardware[self.stream]
+        stream_hardware = cfme_data.template_upload.hardware[self.stream.split('-')[0]]
         self.mgmt.get_template(self.temp_template_name).deploy(
             vm_name=self.temp_vm_name,
             cluster=self.provider_data.template_upload.cluster,
@@ -128,7 +125,7 @@ class RHEVMTemplateUpload(ProviderTemplateUpload):
             self.add_glance_to_provider()
             self.import_template_from_glance()
             self.deploy_vm_from_template()
-            if self.stream == 'upstream':
+            if 'upstream' in self.stream:
                 self.manageiq_cleanup()
             self.add_disk_to_vm()
             self.templatize_vm()

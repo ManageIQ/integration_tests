@@ -449,14 +449,22 @@ class ProviderTemplateUpload:
                  delay=5,
                  timeout=300,
                  message='Waiting for appliance-initialization to complete')
+
         for service in upstream_services:
-            self.execute_ssh_command(f'{service}', client_args=client_args)
+            service_result = self.execute_ssh_command(f'{service}', client_args=client_args)
+            assert service_result
         for cleanup in upstream_cleanup:
-            self.execute_ssh_command(f'rm -rf {cleanup}', client_args=client_args)
+            file_result = self.execute_ssh_command(f'rm -rf {cleanup}', client_args=client_args)
+            assert file_result
 
-        check_pgsql = self.execute_ssh_command('ls /var/lib/pgsql/data/', client_args=client_args)
+            files_after_cleanup = self.execute_ssh_command(f'ls -lh {cleanup.rstrip("*")}',
+                                                           client_args=client_args)
+            logger.info(f'Files after MIQ cleanup: \n{files_after_cleanup.output}\n')
 
-        if not check_pgsql.output:
+        check_pgsql = self.execute_ssh_command('ls -lh /var/lib/pgsql/data/',
+                                               client_args=client_args)
+
+        if 'total 0' in check_pgsql.output:
             logger.info('Finished cleaning out the default setup of a ManageIQ appliance')
             return True
         else:
