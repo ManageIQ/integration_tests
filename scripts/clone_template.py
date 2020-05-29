@@ -79,7 +79,7 @@ def destroy_vm(provider_mgmt, vm_name):
     Returns ``True`` if the VM is deleted, ``False`` if the backend reports that it did not delete
         the VM, and ``None`` if an error occurred (the error will be logged)
 
-    """
+
     try:
         if provider_mgmt.does_vm_exist(vm_name):
             logger.info('Destroying VM %s', vm_name)
@@ -97,6 +97,7 @@ def destroy_vm(provider_mgmt, vm_name):
             return vm_deleted
     except Exception as e:
         logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, str(e))
+    """
 
 
 def cloud_init_done(appliance):
@@ -346,6 +347,7 @@ def main(**kwargs):
                 pass
             else:
                 app.configure(timeout=600)
+                pass
             logger.info('Successfully Configured the appliance.')
     except Exception as e:
         logger.exception(e)
