@@ -159,7 +159,7 @@ layered-yaml-attrdict-config==18.12.3
 lxml==4.3.3
 MarkupSafe==1.1.1
 mccabe==0.6.1
-miq-version==0.2
+miq-version==0.4.0
 mistune==0.8.4
 mock==2.0.0
 msgpack==0.6.1
