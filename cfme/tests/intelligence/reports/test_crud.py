@@ -148,7 +148,6 @@ def test_menuwidget_crud(appliance, request):
         caseimportance: critical
         initialEstimate: 1/12h
     """
-    dashboard = f"{appliance.server.intel_name} / Dashboard"
     w = appliance.collections.dashboard_report_widgets.create(
         appliance.collections.dashboard_report_widgets.MENU,
         fauxfactory.gen_alphanumeric(),
@@ -156,7 +155,7 @@ def test_menuwidget_crud(appliance, request):
         active=True,
         shortcuts={
             "Services / Catalogs": fauxfactory.gen_alphanumeric(),
-            dashboard: fauxfactory.gen_alphanumeric(),
+            "Overview / Dashboard": fauxfactory.gen_alphanumeric(),
         },
         visibility="<To All Users>"
     )

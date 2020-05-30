@@ -216,10 +216,8 @@ class ReportTimelineView(CloudIntelTimelinesView):
         # which is why tree.currently_selected is checked against tree_path[1:]
         return (
             self.logged_in_as_current_user
-            and self.navigation.currently_selected
-            == [self.context["object"].appliance.server.intel_name, "Timelines"]
-            and self.timelines.tree.currently_selected
-            == self.context["object"].tree_path[1:]
+            and self.navigation.currently_selected == ['Overview', 'Timelines']
+            and self.timelines.tree.currently_selected == self.context["object"].tree_path[1:]
         )
 
 

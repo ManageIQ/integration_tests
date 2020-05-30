@@ -11,8 +11,7 @@ class ChargebackView(BaseLoggedInPage):
     def in_chargeback(self):
         return (
             self.logged_in_as_current_user
-            and self.navigation.currently_selected
-            == [self.context["object"].appliance.server.intel_name, "Chargeback"]
+            and self.navigation.currently_selected == ['Overview', 'Chargeback']
         )
 
     @property
