@@ -239,33 +239,6 @@ def test_service_state(request, appliance, provider, catalog_item, check):
              fail_func=view.browser.refresh)
 
 
-@pytest.mark.meta(coverage=[1727443])
-@pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
-@pytest.mark.tier(2)
-def test_service_load():
-    """
-    Bugzilla:
-        1727443
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        startsin: 5.11
-        testSteps:
-            1. Create catalog and catalog item
-            2. Order the catalog item
-            3. Make 1k copy of above service
-            4. Go to My services
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Tree should load faster when having 1000+ services
-    """
-    pass
-
-
 @pytest.fixture
 def services_vms_list(appliance, request, provider, catalog_item):
     ui_services, vms = [], []
@@ -322,13 +295,16 @@ def test_retire_multiple_services(services_vms_list):
     assert all([vm.retired for vm in vms])
 
 
-@pytest.mark.meta(coverage=[1718102, 1718898, 1741327])
-@pytest.mark.manual
+@pytest.mark.meta(automates=[1718102, 1718898, 1741327])
 @pytest.mark.tier(2)
-def test_load_multiple_services():
+@pytest.mark.customer_scenario
+@pytest.mark.ignore_stream("5.10")
+def test_load_multiple_services(appliance, generic_service):
     """
     Bugzilla:
         1718102
+        1718898
+        1741327
 
     Polarion:
         assignee: nansari
@@ -348,7 +324,23 @@ def test_load_multiple_services():
             4.
             5. The page should load in less than 10 seconds
     """
-    pass
+    service, _ = generic_service
+    # Add 999 duplicate services
+    values = appliance.ssh_client.run_rails_console(
+        "999.times {Service.first.dup.save}"
+    )
+    assert values.success
+
+    view = navigate_to(service, "All")
+    view.toolbar.view_selector.select('List View')
+    view.entities.paginator.set_items_per_page(1000)
+    view.browser.refresh()
+    assert wait_for(lambda: view.is_displayed, timeout=10)
+
+    remove = appliance.ssh_client.run_rails_console(
+        "999.times {Service.first.destroy}"
+    )
+    assert remove.success
 
 
 @pytest.mark.meta(automates=[1737559])
