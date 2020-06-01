@@ -11,6 +11,7 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.rest.gen_data import services as _services
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
+from cfme.services.myservice.ui import ServiceRetirementView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils import browser
 from cfme.utils.appliance import ViaUI
@@ -176,19 +177,40 @@ def test_retire_service_with_retired_vm(appliance, context, service_vm):
         service.retire()
 
 
-@pytest.mark.manual
 @pytest.mark.tier(3)
-def test_retire_on_date_for_multiple_service():
+def test_retire_multiple_services_on_date(services_vms_list):
     """
     Polarion:
         assignee: nansari
         casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/8h
-        startsin: 5.5
-        tags: service
+        initialEstimate: 1/6h
+        startsin: 5.10
+        testSteps:
+            1. Create catalog and create two catalog item
+            2. Order the catalog items
+            3. Go to My services
+            4. Set retirements dates on both services
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Services should retire and vms as well
     """
-    pass
+    services, vms = services_vms_list
+    view = navigate_to(services[0], "All")
+    for entity in view.entities.get_all(services[0].name):
+        entity.ensure_checked()
+    view.toolbar.lifecycle.item_select("Set Retirement Dates", handle_alert=True)
+    dt_view = view.browser.create_view(ServiceRetirementView)
+    dt = datetime.utcnow()
+    dt_view.retirement_date.fill(dt)
+    dt_view.save_button.click()
+    wait_for(
+        lambda: all([service.rest_api_entity.retired for service in services]),
+        delay=5,
+        timeout=1200,
+    )
+    assert all([vm.retired for vm in vms])
 
 
 @pytest.mark.meta(automates=[1678123])
