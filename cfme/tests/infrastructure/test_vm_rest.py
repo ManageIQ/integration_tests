@@ -8,6 +8,7 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -177,3 +178,36 @@ def test_filtering_vm_with_multiple_ips(appliance, provider):
     )
     assert_response(appliance)
     assert vm.name in [resource.name for resource in result.resources]
+
+
+@pytest.mark.meta(automates=[1581853])
+@pytest.mark.tier(3)
+@pytest.mark.provider(classes=[InfraProvider], selector=ONE)
+def test_database_wildcard_should_work_and_be_included_in_the_query(appliance, request, provider):
+    """ Database wildcard should work and be included in the query
+    Bugzilla:
+        1581853
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.10
+        testSteps:
+            1. Create a VM with some name, for e.g test-25-xyz.
+            2. Filter VM with wild character and substring of the name, for e.g. "%25%"
+        expectedResults:
+            1. VM is created successfully.
+            2. VM is obtained without any error.
+    """
+    vm_name = _vm(
+        request, provider, appliance, name=fauxfactory.gen_alpha(start="test-25-", length=12)
+    )
+    with LogValidator(
+        "/var/www/miq/vmdb/log/production.log", failure_patterns=[".*FATAL.*"]
+    ).waiting(timeout=20):
+        result = appliance.rest_api.collections.vms.filter(Q("name", "=", "%25%"))
+
+    assert result.subcount
+    assert vm_name in [vm.name for vm in result.resources]

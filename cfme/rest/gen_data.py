@@ -198,13 +198,10 @@ def rates(request, appliance, num=3):
     return _creating_skeleton(request, appliance, 'rates', data)
 
 
-def vm(request, provider, appliance):
+def vm(request, provider, appliance, **kwargs):
+    vm_name = kwargs.pop("name", fauxfactory.gen_alphanumeric(length=18, start="test_rest_vm_"))
     provider_rest = appliance.rest_api.collections.providers.get(name=provider.name)
-    vm = deploy_template(
-        provider.key,
-        fauxfactory.gen_alphanumeric(length=18, start="test_rest_vm_")
-    )
-    vm_name = vm.name
+    vm = deploy_template(provider.key, vm_name)
 
     @request.addfinalizer
     def _finished():
