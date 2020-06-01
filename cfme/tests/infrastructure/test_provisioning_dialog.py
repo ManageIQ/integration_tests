@@ -147,8 +147,6 @@ def check_all_tabs(provision_request, provider):
     for name in provider.provisioning_dialog_widget_names:
         widget = getattr(view, name)
         widget.click()
-        if BZ(1797706).blocks and provider.one_of(RHEVMProvider):
-            pytest.skip('Skipping as this fails due to BZ 1797706')
         assert widget.is_displayed
 
 
