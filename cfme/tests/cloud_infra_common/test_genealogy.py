@@ -40,7 +40,7 @@ def create_vm_with_clone(request, create_vm, provider, appliance):
 
     create_vm.clone_vm(email, first_name, last_name, vm_name, provision_type)
     vm2 = appliance.collections.infra_vms.instantiate(vm_name, provider)
-    wait_for(lambda: vm2.exists, timeout=10)
+    wait_for(lambda: vm2.exists, timeout=120)
 
     @request.addfinalizer
     def _cleanup():
