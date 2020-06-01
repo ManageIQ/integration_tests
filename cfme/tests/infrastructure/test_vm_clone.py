@@ -87,8 +87,7 @@ def test_template_clone(request, appliance, provider, clone_vm_name):
     vm.clone_template("email@xyz.com", "first", "last", clone_vm_name, provision_type)
     request_row = appliance.collections.requests.instantiate(clone_vm_name, partial_check=True)
 
-    if not BZ(1797706).blocks and provider.one_of(RHEVMProvider):
-        check_all_tabs(request_row, provider)
+    check_all_tabs(request_row, provider)
     request_row.wait_for_request(method='ui')
     msg = f"Request failed with the message {request_row.row.last_message.text}"
     assert request_row.is_succeeded(method='ui'), msg
