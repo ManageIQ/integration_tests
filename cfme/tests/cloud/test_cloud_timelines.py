@@ -9,6 +9,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -18,6 +19,10 @@ pytestmark = [
     # Only one prov out of the 2 is taken, if not supplying --use-provider=complete
     pytest.mark.provider([AzureProvider, EC2Provider], required_flags=['timelines', 'events']),
     pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.meta(blockers=[
+        GH("ManageIQ/manageiq-providers-amazon:620",
+           unblock=lambda provider: not provider.one_of(EC2Provider))
+    ]),
     test_requirements.timelines,
     test_requirements.events,
 ]
@@ -379,11 +384,7 @@ def test_cloud_timeline_rename_event(create_vm, soft_assert, azone):
     inst_event.catch_in_timelines(soft_assert, targets)
 
 
-@pytest.mark.meta(automates=[1730819], blockers=[
-    BZ(1730819,
-       forced_streams=["5.11"],
-       unblock=lambda provider: not provider.one_of(AzureProvider))
-])
+@pytest.mark.meta(automates=[1730819])
 @pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
 def test_cloud_timeline_delete_event(create_vm, soft_assert, azone):
     """
