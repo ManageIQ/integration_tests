@@ -10,6 +10,5 @@ class RSSView(BaseLoggedInPage):
     def is_displayed(self):
         return (
             self.logged_in_as_current_user
-            and self.navigation.currently_selected
-            == [self.context["object"].appliance.server.intel_name, "RSS"]
+            and self.navigation.currently_selected == ['Overview', 'RSS']
         )

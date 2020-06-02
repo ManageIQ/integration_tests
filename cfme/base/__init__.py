@@ -13,8 +13,6 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 
 
 @attr.s
@@ -33,7 +31,6 @@ class Server(BaseEntity, sentaku.modeling.ElementMixin):
     current_username = sentaku.ContextualMethod()
     current_group_name = sentaku.ContextualMethod()
     group_names = sentaku.ContextualMethod()
-    intel_name = VersionPicker({"5.11": "Overview", Version.lowest(): "Cloud Intel"})
 
     # zone = sentaku.ContextualProperty()
     # slave_servers = sentaku.ContextualProperty()
