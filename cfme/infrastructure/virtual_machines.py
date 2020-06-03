@@ -518,8 +518,7 @@ class InfraVmCompareView(CompareView):
     @property
     def is_displayed(self):
         title = "Compare VM or Template"
-        return (self.logged_in_as_current_user and
-                self.title.text == title and
+        return (self.title.text == title and
                 self.navigation.currently_selected == ['Compute',
                                                        'Infrastructure', 'Virtual Machines']
                 )
