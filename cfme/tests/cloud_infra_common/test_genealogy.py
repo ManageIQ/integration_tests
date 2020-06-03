@@ -101,7 +101,7 @@ def test_vm_genealogy_detected(
 
 @pytest.mark.provider([VMwareProvider])
 @pytest.mark.tier(1)
-def test_compare_button_enabled(create_vm_with_clone, soft_assert):
+def test_genealogy_comparison(create_vm_with_clone, soft_assert):
     """
     Test that compare button is enabled
 
@@ -124,7 +124,8 @@ def test_compare_button_enabled(create_vm_with_clone, soft_assert):
     Bugzilla:
         1694712
     """
-    assert create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone).is_displayed
+    compare_view = create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone)
+    assert compare_view.is_displayed
 
 
 @pytest.mark.manual

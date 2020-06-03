@@ -50,6 +50,7 @@ from cfme.common.vm_views import VMToolbar
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -511,13 +512,6 @@ class InfraVmGenealogyView(InfraVmView):
         """Is this view being displayed"""
         expected_title = '"Genealogy" for Virtual Machine "{}"'.format(self.context['object'].name)
         return self.in_infra_vms and self.title.text == expected_title
-
-
-class InfraVmCompareToolbar(View):
-    """The toolbar on the compare page"""
-    all = Button(title='All Attributes')
-    different = Button(title='Attributes with different values')
-    same = Button(title='Attributes with same values')
 
 
 class InfraVmCompareView(CompareView):
@@ -1430,6 +1424,8 @@ class Genealogy:
             if not isinstance(obj, list):
                 path = find_path(view.tree, obj)
             view.tree.check_node(*path)
+        if view.toolbar.compare.disabled:
+            raise ToolbarOptionGreyedOrUnavailable()
         view.toolbar.compare.click()
         compare_view = self.obj.create_view(InfraVmCompareView, wait=20)
         compare_view.flash.assert_no_error()
