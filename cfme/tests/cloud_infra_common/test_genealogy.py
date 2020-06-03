@@ -126,35 +126,3 @@ def test_genealogy_comparison(create_vm_with_clone, soft_assert):
     """
     compare_view = create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone)
     assert compare_view.is_displayed
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_cloud_infra_genealogy():
-    """
-    Edit infra vm and cloud instance
-    When editing cloud instance, genealogy should be present on the edit
-    page.
-    When you have two providers - one infra and one cloud - added, there
-    should be no cloud vms displayed when setting genealogy for infra vm
-    and vice-versa.
-
-    Polarion:
-        assignee: spusater
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: Have a cloud instance and an infra vm
-        testSteps:
-            1. Navigate to instance/vm details, choose Genealogy
-            2. Verify that for cloud instance no infra vms are displayed
-            3. Verify that for infra vm no cloud instances are displayed
-        expectedResults:
-            1. Genealogy displayed
-            2. No infra vms displayed
-            3. No cloud instances displayed
-    Bugzilla:
-        1399141
-        1399144
-    """
-    pass
