@@ -125,6 +125,24 @@ def test_map_tagging_crud(appliance, category, soft_assert):
 
 
 @test_requirements.tag
+def test_import_tag(appliance, category, soft_assert):
+    """Test importing tag via file
+    Polarion:
+        assignee: prichard
+        initialEstimate: 1/4h
+        casecomponent: Tagging
+    Bugzilla:
+        1792185
+    """
+    # first create category.  Done (by fixture).
+
+    # then create entry - Need to do this.!!!
+    # create CSV file - Do this.
+    # import tag from CSV
+    category.import_tag_from_file('testFilename')
+
+
+@test_requirements.tag
 def test_updated_tag_name_on_vm(provider, tag, request):
     """
     This test checks that tags don't disappear from the UI after their name (not displayed name) is

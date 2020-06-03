@@ -57,6 +57,23 @@ class CompanyTagsAllView(RegionView):
         )
 
 
+class CompanyTagsImportView(RegionView):
+    """Import Company Tags list view"""
+
+    '''
+    row = xxxx
+    row.choose_file = XXXyyy
+    '''
+
+    choose_file_button = Button('Choose file')  # These aren't 'buttons'
+    upload_button = Button('Upload')
+    # we need to create the views for the file dialog and click thr filename passed.
+
+    @property
+    def is_displayed(self):
+        return (self.tags.is_active() and self.import_tags.is_active())
+
+
 @attr.s(eq=False)
 class Tag(Pretty, BaseEntity, Updateable):
     """ Class represents a category in CFME UI
@@ -266,6 +283,16 @@ class Category(Pretty, BaseEntity, Updateable):
         assert view.is_displayed
         view.flash.assert_no_error()
 
+    def import_tag_from_file(self, file_name, format='csv'):
+        view = navigate_to(self.parent, 'ImportTags')
+        # now enter filename and click Upload.
+        view.choose_file_button.click()
+        view.upload_button.click()
+
+        # Where do we put this file for uploading? root dir via ssh??does code exist for this?
+
+        view.flash.assert_no_error()
+
     @property
     def exists(self):
         """Check if category exists"""
@@ -342,6 +369,15 @@ class CategoryAdd(CFMENavigateStep):
         self.prerequisite_view.add_button.click()
 
 
+@navigator.register(CategoriesCollection, 'ImportTags')
+class CategoryImportTags(CFMENavigateStep):
+    VIEW = CompanyTagsImportView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.tags.import_tags.select()
+
+
 @navigator.register(Category, 'Edit')
 class CategoryEdit(CFMENavigateStep):
     VIEW = CompanyCategoriesEditView
@@ -349,8 +385,6 @@ class CategoryEdit(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.table.row(name=self.obj.name).click()
-
-
 # =======================================MAP TAGS==============================================
 
 
