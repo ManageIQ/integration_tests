@@ -1425,7 +1425,7 @@ class Genealogy:
                 path = find_path(view.tree, obj)
             view.tree.check_node(*path)
         if view.toolbar.compare.disabled:
-            raise ToolbarOptionGreyedOrUnavailable()
+            raise ToolbarOptionGreyedOrUnavailable("The compare button is greyed out or disabled")
         view.toolbar.compare.click()
         compare_view = self.obj.create_view(InfraVmCompareView, wait=20)
         compare_view.flash.assert_no_error()

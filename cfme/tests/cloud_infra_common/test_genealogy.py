@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider.openshift import OpenshiftProvider
+from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -103,7 +104,7 @@ def test_vm_genealogy_detected(
 @pytest.mark.tier(1)
 def test_genealogy_comparison(create_vm_with_clone, soft_assert):
     """
-    Test that compare button is enabled
+    Test that compare button is enabled and the compare page is loaded when 2 VM's are compared
 
     Polarion:
         assignee: spusater
@@ -124,5 +125,10 @@ def test_genealogy_comparison(create_vm_with_clone, soft_assert):
     Bugzilla:
         1694712
     """
-    compare_view = create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone)
-    assert compare_view.is_displayed
+
+    try:
+        compare_view = create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone)
+        assert compare_view.is_displayed
+    except ToolbarOptionGreyedOrUnavailable:
+        logger.exception("The compare button is disabled or unavailable")
+        pytest.fail("The compare button is disabled or unavailable")
