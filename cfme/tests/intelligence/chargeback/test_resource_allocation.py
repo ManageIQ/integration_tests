@@ -36,9 +36,11 @@ import cfme.intelligence.chargeback.assignments as cb
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -49,6 +51,9 @@ pytestmark = [
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     test_requirements.chargeback,
+    pytest.mark.meta(blockers=[
+        GH('ManageIQ/manageiq:20237', unblock=lambda provider: not provider.one_of(AzureProvider))
+    ])
 ]
 
 # Allowed deviation between the reported value in the Chargeback report and the estimated value.
