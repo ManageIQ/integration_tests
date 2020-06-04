@@ -134,11 +134,18 @@ def test_import_tag(appliance, category, soft_assert):
     Bugzilla:
         1792185
     """
-    # first create category.  Done (by fixture).
-    # then create entry - Need to do this.!!!
-    # create CSV file - Do this.
-    category.import_tag_from_file('/root/anaconda-ks.cfg')
+    file_name = 'test_import_' + fauxfactory.gen_alphanumeric(4) + ".csv"
+    csv_data = 'name,category,entry\nkborole-CaseTest,rack,s1102_rz4'
+    # create entry - Need to do this.!!!
+    # create CSV file
+    with open(file_name, "w") as file:
+        file.write(csv_data)
+    # don't forget to delete the file when done.
+
+    category.import_tag_from_file(file_name)
     # I need to determine where file needs to be. What device?
+    # don't forget to delete the file when done. Make sure delete will still occur if error.
+    # like finalize
 
 
 @test_requirements.tag
