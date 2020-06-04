@@ -37,14 +37,6 @@ def test_generate_optimization_report(appliance, menu_name):
             1. Navigate to Overview > Optimization and queue the report with parametrized menu_name.
             2. Check if the report exists.
     """
-    if (
-        menu_name in ["Top CPU Consumers (weekly)", "Top Memory Consumers (weekly)"]
-        and BZ(1769346).blocks
-    ):
-        pytest.skip(
-            "Breadcrumb for these reports is incorrect which is why the exists method fails."
-        )
-
     saved_report = appliance.collections.optimization_reports.instantiate(
         menu_name=menu_name
     ).queue()
