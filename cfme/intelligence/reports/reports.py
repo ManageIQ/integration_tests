@@ -5,16 +5,15 @@ from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import attributize_string
-from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Checkbox
 from widgetastic.widget import FileInput
-from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Select
 from widgetastic.widget import Table as VanillaTable
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
+from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import SelectorDropdown
 
@@ -28,6 +27,7 @@ from cfme.utils import ParamClassName
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.timeutil import parsetime
 from cfme.utils.update import Updateable
@@ -228,6 +228,7 @@ class SavedReportDetailsView(CloudIntelReportsView):
     # TODO: double check and raise GH to devs
     paginator = PaginationPane()
     view_selector = View.nested(ReportToolBarViewSelector)
+    download = Dropdown("Download")
 
     @View.nested
     class data_view(View):  # noqa
@@ -239,22 +240,6 @@ class SavedReportDetailsView(CloudIntelReportsView):
         def child_widget_accessed(self, widget):
             if self.parent.view_selector.selected != "Data View":
                 self.parent.view_selector.select("Data View")
-
-    @ParametrizedView.nested
-    class download(ParametrizedView):  # noqa
-        PARAMETERS = ("format", )
-        ALL_LINKS = ".//a[starts-with(@name, 'download_choice__render_report_')]"
-        download = Button(title="Download")
-        link = Text(ParametrizedLocator(".//a[normalize-space()={format|quote}]"))
-
-        def __init__(self, *args, **kwargs):
-            ParametrizedView.__init__(self, *args, **kwargs)
-            self.download.click()
-            self.link.click()
-
-        @classmethod
-        def all(cls, browser):
-            return [(browser.text(e), ) for e in browser.elements(cls.ALL_LINKS)]
 
     @property
     def is_displayed(self):
@@ -631,11 +616,10 @@ class SavedReport(Updateable, BaseEntity):
 
     def download(self, extension):
         extensions_mapping = {"txt": "Text", "csv": "CSV", "pdf": "PDF"}
+        if extension == "pdf":
+            logger.info("PDF download is not implemented because of multiple window handling.")
         view = navigate_to(self, "Details")
-        if self.appliance.version > '5.10' and extension == "pdf":
-            view.download("Print or export as {}".format(extensions_mapping[extension]))
-        else:
-            view.download("Download as {}".format(extensions_mapping[extension]))
+        view.download.item_select(f"Download as {extensions_mapping[extension]}")
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
