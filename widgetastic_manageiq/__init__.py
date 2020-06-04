@@ -5394,18 +5394,12 @@ class ConversionHost(Widget):
 class MigrationProgressBar(Widget):
     """Represents in-progress plan widget for v2v migration"""
 
-    ROOT = (
-        './/div[contains(@class,"plans-in-progress-list")] | '
-        './/div[contains(@class,"migrations")]/div/div/div/div/div'
-    )
+    ROOT = './/div[contains(@class,"plans-in-progress-list")]'
 
-    ITEM_LOCATOR = (
-        './/*[contains(@class,"plans-in-progress-list__list-item")] | '
-        './/div[contains(@class,"card-pf-match-height")]'
-    )
+    ITEM_LOCATOR = './/tr[contains(@class,"plans-in-progress-list__list-item")]'
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
     TITLE_LOCATOR = './/div[h3[contains(@class,"card-pf-title")]]'
-    TIMER_LOCATOR = './div/div[contains(@class,"active-migration-elapsed-time")]'
+    TIMER_LOCATOR = './/div[contains(@class,"active-migration-elapsed-time")]'
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
@@ -5435,9 +5429,11 @@ class MigrationProgressBar(Widget):
         return self.all_items
 
     def _get_card_element(self, plan_name):
-        for el in self.browser.elements(self.ITEM_LOCATOR):
-            if plan_name in self.browser.text(el):
-                return el
+        # Hack the progress bar has changed to list in 5.11.6 which require to check root is_display
+        if self.is_displayed:
+            for el in self.browser.elements(self.ITEM_LOCATOR):
+                if plan_name in self.browser.text(el):
+                    return el
         raise ItemNotFound(f"No plan found with plan name : {plan_name}")
 
     def get_clock(self, plan_name):
@@ -5483,7 +5479,7 @@ class MigrationProgressBar(Widget):
         )
         if error_displayed:
             return False
-        if timer_displayed and not spinner_displayed:
+        if timer_displayed and spinner_displayed:
             return True
         return False
 
