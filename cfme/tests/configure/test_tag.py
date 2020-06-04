@@ -135,11 +135,10 @@ def test_import_tag(appliance, category, soft_assert):
         1792185
     """
     # first create category.  Done (by fixture).
-
     # then create entry - Need to do this.!!!
     # create CSV file - Do this.
-    # import tag from CSV
-    category.import_tag_from_file('testFilename')
+    category.import_tag_from_file('/root/anaconda-ks.cfg')
+    # I need to determine where file needs to be. What device?
 
 
 @test_requirements.tag

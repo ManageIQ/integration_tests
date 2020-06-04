@@ -6,6 +6,7 @@ from navmazing import NavigateToSibling
 from widgetastic.exceptions import RowNotFound
 from widgetastic.exceptions import UnexpectedAlertPresentException
 from widgetastic.widget import Checkbox
+from widgetastic.widget import FileInput
 from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
@@ -59,15 +60,8 @@ class CompanyTagsAllView(RegionView):
 
 class CompanyTagsImportView(RegionView):
     """Import Company Tags list view"""
-
-    '''
-    row = xxxx
-    row.choose_file = XXXyyy
-    '''
-
-    choose_file_button = Button('Choose file')  # These aren't 'buttons'
-    upload_button = Button('Upload')
-    # we need to create the views for the file dialog and click thr filename passed.
+    upload_file = FileInput(id="upload_file")
+    upload_button = Button(id='upload_tags')
 
     @property
     def is_displayed(self):
@@ -283,13 +277,10 @@ class Category(Pretty, BaseEntity, Updateable):
         assert view.is_displayed
         view.flash.assert_no_error()
 
-    def import_tag_from_file(self, file_name, format='csv'):
+    def import_tag_from_file(self, file_path, format='csv'):
         view = navigate_to(self.parent, 'ImportTags')
-        # now enter filename and click Upload.
-        view.choose_file_button.click()
+        view.upload_file.fill(file_path)
         view.upload_button.click()
-
-        # Where do we put this file for uploading? root dir via ssh??does code exist for this?
 
         view.flash.assert_no_error()
 
