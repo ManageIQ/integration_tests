@@ -1,46 +1,33 @@
-"""Chargeback reports are supported for all infra and cloud providers.
+"""Validate resource allocation values and costs in chargeback reports, for VM/Instance allocated
+memory, CPU, and storage. Resource usage validation tests are in
+cfme/tests/intelligence/reports/test_validate_chargeback_report.py.
 
-Chargeback reports report costs based on 1)resource usage, 2)resource allocation
-Costs are reported for the usage of the following resources by VMs:
-memory, cpu, network io, disk io, storage.
-Costs are reported for the allocation of the following resources to VMs:
-memory, cpu, storage
-
-So, for a provider such as VMware that supports C&U, a chargeback report would show costs for both
-resource usage and resource allocation.
-
-But, for a provider such as SCVMM that doesn't support C&U,chargeback reports show costs for
-resource allocation only.
-
-The tests in this module validate costs for resources(memory, cpu, storage) allocated to VMs.
-
-The tests to validate resource usage are in :
-cfme/tests/intelligence/reports/test_validate_chargeback_report.py
+TODO: Verify whether this is still an issue:
 
 Note: When the tests were parameterized, it was observed that the fixture scope was not preserved in
-parametrized tests.This is supposed to be a known pytest bug.
+parametrized tests. This is supposed to be a known pytest bug.
 
-This test module has a few module scoped fixtures that actually get invoked for every parameterized
-test, despite the fact that these fixtures are module scoped.So, the tests have not been
+This test module has a few module-scoped fixtures that actually get invoked for every parameterized
+test, despite the fact that these fixtures are module-scoped. So, the tests have not been
 parameterized.
 """
-import math
 from datetime import date
+from datetime import datetime
 from datetime import timedelta
 
 import fauxfactory
 import pytest
 from wrapanapi import VmState
 
-import cfme.intelligence.chargeback.assignments as cb
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.intelligence.chargeback.assignments import ComputeAssign
+from cfme.intelligence.chargeback.assignments import StorageAssign
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.utils.blockers import GH
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -51,24 +38,26 @@ pytestmark = [
                          required_fields=[(['cap_and_util', 'test_chargeback'], True)]),
     pytest.mark.usefixtures('has_no_providers_modscope', 'setup_provider_modscope'),
     test_requirements.chargeback,
-    pytest.mark.meta(blockers=[
-        GH('ManageIQ/manageiq:20237', unblock=lambda provider: not provider.one_of(AzureProvider))
-    ])
+    pytest.mark.meta(blockers=[BZ(1843942, forced_streams=['5.11'],
+        unblock=lambda provider: not provider.one_of(AzureProvider))])
 ]
 
-# Allowed deviation between the reported value in the Chargeback report and the estimated value.
-# COST_DEVIATION is the allowed deviation for the chargeback cost for the allocated resource.
-# RESOURCE_ALLOC_DEVIATION is the allowed deviation for the allocated resource itself.
+# Allowed deviations between chargeback report values and estimated values.
 COST_DEVIATION = 1
+"""Allowed deviation for the resource allocation cost"""
 RESOURCE_ALLOC_DEVIATION = 0.25
+"""Allowed deviation for the resource allocation value"""
 
 
-@pytest.yield_fixture(scope="module")
-def vm_ownership(enable_candu, provider, appliance):
-    """In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
-    assigned ownership.
-    """
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
+@pytest.fixture(scope='module')
+def chargeback_vm(provider):
+    return provider.data['cap_and_util']['chargeback_vm']
+
+
+@pytest.fixture(scope='module')
+def vm_owner(enable_candu, provider, appliance, chargeback_vm):
+    """Create and assign owner to VM, for use in chargeback report filter."""
+    vm_name = chargeback_vm
     vm = appliance.provider_based_collection(provider, coll_type='vms').instantiate(vm_name,
                                                                                     provider)
     if not vm.exists_on_provider:
@@ -94,11 +83,10 @@ def vm_ownership(enable_candu, provider, appliance):
         user.delete()
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope='module')
 def enable_candu(provider, appliance):
-    """C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
-    that are not needed for Chargeback reporting.
-    """
+    """Enable C&U server roles, and disable resource-intensive server roles while performing
+    metric capture."""
     candu = appliance.collections.candus
     server_info = appliance.server.settings
     original_roles = server_info.server_roles_db
@@ -112,24 +100,24 @@ def enable_candu(provider, appliance):
     candu.disable_all()
 
 
-@pytest.yield_fixture(scope="module")
-def assign_custom_rate(new_chargeback_rate, provider):
-    """Assign custom Compute rate to the Enterprise and then queue the Chargeback report."""
-    description = new_chargeback_rate
+@pytest.fixture(scope='module')
+def assign_chargeback_rate(chargeback_rate):
+    """Assign chargeback rates to the Enterprise and then queue the Chargeback report."""
+    description = chargeback_rate
     # TODO Move this to a global fixture
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for cls in (ComputeAssign, StorageAssign):
+        enterprise = cls(
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': description}
             })
         enterprise.assign()
-    logger.info('Assigning CUSTOM Compute rate')
+    logger.info(f"Assigned chargeback rates {chargeback_rate}")
     yield
 
     # Resetting the Chargeback rate assignment
-    for klass in (cb.ComputeAssign, cb.StorageAssign):
-        enterprise = klass(
+    for cls in (ComputeAssign, StorageAssign):
+        enterprise = cls(
             assign_to="The Enterprise",
             selections={
                 'Enterprise': {'Rate': '<Nothing>'}
@@ -137,108 +125,92 @@ def assign_custom_rate(new_chargeback_rate, provider):
         enterprise.assign()
 
 
-def verify_vm_uptime(appliance, provider):
-    """Verify VM uptime is at least one hour.That is the shortest duration for
+def verify_vm_uptime(appliance, vm_name):
+    """Verify VM uptime is at least one hour. That is the shortest duration for
     which VMs can be charged.
     """
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
     vm_creation_time = appliance.rest_api.collections.vms.get(name=vm_name).created_on
     return appliance.utc_time() - vm_creation_time > timedelta(hours=1)
 
 
-def verify_records_rollups_table(appliance, provider):
-    """ Verify that hourly rollups are present in the metric_rollups table """
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
-
+def verify_records_rollups_table(appliance, provider, chargeback_vm):
+    """Verify that hourly rollups are present in the metric_rollups table."""
     ems = appliance.db.client['ext_management_systems']
     rollups = appliance.db.client['metric_rollups']
 
+    retval = False
     with appliance.db.client.transaction:
         result = (
             appliance.db.client.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
-            .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
-            ems.name == provider.name, rollups.timestamp >= date.today())
+            .filter(
+                rollups.capture_interval_name == 'hourly',
+                rollups.resource_name == chargeback_vm,
+                ems.name == provider.name,
+                rollups.timestamp >= date.today())
         )
 
-    for record in appliance.db.client.session.query(rollups).filter(
-            rollups.id.in_(result.subquery())):
-        return any([record.cpu_usagemhz_rate_average,
-           record.cpu_usage_rate_average,
-           record.derived_memory_used,
-           record.net_usage_rate_average,
-           record.disk_usage_rate_average])
-    return False
+        for record in appliance.db.client.session.query(rollups).filter(
+                rollups.id.in_(result.subquery())):
+            if any([
+                    record.cpu_usagemhz_rate_average,
+                    record.cpu_usage_rate_average,
+                    record.derived_memory_used,
+                    record.net_usage_rate_average,
+                    record.disk_usage_rate_average]):
+                retval = True
+    return retval
 
 
-def verify_records_metrics_table(appliance, provider):
-    """Verify that rollups are present in the metric_rollups table"""
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
-
+def verify_records_metrics_table(appliance, provider, chargeback_vm):
+    """Verify that realtime metrics are present in the metrics table."""
     ems = appliance.db.client['ext_management_systems']
     metrics = appliance.db.client['metrics']
-
-    # Capture real-time C&U data
-    ret = appliance.ssh_client.run_rails_command(
-        "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-        vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
-        .format(provider.id, repr(vm_name)))
-    assert ret.success, f"Failed to capture VM C&U data:"
 
     with appliance.db.client.transaction:
         result = (
             appliance.db.client.session.query(metrics.id)
             .join(ems, metrics.parent_ems_id == ems.id)
-            .filter(metrics.capture_interval_name == 'realtime',
-            metrics.resource_name == vm_name,
-            ems.name == provider.name, metrics.timestamp >= date.today())
+            .filter(
+                metrics.capture_interval_name == 'realtime',
+                metrics.resource_name == chargeback_vm,
+                ems.name == provider.name,
+                metrics.timestamp >= date.today())
         )
 
-    for record in appliance.db.client.session.query(metrics).filter(
-            metrics.id.in_(result.subquery())):
-        return any([record.cpu_usagemhz_rate_average,
-            record.cpu_usage_rate_average,
-            record.derived_memory_used,
-            record.net_usage_rate_average,
-            record.disk_usage_rate_average])
+        for record in appliance.db.client.session.query(metrics).filter(
+                metrics.id.in_(result.subquery())):
+            return any([
+                record.cpu_usagemhz_rate_average,
+                record.cpu_usage_rate_average,
+                record.derived_memory_used,
+                record.net_usage_rate_average,
+                record.disk_usage_rate_average])
     return False
 
 
-@pytest.fixture(scope="module")
-def resource_alloc(vm_ownership, appliance, provider):
-    """Retrieve resource allocation values
-
-    Since SCVMM doesn't support C&U,the resource allocation values are fetched from
-    form Vm which is represented by rails model
-    ManageIQ::Providers::Microsoft::InfraManager::Vm .
-
-    For all other providers that support C&U, the resource allocation values are fetched
-    from the DB.
-    """
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
-
-    if provider.one_of(SCVMMProvider):
-        wait_for(verify_vm_uptime, [appliance, provider], timeout=3610,
-           message='Waiting for VM to be up for at least one hour')
-
-        vm = appliance.rest_api.collections.vms.get(name=vm_name)
-        vm.reload(attributes=['allocated_disk_storage', 'cpu_total_cores', 'ram_size'])
-        # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
-        # Hence,convert storage used in Bytes to GB
-        return {"storage_alloc": float(vm.allocated_disk_storage) * math.pow(2, -30),
-                "memory_alloc": float(vm.ram_size),
-                "vcpu_alloc": float(vm.cpu_total_cores)}
-
+@pytest.fixture(scope='module')
+def resource_alloc(vm_owner, appliance, provider, chargeback_vm):
+    """Retrieve resource allocation values."""
     metrics = appliance.db.client['metrics']
     rollups = appliance.db.client['metric_rollups']
+    vim_performance_states = appliance.db.client['vim_performance_states']
     ems = appliance.db.client['ext_management_systems']
-    logger.info('Deleting METRICS DATA from metrics and metric_rollups tables')
 
-    appliance.db.client.session.query(metrics).delete()
-    appliance.db.client.session.query(rollups).delete()
+    logger.info("Deleting data from metrics, metric_rollups, and vim_performance_states tables.")
 
-    wait_for(verify_records_metrics_table, [appliance, provider], timeout=600,
-        message='Waiting for VM real-time data')
+    with appliance.db.client.transaction:
+        for table in (metrics, rollups, vim_performance_states):
+            appliance.db.client.session.query(table).delete()
+
+    logger.info("Capturing realtime C&U data.")
+    ret = appliance.ssh_client.run_rails_command(
+        f"\"vm = Vm.where(:ems_id => {provider.id}).where(:name => {chargeback_vm!r})[0];"
+        "vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\"")
+    assert ret.success, f"Failed to capture C&U data for VM {chargeback_vm!r}."
+
+    wait_for(verify_records_metrics_table, [appliance, provider, chargeback_vm], timeout=600,
+        message='Waiting for VM realtime data')
 
     # New C&U data may sneak in since 1)C&U server roles are running and 2)collection for clusters
     # and hosts is on.This would mess up our Chargeback calculations, so we are disabling C&U
@@ -251,37 +223,45 @@ def resource_alloc(vm_ownership, appliance, provider):
     ret = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
-        format(provider.id, repr(vm_name)))
+        format(provider.id, repr(chargeback_vm)))
     assert ret.success, f"Failed to rollup VM C&U data:"
 
-    wait_for(verify_records_rollups_table, [appliance, provider], timeout=600,
+    wait_for(verify_records_rollups_table, [appliance, provider, chargeback_vm], timeout=600,
         message='Waiting for hourly rollups')
 
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
-    # in the metric_rollups DB table.The values from these hourly records are summed up.
-
+    # in the metric_rollups DB table. The values from these hourly records are summed up.
     with appliance.db.client.transaction:
         result = (
-            appliance.db.client.session.query(metrics.id)
-            .join(ems, metrics.parent_ems_id == ems.id)
-            .filter(metrics.capture_interval_name == 'realtime', metrics.resource_name == vm_name,
-            ems.name == provider.name, metrics.timestamp >= date.today())
+            appliance.db.client.session.query(rollups.id)
+            .join(ems, rollups.parent_ems_id == ems.id)
+            .filter(
+                rollups.capture_interval_name == 'hourly',
+                rollups.resource_name == chargeback_vm,
+                ems.name == provider.name,
+                rollups.timestamp >= date.today())
         )
-    for record in appliance.db.client.session.query(metrics).filter(
-            metrics.id.in_(result.subquery())):
-        if all([record.derived_vm_numvcpus, record.derived_memory_available,
-                record.derived_vm_allocated_disk_storage]):
-            break
+        for record in appliance.db.client.session.query(rollups).filter(
+                rollups.id.in_(result.subquery())):
+            if all([
+                record.derived_vm_numvcpus,
+                record.derived_memory_available,
+                record.derived_vm_allocated_disk_storage
+            ]):
+                break
 
-    # By default,chargeback rates for storage are defined in this form: 0.01 USD/GB
-    # Hence,convert storage used in Bytes to GB
+    # By default, chargeback rates for storage are defined in this form: 0.01 USD/GB
+    # Convert metric value from Bytes to GB.
 
-    return {"vcpu_alloc": float(record.derived_vm_numvcpus),
-            "memory_alloc": float(record.derived_memory_available),
-            "storage_alloc": float(record.derived_vm_allocated_disk_storage * math.pow(2, -30))}
+    storage_alloc = float(record.derived_vm_allocated_disk_storage or 0)
+    return {
+        'vcpu_alloc': float(record.derived_vm_numvcpus or 0),
+        'memory_alloc': float(record.derived_memory_available or 0),
+        'storage_alloc': storage_alloc * 2**-30}
 
 
-def resource_cost(appliance, provider, metric_description, usage, description, rate_type):
+def resource_cost(appliance, provider, metric_description, alloc_value, num_hours,
+        description, rate_type):
     """Query the DB for Chargeback rates"""
     tiers = appliance.db.client['chargeback_tiers']
     details = appliance.db.client['chargeback_rate_details']
@@ -297,45 +277,67 @@ def resource_cost(appliance, provider, metric_description, usage, description, r
             filter(cb_rates.rate_type == rate_type).
             filter(cb_rates.description == description).all()
         )
-    for row in result:
-        tiered_rate = {var: getattr(row, var) for var in ['variable_rate', 'fixed_rate', 'start',
-            'finish']}
-        list_of_rates.append(tiered_rate)
+        for row in result:
+            tiered_rate = {var: getattr(row, var) for var in [
+                'variable_rate',
+                'fixed_rate',
+                'start',
+                'finish']}
+            list_of_rates.append(tiered_rate)
 
-    # Check what tier the usage belongs to and then compute the usage cost based on Fixed and
-    # Variable Chargeback rates.
+    # Find the matching tier for this resource allocation value and then compute the estimated
+    # cost based on the fixed and variable rate values.
     for d in list_of_rates:
-        if usage >= d['start'] and usage < d['finish']:
-            cost = d['variable_rate'] * usage + d['fixed_rate']
+        if d['start'] <= alloc_value < d['finish']:
+            cost = (d['variable_rate'] * alloc_value + d['fixed_rate']) * num_hours
             return cost
 
 
-@pytest.fixture(scope="module")
-def chargeback_costs_custom(resource_alloc, new_chargeback_rate, appliance, provider):
-    """Estimate Chargeback costs using custom Chargeback rate and resource allocation"""
-    description = new_chargeback_rate
+@pytest.fixture(scope='module')
+def chargeback_costs(resource_alloc, chargeback_rate, appliance, provider, chargeback_vm):
+    """Estimate chargeback costs using chargeback rate and resource allocation"""
+    description = chargeback_rate
     storage_alloc = resource_alloc['storage_alloc']
     memory_alloc = resource_alloc['memory_alloc']
     vcpu_alloc = resource_alloc['vcpu_alloc']
 
+    vm = appliance.provider_based_collection(provider, coll_type='vms').instantiate(chargeback_vm,
+        provider)
+    state_changed_on = vm.rest_api_entity.state_changed_on.replace(tzinfo=None)
+
+    now = datetime.utcnow()
+    beginning_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Calculate the number of hours to be used when estimating costs.
+    if state_changed_on > beginning_of_day:
+        beginning_of_hour = now.replace(minute=0, second=0, microsecond=0)
+        if state_changed_on > beginning_of_hour:
+            num_hours = 1
+        else:
+            num_hours = (beginning_of_hour - state_changed_on).total_seconds() // 3600
+    else:
+        num_hours = now.hour
+
+    logger.info(f"num_hours = {num_hours}")
     storage_alloc_cost = resource_cost(appliance, provider, 'Allocated Disk Storage',
-        storage_alloc, description, 'Storage')
+        storage_alloc, num_hours, description, 'Storage')
 
     memory_alloc_cost = resource_cost(appliance, provider, 'Allocated Memory',
-        memory_alloc, description, 'Compute')
+        memory_alloc, num_hours, description, 'Compute')
 
     vcpu_alloc_cost = resource_cost(appliance, provider, 'Allocated CPU Count',
-        vcpu_alloc, description, 'Compute')
+        vcpu_alloc, num_hours, description, 'Compute')
 
-    return {"storage_alloc_cost": storage_alloc_cost,
-            "memory_alloc_cost": memory_alloc_cost,
-            "vcpu_alloc_cost": vcpu_alloc_cost}
+    return {
+        'storage_alloc_cost': storage_alloc_cost,
+        'memory_alloc_cost': memory_alloc_cost,
+        'vcpu_alloc_cost': vcpu_alloc_cost}
 
 
-@pytest.yield_fixture(scope="module")
-def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provider):
-    """Create a Chargeback report based on a custom rate; Queue the report"""
-    owner = vm_ownership
+@pytest.fixture(scope='module')
+def chargeback_report(appliance, vm_owner, assign_chargeback_rate, provider):
+    """Create a chargeback report and then queue it."""
+    owner = vm_owner
     data = {
         'menu_name': f'{provider.name}_{fauxfactory.gen_alphanumeric()}',
         'title': f'{provider.name}_{fauxfactory.gen_alphanumeric()}',
@@ -351,7 +353,7 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
     }
     report = appliance.collections.reports.create(is_candu=True, **data)
 
-    logger.info(f'Queuing chargeback report with custom rate for {provider.name} provider')
+    logger.info(f"Queuing chargeback report for provider {provider.name!r}.")
     report.queue(wait_for_finish=True)
 
     if not list(report.saved_reports.all()[0].data.rows):
@@ -363,22 +365,34 @@ def chargeback_report_custom(appliance, vm_ownership, assign_custom_rate, provid
         report.delete()
 
 
-@pytest.yield_fixture(scope="module")
-def new_chargeback_rate(appliance):
+@pytest.fixture(scope='module')
+def chargeback_rate(appliance):
     """Create a new chargeback rate"""
-    desc = fauxfactory.gen_alphanumeric(15, start="custom_")
+    desc = fauxfactory.gen_alphanumeric(15, start="cb_")
     try:
         compute = appliance.collections.compute_rates.create(
             description=desc,
             fields={
-                'Allocated CPU Count': {'per_time': 'Hourly', 'variable_rate': '2'},
-                'Allocated Memory': {'per_time': 'Hourly', 'variable_rate': '2'}
+                'Allocated CPU Count': {
+                    'per_time': 'Hourly',
+                    'fixed_rate': '1.0',
+                    'variable_rate': '2.0'
+                },
+                'Allocated Memory': {
+                    'per_time': 'Hourly',
+                    'fixed_rate': '0.0',
+                    'variable_rate': '2.0'
+                }
             }
         )
         storage = appliance.collections.storage_rates.create(
             description=desc,
             fields={
-                'Allocated Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'}
+                'Allocated Disk Storage': {
+                    'per_time': 'Hourly',
+                    'fixed_rate': '1.0',
+                    'variable_rate': '3.0'
+                }
             }
         )
     except Exception as ex:
@@ -398,7 +412,7 @@ def new_chargeback_rate(appliance):
             )
 
 
-def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom, column,
+def generic_test_chargeback_cost(chargeback_costs, chargeback_report, column,
         resource_alloc_cost, soft_assert):
     """Generic test to validate resource allocation cost reported in chargeback reports.
 
@@ -413,18 +427,18 @@ def generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_cust
     # (since we only have C&U data for an hour and daily chargeback reports have one row per hour).
     # The second row contains the VM name only.
     # Hence, we are using index 0 to fetch the costs from the first row.
-    if not chargeback_report_custom[0][column]:
+    if not chargeback_report[0][column]:
         pytest.skip('missing column in report')
     else:
-        estimated_resource_alloc_cost = chargeback_costs_custom[resource_alloc_cost]
-        cost_from_report = chargeback_report_custom[0][column]
+        estimated_cost = chargeback_costs[resource_alloc_cost]
+        cost_from_report = chargeback_report[0][column]
         cost = cost_from_report.replace('$', '').replace(',', '')
-        soft_assert(estimated_resource_alloc_cost - COST_DEVIATION <=
-            float(cost) <= estimated_resource_alloc_cost + COST_DEVIATION,
-            'Estimated cost and report cost do not match')
+        soft_assert(
+            estimated_cost - COST_DEVIATION <= float(cost) <= estimated_cost + COST_DEVIATION,
+            f"Estimated cost {estimated_cost} and report cost {cost} do not match")
 
 
-def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column,
+def generic_test_resource_alloc(resource_alloc, chargeback_report, column,
         resource, soft_assert):
     """Generic test to verify VM resource allocation reported in chargeback reports.
 
@@ -439,14 +453,14 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
     # (since we only have C&U data for an hour and daily chargeback reports have one row per hour).
     # The second row contains the VM name only.
     # Hence, we are using index 0 to fetch the costs from the first row.
-    if not chargeback_report_custom[0][column]:
+    if not chargeback_report[0][column]:
         pytest.skip('missing column in report')
     else:
         allocated_resource = resource_alloc[resource]
-        if ('GB' in chargeback_report_custom[0][column] and
+        if ('GB' in chargeback_report[0][column] and
                 column == 'Memory Allocated over Time Period'):
-            allocated_resource = allocated_resource * math.pow(2, -10)
-        resource_from_report = chargeback_report_custom[0][column].replace(' ', '')
+            allocated_resource = allocated_resource * 2**-10
+        resource_from_report = chargeback_report[0][column].replace(' ', '')
         resource_from_report = resource_from_report.replace('GB', '')
         resource_from_report = resource_from_report.replace('MB', '')
         lower_end = allocated_resource - RESOURCE_ALLOC_DEVIATION
@@ -455,7 +469,7 @@ def generic_test_resource_alloc(resource_alloc, chargeback_report_custom, column
                     'Estimated resource allocation and report resource allocation do not match')
 
 
-def test_verify_alloc_memory(resource_alloc, chargeback_report_custom, soft_assert):
+def test_verify_alloc_memory(resource_alloc, chargeback_report, soft_assert):
     """Test to verify memory allocation
 
     Polarion:
@@ -463,11 +477,11 @@ def test_verify_alloc_memory(resource_alloc, chargeback_report_custom, soft_asse
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
+    generic_test_resource_alloc(resource_alloc, chargeback_report,
         'Memory Allocated over Time Period', 'memory_alloc', soft_assert)
 
 
-def test_verify_alloc_cpu(resource_alloc, chargeback_report_custom, soft_assert):
+def test_verify_alloc_cpu(resource_alloc, chargeback_report, soft_assert):
     """Test to verify cpu allocation
 
     Polarion:
@@ -475,11 +489,11 @@ def test_verify_alloc_cpu(resource_alloc, chargeback_report_custom, soft_assert)
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
+    generic_test_resource_alloc(resource_alloc, chargeback_report,
         'vCPUs Allocated over Time Period', 'vcpu_alloc', soft_assert)
 
 
-def test_verify_alloc_storage(resource_alloc, chargeback_report_custom, soft_assert):
+def test_verify_alloc_storage(resource_alloc, chargeback_report, soft_assert):
     """Test to verify storage allocation
 
     Polarion:
@@ -487,12 +501,11 @@ def test_verify_alloc_storage(resource_alloc, chargeback_report_custom, soft_ass
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    generic_test_resource_alloc(resource_alloc, chargeback_report_custom,
+    generic_test_resource_alloc(resource_alloc, chargeback_report,
         'Storage Allocated', 'storage_alloc', soft_assert)
 
 
-def test_validate_alloc_memory_cost(chargeback_costs_custom, chargeback_report_custom,
-        soft_assert):
+def test_validate_alloc_memory_cost(chargeback_costs, chargeback_report, soft_assert):
     """Test to validate cost for memory allocation
 
     Polarion:
@@ -500,12 +513,11 @@ def test_validate_alloc_memory_cost(chargeback_costs_custom, chargeback_report_c
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
+    generic_test_chargeback_cost(chargeback_costs, chargeback_report,
         'Memory Allocated Cost', 'memory_alloc_cost', soft_assert)
 
 
-def test_validate_alloc_vcpu_cost(chargeback_costs_custom, chargeback_report_custom,
-        soft_assert):
+def test_validate_alloc_vcpu_cost(chargeback_costs, chargeback_report, soft_assert):
     """Test to validate cost for vCPU allocation
 
     Polarion:
@@ -513,12 +525,11 @@ def test_validate_alloc_vcpu_cost(chargeback_costs_custom, chargeback_report_cus
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
+    generic_test_chargeback_cost(chargeback_costs, chargeback_report,
         'vCPUs Allocated Cost', 'vcpu_alloc_cost', soft_assert)
 
 
-def test_validate_alloc_storage_cost(chargeback_costs_custom, chargeback_report_custom,
-        soft_assert):
+def test_validate_alloc_storage_cost(chargeback_costs, chargeback_report, soft_assert):
     """Test to validate cost for storage allocation
 
     Polarion:
@@ -526,5 +537,5 @@ def test_validate_alloc_storage_cost(chargeback_costs_custom, chargeback_report_
         initialEstimate: 1/4h
         casecomponent: CandU
     """
-    generic_test_chargeback_cost(chargeback_costs_custom, chargeback_report_custom,
+    generic_test_chargeback_cost(chargeback_costs, chargeback_report,
         'Storage Allocated Cost', 'storage_alloc_cost', soft_assert)
