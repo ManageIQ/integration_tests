@@ -263,9 +263,10 @@ def test_add_cancelled_validation_cloud(request, appliance):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
-def test_cloud_provider_add_with_bad_credentials(request, provider, enable_regions, appliance):
+def test_cloud_provider_add_with_bad_credentials(
+    request, provider, has_no_providers, enable_regions, appliance
+):
     """ Tests provider add with bad credentials
 
     Metadata:
@@ -313,9 +314,8 @@ def test_cloud_provider_add_with_bad_credentials(request, provider, enable_regio
 
 @pytest.mark.tier(1)
 @pytest.mark.smoke
-@pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
-def test_cloud_provider_crud(provider, enable_regions):
+def test_cloud_provider_crud(provider, has_no_providers, enable_regions):
     """ Tests provider add with good credentials
 
     Metadata:
@@ -694,8 +694,9 @@ def test_openstack_provider_has_dashboard(appliance, openstack_provider):
 @test_requirements.ec2
 @pytest.mark.tier(3)
 @pytest.mark.provider([EC2Provider], scope="function")
-def test_select_key_pair_none_while_provisioning(appliance, request, has_no_cloud_providers,
-                                                 provider):
+def test_select_key_pair_none_while_provisioning(
+    appliance, request, has_no_providers, provider
+):
     """
         GH Issue: https://github.com/ManageIQ/manageiq/issues/10575
 
@@ -733,8 +734,9 @@ def test_select_key_pair_none_while_provisioning(appliance, request, has_no_clou
 @pytest.mark.tier(3)
 @test_requirements.azure
 @pytest.mark.provider([AzureProvider])
-def test_azure_instance_password_requirements(appliance, request,
-        has_no_cloud_providers, setup_provider):
+def test_azure_instance_password_requirements(
+    appliance, has_no_providers, setup_provider
+):
     """
         Requirement: Have an Azure provider
         1. Compute -> Cloud -> Instances
@@ -1200,9 +1202,10 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
 
 
 @test_requirements.ec2
-@pytest.mark.usefixtures('has_no_cloud_providers')
 @pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
-def test_refresh_with_stack_without_parameters(provider, request, stack_without_parameters):
+def test_refresh_with_stack_without_parameters(
+    provider, has_no_providers, request, stack_without_parameters
+):
     """
     Polarion:
         assignee: mmojzis
@@ -1275,7 +1278,7 @@ def test_public_images_enable_disable(setup_provider, request, appliance, provid
 
 @test_requirements.ec2
 @pytest.mark.provider([EC2Provider], scope="function", selector=ONE)
-def test_create_sns_topic(has_no_cloud_providers, provider, request):
+def test_create_sns_topic(has_no_providers, provider, request):
     """
     Requires: No SNS topic(AWS_Config) for tested region
 

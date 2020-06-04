@@ -216,9 +216,8 @@ def test_api_port_max_character_validation_infra(appliance):
         assert text == prov.default_endpoint.api_port[0:15]
 
 
-@pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
-def test_providers_discovery(request, appliance, provider):
+def test_providers_discovery(request, appliance, has_no_providers, provider):
     """Tests provider discovery
 
     Metadata:
@@ -243,8 +242,7 @@ def test_providers_discovery(request, appliance, provider):
     appliance.collections.infra_providers.wait_for_a_provider()
 
 
-@pytest.mark.usefixtures('has_no_infra_providers')
-def test_infra_provider_add_with_bad_credentials(provider):
+def test_infra_provider_add_with_bad_credentials(has_no_providers, provider):
     """Tests provider add with bad credentials
 
     Metadata:
@@ -266,10 +264,9 @@ def test_infra_provider_add_with_bad_credentials(provider):
         provider.create(validate_credentials=True)
 
 
-@pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.smoke
-def test_infra_provider_crud(provider):
+def test_infra_provider_crud(provider, has_no_providers):
     """Tests provider add with good credentials
 
     Metadata:
@@ -296,11 +293,10 @@ def test_infra_provider_crud(provider):
     provider.wait_for_delete()
 
 
-@pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('verify_tls', [False, True], ids=['no_tls', 'tls'])
 @pytest.mark.provider([RHEVMProvider])
-def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
+def test_provider_rhv_create_delete_tls(request, has_no_providers, provider, verify_tls):
     """Tests RHV provider creation with and without TLS encryption
 
     Metadata:
