@@ -214,44 +214,23 @@ def vddk_url():
     return url
 
 
-def get_conversion_data(appliance, target_provider):
-    # SSL certificate verification is required while configuring conversion hosts only if RHV-M
-    # uses SSL. It's not related to the SSL certificate verification in the provider configuration
-    # and there is no way to link them because they are not used in the same way.
-    tls_ca_certs = None
-
+def get_conversion_data(target_provider):
     if target_provider.one_of(RHEVMProvider):
+        resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
         engine_key = conf.credentials[target_provider.data["ssh_creds"]]
+        auth_user = engine_key.username
         ssh_client = ssh.SSHClient(
             hostname=target_provider.hostname,
             username=engine_key.username,
             password=engine_key.password,
         )
 
-        # Support for UCI hosts for RHV would be added in 5.11.6.
-        if appliance.version >= '5.11.6':
-            tls_ca_certs = ssh_client.run_command(
-                "cat /etc/pki/ovirt-engine/apache-ca.pem").output
-            resource_type = "ManageIQ::Providers::Redhat::InfraManager::Vm"
-            vm_key = conf.credentials[
-                target_provider.data["private-keys"]["engine-rsa"]["credentials"]]
-            auth_user = vm_key.username
-            private_key = ssh_client.run_command(
-                "cat /root/.ssh/id_rsa").output
-            try:
-                hosts = target_provider.data["conversion_instances"]
-            except KeyError:
-                pytest.skip("No conversion host on provider")
-
-        else:
-            resource_type = "ManageIQ::Providers::Redhat::InfraManager::Host"
-            auth_user = engine_key.username
-            private_key = ssh_client.run_command(
-                "cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
-            try:
-                hosts = [h.name for h in target_provider.hosts.all()]
-            except KeyError:
-                pytest.skip("No conversion host on provider")
+        private_key = ssh_client.run_command(
+            "cat /etc/pki/ovirt-engine/keys/engine_id_rsa").output
+        try:
+            hosts = [h.name for h in target_provider.hosts.all()]
+        except KeyError:
+            pytest.skip("No conversion host on provider")
 
     else:
         resource_type = "ManageIQ::Providers::Openstack::CloudManager::Vm"
@@ -269,17 +248,12 @@ def get_conversion_data(appliance, target_provider):
         "private_key": private_key,
         "auth_user": auth_user,
         "hosts": hosts,
-        "tls_ca_certs": tls_ca_certs
     }
 
 
 def set_conversion_host_api(
         appliance, transformation_method, source_provider, target_provider):
-    """
-    Setting conversion host for RHV and OSP provider via REST
-
-    Note: Support for using VMs as UCI conversion hosts will be added for RHV in 5.11.6.
-    """
+    """Setting conversion host for RHV and OSP providers via REST"""
     vmware_ssh_private_key = None
     vmware_vddk_package_url = None
 
@@ -289,7 +263,7 @@ def set_conversion_host_api(
         pytest.skip(
             f"Failed to delete all conversion hosts: {delete_hosts.output}")
 
-    conversion_data = get_conversion_data(appliance, target_provider)
+    conversion_data = get_conversion_data(target_provider)
     if transformation_method == "SSH":
         vmware_key = conf.credentials[
             source_provider.data["private-keys"]["vmware-ssh-key"]["credentials"]]
@@ -298,31 +272,18 @@ def set_conversion_host_api(
         vmware_vddk_package_url = vddk_url()
 
     for host in conversion_data["hosts"]:
-        conversion_entity = (
-            "hosts"
-            if target_provider.one_of(RHEVMProvider) and appliance.version < '5.11.6'
-            else "vms"
-        )
+        conversion_entity = "hosts" if target_provider.one_of(RHEVMProvider) else "vms"
+
         host_id = (
             getattr(appliance.rest_api.collections, conversion_entity).filter(
                 Q.from_dict({"name": host})).resources[0].id)
-        if target_provider.one_of(RHEVMProvider) and appliance.version >= '5.11.6':
-            response = appliance.rest_api.collections.conversion_hosts.action.create(
-                resource_id=host_id,
-                resource_type=conversion_data["resource_type"],
-                vmware_vddk_package_url=vmware_vddk_package_url,
-                vmware_ssh_private_key=vmware_ssh_private_key,
-                conversion_host_ssh_private_key=conversion_data["private_key"],
-                tls_ca_certs=conversion_data["tls_ca_certs"],
-                auth_user=conversion_data["auth_user"])[0]
-        else:
-            response = appliance.rest_api.collections.conversion_hosts.action.create(
-                resource_id=host_id,
-                resource_type=conversion_data["resource_type"],
-                vmware_vddk_package_url=vmware_vddk_package_url,
-                vmware_ssh_private_key=vmware_ssh_private_key,
-                conversion_host_ssh_private_key=conversion_data["private_key"],
-                auth_user=conversion_data["auth_user"])[0]
+        response = appliance.rest_api.collections.conversion_hosts.action.create(
+            resource_id=host_id,
+            resource_type=conversion_data["resource_type"],
+            vmware_vddk_package_url=vmware_vddk_package_url,
+            vmware_ssh_private_key=vmware_ssh_private_key,
+            conversion_host_ssh_private_key=conversion_data["private_key"],
+            auth_user=conversion_data["auth_user"])[0]
         response.reload()
         wait_for(
             lambda: response.task.state == "Finished",
