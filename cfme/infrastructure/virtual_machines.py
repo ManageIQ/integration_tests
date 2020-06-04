@@ -27,6 +27,7 @@ from widgetastic_patternfly import Input as WInput
 
 from cfme.common import BaseLoggedInPage
 from cfme.common import ComparableMixin
+from cfme.common import CompareView
 from cfme.common import TimelinesView
 from cfme.common.provider_views import TemplatesCompareView
 from cfme.common.vm import Template
@@ -49,6 +50,7 @@ from cfme.common.vm_views import VMToolbar
 from cfme.exceptions import DestinationNotFound
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -491,7 +493,7 @@ class InfraVmSnapshotAddView(InfraVmView):
 
 
 class InfraVmGenealogyToolbar(View):
-    """The toolbar on the genalogy page"""
+    """The toolbar on the genealogy page"""
     history = Dropdown(title='History')
     reload = Button(title='Refresh this page')
     edit_tags = Button(title='Edit Tags for this VM')
@@ -510,6 +512,16 @@ class InfraVmGenealogyView(InfraVmView):
         """Is this view being displayed"""
         expected_title = '"Genealogy" for Virtual Machine "{}"'.format(self.context['object'].name)
         return self.in_infra_vms and self.title.text == expected_title
+
+
+class InfraVmCompareView(CompareView):
+    @property
+    def is_displayed(self):
+        title = "Compare VM or Template"
+        return (self.title.text == title and
+                self.navigation.currently_selected == ['Compute',
+                                                       'Infrastructure', 'Virtual Machines']
+                )
 
 
 class VMDisk(
@@ -1404,8 +1416,6 @@ class Genealogy:
             attributes: `all`, `different` or `same`. Default: `all`.
             mode: `exists` or `details`. Default: `exists`."""
         sections = kwargs.get('sections')
-        attributes = kwargs.get('attributes', 'all').lower()
-        mode = kwargs.get('mode', 'exists').lower()
         assert len(objects) >= 2, 'You must specify at least two objects'
         objects = [o.name if isinstance(o, (InfraVm, InfraTemplate)) else o for o in objects]
         view = self.navigate()
@@ -1413,18 +1423,23 @@ class Genealogy:
             if not isinstance(obj, list):
                 path = find_path(view.tree, obj)
             view.tree.check_node(*path)
+        if view.toolbar.compare.disabled:
+            raise ToolbarOptionGreyedOrUnavailable("The compare button is greyed out or disabled")
         view.toolbar.compare.click()
-        view.flash.assert_no_errors()
+        compare_view = self.obj.create_view(InfraVmCompareView, wait=20)
+        compare_view.flash.assert_no_error()
         # COMPARE PAGE
-        compare_view = self.obj.create_view('Compare')
+
         if sections is not None:
             list(map(lambda path: compare_view.tree.check_node(*path), sections))
             compare_view.apply.click()
             compare_view.flash.assert_no_errors()
         # Set requested attributes sets
-        getattr(compare_view.toolbar, self.attr_mapping[attributes]).click()
+        getattr(compare_view.toolbar, "all_attributes").click()
         # Set the requested mode
-        getattr(compare_view.toolbar, self.mode_mapping[mode]).click()
+        getattr(compare_view.toolbar, "exists_mode").click()
+
+        return compare_view
 
     @property
     def tree(self):

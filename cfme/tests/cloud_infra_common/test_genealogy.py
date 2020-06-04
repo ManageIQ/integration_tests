@@ -1,13 +1,18 @@
+import fauxfactory
 import pytest
+from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider.openshift import OpenshiftProvider
+from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 
@@ -22,6 +27,29 @@ pytestmark = [
         scope='module'),
     test_requirements.genealogy
 ]
+
+
+@pytest.fixture
+def create_vm_with_clone(request, create_vm, provider, appliance):
+    """Fixture to provision a VM and clone it"""
+    first_name = fauxfactory.gen_alphanumeric()
+    last_name = fauxfactory.gen_alphanumeric()
+    email = "{first_name}.{last_name}@test.com"
+    provision_type = 'VMware'
+
+    vm_name = random_vm_name(context=None, max_length=15)
+
+    create_vm.clone_vm(email, first_name, last_name, vm_name, provision_type)
+    vm2 = appliance.collections.infra_vms.instantiate(vm_name, provider)
+    wait_for(lambda: vm2.exists, timeout=120)
+
+    @request.addfinalizer
+    def _cleanup():
+        vm2.cleanup_on_provider()
+        provider.refresh_provider_relationships()
+
+    return create_vm, vm2
+
 # uncollected above in pytest_generate_tests
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
 @pytest.mark.uncollectif(lambda provider, from_edit:
@@ -72,11 +100,11 @@ def test_vm_genealogy_detected(
             f"{small_template.name} is not in {create_vm.name}'s ancestors"
 
 
-@pytest.mark.manual
+@pytest.mark.provider([VMwareProvider])
 @pytest.mark.tier(1)
-def test_compare_button_enabled():
+def test_genealogy_comparison(create_vm_with_clone, soft_assert):
     """
-    Test that compare button is enabled
+    Test that compare button is enabled and the compare page is loaded when 2 VM's are compared
 
     Polarion:
         assignee: spusater
@@ -97,36 +125,10 @@ def test_compare_button_enabled():
     Bugzilla:
         1694712
     """
-    pass
 
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_cloud_infra_genealogy():
-    """
-    Edit infra vm and cloud instance
-    When editing cloud instance, genealogy should be present on the edit
-    page.
-    When you have two providers - one infra and one cloud - added, there
-    should be no cloud vms displayed when setting genealogy for infra vm
-    and vice-versa.
-
-    Polarion:
-        assignee: spusater
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup: Have a cloud instance and an infra vm
-        testSteps:
-            1. Navigate to instance/vm details, choose Genealogy
-            2. Verify that for cloud instance no infra vms are displayed
-            3. Verify that for infra vm no cloud instances are displayed
-        expectedResults:
-            1. Genealogy displayed
-            2. No infra vms displayed
-            3. No cloud instances displayed
-    Bugzilla:
-        1399141
-        1399144
-    """
-    pass
+    try:
+        compare_view = create_vm_with_clone[0].genealogy.compare(*create_vm_with_clone)
+        assert compare_view.is_displayed
+    except ToolbarOptionGreyedOrUnavailable:
+        logger.exception("The compare button is disabled or unavailable")
+        pytest.fail("The compare button is disabled or unavailable")
