@@ -3,6 +3,7 @@ from wrapanapi.systems import AzureSystem
 
 from cfme.cloud.instance.azure import AzureInstance
 from cfme.cloud.provider import CloudProvider
+from cfme.common.provider import BaseProvider
 from cfme.common.provider import DefaultEndpoint
 from cfme.common.provider import DefaultEndpointForm
 from cfme.infrastructure.provider.rhevm import RHEVMVMUtilizationView
@@ -52,6 +53,8 @@ class AzureProvider(CloudProvider):
     region = attr.ib(default=None)
     tenant_id = attr.ib(default=None)
     subscription_id = attr.ib(default=None)
+    provisioning_dialog_widget_names = (BaseProvider
+            .provisioning_dialog_widget_names.difference('volumes'))
 
     @property
     def view_value_mapping(self):
