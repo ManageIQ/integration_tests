@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+import tempfile
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
@@ -126,13 +127,12 @@ def test_map_tagging_crud(appliance, category, soft_assert):
 
 @pytest.fixture
 def csv_tag_file(create_vm, category, tag):
-    file_name = 'test_import_' + fauxfactory.gen_alphanumeric(4) + ".csv"
+    temp_file = tempfile.NamedTemporaryFile(suffix=".csv")
     csv_data = f'name,category,entry\n{create_vm.name},{category.display_name},{tag.display_name}'
     # create CSV file
-    with open(file_name, "w") as file:
+    with open(temp_file.name, "w") as file:
         file.write(csv_data)
     yield file
-    file.delete()
 
 
 @test_requirements.tag
