@@ -68,6 +68,8 @@ RECOGNIZED_BY_CREDS = ["CloudManager", "Nuage::NetworkManager"]
 # A helper for the IDs
 SEQ_FACT = 1e12
 
+EMBEDDED_PROVIDERS = ('Embedded Ansible', )
+
 
 def _current_miqqe_version():
     """Parses MiqQE JS patch version from the patch file
@@ -602,12 +604,13 @@ class IPAppliance:
         found_cruds = set()
         unrecognized_ems_names = set()
         for ems_name in self.managed_provider_names:
+            if ems_name in EMBEDDED_PROVIDERS:
+                # ignore embedded pre-configured providers
+                continue
             for prov in prov_cruds:
                 # Name check is authoritative and the only proper way to recognize a known provider
-                if ems_name == prov.name:
-                    found_cruds.add(prov)
-                    break
-                elif prov.name in ems_name:  # config managers append e.g. 'Automation Manager'
+                # Match either by exact name or by child provider name, e.g., 'XXX Network Manager'
+                if ems_name == prov.name or re.match(f'^{prov.name} [A-Za-z]+ Manager$', ems_name):
                     found_cruds.add(prov)
                     break
             else:
