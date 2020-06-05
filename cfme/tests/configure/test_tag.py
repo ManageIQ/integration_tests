@@ -130,15 +130,19 @@ def test_map_tagging_crud(appliance, category, soft_assert):
 def csv_tag_file(create_vm, category, tag):
     temp_file = tempfile.NamedTemporaryFile(suffix=".csv")
     csv_data = f'name,category,entry\n{create_vm.name},{category.display_name},{tag.display_name}'
-    # create CSV file
     with open(temp_file.name, "w") as file:
         file.write(csv_data)
-    yield file
+    yield file.name
 
 
 @test_requirements.tag
 def test_import_tag(appliance, create_vm, category, tag, csv_tag_file):
     """Test importing tag via file
+            1. Create a Tag Category
+            2. Create entry(tag) in the tag category
+            3. Create a VM
+            4. Create a CSV File for adding the tag to the VM
+            5. Navigate to Tags -> Import tags and upload the CSV file
     Polarion:
         assignee: prichard
         initialEstimate: 1/4h
@@ -146,7 +150,7 @@ def test_import_tag(appliance, create_vm, category, tag, csv_tag_file):
     Bugzilla:
         1792185
     """
-    category.import_tag_from_file(csv_tag_file.name)
+    category.import_tag_from_file(csv_tag_file)
 
 
 @test_requirements.tag

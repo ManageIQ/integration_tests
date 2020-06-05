@@ -283,7 +283,6 @@ class Category(Pretty, BaseEntity, Updateable):
 
             Args:
                 file_name: Name of .csv file containing tag data.
-                By default file must be at cfme/tests/configure/
         """
         view = navigate_to(self.parent, 'ImportTags')
         view.upload_file.fill(file_name)
