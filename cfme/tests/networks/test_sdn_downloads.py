@@ -31,18 +31,17 @@ OBJECTCOLLECTIONS = [
 
 def download(objecttype, extension):
     view = navigate_to(objecttype, 'All')
-    if view.browser.product_version >= '5.10' and extension == 'pdf':
+    if extension == 'pdf':
         view.toolbar.download.item_select("Print or export as PDF")
         handle_extra_tabs(view)
     else:
-        view.toolbar.download.item_select("Download as {}".format(extensions_mapping[extension]))
+        view.toolbar.download.item_select(f"Download as {extensions_mapping[extension]}")
 
 
 def download_summary(spec_object):
     view = navigate_to(spec_object, 'Details')
     view.toolbar.download.click()
-    if view.browser.product_version >= '5.10':
-        handle_extra_tabs(view)
+    handle_extra_tabs(view)
 
 
 def handle_extra_tabs(view):

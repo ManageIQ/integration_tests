@@ -3,6 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [test_requirements.report]
 
@@ -30,6 +31,8 @@ def test_download_report(setup_provider_modscope, report, filetype):
         initialEstimate: 1/20h
     """
     if filetype == "pdf":
-        # TODO: fix pdf download or create a manual test
-        pytest.skip("pdf printing opens a window and all the next tests fail")
-    report.download(filetype)
+        view = navigate_to(report, "Details")
+        # since multiple window handling is not possible, we just assert that the option is enabled.
+        assert view.download.item_enabled("Print or export as PDF")
+    else:
+        report.download(filetype)
