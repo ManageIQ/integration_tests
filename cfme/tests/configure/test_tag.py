@@ -125,7 +125,7 @@ def test_map_tagging_crud(appliance, category, soft_assert):
 
 
 @test_requirements.tag
-def test_import_tag(appliance, category, soft_assert):
+def test_import_tag(appliance, category, tag, soft_assert):
     """Test importing tag via file
     Polarion:
         assignee: prichard
@@ -134,9 +134,10 @@ def test_import_tag(appliance, category, soft_assert):
     Bugzilla:
         1792185
     """
+    # use a fixture (createvm) to create a test_vm
+
     file_name = 'test_import_' + fauxfactory.gen_alphanumeric(4) + ".csv"
-    csv_data = 'name,category,entry\nkborole-CaseTest,rack,s1102_rz4'
-    # create entry - Need to do this.!!!
+    csv_data = f'name,category,entry\npjtest1xyz,{category.display_name},{tag.display_name}'
     # create CSV file
     with open(file_name, "w") as file:
         file.write(csv_data)
@@ -145,7 +146,7 @@ def test_import_tag(appliance, category, soft_assert):
     category.import_tag_from_file(file_name)
     # I need to determine where file needs to be. What device?
     # don't forget to delete the file when done. Make sure delete will still occur if error.
-    # like finalize
+    # like finalize. I couild use a fixture to give me the file and use it to clean up.
 
 
 @test_requirements.tag

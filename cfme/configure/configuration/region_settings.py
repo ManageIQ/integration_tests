@@ -278,11 +278,12 @@ class Category(Pretty, BaseEntity, Updateable):
         view.flash.assert_no_error()
 
     def import_tag_from_file(self, file_name):
+        # Add doc block here.
         view = navigate_to(self.parent, 'ImportTags')
         view.upload_file.fill(file_name)
         view.upload_button.click()
-
         view.flash.assert_no_error()
+        # click Apply - This is slightly beyond testing the BZ. BNZ has been tested on last step.
 
     @property
     def exists(self):
