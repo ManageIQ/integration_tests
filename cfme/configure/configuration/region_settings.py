@@ -62,6 +62,7 @@ class CompanyTagsImportView(RegionView):
     """Import Company Tags list view"""
     upload_file = FileInput(id="upload_file")
     upload_button = Button(id='upload_tags')
+    apply_button = Button("Apply")
 
     @property
     def is_displayed(self):
@@ -278,12 +279,18 @@ class Category(Pretty, BaseEntity, Updateable):
         view.flash.assert_no_error()
 
     def import_tag_from_file(self, file_name):
-        # Add doc block here.
+        """Import Tag from CSV formatted file
+
+            Args:
+                file_name: Name of .csv file containing tag data.
+                By default file must be at cfme/tests/configure/
+        """
         view = navigate_to(self.parent, 'ImportTags')
         view.upload_file.fill(file_name)
         view.upload_button.click()
         view.flash.assert_no_error()
-        # click Apply - This is slightly beyond testing the BZ. BNZ has been tested on last step.
+        view.apply_button.click()
+        view.flash.assert_no_error()
 
     @property
     def exists(self):
