@@ -89,6 +89,10 @@ def retry_connect(ips_getter, connection_factory, num_sec, delay):
         for ip in ips_getter():
             try:
                 connection = connection_factory(ip)
+                if not connection:
+                    logger.warning(f"The connection factory {connection_factory} returned None. "
+                                   "Trying again.")
+                    continue
             except Exception as ex:
                 logger.warning(f"Failed to connect {ip}: {ex}")
                 continue
@@ -219,7 +223,7 @@ def find_pingable(mgmt_vm: Vm, allow_ipv6=True):
 
     else:
         logger.info('No reachable IPs found for VM, just returning wrapanapi IP')
-        return getattr(mgmt_vm, 'ip', None)
+        return mgmt_vm.ip
 
 
 def find_pingable_ipv6(mgmt_vm: Vm):
@@ -230,7 +234,7 @@ def find_pingable_ipv6(mgmt_vm: Vm):
      Returns:
          In priority: first pingable ipv6 address, address 'selected' by wrapanapi (possibly None)
      """
-    for ip in getattr(mgmt_vm, 'all_ips', []):
+    for ip in mgmt_vm.all_ips:
         if not is_ipv6(ip) or not is_pingable(ip):
             logger.debug(f"Could not reach mgmt IP on VM: {ip}")
             continue
