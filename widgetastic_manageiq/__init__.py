@@ -5398,7 +5398,7 @@ class MigrationProgressBar(Widget):
 
     ITEM_LOCATOR = './/tr[contains(@class,"plans-in-progress-list__list-item")]'
     ITEM_TEXT_LOCATOR = './/div[contains(@class,"list-group-item-heading")]'
-    TITLE_LOCATOR = './/div[h3[contains(@class,"card-pf-title")]]'
+    TITLE_LOCATOR = './/div[contains(@class, "item-heading")]'
     TIMER_LOCATOR = './/div[contains(@class,"active-migration-elapsed-time")]'
     SIZE_LOCATOR = './/strong[contains(@id,"size-migrated")]'
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
