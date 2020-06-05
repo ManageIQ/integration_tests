@@ -124,8 +124,19 @@ def test_map_tagging_crud(appliance, category, soft_assert):
                                           .format(map_tag_entity.label))
 
 
+@pytest.fixture
+def csv_tag_file(create_vm, category, tag):
+    file_name = 'test_import_' + fauxfactory.gen_alphanumeric(4) + ".csv"
+    csv_data = f'name,category,entry\n{create_vm.name},{category.display_name},{tag.display_name}'
+    # create CSV file
+    with open(file_name, "w") as file:
+        file.write(csv_data)
+    yield file
+    file.delete()
+
+
 @test_requirements.tag
-def test_import_tag(appliance, create_vm, category, tag, soft_assert):
+def test_import_tag(appliance, create_vm, category, tag, csv_tag_file):
     """Test importing tag via file
     Polarion:
         assignee: prichard
@@ -134,18 +145,7 @@ def test_import_tag(appliance, create_vm, category, tag, soft_assert):
     Bugzilla:
         1792185
     """
-    # use a fixture to create the file so it can get cleaned up
-
-    file_name = 'test_import_' + fauxfactory.gen_alphanumeric(4) + ".csv"
-    csv_data = f'name,category,entry\n{create_vm.name},{category.display_name},{tag.display_name}'
-    # create CSV file
-    with open(file_name, "w") as file:
-        file.write(csv_data)
-    # don't forget to delete the file when done.
-    category.import_tag_from_file(file_name)
-    # I need to determine where file needs to be. What device?
-    # don't forget to delete the file when done. Make sure delete will still occur if error.
-    # like finalize. I couild use a fixture to give me the file and use it to clean up.
+    category.import_tag_from_file(csv_tag_file.name)
 
 
 @test_requirements.tag
