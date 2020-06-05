@@ -18,8 +18,7 @@ from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigate_to
 from cfme.utils.appliance.implementations.ssui import navigator
 from cfme.utils.appliance.implementations.ssui import SSUINavigateStep
-from cfme.utils.browser import ensure_browser_open
-from cfme.utils.browser import quit
+from cfme.utils.browser import manager
 from cfme.utils.log import logger
 from widgetastic_manageiq import SSUIVerticalNavigation
 
@@ -187,12 +186,10 @@ class LoginScreen(SSUINavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        ensure_browser_open(self.obj.appliance.server.address())
+        manager.start_at_url(self.obj.appliance.server.address())
 
     def step(self, *args, **kwargs):
         # Can be either blank or logged in
         del self.view  # In order to unbind the browser
-        quit()
-        ensure_browser_open(self.obj.appliance.server.address())
         if not self.view.is_displayed:
             raise Exception('Could not open the login screen')

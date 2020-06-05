@@ -100,8 +100,7 @@ from cfme.fixtures.pytest_store import store
 from cfme.utils import conf
 from cfme.utils import testgen
 from cfme.utils.appliance import current_appliance
-from cfme.utils.browser import browser
-from cfme.utils.browser import ensure_browser_open
+from cfme.utils.browser import manager
 from cfme.utils.browser import take_screenshot
 from cfme.utils.log import logger
 
@@ -139,21 +138,6 @@ def save_screenshot(node, ss, sse):
             slaveid=store.slaveid)
 
 
-def really_logout():
-    """A convenience function logging out
-
-    This function simply ensures that we are logged out and that a new browser is loaded
-    ready for use.
-    """
-    try:
-        current_appliance.server.logout()
-    except AttributeError:
-        try:
-            browser().quit()
-        except AttributeError:
-            ensure_browser_open()
-
-
 @pytest.hookimpl(hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     """Inspects and consumes certain exceptions
@@ -171,7 +155,7 @@ def pytest_pyfunc_call(pyfuncitem):
     # Login as the "new" user to run the test under
     if 'rbac_role' in pyfuncitem.fixturenames:
         user = pyfuncitem._request.getfixturevalue('rbac_role')
-        really_logout()
+        manager.start()  # will quit browser and create a new one
         logger.info(f"setting user to {user}")
         user_obj = current_appliance.collections.users.instantiate(
             username=conf.credentials[user]['username'],
@@ -186,7 +170,7 @@ def pytest_pyfunc_call(pyfuncitem):
 
         # Handle the Exception
         logger.error(pyfuncitem.location[0])
-        loc = "{}/{}".format(pyfuncitem.location[0], pyfuncitem.location[2])
+        loc = f"{pyfuncitem.location[0]}/{pyfuncitem.location[2]}"
         # loc = loc[:min([loc.rfind('['), len(loc)])]
         logger.error(loc)
         # errors = [v for k, v in tests.items() if loc.startswith(k)]

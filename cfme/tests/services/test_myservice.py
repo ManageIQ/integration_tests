@@ -12,11 +12,9 @@ from cfme.rest.gen_data import services as _services
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.utils import browser
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -31,14 +29,13 @@ pytestmark = [
 ]
 
 
-@pytest.fixture
-def needs_firefox():
+@pytest.fixture(scope='session')
+def needs_firefox(appliance):
     """ Fixture which skips the test if not run under firefox.
 
     I recommend putting it in the first place.
     """
-    ensure_browser_open()
-    if browser.browser().name != "firefox":
+    if appliance.browser.name != "firefox":
         pytest.skip(msg="This test needs firefox to run")
 
 

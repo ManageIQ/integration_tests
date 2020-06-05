@@ -19,7 +19,9 @@ class Implementation:
 
     def open_browser(self, url_key=None):
         # TODO: self.appliance.server.address() instead of None
-        return manager.ensure_open(url_key)
+        manager.ensure_open()
+        manager.browser.get(self.appliance.server.address())
+        return manager.browser
 
     def quit_browser(self):
         manager.quit()

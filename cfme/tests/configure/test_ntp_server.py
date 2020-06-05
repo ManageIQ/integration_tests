@@ -6,7 +6,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.browser import quit
+from cfme.utils.browser import manager
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -155,7 +155,7 @@ def test_ntp_server_check(request, appliance, ntp_servers_keys, empty_ntp_dict):
     else:
         raise Exception("Failed modifying the system date")
     # Calling the browser quit() method to compensate the session after the evm service restart
-    quit()
+    manager.quit()
 
 
 @pytest.mark.tier(3)

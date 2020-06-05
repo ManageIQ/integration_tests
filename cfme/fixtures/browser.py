@@ -3,11 +3,10 @@ from urllib.error import URLError
 
 from py.error import ENOENT
 
-import cfme.utils.browser
 from cfme.fixtures.artifactor_plugin import fire_art_test_hook
+from cfme.utils import browser as browser_util
 from cfme.utils import safe_string
 from cfme.utils.appliance import find_appliance
-from cfme.utils.browser import take_screenshot
 from cfme.utils.datafile import template_env
 from cfme.utils.log import logger
 from cfme.utils.path import log_path
@@ -31,7 +30,7 @@ def pytest_runtest_setup(item):
         return
 
     if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
-        cfme.utils.browser.ensure_browser_open()
+        browser_util.manager.start()
 
 
 def pytest_exception_interact(node, call, report):
@@ -41,15 +40,12 @@ def pytest_exception_interact(node, call, report):
     val = safe_string(call.excinfo.value)
     if isinstance(call.excinfo.value, (URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))
-        from cfme.utils.browser import manager
-        manager.start()  # start will quit first and cycle wharf as well
+        browser_util.manager.start()  # start will quit first and cycle wharf as well
 
     last_lines = "\n".join(report.longreprtext.split("\n")[-4:])
 
-    short_tb = '{}\n{}\n{}'.format(
-        last_lines, call.excinfo.type.__name__,
-        val.encode('ascii', 'xmlcharrefreplace')
-    )
+    ascii_val = val.encode('ascii', 'xmlcharrefreplace').decode('ascii')
+    short_tb = f'{last_lines}\n{call.excinfo.type.__name__}\n{ascii_val}'
     fire_art_test_hook(
         node, 'filedump',
         description="Traceback", contents=report.longreprtext, file_type="traceback",
@@ -96,7 +92,7 @@ def pytest_exception_interact(node, call, report):
     # an isinstance(val, WebDriverException) check in addition to the browser fixture check that
     # exists here in commit 825ef50fd84a060b58d7e4dc316303a8b61b35d2
 
-    screenshot = take_screenshot()
+    screenshot = browser_util.take_screenshot()
     template_data['screenshot'] = screenshot.png
     template_data['screenshot_error'] = screenshot.error
     if screenshot.png:
