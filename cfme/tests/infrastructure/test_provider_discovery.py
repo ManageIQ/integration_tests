@@ -92,8 +92,14 @@ def delete_providers_after_test():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.usefixtures('has_no_infra_providers', 'delete_providers_after_test')
-def test_discover_infra(appliance, providers_for_discover, start_ip, max_range):
+def test_discover_infra(
+    appliance,
+    has_no_providers,
+    providers_for_discover,
+    start_ip,
+    max_range,
+    delete_providers_after_test,
+):
     """
     Polarion:
         assignee: pvala

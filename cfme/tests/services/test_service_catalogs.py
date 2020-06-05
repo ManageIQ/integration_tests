@@ -134,9 +134,10 @@ def test_order_catalog_bundle(appliance, provider, catalog_item, request):
 
 @pytest.mark.skip('Catalog items are converted to collections. Refactoring is required')
 # Note here this needs to be reduced, doesn't need to test against all providers
-@pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(3)
-def test_no_template_catalog_item(provider, provisioning, dialog, catalog, appliance):
+def test_no_template_catalog_item(
+    has_no_providers, provider, provisioning, dialog, catalog, appliance
+):
     """Tests no template catalog item
     Metadata:
         test_flag: provision
