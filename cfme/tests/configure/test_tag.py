@@ -1,6 +1,7 @@
+import tempfile
+
 import fauxfactory
 import pytest
-import tempfile
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
