@@ -278,7 +278,7 @@ class Category(Pretty, BaseEntity, Updateable):
         assert view.is_displayed
         view.flash.assert_no_error()
 
-    def import_tag_from_file(self, file_name):
+    def import_tag_from_file(self, file_name, tag, vm):
         """Import Tag from CSV formatted file
 
             Args:
@@ -290,6 +290,13 @@ class Category(Pretty, BaseEntity, Updateable):
         view.flash.assert_no_error()
         view.apply_button.click()
         view.flash.assert_no_error()
+        # assert the tag is correctly assigned
+        vm_tags = vm.get_tags()
+        assert any(
+            tag.category.display_name == vm_tag.category.display_name and
+            tag.display_name == vm_tag.display_name
+            for vm_tag in vm_tags
+        ), "tag is not assigned"
 
     @property
     def exists(self):

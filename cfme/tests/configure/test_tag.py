@@ -150,7 +150,7 @@ def test_import_tag(appliance, create_vm, category, tag, csv_tag_file):
     Bugzilla:
         1792185
     """
-    category.import_tag_from_file(csv_tag_file)
+    category.import_tag_from_file(csv_tag_file, tag, create_vm)
 
 
 @test_requirements.tag
