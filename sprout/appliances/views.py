@@ -29,7 +29,7 @@ from appliances.tasks.maintainance import (nuke_template_configuration,
 
 from sprout.log import create_logger
 from cfme.utils.bz import Bugzilla
-from cfme.utils.providers import get_mgmt
+from sprout.appliances.utils.providers import get_mgmt
 from cfme.utils.version import Version
 
 from wrapanapi import Openshift

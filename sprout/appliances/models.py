@@ -28,7 +28,7 @@ from sprout.log import create_logger
 from cfme.utils.appliance import Appliance as CFMEAppliance, IPAppliance
 from cfme.utils.bz import Bugzilla
 from cfme.utils.conf import cfme_data
-from cfme.utils.providers import get_mgmt
+from sprout.appliances.utils.providers import get_mgmt
 from cfme.utils.timeutil import nice_seconds
 from cfme.utils.version import Version
 

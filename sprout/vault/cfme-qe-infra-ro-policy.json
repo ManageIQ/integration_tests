@@ -1,0 +1,90 @@
+{
+  "path": {
+    "secret/*": {
+      "capabilities": [
+        "list"
+      ]
+    },
+    "secret/cfme-qe-sprout/*": {
+      "capabilities": [
+        "read",
+        "list"
+      ]
+    },
+    "secret/data/cfme-qe-sprout/*": {
+      "capabilities": [
+        "read",
+        "list"
+      ]
+    },
+    "auth/token/lookup-self": {
+      "capabilities": [
+        "read"
+      ]
+    },
+    "auth/token/renew-self": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "auth/token/revoke-self": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/capabilities-self": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/renew": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/leases/renew": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/leases/lookup": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "cubbyhole/*": {
+      "capabilities": [
+        "create",
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    "sys/wrapping/wrap": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/wrapping/lookup": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/wrapping/unwrap": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/mounts": {
+      "capabilities": [
+        "read"
+      ]
+    },
+    "sys/auth": {
+      "capabilities": [
+        "read"
+      ]
+    }
+  }
+}

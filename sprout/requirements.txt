@@ -4,6 +4,7 @@ Django==2.2.5
 diaper
 django-object-actions
 django-ipware
+dynaconf[vault]
 flower
 gunicorn
 kombu==4.5.0
