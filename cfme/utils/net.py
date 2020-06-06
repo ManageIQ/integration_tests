@@ -60,15 +60,15 @@ def ip_echo_socket(port=32123):
             conn.close()
 
 
-def pick_responding_ip(vm, port, num_sec, rounds_delay_second, attempt_timeout):
+def pick_responding_ip(ips_getter, port, num_sec, rounds_delay_second, attempt_timeout):
     """
     Given a vm and port, pick one of the vm's addresses that is connectible
     on the given port
 
     Args:
-        vm: mgmt vm
+        ips_getter: a function returning the IPs for each round of connectivity trial
         port: port number to attempt connecting to
-        num_sec: Minimal ammount of time how long to keep checking (slight
+        num_sec: Minimal amount of time how long to keep checking (slight
                  variation may happen -- approximately the attempt_timeout).
         rounds_delay_second: The delay to wait after checking each IP round in
                              immediate succession.
@@ -81,7 +81,7 @@ def pick_responding_ip(vm, port, num_sec, rounds_delay_second, attempt_timeout):
         if net_check(port, ip, attempt_timeout):
             return ip
 
-    return retry_connect(vm, connection_factory, num_sec, rounds_delay_second)
+    return retry_connect(ips_getter, connection_factory, num_sec, rounds_delay_second)
 
 
 def retry_connect(ips_getter, connection_factory, num_sec, delay):
@@ -99,10 +99,6 @@ def retry_connect(ips_getter, connection_factory, num_sec, delay):
         return False
     connection, _ = wait_for(_try_batch_of_ips, num_sec=num_sec, delay=delay)
     return connection
-
-
-def retry_connect_vm(vm, connection_factory, num_sec, delay):
-    return retry_connect(lambda: vm.all_ips, connection_factory, num_sec, delay)
 
 
 def net_check(port, addr=None, force=False, timeout=10):
