@@ -62,7 +62,7 @@ def test_domain_crud(request, enabled, appliance):
 
 
 @pytest.mark.tier(1)
-def test_domain_edit_enabled(domain, appliance):
+def test_domain_edit_enabled(domain, appliance, request):
     """
     Polarion:
         assignee: dgaikwad
@@ -79,9 +79,14 @@ def test_domain_edit_enabled(domain, appliance):
     view = navigate_to(domain, 'Details')
     assert 'Disabled' in view.title.text
 
+    @request.addfinalizer
+    def _finalize():
+        with update(domain):
+            domain.enabled = True
+
 
 @pytest.mark.tier(2)
-def test_domain_lock_disabled(klass):
+def test_domain_lock_disabled(klass, request):
     """
     Polarion:
         assignee: dgaikwad
@@ -140,6 +145,11 @@ def test_domain_lock_disabled(klass):
 
     # Need to unlock the domain to perform teardown on domain, namespace, class
     klass.namespace.domain.unlock()
+
+    @request.addfinalizer
+    def _finalizer():
+        with update(klass.namespace.domain):
+            klass.namespace.domain.enabled = True
 
 
 @pytest.mark.tier(1)

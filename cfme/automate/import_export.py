@@ -6,7 +6,6 @@ from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import Button
-from widgetastic_patternfly import FlashMessages
 from widgetastic_patternfly import Input
 
 from cfme.common import BaseLoggedInPage
@@ -15,13 +14,11 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from widgetastic_manageiq import V2VFlashMessages
+from widgetastic_manageiq import ImportExportFlashMessages
 
 
 class AutomateImportExportBaseView(BaseLoggedInPage):
-    @View.nested
-    class flash(FlashMessages):
-        ROOT = 'div.import-flash-message'
+    flash = View.nested(ImportExportFlashMessages)
 
     title = Text('.//div[@id="main-content"]//h1')
 
@@ -39,9 +36,6 @@ class AutomateImportExportBaseView(BaseLoggedInPage):
 
 
 class AutomateImportExportView(AutomateImportExportBaseView):
-    @View.nested
-    class flash(V2VFlashMessages):
-        ROOT = 'div.import-flash-message'
 
     @View.nested
     class import_file(View):  # noqa
@@ -76,9 +70,6 @@ class AutomateImportExportView(AutomateImportExportBaseView):
 
 
 class FileImportSelectorView(AutomateImportExportBaseView):
-    @View.nested
-    class flash(V2VFlashMessages):
-        ROOT = 'div.import-flash-message'
 
     import_into = BootstrapSelect(id="selected_domain_to_import_to")
     import_from = BootstrapSelect(
