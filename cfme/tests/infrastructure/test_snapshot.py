@@ -248,7 +248,20 @@ def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event
         casecomponent: Infra
         initialEstimate: 1/4h
     """
-    verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request)
+    # getting the initial value for OS details.
+    view = navigate_to(create_vm, 'Details')
+    os_text_initial = view.entities.summary('Properties').get_text_of('Operating System')
+    # verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request)
+    # We could put this in the method above, but we just had a discussion about putting the
+    # validation in the test case?
+    # verify that the system info is displayed
+    view = navigate_to(create_vm, 'Details')
+    # we can check here that the OS in in the field.
+    os_text_final = view.entities.summary('Properties').get_text_of('Operating System')
+    assert os_text_final == os_text_initial
+    view.entities.summary('Properties').click_at('Operating System')
+    # now verify "Basic Information" table has row "OperatingSystem. And it contains value.
+    # ? should we be capturing this from the initial state before snapshot?
 
 
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
