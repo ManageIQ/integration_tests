@@ -65,7 +65,7 @@ def test_add_conversion_host_ui_crud(appliance, delete_conversion_hosts,
     transformation_method = "VDDK"
     temp_file = tempfile.NamedTemporaryFile('w')
     with open(temp_file.name, 'w') as f:
-        f.write(get_conversion_data(appliance, provider)["private_key"])
+        f.write(get_conversion_data(provider)["private_key"])
     conv_host_key = temp_file.name
 
     if provider.one_of(RHEVMProvider):
