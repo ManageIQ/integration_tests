@@ -150,7 +150,14 @@ def test_import_tag(appliance, create_vm, category, tag, csv_tag_file):
     Bugzilla:
         1792185
     """
-    category.import_tag_from_file(csv_tag_file, tag, create_vm)
+    category.import_tag_from_file(csv_tag_file)
+    # assert the tag is correctly assigned
+    vm_tags = create_vm.get_tags()
+    assert any(
+        tag.category.display_name == vm_tag.category.display_name and
+        tag.display_name == vm_tag.display_name
+        for vm_tag in vm_tags
+    ), "tag is not assigned"
 
 
 @test_requirements.tag
