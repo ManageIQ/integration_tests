@@ -413,6 +413,37 @@ def test_operations_suspended_vm(create_vm, soft_assert):
 
 
 @pytest.mark.provider([VMwareProvider])
+def test_two_snapshots_suspended_vm(create_vm, soft_assert):
+    """Tests snapshot operations on suspended vm
+
+    Metadata:
+        test_flag: snapshot, provision
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        initialEstimate: 1/2h
+
+    VirtualCenter 6.5 VMs are in suspended power state when reverted to a snapshot created in the
+    suspended state.
+    VirtualCenter 6.7 VMs are in off power state when reverted to a snapshot created in the
+    suspended state.
+    """
+    # Suspend the VM
+    create_vm.mgmt.ensure_state(VmState.SUSPENDED)
+    create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_SUSPENDED)
+    # Create first snapshot when VM is suspended
+    snapshot1 = new_snapshot(create_vm)
+    snapshot1.create()
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh,
+             message="Waiting for the first snapshot to become active")
+    view = navigate_to(create_vm, 'SnapshotsAll')
+    view.toolbar.create.click()
+    view.flash.assert_message(f'Snapshot not taken since the state of the virtual machine '
+                              f'has not changed since the last snapshot operation')
+
+
+@pytest.mark.provider([VMwareProvider])
 def test_operations_powered_off_vm(create_vm):
     """
     Polarion:
