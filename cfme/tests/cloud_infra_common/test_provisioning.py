@@ -1,5 +1,9 @@
-# These tests don't work at the moment, due to the security_groups multi select not working
-# in selenium (the group is selected then immediately reset)
+import email.parser
+import email.policy
+import email.utils
+import typing
+from email.message import EmailMessage
+from itertools import chain
 from textwrap import dedent
 
 import pytest
@@ -17,11 +21,16 @@ from cfme.markers.env_markers.provider import providers
 from cfme.utils import normalize_text
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
+
+
+Checker = typing.NewType('Checker', typing.Callable[[object], bool])
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -133,7 +142,6 @@ def _post_approval(smtp_test, provision_request, vm_type, requester, provider, a
     approved_from = normalize_text(f"{vm_type} request from {requester}was approved")
 
     wait_for_messages_with_subjects(smtp_test, {approved_subject, approved_from}, num_sec=90)
-
     smtp_test.clear_database()
 
     # Wait for the VM to appear on the provider backend before proceeding
@@ -186,16 +194,107 @@ def wait_for_messages_with_subjects(smtp_test, expected_subjects_substrings, num
              message='Some expected subjects not found in the received emails subjects.')
 
 
-@pytest.mark.meta(automates=[1472844, 1676910, 1818172, 1380197])
+def multichecker_factory(all_checkers: typing.Iterable[Checker]) -> Checker:
+    all_checkers = tuple(all_checkers)
+
+    def _item_checker(item):
+        logger.debug(f'Checking: {item}')
+        for checker in all_checkers:
+            if not checker(item):
+                logger.debug(f'Failure from checker: {checker}.')
+                return False
+            else:
+                logger.debug(f'Success from checker: {checker}.')
+        return True
+    return _item_checker
+
+
+class AddressHeaderChecker:
+    def __init__(self, example: EmailMessage, checked_field: str):
+        self.checked_field = checked_field
+        self.example_values = self.normalized_field_vals(example)
+
+    def normalized_field_vals(self, eml: EmailMessage):
+        addresses = eml.get_all(self.checked_field)
+        assert addresses
+        return {a[1] for a in email.utils.getaddresses(addresses)}
+
+    def __call__(self, received_email: EmailMessage) -> bool:
+        found_values = self.normalized_field_vals(received_email)
+        if not found_values == self.example_values:
+            logger.debug(f"Field {self.checked_field} values {found_values} "
+                         f"are different to expected {self.example_values}.")
+            return False
+        return True
+
+    def __str__(self):
+        return f'{self.__class__.__name__}<{self.checked_field}, {self.example_values}>'
+
+
+# Note the Bcc is not present in the received email. It is a part of rcpttos.
+ADDRESS_FIELDS = "From To Cc rcpttos".split()
+
+
+def wait_for_expected_email_arrived(smtp, subject, example, num_sec, delay):
+    eml_checker = (multichecker_factory(AddressHeaderChecker(example, field)
+                   for field in ADDRESS_FIELDS))
+
+    def _email_message_with_rcpttos_header(eml):
+        msg = email.message_from_string(eml['data'], policy=email.policy.strict)
+        msg.add_header('rcpttos', ', '.join(eml['rcpttos']))
+        return msg
+
+    def _expected_email_arrived():
+        emails = smtp.get_emails()
+        messages = (_email_message_with_rcpttos_header(m)
+                    for m in emails if subject in normalize_text(m['subject']))
+        return all(eml_checker(m) for m in messages)
+
+    wait_for(_expected_email_arrived, num_sec=num_sec, delay=delay)
+
+
+@pytest.fixture(scope='module')
+def email_addresses_configuration(request, domain):
+    original_instance = (
+        domain.appliance.collections.domains.instantiate("ManageIQ")
+        .namespaces.instantiate("Configuration")
+        .classes.instantiate("Email")
+        .instances.instantiate("Default")
+    )
+    original_instance.copy_to(domain=domain)
+
+    email_configuration = (
+        domain.namespaces.instantiate('Configuration')
+        .classes.instantiate('Email')
+        .instances.instantiate('Default')
+    )
+
+    test_data = {
+        'default_recipient': ('default_recipient@example.com',),
+        'approver': ('approver@example.com',),
+        'cc': ('first-cc@example.com', 'second-cc@example.com',),
+        'bcc': ('first-bcc@example.com', 'second-bcc@example.com'),
+        'from': ('from@example.com',),
+    }
+
+    with update(email_configuration):
+        email_configuration.fields = {k: {'value': ', '.join(v)} for k, v in test_data.items()}
+
+    request.addfinalizer(email_configuration.delete_if_exists)
+    yield test_data
+
+
+@pytest.mark.meta(automates=[1472844, 1676910, 1818172, 1380197, 1702304, 1783511,
+                             GH(('ManageIQ/manageiq', 20260))])
 @pytest.mark.parametrize("action", ["edit", "approve", "deny"])
 def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
-                            action, soft_assert):
+                            action, soft_assert, email_addresses_configuration):
     """ Tests provisioning approval. Tests couple of things.
 
     * Approve manually
     * Approve by editing the request to conform
 
-    Prerequisities:
+    Prerequisites:
         * A provider that can provision.
         * Automate role enabled
         * User with e-mail set so you can receive and view them
@@ -238,7 +337,6 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     vm_names = [vm_name + "001", vm_name + "002"]
     requester = "vm_provision@cfmeqe.com "  # include trailing space for clean formatting
     if provider.one_of(CloudProvider):
-        requester = "" if BZ(1818172).blocks else requester
         vm_type = "instance"
     else:
         vm_type = "virtual machine"
@@ -255,7 +353,21 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
     # requester includes the trailing space
     pending_from = normalize_text(f"{vm_type} request from {requester}pending approval")
 
+    def msg_from_dict(msg_dict) -> EmailMessage:
+        to, = (msg_dict['default_recipient']
+               if GH(('ManageIQ/manageiq', 20260)).blocks
+               else msg_dict['approver'])
+        msg = EmailMessage()
+        msg.add_header('from', ', '.join(msg_dict['from']))
+        msg.add_header('cc', ', '.join(msg_dict['cc']))
+        msg.add_header('to', to)
+        msg.add_header('rcpttos', ', '.join(chain(msg_dict['cc'], msg_dict['bcc'], [to])))
+        return msg
+
     wait_for_messages_with_subjects(smtp_test, {pending_subject, pending_from}, num_sec=90)
+    SUBJ_APPR_PENDING = normalize_text(f'Instance Request from {requester} Pending Approval')
+    wait_for_expected_email_arrived(smtp_test, SUBJ_APPR_PENDING,
+        msg_from_dict(email_addresses_configuration), num_sec=1, delay=0)
 
     smtp_test.clear_database()
 

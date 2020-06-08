@@ -23,17 +23,19 @@
                             <div class="col-md-10">
                                 <strong>{{email.subject}}</strong>
                                 <br />
-                                <em><u>From:</u>&nbsp; {{email.source}}</em>
+                                <em><u>From:</u>&nbsp; {{email.from_address}}</em>
                                 <br />
-                                <em><u>To:</u>&nbsp; {{email.destination}}</em>
+                                <em><u>To:</u>&nbsp; {{email.to_address}}</em>
                                 <br />
-                                <em><u>Received at:</u>&nbsp; {{email.received}}</em>
+                                <em><u>rcpttos:</u>&nbsp; {{email.rcpttos}}</em>
+                                <br />
+                                <em><u>Received at:</u>&nbsp; {{email.time}}</em>
                                 <br />
                             </div>
                         </div>
                     </div>
                     <div class="panel-body">
-                        <pre>{{email.body}}</pre>
+                        <pre>{{email.text}}</pre>
                     </div>
                 </div>
                 {% endfor %}

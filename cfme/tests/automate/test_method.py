@@ -350,9 +350,12 @@ def test_send_email_method(smtp_test, klass):
     )
     assert result.validate(wait="60s")
 
-    # TODO(GH-8820): This issue should be fixed to check mails sent to person in 'cc' and 'bcc'
     # Check whether the mail sent via automate method really arrives
-    wait_for(lambda: len(smtp_test.get_emails(to_address=mail_to)) > 0, num_sec=60, delay=10)
+    email, = smtp_test.wait_for_emails(wait=60, to_address=mail_to)
+    assert email['cc_address'] == mail_cc
+    assert {mail_to, mail_cc, mail_bcc} == set(email['rcpttos'])
+    assert not {mail_bcc}.issubset(email['to_address'])
+    assert not {mail_bcc}.issubset(email['cc_address'])
 
 
 @pytest.fixture(scope="module")
