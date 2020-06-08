@@ -1,3 +1,5 @@
+import datetime
+
 import fauxfactory
 import pytest
 from widgetastic_patternfly import CandidateNotFound
@@ -5,10 +7,12 @@ from widgetastic_patternfly import CandidateNotFound
 from cfme import test_requirements
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
+from widgetastic_manageiq import TimePicker
 
 
 pytestmark = [
@@ -239,3 +243,61 @@ def test_copy_catalog_bundle(appliance, request, generic_catalog_item):
     # copy catalog item
     new_cat_bundle = catalog_bundle.copy()
     request.addfinalizer(new_cat_bundle.delete_if_exists)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(automates=[1638079])
+@pytest.mark.parametrize("file_name", ["bz_1638079.yml"], ids=["sample_dialog"])
+def test_timepicker_on_service_order(
+    appliance, generic_catalog_item_with_imported_dialog
+):
+    """ Timepicker should show date when chosen once
+        and it should retain the value when service is ordered.
+
+    Bugzilla:
+        1638079
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.7
+        tags: service
+        setup:
+            1. Add the dialog, catalog, and catalog_item.
+        testSteps:
+            1. Navigate to the catalogs order page.
+            2. Try to fill in a different value in the timepicker dialog element.
+            3. Once the timepicker value has been changed, click the submit button.
+            4. Navigate to requests details page.
+            5. Check the value of the timepicker element.
+        expectedResults:
+            1.
+            2. Value must changed the first time.
+            3.
+            4.
+            5. Value is same as what was set in step 3.
+    """
+    catalog_item = generic_catalog_item_with_imported_dialog[0]
+    service_catalog = ServiceCatalogs(
+        appliance, catalog=catalog_item.catalog, name=catalog_item.name
+    )
+    view = navigate_to(service_catalog, "Order")
+    datepicker = TimePicker(view, id="begindate")
+    assert datepicker.is_displayed
+    old_date = datepicker.read()
+    new_date = old_date + datetime.timedelta(days=5)
+    datepicker.fill(new_date)
+    new_date = datepicker.read()
+    assert old_date != new_date
+    assert view.submit_button.is_enabled
+    view.submit_button.click()
+    view = navigate_to(
+        appliance.collections.requests.instantiate(service_catalog.name, partial_check=True),
+        "Details",
+    )
+    assert (
+        datetime.datetime.strftime(new_date, "%m/%d/%Y")
+        in view.details.request_details.read()["Begin Date"]
+    )

@@ -187,23 +187,6 @@ def test_triggered_refresh_shouldnt_occurs_for_dialog_after_changing_type_to_sta
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_timepicker_should_show_date_when_chosen_once():
-    """ Timepicker should show date when chosen once
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.7
-        tags: service
-    Bugzilla:
-        1638079
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_default_dialog_entries_should_localized_when_ordering_catalog_item_in_french():
     """ Default dialog entries should localized when ordering catalog item in French
     Polarion:
@@ -232,21 +215,6 @@ def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_v
         tags: service
     Bugzilla:
         1568440
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_timepicker_should_pass_correct_timing_on_service_order():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
     """
     pass
 
