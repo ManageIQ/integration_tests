@@ -617,3 +617,22 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
     # Case6 - lastly do the delete. First try is canceled.
     host.delete(cancel=True)
     host.delete
+
+
+@test_requirements.infra_hosts
+def test_infrastructure_hosts_tagging(appliance, setup_provider):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: low
+        initialEstimate: 1/6h
+    """
+    host = appliance.collections.hosts.all()[0]
+    tag = host.add_tag()
+    host_tags = host.get_tags()
+    assert any(
+        tag.category.display_name == host_tag.category.display_name and
+        tag.display_name == host_tag.display_name
+        for host_tag in host_tags
+    ), "tag is not assigned"
