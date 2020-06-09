@@ -14,7 +14,7 @@ from cfme.utils.wait import wait_for
 
 
 all_prov = ProviderFilter(classes=[InfraProvider, CloudProvider],
-                          required_fields=['provisioning', 'events'])
+                          required_flags=['provision', 'events'])
 excluded = ProviderFilter(classes=[KubeVirtProvider], inverted=True)
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
