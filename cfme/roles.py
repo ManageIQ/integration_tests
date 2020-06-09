@@ -386,7 +386,32 @@ role_access_ui_510z = {
         'Optimize': ['Utilization', 'Planning', 'Bottlenecks'],
         'Monitor': {
             'Alerts': ['Overview', 'All Alerts']
-        }
+        },
+        "Help": ["Documentation", "Product", "About"],
+        "API": [
+            "Pictures",
+            "Metrics",
+            "Apply Config Pattern",
+            "Event Streams",
+            "Service Offerings",
+            "Service Parameters Sets",
+        ],
+        "Service UI": [
+            "Core",
+            "Dashboard",
+            "My Services",
+            "VM Resource",
+            "My Orders",
+            "Service Catalog",
+            "Shopping Cart",
+        ],
+        'Access Rules for all Virtual Machines': [
+            'Instance Access Rules',
+            'Image Access Rules',
+            'VM Access Rules',
+            'Template Access Rules',
+            'API'
+        ]
     },
     'evmgroup-administrator': {
         'Automation': {
@@ -636,6 +661,32 @@ role_access_ui_511z = {
         'Monitor': {
             'Alerts': ['Overview', 'All Alerts']
         },
+        "Help": ["Documentation", "Product", "About"],
+        "API": [
+            "Pictures",
+            "Metrics",
+            "Apply Config Pattern",
+            "Execute Ansible Playbook",
+            "Event Streams",
+            "Service Offerings",
+            "Service Parameters Sets",
+        ],
+        "Service UI": [
+            "Dashboard",
+            "My Services",
+            "VM Resource",
+            "My Orders",
+            "Service Catalog",
+            "Shopping Cart",
+        ],
+        "User Settings": ["My Settings", "Tasks"],
+        "All VM and Instance Access Rules": [
+            "Instance Access Rules",
+            "Image Access Rules",
+            "VM Access Rules",
+            "Template Access Rules",
+        ],
+        "Main Configuration": ["Settings", "Access Control", "Diagnostics", "Database"],
     },
     'evmgroup-administrator': {
         'Overview': ['Dashboard', 'Reports', 'Utilization', 'Chargeback'],
@@ -895,3 +946,12 @@ role_access_ui_511z = {
         }
     }
 }
+
+
+FEATURES_510 = list(
+    role_access_ui_510z["evmgroup-super_administrator"].keys()
+)
+
+FEATURES_511 = list(
+    role_access_ui_511z["evmgroup-super_administrator"].keys()
+)
