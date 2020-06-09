@@ -1,11 +1,11 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.common.provider import BaseProvider
-from cfme.infrastructure.config_management import ConfigManagerProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import providers
@@ -17,12 +17,8 @@ pytestmark = [
     test_requirements.rest,
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2),
-    pytest.mark.provider([BaseProvider], scope='module'),
+    pytest.mark.provider([CloudProvider, InfraProvider], scope='module'),
     pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"]),
-    pytest.mark.uncollectif(
-        lambda provider: provider.one_of(ConfigManagerProvider),
-        reason="Config Manager providers do not support this feature."
-    )
 ]
 
 
@@ -174,8 +170,8 @@ def test_suspend_vm_rest(appliance, create_vm, ensure_vm_running, soft_assert, f
 
 @pytest.mark.provider(
     gen_func=providers,
-    filters=[ProviderFilter([BaseProvider]),
-             ProviderFilter([RHEVMProvider, AzureProvider], inverted=True)],
+    filters=[ProviderFilter(classes=[CloudProvider, InfraProvider]),
+             ProviderFilter(classes=[RHEVMProvider, AzureProvider], inverted=True)],
 )
 @pytest.mark.parametrize('create_vm', ['small_template'], indirect=True)
 def test_reset_vm_rest(create_vm, ensure_vm_running, from_detail, appliance, provider):
@@ -212,10 +208,7 @@ def test_reset_vm_rest(create_vm, ensure_vm_running, from_detail, appliance, pro
     else:
         rest_api.collections.vms.action.reset(vm)
     success, message = verify_action_result(rest_api, assert_success=False)
-    if appliance.version < '5.7':
-        unsupported_providers = (GCEProvider, EC2Provider, SCVMMProvider)
-    else:
-        unsupported_providers = (GCEProvider, EC2Provider)
+    unsupported_providers = (GCEProvider, EC2Provider)
     if create_vm.provider.one_of(*unsupported_providers):
         assert success is False
         assert "not available" in message
