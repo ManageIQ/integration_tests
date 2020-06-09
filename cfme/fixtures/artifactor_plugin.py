@@ -234,6 +234,8 @@ def pytest_runtest_protocol(item):
 
 
 def pytest_runtest_teardown(item, nextitem):
+    if not getattr(item.config, '_art_client'):
+        return
     name, location = get_test_idents(item)
     app = find_appliance(item)
     ip = app.hostname
