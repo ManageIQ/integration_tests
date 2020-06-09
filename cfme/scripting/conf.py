@@ -31,7 +31,7 @@ def test(conf_name):
     print("{} keys found, if this value seems low, there may be a YAML error".format(len(creds)))
 
 
-@main.command('show-credential', help='Shows the value of a crednetial key')
+@main.command('show-credential', help='Shows the value of a credential key')
 @click.argument('cred-or-provider-key')
 @click.option('--only-credentials', is_flag=True, help='Only search credentials, (not providers)')
 def show_credential(cred_or_provider_key, only_credentials):

@@ -82,7 +82,7 @@ class Store:
         return self.config is not None
 
     def _maybe_get_plugin(self, name):
-        """ returns the plugin if the pluginmanager is availiable and the plugin exists"""
+        """ returns the plugin if the pluginmanager is available and the plugin exists"""
         return self.pluginmanager and self.pluginmanager.getplugin(name)
 
     @property
