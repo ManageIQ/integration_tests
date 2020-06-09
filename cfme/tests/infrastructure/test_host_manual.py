@@ -443,33 +443,6 @@ def test_host_comparison_multipleviews_interactions():
 
 
 @test_requirements.infra_hosts
-def test_host_refresh_multiple():
-    """
-    Testing refreshing multiple hosts.
-
-
-    Polarion:
-        assignee: prichard
-        casecomponent: Infra
-        caseimportance: low
-        initialEstimate: 1/4h
-        testSteps:
-            1. Navigate to the Compute > Infrastructure > Hosts view.
-            2. Select at least 2 hosts (more if possible) by checking the box in upper left of
-               quadicons.
-            3. Click "Refresh Relationships and Power States" under the Configuration
-               dropdowm, and then click "OK" when prompted.
-        expectedResults:
-            1. Hosts view is displayed.
-            2. The selected hosts should be displayed with a blue border and checked checkbox.
-            3. "Refresh initiated for X Hosts from the CFME Database" is displayed in green
-               banner where "X" is the number of selected hosts. Properties for each host are
-               refreshed.
-    """
-    pass
-
-
-@test_requirements.infra_hosts
 def test_host_discover_multiple_valid_ips():
     """
     Testing discovering multiple hosts (not using providers).
