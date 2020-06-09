@@ -1,7 +1,6 @@
 import hashlib
 import os
 import re
-import time
 from contextlib import closing
 from os import path
 from threading import Lock
@@ -468,7 +467,7 @@ class ProviderTemplateUpload:
         check_certs = self.execute_ssh_command('ls /var/www/miq/vmdb/certs',
             client_args=client_args)
         logger.info(f'NANDINI: check_region.output is {check_certs.output}')
-        time.sleep(100)
+        # time.sleep(100)
 
         if not check_pgsql.output:
             logger.info('Finished cleaning out the default setup of a ManageIQ appliance')
