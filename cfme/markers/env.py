@@ -45,7 +45,7 @@ class EnvironmentMarker:
 
 
 class BrowserEnvironmentMarker(EnvironmentMarker):
-    """Browser Envrionment Marker"""
+    """Browser Environment Marker"""
     NAME = 'browser'
     CHOICES = ['firefox', 'chrome', 'ie']
 

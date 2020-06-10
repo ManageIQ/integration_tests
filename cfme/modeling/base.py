@@ -32,18 +32,18 @@ class EntityCollections:
     of all known good collections.
     """
     _parent = attr.ib(repr=False, eq=False, hash=False)
-    _availiable_collections = attr.ib(repr=False, eq=False, hash=False)
+    _available_collections = attr.ib(repr=False, eq=False, hash=False)
     _filters = attr.ib(eq=False, hash=False, default=attr.Factory(dict))
     _collection_cache = attr.ib(repr=False, eq=False, hash=False, init=False,
                                 default=attr.Factory(dict))
 
     @classmethod
     def for_appliance(cls, appliance):
-        return cls(parent=appliance, availiable_collections=load_appliance_collections())
+        return cls(parent=appliance, available_collections=load_appliance_collections())
 
     @classmethod
     def for_entity(cls, entity, collections):
-        return cls(parent=entity, availiable_collections=collections, filters={'parent': entity})
+        return cls(parent=entity, available_collections=collections, filters={'parent': entity})
 
     @classmethod
     def declared(cls, **spec):
@@ -56,16 +56,16 @@ class EntityCollections:
 
     def __dir__(self):
         internal_dir = dir(super())
-        return internal_dir + list(self._availiable_collections.keys())
+        return internal_dir + list(self._available_collections.keys())
 
     def __getattr__(self, name):
-        if name not in self._availiable_collections:
-            sorted_collection_keys = sorted(self._availiable_collections)
+        if name not in self._available_collections:
+            sorted_collection_keys = sorted(self._available_collections)
             raise AttributeError('Collection [{}] not known to object, available collections: {}'
                                  .format(name, sorted_collection_keys))
         if name not in self._collection_cache:
             item_filters = self._filters.copy()
-            cls_and_or_filter = self._availiable_collections[name]
+            cls_and_or_filter = self._available_collections[name]
             if isinstance(cls_and_or_filter, tuple):
                 item_filters.update(cls_and_or_filter[1])
                 cls_or_verpick = cls_and_or_filter[0]
