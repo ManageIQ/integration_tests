@@ -463,6 +463,39 @@ def test_snapshot_history_btn(create_vm, provider):
     assert snapshot_view.is_displayed
 
 
+def test_snapshot_link_after_delete(create_vm, provider):
+    """Tests snapshot link and history button after delete
+    Metadata:
+        test_flag: snapshot
+
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/6h
+    """
+    has_name = not provider.one_of(RHEVMProvider)
+    snapshot1 = new_snapshot(create_vm, has_name=has_name)
+    snapshot1.create()
+    snapshot2 = new_snapshot(create_vm, has_name=has_name)
+    snapshot2.create()
+    snapshot1.delete()
+    # snap 1 will be the active so we'd be testing a negative case for rhv(rhv should not allow
+    # deletion of active snap).
+    snapshot_view = navigate_to(create_vm, 'SnapshotsAll')
+    back_to_vm_item = f'VM and Instance "{create_vm.name}"'
+    snapshot_view.toolbar.history.item_select(back_to_vm_item)
+    vm_details_view = navigate_to(create_vm, 'Details')  # no nav should be needed.
+    snapshot_item = f'"Snapshots" for Virtual Machine "{create_vm.name}"'
+    vm_details_view.toolbar.history.item_select(snapshot_item)
+    snapshot_view = create_vm.create_view(InfraVmSnapshotView)
+    assert snapshot_view.is_displayed
+    # Now go back to Datails and click on the snapshots link ?Do I want to use history button here?
+    vm_details_view = navigate_to(create_vm, 'Details')
+    vm_details_view.entities.summary('Properties').click_at("Snapshots")
+    assert snapshot_view.is_displayed
+
+
 @pytest.mark.provider([VMwareProvider])
 def test_create_snapshot_via_ae(appliance, request, domain, create_vm):
     """This test checks whether the vm.create_snapshot works in AE.
