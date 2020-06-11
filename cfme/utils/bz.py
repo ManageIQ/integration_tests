@@ -181,10 +181,12 @@ class Bugzilla:
         for variant in sorted(variants, key=lambda variant: variant.id):
             if variant.id in ignore_bugs:
                 continue
-            if variant.version is not None and variant.version > version:
+            if variant.version and variant.version > version:
                 continue
-
-            if variant.release_flag is not None and version.is_in_series(variant.release_flag):
+            if variant.release_flag and (
+                variant.release_flag == 'future' or
+                version.is_in_series(variant.release_flag)
+            ):
                 logger.info('Found matching bug for %d by release - #%d', bug.id, variant.id)
                 filtered.clear()
                 filtered.add(variant)
