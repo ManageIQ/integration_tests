@@ -632,37 +632,3 @@ def test_login_self_service_ui():
             error flash message appear immediately
     """
     pass
-
-
-@pytest.mark.customer_scenario
-@test_requirements.rbac
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1730066])
-def test_aws_keypair_list():
-    """
-    Should able to view AWS keypair list as tenant_administrator
-    Bugzilla:
-        1730066
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: critical
-        initialEstimate: 1/4h
-        testSteps:
-            1. Copy the EvmRole_tenant_admin role to a new role (Since this role does not have
-             the Auth Key Pairs feature enabled)
-            2. In the role, enable the Auth Key Pairs feature
-            3. Add either new or existing groups to the newly created tenant admin role
-            4. If the added groups belong to the Top-Level Tenant (Parent Tenant),
-            then users in that group will be able to see the WAS Key Pairs
-            5. Otherwise, if the added groups belong to one of the sub-tenant (Children tenant),
-             users in those groups will not be able to see the AWS Key Pairs
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Users in groups that belong to either the top-level tenant or any of the
-            children tenants (sub-tenants) should be able to see the key Pairs.
-    """
-    pass

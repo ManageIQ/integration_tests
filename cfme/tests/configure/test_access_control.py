@@ -5,6 +5,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.provider import base_types
 from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
@@ -155,6 +156,51 @@ def catalog_obj(appliance):
 
     if cat.exists:
         cat.delete()
+
+
+@pytest.fixture
+def tenant_custom_role(appliance, request, provider):
+    """Fixture to create a tenant_administrator role, group, user with additional
+    product features"""
+    # Creating role
+    role = appliance.collections.roles.instantiate(name='EvmRole-tenant_administrator')
+    tenant_role = role.copy(
+        name=fauxfactory.gen_alphanumeric(30, start="EvmRole-tenant_admin_copy_")
+    )
+    with update(tenant_role):
+        tenant_role.product_features = [
+            (["Everything", "Compute", "Clouds", "Auth Key Pairs"], True)
+        ]
+    # creating group
+    if request.param == 'top':
+        tenant_name = appliance.collections.tenants.get_root_tenant().name
+    else:
+        tenant_collection = appliance.collections.tenants
+        tenant = tenant_collection.create(
+            name=fauxfactory.gen_alphanumeric(start="tenant_"),
+            description=fauxfactory.gen_alphanumeric(30, "tenant_description_"),
+            parent=tenant_collection.get_root_tenant()
+        )
+        request.addfinalizer(tenant.delete_if_exists)
+        tenant_name = f"My Company/{tenant.name}"
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(30, "group_description_"),
+        role=tenant_role.name,
+        tenant=tenant_name
+    )
+
+    # creating user
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                              secret=fauxfactory.gen_alphanumeric(start="pwd")),
+        email=fauxfactory.gen_email(),
+        groups=[group]
+    )
+    yield user, group, tenant_role
+    user.delete_if_exists()
+    group.delete_if_exists()
+    tenant_role.delete_if_exists()
 
 
 # User test cases
@@ -2979,3 +3025,59 @@ def test_select_edit_group(appliance, request):
         view.toolbar.configuration.open()
         assert view.toolbar.configuration.item_enabled(
             "Edit the selected Group"), '"Edit the selected Group" button is disabled'
+
+
+@pytest.mark.customer_scenario
+@test_requirements.rbac
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1730066])
+@pytest.mark.provider([EC2Provider], scope='function', selector=ONE_PER_TYPE)
+@pytest.mark.parametrize("tenant_custom_role", ["top", "child"], indirect=True)
+def test_aws_keypair_list(appliance, setup_provider, provider, tenant_custom_role, request):
+    """
+    Should able to view AWS keypair list as tenant_administrator
+    Bugzilla:
+        1730066
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/4h
+        testSteps:
+            1. Login user admin user
+            2. add aws cloud provider
+            3. Copy the EvmRole_tenant_admin role to a new role (Since this role does not have the
+               Auth Key Pairs feature enabled)
+            4. In the new role, enable the Auth Key Pairs feature
+            5. Add new group to the newly created tenant admin role
+            6. Navigate to "Compute>Cloud>Key Pair" and add new "Key Pair" by using recently
+            added also set permisson
+            7. a) If the added groups belong to the Top-Level Tenant (Parent Tenant, Example
+                  "My Company"), navigate to "Compute>Cloud>Key Pair" page by login respective user.
+               b) if the added groups belong to one of the sub-tenant (Children tenant,
+                  example "My Company/new_tenant"), navigate to "Compute>Cloud>Key Pair" page by
+                  login respective user.
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7. a) should able see created Key Pair
+               b) should able see created Key Pair
+    """
+    user, group, _ = tenant_custom_role
+    keypair = appliance.collections.cloud_keypairs.create(
+        name=fauxfactory.gen_alphanumeric(),
+        provider=provider
+    )
+    request.addfinalizer(keypair.delete_if_exists)
+    assert keypair.exists
+
+    view = navigate_to(keypair.parent, 'All')
+    owner = appliance.collections.users.instantiate('Administrator')
+    keypair.set_ownership(group=group, owner=owner)
+    view.flash.assert_success_message('Ownership saved for selected Key Pair')
+    with user:
+        assert keypair.exists
