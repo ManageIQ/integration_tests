@@ -51,21 +51,6 @@ def test_service_catalog_crud_ssui(appliance, setup_provider,
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_ssui_myservice_myrequests_and_service_catalog_filter_links():
-    """ Check Filter Links of all pages
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/8h
-        startsin: 5.5
-        tags: ssui
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_ssui_test_all_language_translations():
     """
@@ -125,23 +110,6 @@ def test_ssui_disable_notification(request, appliance, user_self_service_role,
             assert view.alert.read() == "Shopping cart is empty."
 
 
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_in_ssui_portal_reconfigure_service_should_shows_available_provisioning_dialog():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/2h
-        startsin: 5.9
-        tags: ssui
-    Bugzilla:
-        1633453
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_refresh_ssui_page(appliance, generic_service):
     """
@@ -161,23 +129,6 @@ def test_refresh_ssui_page(appliance, generic_service):
         # After refresh it should be on the same page or shouldn't logout
         view.browser.refresh()
         assert view.is_displayed
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_able_to_access_openstack_instance_console_from_self_service_portal():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        initialEstimate: 1/2h
-        testtype: functional
-        startsin: 5.9
-        tags: ssui
-    Bugzilla:
-        1624573
-    """
-    pass
 
 
 @pytest.mark.manual
@@ -242,21 +193,6 @@ def test_disabling_dashboard_under_service_ui_for_a_role_shall_disable_the_dashb
         tags: ssui
     Bugzilla:
         1589409
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_sui_order_and_request_should_be_sorted_by_time():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: ssui
     """
     pass
 
