@@ -41,14 +41,17 @@ def show_credential(cred_or_provider_key, only_credentials):
         endpoints_data = data['management_systems'][cred_or_provider_key].get('endpoints', {})
         for endpoint in endpoints_data:
             print(endpoint)
-            cred_key = endpoints_data[endpoint]['credentials']
+            cred_key = endpoints_data[endpoint].get('credentials')
+            if not cred_key:
+                print(" No credentials defined for this endpoint.")
+                continue
             cred_dict = conf.credentials[cred_key]
-            for k in cred_dict:
-                print(" {}: {}".format(k, cred_dict[k]))
+            for k, v in cred_dict.items():
+                print(f" {k}: {v}")
     elif cred_or_provider_key in conf.credentials:
         cred_dict = conf.credentials[cred_or_provider_key]
-        for k in cred_dict:
-            print("{}: {}".format(k, cred_dict[k]))
+        for k, v in cred_dict.items():
+            print(f"{k}: {v}")
     else:
         print("Key couldn't be found in providers or credentials YAMLS")
 
