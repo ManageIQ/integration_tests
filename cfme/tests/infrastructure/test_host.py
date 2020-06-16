@@ -625,7 +625,7 @@ def test_infrastructure_hosts_tagging(appliance, setup_provider):
     Polarion:
         assignee: prichard
         casecomponent: Infra
-        caseimportance: low
+        caseimportance: high
         initialEstimate: 1/6h
     """
     host = appliance.collections.hosts.all()[0]
