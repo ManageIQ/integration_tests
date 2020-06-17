@@ -5995,3 +5995,157 @@ class SSUICardPFInfoStatus(Widget):
 
     def read(self):
         return [self.browser.text(el) for el in self.browser.elements(self.ITEMS)]
+
+
+class TimePicker(View):
+    """Represents the Bootstrap TimePicker.
+
+    TODO: Make this work for time picking as well.
+
+    Args:
+    name: Name of TimePicker
+    id: Id of TimePicker
+    locator: If none of the above applies, you can also supply a full locator
+    strptime_format: `datetime` module `strptime` format. The default is for `mm/dd/yyyy` but
+    the user can overwrite as per widget requirement which should comparable with datetime.
+    .. code-block:: python
+        date = TimePicker(name='miq_date_1')
+        # fill current date
+        date.fill(datetime.now())
+        # read selected date for TimePicker
+        date.read()
+    """
+
+    textbox = TextInput(locator=Parameter("@locator"))
+
+    def __init__(
+        self, parent, id=None, name=None, strptime_format="%m/%d/%Y", locator=None, logger=None
+    ):  # noqa
+        View.__init__(self, parent=parent, logger=logger)
+
+        self.strptime_format = strptime_format
+        base_locator = ".//*[(self::input or self::textarea) and @{}={}]"
+
+        if id:
+            self.locator = base_locator.format("id", quote(id))
+        elif name:
+            self.locator = base_locator.format("name", quote(name))
+        elif locator:
+            self.locator = locator
+        else:
+            raise TypeError("You need to specify either, id, name or locator for TimePicker")
+
+    class HeaderView(View):
+        prev_button = Text(locator=".//button[contains(@class, 'left')]")
+        next_button = Text(locator=".//button[contains(@class, 'right')]")
+        datepicker_switch = Text(".//*[contains(@id, 'datepicker')]")
+        _elements = {}
+
+        def select(self, value):
+            for el, web_el in self._elements.items():
+                if el == value:
+                    web_el.click()
+                    return True
+
+        @property
+        def active(self):
+            for el, web_el in self._elements.items():
+                if bool(self.browser.classes(web_el) & {"active", "focused"}):
+                    return el
+
+    @View.nested
+    class date_pick(HeaderView):  # noqa
+        DATES = ".//table[@ng-switch-when='day']/tbody/tr/td[@role='gridcell']"
+
+        @property
+        def _elements(self):
+            dates = {}
+            for el in self.browser.elements(self.DATES):
+                if not bool({"old", "new", "disabled"} & self.browser.classes(el)):
+                    dates.update({int(el.text): el})
+            return dates
+
+    @View.nested
+    class month_pick(HeaderView):  # noqa
+        MONTHS = ".//table[@ng-switch-when='month']/tbody/tr/td/*"
+
+        @property
+        def _elements(self):
+            months = {}
+            for el in self.browser.elements(self.MONTHS):
+                if not bool({"disabled"} & self.browser.classes(el)):
+                    months.update({el.text: el})
+            return months
+
+    @View.nested
+    class year_pick(HeaderView):  # noqa
+        YEARS = ".//table[@ng-switch-when='year']/tbody/tr/td/*"
+
+        @property
+        def _elements(self):
+            years = {}
+            for el in self.browser.elements(self.YEARS):
+                if not bool({"old", "new", "disabled"} & self.browser.classes(el)):
+                    years.update({int(el.text): el})
+            return years
+
+        def _pick(self, value):
+            for el, web_el in self._elements.items():
+                if el == value:
+                    web_el.click()
+                    return True
+
+        def select(self, value):
+            start_yr, end_yr = [int(item) for item in self.datepicker_switch.read().split("-")]
+            if value > end_yr:
+                for _ in range(end_yr, value, 10):
+                    self.next_button.click()
+            elif value < start_yr:
+                for _ in range(start_yr, value, -10):
+                    self.prev_button.click()
+            self._pick(value)
+
+    def read(self):
+        """Read the current date form TimePicker
+        Returns:
+            :py:class:`datetime`
+        """
+        try:
+            return datetime.strptime(self.textbox.value, self.strptime_format)
+        except ValueError:
+            return None
+
+    def fill(self, value):
+        """Fill date to TimePicker
+        Args:
+           value: datetime object.
+        Returns:
+            :py:class:`bool`
+        """
+        current_date = self.read()
+        if current_date and value.date() == current_date.date():
+            return False
+
+        self.browser.click(f"{self.locator}/following-sibling::span/button")
+        self.date_pick.datepicker_switch.click()
+        self.month_pick.datepicker_switch.click()
+        self.year_pick.select(value=value.year)
+        self.month_pick.select(value=value.strftime("%B"))
+        self.date_pick.select(value=value.day)
+        return True
+
+    @property
+    def date_format(self):
+        """TimePicker date format
+        Returns:
+            :py:class:`str`
+        """
+        return self.browser.get_attribute("uib-TimePicker-popup", self.textbox)
+
+    @property
+    def is_displayed(self):
+        """TimePicker displayed or not
+        Returns:
+            :py:class:`bool`
+        """
+        return self.browser.is_displayed(self.textbox)
