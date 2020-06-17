@@ -1547,6 +1547,15 @@ class VmAllWithTemplatesForProvider(CFMENavigateStep):
         self.view.reset_page()
 
 
+@navigator.register(InfraVm, 'OS Info')
+class VmOsInfo(CFMENavigateStep):
+    VIEW = InfraVmOsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Operating System')
+
+
 @navigator.register(InfraTemplate, 'Details')
 @navigator.register(InfraVm, 'Details')
 class VmAllWithTemplatesDetails(CFMENavigateStep):

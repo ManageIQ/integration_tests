@@ -11,7 +11,6 @@ from cfme.base.credential import SSHCredential
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
-from cfme.infrastructure.virtual_machines import InfraVmOsView
 from cfme.infrastructure.virtual_machines import InfraVmSnapshotAddView
 from cfme.infrastructure.virtual_machines import InfraVmSnapshotView
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -252,7 +251,7 @@ def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event
     # getting the initial value for OS details.
     view = navigate_to(create_vm, 'Details')
     os_text_initial = view.entities.summary('Properties').get_text_of('Operating System')
-    # verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request)
+    verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request)
     # We could put this in verify_revert_snapshot, but we just had a discussion about putting the
     # validation in the test case?
     # verify that the system info is displayed
@@ -260,10 +259,7 @@ def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event
     # we can check here that the OS in in the field.
     os_text_compare = view.entities.summary('Properties').get_text_of('Operating System')
     assert os_text_compare == os_text_initial
-    # !!! Create a navigate_to for Operating System view
-
-    view.entities.summary('Properties').click_at('Operating System')
-    os_view = create_vm.create_view(InfraVmOsView)
+    os_view = navigate_to(create_vm, 'OS Info')
     assert os_view.is_displayed
     os_text_compare = view.entities.summary('Basic Information').get_text_of('Operating System')
     assert os_text_compare == os_text_initial
