@@ -463,9 +463,19 @@ def test_snapshot_history_btn(create_vm, provider):
     assert snapshot_view.is_displayed
 
 
+@pytest.fixture
+def add2snaps_del1(provider, create_vm):
+    has_name = not provider.one_of(RHEVMProvider)
+    snapshot1 = new_snapshot(create_vm, has_name=has_name)
+    snapshot1.create()
+    snapshot2 = new_snapshot(create_vm, has_name=has_name)
+    snapshot2.create()
+    snapshot1.delete()
+
+
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1395116])
-def test_snapshot_link_after_delete(create_vm, provider):
+def test_snapshot_link_after_delete(create_vm, add2snaps_del1):
     """Tests snapshot link and history button after delete
     Metadata:
         test_flag: snapshot
@@ -477,14 +487,6 @@ def test_snapshot_link_after_delete(create_vm, provider):
     Bugzilla:
         1395116
     """
-    has_name = not provider.one_of(RHEVMProvider)
-    snapshot1 = new_snapshot(create_vm, has_name=has_name)
-    snapshot1.create()
-    snapshot2 = new_snapshot(create_vm, has_name=has_name)
-    snapshot2.create()
-    snapshot1.delete()
-    # snap 2 will be the active so we'd be testing a negative case for rhv(rhv should not allow
-    # deletion of active snap).
     snapshot_view = navigate_to(create_vm, 'SnapshotsAll')
     back_to_vm_item = f'VM and Instance "{create_vm.name}"'
     snapshot_view.toolbar.history.item_select(back_to_vm_item)
@@ -493,7 +495,7 @@ def test_snapshot_link_after_delete(create_vm, provider):
     vm_details_view.toolbar.history.item_select(snapshot_item)
     snapshot_view = create_vm.create_view(InfraVmSnapshotView)
     assert snapshot_view.is_displayed
-    # Now go back to Datails and click on the snapshots link ?Do I want to use history button here?
+    # Now go back to Details and click on the snapshots link ?Do I want to use history button here?
     vm_details_view = navigate_to(create_vm, 'Details')
     vm_details_view.entities.summary('Properties').click_at("Snapshots")
     assert snapshot_view.is_displayed
