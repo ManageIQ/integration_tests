@@ -333,6 +333,7 @@ class InfraVmContainerView(VMDetailsEntities):
     @property
     def is_displayed(self):
         return self.basic_information.is_displayed and self.device.is_displayed
+        # does above work?? There is no is_displayed for SummaryTable?
 
 
 class InfraVmDetailsView(InfraVmView):
@@ -451,6 +452,24 @@ class InfraVmReconfigureView(BaseLoggedInPage):
         return (self.title.text == 'Reconfigure Virtual Machine' and
                 len([row for row in self.affected_vms.rows()]) == 1 and
                 self.context['object'].name in [row.name.text for row in self.affected_vms.rows()])
+
+
+class InfraVmOsView(InfraVmView):
+    """The Operating System page"""
+    title = Text('#explorer_title_text')
+    basic_information = SummaryTable(title="Basic Information")
+
+    '''
+    This looks suspect.
+    @property
+    def is_displayed(self):
+        return self.basic_information.is_displayed
+    '''
+
+    @property
+    def is_displayed(self):
+        expected_title = '"OS Info" for Virtual Machine "{}"'.format(self.context['object'].name)
+        return self.in_infra_vms and self.title.text == expected_title
 
 
 class InfraVmSnapshotToolbar(View):
