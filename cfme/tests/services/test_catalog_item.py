@@ -297,35 +297,6 @@ def test_restricted_catalog_items_select_for_catalog_bundle(appliance, request, 
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(1)
-def test_catalog_all_page_after_deleting_selected_template():
-    """
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/12h
-        caseimportance: low
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.10
-        casecomponent: Services
-        tags: service
-        testSteps:
-            1. Add provider (VMware or scvmm)
-            2. Create catalog item (Remember template you selected.)
-            3. Order Service catalog item
-            4. Go to details page of provider and click on templates
-            5. Either delete this template while provisioning process in progress or after
-               completing process.
-            6. Go to service > catalogs > service catalogs or catalog items
-            7. Click on catalog item you created or ordered
-    Bugzilla:
-        1652858
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_rbac_assigning_multiple_tags_from_same_category_to_catalog_item():
     """ RBAC : Assigning multiple tags from same category to catalog Item
@@ -553,33 +524,6 @@ def test_reorder_buttons_in_catalog_items():
             2.
             3.
             4. Cancel/save button should be present on the bottom
-    """
-    pass
-
-
-@pytest.mark.meta(coverage=[1740814])
-@pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
-@pytest.mark.tier(2)
-def test_change_ansible_tower_job_template():
-    """
-    Bugzilla:
-        1740814
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/16h
-        startsin: 5.11
-        testSteps:
-            1. Add a Ansible Tower provider
-            2. Add an Ansible Tower Catalog Item with 'Display in Catalog' Checked
-            3. Edit the Catalog item, change the Tower job template
-        expectedResults:
-            1.
-            2.
-            3. 'Display in Catalog' remains checked after template change
     """
     pass
 

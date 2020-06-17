@@ -4,6 +4,7 @@ from cfme import test_requirements
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 
@@ -99,3 +100,38 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type,
     assert order_request.is_succeeded(method='ui'), msg
     myservice = MyService(appliance, catalog_item.name)
     myservice.retire()
+
+
+@pytest.mark.ignore_stream('5.10')
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1740814])
+@pytest.mark.parametrize('job_type', ['template'], ids=['template_job'])
+def test_change_ansible_tower_job_template(catalog_item, job_type, ansible_api_version_change):
+    """
+    Bugzilla:
+        1740814
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.11
+        testSteps:
+            1. Add a Ansible Tower provider
+            2. Add an Ansible Tower Catalog Item with 'Display in Catalog' Checked
+            3. Edit the Catalog item, change the Tower job template
+        expectedResults:
+            1.
+            2.
+            3. 'Display in Catalog' remains checked after template change
+    """
+    view = navigate_to(catalog_item, 'Edit')
+
+    # Change the Ansible Tower Template
+    view.select_orch_template.fill("bz-survey")
+    view.save.click()
+    view = navigate_to(catalog_item, 'Edit')
+
+    # "Display in Catalog" should be checked
+    assert view.display.read()
+    view.cancel.click()
