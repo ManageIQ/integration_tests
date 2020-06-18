@@ -385,7 +385,7 @@ def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
         }
         provision_request = appliance.collections.requests.instantiate(cells=cells)
         provision_request.edit_request(values=modifications)
-        vm_names = [new_vm_name]  # Will be just one now
+        vm_names = [new_vm_name]  # Will be just one at this moment
         request.addfinalizer(
             lambda: collection.instantiate(new_vm_name, provider).cleanup_on_provider()
         )
