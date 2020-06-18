@@ -458,13 +458,6 @@ class InfraVmOsView(InfraVmView):
     title = Text('#explorer_title_text')
     basic_information = SummaryTable(title="Basic Information")
 
-    '''
-    This looks suspect.
-    @property
-    def is_displayed(self):
-        return self.basic_information.is_displayed
-    '''
-
     @property
     def is_displayed(self):
         expected_title = '"OS Info" for Virtual Machine "{}"'.format(self.context['object'].name)
