@@ -462,6 +462,59 @@ def test_snapshot_history_btn(create_vm, provider):
     assert snapshot_view.is_displayed
 
 
+@pytest.fixture
+def add2snaps_del1(provider, create_vm):
+    has_name = not provider.one_of(RHEVMProvider)
+    snapshot1 = new_snapshot(create_vm, has_name=has_name)
+    snapshot1.create()
+    snapshot2 = new_snapshot(create_vm, has_name=has_name)
+    snapshot2.create()
+    snapshot1.delete()
+
+
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1395116])
+def test_snapshot_link_after_delete(create_vm, add2snaps_del1):
+    """Tests snapshot link and history button after delete
+    Metadata:
+        test_flag: snapshot
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/6h
+    setup:
+        1. Add vmware provider
+        2. Create testing VM
+    testSteps:
+        1. Create two snapshots
+        2. Delete one snapshot
+        3. Use history button to navigate back to VM summary page
+        4. From the vm summary page use the history button and try to go back to snapshots.
+        5. From vm summary page click the snapshot link
+    expectedResults:
+        1. Snapshots successfully created
+        2. Snapshot successfully deleted
+        3. VM summary page displayed
+        4. Snapshots page displayed
+        5. Snapshots page displayed
+    Bugzilla:
+        1395116
+    """
+    snapshot_view = navigate_to(create_vm, 'SnapshotsAll')
+    back_to_vm_item = f'VM and Instance "{create_vm.name}"'
+    snapshot_view.toolbar.history.item_select(back_to_vm_item)
+    vm_details_view = navigate_to(create_vm, 'Details')  # no nav should be needed.
+    snapshot_item = f'"Snapshots" for Virtual Machine "{create_vm.name}"'
+    vm_details_view.toolbar.history.item_select(snapshot_item)
+    snapshot_view = create_vm.create_view(InfraVmSnapshotView)
+    assert snapshot_view.is_displayed
+    # Now go back to Details and click on the snapshots link
+    vm_details_view = navigate_to(create_vm, 'Details')
+    vm_details_view.entities.summary('Properties').click_at("Snapshots")
+    assert snapshot_view.is_displayed
+
+
 @pytest.mark.provider([VMwareProvider])
 def test_create_snapshot_via_ae(appliance, request, domain, create_vm):
     """This test checks whether the vm.create_snapshot works in AE.
@@ -681,44 +734,6 @@ def test_snapshot_tree_view_functionality():
                snapshot is the last one created
     Bugzilla:
         1398239
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.provider([VMwareProvider])
-@pytest.mark.tier(1)
-@pytest.mark.meta(coverage=[1395116])
-def test_snapshot_link_after_deleting_snapshot():
-    """
-    test snapshot link in vm summary page after deleting snapshot
-    Have a vm, create couple of snapshots. Delete one snapshot. From the
-    vm summary page use the history button and try to go back to
-    snapshots. Go to the vm summary page again and try to click snapshots
-    link, it should work.
-
-    Polarion:
-        assignee: prichard
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/6h
-        setup:
-            1. Add vmware provider
-            2. Create testing VM
-        testSteps:
-            1. Create two snapshots
-            2. Delete one snapshot
-            3. Use history button to navigate back to VM summary page
-            4. From the vm summary page use the history button and try to go back to snapshots.
-            5. From vm summary page click the snapshot link
-        expectedResults:
-            1. Snapshots successfully created
-            2. Snapshot successfully deleted
-            3. VM summary page displayed
-            4. Snapshots page displayed
-            5. Snapshots page displayed
-    Bugzilla:
-        1395116
     """
     pass
 
