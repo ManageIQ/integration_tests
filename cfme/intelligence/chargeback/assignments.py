@@ -13,7 +13,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from widgetastic_manageiq import Table
-from widgetastic_manageiq.hacks import BootstrapSelectByLocator
 
 
 class AssignmentsAllView(ChargebackView):
@@ -48,14 +47,11 @@ class AssignmentsView(ChargebackView):
     assign_to = BootstrapSelect(id="cbshow_typ")
     tag_category = BootstrapSelect(id='cbtag_cat')
     docker_labels = BootstrapSelect(id='cblabel_key')
+
     _table_locator = '//h3[contains(text(),"Selections")]/following-sibling::table'
     _table_widget_locator = './/div[contains(@class, "bootstrap-select")]'
-
-    selections = Table(
-        locator=_table_locator,
-        column_widgets={'Rate': BootstrapSelectByLocator(locator=_table_widget_locator)},
-        assoc_column=0,
-    )
+    _column_widgets = {'Rate': BootstrapSelect(locator=_table_widget_locator)}
+    selections = Table(locator=_table_locator, column_widgets=_column_widgets, assoc_column=0)
 
 
 class Assign(Updateable, Pretty, Navigatable):
