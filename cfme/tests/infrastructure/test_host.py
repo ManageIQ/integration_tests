@@ -636,3 +636,4 @@ def test_infrastructure_hosts_tagging(appliance, setup_provider):
         tag.display_name == host_tag.display_name
         for host_tag in host_tags
     ), "tag is not assigned"
+    host.remove_tag(tag)
