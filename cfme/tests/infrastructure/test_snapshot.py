@@ -252,14 +252,13 @@ def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event
     view = navigate_to(create_vm, 'Details')
     os_text_initial = view.entities.summary('Properties').get_text_of('Operating System')
     verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request)
-    # We could put this in verify_revert_snapshot, but we just had a discussion about putting the
-    # validation in the test case?
     # verify that the system info is displayed
     view = navigate_to(create_vm, 'Details')
-    # we can check here that the OS in in the field.
+    # check that the OS is in the field.
     os_text_compare = view.entities.summary('Properties').get_text_of('Operating System')
     assert os_text_compare == os_text_initial
     os_view = navigate_to(create_vm, 'OS Info')
+    # check that the OS Info view is displayed and contains OS data
     assert os_view.is_displayed
     os_text_compare = view.entities.summary('Basic Information').get_text_of('Operating System')
     assert os_text_compare == os_text_initial

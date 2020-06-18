@@ -333,7 +333,6 @@ class InfraVmContainerView(VMDetailsEntities):
     @property
     def is_displayed(self):
         return self.basic_information.is_displayed and self.device.is_displayed
-        # does above work?? There is no is_displayed for SummaryTable?
 
 
 class InfraVmDetailsView(InfraVmView):
