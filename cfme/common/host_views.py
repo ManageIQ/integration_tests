@@ -381,3 +381,31 @@ class ProviderAllHostsView(HostsView):
             matched_title and
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']
         )
+
+
+class HostOsView(HostsView):
+    """The Operating System page"""
+    # title = Text('.//h1[contains(@class, "col-md-7")]')
+
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (OS Information)"
+        return self.breadcrumb.active_location == active_loc
+
+
+class HostStorageAdaptersView(HostsView):
+    """The storage adapters page"""
+    # Work on the title locator or another better way to do is_displayed.
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (Storage Adapters)"
+        return self.breadcrumb.active_location == active_loc
+
+
+class HostServicesView(HostsView):
+    """The services page"""
+
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (Services)"
+        return self.breadcrumb.active_location == active_loc

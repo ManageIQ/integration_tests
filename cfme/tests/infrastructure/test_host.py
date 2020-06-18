@@ -8,6 +8,10 @@ from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.common.host_views import HostNetworkDetailsView
+from cfme.common.host_views import HostOsView
+from cfme.common.host_views import HostServicesView
+from cfme.common.host_views import HostStorageAdaptersView
 from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import HostsView
 from cfme.common.provider_views import InfraProviderDetailsView
@@ -527,6 +531,44 @@ def test_add_ipmi_refresh(appliance, setup_provider):
     host.refresh()
     view = navigate_to(host, "Edit")
     assert view.ipmi_address.read() == ipmi_address
+
+# Why have we not used this here before??
+@pytest.fixture
+def host(appliance, provider):
+    host_collection = provider.hosts
+    return random.choice(host_collection.all())
+
+
+HOST_DETAIL_ROWS = [
+    # ("Properties", "VM Monitor Information", XXXXView),
+    ("Properties", "Operating System", HostOsView),
+    # ("Properties", "Devices", InfraVmOSView),
+    ("Properties", "Networks", HostNetworkDetailsView),
+    ("Properties", "Storage Adapters", HostStorageAdaptersView),
+    ("Configuration", "Services", HostServicesView),
+    # ("Smart Management", "My company Tags", HostCompanyTagsView), # check if this already exists.
+]
+
+
+@test_requirements.infra_hosts
+@pytest.mark.parametrize("table,row,view", HOST_DETAIL_ROWS,
+    ids=[rel[1] for rel in HOST_DETAIL_ROWS])
+def test_infrastructure_hosts_viewing(appliance, setup_provider, host, table, row, view):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/6h
+    """
+    # We need to check that we have Storage Adapters and services
+    if row not in ["Operating System", "Networks"]:
+        view = navigate_to(host, "Details")
+        # we need to check if we have any of these
+        if view.entities.summary(table).get_text_of(row) == '0':
+            return
+    view = navigate_to(host, row)
+    assert view.is_displayed
 
 
 @test_requirements.infra_hosts

@@ -20,6 +20,9 @@ from cfme.common.host_views import HostDriftAnalysis
 from cfme.common.host_views import HostDriftHistory
 from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostNetworkDetailsView
+from cfme.common.host_views import HostOsView
+from cfme.common.host_views import HostServicesView
+from cfme.common.host_views import HostStorageAdaptersView
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostTimelinesView
@@ -782,6 +785,33 @@ class HostNetworks(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Properties').click_at('Network')
+
+
+@navigator.register(Host, 'Operating System')
+class HostOperatingSystems(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostOsView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Operating System')
+
+
+@navigator.register(Host, "Storage Adapters")
+class HostStorageAdapters(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostStorageAdaptersView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Storage Adapters')
+
+
+@navigator.register(Host, "Services")
+class HostServices(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostServicesView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Configuration').click_at('Services')
 
 
 @navigator.register(Host, "UtilTrendSummary")
