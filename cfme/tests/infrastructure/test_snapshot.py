@@ -484,6 +484,21 @@ def test_snapshot_link_after_delete(create_vm, add2snaps_del1):
         casecomponent: Infra
         caseimportance: medium
         initialEstimate: 1/6h
+    setup:
+        1. Add vmware provider
+        2. Create testing VM
+    testSteps:
+        1. Create two snapshots
+        2. Delete one snapshot
+        3. Use history button to navigate back to VM summary page
+        4. From the vm summary page use the history button and try to go back to snapshots.
+        5. From vm summary page click the snapshot link
+    expectedResults:
+        1. Snapshots successfully created
+        2. Snapshot successfully deleted
+        3. VM summary page displayed
+        4. Snapshots page displayed
+        5. Snapshots page displayed
     Bugzilla:
         1395116
     """
@@ -495,7 +510,7 @@ def test_snapshot_link_after_delete(create_vm, add2snaps_del1):
     vm_details_view.toolbar.history.item_select(snapshot_item)
     snapshot_view = create_vm.create_view(InfraVmSnapshotView)
     assert snapshot_view.is_displayed
-    # Now go back to Details and click on the snapshots link ?Do I want to use history button here?
+    # Now go back to Details and click on the snapshots link
     vm_details_view = navigate_to(create_vm, 'Details')
     vm_details_view.entities.summary('Properties').click_at("Snapshots")
     assert snapshot_view.is_displayed
