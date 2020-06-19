@@ -396,36 +396,44 @@ def test_provider_field_should_display_in_vm_details_page_in_ssui(appliance, pro
         assert vm.name in view.vm_info.read()
 
 
-@pytest.mark.meta(coverage=[1685266])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_service_dialog_date_datetime_picker_dynamic_dialog():
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1685266, 1728964])
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize(
+    "import_data",
+    [DatastoreImport("bz_1685266.zip", "bz_1685266", None)],
+    ids=["datastore"],
+)
+@pytest.mark.parametrize("file_name", ["bz_1685266.yml"], ids=["load-init"])
+def test_dialog_dynamic_timepicker_date_format(appliance, import_datastore, import_data,
+                                               generic_catalog_item_with_imported_dialog):
     """
-
     Bugzilla:
         1685266
+        1728964
 
     Polarion:
         assignee: nansari
-        startsin: 5.10
+        startsin: 5.11
         casecomponent: Services
         initialEstimate: 1/6h
         testSteps:
-            1. Import Datastore
-            2. Create a dialog with a Date Picker/DateTmie picker
-            3. Make the dialog field dynamic
-            4. Create a service and add your dialog
-            5. Navigate to order page of service
-            6. In service Order page
+            1. Import Datastore and dialog
+            2. Create a service and add the dialog
+            3. Navigate to order page of service
+            4. In service Order page
         expectedResults:
             1.
             2.
             3.
-            4.
-            5.
-            6. Date should be today
+            4. Timepicker date format and date should be correct
     """
-    pass
+    catalog_item, _, _ = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+    view = navigate_to(service_catalogs, "Order")
+
+    # Format and date should be correct as per automation method
+    assert view.fields("date_time_control_1").read() == '06/19/2020'
 
 
 @pytest.mark.customer_scenario
