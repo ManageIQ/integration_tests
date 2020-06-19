@@ -284,7 +284,7 @@ def email_addresses_configuration(request, domain):
     yield test_data
 
 
-@pytest.mark.meta(automates=[1472844, 1676910, 1818172, 1380197, 1702304, 1783511,
+@pytest.mark.meta(automates=[1472844, 1676910, 1818172, 1380197, 1688500, 1702304, 1783511,
                              GH(('ManageIQ/manageiq', 20260))])
 @pytest.mark.parametrize("action", ["edit", "approve", "deny"])
 def test_provision_approval(appliance, provider, vm_name, smtp_test, request,
