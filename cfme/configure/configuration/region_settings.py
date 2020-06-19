@@ -6,6 +6,7 @@ from navmazing import NavigateToSibling
 from widgetastic.exceptions import RowNotFound
 from widgetastic.exceptions import UnexpectedAlertPresentException
 from widgetastic.widget import Checkbox
+from widgetastic.widget import FileInput
 from widgetastic.widget import Select
 from widgetastic.widget import Text
 from widgetastic_patternfly import BootstrapSelect
@@ -55,6 +56,17 @@ class CompanyTagsAllView(RegionView):
             self.company_tags.is_active() and
             self.table.is_displayed
         )
+
+
+class CompanyTagsImportView(RegionView):
+    """Import Company Tags list view"""
+    upload_file = FileInput(id="upload_file")
+    upload_button = Button(id='upload_tags')
+    apply_button = Button("Apply")
+
+    @property
+    def is_displayed(self):
+        return (self.tags.is_active() and self.import_tags.is_active())
 
 
 @attr.s(eq=False)
@@ -266,6 +278,19 @@ class Category(Pretty, BaseEntity, Updateable):
         assert view.is_displayed
         view.flash.assert_no_error()
 
+    def import_tag_from_file(self, file_name):
+        """Assign tag to VM via Import from CSV formatted file
+
+            Args:
+                file_name: Name of .csv file containing tag data.
+        """
+        view = navigate_to(self.parent, 'ImportTags')
+        view.upload_file.fill(file_name)
+        view.upload_button.click()
+        view.flash.assert_no_error()
+        view.apply_button.click()
+        view.flash.assert_no_error()
+
     @property
     def exists(self):
         """Check if category exists"""
@@ -342,6 +367,15 @@ class CategoryAdd(CFMENavigateStep):
         self.prerequisite_view.add_button.click()
 
 
+@navigator.register(CategoriesCollection, 'ImportTags')
+class CategoryImportTags(CFMENavigateStep):
+    VIEW = CompanyTagsImportView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.tags.import_tags.select()
+
+
 @navigator.register(Category, 'Edit')
 class CategoryEdit(CFMENavigateStep):
     VIEW = CompanyCategoriesEditView
@@ -349,8 +383,6 @@ class CategoryEdit(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.table.row(name=self.obj.name).click()
-
-
 # =======================================MAP TAGS==============================================
 
 

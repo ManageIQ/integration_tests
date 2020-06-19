@@ -1,3 +1,5 @@
+import tempfile
+
 import fauxfactory
 import pytest
 
@@ -122,6 +124,40 @@ def test_map_tagging_crud(appliance, category, soft_assert):
     if appliance.version >= "5.11":  # BZ 1707328 is fixed only for 5.11
         view.flash.assert_success_message('Container Label Tag Mapping "{}": Delete successful'
                                           .format(map_tag_entity.label))
+
+
+@pytest.fixture
+def csv_tag_file(create_vm, category, tag):
+    temp_file = tempfile.NamedTemporaryFile(suffix=".csv")
+    csv_data = f'name,category,entry\n{create_vm.name},{category.display_name},{tag.display_name}'
+    with open(temp_file.name, "w") as file:
+        file.write(csv_data)
+    yield file.name
+
+
+@test_requirements.tag
+def test_import_tag(appliance, create_vm, category, tag, csv_tag_file):
+    """Test importing tag via file
+            1. Create a Tag Category
+            2. Create entry(tag) in the tag category
+            3. Create a VM
+            4. Create a CSV File for adding the tag to the VM
+            5. Navigate to Tags -> Import tags and upload the CSV file
+    Polarion:
+        assignee: prichard
+        initialEstimate: 1/4h
+        casecomponent: Tagging
+    Bugzilla:
+        1792185
+    """
+    category.import_tag_from_file(csv_tag_file)
+    # assert the tag is correctly assigned
+    vm_tags = create_vm.get_tags()
+    assert any(
+        tag.category.display_name == vm_tag.category.display_name and
+        tag.display_name == vm_tag.display_name
+        for vm_tag in vm_tags
+    ), "tag is not assigned"
 
 
 @test_requirements.tag
