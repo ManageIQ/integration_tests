@@ -19,8 +19,6 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.version import Version
-from cfme.utils.version import VersionPicker
 from widgetastic_manageiq import RadioGroup
 from widgetastic_manageiq import ReactSelect
 
@@ -40,8 +38,7 @@ USER_TYPES = {
 }
 
 
-# subclass this class as needed to add version-specific roles
-class BaseServerRolesView(View):
+class ServerRolesView(View):
     """ Class represents Server Roles Form """
     automate = BootstrapSwitch(name="server_roles_automate")
     ems_metrics_coordinator = BootstrapSwitch(name="server_roles_ems_metrics_coordinator")
@@ -52,9 +49,11 @@ class BaseServerRolesView(View):
     embedded_ansible = BootstrapSwitch(name='server_roles_embedded_ansible')
     event = BootstrapSwitch(name="server_roles_event")
     git_owner = BootstrapSwitch(name="server_roles_git_owner")
+    internet_connectivity = BootstrapSwitch(name="server_roles_internet_connectivity")
     notifier = BootstrapSwitch(name="server_roles_notifier")
     ems_inventory = BootstrapSwitch(name="server_roles_ems_inventory")
     ems_operations = BootstrapSwitch(name="server_roles_ems_operations")
+    remote_console = BootstrapSwitch(name="server_roles_remote_console")
     reporting = BootstrapSwitch(name="server_roles_reporting")
     scheduler = BootstrapSwitch(name="server_roles_scheduler")
     smartproxy = BootstrapSwitch(name="server_roles_smartproxy")
@@ -64,15 +63,6 @@ class BaseServerRolesView(View):
 
     default_smart_proxy = Text(
         "//label[contains(text(), 'Default Repository SmartProxy')]/following-sibling::div")
-
-
-class ServerRolesView510(BaseServerRolesView):
-    websocket = BootstrapSwitch(name="server_roles_websocket")
-
-
-class ServerRolesView511(BaseServerRolesView):
-    internet_connectivity = BootstrapSwitch(name="server_roles_internet_connectivity")
-    remote_console = BootstrapSwitch(name="server_roles_remote_console")
 
 
 class ServerInformationView(View):
@@ -94,10 +84,7 @@ class ServerInformationView(View):
         time_zone = BootstrapSelect(id='server_timezone')
         locale = BootstrapSelect(id='locale')
 
-    server_roles = VersionPicker(
-        {'5.11': View.nested(ServerRolesView511),
-         Version.lowest(): View.nested(ServerRolesView510)}
-    )
+    server_roles = View.nested(ServerRolesView)
 
     @View.nested
     class vmware_console(View):  # noqa
@@ -165,20 +152,20 @@ class ServerInformation(Updateable, Pretty):
 
     * BasicInformationForm:
 
-        * company_name: [BasicInformationForm] Company name, default value in "My Company"
-        * appliance_name: [BasicInformationForm] Appliance name.
-        * appliance_zone: [BasicInformationForm] Appliance Zone.
-        * time_zone: [BasicInformationForm] Time Zone.
-        * locale: [BasicInformationForm] Locale used for users UI
+        * company_name: Company name, default value in "My Company"
+        * appliance_name: Appliance name
+        * appliance_zone: Appliance Zone
+        * time_zone: Time Zone
+        * locale: Locale used for users UI
 
     * ServerControlForm (Server Roles):
 
         * automate, ems_metrics_coordinator, ems_metrics_collector,
         * ems_metrics_processor, cockpit_ws, database_operations,
-        * embedded_ansible, event, git_owner, internet_connectivity [5.11],
-        * notifier, ems_inventory, ems_operations, remote_console [5.11],
+        * embedded_ansible, event, git_owner, internet_connectivity,
+        * notifier, ems_inventory, ems_operations, remote_console,
         * reporting, scheduler, smartproxy, smartstate, user_interface,
-        * web_services, websocket [5.10] : set True/False to change the state
+        * web_services : set True/False to change the state
 
     * VWwareConsoleSupportForm:
 
@@ -222,7 +209,7 @@ class ServerInformation(Updateable, Pretty):
         'embedded_ansible', 'event', 'git_owner', 'internet_connectivity',
         'notifier', 'ems_inventory', 'ems_operations', 'remote_console',
         'reporting', 'scheduler', 'smartproxy', 'smartstate', 'user_interface',
-        'web_services', 'websocket'
+        'web_services'
     )
     _basic_information = ['hostname', 'company_name', 'appliance_name', 'appliance_zone',
                           'time_zone', 'locale']
