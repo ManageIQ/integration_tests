@@ -1,17 +1,26 @@
+from time import sleep
+
 import fauxfactory
 import pytest
 from wait_for import wait_for
 from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
+from cfme.base.ui import LoginPage
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.virtual_machines import InfraVmDetailsView
+from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.utils.appliance.implementations.rest import ViaREST
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
+from cfme.utils.rest import assert_response
 
 pytestmark = [test_requirements.replication, pytest.mark.long_running]
 
@@ -67,66 +76,6 @@ def setup_replication(configured_appliance, unconfigured_appliance):
     global_app.add_pglogical_replication_subscription(remote_app.hostname)
 
     return configured_appliance, unconfigured_appliance
-
-
-@pytest.mark.provider([OpenStackProvider])
-def test_replication_powertoggle(request, provider, setup_replication, small_template):
-    """
-    power toggle from global to remote
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Replication
-        caseimportance: critical
-        initialEstimate: 1/12h
-        testSteps:
-            1. Have a VM created in the provider in the Remote region
-               subscribed to Global.
-            2. Turn the VM off using the Global appliance.
-            3. Turn the VM on using the Global appliance.
-        expectedResults:
-            1.
-            2. VM state changes to off in the Remote and Global appliance.
-            3. VM state changes to on in the Remote and Global appliance.
-    """
-    instance_name = fauxfactory.gen_alphanumeric(start="test_replication_", length=25).lower()
-    remote_app, global_app = setup_replication
-
-    provider_app_crud(OpenStackProvider, remote_app).setup()
-    provider.appliance = remote_app
-
-    remote_instance = remote_app.collections.cloud_instances.instantiate(
-        instance_name, provider, small_template.name
-    )
-    global_instance = global_app.collections.cloud_instances.instantiate(instance_name, provider)
-
-    # Create instance
-    remote_instance.create_on_provider(find_in_cfme=True)
-    request.addfinalizer(remote_instance.cleanup_on_provider)
-
-    remote_instance.wait_for_instance_state_change(desired_state=remote_instance.STATE_ON)
-
-    # Power OFF instance using global appliance
-    global_instance.power_control_from_cfme(option=global_instance.STOP)
-
-    # Assert instance power off state from both remote and global appliance
-    assert global_instance.wait_for_instance_state_change(
-        desired_state=global_instance.STATE_OFF
-    ).out
-    assert remote_instance.wait_for_instance_state_change(
-        desired_state=remote_instance.STATE_OFF
-    ).out
-
-    # Power ON instance using global appliance
-    global_instance.power_control_from_cfme(option=global_instance.START)
-
-    # Assert instance power ON state from both remote and global appliance
-    assert global_instance.wait_for_instance_state_change(
-        desired_state=global_instance.STATE_ON
-    ).out
-    assert remote_instance.wait_for_instance_state_change(
-        desired_state=global_instance.STATE_ON
-    ).out
 
 
 @pytest.mark.tier(2)
@@ -466,3 +415,255 @@ def test_replication_subscription_revalidation_pglogical(configured_appliance,
     region.replication.set_replication(replication_type="global",
                                        updates={"host": remote_app.hostname},
                                        validate=True)
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+def test_replication_between_regions(provider, replicated_appliances):
+    """Test that a provider added to the remote appliance is replicated to the global
+    appliance.
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: dgaikwad
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    remote_appliance, global_appliance = replicated_appliances
+
+    with remote_appliance:
+        provider.create()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
+
+    with global_appliance:
+        global_appliance.collections.infra_providers.wait_for_a_provider()
+        assert provider.exists
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+def test_replication_database_disconnection(provider, replicated_appliances):
+    """Test that a provider created on the remote appliance *after* a database restart on the
+    global appliance is still successfully replicated to the global appliance.
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: dgaikwad
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    remote_appliance, global_appliance = replicated_appliances
+
+    global_appliance.db_service.stop()
+    sleep(60)
+    global_appliance.db_service.start()
+
+    with remote_appliance:
+        provider.create()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
+
+    with global_appliance:
+        global_appliance.collections.infra_providers.wait_for_a_provider()
+        assert provider.exists
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+def test_replication_database_disconnection_with_backlog(provider, replicated_appliances):
+    """Test that a provider created on the remote appliance *before* a database restart on the
+    global appliance is still successfully replicated to the global appliance.
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: dgaikwad
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    remote_appliance, global_appliance = replicated_appliances
+
+    with remote_appliance:
+        provider.create()
+        global_appliance.db_service.stop()
+        sleep(60)
+        global_appliance.db_service.start()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
+
+    with global_appliance:
+        global_appliance.collections.infra_providers.wait_for_a_provider()
+        assert provider.exists
+
+
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(automates=[1796681])
+def test_replication_remote_down(replicated_appliances):
+    """Test that the Replication tab displays in the global appliance UI when the remote appliance
+    database cannot be reached.
+
+    Bugzilla:
+        1796681
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: dgaikwad
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    remote_appliance, global_appliance = replicated_appliances
+
+    with global_appliance:
+        global_region = global_appliance.server.zone.region
+        assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+            "Remote appliance not found on Replication tab after initial configuration.")
+
+        result = global_appliance.ssh_client.run_command(
+            f"firewall-cmd --direct --add-rule ipv4 filter OUTPUT 0 -d {remote_appliance.hostname}"
+            " -j DROP")
+        assert result.success, "Could not create firewall rule on global appliance."
+
+        global_appliance.browser.widgetastic.refresh()
+        assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+            "Remote appliance not found on Replication tab after dropped connection.")
+
+    global_appliance.browser.widgetastic.refresh()
+    assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+        "Remote appliance not found on Replication tab after dropped connection.")
+
+
+@pytest.mark.rhel_testing
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1678142])
+@pytest.mark.ignore_stream('upstream')
+def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
+    """Test that the user can view the VM in the global appliance UI, click on the
+    "Connect to VM in its Region" button, and be redirected to the VM in the remote appliance UI.
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+        startsin: 5.11
+    """
+    remote_appliance, global_appliance = replicated_appliances
+
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
+
+    vm_per_appliance = {
+        a: a.provider_based_collection(provider).instantiate(vm_name, provider)
+        for a in replicated_appliances
+    }
+    with remote_appliance:
+        provider.create()
+        remote_appliance.collections.infra_providers.wait_for_a_provider()
+
+    with global_appliance:
+        view = navigate_to(vm_per_appliance[global_appliance], 'Details')
+        initial_count = len(view.browser.window_handles)
+        main_window = view.browser.current_window_handle
+
+        view.entities.summary('Multi Region').click_at('Remote Region')
+
+        wait_for(
+            lambda: len(view.browser.window_handles) > initial_count,
+            timeout=30,
+            message="Check for new browser window",
+        )
+        open_url_window = (set(view.browser.window_handles) - {main_window}).pop()
+        view.browser.switch_to_window(open_url_window)
+
+        # TODO: Remove this once `ensure_page_safe()` is equipped to handle WebDriverException
+        # When a new window opens, URL takes time to load, this will act as a workaround.
+        sleep(5)
+
+        view = global_appliance.browser.create_view(LoginPage)
+        wait_for(lambda: view.is_displayed, message="Wait for Login page")
+        view.fill({
+            'username': credentials['default']['username'],
+            'password': credentials['default']['password']
+        })
+        view.login.click()
+
+        # Use VM instantiated on global_appliance here because we're still using the same browser.
+        view = vm_per_appliance[global_appliance].create_view(InfraVmDetailsView)
+        wait_for(lambda: view.is_displayed, message="Wait for VM Details page")
+
+
+@pytest.mark.ignore_stream("upstream")
+def test_appliance_replicate_zones(replicated_appliances):
+    """
+    Verify that no remote zones can be selected when changing the server's zone
+    in the global appliance UI.
+
+    Bugzilla:
+        1470283
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Configuration
+        caseimportance: medium
+        initialEstimate: 1/4h
+    """
+    remote_appliance, global_appliance = replicated_appliances
+
+    remote_zone = 'remote-A'
+    remote_appliance.collections.zones.create(name=remote_zone, description=remote_zone)
+
+    global_zone = 'global-A'
+    global_appliance.collections.zones.create(name=global_zone, description=global_zone)
+
+    with global_appliance:
+        view = navigate_to(global_appliance.server, 'Server')
+        global_zones = [o.text for o in view.basic_information.appliance_zone.all_options]
+        assert global_zone in global_zones and remote_zone not in global_zones
+
+
+@pytest.mark.rhel_testing
+@pytest.mark.tier(2)
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+@pytest.mark.provider([CloudProvider, InfraProvider], selector=ONE_PER_TYPE)
+@test_requirements.multi_region
+@test_requirements.power
+def test_replication_vm_power_control(provider, create_vm, context, replicated_appliances):
+    """Test that the global appliance can power off a VM managed by the remote appliance.
+
+    Metadata:
+        test_flag: replication
+
+    Polarion:
+        assignee: tpapaioa
+        initialEstimate: 1/4h
+        casecomponent: Appliance
+    """
+    remote_appliance, global_appliance = replicated_appliances
+
+    vm_per_appliance = {
+        a: a.provider_based_collection(provider).instantiate(create_vm.name, provider)
+        for a in replicated_appliances
+    }
+
+    with remote_appliance:
+        assert provider.create(validate_inventory=True), "Could not create provider."
+
+    with global_appliance:
+        vm = vm_per_appliance[global_appliance]
+        if context.name == 'UI':
+            vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
+        else:
+            vm_entity = global_appliance.rest_api.collections.vms.get(name=vm.name)
+            global_appliance.rest_api.collections.vms.action.stop(vm_entity)
+            assert_response(global_appliance, task_wait=0)
+
+    with remote_appliance:
+        vm = vm_per_appliance[remote_appliance]
+        vm.wait_for_vm_state_change(desired_state=vm.STATE_OFF, timeout=900)
+        assert vm.find_quadicon().data['state'] == 'off', "Incorrect VM quadicon state"
+        assert not vm.mgmt.is_running, "VM is still running"

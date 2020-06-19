@@ -10,19 +10,6 @@ pytestmark = [
 ]
 
 
-def test_distributed_add_provider_to_remote_zone():
-    """
-    Adding a provider from the global region to a remote zone.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        caseimportance: medium
-        initialEstimate: 1/12h
-    """
-    pass
-
-
 def test_distributed_zone_add_provider_to_nondefault_zone():
     """
     Can a new provider be added the first time to a non default zone.
@@ -30,20 +17,6 @@ def test_distributed_zone_add_provider_to_nondefault_zone():
     Polarion:
         assignee: tpapaioa
         casecomponent: Infra
-        caseimportance: critical
-        initialEstimate: 1/12h
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_distributed_zone_delete_occupied():
-    """
-    Delete Zone that has appliances in it.
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
         caseimportance: critical
         initialEstimate: 1/12h
     """

@@ -31,48 +31,12 @@ def test_configure_icons_roles_by_server():
 @test_requirements.settings
 @test_requirements.multi_region
 @pytest.mark.tier(3)
-def test_replication_subscription_crud():
-    """
-    Add/Edit/Remove replication subscription
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        caseimportance: critical
-        initialEstimate: 1/4h
-        testSteps:
-            1. Set up two appliances where first appliance resides in global region (99) and
-            second one resides in remote region (10). Those should use the same security key
-            2. Add a provider to second appliance
-            3. Set replication subscription type to Remote in second appliance
-            4. Set replication subscription type to Global in first appliance
-            5. Try adding subscription to second appliance with wrong password in first appliance
-            6. Update not working subscription to use correct password
-            7. Delete subscription
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5. Subscription was added. User was prewarned that subscription wasn't established.
-               Provider didn't show up in global appliance.
-            6. Provider and its data showed up in global region appliance
-            7. Subscription was deleted. Provider and its data disappeared from global region
-            appliance.
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.settings
-@test_requirements.multi_region
-@pytest.mark.tier(3)
 def test_add_duplicate_subscription():
     """
     Try adding duplicate record
 
     Polarion:
-        assignee: tpapaioa
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: low
         caseposneg: negative
@@ -107,7 +71,7 @@ def test_add_bad_subscription():
       2. remote appliance isn't available and etc
 
     Polarion:
-        assignee: tpapaioa
+        assignee: dgaikwad
         casecomponent: Configuration
         caseposneg: negative
         caseimportance: low
@@ -138,7 +102,7 @@ def test_edit_bad_subscription():
     Try changing subscriptions from good to bad or vise versa
 
     Polarion:
-        assignee: tpapaioa
+        assignee: dgaikwad
         casecomponent: Configuration
         caseposneg: negative
         caseimportance: low
@@ -170,7 +134,7 @@ def test_cancel_subscription():
     Try canceling adding/changing/removing subscriptions
 
     Polarion:
-        assignee: tpapaioa
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -200,7 +164,7 @@ def test_change_subscription_type():
     Try setting/removing global/remote subscription
 
     Polarion:
-        assignee: tpapaioa
+        assignee: dgaikwad
         casecomponent: Configuration
         caseimportance: low
         initialEstimate: 1/4h
@@ -241,7 +205,7 @@ def test_subscription_disruption():
     Test restoring subscription after temporary disruptions
 
     Polarion:
-        assignee: tpapaioa
+        assignee: dgaikwad
         casecomponent: Configuration
         caseposneg: negative
         caseimportance: medium
