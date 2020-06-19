@@ -257,32 +257,6 @@ def test_dialog_editor_modify_field(dialog):
     view.cancel_button.click(handle_alert=False)
 
 
-@pytest.mark.meta(coverage=[1706848])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_specific_dates_and_time_in_timepicker():
-    """
-
-    Bugzilla:
-        1706848
-
-    Polarion:
-        assignee: nansari
-        startsin: 5.10
-        casecomponent: Services
-        initialEstimate: 1/16h
-        testSteps:
-            1. Create a dialog with timepicker
-            2. Select specific dates and time, Save
-            3. Edit the dialog
-        expectedResults:
-            1.
-            2.
-            3. Able to set specific dates and time in timepicker
-    """
-    pass
-
-
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1706693])
 @pytest.mark.tier(2)
@@ -888,31 +862,39 @@ def test_service_dynamic_dialog_tagcontrol(appliance, import_datastore, import_d
     )
 
 
-@pytest.mark.meta(coverage=[1744413])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_datepicker_in_service_request():
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1744413])
+@pytest.mark.parametrize("file_name", ["bz_1744413.yml"], ids=["load-init"])
+def test_datepicker_in_service_request(generic_catalog_item_with_imported_dialog):
     """
     Bugzilla:
         1744413
 
     Polarion:
         assignee: nansari
+        startsin: 5.11
         casecomponent: Services
         initialEstimate: 1/6h
-        startsin: 5.10
         testSteps:
-            1. Create Dialog with Date picker
-            2. Create Service with the dialog and order the service
-            3. Mention a date for the date picker
-            4. Navigate to Services -> Requests -> [your_service] -> Dialog Options
+            1. Create Dialog with datepicker
+            2. Create a service and add the dialog
+            3. Order the service
+            4. Go to on service request details page
         expectedResults:
             1.
             2.
             3.
-            4. Date picker should show correct selected dates
+            4. datepicker date should be correct
     """
-    pass
+    catalog_item, _, _ = generic_catalog_item_with_imported_dialog
+    request = ServiceCatalogs(
+        catalog_item.appliance, catalog=catalog_item.catalog, name=catalog_item.name
+    ).order()
+
+    view = navigate_to(request, "Details")
+
+    # Date should be correct on request details page
+    assert view.details.request_details.read()["Datepicker"] == "06/18/2020"
 
 
 @pytest.mark.meta(automates=[1740823])
