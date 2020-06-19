@@ -11,6 +11,7 @@ from cfme.base.credential import Credential
 from cfme.common.host_views import HostDevicesView
 from cfme.common.host_views import HostNetworkDetailsView
 from cfme.common.host_views import HostOsView
+from cfme.common.host_views import HostPrintView
 from cfme.common.host_views import HostServicesView
 from cfme.common.host_views import HostStorageAdaptersView
 from cfme.common.host_views import HostVmmInfoView
@@ -548,6 +549,7 @@ HOST_DETAIL_ROWS = [
     ("Properties", "Networks", HostNetworkDetailsView),
     ("Properties", "Storage Adapters", HostStorageAdaptersView),
     ("Configuration", "Services", HostServicesView),
+    ("Toolbar", "Print or export", HostPrintView),
 ]
 
 
@@ -562,12 +564,14 @@ def test_infrastructure_hosts_viewing(appliance, setup_provider, host, table, ro
         caseimportance: high
         initialEstimate: 1/6h
     """
-    # Except for OS and Network, we need to check if we have any of the row items.
-    if row not in ["Operating System", "Networks"]:
+    # Except for OS, Network, and print we need to check if we have any of the row items.
+    if row not in ["Operating System", "Networks", "Print or export"]:
         view = navigate_to(host, "Details")
         if view.entities.summary(table).get_text_of(row) == '0':
             return
     view = navigate_to(host, row)
+    if row == "Print or export":
+        handle_extra_tabs(view)
     assert view.is_displayed
 
 

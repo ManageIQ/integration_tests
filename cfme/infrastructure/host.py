@@ -21,6 +21,7 @@ from cfme.common.host_views import HostDriftAnalysis
 from cfme.common.host_views import HostDriftHistory
 from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostNetworkDetailsView
+from cfme.common.host_views import HostPrintView
 from cfme.common.host_views import HostOsView
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostServicesView
@@ -779,7 +780,7 @@ class HostSubnet(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Relationships').click_at('Cloud Subnets')
 
-#
+
 @navigator.register(Host, 'Devices')
 class HostDevices(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
@@ -787,6 +788,15 @@ class HostDevices(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Properties').click_at('Devices')
+
+
+@navigator.register(Host, 'Print or export')
+class HostPrint(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostPrintView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.download.click()
 
 
 @navigator.register(Host, 'Networks')

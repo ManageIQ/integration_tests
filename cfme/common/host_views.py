@@ -68,6 +68,7 @@ class HostDetailsToolbar(View):
     configuration = Dropdown(text="Configuration")
     policy = Dropdown(text="Policy")
     power = Dropdown(text="Power")
+    download = Button(title='Print or export summary')
 
     @ParametrizedView.nested
     class custom_button(ParametrizedView):  # noqa
@@ -206,6 +207,10 @@ class HostEntitiesView(BaseEntitiesView):
     @property
     def entity_class(self):
         return HostEntity
+
+
+class HostPrintView(BaseLoggedInPage):
+    pass
 
 
 class HostsView(ComputeInfrastructureHostsView):
