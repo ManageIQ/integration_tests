@@ -825,7 +825,7 @@ class HostServices(CFMENavigateStep):
         self.prerequisite_view.entities.summary('Configuration').click_at('Services')
 
 
-@navigator.register(Host, "VM Monitor Information")
+@navigator.register(Host, "VMM Information")
 class HostVmmInfo(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
     VIEW = HostVmmInfoView
