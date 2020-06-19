@@ -228,9 +228,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
         assert ssh_client.run_command('test -e snapshot2.txt') == 1
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1805803, unblock=lambda provider: not provider.one_of(RHEVMProvider),
-                 ignore_bugs={1745065})], automates=[1805803])
+@pytest.mark.rhv1
+@pytest.mark.provider([VMwareProvider])
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
@@ -241,7 +240,7 @@ def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event
         test_flag: snapshot, provision
 
     Bugzilla:
-        1561618
+        1805803
 
     Polarion:
         assignee: prichard
