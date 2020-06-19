@@ -540,32 +540,6 @@ def test_host_view_storage_adapter():
 
 
 @test_requirements.infra_hosts
-def test_host_viewing():
-    """
-    Testing the viewing of host info.
-
-
-    Polarion:
-        assignee: prichard
-        casecomponent: Infra
-        caseimportance: high
-        initialEstimate: 1/4h
-        testSteps:
-            1. Navigate to the Compute > Infrastructure > Hosts view.
-            2. Click on a host quadicon.
-        expectedResults:
-            1. Hosts view is displayed.
-            2. The hosts summary view is displayed containing taskbar, summary panel,
-               accordion, and print/export button.
-               - Items in the accordion sections are displayed in view panel when clicked.
-               - Print/export view is displayed when print/export button is clicked.
-               - Row items that are blue on mouseover can be clicked and display additional
-                 details when done so.
-    """
-    pass
-
-
-@test_requirements.infra_hosts
 def test_host_drift_analysis():
     """
     Testing drift detection for hosts.
