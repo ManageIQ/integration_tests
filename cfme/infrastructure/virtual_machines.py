@@ -460,7 +460,8 @@ class InfraVmOsView(InfraVmView):
 
     @property
     def is_displayed(self):
-        expected_title = '"OS Info" for Virtual Machine "{}"'.format(self.context['object'].name)
+        name = self.context['object'].name
+        expected_title = f'"OS Info" for Virtual Machine "{name}"'
         return self.in_infra_vms and self.title.text == expected_title
 
 
