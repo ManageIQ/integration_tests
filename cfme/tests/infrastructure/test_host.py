@@ -535,7 +535,7 @@ def test_add_ipmi_refresh(appliance, setup_provider):
     view = navigate_to(host, "Edit")
     assert view.ipmi_address.read() == ipmi_address
 
-# Why have we not used this here before??
+
 @pytest.fixture
 def host(appliance, provider):
     host_collection = provider.hosts
