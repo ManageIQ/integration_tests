@@ -21,8 +21,8 @@ from cfme.common.host_views import HostDriftAnalysis
 from cfme.common.host_views import HostDriftHistory
 from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostNetworkDetailsView
-from cfme.common.host_views import HostPrintView
 from cfme.common.host_views import HostOsView
+from cfme.common.host_views import HostPrintView
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostServicesView
 from cfme.common.host_views import HostStorageAdaptersView

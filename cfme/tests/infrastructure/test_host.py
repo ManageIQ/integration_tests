@@ -12,11 +12,11 @@ from cfme.common.host_views import HostDevicesView
 from cfme.common.host_views import HostNetworkDetailsView
 from cfme.common.host_views import HostOsView
 from cfme.common.host_views import HostPrintView
+from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import HostServicesView
 from cfme.common.host_views import HostStorageAdaptersView
-from cfme.common.host_views import HostVmmInfoView
-from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import HostsView
+from cfme.common.host_views import HostVmmInfoView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
