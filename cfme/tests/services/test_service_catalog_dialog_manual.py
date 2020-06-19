@@ -127,66 +127,6 @@ def test_request_filter_on_request_page():
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_edit_catalog_item_after_remove_resource_pool():
-    """ Create catalog item with a resource pool , Remove resource pool from
-        the provider and then edit catalog item.
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/8h
-        startsin: 5.5
-        tags: service
-        testSteps:
-            1. Create a catalog item
-            2. Select cluster and resource pool and Save
-            3. Remove resource pool from provider
-            4. Edit catalog
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Validation message should be shown
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_dialog_dropdown_ui_values_in_the_dropdown_should_be_visible_in_edit_mode():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/16h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1557508
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_triggered_refresh_shouldnt_occurs_for_dialog_after_changing_type_to_static():
-    """ Triggered Refresh shouldn't Occurs for Dialog After Changing Type to Static
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: service
-    Bugzilla:
-        1614436
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_default_dialog_entries_should_localized_when_ordering_catalog_item_in_french():
     """ Default dialog entries should localized when ordering catalog item in French
     Polarion:
@@ -198,56 +138,5 @@ def test_default_dialog_entries_should_localized_when_ordering_catalog_item_in_f
         tags: service
     Bugzilla:
         1592573
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_in_dynamic_dropdown_list_the_default_value_should_not_contain_all_the_value_of_the_list():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.10
-        tags: service
-    Bugzilla:
-        1568440
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_user_should_be_able_to_change_the_order_of_values_of_the_drop_down_list():
-    """
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/16h
-        casecomponent: Services
-        testtype: functional
-        startsin: 5.10
-        tags: service
-    Bugzilla:
-        1594301
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_entries_shouldnt_be_mislabeled_for_dropdown_element_in_dialog_editor():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        testtype: functional
-        startsin: 5.10
-        tags: service
-    Bugzilla:
-        1597802
     """
     pass

@@ -1194,3 +1194,38 @@ def test_dynamic_dropdown_refresh_load(appliance, import_datastore, import_data,
                 matched_patterns=['We are in B'],
                 failure_patterns=["We are in A"]).waiting(timeout=120):
             view.fields(ele_label).dropdown.fill("b")
+
+
+@pytest.mark.meta(automates=[1614436])
+@pytest.mark.customer_scenario
+@pytest.mark.parametrize(
+    "import_data", [DatastoreImport("bz_1614436.zip", "bz_1614436", None)], ids=["domain"], )
+@pytest.mark.parametrize("file_name", ["bz_1614436.yml"], ids=["dialog"])
+def test_dynamic_dialog_field_to_static_field(appliance, import_datastore,
+                                              generic_catalog_item_with_imported_dialog):
+    """
+    Bugzilla:
+        1614436
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        testtype: functional
+        initialEstimate: 1/4h
+        startsin: 5.10
+    """
+    auto_log = '/var/www/miq/vmdb/log/automation.log'
+    catalog_item, sd, ele_label = generic_catalog_item_with_imported_dialog
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
+    navigate_to(sd, "Edit")
+    # update dynamic field to static
+    view = appliance.browser.create_view(EditElementView)
+    view.element.edit_element(ele_label)
+    view.element_information.dynamic_chkbox.fill(False)
+    view.ele_save_button.click()
+    view.save_button.click()
+
+    # Text area field should not be loaded in automation log
+    with LogValidator(auto_log, failure_patterns=["TEXT AREA REFRESH DIALOG"]
+                      ).waiting(timeout=120):
+        navigate_to(service_catalogs, "Order")
