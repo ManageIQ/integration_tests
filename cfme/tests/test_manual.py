@@ -229,23 +229,6 @@ def test_heat_stacks_in_non_admin_tenants_shall_also_be_collected():
 
 
 @pytest.mark.manual
-@test_requirements.service
-@pytest.mark.tier(2)
-def test_bundle_stack_deployment():
-    """
-    bundle stack provisioning for entry point catalog items
-
-    Polarion:
-        assignee: sshveta
-        casecomponent: Services
-        caseimportance: medium
-        initialEstimate: 1/4h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_verify_smart_mgmt_orchest_template():
     """
