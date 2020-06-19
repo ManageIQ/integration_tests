@@ -566,37 +566,6 @@ def test_host_viewing():
 
 
 @test_requirements.infra_hosts
-def test_host_tagging():
-    """
-    Testing tagging hosts.
-
-
-    Polarion:
-        assignee: prichard
-        casecomponent: Infra
-        caseimportance: high
-        initialEstimate: 1/4h
-        testSteps:
-            1. Navigate to the Compute > Infrastructure > Hosts view.
-            2. Click checkbox in quadicon to select a host.
-            3. Click Edit Tags in the Policy dropdown.
-            4. Select a customer tag from the first dropdown and then a value for the tag.
-            5. Click save.
-            6. Click on the same quadicon as in step 2.
-            7. Repeat steps 1 thru 6, but select multiple hosts.
-        expectedResults:
-            1. Hosts view is displayed.
-            2.
-            3. Tag Assignement view is displayed.
-            4.
-            5. "Tag edits successfully saved." message is displayed.
-            6. Tags added in step 4 are displayed in Smart Management section of hosts summary.
-            7. Expected results are the same as steps 1 thru 6 for multiple hosts.
-    """
-    pass
-
-
-@test_requirements.infra_hosts
 def test_host_drift_analysis():
     """
     Testing drift detection for hosts.
