@@ -22,12 +22,12 @@ from cfme.common.host_views import HostDriftHistory
 from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostNetworkDetailsView
 from cfme.common.host_views import HostOsView
+from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostServicesView
 from cfme.common.host_views import HostStorageAdaptersView
-from cfme.common.host_views import HostVmmInfoView
-from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostTimelinesView
+from cfme.common.host_views import HostVmmInfoView
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.host_views import ProviderHostsCompareView
 from cfme.exceptions import ItemNotFound
@@ -780,7 +780,7 @@ class HostSubnet(CFMENavigateStep):
         self.prerequisite_view.entities.summary('Relationships').click_at('Cloud Subnets')
 
 #
-@navigator.register(Host, 'Networks')
+@navigator.register(Host, 'Devices')
 class HostDevices(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
     VIEW = HostDevicesView
@@ -831,7 +831,7 @@ class HostVmmInfo(CFMENavigateStep):
     VIEW = HostVmmInfoView
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.entities.summary('Properties').click_at('VM Monitor Information')
+        self.prerequisite_view.entities.summary('Properties').click_at('VMM Information')
 
 
 @navigator.register(Host, "UtilTrendSummary")

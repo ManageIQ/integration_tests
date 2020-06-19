@@ -542,7 +542,7 @@ def host(appliance, provider):
 
 
 HOST_DETAIL_ROWS = [
-    ("Properties", "VM Monitor Information", HostVmmInfoView),
+    ("Properties", "VMM Information", HostVmmInfoView),
     ("Properties", "Operating System", HostOsView),
     ("Properties", "Devices", HostDevicesView),
     ("Properties", "Networks", HostNetworkDetailsView),
