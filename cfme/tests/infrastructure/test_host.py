@@ -8,10 +8,12 @@ from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.common.host_views import HostDevicesView
 from cfme.common.host_views import HostNetworkDetailsView
 from cfme.common.host_views import HostOsView
 from cfme.common.host_views import HostServicesView
 from cfme.common.host_views import HostStorageAdaptersView
+from cfme.common.host_views import HostVmmInfoView
 from cfme.common.host_views import HostsEditView
 from cfme.common.host_views import HostsView
 from cfme.common.provider_views import InfraProviderDetailsView
@@ -540,13 +542,12 @@ def host(appliance, provider):
 
 
 HOST_DETAIL_ROWS = [
-    # ("Properties", "VM Monitor Information", XXXXView),
+    ("Properties", "VM Monitor Information", HostVmmInfoView),
     ("Properties", "Operating System", HostOsView),
-    # ("Properties", "Devices", InfraVmOSView),
+    ("Properties", "Devices", HostDevicesView),
     ("Properties", "Networks", HostNetworkDetailsView),
     ("Properties", "Storage Adapters", HostStorageAdaptersView),
     ("Configuration", "Services", HostServicesView),
-    # ("Smart Management", "My company Tags", HostCompanyTagsView), # check if this already exists.
 ]
 
 
@@ -561,10 +562,9 @@ def test_infrastructure_hosts_viewing(appliance, setup_provider, host, table, ro
         caseimportance: high
         initialEstimate: 1/6h
     """
-    # We need to check that we have Storage Adapters and services
+    # Except for OS and Network, we need to check if we have any of the row items.
     if row not in ["Operating System", "Networks"]:
         view = navigate_to(host, "Details")
-        # we need to check if we have any of these
         if view.entities.summary(table).get_text_of(row) == '0':
             return
     view = navigate_to(host, row)

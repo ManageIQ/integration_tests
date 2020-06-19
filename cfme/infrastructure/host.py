@@ -15,6 +15,7 @@ from cfme.common import Taggable
 from cfme.common.candu_views import HostInfraUtilizationView
 from cfme.common.host_views import HostAddView
 from cfme.common.host_views import HostDetailsView
+from cfme.common.host_views import HostDevicesView
 from cfme.common.host_views import HostDiscoverView
 from cfme.common.host_views import HostDriftAnalysis
 from cfme.common.host_views import HostDriftHistory
@@ -23,6 +24,7 @@ from cfme.common.host_views import HostNetworkDetailsView
 from cfme.common.host_views import HostOsView
 from cfme.common.host_views import HostServicesView
 from cfme.common.host_views import HostStorageAdaptersView
+from cfme.common.host_views import HostVmmInfoView
 from cfme.common.host_views import HostsCompareView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostTimelinesView
@@ -777,6 +779,15 @@ class HostSubnet(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Relationships').click_at('Cloud Subnets')
 
+#
+@navigator.register(Host, 'Networks')
+class HostDevices(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostDevicesView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Devices')
+
 
 @navigator.register(Host, 'Networks')
 class HostNetworks(CFMENavigateStep):
@@ -812,6 +823,15 @@ class HostServices(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Configuration').click_at('Services')
+
+
+@navigator.register(Host, "VM Monitor Information")
+class HostVmmInfo(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostVmmInfoView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('VM Monitor Information')
 
 
 @navigator.register(Host, "UtilTrendSummary")

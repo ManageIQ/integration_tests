@@ -383,9 +383,17 @@ class ProviderAllHostsView(HostsView):
         )
 
 
+class HostDevicesView(HostsView):
+    """The devices page"""
+
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (Devices)"
+        return self.breadcrumb.active_location == active_loc
+
+
 class HostOsView(HostsView):
     """The Operating System page"""
-    # title = Text('.//h1[contains(@class, "col-md-7")]')
 
     @property
     def is_displayed(self):
@@ -408,4 +416,13 @@ class HostServicesView(HostsView):
     @property
     def is_displayed(self):
         active_loc = f"{self.context['object'].name} (Services)"
+        return self.breadcrumb.active_location == active_loc
+
+
+class HostVmmInfoView(HostsView):
+    """The VM monitor info page"""
+    # Work on the title locator or another better way to do is_displayed.
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (VM Monitor Information)"
         return self.breadcrumb.active_location == active_loc
