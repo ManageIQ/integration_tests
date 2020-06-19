@@ -16,30 +16,30 @@ pytestmark = [
 
 @pytest.fixture(scope="function")
 def dialog_cat_item(appliance, catalog, request):
+    default_data = {"choose_type": "Text Box", "validation": "^([a-z0-9]+_*)*[a-z0-9]+$"}
+    data = getattr(request, "param", default_data)
 
     service_dialog = appliance.collections.service_dialogs
     dialog = fauxfactory.gen_alphanumeric(12, start="dialog_")
-
     element_data = {
-        'element_information': {
-            'ele_label': fauxfactory.gen_alphanumeric(15, start="ele_label_"),
-            'ele_name': fauxfactory.gen_alphanumeric(15, start="ele_name_"),
-            'ele_desc': fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
-            'choose_type': "Text Box"
+        "element_information": {
+            "ele_label": fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            "ele_name": fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            "ele_desc": fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
+            "choose_type": data.get("choose_type", default_data["choose_type"]),
         },
-        'options': {
-            'validation_switch': True,
-            'validation': request.param["validation"]
-        }
+        "options": {
+            "validation_switch": True,
+            "validation": data.get("validation", default_data["validation"]),
+        },
     }
-
-    if appliance.version < '5.10':
-        element_data["options"].pop("validation_switch", None)
     sd = service_dialog.create(label=dialog, description="my dialog")
-    tab = sd.tabs.create(tab_label=fauxfactory.gen_alphanumeric(start="tab_"),
-                         tab_desc="my tab desc")
-    box = tab.boxes.create(box_label=fauxfactory.gen_alphanumeric(start="box_"),
-                           box_desc="my box desc")
+    tab = sd.tabs.create(
+        tab_label=fauxfactory.gen_alphanumeric(start="tab_"), tab_desc="my tab desc"
+    )
+    box = tab.boxes.create(
+        box_label=fauxfactory.gen_alphanumeric(start="box_"), box_desc="my box desc"
+    )
     box.elements.create(element_data=[element_data])
 
     catalog_item = appliance.collections.catalog_items.create(
@@ -48,15 +48,20 @@ def dialog_cat_item(appliance, catalog, request):
         description="my catalog",
         display_in=True,
         catalog=catalog,
-        dialog=sd)
+        dialog=sd,
+    )
     yield catalog_item, element_data, sd
     if catalog_item.exists:
         catalog_item.delete()
     sd.delete_if_exists()
 
 
-@pytest.mark.parametrize("dialog_cat_item", [{"validation": "^([a-z0-9]+_*)*[a-z0-9]+$"}],
-                         indirect=True)
+@pytest.mark.parametrize(
+    "dialog_cat_item",
+    [{"choose_type": "Text Box"}, {"choose_type": "Text Area"}],
+    indirect=["dialog_cat_item"], ids=["Text Box", "Text Area"],
+)
+@pytest.mark.meta(automates=[1518971])
 def test_dialog_element_regex_validation(appliance, dialog_cat_item):
     """Tests Service Dialog Elements with regex validation.
 
@@ -76,29 +81,6 @@ def test_dialog_element_regex_validation(appliance, dialog_cat_item):
     wait_for(lambda: view.submit_button.disabled, timeout=7)
     view.fields(ele_name).fill("test_123")
     wait_for(lambda: not view.submit_button.disabled, timeout=7)
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_dialog_text_area_element_regex_validation():
-    """ Tests Service Dialog Elements with regex validation
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        startsin: 5.10
-        caseimportance: high
-        testSteps:
-            1. Create a dialog. Set regex_validation in text area
-            2. Use the dialog in a catalog.
-            3. Order catalog.
-        expectedResults:
-            1.
-            2.
-            3. Regex validation should work
-    """
-    pass
 
 
 @pytest.mark.meta(automates=[1720245])
