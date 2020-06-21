@@ -248,6 +248,8 @@ class SavedReportDetailsView(CloudIntelReportsView):
             and self.reports.is_opened
             and self.reports.tree.currently_selected == self.context["object"].tree_path
             and self.context["object"].queued_datetime_in_title in self.title.text
+            and self.breadcrumb.locations
+            == ["Overview", "Reports", "Reports", self.context["object"].datetime_in_tree]
         )
 
 

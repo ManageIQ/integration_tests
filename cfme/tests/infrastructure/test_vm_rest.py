@@ -81,10 +81,6 @@ def test_vm_scan(appliance, vm, from_detail):
 @pytest.mark.meta(automates=[1833362, 1428250])
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 @pytest.mark.parametrize("attribute", ["name", "description"])
-@pytest.mark.uncollectif(
-    lambda attribute, appliance: appliance.version < "5.11" and attribute == "name",
-    reason="Renaming a VM via rest is not possible on 5.10."
-)
 def test_edit_vm(request, vm, appliance, from_detail, attribute):
     """Tests edit VMs using REST API.
 
