@@ -37,27 +37,3 @@ def test_reports_in_global_region(context, report):
 
     """
     pass
-
-
-@pytest.mark.ignore_stream("5.10")
-@test_requirements.report
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1714197])
-def test_optimization_reports():
-    """
-    Bugzilla:
-        1714197
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Reporting
-        initialEstimate: 1/2h
-        startsin: 5.11
-        testSteps:
-            1. Navigate to Overview > Optimization.
-            2. Queue all the 7 parametrized reports and check if it exists.
-        expectedResults:
-            1.
-            2. Reports must exist.
-    """
-    pass

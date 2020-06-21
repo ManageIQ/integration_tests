@@ -1,8 +1,8 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.utils.appliance.implementations.ui import ViaUI
 from cfme.utils.appliance.implementations.rest import ViaREST
+from cfme.utils.appliance.implementations.ui import ViaUI
 
 pytestmark = [test_requirements.auth, pytest.mark.manual]
 

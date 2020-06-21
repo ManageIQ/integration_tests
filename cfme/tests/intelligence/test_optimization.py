@@ -20,12 +20,13 @@ REPORTS = [
 ]
 
 
-@pytest.mark.meta(automates=[1769346])
+@pytest.mark.meta(automates=[1769346, 1714197])
 @pytest.mark.parametrize("menu_name", REPORTS, ids=[attributize_string(i) for i in REPORTS])
 def test_generate_optimization_report(appliance, menu_name):
     """
     Bugzilla:
         1769346
+        1714197
 
     Polarion:
         assignee: pvala

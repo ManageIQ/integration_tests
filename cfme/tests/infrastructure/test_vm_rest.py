@@ -212,12 +212,3 @@ def test_database_wildcard_should_work_and_be_included_in_the_query(appliance, r
 
     assert result.subcount
     assert vm_name in [vm.name for vm in result.resources]
-
-@pytest.mark.ignore_stream("5.10")
-@pytest.mark.parametrize(
-    'from_detail', [True, False],
-    ids=['from_detail', 'from_collection'])
-def test_rename_vm(vm, appliance, from_detail, request):
-    request.addfinalizer(vm.action.delete)
-    new_name = fauxfactory.gen_alphanumeric(15, start="Renamed VM")
-    payload = {"new_name": new_name}
