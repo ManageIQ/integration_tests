@@ -3,6 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.wait import wait_for
@@ -80,10 +81,13 @@ def test_targeted_refresh_instance(appliance, create_vm, provider, request):
     wait_for_power_state(vms_collection, instance.mgmt.name, "terminated")
 
 
-@pytest.mark.manual
-def test_ec2_targeted_refresh_floating_ip():
+@pytest.mark.meta(automates=[1746860])
+def test_ec2_targeted_refresh_floating_ip(provider, create_vm):
     """
     AWS naming is Elastic IP
+
+    Bugzilla:
+        1746860
 
     Polarion:
         assignee: mmojzis
@@ -101,7 +105,28 @@ def test_ec2_targeted_refresh_floating_ip():
             7. Floating IP UPDATE
             8. Floating IP DELETE
     """
-    pass
+    ec2_connection = provider.mgmt.ec2_connection
+    vm = provider.mgmt.get_vm(name=create_vm.name)
+    vm_id = vm.raw.id
+
+    view = navigate_to(create_vm, "Details")
+    ui_ip_address = create_vm.all_ip_addresses
+
+    allocation = ec2_connection.allocate_address(Domain="vpc")
+    ec2_connection.associate_address(AllocationId=allocation["AllocationId"], InstanceId=vm_id)
+    wait_for(
+        lambda: create_vm.all_ip_addresses != ui_ip_address,
+        fail_func=view.toolbar.reload.click,
+        timeout=180,
+    )
+    assert allocation["PublicIp"] in create_vm.all_ip_addresses
+
+    ec2_connection.release_address(AllocationId=allocation["AllocationId"])
+    wait_for(
+        lambda: allocation["PublicIp"] not in create_vm.all_ip_addresses,
+        fail_func=view.toolbar.reload.click,
+        timeout=360,
+    )
 
 
 def test_targeted_refresh_network(appliance, provider, request):
