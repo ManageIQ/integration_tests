@@ -94,7 +94,7 @@ def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold):
 
 @test_requirements.settings
 @pytest.mark.tier(2)
-@pytest.mark.meta(automates=[1658373, 1715633, 1787350, 1799443, 1805845])
+@pytest.mark.meta(automates=[1658373, 1715633, 1787350, 1799443, 1805845, 1810773])
 @pytest.mark.parametrize('set_memory_threshold',
     [set_memory_threshold_in_ui, set_memory_threshold_in_advanced_settings],
     ids=['in_UI', 'in_advanced_setting'])
@@ -107,6 +107,7 @@ def test_set_memory_threshold(appliance, worker, request, set_memory_threshold):
         1787350
         1799443
         1805845
+        1810773
 
     Polarion:
         assignee: tpapaioa
