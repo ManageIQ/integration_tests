@@ -575,11 +575,15 @@ def test_session_timeout():
     pass
 
 
-@pytest.mark.meta(coverage=[1784145])
+@pytest.mark.meta(coverage=[1784145, 1805914])
 @pytest.mark.parametrize("context", [ViaREST, ViaUI])
 def test_openid_auth_provider(context):
     """
     Test setting up CFME with OpenID Auth Provider
+
+    Bugzilla:
+        1784145
+        1805914
 
     Polarion:
         assignee: dgaikwad

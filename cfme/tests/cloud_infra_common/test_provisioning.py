@@ -86,12 +86,16 @@ def provisioned_instance(provider, instance_args, appliance):
                        .format(ex.message))
 
 
+@pytest.mark.meta(automates=[1830305])
 @pytest.mark.parametrize('instance_args', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(provider, provisioned_instance):
+def test_provision_from_template(provisioned_instance):
     """ Tests instance provision from template via CFME UI
 
     Metadata:
         test_flag: provision
+
+    Bugzilla:
+        1830305
 
     Polarion:
         assignee: jhenner
