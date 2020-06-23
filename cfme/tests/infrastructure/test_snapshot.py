@@ -228,9 +228,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
         assert ssh_client.run_command('test -e snapshot2.txt') == 1
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1805803, unblock=lambda provider: not provider.one_of(RHEVMProvider),
-                 ignore_bugs={1745065})], automates=[1805803])
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider),
+                        reason="RHV providers blocked for BZ 1805803 marked WONTFIX")
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
@@ -241,14 +240,27 @@ def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event
         test_flag: snapshot, provision
 
     Bugzilla:
-        1561618
+        1805803
 
     Polarion:
         assignee: prichard
         casecomponent: Infra
         initialEstimate: 1/4h
     """
+    # getting the initial value for OS details.
+    view = navigate_to(create_vm, 'Details')
+    os_text_initial = view.entities.summary('Properties').get_text_of('Operating System')
     verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request)
+    # verify that the system info is displayed
+    view = navigate_to(create_vm, 'Details')
+    # check that the OS is in the field.
+    os_text_compare = view.entities.summary('Properties').get_text_of('Operating System')
+    assert os_text_compare == os_text_initial
+    os_view = navigate_to(create_vm, 'OS Info')
+    # check that the OS Info view is displayed and contains OS data
+    assert os_view.is_displayed
+    os_text_compare = view.entities.summary('Basic Information').get_text_of('Operating System')
+    assert os_text_compare == os_text_initial
 
 
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)

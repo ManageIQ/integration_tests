@@ -453,6 +453,18 @@ class InfraVmReconfigureView(BaseLoggedInPage):
                 self.context['object'].name in [row.name.text for row in self.affected_vms.rows()])
 
 
+class InfraVmOsView(InfraVmView):
+    """The Operating System page"""
+    title = Text('#explorer_title_text')
+    basic_information = SummaryTable(title="Basic Information")
+
+    @property
+    def is_displayed(self):
+        name = self.context['object'].name
+        expected_title = f'"OS Info" for Virtual Machine "{name}"'
+        return self.in_infra_vms and self.title.text == expected_title
+
+
 class InfraVmSnapshotToolbar(View):
     """The toolbar on the snapshots page"""
     history = Dropdown('History')
@@ -1526,6 +1538,15 @@ class VmAllWithTemplatesForProvider(CFMENavigateStep):
 
     def resetter(self, *args, **kwargs):
         self.view.reset_page()
+
+
+@navigator.register(InfraVm, 'OS Info')
+class VmOsInfo(CFMENavigateStep):
+    VIEW = InfraVmOsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Operating System')
 
 
 @navigator.register(InfraTemplate, 'Details')
