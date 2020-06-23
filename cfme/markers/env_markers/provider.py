@@ -160,6 +160,7 @@ class DataProvider:
     category = attr.ib()
     type_name = attr.ib()
     version = attr.ib()
+    key = attr.ib(default=None)
     klass = attr.ib(default=attr.Factory(data_provider_types, takes_self=True))
 
     @classmethod
@@ -191,13 +192,12 @@ class DataProvider:
 
 
 def all_required(miq_version, filters=None):
-    """This returns a list DataProvider objects
-
-    This list of providers is a representative of the providers that a test should be run against.
+    """Return a list of DataProvider instances representing the providers for which the test should
+    run.
 
     Args:
-        miq_version: The version of miq to query the supportability
-        filters: A list of filters
+        miq_version: The MIQ/CFME version to query in the supportability yaml
+        filters: :py:class:`list` of provider filters to apply
     """
     # Load the supportability YAML and extrace the providers portion
     filters = filters or []  # default immutable
@@ -274,26 +274,27 @@ def providers(metafunc, filters=None, selector=ONE_PER_VERSION, fixture_name='pr
     series = holder.held_appliance.version.series()
     supported_providers = all_required(series, filters)
 
-    def get_valid_providers(provider):
-        # We now search through all the available providers looking for one that matches the
-        # criteria. If we don't find one, we return None
-        prov_tuples = []
-        for a_prov in available_providers:
+    def get_valid_providers(data_provider):
+        """Search through all available providers in yaml for ones that match the criteria in
+        data_provider."""
+        valid_providers = []
+        for available_provider in available_providers:
             try:
-                if not a_prov.version:
-                    raise ValueError(f"provider {a_prov} has no version")
-                elif (a_prov.version == provider.version and
-                        a_prov.type == provider.type_name and
-                        a_prov.category == provider.category):
-                    prov_tuples.append((provider, a_prov))
-            except (KeyError, ValueError):
-                if (a_prov.type == provider.type_name and
-                        a_prov.category == provider.category):
-                    prov_tuples.append((provider, a_prov))
-        return prov_tuples
+                if available_provider.version != data_provider.version:
+                    continue
+            except KeyError:
+                pass
+            if (
+                available_provider.type == data_provider.type_name and
+                available_provider.category == data_provider.category
+            ):
+                data_provider_with_key = DataProvider.get_instance(data_provider.category,
+                    data_provider.type_name, data_provider.version, available_provider.key)
+                valid_providers.append((data_provider_with_key, available_provider))
 
-    # A small routine to check if we need to supply the idlist a provider type or
-    # a real type/version
+        return valid_providers
+
+    # Check whether we need to supply a provider type or a real type / version to idlist.
     need_prov_keys = False
     for filter in filters:
         if isinstance(filter, ProviderFilter) and filter.classes:
@@ -303,11 +304,11 @@ def providers(metafunc, filters=None, selector=ONE_PER_VERSION, fixture_name='pr
                     break
 
     matching_provs = [valid_provider
-                      for prov in supported_providers
-                      for valid_provider in get_valid_providers(prov)]
+                      for data_provider in supported_providers
+                      for valid_provider in get_valid_providers(data_provider)]
 
-    # Now we run through the selectors and build up a list of supported providers which match our
-    # requirements. This then forms the providers that the test should run against.
+    # Run through the selectors and build a list of supported providers which match our
+    # requirements. This then forms the providers against which the test should run.
     if selector == ONE:
         if matching_provs:
             allowed_providers = [matching_provs[0]]
@@ -363,17 +364,16 @@ def providers(metafunc, filters=None, selector=ONE_PER_VERSION, fixture_name='pr
         # If there are no selectors, then the allowed providers are whichever are supported
         allowed_providers = matching_provs
 
-    # Now we iterate through the required providers and try to match them to the available ones
+    # Iterate through the required providers and try to match them to the available ones
     for data_prov, real_prov in allowed_providers:
-        data_prov.key = real_prov.key
         argvalues.append(pytest.param(data_prov))
 
         # Use the provider key for idlist, helps with readable parametrized test output
         use_legacy_ids = metafunc.config.getoption('legacy_ids')
-        legacy_key = str(data_prov.key)
+        legacy_key = data_prov.key
         the_id = legacy_key if use_legacy_ids else data_prov.the_id
 
-        # Now we modify the id based on what selector we chose
+        # Modify the test id based on what selector we chose.
         if metafunc.config.getoption('disable_selectors'):
             selected_id = the_id
         else:
