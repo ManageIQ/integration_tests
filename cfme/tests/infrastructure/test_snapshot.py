@@ -228,8 +228,8 @@ def verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, 
         assert ssh_client.run_command('test -e snapshot2.txt') == 1
 
 
-@pytest.mark.rhv1
-@pytest.mark.provider([VMwareProvider])
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider),
+                        reason="RHV providers blocked for BZ 1805803 marked WONTFIX")
 @pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_verify_revert_snapshot(create_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
