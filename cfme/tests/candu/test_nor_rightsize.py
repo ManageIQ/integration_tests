@@ -7,7 +7,7 @@ from cfme.markers.env_markers.provider import ONE
 
 pytestmark = [
     pytest.mark.ignore_stream('upstream'),
-    pytest.mark.manual,
+    pytest.mark.manual('manualonly'),
     test_requirements.right_size,
     pytest.mark.provider([VMwareProvider], selector=ONE),
 ]
@@ -33,6 +33,7 @@ def test_normal_operating_range(provider, value_type):
     Polarion:
         assignee: tpapaioa
         casecomponent: CandU
+        caseimportance: medium
         initialEstimate: 1/4h
 
     Bugzilla:
@@ -50,6 +51,7 @@ def test_rightsize_recommendations(provider, value_type):
     Polarion:
         assignee: tpapaioa
         casecomponent: CandU
+        caseimportance: medium
         initialEstimate: 1/4h
 
     Bugzilla:
