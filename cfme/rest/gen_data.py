@@ -640,3 +640,15 @@ def custom_buttons(
         data.append(data_dict)
 
     return _creating_skeleton(request, appliance, "custom_buttons", data)
+
+
+def policy_profiles(request, appliance, num=2):
+    data = []
+    for _ in range(num):
+        data.append(
+            {
+                "description": fauxfactory.gen_alpha(start="PP description ", length=17),
+                "name": fauxfactory.gen_alpha(start="test_pp_name_", length=17),
+            }
+        )
+    return _creating_skeleton(request, appliance, "policy_profiles", data)
