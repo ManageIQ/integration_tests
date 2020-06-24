@@ -1,6 +1,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.utils.appliance.implementations.rest import ViaREST
+from cfme.utils.appliance.implementations.ui import ViaUI
 
 pytestmark = [test_requirements.auth, pytest.mark.manual]
 
@@ -573,10 +575,15 @@ def test_session_timeout():
     pass
 
 
-@pytest.mark.meta(coverage=[1784145])
-def test_openid_auth_provider():
+@pytest.mark.meta(coverage=[1784145, 1805914])
+@pytest.mark.parametrize("context", [ViaREST, ViaUI])
+def test_openid_auth_provider(context):
     """
     Test setting up CFME with OpenID Auth Provider
+
+    Bugzilla:
+        1784145
+        1805914
 
     Polarion:
         assignee: dgaikwad
@@ -599,6 +606,7 @@ def test_openid_auth_provider():
                     --oidc-client-id <appliance-fqdn>
                     --oidc-client-secret <client-secret>
             5. Login to appliance with OpenID user (clicking "Login to Corporate Account")
+                via given context.
         expectedResults:
             1.
             2.

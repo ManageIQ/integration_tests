@@ -78,16 +78,20 @@ def test_vm_scan(appliance, vm, from_detail):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.parametrize(
-    'from_detail', [True, False],
-    ids=['from_detail', 'from_collection'])
-def test_edit_vm(request, vm, appliance, from_detail):
+@pytest.mark.meta(automates=[1833362, 1428250])
+@pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+@pytest.mark.parametrize("attribute", ["name", "description"])
+def test_edit_vm(request, vm, appliance, from_detail, attribute):
     """Tests edit VMs using REST API.
 
     Testing BZ 1428250.
 
     Metadata:
         test_flag: rest
+
+    Bugzilla:
+        1428250
+        1833362
 
     Polarion:
         assignee: pvala
@@ -96,25 +100,22 @@ def test_edit_vm(request, vm, appliance, from_detail):
         initialEstimate: 1/4h
     """
     request.addfinalizer(vm.action.delete)
-    new_description = fauxfactory.gen_alphanumeric(18, start="Test REST VM ")
-    payload = {'description': new_description}
+    payload = {attribute: fauxfactory.gen_alphanumeric(15, start=f"Edited-{attribute}-")}
     if from_detail:
         edited = vm.action.edit(**payload)
         assert_response(appliance)
     else:
-        payload.update(vm._ref_repr())
-        edited = appliance.rest_api.collections.vms.action.edit(payload)
+        edited = appliance.rest_api.collections.vms.action.edit({**payload, **vm._ref_repr()})
         assert_response(appliance)
         edited = edited[0]
 
     record, __ = wait_for(
-        lambda: appliance.rest_api.collections.vms.find_by(
-            description=new_description) or False,
+        lambda: appliance.rest_api.collections.vms.find_by(**payload) or False,
         num_sec=100,
         delay=5,
     )
     vm.reload()
-    assert vm.description == edited.description == record[0].description
+    assert getattr(vm, attribute) == getattr(edited, attribute) == getattr(record[0], attribute)
 
 
 @pytest.mark.tier(3)
