@@ -276,3 +276,33 @@ def test_compliance_instance(create_policy_profile, create_vm, request):
         view.flash.assert_message(
             "Check Compliance initiated for 1 VM and Instance from the CFME Database"
         )
+
+
+@test_requirements.rest
+@pytest.mark.meta(automates=[1806660, 1806656])
+def test_rest_vm_compliance_subcollection(create_policy_profile, compliance_vm):
+    """
+    Bugzilla:
+        1806660
+        1806656
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Infra
+        caseimportance: medium
+        initialEstimate: 1/10h
+        setup:
+            1. Create condition.
+            2. Create policy with the condition.
+            3. Create a policy profile with the policy.
+            4. Provision a VM.
+        testSteps:
+            1. Assign policy profile to the VM.
+            2. Scan the VM.
+            3. Check compliance of the VM.
+            4. Check if compliance data is available under VM's `compliances` subcollection
+    """
+    compliance_vm.assign_policy_profiles(create_policy_profile.description)
+    do_scan(compliance_vm)
+    compliance_vm.check_compliance()
+    assert compliance_vm.rest_api_entity.compliances.all
