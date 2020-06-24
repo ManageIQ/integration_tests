@@ -4,12 +4,16 @@ import pytest
 from wrapanapi import VmState
 
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policies import HostCompliancePolicy
 from cfme.control.explorer.policies import VMCompliancePolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.tests.control import do_scan
 from cfme.utils import conf
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 
 pytestmark = [
@@ -204,3 +208,71 @@ def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     )
     host.check_compliance()
     assert not host.is_compliant
+
+
+@pytest.fixture
+def create_policy_profile(appliance, request):
+    condition = appliance.collections.conditions.create(
+        VMCondition,
+        fauxfactory.gen_alphanumeric(40, start="Compliance testing condition "),
+        expression="fill_tag(VM and Instance.My Company Tags : Service Level, Gold)",
+    )
+    request.addfinalizer(condition.delete)
+
+    policy = appliance.collections.policies.create(
+        VMCompliancePolicy, fauxfactory.gen_alphanumeric(15, start="Compliance ")
+    )
+    request.addfinalizer(policy.delete)
+
+    policy.assign_conditions(condition)
+
+    profile = appliance.collections.policy_profiles.create(
+        fauxfactory.gen_alphanumeric(20, start="Compliance PP "), policies=[policy]
+    )
+    request.addfinalizer(profile.delete)
+
+    return profile
+
+
+@pytest.mark.meta(automates=[1824811])
+@pytest.mark.provider([CloudProvider], scope="module", selector=ONE)
+def test_compliance_instance(create_policy_profile, create_vm, request):
+    """
+    Bugzilla:
+        1824811
+
+    Polarion:
+        assignee: dgaikwad
+        initialEstimate: 1/4h
+        casecomponent: Control
+        caseimportance: high
+        setup:
+            1. Create condition.
+            2. Create policy with the condition.
+            3. Create a policy profile with the policy.
+            4. Create a cloud instance.
+        testSteps:
+            1. Assign policy profile to an instance.
+            2. From Instance's All page, select the instance entity, click on Configuration
+                and select 'Check Compliance of Last Known Configuration'.
+        expectedResults:
+            1. Policy profile must be assigned successfully.
+            2. Compliance should be initiated for the instance.
+    """
+    instance = create_vm
+    instance.assign_policy_profiles(create_policy_profile.description)
+    request.addfinalizer(
+        lambda: instance.unassign_policy_profiles(create_policy_profile.description)
+    )
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/production.log", failure_patterns=[".*FATAL.*"]
+    ).waiting(timeout=120):
+        view = navigate_to(instance.parent, "All")
+        view.entities.get_entity(name=instance.name, use_search=True).ensure_checked()
+        view.toolbar.policy.item_select(
+            "Check Compliance of Last Known Configuration", handle_alert=True
+        )
+        view.flash.assert_message(
+            "Check Compliance initiated for 1 VM and Instance from the CFME Database"
+        )

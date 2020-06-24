@@ -225,9 +225,14 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(ConditionClassAllView, wait="20s")
-            view.flash.assert_success_message('Condition "{}": Delete successful'.format(
-                self.description))
+            if not BZ(1811689, forced_streams=["5.11"]).blocks:
+                view = self.create_view(ConditionClassAllView, wait="20s")
+                view.flash.assert_success_message('Condition "{}": Delete successful'.format(
+                    self.description))
+            else:
+                view.browser.refresh()
+                view = self.create_view(ConditionClassAllView)
+                view.flash.assert_message("Last selected Condition no longer exists")
 
     def read_expression(self):
         view = navigate_to(self, "Details")
