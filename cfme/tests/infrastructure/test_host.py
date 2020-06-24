@@ -567,8 +567,7 @@ def test_infrastructure_hosts_viewing(appliance, setup_provider, host, table, ro
     # Except for OS, Network, and print we need to check if we have any of the row items.
     if row not in ["Operating System", "Networks", "Print or export"]:
         view = navigate_to(host, "Details")
-        if view.entities.summary(table).get_text_of(row) == '0':
-            return
+            pytest.skip(f"No row item present for {row}")
     view = navigate_to(host, row)
     if row == "Print or export":
         handle_extra_tabs(view)
