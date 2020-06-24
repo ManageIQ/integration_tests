@@ -123,20 +123,3 @@ def test_request_filter_on_request_page():
         1498237
     """
     pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_default_dialog_entries_should_localized_when_ordering_catalog_item_in_french():
-    """ Default dialog entries should localized when ordering catalog item in French
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/16h
-        startsin: 5.7
-        tags: service
-    Bugzilla:
-        1592573
-    """
-    pass

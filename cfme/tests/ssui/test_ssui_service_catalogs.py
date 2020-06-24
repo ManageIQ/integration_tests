@@ -50,22 +50,6 @@ def test_service_catalog_crud_ssui(appliance, setup_provider,
         service.order()
 
 
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_ssui_test_all_language_translations():
-    """
-    desc
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.10
-        tags: ssui
-    """
-    pass
-
-
 @pytest.mark.customer_scenario
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1496233])
@@ -132,38 +116,6 @@ def test_refresh_ssui_page(appliance, generic_service):
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_notifications_should_appear_in_sui_after_enableing_embedded_ansible_role():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/16h
-        startsin: 5.9
-        tags: ssui
-    Bugzilla:
-        1637512
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_sui_service_explorer_will_also_show_child_services():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: ssui
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(1)
 def test_sui_ordering_service_catalog_the_dynamic_drop_down_dialogs_fields_should_auto_refreshed():
     """
@@ -198,24 +150,6 @@ def test_disabling_dashboard_under_service_ui_for_a_role_shall_disable_the_dashb
 
 
 @pytest.mark.manual
-@pytest.mark.tier(3)
-def test_sui_create_snapshot_when_no_provider_is_connected():
-    """
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: ssui
-    Bugzilla:
-        1440966
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_sui_monitor_ansible_playbook_std_output():
     """
@@ -229,21 +163,5 @@ def test_sui_monitor_ansible_playbook_std_output():
         tags: ssui
     Bugzilla:
         1437210
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-def test_sui_snapshots_for_vm_create_edit_delete():
-    """
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: ssui
     """
     pass

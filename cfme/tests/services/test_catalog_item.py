@@ -303,6 +303,7 @@ def test_rbac_assigning_multiple_tags_from_same_category_to_catalog_item():
     Polarion:
         assignee: nansari
         casecomponent: Services
+        caseimportance: medium
         testtype: functional
         initialEstimate: 1/8h
         startsin: 5.5
@@ -321,6 +322,7 @@ def test_change_provider_template_in_catalog_item():
         assignee: nansari
         casecomponent: Services
         testtype: functional
+        caseimportance: low
         initialEstimate: 1/8h
         startsin: 5.5
         tags: service
@@ -341,6 +343,7 @@ def test_able_to_add_long_description_for_playbook_catalog_items():
     Polarion:
         assignee: nansari
         casecomponent: Services
+        caseimportance: low
         testtype: functional
         initialEstimate: 1/4h
         startsin: 5.9
