@@ -222,6 +222,7 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
         initialEstimate: 1/8h
         casecomponent: Tagging
     """
+    # Todo: use host fixture once it gets merged(PR10197).
     host_on_provider = provider.hosts.all()[0]
     provider.delete()
     provider.wait_for_delete()
@@ -287,6 +288,7 @@ def test_infrastructure_hosts_icons_states(
                 `UPDATE hosts SET power_state = ':power_state' WHERE name=':host_name';`
     """
     # get host and host details
+    # Todo: use host fixture once it gets merged(PR10197).
     host = provider.hosts.all()[0]
     host_name = host.name
     reset_state = host.rest_api_entity.power_state
@@ -431,12 +433,8 @@ def test_infrastructure_hosts_navigation_after_download(
     Bugzilla:
         1738664
     """
-    # TODO: prichard use locals()
     # TODO: prichard consider putting download functionality into it's own function
-    if hosts_collection == "provider":
-        hosts_view = navigate_to(provider.collections.hosts, "All")
-    elif hosts_collection == "appliance":
-        hosts_view = navigate_to(appliance.collections.hosts, "All")
+    hosts_view = navigate_to(locals()[hosts_collection].collections.hosts, "All")
     hosts_view.toolbar.download.item_select(report_format.value)
     if report_format == DownloadOptions.PDF:
         handle_extra_tabs(hosts_view)
@@ -517,6 +515,7 @@ def test_add_ipmi_refresh(appliance, setup_provider):
         caseimportance: medium
         casecomponent: Infra
     """
+    # Todo: use host fixture once it gets merged(PR10197).
     host = appliance.collections.hosts.all()[0]
     # dummy credentials and ipmi address are sufficient for this test case
     cred = host.Credential(principal="111", secret="222", ipmi=True)
@@ -541,6 +540,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
     Bugzilla:
         1634794
     """
+    # Todo: use host fixture once it gets merged(PR10197).
     host = appliance.collections.hosts.all()[0]
 
     # Case1 - edit from Hosts
@@ -628,6 +628,7 @@ def test_infrastructure_hosts_tagging(appliance, setup_provider):
         caseimportance: high
         initialEstimate: 1/6h
     """
+    # Todo: use host fixture once it gets merged(PR10197).
     host = appliance.collections.hosts.all()[0]
     tag = host.add_tag()
     host_tags = host.get_tags()
