@@ -416,6 +416,25 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             events_connection["endpoint"]["security_protocol"] = security_protocol
         connection_configs.append(events_connection)
 
+    def _fill_ceilometer_endpoint_dicts(self, provider_attributes, connection_configs):
+        """Fills dicts with Ceilometer events endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        if 'events' not in self.endpoints:
+            return
+
+        endpoint_events = self.endpoints['events']
+
+        event_stream = getattr(endpoint_events, 'event_stream', None)
+        if not (event_stream and event_stream.lower() == 'ceilometer'):
+            return
+
+        events_connection = {
+            'endpoint': {'role': 'ceilometer'}
+        }
+        connection_configs.append(events_connection)
+
     def _fill_smartstate_endpoint_dicts(self, provider_attributes):
         """Fills dicts with smartstate endpoint data.
 
@@ -501,6 +520,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self._fill_candu_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_rsa_endpoint_dicts(connection_configs)
         self._fill_amqp_endpoint_dicts(provider_attributes, connection_configs)
+        self._fill_ceilometer_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_smartstate_endpoint_dicts(provider_attributes)
         self._fill_vmrc_console_endpoint_dicts(provider_attributes)
         self._compile_connection_configurations(provider_attributes, connection_configs)
