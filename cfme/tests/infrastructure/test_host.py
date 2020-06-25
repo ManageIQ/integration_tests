@@ -570,10 +570,12 @@ def test_infrastructure_hosts_viewing(request, appliance, setup_provider, host, 
             handle_extra_tabs(view)
     try:
         # Except for OS, Network, and print we need to check if we have any of the row items.
-        if row not in ["Operating System", "Networks", "Print or export"]:
-            view = navigate_to(host, "Details")
-            if view.entities.summary(table).get_text_of(row) == '0':
-                pytest.skip(f"No row item present for {row}")
+        if row in ["Devices", "Storage Adapters", "Services"]:
+            det_view = navigate_to(host, "Details")
+            if det_view.entities.summary(table).get_text_of(row) == '0':
+                view = navigate_to(host, row, wait_for_view=0)
+                assert det_view.is_displayed
+                return
         view = navigate_to(host, row)
     except TimedOutError:
         pytest.fail(f'Timed out navigating to host relationship {row}')
