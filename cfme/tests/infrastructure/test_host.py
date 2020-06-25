@@ -543,20 +543,20 @@ def host(appliance, provider):
 
 
 HOST_DETAIL_ROWS = [
-    ("VMM Information", HostVmmInfoView),
-    ("Operating System", HostOsView),
-    ("Devices", HostDevicesView),
-    ("Networks", HostNetworkDetailsView),
-    ("Storage Adapters", HostStorageAdaptersView),
-    ("Services", HostServicesView),
-    ("Print or export", HostPrintView),
+    ("Properties", "VMM Information", HostVmmInfoView),
+    ("Properties", "Operating System", HostOsView),
+    ("Properties", "Devices", HostDevicesView),
+    ("Properties", "Networks", HostNetworkDetailsView),
+    ("Properties", "Storage Adapters", HostStorageAdaptersView),
+    ("Configuration", "Services", HostServicesView),
+    ("Toolbar", "Print or export", HostPrintView),
 ]
 
 
 @test_requirements.infra_hosts
-@pytest.mark.parametrize("row,view", HOST_DETAIL_ROWS,
-    ids=[rel[0] for rel in HOST_DETAIL_ROWS])
-def test_infrastructure_hosts_viewing(appliance, setup_provider, host, row, view):
+@pytest.mark.parametrize("table,row,view", HOST_DETAIL_ROWS,
+    ids=[rel[1] for rel in HOST_DETAIL_ROWS])
+def test_infrastructure_hosts_viewing(request, appliance, setup_provider, host, table, row, view):
     """
     Polarion:
         assignee: prichard
@@ -564,14 +564,19 @@ def test_infrastructure_hosts_viewing(appliance, setup_provider, host, row, view
         caseimportance: high
         initialEstimate: 1/6h
     """
-    # Except for OS, Network, and print we need to check if we have any of the row items.
-    if row not in ["Operating System", "Networks", "Print or export"]:
-        view = navigate_to(host, "Details")
-        pytest.skip(f"No row item present for {row}")
-    view = navigate_to(host, row)
-    if row == "Print or export":
-        handle_extra_tabs(view)
-    assert view.is_displayed
+    @request.addfinalizer
+    def _finalizer():
+        if row == "Print or export":
+            handle_extra_tabs(view)
+    try:
+        # Except for OS, Network, and print we need to check if we have any of the row items.
+        if row not in ["Operating System", "Networks", "Print or export"]:
+            view = navigate_to(host, "Details")
+            if view.entities.summary(table).get_text_of(row) == '0':
+                pytest.skip(f"No row item present for {row}")
+        view = navigate_to(host, row)
+    except TimedOutError:
+        pytest.fail(f'Timed out navigating to host relationship {row}')
 
 
 @test_requirements.infra_hosts
