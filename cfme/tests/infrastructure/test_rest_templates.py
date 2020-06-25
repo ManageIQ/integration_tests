@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from wrapanapi.exceptions import MultipleItemsError
 from wrapanapi.exceptions import NotFoundError
@@ -165,3 +167,21 @@ def test_delete_template_from_collection(template):
         initialEstimate: 1/4h
     """
     delete_resources_from_collection([template])
+
+
+@pytest.mark.parametrize("method", ["PUT", "PATCH"])
+def test_edit_template(appliance, template, method):
+    """
+    Polarion:
+        assignee: pvala
+        casecomponent: Services
+        caseimportance: high
+        initialEstimate: 1/4h
+    """
+    payload = {"name": f"edited-{template.name}"}
+    getattr(appliance.rest_api._session, method.lower())(
+        url=template.href, data=json.dumps(payload)
+    )
+    assert_response(appliance)
+    template.reload()
+    assert template.name == payload["name"]
