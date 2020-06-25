@@ -84,10 +84,8 @@ def smtp_test(request, appliance):
     if query_port_open:
         logger.warning('The SMTP collector query port seem to be closed.')
     server_port_open = net_check_remote(mail_server_port, my_ip, force=True)
-    assert server_port_open,\
-        'Ports {} and {} on the machine executing the tests are closed.\n'\
-        'The ports are randomly chosen -> turn firewall off.'\
-        .format(mail_query_port, mail_server_port)
+    assert server_port_open, (f"The destination {my_ip} port {mail_server_port} seem "
+                              "to be unreachable by the appliance.")
     client = SMTPCollectorClient(
         my_ip,
         mail_query_port
