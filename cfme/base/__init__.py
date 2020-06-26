@@ -385,11 +385,15 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
 
     @property
     def settings_string(self):
+        # TODO: This does not work when region description is not set to default.
         return f"{self.appliance.product_name} Region: Region {self.number} [{self.number}]"
 
     @property
     def region_string(self):
-        """Return Region string like `Region 0`"""
+        """
+        Return Region string like `Region 0`
+        TODO: This does not work when region description is not set to default.
+        """
         return f"Region {self.number}"
 
     @property
@@ -469,6 +473,15 @@ class Region(BaseEntity, sentaku.modeling.ElementMixin):
         })
         view.submit.click()
         view.flash.assert_no_error()
+
+    @property
+    def rest_api_entity(self):
+        try:
+            return self.appliance.rest_api.collections.regions.get(region_number=self.number)
+        except ValueError:
+            raise RestLookupError(
+                f"No region rest entity found matching region_number {self.number}"
+            )
 
 
 @attr.s
