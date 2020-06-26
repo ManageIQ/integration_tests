@@ -1860,7 +1860,7 @@ class TestOrchestrationTemplatesRESTAPI:
 class TestServiceOrderCart:
     @pytest.fixture(scope="class")
     def service_templates_class(self, request, appliance):
-        return service_templates(request, appliance)
+        return _service_templates(request, appliance)
 
     def add_requests(self, cart, service_templates):
         body = [{'service_template_href': tmplt.href} for tmplt in service_templates]
@@ -1901,9 +1901,15 @@ class TestServiceOrderCart:
         cart_dict = appliance.rest_api.get(f'{cart.collection._href}/cart')
         assert cart_dict['id'] == cart.id
 
+    @pytest.mark.meta(automates=[1493788])
     @pytest.mark.tier(3)
-    def test_create_second_cart(self, request, appliance, cart):
-        """Tests that it's not possible to create second cart.
+    def test_create_second_cart(self, appliance, cart):
+        """
+        Tests that it's not possible to create second cart.
+        There can be one and only one shopping cart for the authenticated user.
+
+        Bugzilla:
+            1493788
 
         Metadata:
             test_flag: rest
@@ -1914,12 +1920,14 @@ class TestServiceOrderCart:
             initialEstimate: 1/4h
             tags: service
         """
-        # This will fail somehow once BZ 1493788 is fixed.
-        # There can be one and only one shopping cart for the authenticated user.
-        second_cart = appliance.rest_api.collections.service_orders.action.create(name="cart2")
-        second_cart = second_cart[0]
-        request.addfinalizer(second_cart.action.delete)
-        assert second_cart.state == 'cart'
+        with pytest.raises(
+            APIException,
+            match=(
+                "Could not create service order - Validation failed:"
+                " ServiceOrder: State has already been taken"
+            ),
+        ):
+            appliance.rest_api.collections.service_orders.action.create(name="cart2")
 
     @pytest.mark.tier(3)
     def test_create_cart(self, request, appliance, service_templates):
@@ -2081,7 +2089,7 @@ class TestServiceOrderCart:
         assert_response(appliance)
         cart.reload()
         assert cart.state == 'ordered'
-        service_requests = list(cart.service_requests)
+        service_requests = cart.service_requests.all
 
         def _order_finished():
             for sr in service_requests:
@@ -2092,14 +2100,16 @@ class TestServiceOrderCart:
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        for index, sr in enumerate(service_requests):
+        for sr in service_requests:
+            # ensure template and service_request are mapped correctly
+            template = [temp for temp in selected_templates if temp.id == sr.source_id][0]
             service_name = get_dialog_service_name(
                 appliance,
                 sr,
                 *[t.name for t in selected_templates]
             )
             assert f'[{service_name}]' in sr.message
-            service_description = selected_templates[index].description
+            service_description = template.description
             new_service = appliance.rest_api.collections.services.get(
                 description=service_description)
             request.addfinalizer(new_service.action.delete)
