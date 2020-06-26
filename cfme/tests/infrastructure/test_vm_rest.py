@@ -212,3 +212,29 @@ def test_database_wildcard_should_work_and_be_included_in_the_query(appliance, r
 
     assert result.subcount
     assert vm_name in [vm.name for vm in result.resources]
+
+
+def test_vm_disk_subcollection(appliance, vm, provider):
+    """ Test querying VM disks via API
+
+    Polarion:
+        assignee: pvala
+        casecomponent: Rest
+        testtype: functional
+        initialEstimate: 1/4h
+        setup:
+            1. Provision a VM.
+        testSteps:
+            1. Query disks of the VM via REST and compare it with UI and database data.
+    """
+    ui_vm = appliance.collections.infra_vms.instantiate(vm.name, provider)
+    config = ui_vm.configuration
+    filenames = [disk.filename for disk in vm.disks.all]
+    view = ui_vm.load_details()
+    # config does not show  CD-ROM disk, and thus num_disks returns 1 disk less
+    assert (
+        int(view.entities.summary("Datastore Allocation Summary").get_text_of("Number of Disks"))
+        == len(vm.disks)
+        == (config.num_disks + 1)
+    )
+    assert all([disk.filename in filenames for disk in config.disks])
