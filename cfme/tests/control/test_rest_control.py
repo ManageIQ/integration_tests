@@ -6,6 +6,7 @@ from manageiq_client.api import APIException
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
+from cfme.rest.gen_data import policy_profiles as _policy_profiles
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.rest import delete_resources_from_detail
@@ -283,3 +284,155 @@ class TestPoliciesRESTAPI:
 
         with pytest.raises(APIException, match="Api::BadRequestError"):
             appliance.rest_api.collections.policies.action.create(data)
+
+
+@pytest.mark.meta(automates=[1806702])
+class TestPolicyProfilesRESTAPI:
+    @pytest.fixture(scope="function")
+    def policy_profiles(self, appliance, request):
+        policy_profiles = _policy_profiles(request, appliance, num=2)
+        assert_response(appliance)
+        return policy_profiles
+
+    def test_query_policy_attributes(self, policy_profiles, soft_assert):
+        """Tests access to policy profile attributes.
+
+        Metadata:
+            test_flag: rest
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Control
+            caseimportance: low
+            initialEstimate: 1/4h
+        """
+        query_resource_attributes(policy_profiles[0], soft_assert=soft_assert)
+
+    def test_create_policy_profiles(self, appliance, policy_profiles):
+        """
+        Bugzilla:
+            1806702
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Control
+            caseimportance: low
+            initialEstimate: 1/4h
+        """
+        for policy_profile in policy_profiles:
+            pp = appliance.rest_api.collections.policy_profiles.get(id=policy_profile.id)
+            assert pp.description == policy_profile.description
+            assert pp.name == policy_profile.name
+
+    @pytest.mark.parametrize("from_detail", (True, False), ids=["from_detail", "from_collection"])
+    def test_edit_policy_profiles(self, appliance, policy_profiles, from_detail):
+        """
+        Bugzilla:
+            1806702
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Control
+            caseimportance: low
+            initialEstimate: 1/4h
+        """
+        new = [
+            fauxfactory.gen_alpha(start="Edited pp ", length=13)
+            for _ in range(len(policy_profiles))
+        ]
+        if from_detail:
+            for index, pp in enumerate(policy_profiles):
+                pp.action.edit(**{"description": new[index]})
+                assert_response(appliance)
+        else:
+            appliance.rest_api.collections.policy_profiles.action.edit(
+                *[
+                    {"description": new[index], **pp._ref_repr()}
+                    for index, pp in enumerate(policy_profiles)
+                ]
+            )
+            assert_response(appliance)
+
+        for index, pp in enumerate(policy_profiles):
+            pp.reload()
+            description = new[index]
+            policy_profile = appliance.rest_api.collections.policy_profiles.get(
+                description=description
+            )
+            assert pp.description == description == policy_profile.description
+
+    def test_edit_read_only_policy_profile(self, appliance):
+        """
+        Bugzilla:
+            1806702
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Control
+            caseimportance: low
+            initialEstimate: 1/4h
+        """
+        # Currently it's not possible to delete a policy_profile with read_only set to True.
+        policy_profile = appliance.rest_api.collections.policy_profiles.action.create(
+            {
+                "description": fauxfactory.gen_alpha(start="PP description ", length=17),
+                "name": fauxfactory.gen_alpha(start="test_pp_name_", length=17),
+                "read_only": True,
+            }
+        )[0]
+        assert_response(appliance)
+        with pytest.raises(APIException, match="Api::ForbiddenError: Api::ForbiddenError"):
+            policy_profile.action.edit(
+                {"name": fauxfactory.gen_alpha(start="updated_pp_name_", length=20)}
+            )
+
+    @pytest.mark.parametrize("method", ["POST", "DELETE"])
+    def test_delete_policy_profiles_from_detail(self, policy_profiles, method):
+        """
+        Bugzilla:
+            1806702
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Control
+            caseimportance: low
+            initialEstimate: 1/4h
+        """
+        delete_resources_from_detail(policy_profiles, method=method)
+
+    def test_delete_policy_profiles_from_collection(self, policy_profiles):
+        """
+        Bugzilla:
+            1806702
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Control
+            caseimportance: low
+            initialEstimate: 1/4h
+        """
+        delete_resources_from_collection(policy_profiles, not_found=True)
+
+    def test_read_only_policy_profile_delete(self, appliance):
+        """
+        Bugzilla:
+            1806702
+
+        Polarion:
+            assignee: pvala
+            casecomponent: Control
+            caseimportance: low
+            initialEstimate: 1/4h
+        """
+        # Currently it's not possible to delete a policy_profile with read_only set to True.
+        policy_profile = appliance.rest_api.collections.policy_profiles.action.create(
+            {
+                "description": fauxfactory.gen_alpha(start="PP description ", length=17),
+                "name": fauxfactory.gen_alpha(start="test_pp_name_", length=17),
+                "read_only": True,
+            }
+        )[0]
+        assert_response(appliance)
+        assert policy_profile.read_only
+        with pytest.raises(APIException, match="Api::ForbiddenError: Api::ForbiddenError"):
+            delete_resources_from_detail([policy_profile], method="DELETE", check_response=False)
