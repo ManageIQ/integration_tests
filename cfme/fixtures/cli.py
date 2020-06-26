@@ -279,6 +279,9 @@ def distributed_appliances(temp_appliance_preconfig_funcscope_rhevm,
     secondary_appliance.configure(region=0, key_address=primary_appliance.hostname,
         db_address=primary_appliance.hostname)
 
+    primary_appliance.browser_steal = True
+    secondary_appliance.browser_steal = True
+
     return primary_appliance, secondary_appliance
 
 
@@ -299,6 +302,9 @@ def replicated_appliances(temp_appliance_preconfig_funcscope_rhevm,
     global_appliance.add_pglogical_replication_subscription(remote_appliance.hostname)
     logger.info("Finished appliance replication configuration.")
 
+    remote_appliance.browser_steal = True
+    global_appliance.browser_steal = True
+
     return remote_appliance, global_appliance
 
 
@@ -317,6 +323,9 @@ def replicated_appliances_preupdate(multiple_preupdate_appliances):
     global_appliance.set_pglogical_replication(replication_type=':global')
     global_appliance.add_pglogical_replication_subscription(remote_appliance.hostname)
     logger.info("Finished appliance replication configuration.")
+
+    global_appliance.browser_steal = True
+    remote_appliance.browser_steal = True
 
     return remote_appliance, global_appliance
 
