@@ -1,9 +1,12 @@
+from random import choice
+
 import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
 from cfme.utils.rest import delete_resources_from_collection
@@ -13,11 +16,11 @@ from cfme.utils.rest import delete_resources_from_detail
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.tier(2),
-    pytest.mark.provider([CloudProvider, InfraProvider], scope='module'),
+    pytest.mark.provider([CloudProvider, InfraProvider], scope='module', selector=ONE),
     test_requirements.rest,
 ]
 
-COLLECTIONS = ['providers', 'vms', 'instances', 'services']
+COLLECTIONS = ['providers', 'vms', 'instances', 'services', 'hosts']
 
 
 @pytest.fixture(scope='module')
@@ -78,13 +81,19 @@ def get_service(appliance):
         pass
 
 
+@pytest.fixture(scope="module")
+def get_host(appliance, setup_provider_modscope):
+    return lambda: choice(appliance.rest_api.collections.hosts.all)
+
+
 @pytest.fixture(scope='module')
-def get_resource(get_provider, get_vm, get_service):
+def get_resource(get_provider, get_vm, get_service, get_host):
     db = {
         'providers': get_provider,
         'instances': get_vm,
         'vms': get_vm,
         'services': get_service,
+        'hosts': get_host
     }
     return db
 
@@ -115,13 +124,14 @@ def add_custom_attributes(request, resource, num=2):
 def _uncollect(provider, collection_name):
     return (
         (provider.one_of(InfraProvider) and collection_name == 'instances') or
-        (provider.one_of(CloudProvider) and collection_name == 'vms')
+        (provider.one_of(CloudProvider) and collection_name in ('vms', 'hosts'))
     )
 
 
 GENERIC_UNCOLLECT = 'Invalid combination of collection_name and provider type'
 
 
+@pytest.mark.meta(automates=[1816003])
 class TestCustomAttributesRESTAPI:
     @pytest.mark.uncollectif(lambda provider, collection_name:
                              _uncollect(provider, collection_name),
