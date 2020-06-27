@@ -426,14 +426,17 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         })
 
     # TODO: implement this via Sentaku
-    def create_rest(self):
+    def create_rest(self, check_existing=False, validate_inventory=False):
         """Create the config manager in CFME using REST"""
-        include_ssl = False
+        if check_existing and self.exists:
+            return False
+
+        logger.info("Setting up provider via REST: %s", self.key)
+
         if self.type == "ansible_tower":
             config_type = "AnsibleTower"
         else:
             config_type = "Foreman"
-            include_ssl = True
 
         payload = {
             "type": f"ManageIQ::Providers::{config_type}::Provider",
@@ -443,10 +446,8 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
                 "userid": self.credentials.view_value_mapping["username"],
                 "password": self.credentials.view_value_mapping["password"],
             },
+            "verify_ssl": self.ssl,
         }
-
-        if include_ssl:
-            payload["verify_ssl"] = self.ssl
 
         try:
             self.appliance.rest_api.post(
@@ -463,6 +464,8 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
             raise AssertionError(
                 f"Provider wasn't added, status code {response.status_code}"
             )
+        if validate_inventory:
+            self.validate(timeout=300)
 
         assert_response(self.appliance)
         return True

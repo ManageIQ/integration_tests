@@ -649,7 +649,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         Sets up the provider robustly
         """
         # TODO: Eventually this will become Sentakuified, but only after providers is CEMv3
-        if self.category in ['cloud', 'infra', 'physical']:
+        if self.category in ['cloud', 'infra', 'physical', 'config_manager']:
             return self.create_rest(check_existing=True, validate_inventory=True)
         else:
             return self.create(cancel=False, validate_credentials=True,
@@ -710,8 +710,11 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             return
         else:
             # Set off a Refresh Relationships
-            method = 'ui' if ui else None
-            self.refresh_provider_relationships(method=method)
+            if self.category == "config_manager" and ui:
+                self.refresh_relationships()
+            else:
+                method = 'ui' if ui else None
+                self.refresh_provider_relationships(method=method)
 
             refresh_timer = RefreshTimer(time_for_refresh=300)
             wait_for(self._do_stats_match,
@@ -731,7 +734,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         """
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
         logger.debug('Refreshing provider relationships')
-        col = self.appliance.rest_api.collections.providers.find_by(name=self.name)
+        name = self.ui_name if self.category == "config_manager" else self.name
+        col = self.appliance.rest_api.collections.providers.find_by(name=name)
         try:
             col[0].action.refresh()
             self.wait_for_relationship_refresh(wait, delay, refresh_delta)
@@ -764,7 +768,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     @variable(alias='rest')
     def last_refresh_date(self):
         try:
-            col = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
+            name = self.ui_name if self.category == "config_manager" else self.name
+            col = self.appliance.rest_api.collections.providers.find_by(name=name)[0]
             return col.last_refresh_date
         except AttributeError:
             return None
@@ -772,7 +777,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     @variable(alias='rest')
     def last_refresh_error(self):
         try:
-            col = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
+            name = self.ui_name if self.category == "config_manager" else self.name
+            col = self.appliance.rest_api.collections.providers.find_by(name=name)[0]
             return col.last_refresh_error
         except AttributeError:
             return None
