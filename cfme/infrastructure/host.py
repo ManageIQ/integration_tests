@@ -15,14 +15,20 @@ from cfme.common import Taggable
 from cfme.common.candu_views import HostInfraUtilizationView
 from cfme.common.host_views import HostAddView
 from cfme.common.host_views import HostDetailsView
+from cfme.common.host_views import HostDevicesView
 from cfme.common.host_views import HostDiscoverView
 from cfme.common.host_views import HostDriftAnalysis
 from cfme.common.host_views import HostDriftHistory
 from cfme.common.host_views import HostEditView
 from cfme.common.host_views import HostNetworkDetailsView
+from cfme.common.host_views import HostOsView
+from cfme.common.host_views import HostPrintView
 from cfme.common.host_views import HostsCompareView
+from cfme.common.host_views import HostServicesView
+from cfme.common.host_views import HostStorageAdaptersView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostTimelinesView
+from cfme.common.host_views import HostVmmInfoView
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.host_views import ProviderHostsCompareView
 from cfme.exceptions import ItemNotFound
@@ -775,6 +781,24 @@ class HostSubnet(CFMENavigateStep):
         self.prerequisite_view.entities.summary('Relationships').click_at('Cloud Subnets')
 
 
+@navigator.register(Host, 'Devices')
+class HostDevices(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostDevicesView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Devices')
+
+
+@navigator.register(Host, 'Print or export')
+class HostPrint(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostPrintView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.download.click()
+
+
 @navigator.register(Host, 'Networks')
 class HostNetworks(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
@@ -782,6 +806,42 @@ class HostNetworks(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.entities.summary('Properties').click_at('Network')
+
+
+@navigator.register(Host, 'Operating System')
+class HostOperatingSystems(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostOsView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Operating System')
+
+
+@navigator.register(Host, "Storage Adapters")
+class HostStorageAdapters(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostStorageAdaptersView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('Storage Adapters')
+
+
+@navigator.register(Host, "Services")
+class HostServices(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostServicesView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Configuration').click_at('Services')
+
+
+@navigator.register(Host, "VMM Information")
+class HostVmmInfo(CFMENavigateStep):
+    prerequisite = NavigateToSibling("Details")
+    VIEW = HostVmmInfoView
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Properties').click_at('VMM Information')
 
 
 @navigator.register(Host, "UtilTrendSummary")

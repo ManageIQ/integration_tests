@@ -68,6 +68,7 @@ class HostDetailsToolbar(View):
     configuration = Dropdown(text="Configuration")
     policy = Dropdown(text="Policy")
     power = Dropdown(text="Power")
+    download = Button(title='Print or export summary')
 
     @ParametrizedView.nested
     class custom_button(ParametrizedView):  # noqa
@@ -206,6 +207,10 @@ class HostEntitiesView(BaseEntitiesView):
     @property
     def entity_class(self):
         return HostEntity
+
+
+class HostPrintView(BaseLoggedInPage):
+    pass
 
 
 class HostsView(ComputeInfrastructureHostsView):
@@ -381,3 +386,48 @@ class ProviderAllHostsView(HostsView):
             matched_title and
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']
         )
+
+
+class HostDevicesView(HostsView):
+    """The devices page"""
+
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (Devices)"
+        return self.breadcrumb.active_location == active_loc
+
+
+class HostOsView(HostsView):
+    """The Operating System page"""
+
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (OS Information)"
+        return self.breadcrumb.active_location == active_loc
+
+
+class HostStorageAdaptersView(HostsView):
+    """The storage adapters page"""
+    # Work on the title locator or another better way to do is_displayed.
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (Storage Adapters)"
+        return self.breadcrumb.active_location == active_loc
+
+
+class HostServicesView(HostsView):
+    """The services page"""
+
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (Services)"
+        return self.breadcrumb.active_location == active_loc
+
+
+class HostVmmInfoView(HostsView):
+    """The VM monitor info page"""
+    # Work on the title locator or another better way to do is_displayed.
+    @property
+    def is_displayed(self):
+        active_loc = f"{self.context['object'].name} (VM Monitor Information)"
+        return self.breadcrumb.active_location == active_loc

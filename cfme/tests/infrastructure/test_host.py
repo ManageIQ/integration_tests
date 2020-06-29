@@ -8,8 +8,15 @@ from widgetastic.exceptions import UnexpectedAlertPresentException
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
+from cfme.common.host_views import HostDevicesView
+from cfme.common.host_views import HostNetworkDetailsView
+from cfme.common.host_views import HostOsView
+from cfme.common.host_views import HostPrintView
 from cfme.common.host_views import HostsEditView
+from cfme.common.host_views import HostServicesView
+from cfme.common.host_views import HostStorageAdaptersView
 from cfme.common.host_views import HostsView
+from cfme.common.host_views import HostVmmInfoView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
@@ -527,6 +534,51 @@ def test_add_ipmi_refresh(appliance, setup_provider):
     host.refresh()
     view = navigate_to(host, "Edit")
     assert view.ipmi_address.read() == ipmi_address
+
+
+@pytest.fixture
+def host(appliance, provider):
+    host_collection = provider.hosts
+    return random.choice(host_collection.all())
+
+
+HOST_DETAIL_ROWS = [
+    ("Properties", "VMM Information", HostVmmInfoView),
+    ("Properties", "Operating System", HostOsView),
+    ("Properties", "Devices", HostDevicesView),
+    ("Properties", "Networks", HostNetworkDetailsView),
+    ("Properties", "Storage Adapters", HostStorageAdaptersView),
+    ("Configuration", "Services", HostServicesView),
+    ("Toolbar", "Print or export", HostPrintView),
+]
+
+
+@test_requirements.infra_hosts
+@pytest.mark.parametrize("table,row,view", HOST_DETAIL_ROWS,
+    ids=[rel[1] for rel in HOST_DETAIL_ROWS])
+def test_infrastructure_hosts_viewing(request, appliance, setup_provider, host, table, row, view):
+    """
+    Polarion:
+        assignee: prichard
+        casecomponent: Infra
+        caseimportance: high
+        initialEstimate: 1/6h
+    """
+    @request.addfinalizer
+    def _finalizer():
+        if row == "Print or export":
+            handle_extra_tabs(view)
+    try:
+        # Except for OS, Network, and print we need to check if we have any of the row items.
+        if row in ["Devices", "Storage Adapters", "Services"]:
+            det_view = navigate_to(host, "Details")
+            if det_view.entities.summary(table).get_text_of(row) == '0':
+                view = navigate_to(host, row, wait_for_view=0)
+                assert det_view.is_displayed
+                return
+        view = navigate_to(host, row)
+    except TimedOutError:
+        pytest.fail(f'Timed out navigating to host relationship {row}')
 
 
 @test_requirements.infra_hosts
