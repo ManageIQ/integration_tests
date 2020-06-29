@@ -11,6 +11,7 @@ class AzureInstance(Instance):
     START = "Start"
     POWER_ON = START  # For compatibility with the infra objects.
     STOP = "Stop"
+    POWER_OFF = STOP  # For compatibility with the infra objects.
     SUSPEND = "Suspend"
     DELETE = "Delete"
     TERMINATE = 'Delete'
