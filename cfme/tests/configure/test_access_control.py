@@ -18,6 +18,7 @@ from cfme.roles import FEATURES_510
 from cfme.roles import FEATURES_511
 from cfme.services.myservice import MyService
 from cfme.tests.integration.test_cfme_auth import retrieve_group
+from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
 from cfme.utils.blockers import BZ
@@ -201,6 +202,44 @@ def tenant_custom_role(appliance, request, provider):
     user.delete_if_exists()
     group.delete_if_exists()
     tenant_role.delete_if_exists()
+
+
+@pytest.fixture
+def custom_user(appliance):
+    """Fixture to create a tenant_administrator role, group, user with additional
+        product features"""
+    # Creating role
+    ssui_role = appliance.collections.roles.instantiate(name='EvmRole-user_self_service')
+    non_ssui_role = ssui_role.copy(
+        name=fauxfactory.gen_alphanumeric(30, start="EvmRole-user_non_ssui_")
+    )
+    with update(non_ssui_role):
+        non_ssui_role.product_features = [
+            (["Everything", "Service UI"], False)
+        ]
+    non_ssui_group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(30, "group_non_ssui_"),
+        role=non_ssui_role.name,
+        tenant="My Company"
+    )
+    ssui_group = appliance.collections.groups.instantiate(
+        description="EvmGroup-user_self_service"
+    )
+    # creating user
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(principal=fauxfactory.gen_alphanumeric(start="uid"),
+                              secret=fauxfactory.gen_alphanumeric(start="pwd")),
+        email=fauxfactory.gen_email(),
+        groups=[ssui_group, non_ssui_group]
+    )
+
+    # yield user
+    yield user, [ssui_group, non_ssui_group], [ssui_role, non_ssui_role]
+
+    user.delete_if_exists()
+    non_ssui_group.delete_if_exists()
+    non_ssui_role.delete_if_exists()
 
 
 # User test cases
@@ -2409,11 +2448,10 @@ def test_add_project():
     pass
 
 
-@pytest.mark.manual
 @test_requirements.rbac
 @test_requirements.ssui
 @pytest.mark.tier(2)
-def test_ssui_group_switch():
+def test_ssui_group_switch(appliance, custom_user):
     """
     When a user is a member of two or more groups and one of the groups
     does not have access to the SSUI, verify that the group w/o SSUI does
@@ -2435,7 +2473,16 @@ def test_ssui_group_switch():
             1. Login successful
             2. Automatically logged out of the SSUI
     """
-    pass
+    user, groups, roles = custom_user
+    with user:
+        with appliance.context.use(ViaSSUI):
+            view = appliance.server.login(user)
+
+            view.is_displayed
+            view.settings.click()
+
+            item = view.settings.items
+            view.settings.select_item(item[0])
 
 
 @pytest.mark.customer_scenario
