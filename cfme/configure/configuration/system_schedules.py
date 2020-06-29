@@ -217,7 +217,17 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
             'start_date': updates.get('start_date'),
             'start_hour': updates.get('start_hour'),
             'start_minute': updates.get('start_minute'),
-            'database_backup': {
+            'items_analysis': {
+                'filter_level1': updates.get('filter_level1'),
+                'filter_level2': updates.get('filter_level2'),
+            }
+        }
+
+        # The database_backup may not be available for filling depending on schedule type.
+        database_backup_fields = {
+            'backup_type', 'depot_name', 'uri', 'samba_username', 'samba_password'}
+        if any(updates.get(f) is not None for f in database_backup_fields):
+            form_mapping['database_backup'] = {
                 'backup_type': updates.get('backup_type'),
                 'backup_settings': {
                     'depot_name': updates.get('depot_name'),
@@ -226,12 +236,7 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
                     'samba_password': updates.get('samba_password'),
                     'samba_password_verify': updates.get('samba_password')
                 }
-            },
-            'items_analysis': {
-                'filter_level1': updates.get('filter_level1'),
-                'filter_level2': updates.get('filter_level2'),
             }
-        }
         view = navigate_to(self, 'Edit')
         updated = view.form.fill(form_mapping)
         if reset:
