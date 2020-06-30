@@ -62,19 +62,6 @@ def orphaned_vm(provider, testing_vm):
                                         from_details=False, from_any_provider=True)
 
 
-@pytest.fixture(scope="function")
-def testing_vm_tools(appliance, provider, vm_name, full_template):
-    """Fixture to provision vm with preinstalled tools to the provider being tested"""
-    vm = appliance.collections.infra_vms.instantiate(vm_name, provider, full_template.name)
-
-    if not provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    yield vm
-    vm.cleanup_on_provider()
-    if_scvmm_refresh_provider(provider)
-
-
 def if_scvmm_refresh_provider(provider):
     # No eventing from SCVMM so force a relationship refresh
     if provider.one_of(SCVMMProvider):
@@ -152,7 +139,7 @@ def wait_for_vm_tools(vm, timeout=300):
 
 class TestControlOnQuadicons:
 
-    def test_power_off_cancel(self, testing_vm, ensure_vm_running, soft_assert):
+    def test_power_off_cancel(self, create_vm, ensure_vm_running, soft_assert):
         """Tests power off cancel
 
         Metadata:
@@ -163,17 +150,17 @@ class TestControlOnQuadicons:
             casecomponent: Infra
             initialEstimate: 1/10h
         """
-        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
-        testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=True)
-        if_scvmm_refresh_provider(testing_vm.provider)
+        create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON, timeout=720)
+        create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=True)
+        if_scvmm_refresh_provider(create_vm.provider)
         # TODO: assert no event.
         time.sleep(60)
-        vm_state = testing_vm.find_quadicon().data['state']
+        vm_state = create_vm.find_quadicon().data['state']
         soft_assert(vm_state == 'on')
         soft_assert(
-            testing_vm.mgmt.is_running, "vm not running")
+            create_vm.mgmt.is_running, "vm not running")
 
-    def test_power_off(self, appliance, testing_vm, ensure_vm_running, soft_assert):
+    def test_power_off(self, appliance, create_vm, ensure_vm_running, soft_assert):
         """Tests power off
 
         Polarion:
@@ -183,19 +170,19 @@ class TestControlOnQuadicons:
             caseimportance: high
             tags: power
         """
-        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
-        testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False)
+        create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON, timeout=720)
+        create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
 
         view = appliance.browser.create_view(BaseLoggedInPage)
         view.flash.assert_success_message(text='Stop initiated', partial=True)
 
-        if_scvmm_refresh_provider(testing_vm.provider)
-        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=900)
-        vm_state = testing_vm.find_quadicon().data['state']
+        if_scvmm_refresh_provider(create_vm.provider)
+        create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF, timeout=900)
+        vm_state = create_vm.find_quadicon().data['state']
         soft_assert(vm_state == 'off')
-        soft_assert(not testing_vm.mgmt.is_running, "vm running")
+        soft_assert(not create_vm.mgmt.is_running, "vm running")
 
-    def test_power_on_cancel(self, testing_vm, ensure_vm_stopped, soft_assert):
+    def test_power_on_cancel(self, create_vm, ensure_vm_stopped, soft_assert):
         """Tests power on cancel
 
         Polarion:
@@ -205,16 +192,16 @@ class TestControlOnQuadicons:
             caseimportance: high
             tags: power
         """
-        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
-        testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=True)
-        if_scvmm_refresh_provider(testing_vm.provider)
+        create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF, timeout=720)
+        create_vm.power_control_from_cfme(option=create_vm.POWER_ON, cancel=True)
+        if_scvmm_refresh_provider(create_vm.provider)
         time.sleep(60)
-        vm_state = testing_vm.find_quadicon().data['state']
+        vm_state = create_vm.find_quadicon().data['state']
         soft_assert(vm_state == 'off')
-        soft_assert(not testing_vm.mgmt.is_running, "vm running")
+        soft_assert(not create_vm.mgmt.is_running, "vm running")
 
     @pytest.mark.tier(1)
-    def test_power_on(self, appliance, testing_vm, ensure_vm_stopped, soft_assert):
+    def test_power_on(self, appliance, create_vm, ensure_vm_stopped, soft_assert):
         """Tests power on
 
         Metadata:
@@ -227,17 +214,17 @@ class TestControlOnQuadicons:
             caseimportance: high
             tags: power
         """
-        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
-        testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False)
+        create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF, timeout=720)
+        create_vm.power_control_from_cfme(option=create_vm.POWER_ON, cancel=False)
 
         view = appliance.browser.create_view(BaseLoggedInPage)
         view.flash.assert_success_message(text='Start initiated', partial=True)
 
         if_scvmm_refresh_provider(testing_vm.provider)
-        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=900)
-        vm_state = testing_vm.find_quadicon().data['state']
+        create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON, timeout=900)
+        vm_state = create_vm.find_quadicon().data['state']
         soft_assert(vm_state == 'on')
-        soft_assert(testing_vm.mgmt.is_running, "vm not running")
+        soft_assert(create_vm.mgmt.is_running, "vm not running")
 
 
 class TestVmDetailsPowerControlPerProvider:
