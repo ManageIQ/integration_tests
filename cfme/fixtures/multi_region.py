@@ -1,5 +1,10 @@
+from typing import List
+from typing import Optional
+
 import attr
 import pytest
+
+from cfme.utils.appliance import IPAppliance
 
 
 @attr.s
@@ -9,8 +14,8 @@ class ApplianceCluster:
     Appliance from global region is stored in global_appliance.
     Whereas remote region appliances are stored in remote_appliances property.
     """
-    global_appliance = attr.ib(default=None)
-    remote_appliances = attr.ib(default=[])
+    global_appliance: Optional[IPAppliance] = attr.ib(default=None)
+    remote_appliances: List[IPAppliance] = attr.ib(default=[])
 
 
 @pytest.fixture(scope='module')

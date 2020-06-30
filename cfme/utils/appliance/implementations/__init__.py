@@ -1,3 +1,4 @@
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.browser import manager
 from cfme.utils.log import logger
 
@@ -7,7 +8,7 @@ class Implementation:
 
     navigator = None
 
-    def __init__(self, owner):
+    def __init__(self, owner: IPAppliance):
         self.owner = owner
 
     @property

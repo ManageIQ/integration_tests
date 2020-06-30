@@ -11,12 +11,17 @@ For tests that require multiple unconfigured appliances (e.g. replication testin
 :py:func:`temp_appliances_unconfig`.
 """
 from contextlib import contextmanager
+from typing import ContextManager
+from typing import Iterable
+from typing import Tuple
 
 import pytest
 
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
 from cfme.utils import periodic_call
+from cfme.utils import the_only_one_from
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.log import logger
 
 
@@ -31,7 +36,7 @@ def sprout_appliances(
     provider_type=None,
     version=None,
     **kwargs
-):
+) -> ContextManager[Iterable[IPAppliance]]:
     """ Provisions one or more appliances for testing
 
     Args:
@@ -89,21 +94,21 @@ def temp_appliance_preconfig(temp_appliance_preconfig_modscope):
 @pytest.fixture(scope="module")
 def temp_appliance_preconfig_modscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="class")
 def temp_appliance_preconfig_clsscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
 def temp_appliance_preconfig_funcscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=True) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
@@ -118,7 +123,7 @@ def temp_appliance_preconfig_funcscope_upgrade(request, appliance, pytestconfig)
                 split_version[0], (int(split_version[1]) - 1)
             )  # n-1 stream for upgrade
     ) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
@@ -129,7 +134,7 @@ def temp_appliance_preconfig_long(request, appliance, pytestconfig):
             appliance, config=pytestconfig, preconfigured=True, lease_time=1440,
             provider_type='rhevm'
     ) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
@@ -140,7 +145,7 @@ def temp_appliance_preconfig_funcscope_rhevm(appliance, pytestconfig):
             config=pytestconfig, preconfigured=True,
             provider_type='rhevm'
     ) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
 
 
 # Single appliance, unconfigured
@@ -152,21 +157,21 @@ def temp_appliance_unconfig(temp_appliance_unconfig_modscope):
 @pytest.fixture(scope="module")
 def temp_appliance_unconfig_modscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="class")
 def temp_appliance_unconfig_clsscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
 @pytest.fixture(scope="function")
 def temp_appliance_unconfig_funcscope(request, appliance, pytestconfig):
     with sprout_appliances(appliance, config=pytestconfig, preconfigured=False) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
@@ -178,7 +183,7 @@ def temp_appliance_unconfig_funcscope_rhevm(request, appliance, pytestconfig):
             preconfigured=False,
             provider_type='rhevm'
     ) as appliances:
-        yield appliances[0]
+        yield the_only_one_from(appliances)
         _collect_logs(request.config, appliances)
 
 
@@ -189,7 +194,8 @@ def temp_appliances_unconfig(temp_appliances_unconfig_modscope):
 
 
 @pytest.fixture(scope="module")
-def temp_appliances_unconfig_modscope(request, appliance, pytestconfig):
+def temp_appliances_unconfig_modscope(request, appliance, pytestconfig) \
+        -> Tuple[IPAppliance, IPAppliance]:
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -201,7 +207,8 @@ def temp_appliances_unconfig_modscope(request, appliance, pytestconfig):
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_unconfig_funcscope_rhevm(request, appliance, pytestconfig):
+def temp_appliances_unconfig_funcscope_rhevm(request, appliance, pytestconfig) \
+        -> Tuple[IPAppliance, IPAppliance]:
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -227,7 +234,8 @@ def temp_appliances_unconfig_modscope_rhevm(request, appliance, pytestconfig):
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_preconfig_funcscope(request, appliance, pytestconfig):
+def temp_appliances_preconfig_funcscope(request, appliance, pytestconfig) \
+        -> Tuple[IPAppliance, IPAppliance]:
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -239,7 +247,8 @@ def temp_appliances_preconfig_funcscope(request, appliance, pytestconfig):
 
 
 @pytest.fixture(scope="class")
-def temp_appliances_unconfig_clsscope(request, appliance, pytestconfig):
+def temp_appliances_unconfig_clsscope(request, appliance, pytestconfig) \
+        -> Tuple[IPAppliance, IPAppliance]:
     with sprout_appliances(
             appliance,
             config=pytestconfig,
@@ -251,7 +260,8 @@ def temp_appliances_unconfig_clsscope(request, appliance, pytestconfig):
 
 
 @pytest.fixture(scope="function")
-def temp_appliances_unconfig_funcscope(request, appliance, pytestconfig):
+def temp_appliances_unconfig_funcscope(request, appliance, pytestconfig) \
+        -> Tuple[IPAppliance, IPAppliance]:
     with sprout_appliances(
             appliance,
             config=pytestconfig,

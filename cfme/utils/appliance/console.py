@@ -1,10 +1,12 @@
 import re
 import socket
 from contextlib import contextmanager
+from typing import Tuple
 
 import lxml
 import yaml
 
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance.plugin import AppliancePlugin
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
@@ -281,7 +283,7 @@ def waiting_for_ha_monitor_started(appl, standby_server_ip, timeout):
         wait_for(lambda: appl.evm_failover_monitor.running, timeout=300)
 
 
-def configure_appliances_ha(appliances, pwd):
+def configure_appliances_ha(appliances: Tuple[IPAppliance, IPAppliance, IPAppliance], pwd):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,

@@ -5,13 +5,19 @@ import subprocess
 import threading
 from contextlib import contextmanager
 from functools import partial
+from typing import Iterable
+from typing import TypeVar
 
-import diaper
+import diaper  # import diaper for backward compatibility
 from cached_property import cached_property
 from werkzeug.local import LocalProxy
-# import diaper for backward compatibility
+
+from cfme.fixtures.appliance import T
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
+
+T = TypeVar('T')
 
 
 class TriesExceeded(Exception):
@@ -411,3 +417,11 @@ def periodic_call(period_seconds, call, args=None, kwargs=None):
         yield
     finally:
         timer.cancel()
+
+
+def the_only_one_from(iterable: Iterable[T]) -> T:
+    """ Returns the first element from iterable, preserving type,
+    checking whether it is the only one in it.
+    """
+    obj, = iterable
+    return obj

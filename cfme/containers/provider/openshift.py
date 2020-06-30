@@ -87,7 +87,6 @@ class AlertsEndpoint(ServiceBasedEndpoint):
 
 @attr.s(eq=False)
 class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
-
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"
@@ -351,7 +350,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
         provider_ssh = self.cli.ssh_client
         appliance_ssh = self.appliance.ssh_client()
 
-        # Connection to the applince in case of dead connection
+        # Connection to the appliance in case of dead connection
         if not appliance_ssh.connected:
             appliance_ssh.connect()
 
@@ -371,7 +370,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
                      message="Copy certificate from OCP to CFME")
             appliance_ssh.exec_command("update-ca-trust")
 
-            # restarting evemserverd to apply the new SSL certificate
+            # restarting evmserverd to apply the new SSL certificate
             self.appliance.evmserverd.restart()
             self.appliance.evmserverd.wait_for_running()
             self.appliance.wait_for_web_ui()
