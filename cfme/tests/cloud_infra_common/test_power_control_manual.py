@@ -2,10 +2,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider
-from cfme.infrastructure.provider import InfraProvider
-from cfme.markers.env_markers.provider import ONE_PER_TYPE
-from cfme.utils.appliance import ViaREST
 
 pytestmark = [test_requirements.power, pytest.mark.manual]
 
@@ -214,46 +210,6 @@ def test_power_controls_on_vm_in_stack_cloud():
             3.
             4.
             5. Power operations applicable for this instance should be working as expected
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.parametrize('context', [ViaREST])
-@pytest.mark.provider([CloudProvider, InfraProvider], required_fields=['templates'],
-                      selector=ONE_PER_TYPE)
-@test_requirements.multi_region
-@test_requirements.power
-def test_power_operations_from_global_region(provider, context):
-    """
-    This test case is to check power operations from Global region
-    Setup is 2 or more appliances(DB should be configured manually). One
-    is Global region, others are Remote. To get this working enable Central Admin.
-
-    Polarion:
-        assignee: tpapaioa
-        initialEstimate: 1/2h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.6
-        casecomponent: Control
-        tags: power
-        testSteps:
-            1. Take two or more appliances
-            2. Configure DB manually
-            3. Make one appliance as Global region and others are Remote
-            4. Add provider to remote region appliance
-            5. Provision VM
-            6. Perform power operations on VM from global region
-        expectedResults:
-            1.
-            2.
-            3.
-            4.
-            5.
-            6. Power operations applicable for this vm should be working as expected
     """
     pass
 

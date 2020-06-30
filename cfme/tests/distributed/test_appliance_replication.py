@@ -10,9 +10,11 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils import conf
+from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
+from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -138,7 +140,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider, repli
 @pytest.mark.rhel_testing
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.parametrize('context', [ViaUI])
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.provider([CloudProvider, InfraProvider], selector=ONE_PER_TYPE)
 @test_requirements.multi_region
 @test_requirements.power
@@ -165,11 +167,18 @@ def test_replication_vm_power_control(provider, create_vm, context, replicated_a
 
     with global_appliance:
         vm = vm_per_appliance[global_appliance]
-        vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
-        # navigate_to(provider, 'Details')
+        if context.name == 'UI':
+            vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
+        else:
+            vm_entity = global_appliance.rest_api.collections.vms.get(name=vm.name)
+            global_appliance.rest_api.collections.vms.action.stop(vm_entity)
+            assert_response(global_appliance, task_wait=0)
+
+    with remote_appliance:
+        vm = vm_per_appliance[remote_appliance]
         vm.wait_for_vm_state_change(desired_state=vm.STATE_OFF, timeout=900)
         assert vm.find_quadicon().data['state'] == 'off', "Incorrect VM quadicon state"
-        assert not create_vm.mgmt.is_running, "VM is still running"
+        assert not vm.mgmt.is_running, "VM is still running"
 
 
 @pytest.mark.rhel_testing
