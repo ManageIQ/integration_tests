@@ -2,7 +2,7 @@ import pytest
 from wait_for import wait_for
 
 from cfme import test_requirements
-from cfme.utils.appliance.console import waiting_for_ha_monitor_started
+from cfme.utils.ha import waiting_for_ha_monitor_started
 from cfme.utils.log_validator import LogValidator
 
 pytestmark = [

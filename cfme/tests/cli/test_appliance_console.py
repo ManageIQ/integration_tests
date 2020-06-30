@@ -12,10 +12,10 @@ from cfme import test_requirements
 from cfme.exceptions import SSHExpectTimeoutError
 from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
-from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
+from cfme.utils.ha import waiting_for_ha_monitor_started
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.net import net_check

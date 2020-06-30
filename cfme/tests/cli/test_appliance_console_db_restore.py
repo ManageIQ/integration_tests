@@ -9,12 +9,13 @@ from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils.appliance.console import configure_appliances_ha
-from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.ha import configure_appliances_ha
+from cfme.utils.ha import configure_automatic_failover
+from cfme.utils.ha import waiting_for_ha_monitor_started
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.ssh_expect import SSHExpect
@@ -542,7 +543,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     appl1.appliance_console.reconfigure_primary_replication_node(pwd)
     appl2.appliance_console.reconfigure_standby_replication_node(pwd, appl1.hostname)
 
-    appl3.appliance_console.configure_automatic_failover(primary_ip=appl1.hostname)
+    configure_automatic_failover(appl3, primary_ip=appl1.hostname)
     appl3.evm_failover_monitor.restart()
 
     appl3.evmserverd.start()

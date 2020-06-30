@@ -4,7 +4,6 @@ from configparser import ConfigParser
 from contextlib import contextmanager
 from io import StringIO
 from typing import ContextManager
-from typing import Generator
 from typing import Iterable
 from typing import Tuple
 
@@ -24,10 +23,10 @@ from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
 from cfme.utils import the_only_one_from
 from cfme.utils.appliance import IPAppliance
-from cfme.utils.appliance.console import configure_appliances_ha
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.ha import configure_appliances_ha
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
 from cfme.utils.version import Version
@@ -252,7 +251,7 @@ def appliance_preupdate(appliance, old_version, request):
 
 @pytest.fixture
 def multiple_preupdate_appliances(appliance, old_version, request) \
-        -> Generator[Tuple[IPAppliance, IPAppliance]]:
+        -> Tuple[IPAppliance, IPAppliance]:
     """Requests multiple appliances from sprout."""
     with get_apps(request, appliance, old_version, count=2, preconfigured=False,
                   pytest_config=request.config) as apps:
@@ -261,7 +260,7 @@ def multiple_preupdate_appliances(appliance, old_version, request) \
 
 @pytest.fixture
 def ha_multiple_preupdate_appliances(appliance, old_version, request) \
-        -> Generator[Tuple[IPAppliance, IPAppliance, IPAppliance]]:
+        -> Tuple[IPAppliance, IPAppliance, IPAppliance]:
     """Requests multiple appliances from sprout."""
     with get_apps(request, appliance, old_version, count=3, preconfigured=False,
                   pytest_config=request.config) as apps:

@@ -6,7 +6,6 @@ from weakref import WeakKeyDictionary
 import attr
 from cached_property import cached_property
 
-
 T = TypeVar('T')
 
 
@@ -47,6 +46,7 @@ class AppliancePlugin:
 
     Instance of such plugin is then created upon first access.
     """
+    # appliance: IPAppliance = attr.ib(repr=False, converter=proxy)
     appliance = attr.ib(repr=False, converter=proxy)
 
     @cached_property

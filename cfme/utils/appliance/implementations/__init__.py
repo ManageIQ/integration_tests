@@ -1,6 +1,11 @@
-from cfme.utils.appliance import IPAppliance
+from typing import TypeVar
+
 from cfme.utils.browser import manager
 from cfme.utils.log import logger
+
+# A hack to workaround problem with circular import of modules
+# for the IPAppliance class
+T = TypeVar('T')
 
 
 class Implementation:
@@ -8,7 +13,7 @@ class Implementation:
 
     navigator = None
 
-    def __init__(self, owner: IPAppliance):
+    def __init__(self, owner: T):
         self.owner = owner
 
     @property
