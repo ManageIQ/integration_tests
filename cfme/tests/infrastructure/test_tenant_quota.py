@@ -141,11 +141,11 @@ def migration_destination_host(create_vm_modscope, provider):
 
 @pytest.fixture
 def quota_limit(root_tenant):
-    in_use_storage = int(root_tenant.quota["storage"]["in_use"].strip(" GB"))
+    in_use_storage = round(float(root_tenant.quota["storage"]["in_use"].strip(" GB")), 2)
     # set storage quota limit to something more than the in_use_storage space
     root_tenant.set_quota(storage_cb=True, storage=(in_use_storage + 3))
 
-    yield int(root_tenant.quota["storage"]["available"].strip(" GB"))
+    yield round(float(root_tenant.quota["storage"]["available"].strip(" GB")), 2)
 
     root_tenant.set_quota(storage_cb=False)
 
