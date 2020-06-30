@@ -12,8 +12,6 @@ import diaper  # import diaper for backward compatibility
 from cached_property import cached_property
 from werkzeug.local import LocalProxy
 
-from cfme.fixtures.appliance import T
-
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 
