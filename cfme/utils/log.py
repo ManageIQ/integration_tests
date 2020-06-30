@@ -149,7 +149,7 @@ MARKER_LEN = 80
 
 # set logging defaults
 _default_conf = {
-    'level': 'INFO',
+    'level': logging.INFO,
     'errors_to_console': False,
     'to_console': False,
 }
@@ -366,13 +366,9 @@ def setup_logger(logger, file_handler=None):
     Returns:
         tuple of (<logger>, <file handler attached to this logger>)
     """
-    # prevent the root logger effective level from affecting us
-    # this is a hack
-    logger.setLevel(logging.INFO)
-    # prevent root logger handlers from triggering (its sad that we need this)
-    logger.propagate = False
-    # Grab the logging conf
     conf = _load_conf(logger.name)
+    logger.setLevel(conf['level'])
+    logger.propagate = False
 
     # log_file is dynamic, so we can't used logging.config.dictConfig here without creating
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
