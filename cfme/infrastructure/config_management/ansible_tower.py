@@ -76,6 +76,7 @@ class AnsibleTowerProvider(ConfigManagerProvider):
             tower_cfg_mgr.delete()
     """
     type_name = 'ansible_tower'
+    ssl = attr.ib(default=None)
     ui_type = 'Ansible Tower'
 
     _collections = {
@@ -96,6 +97,7 @@ class AnsibleTowerProvider(ConfigManagerProvider):
             cls,
             name=data['name'],
             url=data['url'],
+            ssl=data['ssl'],
             credentials=cls.Credential(
                 principal=creds['username'], secret=creds['password']),
             key=prov_key

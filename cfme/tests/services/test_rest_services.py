@@ -1,4 +1,5 @@
 import datetime
+from random import choice
 
 import fauxfactory
 import pytest
@@ -7,6 +8,7 @@ from manageiq_client.api import ManageIQClient as MiqApi
 from manageiq_client.filters import Q
 
 from cfme import test_requirements
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.rest.gen_data import _creating_skeleton
@@ -822,6 +824,35 @@ class TestServiceDialogsRESTAPI:
             dialog_fields, = dialog_groups['dialog_fields']
             assert dialog_fields['name']
 
+    @pytest.fixture(
+        params=[
+            ("OrchestrationTemplate", "OrchestrationTemplateServiceDialog"),
+            ("ConfigurationScript", "AnsibleTowerJobTemplateDialogService"),
+        ],
+        ids=["orchestration_templates", "configuration_scripts"],
+    )
+    def create_from_template(self, appliance, request):
+        rest_collection = appliance.rest_api.collections
+        template_class, dialog_class = request.param
+        payload = {
+            "label": fauxfactory.gen_alpha(start="dialog "),
+            "template_id": choice(
+                getattr(
+                    rest_collection,
+                    "orchestration_templates"
+                    if template_class == "OrchestrationTemplate"
+                    else "configuration_scripts",
+                ).all
+            ).id,
+            "template_class": template_class,
+            "dialog_class": f"Dialog::{dialog_class}",
+        }
+
+        service_dialog = rest_collection.service_dialogs.action.template_service_dialog(payload)[0]
+        yield service_dialog
+        if service_dialog.exists:
+            service_dialog.action.delete()
+
     def test_query_service_dialog_attributes(self, service_dialogs, soft_assert):
         """Tests access to service dialog attributes.
 
@@ -928,6 +959,27 @@ class TestServiceDialogsRESTAPI:
             tags: service
         """
         delete_resources_from_collection(service_dialogs)
+
+    @pytest.mark.provider([AnsibleTowerProvider], override=True, scope="module", selector=ONE)
+    def test_create_from_template(self, appliance, setup_provider, create_from_template):
+        """Tests dialog creation from template.
+        TODO:
+            AnsibleTowerProvider is not required while using OrchestrationTemplate, figure out a
+            way to setup provider only while using ConfigurationScript without writing separate
+            tests.
+
+        Metadata:
+            test_flag: rest
+
+        Polarion:
+            assignee: nansari
+            casecomponent: Rest
+            initialEstimate: 1/4h
+            tags: service
+        """
+        dialog = create_from_template
+        get_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
+        assert get_dialog.exists
 
 
 class TestServiceTemplateRESTAPI:
