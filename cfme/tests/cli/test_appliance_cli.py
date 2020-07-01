@@ -96,7 +96,7 @@ def test_appliance_console_cli_internal_fetch_key(app_creds, unconfigured_applia
         unconfigured_appliance.unpartitioned_disks[0], fetch_key_ip, app_creds['sshlogin'],
         app_creds['sshpass'])
     unconfigured_appliance.evmserverd.wait_for_running()
-    unconfigured_appliance.wait_for_web_ui()
+    unconfigured_appliance.wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)
@@ -114,7 +114,7 @@ def test_appliance_console_cli_external_join(app_creds, appliance,
         appliance_ip, app_creds['username'], app_creds['password'], 'vmdb_production', appliance_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
     temp_appliance_unconfig_funcscope.evmserverd.wait_for_running()
-    temp_appliance_unconfig_funcscope.wait_for_web_ui()
+    temp_appliance_unconfig_funcscope.wait_for_miq_ready()
 
 
 @pytest.mark.rhel_testing
@@ -133,7 +133,7 @@ def test_appliance_console_cli_external_create(app_creds, dedicated_db_appliance
         hostname, app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
         app_creds['sshlogin'], app_creds['sshpass'])
     unconfigured_appliance_secondary.evmserverd.wait_for_running()
-    unconfigured_appliance_secondary.wait_for_web_ui()
+    unconfigured_appliance_secondary.wait_for_miq_ready()
 
 
 @pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],
@@ -259,7 +259,7 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
         app0_ip, app_creds['username'], app_creds['password'], 'vmdb_production', app0_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
     apps[2].evmserverd.wait_for_running()
-    apps[2].wait_for_web_ui()
+    apps[2].wait_for_miq_ready()
     # Configure primary node
     apps[0].appliance_console_cli.configure_appliance_dedicated_ha_primary(
         app_creds['username'], app_creds['password'], 'primary', app0_ip, '1', 'vmdb_production'
@@ -283,4 +283,4 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
         assert result.success, f"Failed to stop APPLIANCE_PG_SERVICE: {result.output}"
 
     apps[2].evmserverd.wait_for_running()
-    apps[2].wait_for_web_ui()
+    apps[2].wait_for_miq_ready()

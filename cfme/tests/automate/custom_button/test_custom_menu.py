@@ -36,7 +36,7 @@ def update_adv_setting_and_wait(appliance, data):
     """
     appliance.update_advanced_settings(data)
     appliance.evmserverd.restart()
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
 
 
 @pytest.mark.tier(1)

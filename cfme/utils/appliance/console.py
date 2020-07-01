@@ -380,7 +380,7 @@ def configure_appliances_ha(appliances, pwd):
         interaction.answer('Press any key to continue.', '', timeout=360)
 
     apps2.evmserverd.wait_for_running()
-    apps2.wait_for_web_ui()
+    apps2.wait_for_miq_ready()
 
     apps0.appliance_console.configure_primary_replication_node(pwd)
     apps1.appliance_console.configure_standby_replication_node(pwd, app0_ip)

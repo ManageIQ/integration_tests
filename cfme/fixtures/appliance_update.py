@@ -28,5 +28,5 @@ def pytest_sessionstart(session):
     urls = session.config.getoption("update_urls")
     store.current_appliance.update_rhel(*urls, reboot=True)
     store.write_line("Appliance update finished, waiting for UI ...")
-    store.current_appliance.wait_for_web_ui()
+    store.current_appliance.wait_for_miq_ready()
     store.write_line("Appliance update finished ...")

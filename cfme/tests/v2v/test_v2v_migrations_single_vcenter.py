@@ -364,7 +364,7 @@ def test_migration_restart(request, appliance, provider,
         delay=10,
         num_sec=1800
     )
-    appliance.wait_for_web_ui()
+    appliance.wait_for_miq_ready()
     try:
         assert migration_plan.wait_for_state("In_Progress")
     except WebDriverException:

@@ -1194,7 +1194,7 @@ def test_create_azure_vm_from_azure_image(connect_az_account, cfme_vhd, upload_i
         assert unlock.success
 
     app.configure()
-    app.wait_for_web_ui()
+    app.wait_for_miq_ready()
 
     # Check we can login
     logged_in_page = app.server.login()

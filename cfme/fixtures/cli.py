@@ -346,7 +346,7 @@ def ext_appliances_with_providers(multiple_preupdate_appliances, app_creds_modsc
     app_ip = appl1.hostname
     # configure appliances
     appl1.configure(region=0)
-    appl1.wait_for_web_ui()
+    appl1.wait_for_miq_ready()
     appl2.appliance_console_cli.configure_appliance_external_join(
         app_ip,
         app_creds_modscope["username"],
@@ -356,7 +356,7 @@ def ext_appliances_with_providers(multiple_preupdate_appliances, app_creds_modsc
         app_creds_modscope["sshlogin"],
         app_creds_modscope["sshpass"],
     )
-    appl2.wait_for_web_ui()
+    appl2.wait_for_miq_ready()
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(OpenStackProvider, appl1).setup()

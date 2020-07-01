@@ -60,7 +60,7 @@ def setup_replication(configured_appliance, unconfigured_appliance):
 
     global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
     global_app.evmserverd.wait_for_running()
-    global_app.wait_for_web_ui()
+    global_app.wait_for_miq_ready()
 
     remote_app.set_pglogical_replication(replication_type=':remote')
     global_app.set_pglogical_replication(replication_type=':global')
@@ -279,7 +279,7 @@ def test_replication_appliance_set_type_global_ui(configured_appliance, unconfig
 
     global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
     global_app.evmserverd.wait_for_running()
-    global_app.wait_for_web_ui()
+    global_app.wait_for_miq_ready()
 
     # Making configured app to Remote Appliance using UI
     remote_region = remote_app.collections.regions.instantiate()
@@ -459,7 +459,7 @@ def test_replication_subscription_revalidation_pglogical(configured_appliance,
 
     global_app.appliance_console_cli.configure_appliance_internal_fetch_key(**app_params)
     global_app.evmserverd.wait_for_running()
-    global_app.wait_for_web_ui()
+    global_app.wait_for_miq_ready()
 
     remote_app.set_pglogical_replication(replication_type=':remote')
     region = global_app.collections.regions.instantiate(number=99)

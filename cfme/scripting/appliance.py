@@ -83,7 +83,7 @@ def upgrade_appliance(appliance_ip, cfme_only, update_to):
     print('Starting EVM')
     app.evmserverd.start()
     print('Waiting for webui')
-    app.wait_for_web_ui()
+    app.wait_for_miq_ready()
     print('Appliance upgrade completed')
 
 
@@ -131,7 +131,7 @@ def backup_migrate(appliance_ip, db_url, keys_url, backup):
     print('Starting EVM')
     app.evmserverd.start()
     print('Waiting for webui')
-    app.wait_for_web_ui()
+    app.wait_for_miq_ready()
     print('Appliance upgrade completed')
 
 

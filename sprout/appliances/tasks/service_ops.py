@@ -86,7 +86,7 @@ def appliance_reboot(self, appliance_id, if_needs_restarting=False):
             appliance = Appliance.objects.get(id=appliance_id)
             appliance.set_power_state(Appliance.Power.REBOOTING)
             appliance.save()
-        appliance.ipapp.reboot(wait_for_web_ui=False, log_callback=appliance.set_status)
+        appliance.ipapp.reboot(wait_for_miq_ready=False, log_callback=appliance.set_status)
         with transaction.atomic():
             appliance = Appliance.objects.get(id=appliance_id)
             appliance.set_power_state(Appliance.Power.ON)

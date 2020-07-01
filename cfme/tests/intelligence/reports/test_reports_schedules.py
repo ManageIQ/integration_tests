@@ -283,7 +283,7 @@ def test_miq_schedule_validation_failed(temp_appliance_preconfig):
         pytest.fail("Failed to download the file to the appliance.")
 
     # In case the failure pattern is encountered, the following piece of code will raise
-    # a TimedOutError from appliance.wait_for_web_ui
+    # a TimedOutError from appliance.wait_for_miq_ready
     # The matched_patterns will only be found on successful database restore.
     with LogValidator(
         "/var/www/miq/vmdb/log/evm.log",

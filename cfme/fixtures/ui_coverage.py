@@ -145,7 +145,7 @@ class CoverageManager:
         self._install_simplecov()
         self._install_coverage_hook()
         self.ipapp.evmserverd.restart()
-        self.ipapp.wait_for_web_ui()
+        self.ipapp.wait_for_miq_ready()
 
     def collect(self):
         self.print_message('collecting reports')

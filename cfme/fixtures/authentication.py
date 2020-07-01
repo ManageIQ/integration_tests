@@ -141,7 +141,7 @@ def configure_auth(temp_appliance_preconfig_long, auth_mode, auth_provider, user
     # return to original auth config
     temp_appliance_preconfig_long.server.authentication.auth_settings = original_config
     temp_appliance_preconfig_long.evmserverd.restart()
-    temp_appliance_preconfig_long.wait_for_web_ui()
+    temp_appliance_preconfig_long.wait_for_miq_ready()
     # after waiting for web ui to reappear we are greeted with an API logout message
     # and stuck on the login screen without the login widgets having loaded
     sleep(30)

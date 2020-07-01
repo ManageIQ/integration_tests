@@ -56,15 +56,13 @@ def get_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm):
     appl2.configure(region=0)
 
     for app in temp_appliances_unconfig_funcscope_rhevm:
-        app.wait_for_web_ui()
-        app.wait_for_api_available()
+        app.wait_for_miq_ready()
 
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(OpenStackProvider, appl1).setup()
     appl1.db.backup()
-    appl1.wait_for_web_ui()
-    appl1.wait_for_api_available()
+    appl1.wait_for_miq_ready()
     return temp_appliances_unconfig_funcscope_rhevm
 
 
@@ -79,8 +77,7 @@ def get_appliance_with_ansible(temp_appliance_preconfig_funcscope):
     appl1.enable_embedded_ansible_role()
     appl1.wait_for_embedded_ansible()
     appl1.db.backup()
-    appl1.wait_for_web_ui()
-    appl1.wait_for_api_available()
+    appl1.wait_for_miq_ready()
     return temp_appliance_preconfig_funcscope
 
 
@@ -94,13 +91,12 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
     app_ip = appl1.hostname
     # configure appliances
     appl1.configure(region=0)
-    appl1.wait_for_web_ui()
-    appl1.wait_for_api_available()
+    appl1.wait_for_miq_ready()
 
     appl2.appliance_console_cli.configure_appliance_external_join(
         app_ip, app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
         app_ip, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])
-    appl2.wait_for_web_ui()
+    appl2.wait_for_miq_ready()
     # Add infra/cloud providers and create db backup
     provider_app_crud(VMwareProvider, appl1).setup()
     provider_app_crud(OpenStackProvider, appl1).setup()
@@ -154,7 +150,7 @@ def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
         TimedCommand(pwd, 360), '')
     appl3.appliance_console.run_commands(command_set)
     appl3.evmserverd.wait_for_running()
-    appl3.wait_for_web_ui()
+    appl3.wait_for_miq_ready()
     # Configure primary replication node
     command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip, TimedCommand('y', 60), '')
     appl1.appliance_console.run_commands(command_set)
@@ -247,8 +243,7 @@ def test_appliance_console_dump_restore_db_local(request, get_appliances_with_pr
     appl2.db.create()
     restore_db(appl2)
     appl2.evmserverd.start()
-    appl2.wait_for_web_ui()
-    appl2.wait_for_api_available()
+    appl2.wait_for_miq_ready()
 
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == set(appl1.managed_provider_names), (
@@ -307,8 +302,7 @@ def test_appliance_console_backup_restore_db_local(request, two_appliances_one_w
         interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
-    appl2.wait_for_web_ui()
-    appl2.wait_for_api_available()
+    appl2.wait_for_miq_ready()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
@@ -336,8 +330,7 @@ def test_appliance_console_restore_pg_basebackup_ansible(get_appliance_with_ansi
     restore_db(appl1, '/tmp/evm_db.backup')
     manager.quit()
     appl1.evmserverd.start()
-    appl1.wait_for_web_ui()
-    appl1.wait_for_api_available()
+    appl1.wait_for_miq_ready()
     appl1.wait_for_embedded_ansible()
     repositories = appl1.collections.ansible_repositories
     try:
@@ -385,10 +378,9 @@ def test_appliance_console_restore_pg_basebackup_replicated(
     restore_db(appl2, '/tmp/evm_db.backup')
     appl1.evmserverd.start()
     appl2.evmserverd.start()
-    appl1.wait_for_web_ui()
-    appl2.wait_for_web_ui()
-    appl1.wait_for_api_available()
-    appl2.wait_for_api_available()
+    appl1.wait_for_miq_ready()
+    appl2.wait_for_miq_ready()
+
     # Assert providers exist after restore and replicated to second appliances
     assert providers_before_restore == set(appl1.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -427,9 +419,9 @@ def test_appliance_console_restore_db_external(request, get_ext_appliances_with_
     appl1.db.create()
     restore_db(appl1)
     appl1.evmserverd.start()
-    appl1.wait_for_web_ui()
+    appl1.wait_for_miq_ready()
     appl2.evmserverd.start()
-    appl2.wait_for_web_ui()
+    appl2.wait_for_miq_ready()
     # Assert providers after restore on both apps
     assert providers_before_restore == set(appl1.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -474,10 +466,8 @@ def test_appliance_console_restore_db_replicated(
     restore_db(appl1)
     appl1.evmserverd.start()
     appl2.evmserverd.start()
-    appl1.wait_for_web_ui()
-    appl2.wait_for_web_ui()
-    appl1.wait_for_api_available()
-    appl2.wait_for_api_available()
+    appl1.wait_for_miq_ready()
+    appl2.wait_for_miq_ready()
 
     # reconfigure replication between appliances which switches to "disabled"
     # during restore
@@ -546,8 +536,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     appl3.evm_failover_monitor.restart()
 
     appl3.evmserverd.start()
-    appl3.wait_for_web_ui()
-    appl3.wait_for_api_available()
+    appl3.wait_for_miq_ready()
     # Assert providers still exist after restore
     assert providers_before_restore == set(appl3.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -560,8 +549,7 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
         appl1.db_service.stop()
 
     appl3.evmserverd.wait_for_running()
-    appl3.wait_for_web_ui()
-    appl3.wait_for_api_available()
+    appl3.wait_for_miq_ready()
     # Assert providers still exist after ha failover
     assert providers_before_restore == set(appl3.managed_provider_names), (
         'Restored DB is missing some providers'
@@ -641,8 +629,7 @@ def test_appliance_console_restore_db_nfs(request, two_appliances_one_with_provi
         interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
-    appl2.wait_for_web_ui()
-    appl2.wait_for_api_available()
+    appl2.wait_for_miq_ready()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'
@@ -728,8 +715,7 @@ def test_appliance_console_restore_db_samba(request, two_appliances_one_with_pro
         interaction.answer('Press any key to continue.', '', timeout=80)
 
     appl2.evmserverd.start()
-    appl2.wait_for_web_ui()
-    appl2.wait_for_api_available()
+    appl2.wait_for_miq_ready()
     # Assert providers on the second appliance
     assert set(appl2.managed_provider_names) == appl1_provider_names, (
         'Restored DB is missing some providers'

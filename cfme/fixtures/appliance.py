@@ -68,7 +68,7 @@ def sprout_appliances(
             # Web UI not available on unconfigured appliances
             if preconfigured:
                 logger.info("Appliance update finished on temp appliance, waiting for UI ...")
-                app.wait_for_web_ui()
+                app.wait_for_miq_ready()
             logger.info("Appliance update finished on temp appliance...")
 
     try:

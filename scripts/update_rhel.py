@@ -28,7 +28,7 @@ def main():
     if res.rc == 0:
         if args.reboot:
             print('Rebooting')
-            ip_a.reboot(wait_for_web_ui=args.no_wait_ui)
+            ip_a.reboot(wait_for_miq_ready=args.no_wait_ui)
         print('Appliance update complete')
 
     return res.rc

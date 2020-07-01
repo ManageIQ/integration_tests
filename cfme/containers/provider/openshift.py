@@ -374,7 +374,7 @@ class OpenshiftProvider(ContainersProvider, ConsoleMixin, Taggable):
             # restarting evemserverd to apply the new SSL certificate
             self.appliance.evmserverd.restart()
             self.appliance.evmserverd.wait_for_running()
-            self.appliance.wait_for_web_ui()
+            self.appliance.wait_for_miq_ready()
 
     def get_system_id(self):
         mgmt_systems_tbl = self.appliance.db.client['ext_management_systems']
