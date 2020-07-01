@@ -14,14 +14,14 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.stack import ProviderStackAllView
 from cfme.cloud.tenant import ProviderTenantAllView
+from cfme.common.datastore_views import HostAllDatastoresView
+from cfme.common.datastore_views import ProviderAllDatastoresView
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.provider_views import InfraProviderDetailsView
 from cfme.common.vm_views import HostAllVMsView
 from cfme.common.vm_views import ProviderAllVMsView
 from cfme.infrastructure.cluster import ClusterDetailsView
 from cfme.infrastructure.cluster import ProviderAllClustersView
-from cfme.infrastructure.datastore import HostAllDatastoresView
-from cfme.infrastructure.datastore import ProviderAllDatastoresView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
