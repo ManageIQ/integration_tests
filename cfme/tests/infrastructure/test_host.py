@@ -229,7 +229,6 @@ def test_tag_host_after_provider_delete(provider, appliance, setup_provider, req
         initialEstimate: 1/8h
         casecomponent: Tagging
     """
-    # Todo: use host fixture once it gets merged(PR10197).
     host_on_provider = provider.hosts.all()[0]
     provider.delete()
     provider.wait_for_delete()
@@ -278,7 +277,7 @@ def test_250_vmware_hosts_loading(appliance, create_250_hosts, view_type):
     "power_state", ["preparing_for_maintenance", "maintenance", "unknown", "off", "on"]
 )
 def test_infrastructure_hosts_icons_states(
-    appliance, request, power_state, setup_provider, provider, soft_assert
+    appliance, request, power_state, setup_provider, host, soft_assert
 ):
     """
     Polarion:
@@ -295,8 +294,6 @@ def test_infrastructure_hosts_icons_states(
                 `UPDATE hosts SET power_state = ':power_state' WHERE name=':host_name';`
     """
     # get host and host details
-    # Todo: use host fixture once it gets merged(PR10197).
-    host = provider.hosts.all()[0]
     host_name = host.name
     reset_state = host.rest_api_entity.power_state
     hosts = appliance.db.client["hosts"]
@@ -509,7 +506,7 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
 @test_requirements.rhev
 @pytest.mark.provider([RHEVMProvider], required_fields=['hosts'], selector=ONE)
 @pytest.mark.meta(automates=[1669011])
-def test_add_ipmi_refresh(appliance, setup_provider):
+def test_add_ipmi_refresh(appliance, setup_provider, host):
     """
     Tests IPMI IP address is not blank after running refresh relationships on the host.
 
@@ -522,8 +519,6 @@ def test_add_ipmi_refresh(appliance, setup_provider):
         caseimportance: medium
         casecomponent: Infra
     """
-    # Todo: use host fixture once it gets merged(PR10197).
-    host = appliance.collections.hosts.all()[0]
     # dummy credentials and ipmi address are sufficient for this test case
     cred = host.Credential(principal="111", secret="222", ipmi=True)
     ipmi_address = "10.10.10.10"
@@ -582,7 +577,7 @@ def test_infrastructure_hosts_viewing(request, appliance, setup_provider, host, 
 
 @test_requirements.infra_hosts
 @pytest.mark.meta(automates=[1634794])
-def test_infrastructure_hosts_crud(appliance, setup_provider):
+def test_infrastructure_hosts_crud(appliance, setup_provider, host):
     """
     Polarion:
         assignee: prichard
@@ -592,9 +587,6 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
     Bugzilla:
         1634794
     """
-    # Todo: use host fixture once it gets merged(PR10197).
-    host = appliance.collections.hosts.all()[0]
-
     # Case1 - edit from Hosts
     new_custom_id = f'Edit host data. {fauxfactory.gen_alphanumeric()}'
     with update(host, from_details=False):
@@ -672,7 +664,7 @@ def test_infrastructure_hosts_crud(appliance, setup_provider):
 
 
 @test_requirements.infra_hosts
-def test_infrastructure_hosts_tagging(appliance, setup_provider):
+def test_infrastructure_hosts_tagging(appliance, setup_provider, host):
     """
     Polarion:
         assignee: prichard
@@ -680,8 +672,6 @@ def test_infrastructure_hosts_tagging(appliance, setup_provider):
         caseimportance: high
         initialEstimate: 1/6h
     """
-    # Todo: use host fixture once it gets merged(PR10197).
-    host = appliance.collections.hosts.all()[0]
     tag = host.add_tag()
     host_tags = host.get_tags()
     assert any(
