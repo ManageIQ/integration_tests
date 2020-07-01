@@ -14,7 +14,6 @@ from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.rest.gen_data import users as _users
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -29,14 +28,32 @@ pytestmark = [
 
 
 @pytest.fixture(scope='function')
-def vm_name():
-    return random_vm_name('pwr-c')
+def vm_name(create_vm):
+    return create_vm.name
 
 
 @pytest.fixture(scope="function")
-def testing_vm(appliance, provider, vm_name):
-    """Fixture to provision vm to the provider being tested"""
-    vm = appliance.collections.infra_vms.instantiate(vm_name, provider)
+def archived_vm(create_vm):
+    """Fixture to archive testing VM"""
+    create_vm.mgmt.delete()
+    create_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
+                                       from_details=False, from_any_provider=True)
+
+
+@pytest.fixture(scope="function")
+def orphaned_vm(provider, create_vm):
+    """Fixture to orphane VM by removing provider from CFME"""
+    provider.delete_if_exists(cancel=False)
+    create_vm.wait_for_vm_state_change(desired_state='orphaned', timeout=720,
+                                       from_details=False, from_any_provider=True)
+
+
+'''
+# I'll need to implement this as a call to create_vm using full_template
+@pytest.fixture(scope="function")
+def testing_vm_tools(appliance, provider, vm_name, full_template):
+    """Fixture to provision vm with preinstalled tools to the provider being tested"""
+    vm = appliance.collections.infra_vms.instantiate(vm_name, provider, full_template.name)
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
@@ -44,22 +61,7 @@ def testing_vm(appliance, provider, vm_name):
     yield vm
     vm.cleanup_on_provider()
     if_scvmm_refresh_provider(provider)
-
-
-@pytest.fixture(scope="function")
-def archived_vm(testing_vm):
-    """Fixture to archive testing VM"""
-    testing_vm.mgmt.delete()
-    testing_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
-                                        from_details=False, from_any_provider=True)
-
-
-@pytest.fixture(scope="function")
-def orphaned_vm(provider, testing_vm):
-    """Fixture to orphane VM by removing provider from CFME"""
-    provider.delete_if_exists(cancel=False)
-    testing_vm.wait_for_vm_state_change(desired_state='orphaned', timeout=720,
-                                        from_details=False, from_any_provider=True)
+'''
 
 
 def if_scvmm_refresh_provider(provider):
@@ -220,7 +222,7 @@ class TestControlOnQuadicons:
         view = appliance.browser.create_view(BaseLoggedInPage)
         view.flash.assert_success_message(text='Start initiated', partial=True)
 
-        if_scvmm_refresh_provider(testing_vm.provider)
+        if_scvmm_refresh_provider(create_vm.provider)
         create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_ON, timeout=900)
         vm_state = create_vm.find_quadicon().data['state']
         soft_assert(vm_state == 'on')
