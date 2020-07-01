@@ -12,20 +12,20 @@ import iso8601
 import paramiko
 from cached_property import cached_property
 from scp import SCPClient
+from wrapanapi.entities import Vm
 
 from cfme.fixtures.pytest_store import store
 from cfme.utils import conf
 from cfme.utils import ports
 from cfme.utils.log import logger
 from cfme.utils.net import net_check
-from cfme.utils.net import retry_connect_vm
+from cfme.utils.net import retry_connect
 from cfme.utils.path import project_path
 from cfme.utils.quote import quote
 from cfme.utils.timeutil import parsetime
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
-
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)
 RUNCMD_TIMEOUT = 1200.0
@@ -867,7 +867,7 @@ def unquirked_ssh_client(**kwargs):
     return client
 
 
-def connect_ssh(vm, creds,
+def connect_ssh(vm: Vm, creds,
                 num_sec=CONNECT_RETRIES_TIMEOUT,
                 connect_timeout=CONNECT_TIMEOUT,
                 delay=CONNECT_SSH_DELAY):
@@ -887,4 +887,4 @@ def connect_ssh(vm, creds,
     msg = "The num_sec is smaller then connect_timeout. This looks like a bug."
     assert num_sec > connect_timeout, msg
 
-    return retry_connect_vm(vm, _connection_factory, num_sec=num_sec, delay=delay)
+    return retry_connect(lambda: vm.all_ips, _connection_factory, num_sec=num_sec, delay=delay)

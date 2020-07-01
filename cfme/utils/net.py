@@ -3,6 +3,8 @@ import re
 import socket
 from collections import defaultdict
 
+from wrapanapi.entities.vm import Vm
+
 from cfme.fixtures.pytest_store import store
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -58,15 +60,15 @@ def ip_echo_socket(port=32123):
             conn.close()
 
 
-def pick_responding_ip(vm, port, num_sec, rounds_delay_second, attempt_timeout):
+def pick_responding_ip(ips_getter, port, num_sec, rounds_delay_second, attempt_timeout):
     """
     Given a vm and port, pick one of the vm's addresses that is connectible
     on the given port
 
     Args:
-        vm: mgmt vm
+        ips_getter: a function returning the IPs for each round of connectivity trial
         port: port number to attempt connecting to
-        num_sec: Minimal ammount of time how long to keep checking (slight
+        num_sec: Minimal amount of time how long to keep checking (slight
                  variation may happen -- approximately the attempt_timeout).
         rounds_delay_second: The delay to wait after checking each IP round in
                              immediate succession.
@@ -79,7 +81,7 @@ def pick_responding_ip(vm, port, num_sec, rounds_delay_second, attempt_timeout):
         if net_check(port, ip, attempt_timeout):
             return ip
 
-    return retry_connect(vm, connection_factory, num_sec, rounds_delay_second)
+    return retry_connect(ips_getter, connection_factory, num_sec, rounds_delay_second)
 
 
 def retry_connect(ips_getter, connection_factory, num_sec, delay):
@@ -87,6 +89,10 @@ def retry_connect(ips_getter, connection_factory, num_sec, delay):
         for ip in ips_getter():
             try:
                 connection = connection_factory(ip)
+                if not connection:
+                    logger.warning(f"The connection factory {connection_factory} returned None. "
+                                   "Trying again.")
+                    continue
             except Exception as ex:
                 logger.warning(f"Failed to connect {ip}: {ex}")
                 continue
@@ -99,15 +105,9 @@ def retry_connect(ips_getter, connection_factory, num_sec, delay):
     return connection
 
 
-def retry_connect_vm(vm, connection_factory, num_sec, delay):
-    return retry_connect(lambda: vm.all_ips, connection_factory, num_sec, delay)
-
-
 def net_check(port, addr=None, force=False, timeout=10):
-    """Checks the availablility of a port"""
+    """Checks the availability of a port"""
     port = int(port)
-    if not addr:
-        addr = store.current_appliance.hostname
     if port not in _ports[addr] or force:
         # First try DNS resolution
         try:
@@ -194,14 +194,14 @@ def is_pingable(ip_addr):
         if status == 0:
             logger.info('IP: %s is RESPONDING !', ip_addr)
             return True
-        logger.info('ping exit status: %d, IP: %s is UNREACHABLE !', status, ip_addr)
+        logger.info(f'ping of {ip_addr:s} exit status: {status:d}')
         return False
     except Exception as e:
         logger.exception(e)
         return False
 
 
-def find_pingable(mgmt_vm, allow_ipv6=True):
+def find_pingable(mgmt_vm: Vm, allow_ipv6=True):
     """Looks for a pingable address from mgmt_vm.all_ips
 
      Assuming mgmt_vm is a wrapanapi VM entity, with all_ips and ip methods
@@ -209,7 +209,7 @@ def find_pingable(mgmt_vm, allow_ipv6=True):
      Returns:
          In priority: first pingable address, address 'selected' by wrapanapi (possibly None)
      """
-    for ip in getattr(mgmt_vm, 'all_ips', []):
+    for ip in mgmt_vm.all_ips:
         if ip:
             if not allow_ipv6 and is_ipv6(ip):
                 logger.debug('VMs ip is ipv6, skipping it: %s', ip)
@@ -223,10 +223,10 @@ def find_pingable(mgmt_vm, allow_ipv6=True):
 
     else:
         logger.info('No reachable IPs found for VM, just returning wrapanapi IP')
-        return getattr(mgmt_vm, 'ip', None)
+        return mgmt_vm.ip
 
 
-def find_pingable_ipv6(mgmt_vm):
+def find_pingable_ipv6(mgmt_vm: Vm):
     """Looks for a pingable ipv6 address from mgmt_vm.all_ips
 
      Assuming mgmt_vm is a wrapanapi VM entity, with all_ips and ip methods
@@ -234,7 +234,7 @@ def find_pingable_ipv6(mgmt_vm):
      Returns:
          In priority: first pingable ipv6 address, address 'selected' by wrapanapi (possibly None)
      """
-    for ip in getattr(mgmt_vm, 'all_ips', []):
+    for ip in mgmt_vm.all_ips:
         if not is_ipv6(ip) or not is_pingable(ip):
             logger.debug(f"Could not reach mgmt IP on VM: {ip}")
             continue

@@ -7,9 +7,12 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
 from cfme.utils.net import find_pingable_ipv6
+from cfme.utils.net import pick_responding_ip
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
+
+FTP_PORT = 21
 
 
 @pytest.fixture(scope="module")
@@ -34,13 +37,9 @@ def depot_machine_ip(request, appliance):
         pytest.skip(msg)
 
     try:
-        found_ip, _ = wait_for(
-            find_pingable,
-            func_args=[vm],
-            fail_condition=None,
-            delay=5,
-            num_sec=300
-        )
+        # TODO It would be better to use retry_connect here, but this requires changes to other
+        #  fixtures.
+        found_ip = pick_responding_ip(lambda: vm.all_ips, FTP_PORT, 300, 5, 10)
     except TimedOutError:
         msg = 'Timed out waiting for reachable depot VM IP'
         logger.exception(msg)

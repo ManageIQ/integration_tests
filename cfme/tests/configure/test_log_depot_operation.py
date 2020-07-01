@@ -9,9 +9,11 @@ from datetime import datetime
 import fauxfactory
 import pytest
 
+import cfme.base
 from cfme import test_requirements
 from cfme.utils import conf
 from cfme.utils import testgen
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
@@ -133,8 +135,15 @@ def configured_depot(log_depot, depot_machine_ip, appliance):
     server_log_depot.clear()
 
 
-def check_ftp(appliance, ftp, server_name, server_zone_id, check_contents=False):
-    server_string = f'{server_name}_{server_zone_id}'
+def check_ftp(appliance: IPAppliance, ftp: FTPClient, server: cfme.base.Server,
+              check_contents=False):
+    server_string = re.escape('_'.join((
+        'region_0',  # Not sure how to find this out.
+        server.zone.name,
+        server.zone.id,
+        server.name,
+        server.sid)
+    ))
     with ftp:
         # Files must have been created after start with server string in it (for ex. EVM_1)
         date_group = '(_.*?){4}'
@@ -237,8 +246,7 @@ def test_collect_log_depot(log_depot, appliance, service_request, configured_dep
     # Start the collection
     configured_depot.collect_all()
     # Check it on FTP
-    check_ftp(appliance=appliance, ftp=log_depot.ftp, server_name=appliance.server.name,
-              server_zone_id=appliance.server.sid, check_contents=True)
+    check_ftp(appliance=appliance, ftp=log_depot.ftp, server=appliance.server, check_contents=True)
 
 
 @pytest.mark.tier(3)
@@ -273,8 +281,9 @@ def test_collect_unconfigured(appliance):
 @pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
 @pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
 @pytest.mark.tier(3)
-def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_machine_ip, request,
-                                  configured_external_appliance, zone_collect, collect_type,
+def test_collect_multiple_servers(log_depot, depot_machine_ip, request,
+                                  zone_collect, collect_type,
+                                  temp_appliance_preconfig, configured_external_appliance,
                                   from_secondary):
 
     """
@@ -284,6 +293,7 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
         initialEstimate: 1/4h
     """
     appliance = temp_appliance_preconfig
+
     log_depot.machine_ip = depot_machine_ip
     collect_logs = (
         appliance.server.zone.collect_logs if zone_collect else appliance.server.collect_logs)
@@ -321,12 +331,12 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
     secondary_server = secondary_servers[0] if secondary_servers else None
 
     if from_secondary and zone_collect:
-        check_ftp(appliance, log_depot.ftp, secondary_server.name, secondary_server.sid)
-        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+        check_ftp(appliance, log_depot.ftp, secondary_server)
+        check_ftp(appliance, log_depot.ftp, appliance.server)
     elif from_secondary:
-        check_ftp(appliance, log_depot.ftp, secondary_server.name, secondary_server.sid)
+        check_ftp(appliance, log_depot.ftp, secondary_server)
     else:
-        check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.zone.id)
+        check_ftp(appliance, log_depot.ftp, appliance.server)
 
 
 @pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
@@ -370,7 +380,7 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
     else:
         collect_logs.collect_current()
 
-    check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.sid)
+    check_ftp(appliance, log_depot.ftp, appliance.server)
 
 
 @pytest.mark.tier(2)
@@ -419,4 +429,4 @@ def test_log_collection_over_ipv6(log_depot, depot_machine_ipv4_and_ipv6, applia
     request.addfinalizer(collect_logs.clear)
     collect_logs.collect_all()
 
-    check_ftp(appliance, log_depot.ftp, appliance.server.name, appliance.server.sid)
+    check_ftp(appliance, log_depot.ftp, appliance.server)

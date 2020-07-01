@@ -1753,6 +1753,10 @@ class IPAppliance:
 
     @property
     def is_ssh_running(self):
+        # WORKAROUND INC1296328
+        # https://redhat.service-now.com/help?id=rh_ticket&table=incident&sys_id=65b98d19db701050c0c8464e139619eb
+        is_pingable(self.hostname)
+
         if self.openshift_creds and 'hostname' in self.openshift_creds:
             hostname = self.openshift_creds['hostname']
         else:
