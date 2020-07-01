@@ -16,6 +16,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import conf
 from cfme.utils import ssh
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -32,7 +33,7 @@ FormDataVmObj = namedtuple("FormDataVmObj", ["infra_mapping_data", "vm_list"])
 V2vProviders = namedtuple("V2vProviders", ["vmware_provider", "rhv_provider", "osp_provider"])
 
 
-def set_skip_event_history_flag(appliance):
+def set_skip_event_history_flag(appliance: IPAppliance):
     """This flag is required for OSP to skip all old events and refresh inventory"""
     config = appliance.advanced_settings
     if not config['ems']['ems_openstack']['event_handling']['event_skip_history']:
@@ -44,7 +45,7 @@ def set_skip_event_history_flag(appliance):
         appliance.wait_for_api_available()
 
 
-def _start_event_workers_for_osp(appliance, provider):
+def _start_event_workers_for_osp(appliance: IPAppliance, provider):
     """This is a workaround to start event catchers until BZ 1753364 is fixed"""
     provider_edit_view = navigate_to(provider, 'Edit', wait_for_view=30)
     endpoint_view = provider.endpoints_form(parent=provider_edit_view)
@@ -65,7 +66,7 @@ def _start_event_workers_for_osp(appliance, provider):
 
 
 @pytest.fixture(scope="module")
-def v2v_provider_setup(request, appliance, source_provider, provider):
+def v2v_provider_setup(request, appliance: IPAppliance, source_provider, provider):
     """ Fixture to setup providers """
     vmware_provider, rhv_provider, osp_provider = None, None, None
     for v2v_provider in [source_provider, provider]:
@@ -102,7 +103,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
             v2v_provider.delete_if_exists(cancel=False)
 
 
-def __host_credentials(appliance, transformation_method, v2v_providers): # noqa
+def __host_credentials(appliance: IPAppliance, transformation_method, v2v_providers): # noqa
     """ Sets up host credentials for vmware and rhv providers
         for RHEV migration.
         For migration with OSP only vmware(source) provider
@@ -182,7 +183,7 @@ def _tag_cleanup(host_obj, tag1, tag2):
     return False
 
 
-def create_tags(appliance, transformation_method):
+def create_tags(appliance: IPAppliance, transformation_method):
     """
     Create tags V2V - Transformation Host * and V2V - Transformation Method
     Args:
@@ -252,7 +253,7 @@ def get_conversion_data(target_provider):
 
 
 def set_conversion_host_api(
-        appliance, transformation_method, source_provider, target_provider):
+        appliance: IPAppliance, transformation_method, source_provider, target_provider):
     """Setting conversion host for RHV and OSP providers via REST"""
     vmware_ssh_private_key = None
     vmware_vddk_package_url = None
@@ -294,7 +295,7 @@ def set_conversion_host_api(
 
 
 @pytest.fixture(scope="function")
-def delete_conversion_hosts(appliance):
+def delete_conversion_hosts(appliance: IPAppliance):
     # Delete existing conversion host entries from CFME
     delete_hosts = appliance.ssh_client.run_rails_command(
         "'MiqTask.delete_all; ConversionHost.delete_all'")
@@ -317,7 +318,7 @@ def cleanup_target(provider, migrated_vm):
             logger.warning(e)
 
 
-def get_vm(request, appliance, source_provider, template_type, datastore='nfs'):
+def get_vm(request, appliance: IPAppliance, source_provider, template_type, datastore='nfs'):
     """ Helper method that takes template , source provider and datastore
         and creates VM on source provider to migrate .
 
@@ -404,7 +405,7 @@ def infra_mapping_default_data(source_provider, provider):
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_mini(request, appliance, source_provider, provider):
+def mapping_data_vm_obj_mini(request, appliance: IPAppliance, source_provider, provider):
     """Fixture to return minimal mapping data and vm object for migration plan"""
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     vm_obj = get_vm(request, appliance, source_provider, Templates.RHEL7_MINIMAL)
@@ -537,7 +538,7 @@ def mapping_data_dual_vm_obj_dual_datastore(request, appliance, source_provider,
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider):
+def mapping_data_vm_obj_dual_nics(request, appliance: IPAppliance, source_provider, provider):
     source_type = ["VM Network", "DPortGroup"]
     dest_type = ["ovirtmgmt", "Storage - VLAN 33"]
 
@@ -566,7 +567,7 @@ def mapping_data_vm_obj_dual_nics(request, appliance, source_provider, provider)
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_single_datastore(request, appliance, source_provider, provider,
+def mapping_data_vm_obj_single_datastore(request, appliance: IPAppliance, source_provider, provider,
                                          source_type, dest_type, template_type):
     """Return Infra Mapping form data and vm object"""
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
@@ -588,7 +589,7 @@ def mapping_data_vm_obj_single_datastore(request, appliance, source_provider, pr
 
 
 @pytest.fixture(scope="function")
-def mapping_data_vm_obj_single_network(request, appliance, source_provider, provider,
+def mapping_data_vm_obj_single_network(request, appliance: IPAppliance, source_provider, provider,
                                        source_type, dest_type, template_type):
     infra_mapping_data = infra_mapping_default_data(source_provider, provider)
     recursive_update(

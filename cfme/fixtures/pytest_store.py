@@ -53,9 +53,9 @@ class Store:
 
     @property
     def current_appliance(self):
-        # layz import due to loops and loops and loops
+        # lazy import due to loops and loops and loops
         from cfme.utils import appliance
-        # TODO: concieve a better way to detect/log import-time missuse
+        # TODO: conceive a better way to detect/log import-time misuse
         # assert self.config is not None, 'current appliance not in scope'
         return appliance.current_appliance
 

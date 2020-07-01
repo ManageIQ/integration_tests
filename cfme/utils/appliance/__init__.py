@@ -57,6 +57,7 @@ from cfme.utils.version import VersionPicker
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
+
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # EMS types recognized by IP or credentials
 RECOGNIZED_BY_IP = [
@@ -2985,7 +2986,7 @@ def provision_appliance(
 
 class ApplianceStack(LocalStack):
 
-    def push(self, obj):
+    def push(self, obj: IPAppliance):
         stack_parent = self.top
         super().push(obj)
 
@@ -2995,7 +2996,7 @@ class ApplianceStack(LocalStack):
             from cfme.utils import browser
             browser.start()
 
-    def pop(self):
+    def pop(self) -> IPAppliance:
         stack_parent = super().pop()
         current = self.top
         logger.info(f"Popped appliance {getattr(stack_parent, 'hostname', 'empty')} from stack\n"
@@ -3165,7 +3166,7 @@ class ApplianceSummoningWarning(PendingDeprecationWarning):
     """to ease filtering/erroring on magical appliance creation based on script vs code"""
 
 
-def get_or_create_current_appliance():
+def get_or_create_current_appliance() -> IPAppliance:
     if stack.top is None:
         warnings.warn(
             "magical creation of appliance objects has been deprecated,"

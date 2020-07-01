@@ -1,5 +1,6 @@
 import json
 import os
+from typing import List
 
 import attr
 import requests
@@ -130,7 +131,7 @@ class SproutClient:
             message=f'provision {count} appliance(s) from sprout')
         data = self.call_method('request_check', str(request_id))
         logger.debug(data)
-        appliances = []
+        appliances: List[IPAppliance] = []
         for appliance in data['appliances']:
             app_args = {'hostname': appliance['ip_address'],
                         'project': appliance['project'],

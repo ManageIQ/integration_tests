@@ -1,8 +1,12 @@
+from typing import Type
+from typing import TypeVar
 from weakref import proxy
 from weakref import WeakKeyDictionary
 
 import attr
 from cached_property import cached_property
+
+T = TypeVar('T')
 
 
 class AppliancePluginException(Exception):
@@ -21,7 +25,8 @@ class AppliancePluginDescriptor:
             return self
 
         if o not in self.cache:
-            self.cache[o] = self.cls(o, *self.args, **self.kwargs)
+            self.cache[o] = new_instance = self.cls(o, *self.args, **self.kwargs)
+            return new_instance
 
         return self.cache[o]
 
@@ -41,6 +46,7 @@ class AppliancePlugin:
 
     Instance of such plugin is then created upon first access.
     """
+    # appliance: IPAppliance = attr.ib(repr=False, converter=proxy)
     appliance = attr.ib(repr=False, converter=proxy)
 
     @cached_property
@@ -50,5 +56,5 @@ class AppliancePlugin:
         return logger
 
     @classmethod
-    def declare(cls, **kwargs):
+    def declare(cls: Type[T], **kwargs) -> T:
         return AppliancePluginDescriptor(cls, (), kwargs)

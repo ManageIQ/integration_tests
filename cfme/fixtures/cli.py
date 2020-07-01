@@ -3,6 +3,9 @@ from collections import namedtuple
 from configparser import ConfigParser
 from contextlib import contextmanager
 from io import StringIO
+from typing import ContextManager
+from typing import Iterable
+from typing import Tuple
 
 import fauxfactory
 import pytest
@@ -18,10 +21,12 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
-from cfme.utils.appliance.console import configure_appliances_ha
+from cfme.utils import the_only_one_from
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
+from cfme.utils.ha import configure_appliances_ha
 from cfme.utils.log import logger
 from cfme.utils.providers import list_providers_by_class
 from cfme.utils.version import Version
@@ -39,7 +44,7 @@ def unconfigured_appliance(request, appliance, pytestconfig):
             config=pytestconfig,
             provider_type='rhevm',
     ) as apps:
-        yield apps[0]
+        yield the_only_one_from(apps)
         _collect_logs(request.config, apps)
 
 
@@ -52,7 +57,7 @@ def unconfigured_appliance_secondary(request, appliance, pytestconfig):
             config=pytestconfig,
             provider_type='rhevm',
     ) as apps:
-        yield apps[0]
+        yield the_only_one_from(apps)
         _collect_logs(request.config, apps)
 
 
@@ -78,7 +83,7 @@ def configured_appliance(request, appliance, pytestconfig):
             config=pytestconfig,
             provider_type='rhevm',
     ) as apps:
-        yield apps[0]
+        yield the_only_one_from(apps)
         _collect_logs(request.config, apps)
 
 
@@ -190,7 +195,8 @@ def get_puddle_cfme_version(repo_file_path):
 
 
 @contextmanager
-def get_apps(requests, appliance, old_version, count, preconfigured, pytest_config):
+def get_apps(request, appliance, old_version, count, preconfigured, pytest_config) \
+        -> ContextManager[Iterable[IPAppliance]]:
     """Requests appliance from sprout based on old_versions, edits partitions and adds
         repo file for update"""
     series = appliance.version.series()
@@ -240,23 +246,25 @@ def appliance_preupdate(appliance, old_version, request):
     """Requests single appliance from sprout."""
     with get_apps(request, appliance, old_version, count=1, preconfigured=True,
                   pytest_config=request.config) as apps:
-        yield apps[0]
+        yield the_only_one_from(apps)
 
 
 @pytest.fixture
-def multiple_preupdate_appliances(appliance, old_version, request):
+def multiple_preupdate_appliances(appliance, old_version, request) \
+        -> Tuple[IPAppliance, IPAppliance]:
     """Requests multiple appliances from sprout."""
     with get_apps(request, appliance, old_version, count=2, preconfigured=False,
                   pytest_config=request.config) as apps:
-        yield apps
+        yield tuple(apps)
 
 
 @pytest.fixture
-def ha_multiple_preupdate_appliances(appliance, old_version, request):
+def ha_multiple_preupdate_appliances(appliance, old_version, request) \
+        -> Tuple[IPAppliance, IPAppliance, IPAppliance]:
     """Requests multiple appliances from sprout."""
     with get_apps(request, appliance, old_version, count=3, preconfigured=False,
                   pytest_config=request.config) as apps:
-        yield apps
+        yield tuple(apps)
 
 
 @pytest.fixture
