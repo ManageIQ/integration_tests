@@ -57,26 +57,31 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope='module')
-def datastore(appliance, provider, datastore_type, datastore_name):
+def datastore(setup_provider_modscope, appliance, provider, datastore_type, datastore_name):
     return appliance.collections.datastores.instantiate(name=datastore_name,
                                                         provider=provider,
                                                         type=datastore_type)
 
 
 @pytest.fixture(scope='module')
-def datastores_hosts_setup(provider, datastore):
-    hosts = datastore.hosts.all()
-    for host in hosts:
-        host_data = [data
-                     for data in provider.data.get("hosts", {})
-                     if data.get("name") == host.name]
-        if not host_data:
-            pytest.skip(f"No host data for provider {provider} and datastore {datastore}")
-        host.update_credentials_rest(credentials=host_data[0]['credentials'])
-    else:
-        pytest.skip(f"No hosts attached to the datastore selected for testing: {datastore}")
+def datastores_hosts_setup(setup_provider_modscope, provider, datastore):
+    updated_hosts = []
+    for host in datastore.hosts.all():
+        try:
+            host_data, = [data
+                          for data in provider.data.get("hosts", {})
+                          if data.get("name") == host.name]
+        except ValueError as exc:
+            pytest.skip(f"Data for host {host} in provider {provider} and datastore {datastore} "
+                        f"couldn't be determined: {exc}.")
+        else:
+            host.update_credentials_rest(credentials=host_data['credentials'])
+            updated_hosts.append(host)
+
+    if not updated_hosts:
+        pytest.skip(f"No hosts attached to the datastore {datastore} was selected for testing.")
     yield
-    for host in hosts:
+    for host in updated_hosts:
         host.remove_credentials_rest()
 
 
