@@ -247,12 +247,6 @@ class ServerInformation(Updateable, Pretty):
         updated = view.basic_information.fill(updates)
         self._save_action(view, updated, reset)
 
-    @property
-    def basic_information_values(self):
-        """ Returns(dict): basic_information fields values"""
-        view = navigate_to(self.appliance.server, 'Server')
-        return view.basic_information.read()
-
 # =============================== Server Roles Form ===================================
 
     def update_server_roles_ui(self, updates, reset=False):

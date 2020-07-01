@@ -1353,6 +1353,7 @@ class ZoneSettingsView(ConfigurationView):
     class zone(WaitTab):  # noqa
         TAB_NAME = "Zone"
         configuration = Dropdown('Configuration')
+        basic_information = SummaryForm("Basic Information")
 
     @View.nested
     class smart_proxy_affinity(WaitTab):  # noqa

@@ -347,6 +347,13 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
         )
         assert result.ok
 
+    @property
+    def rest_api_entity(self):
+        try:
+            return self.appliance.rest_api.collections.zones.get(id=self.id)
+        except ValueError:
+            raise RestLookupError(f"No zone rest entity found matching id '{self.id}'")
+
 
 @attr.s
 class ZoneCollection(BaseCollection, sentaku.modeling.ElementMixin):
