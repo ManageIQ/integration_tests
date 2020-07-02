@@ -2,6 +2,7 @@ import os
 import re
 import socket
 from collections import defaultdict
+from textwrap import dedent
 
 from wrapanapi.entities.vm import Vm
 
@@ -145,14 +146,17 @@ def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=F
             )
         with ssh_client:
             # on exception => fails with return code 1
-            cmd = '''python2 -c "
-import sys, socket
-addr = socket.gethostbyname('%s')
-socket.create_connection((addr, %d), timeout=10)
-sys.exit(0)
-            "''' % (addr, port)
+            cmd = dedent(f'''\
+            python3 -c "
+            import sys, socket
+            addr = socket.gethostbyname('{addr:s}')
+            socket.create_connection((addr, {port:d}), timeout=10)
+            sys.exit(0)
+            "''')
             result = ssh_client.run_command(cmd)
             _ports[addr][port] = result.success
+            if not result.success:
+                logger.debug(f'The net_check_remote failed:\n{result.output}')
     return _ports[addr][port]
 
 

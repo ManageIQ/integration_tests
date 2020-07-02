@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Script used to catch and expose e-mails from CFME"""
 import asyncore
-import email
+import email.policy
 import json
 import re
 import sqlite3
@@ -24,7 +24,8 @@ from cfme.utils.timeutil import parsetime
 
 
 TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
-ROWS = ("from_address", "to_address", "subject", "time", "text")
+Email = namedtuple("Email",
+                   ["subject", "from_address", "to_address", "rcpttos", 'text', 'data', 'time'])
 
 # Shared variable with all messages
 db_lock = threading.RLock()
@@ -33,15 +34,38 @@ cur = connection.cursor()
 cur.execute(
     """
     CREATE TABLE emails (
+        subject TEXT,
         from_address TEXT,
         to_address TEXT,
-        subject TEXT,
-        time TIMESTAMP DEFAULT (datetime('now','localtime')),
-        text TEXT
+        rcpttos TEXT,
+        text TEXT,
+        data TEXT,
+        time TIMESTAMP DEFAULT (datetime('now','localtime'))
     )
     """
 )
 connection.commit()
+
+
+def write_email(cursor, rcpttos: str, data: str):
+    message = email.message_from_string(data, policy=email.policy.strict)
+    payload = message.get_payload()
+    if isinstance(payload, list):
+        # Message can have multiple payloads, so let's join them for simplicity
+        payload = "\n".join([x.get_payload().strip() for x in payload])
+
+    cursor.execute(
+        "INSERT INTO emails VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+        (
+            # Perhaps get_all should rather be used, but so far it works like it is.
+            message.get("Subject"),
+            message.get("From"),
+            ",".join([address.strip() for address in message["To"].split(",")]),
+            json.dumps(rcpttos),
+            payload,
+            data)
+    )
+
 
 # To write the e-mails into the files
 files_lock = threading.RLock()  # To prevent filename collisions
@@ -70,22 +94,14 @@ def write(what, end="\n"):
 class EmailServer(SMTPServer):
     """Simple e-mail server. What does it do is that every mail is put in the database."""
     def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
-        message = email.message_from_string(data)
-        payload = message.get_payload()
-        if isinstance(payload, list):
-            # Message can have multiple payloads, so let's join them for simplicity
-            payload = "\n".join([x.get_payload().strip() for x in payload])
+        # Note that in SMTP the Bcc is implemented as specifying the hidden recipients in
+        # `rcpttos` but not specifying them in the email headers (like "To", or "Cc").
+        # There is not really a "Bcc" header as far as I (jhenner) understands SMTP).
+
         with db_lock:
             global connection
             cursor = connection.cursor()
-            cursor.execute(
-                "INSERT INTO emails VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)",
-                (
-                    message["From"],
-                    ",".join([address.strip() for address in message["To"].strip().split(",")]),
-                    message["Subject"],
-                    payload)
-            )
+            write_email(cursor, rcpttos, data)
             connection.commit()
         if email_folder is not None:
             with files_lock:
@@ -169,15 +185,17 @@ def all_messages():
         # execute query
         c = db.execute(sql, bindings)
 
-        rows = c.fetchall()
-        return json.dumps([dict(list(zip(ROWS, row))) for row in rows])
+        rows = [dict(zip(Email._fields, row)) for row in c.fetchall()]
+        for r in rows:
+            r['rcpttos'] = json.loads(r['rcpttos'])
+        return json.dumps(rows)
 
 
 @route("/messages.html")
 def all_messages_in_html():
     response.content_type = "text/html"
     emails = []
-    Email = namedtuple("Email", ["source", "destination", "subject", "received", "body"])
+
     with db_lock:
         emails = list(map(Email._make,
                           connection.cursor().execute("SELECT * FROM emails").fetchall()))

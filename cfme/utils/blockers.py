@@ -92,8 +92,8 @@ class GH(Blocker):
         self.until = kwargs.get('until')
         if isinstance(description, (list, tuple)):
             try:
-                self.repo, self.issue = description
-                self.issue = int(self.issue)
+                self._repo, issue = description
+                self.issue = int(issue)
             except ValueError:
                 raise ValueError(
                     "The GH issue specification must have 2 items and issue must be number")
