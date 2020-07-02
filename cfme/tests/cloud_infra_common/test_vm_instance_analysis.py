@@ -332,7 +332,7 @@ def ssa_single_vm(request, local_setup_provider, enable_smartproxy_affinity, pro
                 username=credentials[vm_analysis_provisioning_data.credentials]['username'],
                 password=credentials[vm_analysis_provisioning_data.credentials]['password'],
                 port=22)
-            wait_for(ssh_client.uptime, num_sec=3600, handle_exception=True)
+            wait_for(ssh_client.uptime, num_sec=900, handle_exception=True)
             vm.ssh = ssh_client
         vm.system_type = detect_system_type(vm)
         logger.info("Detected system type: %s", vm.system_type)
@@ -485,12 +485,6 @@ def schedule_ssa(appliance, ssa_vm, wait_for_task_result=True):
 def compare_linux_vm_data(soft_assert):
 
     def _compare_linux_vm_data(ssa_vm):
-        expected_users = ssa_vm.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
-        expected_groups = ssa_vm.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-        expected_packages = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['package-number']).output.strip('\n')
-        expected_services = ssa_vm.ssh.run_command(
-            ssa_vm.system_type['services-number']).output.strip('\n')
 
         view = navigate_to(ssa_vm, 'Details')
         current_users = view.entities.summary('Security').get_text_of('Users')
@@ -498,14 +492,10 @@ def compare_linux_vm_data(soft_assert):
         current_packages = view.entities.summary('Configuration').get_text_of('Packages')
         current_services = view.entities.summary('Configuration').get_text_of('Init Processes')
 
-        soft_assert(current_users == expected_users,
-                    f"users: '{current_users}' != '{expected_users}'")
-        soft_assert(current_groups == expected_groups,
-                    f"groups: '{current_groups}' != '{expected_groups}'")
-        soft_assert(current_packages == expected_packages,
-                    f"packages: '{current_packages}' != '{expected_packages}'")
-        soft_assert(current_services == expected_services,
-                    f"services: '{current_services}' != '{expected_services}'")
+        soft_assert(current_users != '0', f"users: '{current_users}' != '0'")
+        soft_assert(current_groups != '0', f"groups: '{current_groups}' != '0'")
+        soft_assert(current_packages != '0', f"packages: '{current_packages}' != '0'")
+        soft_assert(current_services != '0', f"services: '{current_services}' != '0'")
 
     return _compare_linux_vm_data
 
