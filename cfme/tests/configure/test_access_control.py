@@ -2438,18 +2438,14 @@ def test_ssui_group_switch():
     pass
 
 
-@pytest.mark.customer_scenario
 @pytest.mark.manual
 @test_requirements.rbac
 @test_requirements.ssui
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1790817])
 def test_ssui_update_dashboard():
     """
     Verify that switching Groups in SSUI changes the dashboard items to
     match the new groups permissions
-    Bugzilla:
-        1790817
     Polarion:
         assignee: dgaikwad
         casecomponent: SelfServiceUI
@@ -3081,3 +3077,28 @@ def test_aws_keypair_list(appliance, setup_provider, provider, tenant_custom_rol
     view.flash.assert_success_message('Ownership saved for selected Key Pair')
     with user:
         assert keypair.exists
+
+
+@pytest.mark.manual
+@pytest.mark.customer_scenario
+@test_requirements.ssui
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1790817])
+def test_ssui_login_http():
+    """
+    Should able to login SSUI when http auth enabled
+    Bugzilla:
+        1790817
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: SelfServiceUI
+        caseimportance: low
+        initialEstimate: 1/4h
+        testSteps:
+            1. Enable httpd authentication on the UI appliance
+            2. Try to login using self-service portal
+        expectedResults:
+            1.
+            2. able to login SSUI
+    """
+    pass
