@@ -14,6 +14,7 @@ from cfme.markers.env_markers.provider import providers
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
@@ -434,11 +435,8 @@ def test_resume_retired_instance(create_vm, provider, remove_date):
 @pytest.mark.long_running
 @test_requirements.multi_region
 @test_requirements.retirement
-def test_vm_retirement_from_global_region(setup_multi_region_cluster,
-                                          multi_region_cluster,
-                                          activate_global_appliance,
-                                          setup_remote_provider,
-                                          create_vm):
+@pytest.mark.meta(blockers=[BZ(1839770)])
+def test_vm_retirement_from_global_region(replicated_appliances, create_vm):
     """
     Retire a VM via Centralized Administration
 
@@ -456,15 +454,29 @@ def test_vm_retirement_from_global_region(setup_multi_region_cluster,
             2. VM transitions to Retired state in the Global and Remote region.
 
     """
+    remote_appliance, global_appliance = replicated_appliances
+
     expected_date = {}
     expected_date['start'] = datetime.utcnow() + timedelta(minutes=-5)
 
-    create_vm.retire()
+    provider = create_vm.provider
 
-    verify_retirement_state(create_vm)
+    # Instantiate on each appliance so that browser uses the correct appliance.
+    vm_per_appliance = {
+        a: a.provider_based_collection(provider).instantiate(create_vm.name, provider)
+        for a in replicated_appliances
+    }
 
-    expected_date['end'] = datetime.utcnow() + timedelta(minutes=5)
-    verify_retirement_date(create_vm, expected_date=expected_date)
+    with remote_appliance:
+        provider.create()
+
+    with global_appliance:
+        vm_per_appliance[global_appliance].retire()
+
+    with remote_appliance:
+        verify_retirement_state(vm_per_appliance[remote_appliance])
+        expected_date['end'] = datetime.utcnow() + timedelta(minutes=5)
+        verify_retirement_date(vm_per_appliance[remote_appliance], expected_date=expected_date)
 
 
 @pytest.mark.manual

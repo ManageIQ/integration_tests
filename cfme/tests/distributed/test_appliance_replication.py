@@ -40,12 +40,10 @@ def test_appliance_replicate_between_regions(provider, replicated_appliances):
     """
     remote_appliance, global_appliance = replicated_appliances
 
-    remote_appliance.browser_steal = True
     with remote_appliance:
         provider.create()
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_appliance.browser_steal = True
     with global_appliance:
         global_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
@@ -69,12 +67,10 @@ def test_external_database_appliance(provider, distributed_appliances):
     """
     primary_appliance, secondary_appliance = distributed_appliances
 
-    primary_appliance.browser_steal = True
     with primary_appliance:
         provider.create()
         primary_appliance.collections.infra_providers.wait_for_a_provider()
 
-    secondary_appliance.browser_steal = True
     with secondary_appliance:
         secondary_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
@@ -101,12 +97,10 @@ def test_appliance_replicate_database_disconnection(provider, replicated_applian
     sleep(60)
     global_appliance.db_service.start()
 
-    remote_appliance.browser_steal = True
     with remote_appliance:
         provider.create()
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_appliance.browser_steal = True
     with global_appliance:
         global_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
@@ -129,7 +123,6 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider, repli
     """
     remote_appliance, global_appliance = replicated_appliances
 
-    remote_appliance.browser_steal = True
     with remote_appliance:
         provider.create()
         global_appliance.db_service.stop()
@@ -137,7 +130,6 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider, repli
         global_appliance.db_service.start()
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_appliance.browser_steal = True
     with global_appliance:
         global_appliance.collections.infra_providers.wait_for_a_provider()
         assert provider.exists
@@ -163,16 +155,20 @@ def test_replication_vm_power_control(provider, create_vm, context, replicated_a
     """
     remote_appliance, global_appliance = replicated_appliances
 
-    remote_appliance.browser_steal = True
+    vm_per_appliance = {
+        a: a.provider_based_collection(provider).instantiate(create_vm.name, provider)
+        for a in replicated_appliances
+    }
+
     with remote_appliance:
         assert provider.create(validate_inventory=True), "Could not create provider."
 
-    global_appliance.browser_steal = True
     with global_appliance:
-        create_vm.power_control_from_cfme(option=create_vm.POWER_OFF, cancel=False)
-        navigate_to(create_vm.provider, 'Details')
-        create_vm.wait_for_vm_state_change(desired_state=create_vm.STATE_OFF, timeout=900)
-        assert create_vm.find_quadicon().data['state'] == 'off', "Incorrect VM quadicon state"
+        vm = vm_per_appliance[global_appliance]
+        vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
+        # navigate_to(provider, 'Details')
+        vm.wait_for_vm_state_change(desired_state=vm.STATE_OFF, timeout=900)
+        assert vm.find_quadicon().data['state'] == 'off', "Incorrect VM quadicon state"
         assert not create_vm.mgmt.is_running, "VM is still running"
 
 
@@ -198,16 +194,17 @@ def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
 
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-    remote_appliance.browser_steal = True
+    vm_per_appliance = {
+        a: a.provider_based_collection(provider).instantiate(vm_name, provider)
+        for a in replicated_appliances
+    }
+
     with remote_appliance:
         provider.create()
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
-    global_appliance.browser_steal = True
     with global_appliance:
-        collection = global_appliance.provider_based_collection(provider)
-        vm = collection.instantiate(vm_name, provider)
-        view = navigate_to(vm, 'Details')
+        view = navigate_to(vm_per_appliance[global_appliance], 'Details')
 
         initial_count = len(view.browser.window_handles)
         main_window = view.browser.current_window_handle
@@ -233,7 +230,9 @@ def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
             'password': conf.credentials['default']['password']
         })
         view.login.click()
-        view = vm.create_view(InfraVmDetailsView)
+
+        # Use VM instantiated on global_appliance here because we're still using the same browser.
+        view = vm_per_appliance[global_appliance].create_view(InfraVmDetailsView)
         wait_for(lambda: view.is_displayed, message="Wait for VM Details page")
 
 
@@ -265,7 +264,6 @@ def test_appliance_httpd_roles(distributed_appliances):
     sid = secondary_appliance.server.sid
     secondary_server = primary_appliance.collections.servers.instantiate(sid=sid)
 
-    primary_appliance.browser_steal = True
     with primary_appliance:
         view = navigate_to(secondary_server, 'Server')
 
@@ -348,7 +346,6 @@ def test_server_role_failover(distributed_appliances):
 
     # Enable all roles on both appliances.
     for appliance in distributed_appliances:
-        appliance.browser_steal = True
         with appliance:
             view = navigate_to(appliance.server, 'Server')
             view.server_roles.fill(fill_values)
@@ -393,9 +390,10 @@ def test_appliance_replicate_zones(replicated_appliances):
     global_zone = 'global-A'
     global_appliance.collections.zones.create(name=global_zone, description=global_zone)
 
-    view = navigate_to(global_appliance.server, 'Server')
-    global_zones = [o.text for o in view.basic_information.appliance_zone.all_options]
-    assert global_zone in global_zones and remote_zone not in global_zones
+    with global_appliance:
+        view = navigate_to(global_appliance.server, 'Server')
+        global_zones = [o.text for o in view.basic_information.appliance_zone.all_options]
+        assert global_zone in global_zones and remote_zone not in global_zones
 
 
 @pytest.mark.tier(2)
@@ -419,15 +417,16 @@ def test_appliance_replicate_remote_down(replicated_appliances):
     """
     remote_appliance, global_appliance = replicated_appliances
 
-    global_region = global_appliance.server.zone.region
-    assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
-        "Remote appliance not found on Replication tab after initial configuration.")
+    with global_appliance:
+        global_region = global_appliance.server.zone.region
+        assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+            "Remote appliance not found on Replication tab after initial configuration.")
 
-    result = global_appliance.ssh_client.run_command(
-        f"firewall-cmd --direct --add-rule ipv4 filter OUTPUT 0 -d {remote_appliance.hostname}"
-        " -j DROP")
-    assert result.success, "Could not create firewall rule on global appliance."
+        result = global_appliance.ssh_client.run_command(
+            f"firewall-cmd --direct --add-rule ipv4 filter OUTPUT 0 -d {remote_appliance.hostname}"
+            " -j DROP")
+        assert result.success, "Could not create firewall rule on global appliance."
 
-    global_appliance.browser.widgetastic.refresh()
-    assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
-        "Remote appliance not found on Replication tab after dropped connection.")
+        global_appliance.browser.widgetastic.refresh()
+        assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
+            "Remote appliance not found on Replication tab after dropped connection.")
