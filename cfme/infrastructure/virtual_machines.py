@@ -449,7 +449,7 @@ class InfraVmReconfigureView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (self.title.text == 'Reconfigure Virtual Machine' and
-                len([row for row in self.affected_vms.rows()]) == 1 and
+                len([row for row in self.affected_vms.rows()]) >= 1 and
                 self.context['object'].name in [row.name.text for row in self.affected_vms.rows()])
 
 
