@@ -185,14 +185,14 @@ def create_vms(setup_provider, request, provider):
     param = getattr(request, 'param', None)
     if param:
         if not isinstance(param, dict):
-            pytest.skip("create_vms_modscope did not receive valid parameters.")
+            pytest.skip("create_vms did not receive valid parameters.")
 
         template_type = param.get('template_type', 'small_template')
         num_vms = param.get('num_vms', 2)
 
         # Check for invalid template_type or num_vms parameters.
         if not isinstance(template_type, str) or not isinstance(num_vms, int) or num_vms < 2:
-            pytest.skip("create_vms_modscope did not receive valid parameters.")
+            pytest.skip("create_vms did not receive valid parameters.")
 
     vms = []
     for _ in range(num_vms):
