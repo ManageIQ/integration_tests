@@ -27,6 +27,7 @@ from cfme.tests.control import do_scan
 from cfme.tests.control import wait_for_ssa_enabled
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -297,6 +298,14 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, poli
     scope="module",
     selector=ONE_PER_TYPE
 )
+@pytest.mark.meta(
+    blockers=[
+        GH(
+            "ManageIQ/manageiq:20247",
+            unblock=lambda provider: not provider.one_of(OpenStackProvider),
+        )
+    ]
+)
 def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Prevent current event from proceeding'
 
@@ -476,6 +485,14 @@ def test_action_prevent_host_ssa(request, host, host_policy):
     scope="module",
     selector=ONE_PER_TYPE
 )
+@pytest.mark.meta(
+    blockers=[
+        GH(
+            "ManageIQ/manageiq:20252",
+            unblock=lambda provider: not provider.one_of(OpenStackProvider),
+        )
+    ]
+)
 def test_action_power_on_logged(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Generate log message'.
 
@@ -518,6 +535,14 @@ def test_action_power_on_logged(request, vm, vm_off, policy_for_testing):
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module",
     selector=ONE_PER_TYPE
+)
+@pytest.mark.meta(
+    blockers=[
+        GH(
+            "ManageIQ/manageiq:20253",
+            unblock=lambda provider: not provider.one_of(OpenStackProvider),
+        )
+    ]
 )
 def test_action_power_on_audit(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Generate Audit Event'.
@@ -756,6 +781,14 @@ def test_action_initiate_smartstate_analysis(
     scope="module",
     selector=ONE_PER_TYPE
 )
+@pytest.mark.meta(
+    blockers=[
+        GH(
+            "ManageIQ/manageiq:20262",
+            unblock=lambda provider: not provider.one_of(OpenStackProvider),
+        )
+    ]
+)
 def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
     """ Tests action tag
 
@@ -804,6 +837,14 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, appliance):
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module",
     selector=ONE_PER_TYPE
+)
+@pytest.mark.meta(
+    blockers=[
+        GH(
+            "ManageIQ/manageiq:20262",
+            unblock=lambda provider: not provider.one_of(OpenStackProvider),
+        )
+    ]
 )
 def test_action_untag(request, vm, vm_off, policy_for_testing, appliance, tag):
     """ Tests action untag
