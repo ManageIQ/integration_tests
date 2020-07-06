@@ -184,7 +184,7 @@ class SSUINavigateStep(NavigateStep):
         except NotImplementedError:
             nav_args['wait_for_view'] = 0
             self.log_message(
-                "is_displayed not implemented for {} view".format(self.VIEW or ""), level="warn")
+                "is_displayed not implemented for {} view".format(self.VIEW or ""), level="warning")
         except Exception as e:
             self.log_message(
                 f"Exception raised [{e}] whilst checking if already here", level="error")

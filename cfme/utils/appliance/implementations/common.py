@@ -35,7 +35,7 @@ class HandleModalsMixin:
             return None
 
         try:
-            return self.selenium.switch_to_alert()
+            return self.selenium.switch_to.alert()
         except NoAlertPresentException:
             modal = self._modal_alert
             return modal if modal.is_displayed else None
