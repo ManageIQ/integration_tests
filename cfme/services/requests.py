@@ -8,6 +8,7 @@ from widgetastic.widget import Checkbox
 from widgetastic.widget import Table
 from widgetastic.widget import Text
 from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
 from widgetastic_patternfly import BootstrapTreeview
 from widgetastic_patternfly import BreadCrumb
 from widgetastic_patternfly import Input
@@ -283,6 +284,18 @@ class RequestBasicView(BaseLoggedInPage):
             self.logged_in_as_current_user
             and self.navigation.currently_selected == ['Services', 'Requests']
         )
+
+    @View.nested
+    class filter_by(View):  # noqa
+        requester = BootstrapSelect(
+            locator=(
+                './/div[contains(@class, "requester")]'
+                '/div[contains(@class, "bootstrap-select")]'
+            )
+        )
+        # TODO: Add other available fields.
+        apply = Button('Apply')
+        reset = Button('Reset')
 
 
 class RequestsView(RequestBasicView):

@@ -3,6 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.services.requests import RequestsView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -39,19 +40,19 @@ def test_copy_request_bz1194479(appliance, provider, catalog_item, request):
     assert navigate_to(service_request, 'Details')
 
 
-@pytest.mark.meta(coverage=[1749953])
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_services_requester_dropdown_sorting():
+@pytest.mark.meta(automates=[1749953, 1767660])
+@pytest.mark.customer_scenario
+def test_services_requester_dropdown_sorting(appliance, generic_catalog_item):
     """
     Bugzilla:
         1749953
+        1767660
 
     Polarion:
         assignee: nansari
         casecomponent: Services
         initialEstimate: 1/6h
-        startsin: 5.10
+        startsin: 5.11
         testSteps:
             1. Create catalog
             2. Order the catalog items
@@ -63,4 +64,10 @@ def test_services_requester_dropdown_sorting():
             3.
             4. Requester dropdown should Be Organized alphabetically
     """
-    pass
+    request = ServiceCatalogs(
+        appliance, catalog=generic_catalog_item.catalog, name=generic_catalog_item.name
+    ).order()
+    view = request.create_view(RequestsView)
+
+    all_options = [option.text for option in view.filter_by.requester.all_options]
+    assert ["Administrator", "All"] == all_options
