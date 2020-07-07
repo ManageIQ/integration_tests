@@ -223,31 +223,6 @@ def test_automate_buttons_requests():
     pass
 
 
-@pytest.mark.tier(1)
-def test_vm_naming_number_padding():
-    """
-    Polarion:
-        assignee: dgaikwad
-        initialEstimate: 1/8h
-        caseimportance: high
-        caseposneg: positive
-        testtype: functional
-        startsin: 5.10
-        casecomponent: Automate
-        tags: automate
-        setup:
-            1. Add any provider
-        testSteps:
-            1. Provision more than 10 VMs
-        expectedResults:
-            1. VMs should be generated with respective numbering
-
-    Bugzilla:
-        1688672
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 @pytest.mark.manual('manualonly')
 def test_git_refresh_with_rapid_updates():
