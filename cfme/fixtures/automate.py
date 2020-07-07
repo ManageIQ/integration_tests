@@ -2,6 +2,8 @@ from collections import namedtuple
 
 import fauxfactory
 import pytest
+import pytz
+from dateutil import parser
 
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
@@ -108,3 +110,20 @@ def import_datastore(appliance, import_data):
         domain.enabled = True
     yield domain
     domain.delete_if_exists()
+
+
+@pytest.fixture
+def current_server_time(appliance):
+    current_time = parser.parse(appliance.ssh_client.run_command('date').output)
+    tz_list = appliance.ssh_client.run_command("timedatectl | grep 'Time zone'") \
+        .output.strip().split(' ')
+
+    tz_name = tz_list[2]
+    tz_num = tz_list[-1][:-1]
+    date = current_time.replace(tzinfo=pytz.timezone(tz_name))
+    return date, tz_num
+
+
+def round_min(value, base=5):
+    round_value = int(base * round(float(value) / base))
+    return 0 if round_value == 60 else round_value

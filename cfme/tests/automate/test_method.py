@@ -2,11 +2,13 @@ from textwrap import dedent
 
 import fauxfactory
 import pytest
+from dateutil import relativedelta
 
 from . import tag_delete_from_category
 from cfme import test_requirements
 from cfme.automate.explorer.klass import ClassDetailsView
 from cfme.automate.simulation import simulate
+from cfme.fixtures.automate import round_min
 from cfme.rest.gen_data import users as _users
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.rest import ViaREST
@@ -19,6 +21,34 @@ from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.automate, pytest.mark.tier(2)]
+
+
+@pytest.fixture
+def custom_automate_setup(domain, namespace):
+    auto_class = namespace.classes.create(
+        name=fauxfactory.gen_alphanumeric(15, start="class_"),
+        display_name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha(),
+    )
+
+    method = auto_class.methods.create(
+        name=fauxfactory.gen_alphanumeric(15, start="method_"),
+        location="inline",
+        script='$evm.log(:info, "Hello World")',
+    )
+    schema_field = {
+        "name": fauxfactory.gen_alphanumeric(15, start="schema_"),
+        "type": "Method",
+        "data_type": "String",
+    }
+    auto_class.schema.add_fields(schema_field)
+
+    instance = auto_class.instances.create(
+        name=fauxfactory.gen_alphanumeric(15, start="instance_"),
+        fields={schema_field["name"]: {"value": method.name}},
+    )
+    yield domain, namespace, auto_class, instance
+    auto_class.delete()
 
 
 @pytest.fixture(scope='function')
@@ -797,3 +827,90 @@ def test_delete_tag_from_category(custom_instance):
                 "instance": instance.name,
             },
         )
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automate=[1713072, 1745197])
+def test_automate_task_schedule(appliance, custom_automate_setup, current_server_time, request):
+    """
+    Polarion:
+        assignee: dgaikwad
+        initialEstimate: 1/8h
+        caseposneg: positive
+        casecomponent: Automate
+        setup:
+            1. Create domain, namespace, class and instance
+            2. Also create automate method with below ruby code:
+                >> $evm.log(:info, "Hello World")
+        testSteps:
+            1. Go to Configuration > Settings > Zones > Schedules
+            2. Create schedule with required fields:
+               >> Action - Automation Tasks
+               >> Object Details(Request) - Call_Instance
+               >> Attribute/Value Pairs
+                     >> domain - domain_name
+                     >> namespace - namespace_name
+                     >> class - class_name
+                     >> instance - instance_name
+               >> Timer Options
+            3. Check automation logs more than 1 times
+        expectedResults:
+            1.
+            2.
+            3. Automate method should be executed on scheduled time.
+
+    Bugzilla:
+        1713072
+    """
+    domain, namespace, auto_class, instance = custom_automate_setup
+    current_time, tz_num = current_server_time
+    start_date = current_time + relativedelta.relativedelta(minutes=5)
+    view = navigate_to(appliance.collections.system_schedules, 'Add')
+    available_list = view.form.time_zone.all_options
+    tz_select = next(tz.text for tz in available_list if f'{tz_num[0:3]}:00'in tz.text)
+    if round_min(start_date.minute) == 0:
+        start_date = start_date + relativedelta.relativedelta(minutes=60 - start_date.minute)
+        start_date_minute = str(start_date.minute)
+    else:
+        start_date_minute = str(round_min(start_date.minute))
+
+        attribute_value_pairs = {
+            "domain": domain.name,
+            "namespace": namespace.name,
+            "class": auto_class.name,
+            "instance": instance.name,
+        }
+
+    schedule = appliance.collections.system_schedules.create(
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
+        action_type="Automation Tasks",
+        request="Call_Instance",
+        attribute_value_pairs=attribute_value_pairs,
+        run_type="Hourly",
+        time_zone=tz_select,
+        start_hour=str(start_date.hour),
+        start_minute=start_date_minute,
+    )
+
+    @request.addfinalizer
+    def _finalize():
+        try:
+            schedule.delete_if_exists()
+        except TypeError:
+            # Delete failing only on PRT with type error
+            pass
+
+    matched_pattern = ".*INFO.* : Q-task_id.* Hello World"
+
+    def _check_automation_log():
+        log = LogValidator("/var/www/miq/vmdb/log/automation.log",
+                           matched_patterns=[matched_pattern]
+                           )
+        log.start_monitoring()
+        log.validate(wait="15m")
+
+    _check_automation_log()
+    next_run_date = start_date + relativedelta.relativedelta(minutes=-5, hours=1)
+    appliance.ssh_client.run_command(f"date {next_run_date.strftime('%m%d%H%M%Y')}")
+    _check_automation_log()

@@ -16,6 +16,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from widgetastic_manageiq import AttributeValueForm
 from widgetastic_manageiq import Calendar
 from widgetastic_manageiq import Checkbox
 from widgetastic_manageiq import Dropdown
@@ -59,6 +60,7 @@ class ScheduleAddEditEntities(View):
     request = Input(name='object_request')
     object_type = BootstrapSelect('target_class')
     object_selection = BootstrapSelect('target_id')
+    attribute_value_pairs = AttributeValueForm("attribute_", "value_")
 
 
 class ScheduleAllView(ConfigurationView):
@@ -196,6 +198,9 @@ class SystemSchedule(BaseEntity, Updateable, Pretty):
     # Samba backup config
     samba_username = attr.ib(default=None)
     samba_password = attr.ib(default=None)
+    # Automation Task
+    request = attr.ib(default=None)
+    attribute_value_pairs = attr.ib(default=None)
 
     def update(self, updates, reset=False, cancel=False):
         """ Modify an existing schedule with informations from this instance.
@@ -309,7 +314,8 @@ class SystemSchedulesCollection(BaseCollection):
     def create(self, name, description, active=True, action_type=None, run_type=None,
                run_every=None, time_zone=None, start_date=None, start_hour=None, start_minute=None,
                filter_level1=None, filter_level2=None, backup_type=None, depot_name=None, uri=None,
-               samba_username=None, samba_password=None, cancel=False):
+               samba_username=None, samba_password=None, cancel=False, request=None,
+               attribute_value_pairs=None):
         """ Create a new schedule from the informations stored in the object.
 
         Args:
@@ -343,6 +349,8 @@ class SystemSchedulesCollection(BaseCollection):
                     'samba_password': samba_password,
                     'samba_password_verify': samba_password
                 })
+        elif action_type == "Automation Tasks":
+            details.update({"request": request, "attribute_value_pairs": attribute_value_pairs})
         else:
             details.update({
                 'items_analysis': {
@@ -364,7 +372,8 @@ class SystemSchedulesCollection(BaseCollection):
                                     start_minute=start_minute, filter_level1=filter_level1,
                                    filter_level2=filter_level2, backup_type=backup_type,
                                    depot_name=depot_name, uri=uri, samba_username=samba_username,
-                                   samba_password=samba_password)
+                                   samba_password=samba_password, request=request,
+                                    attribute_value_pairs=attribute_value_pairs)
         return schedule
 
 
