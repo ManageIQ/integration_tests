@@ -116,23 +116,6 @@ def test_refresh_ssui_page(appliance, generic_service):
 
 
 @pytest.mark.manual
-@pytest.mark.tier(1)
-def test_sui_ordering_service_catalog_the_dynamic_drop_down_dialogs_fields_should_auto_refreshed():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: ssui
-    Bugzilla:
-        1568342
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(2)
 def test_disabling_dashboard_under_service_ui_for_a_role_shall_disable_the_dashboard():
     """

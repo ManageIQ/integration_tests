@@ -1194,3 +1194,41 @@ def test_dynamic_dialog_field_to_static_field(appliance, import_datastore,
     with LogValidator(auto_log, failure_patterns=["TEXT AREA REFRESH DIALOG"]
                       ).waiting(timeout=120):
         navigate_to(service_catalogs, "Order")
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1568342])
+@pytest.mark.parametrize("import_data", [DatastoreImport("bz_1568342.zip", "bz_1568342", None)],
+                         ids=["datastore"])
+@pytest.mark.parametrize("file_name", ["bz_1568342.yml"], ids=["dynamic_dialog"])
+@pytest.mark.parametrize('context', [ViaUI, ViaSSUI])
+def test_dynamic_dropdown_auto_refresh_load(appliance, import_datastore, import_data,
+                                            generic_catalog_item_with_imported_dialog, context):
+    """
+    Bugzilla:
+        1568342
+    Polarion:
+        assignee: nansari
+        startsin: 5.11
+        casecomponent: Services
+        initialEstimate: 1/16h
+    """
+    catalog_item, _, ele_label = generic_catalog_item_with_imported_dialog
+
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
+    with appliance.context.use(context):
+        if context == ViaSSUI:
+            view = ssui_nav(service_catalogs, "Details")
+        else:
+            view = navigate_to(service_catalogs, "Order")
+
+        view.fields(ele_label).dropdown.fill("Contract B")
+        wait_for(
+            lambda: view.fields("location").dropdown.read() == 'Florida', timeout=7
+        )
+
+        view.fields(ele_label).dropdown.fill("Contract A")
+        wait_for(
+            lambda: view.fields("location").dropdown.read() == 'Alaska', timeout=7
+        )
