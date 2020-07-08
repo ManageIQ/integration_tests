@@ -2,6 +2,7 @@ import fauxfactory
 import pytest
 from pytest_polarion_collect.utils import get_parsed_docstring
 from pytest_polarion_collect.utils import process_json_data
+from pytest_polarion_collect.utils import set_cache
 from wrapanapi import VmState
 
 from cfme.cloud.provider.ec2 import EC2Provider
@@ -27,6 +28,7 @@ def pytest_collection_finish(session):
     """This hook will call the process_json_data and cause _docstrings_cache
     to be populated so that we can access required information in the _create_vm."""
     if not session.config.getoption('--no-assignee-vm-name'):
+        set_cache(session)
         process_json_data(session, session.items)
 
 
