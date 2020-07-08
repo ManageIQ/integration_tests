@@ -6149,3 +6149,8 @@ class TimePicker(View):
             :py:class:`bool`
         """
         return self.browser.is_displayed(self.textbox)
+
+
+class ImportExportFlashMessages(FlashMessages):
+    ROOT = ".//div[contains(@class, 'import-flash-message')]"
+    MSG_LOCATOR = ".//div[contains(@class, 'alert')]"
