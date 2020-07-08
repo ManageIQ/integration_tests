@@ -2413,35 +2413,6 @@ def test_add_project():
 @test_requirements.rbac
 @test_requirements.ssui
 @pytest.mark.tier(2)
-def test_ssui_group_switch():
-    """
-    When a user is a member of two or more groups and one of the groups
-    does not have access to the SSUI, verify that the group w/o SSUI does
-    not stay logged in after switching groups.
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: SelfServiceUI
-        caseimportance: critical
-        initialEstimate: 1/6h
-        startsin: 5.9
-        setup:
-            1. Create a user that is a member of two more groups with one group having SSUI access
-                and the other group having SSUI access disabled.
-        testSteps:
-            1. Login to the SSUI
-            2. Switch to the group that doesn"t have SSUI access
-        expectedResults:
-            1. Login successful
-            2. Automatically logged out of the SSUI
-    """
-    pass
-
-
-@pytest.mark.manual
-@test_requirements.rbac
-@test_requirements.ssui
-@pytest.mark.tier(2)
 def test_ssui_update_dashboard():
     """
     Verify that switching Groups in SSUI changes the dashboard items to
