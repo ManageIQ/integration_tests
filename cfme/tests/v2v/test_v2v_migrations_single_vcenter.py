@@ -14,7 +14,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -345,25 +344,10 @@ def test_migration_restart(request, appliance, provider,
         target_provider=provider,
         vm_list=mapping_data_vm_obj_single_datastore.vm_list,
     )
-    view = navigate_to(migration_plan, "InProgress")
     assert migration_plan.wait_for_state("Started")
-
-    def _system_reboot():
-        # reboot system when migrated percentage greater than 20%
-        ds_percent = int(view.progress_card.get_progress_percent(migration_plan.name)["datastores"])
-        if ds_percent > 10:
-            appliance.restart_evm_rude()
-            return True
-        else:
-            return False
-
-    # wait until system restarts
-    wait_for(
-        func=_system_reboot,
-        message="migration plan is in progress, be patient please",
-        delay=10,
-        num_sec=1800
-    )
+    # reboot system when the actual disk migration elapsed a 240 second time duration
+    migration_plan.in_progress(plan_elapsed_time=240)
+    appliance.restart_evm_rude()
     appliance.wait_for_miq_ready()
     try:
         assert migration_plan.wait_for_state("In_Progress")
