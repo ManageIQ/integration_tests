@@ -102,7 +102,7 @@ def _vm_state(vm, state):
         ensure_state = VmState.RUNNING
         state_change = vm.STATE_ON
     else:
-        raise Exception("Unknown power state - unable to continue!")
+        raise ValueError("Unknown power state - unable to continue!")
 
     vm.mgmt.ensure_state(ensure_state)
     vm.wait_for_power_state_change_rest(state_change)
@@ -148,10 +148,8 @@ def request_succeeded(appliance):
             view = navigate_to(reconfig_request.parent, "All")
             # Get the latest request
             request_id = max(
-                [
-                    int(row.request_id.text)
-                    for row in view.table.rows(description__contains=reconfig_request.description)
-                ]
+                int(row.request_id.text)
+                for row in view.table.rows(description__contains=reconfig_request.description)
             )
             request_rest = appliance.rest_api.collections.requests.get(id=request_id)
             wait_for(
@@ -468,7 +466,7 @@ def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm
 @pytest.mark.parametrize("increase", [True, False], ids=["increase", "decrease"])
 @pytest.mark.parametrize(
     "create_vms_modscope",
-    [{"template_type": "full_template"}],
+    [{"template_type": "full_template", "num_vms": 2}],
     ids=["full_template"],
     indirect=True,
 )
@@ -518,7 +516,7 @@ def test_reconfigure_vm_vmware_multiple(
             new_memory = current_memory + 1
         else:
             if current_memory < 1:
-                pytest.skip("Cannot test when the value is less than the minimum required.")
+                pytest.skip("Cannot decrease memory below 1.")
             new_memory = current_memory - 1
         reconfig_view.mem_size.fill(new_memory)
         request_description = f"VM Reconfigure for: Multiple VMs - Memory: {new_memory * 1024} MB"
@@ -529,7 +527,7 @@ def test_reconfigure_vm_vmware_multiple(
             new_processor = current_processors + 1
         else:
             if current_processors < 1:
-                pytest.skip("Cannot test when value is  less than the minimum required.")
+                pytest.skip("Cannot decrease sockets number below 1.")
             new_processor = current_processors - 1
         reconfig_view.sockets.select_by_visible_text(str(new_processor))
         request_description = (

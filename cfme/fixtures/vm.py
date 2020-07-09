@@ -147,7 +147,7 @@ def create_vms_modscope(setup_provider_modscope, request, provider):
     param = {'template_type': 'big_template', 'num_vms': 3}
 
     @pytest.mark.parametrize('create_vms_modscope',
-                             [{'template_type': 'big_template', 'num': 3}],
+                             [{'template_type': 'big_template', 'num_vms': 3}],
                              indirect=True)
     def test_big_template(create_vms_modscope):
         pass
