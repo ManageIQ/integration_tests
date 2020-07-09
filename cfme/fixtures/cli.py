@@ -459,3 +459,27 @@ def do_appliance_versions_match(appliance1, appliance2):
             "Couldn't clear one or more cache - best guess it has already been cleared."
         )
     assert appliance1.version == appliance2.version
+
+
+@pytest.fixture(scope="module")
+def replicated_appliances_modscope(
+    temp_appliance_preconfig_modscope_rhevm, temp_appliances_unconfig_modscope_rhevm
+):
+    """Configure a global appliance with region 99, sharing the same encryption key as the
+    preconfigured remote appliance with region 0. Then set up database replication between them.
+    """
+    remote_appliance = temp_appliance_preconfig_modscope_rhevm
+    global_appliance = temp_appliances_unconfig_modscope_rhevm[0]
+
+    logger.info("Starting appliance replication configuration.")
+    global_appliance.configure(region=99, key_address=remote_appliance.hostname)
+
+    remote_appliance.set_pglogical_replication(replication_type=":remote")
+    global_appliance.set_pglogical_replication(replication_type=":global")
+    global_appliance.add_pglogical_replication_subscription(remote_appliance.hostname)
+    logger.info("Finished appliance replication configuration.")
+
+    remote_appliance.browser_steal = True
+    global_appliance.browser_steal = True
+
+    return remote_appliance, global_appliance

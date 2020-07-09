@@ -217,12 +217,15 @@ def timezone(appliance):
     appliance.user.my_settings.visual.timezone = current_timezone
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def setup_replicated_multiple_appliances_with_providers(
-    temp_appliance_unconfig_funcscope, replicated_appliances
+    temp_appliances_unconfig_modscope_rhevm, replicated_appliances_modscope
 ):
-    second_remote_appliance = temp_appliance_unconfig_funcscope
-    remote_appliance, global_appliance = replicated_appliances
+    # In this case, first appliance from the 2 appliances spawned by
+    # `temp_appliances_unconfig_modscope_rhevm` is used by
+    # global_appliance in `replicated_appliances_modscope`
+    second_remote_appliance = temp_appliances_unconfig_modscope_rhevm[1]
+    remote_appliance, global_appliance = replicated_appliances_modscope
     logger.info("Starting appliance replication configuration.")
     second_remote_appliance.configure(region=89, key_address=remote_appliance.hostname)
     second_remote_appliance.set_pglogical_replication(replication_type=":remote")
@@ -240,7 +243,7 @@ def setup_replicated_multiple_appliances_with_providers(
     return vmware_provider, rhev_provider, global_appliance
 
 
-@pytest.fixture(params=["new-report", "existing-report"])
+@pytest.fixture(params=["new-report", "existing-report"], scope="module")
 def saved_report(request, setup_replicated_multiple_appliances_with_providers, get_report):
     # here `appliance` is the global appliance
     appliance = setup_replicated_multiple_appliances_with_providers[-1]
