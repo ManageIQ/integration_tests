@@ -3,18 +3,24 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
+from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.ftp import FTPException
 from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
@@ -78,7 +84,10 @@ def tenant_report(appliance):
 
 @pytest.fixture(scope="module")
 def get_report(appliance, request):
-    def _report(file_name, menu_name, preserve_owner=False, overwrite=False):
+    def _report(
+        file_name, menu_name, preserve_owner=False, overwrite=False, custom_appliance=appliance
+    ):
+        appliance = custom_appliance
         collection = appliance.collections.reports
 
         # download the report from server
@@ -206,6 +215,46 @@ def timezone(appliance):
     appliance.user.my_settings.visual.timezone = visual_tz
     yield tz
     appliance.user.my_settings.visual.timezone = current_timezone
+
+
+@pytest.fixture
+def setup_replicated_multiple_appliances_with_providers(
+    temp_appliance_unconfig_funcscope, replicated_appliances
+):
+    second_remote_appliance = temp_appliance_unconfig_funcscope
+    remote_appliance, global_appliance = replicated_appliances
+    logger.info("Starting appliance replication configuration.")
+    second_remote_appliance.configure(region=89, key_address=remote_appliance.hostname)
+    second_remote_appliance.set_pglogical_replication(replication_type=":remote")
+    global_appliance.add_pglogical_replication_subscription(second_remote_appliance.hostname)
+    logger.info("Finished appliance replication configuration.")
+
+    second_remote_appliance.browser_steal = True
+
+    vmware_provider = provider_app_crud(VMwareProvider, remote_appliance)
+    rhev_provider = provider_app_crud(RHEVMProvider, second_remote_appliance)
+
+    vmware_provider.setup()
+    rhev_provider.setup()
+
+    return vmware_provider, rhev_provider, global_appliance
+
+
+@pytest.fixture(params=["new-report", "existing-report"])
+def saved_report(request, setup_replicated_multiple_appliances_with_providers, get_report):
+    # here `appliance` is the global appliance
+    appliance = setup_replicated_multiple_appliances_with_providers[-1]
+    if request.param == "existing-report":
+        report = appliance.collections.reports.instantiate(
+            type="Configuration Management", subtype="Providers", menu_name="Providers Summary"
+        )
+    else:
+        report = get_report(
+            file_name="test_reports_in_global_region.yaml",
+            menu_name="Custom Providers Summary Report",
+            custom_appliance=appliance,
+        )
+    return report.queue(wait_for_finish=True)
 
 
 # =========================================== Tests ===============================================
@@ -787,9 +836,7 @@ def test_reports_generate_custom_conditional_filter_report(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(
-    automates=[1743579], blockers=[BZ(1743579, forced_streams=["5.11", "5.10"])]
-)
+@pytest.mark.meta(automates=[1743579], blockers=[BZ(1743579, forced_streams=["5.11", "5.10"])])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize("create_vm", ["small_template"], indirect=True, ids=[""])
 def test_created_on_time_report_field(create_vm, get_report):
@@ -845,8 +892,48 @@ def test_reports_timezone(setup_provider, timezone, get_report):
     )
     view = navigate_to(report, "Details")
     boot_time = [
-        timezone in row.boot_time.text
-        for row in view.table.rows()
-        if row.boot_time.text != ""
+        timezone in row.boot_time.text for row in view.table.rows() if row.boot_time.text != ""
     ]
     assert all(boot_time)
+
+
+@pytest.mark.long_running
+@test_requirements.multi_region
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("context", [ViaREST, ViaUI])
+def test_reports_in_global_region(
+    context, saved_report, setup_replicated_multiple_appliances_with_providers
+):
+    """
+    This test case tests report creation and rendering from global region
+    based on data from remote regions.
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Reporting
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testSteps:
+            1. Set up Multi-Region deployment with 2 remote region appliances
+            2. Add provider to each remote appliance
+            3. Create and render report in global region. report should use data from both providers
+            4. Use one of existing reports using data from added providers
+        expectedResults:
+            1.
+            2.
+            3. Report should be created and rendered successfully and show expected data.
+            4. Report should be rendered successfully and show expected data.
+
+    """
+    vmware_provider, rhev_provider, _ = setup_replicated_multiple_appliances_with_providers
+
+    # get list of provider names from the report generated in global appliance
+    if context == ViaUI:
+        view = navigate_to(saved_report, "Details")
+        actual_data = [row["Name"].text for row in view.table.rows()]
+    else:
+        # since the appliance is temporary and only one saved report is present, we can use indexing
+        result = saved_report.report.rest_api_entity.results.all[0]
+        actual_data = [data["name"] for data in result.result_set]
+
+    assert all(provider in actual_data for provider in [vmware_provider.name, rhev_provider.name])
