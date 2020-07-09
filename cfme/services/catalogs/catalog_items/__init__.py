@@ -5,7 +5,6 @@ import fauxfactory
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
-from widgetastic.utils import VersionPick
 from widgetastic.utils import WaitFillViewStrategy
 from widgetastic.widget import Checkbox
 from widgetastic.widget import ColourInput
@@ -31,8 +30,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from cfme.utils.version import LOWEST
-from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import EntryPoint
@@ -64,18 +61,10 @@ class BasicInfoForm(ServicesCatalogView):
     display = Checkbox(name='display')
 
     subtype = BootstrapSelect('generic_subtype')
-    provisioning_entry_point = VersionPicker({
-        LOWEST: EntryPoint(name='fqname', tree_id="automate_treebox"),
-        "5.11": EntryPoint(name='fqname', tree_id="automate_catalog_treebox")
-    })
-    retirement_entry_point = VersionPicker({
-        LOWEST: EntryPoint(name='retire_fqname', tree_id="automate_treebox"),
-        "5.11": EntryPoint(name='retire_fqname', tree_id="automate_catalog_treebox")
-    })
-    reconfigure_entry_point = VersionPicker({
-        LOWEST: EntryPoint(name='reconfigure_fqname', tree_id="automate_treebox"),
-        "5.11": EntryPoint(name='reconfigure_fqname', tree_id="automate_catalog_treebox")
-    })
+    provisioning_entry_point = EntryPoint(name='fqname', tree_id="automate_catalog_treebox")
+    retirement_entry_point = EntryPoint(name='retire_fqname', tree_id="automate_catalog_treebox")
+    reconfigure_entry_point = EntryPoint(name='reconfigure_fqname',
+        tree_id="automate_catalog_treebox")
     select_resource = BootstrapSelect('resource_id')
     additional_tenants = CheckableBootstrapTreeview(tree_id="tenants_treebox")
     zone = BootstrapSelect("zone_id")
@@ -365,15 +354,12 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
 
     def delete(self):
         view = navigate_to(self, 'Details')
-        view.configuration.item_select(VersionPick({LOWEST: 'Remove Catalog Item',
-                                                    '5.11': 'Delete Catalog Item'}),
-                                       handle_alert=True)
+        view.configuration.item_select('Delete Catalog Item', handle_alert=True)
 
         view = self.create_view(AllCatalogItemView, wait="20s")
         assert view.is_displayed
-        view.flash.assert_success_message(VersionPick(
-            {LOWEST: 'The selected Catalog Item was deleted',
-             '5.11': f'The catalog item "{self.name}" has been successfully deleted'}))
+        view.flash.assert_success_message(f'The catalog item "{self.name}"'
+            ' has been successfully deleted')
 
     def copy(self, name=None):
         view = navigate_to(self, 'Copy')
@@ -414,7 +400,6 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         view = navigate_to(self, "Details")
         path = view.catalog_items.tree.read()
 
-        # For 5.11+ no group tagging hover points group or button
         path.extend(["Actions", f"{name} (Group)"])
 
         try:
@@ -427,7 +412,6 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         view = navigate_to(self, "Details")
         path = view.catalog_items.tree.read()
 
-        # For 5.11+ no group tagging hover points group or button
         path.extend(["Actions", f"{name} (Group)"])
         view.catalog_items.tree.fill(path)
         view.configuration.item_select("Remove this Button Group", handle_alert=True)
@@ -495,7 +479,6 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
 
     @property
     def catalog_name(self):
-        # In 5.10 catalog name is appended with 'My Company'
         cat_name = 'My Company/{}'.format(getattr(self.catalog, 'name', None))
         return cat_name
 
