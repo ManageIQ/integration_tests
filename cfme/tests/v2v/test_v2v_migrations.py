@@ -307,6 +307,14 @@ def test_migrations_different_os_templates(request, appliance, provider,
     infrastructure_mapping_collection = appliance.collections.v2v_infra_mappings
     mapping_data = mapping_data_multiple_vm_obj_single_datastore.infra_mapping_data
     mapping = infrastructure_mapping_collection.create(**mapping_data)
+    src_vms_list = mapping_data_multiple_vm_obj_single_datastore.vm_list
+
+    # v2v-win10 base vm unable to power-on during creation as it hibernates and
+    # that state of filesystem is unsupported, So we need to power-on using cfme control.
+    for src_vm in src_vms_list:
+        if src_vm.template_name == 'v2v-win10':
+            src_vm.power_control_from_cfme(src_vm.POWER_ON, cancel=False)
+            src_vm.wait_for_power_state_change_rest(desired_state=src_vm.STATE_ON, timeout=180)
 
     @request.addfinalizer
     def _cleanup():
@@ -321,7 +329,7 @@ def test_migrations_different_os_templates(request, appliance, provider,
         description=fauxfactory.gen_alphanumeric(15, start="plan_desc_"),
         infra_map=mapping.name,
         target_provider=provider,
-        vm_list=mapping_data_multiple_vm_obj_single_datastore.vm_list,
+        vm_list=src_vms_list,
     )
     request_details_list = migration_plan.get_plan_vm_list()
     vms = request_details_list.read()
@@ -330,7 +338,6 @@ def test_migrations_different_os_templates(request, appliance, provider,
             request_details_list.is_successful(vm) and not request_details_list.is_errored(vm)
         )
 
-    src_vms_list = mapping_data_multiple_vm_obj_single_datastore.vm_list
     # validate MAC address matches between source and target VMs
     for src_vm in src_vms_list:
         migrated_vm = get_migrated_vm(src_vm, provider)
