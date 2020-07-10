@@ -68,14 +68,17 @@ def candu_tag_vm(provider, enable_candu_category):
 
 
 @pytest.fixture(scope="module")
-def candu_db_restore(temp_appliance_extended_db):
+def candu_db_restore(request, temp_appliance_extended_db):
     app = temp_appliance_extended_db
     # get DB backup file
     db_storage_hostname = conf.cfme_data.bottlenecks.hostname
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials.bottlenecks)
+    file_name = getattr(request, 'param', 'candu.db.backup')
     rand_filename = f"/tmp/db.backup_{fauxfactory.gen_alphanumeric()}"
-    db_storage_ssh.get_file("{}/candu.db.backup".format(
-        conf.cfme_data.bottlenecks.backup_path), rand_filename)
+    db_storage_ssh.get_file(
+        f"{conf.cfme_data.bottlenecks.backup_path}/{file_name}",
+        rand_filename
+    )
     app.ssh_client.put_file(rand_filename, "/tmp/evm_db.backup")
 
     app.evmserverd.stop()
@@ -90,3 +93,19 @@ def candu_db_restore(temp_appliance_extended_db):
     app.db.fix_auth_dbyml()
     app.evmserverd.start()
     app.wait_for_miq_ready()
+
+
+@pytest.fixture(params=["regions", "providers", "clusters", "hosts"])
+def entity_init(temp_appliance_extended_db, request, provider):
+    appliance = temp_appliance_extended_db
+    provider.appliance = appliance
+    if request.param == "regions":
+        return appliance.collections.regions.instantiate(appliance.region()[-1])
+    if request.param == "providers":
+        return provider
+    if request.param == "clusters":
+        return appliance.collections.clusters.instantiate(name=provider.data["clusters"][0],
+        provider=provider)
+    if request.param == "hosts":
+        return appliance.collections.hosts.instantiate(name=provider.data["hosts"][0].name,
+        provider=provider)

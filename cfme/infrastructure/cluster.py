@@ -425,4 +425,6 @@ class ClusterOptimizeUtilization(CFMENavigateStep):
         ]
         if self.appliance.version >= "5.11":
             path.insert(0, "Enterprise")
+        self.prerequisite_view.tree.expand_path(*path)
+        self.prerequisite_view.browser.plugin.ensure_page_safe()
         self.prerequisite_view.tree.click_path(*path)
