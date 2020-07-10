@@ -1,11 +1,14 @@
 import fauxfactory
 import pytest
+from widgetastic.exceptions import NoSuchElementException
 from wrapanapi import VmState
 
 from cfme import test_requirements
+from cfme.exceptions import RequestException
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVm
+from cfme.infrastructure.virtual_machines import InfraVmReconfigureView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
@@ -91,22 +94,24 @@ def ensure_vm_running(full_vm):
         raise Exception("Unknown power state - unable to continue!")
 
 
+def _vm_state(vm, state):
+    if state == "cold" and vm.is_pwr_option_available_in_cfme(vm.POWER_OFF):
+        ensure_state = VmState.STOPPED
+        state_change = vm.STATE_OFF
+    elif state == "hot" and vm.is_pwr_option_available_in_cfme(vm.POWER_ON):
+        ensure_state = VmState.RUNNING
+        state_change = vm.STATE_ON
+    else:
+        raise ValueError("Unknown power state - unable to continue!")
+
+    vm.mgmt.ensure_state(ensure_state)
+    vm.wait_for_power_state_change_rest(state_change)
+
+
 @pytest.fixture(params=["cold", "hot"])
 def vm_state(request, full_vm):
-    if request.param == "cold":
-        if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_OFF):
-            full_vm.mgmt.ensure_state(VmState.STOPPED)
-            full_vm.wait_for_vm_state_change(full_vm.STATE_OFF)
-        else:
-            raise Exception("Unknown power state - unable to continue!")
-    else:
-        if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_ON):
-            full_vm.mgmt.ensure_state(VmState.RUNNING)
-            full_vm.wait_for_vm_state_change(full_vm.STATE_ON)
-        else:
-            raise Exception("Unknown power state - unable to continue!")
-
-    yield request.param
+    _vm_state(full_vm, request.param)
+    return request.param
 
 
 @pytest.fixture(scope='function')
@@ -117,6 +122,45 @@ def enable_hot_plugin(provider, full_vm, ensure_vm_stopped):
         vm = provider.mgmt.get_vm(full_vm.name)
         vm.cpu_hot_plug = True
         vm.memory_hot_plug = True
+
+
+@pytest.fixture(params=["hot", "cold"])
+def multiple_vm_state(request, config_type, create_vms_modscope):
+    for vm in create_vms_modscope:
+        if request.param == "hot":
+            vm.mgmt.ensure_state(VmState.STOPPED)
+            if config_type == "sockets":
+                vm.mgmt.cpu_hot_plug = True
+            else:
+                vm.mgmt.memory_hot_plug = True
+            vm.mgmt.ensure_state(VmState.RUNNING)
+        _vm_state(vm, request.param)
+    return request.param
+
+
+@pytest.fixture
+def request_succeeded(appliance):
+    def _is_succeeded(reconfig_request):
+        try:
+            reconfig_request.wait_for_request()
+            return reconfig_request.is_succeeded()
+        except RequestException:
+            view = navigate_to(reconfig_request.parent, "All")
+            # Get the latest request
+            request_id = max(
+                int(row.request_id.text)
+                for row in view.table.rows(description__contains=reconfig_request.description)
+            )
+            request_rest = appliance.rest_api.collections.requests.get(id=request_id)
+            wait_for(
+                lambda: request_rest.request_state == "finished",
+                fail_func=request_rest.reload,
+                timeout=120,
+            )
+            return request_rest.status == "Ok"
+        return
+
+    return _is_succeeded
 
 
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
@@ -223,7 +267,7 @@ def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_hot(
         provider, full_vm, enable_hot_plugin, ensure_vm_running, change_type):
-    """Change number of CPU sockets and amount of memory while VM is runnng.
+    """Change number of CPU sockets and amount of memory while VM is running.
     Changing number of cores per socket on running VM is not supported by RHV.
 
     Polarion:
@@ -417,10 +461,24 @@ def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm
     )
 
 
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider])
-def test_reconfigure_vm_vmware_mem_multiple():
+@pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module")
+@pytest.mark.parametrize("config_type", ["sockets", "memory"])
+@pytest.mark.parametrize("increase", [True, False], ids=["increase", "decrease"])
+@pytest.mark.parametrize(
+    "create_vms_modscope",
+    [{"template_type": "full_template", "num_vms": 2}],
+    ids=["full_template"],
+    indirect=True,
+)
+def test_reconfigure_vm_vmware_multiple(
+    appliance,
+    config_type,
+    create_vms_modscope,
+    multiple_vm_state,
+    increase,
+    request,
+    request_succeeded,
+):
     """
     Polarion:
         assignee: nansari
@@ -437,127 +495,62 @@ def test_reconfigure_vm_vmware_mem_multiple():
             2. Hot Decrease
             3. Cold Increase
             4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
         expectedResults:
             1. Action should succeed
             2. Action should fail
             3. Action should succeed
             4. Action should succeed
-            5. Action should succeed
-            6. Action should Error
     """
-    pass
+    vms = create_vms_modscope
+    all_view = navigate_to(vms[0], "AllForProvider")
+    entities = [all_view.entities.get_entity(surf_pages=True, name=vm.name) for vm in vms]
+    [entity.ensure_checked() for entity in entities]
+    all_view.toolbar.configuration.item_select("Reconfigure Selected items")
 
+    reconfig_view = vms[0].create_view(InfraVmReconfigureView, wait="20s")
+    if config_type == "memory":
+        reconfig_view.memory.fill(True)
+        reconfig_view.mem_size_unit.select_by_visible_text("GB")
+        current_memory = int(reconfig_view.mem_size.value)
+        if increase:
+            new_memory = current_memory + 1
+        else:
+            if current_memory < 1:
+                pytest.skip("Cannot decrease memory below 1.")
+            new_memory = current_memory - 1
+        reconfig_view.mem_size.fill(new_memory)
+        request_description = f"VM Reconfigure for: Multiple VMs - Memory: {new_memory * 1024} MB"
+    else:
+        reconfig_view.cpu.fill(True)
+        current_processors = int(reconfig_view.sockets.selected_option)
+        if increase:
+            new_processor = current_processors + 1
+        else:
+            if current_processors < 1:
+                pytest.skip("Cannot decrease sockets number below 1.")
+            new_processor = current_processors - 1
+        reconfig_view.sockets.select_by_visible_text(str(new_processor))
+        request_description = (
+            f"VM Reconfigure for: Multiple VMs - Processor Sockets: {new_processor}"
+        )
 
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider])
-def test_reconfigure_vm_vmware_sockets_multiple():
-    """ Test changing the cpu sockets of multiple vms at the same time.
+    reconfig_view.submit_button.click()
+    reconfig_request = appliance.collections.requests.instantiate(
+        description=request_description, partial_check=True
+    )
 
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.6
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. get new configured appliance ->add vmware provider
-            2. provision 2 new vms
-            3. power off 1 vm -> select both vms
-            4. configure-->reconfigure vm
-            5. increase/decrease counts
-            6. power on vm
-            7. check changes
-    """
-    pass
+    @request.addfinalizer
+    def _finalize():
+        try:
+            reconfig_request.remove_request()
+        except (RequestException, NoSuchElementException):
+            # sometimes the delete button is not present on the page.
+            pass
 
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider])
-def test_reconfigure_vm_vmware_cores_multiple():
-    """ Test changing the cpu cores of multiple vms at the same time.
-
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.6
-        casecomponent: Infra
-        tags: reconfigure
-        setup:
-            1. get new configured appliance ->add vmware provider
-            2. provision 2 new vms
-        testSteps:
-            1. Hot increase
-            2. Hot Decrease
-            3. Cold Increase
-            4. Cold Decrease
-            5. Hot + Cold Increase
-            6. Hot + Cold Decrease
-        expectedResults:
-            1. Action should fail
-            2. Action should fail
-            3. Action should succeed
-            4. Action should succeed
-            5. Action should fail
-            6. Action should Error
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
-@pytest.mark.provider([VMwareProvider])
-def test_reconfigure_add_disk_cold():
-    """ Test adding 16th disk to test how a new scsi controller is handled.
-
-    Bugzilla:
-        1337310
-
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.7
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. get new configured appliance ->add vmware provider
-            2. provision a new vm with 15 disks
-            3. Add a new disk with CloudForms using the VM Reconfigure dialog
-            4. Check new SCSI controller in vm
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.provider([VMwareProvider])
-def test_reconfigure_add_disk_cold_controller_sas():
-    """
-
-    Bugzilla:
-        1445874
-
-    Polarion:
-        assignee: nansari
-        initialEstimate: 1/6h
-        testtype: functional
-        startsin: 5.5
-        casecomponent: Infra
-        tags: reconfigure
-        testSteps:
-            1. get new configured appliance ->add vmware provider
-            2. Add 15 disks to an existing VM with Controller type set to SAS
-            3. look at the 16th Disk Controller Type
-            4. Check controller type
-            5. Should be SAS like exiting Controller
-    """
-    pass
+    if multiple_vm_state == "hot" and not increase:
+        assert not request_succeeded(reconfig_request)
+    else:
+        assert request_succeeded(reconfig_request)
 
 
 def vm_reconfig_via_rest(appliance, config_type, vm_id, config_data):
@@ -654,12 +647,10 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.provider([VMwareProvider, RHEVMProvider],
                       required_fields=['templates'], selector=ONE_PER_TYPE)
 @test_requirements.multi_region
-@test_requirements.reconfigure
 def test_vm_reconfigure_from_global_region(context):
     """
     reconfigure a VM via CA
