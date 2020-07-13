@@ -3073,3 +3073,73 @@ def test_ssui_login_http():
             2. able to login SSUI
     """
     pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.customer_scenario
+@pytest.mark.meta(coverage=[1710998])
+def test_verify_datastores_list():
+    """
+    Datastore filter should work properly after even delete the datastores
+    Bugzilla:
+        1710998
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Auth
+        caseimportance: high
+        initialEstimate: 1/4h
+    setup:
+        1. create setup like below
+            My VMWARE structure:
+            vcenter-server
+            |
+            | -> Datacenter1
+                | -> Cluster1
+            |
+            | -> Datacenter2
+                | -> Cluster2
+            |
+            | -> Datacenter3
+                | -> Cluster3
+    testSteps:
+        1. create a role and group `group1` and assigne filters for only `Cluster3`,
+        2. created user `user1`, logged in with user `user1` and verified that I can only
+        see `Cluster3`.
+        3. delete the 'cluster3'
+        4. navigate to check cluster list
+    expectedResults:
+        1. role and group successfully created
+        2. able to see only `cluster3`
+        3. cluster should be deleted successfully
+        4. There should not be any cluster in the list
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.tier(1)
+@pytest.mark.meta(coverage=[1854839])
+def test_chargeback_report():
+    """
+    Chargeback report should show correct data
+    Bugzilla:
+        1854839
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Auth
+        caseimportance: medium
+        initialEstimate: 1/4h
+        testSteps:
+            1. create rules (see screen copy): overview -> chargeback -> rates -> compute ->
+             configuration -> Add new chargeback rate
+            2. assign this rule to the whole company (see screen copy): overview -> chargeback ->
+             assignments -> compute : assign previously define rule to enterprise
+            3. create a report based on these rules: overview -> reports
+        expectedResults:
+            1.
+            2.
+            3. report generated with correct data
+
+    """
+    pass

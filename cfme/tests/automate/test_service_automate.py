@@ -357,33 +357,6 @@ def test_passing_value_between_catalog_items(request, appliance, catalog_item_se
         assert provision_request.is_succeeded(method="ui")
 
 
-@pytest.mark.manual
-@pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1748353])
-def test_service_retire_automate():
-    """
-    Bugzilla:
-        1748353
-
-    Polarion:
-        assignee: dgaikwad
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        testSteps:
-            1. Create email retirement method & add it to automate
-            2. Provision service with a retirement date
-            3. Reach retirement date
-            4. See automation logs
-        expectedResults:
-            1.
-            2.
-            3.
-            4. The retirement should not run multiple times at the same time
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1740796], blockers=[BZ(1740796, forced_streams=["5.10"])])
 def test_import_dialog_file_without_selecting_file(appliance, dialog):
