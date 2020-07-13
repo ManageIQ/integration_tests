@@ -263,42 +263,6 @@ def test_git_refresh_with_rapid_updates():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1713072, 1745197])
-def test_automate_task_schedule():
-    """
-    Polarion:
-        assignee: dgaikwad
-        initialEstimate: 1/8h
-        caseposneg: positive
-        casecomponent: Automate
-        setup:
-            1. Create domain, namespace, class and instance
-            2. Also create automate method with below ruby code:
-                >> $evm.log(:info, "Hello World")
-        testSteps:
-            1. Go to Configuration > Settings > Zones > Schedules
-            2. Create schedule with required fields:
-               >> Action - Automation Tasks
-               >> Object Details(Request) - Call_Instance
-               >> Attribute/Value Pairs
-                     >> domain - domain_name
-                     >> namespace - namespace_name
-                     >> class - class_name
-                     >> instance - instance_name
-               >> Timer Options
-            3. Check automation logs
-        expectedResults:
-            1.
-            2.
-            3. Automate method should be executed on scheduled time.
-
-    Bugzilla:
-        1713072
-    """
-    pass
-
-
-@pytest.mark.tier(2)
 @pytest.mark.meta(coverage=[1743227])
 def test_queue_up_schedule_run_now():
     """

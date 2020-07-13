@@ -3155,10 +3155,16 @@ class AttributeValueForm(View):
         PARAMETERS = ("id",)
 
         attribute = Input(
-            locator=ParametrizedLocator(".//input[@id=concat({@attr_prefix|quote}, {id|quote})]")
+            locator=ParametrizedLocator(
+                "(.//input[@id=concat({@attr_prefix|quote}, {id|quote})])|"
+                "(.//div[./label[contains((.),{id|quote})]]//input[contains(@ng-model,'0')])"
+            )
         )
         value = Input(
-            locator=ParametrizedLocator(".//input[@id=concat({@val_prefix|quote}, {id|quote})]")
+            locator=ParametrizedLocator(
+                "(.//input[@id=concat({@val_prefix|quote}, {id|quote})])|"
+                "(.//div[./label[contains((.),{id|quote})]]//input[contains(@ng-model,'1')])"
+            )
         )
 
         @property
@@ -3172,7 +3178,9 @@ class AttributeValueForm(View):
         # TODO: Figure out how to smuggle some extra data to the all classmethod
         # TODO: since it is now impossible to pass the attr_prefix to it.
 
-    ATTRIBUTES = ParametrizedLocator(".//input[starts-with(@id, {@attr_prefix|quote})]")
+    ATTRIBUTES = ParametrizedLocator(
+        "(.//input[starts-with(@id, {@attr_prefix|quote})])|(.//input[contains(@ng-model, '0')])"
+    )
 
     def __init__(self, parent, attr_prefix, val_prefix, start=1, end=5, logger=None):
         View.__init__(self, parent, logger=logger)

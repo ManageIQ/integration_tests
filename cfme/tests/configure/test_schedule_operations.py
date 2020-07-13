@@ -1,11 +1,11 @@
 import fauxfactory
 import pytest
-import pytz
 from dateutil import parser
 from dateutil import relativedelta
 
 from cfme import test_requirements
 from cfme.base.ui import BaseLoggedInPage
+from cfme.fixtures.automate import round_min
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -35,23 +35,6 @@ def host_with_credentials(appliance, provider):
     host.update_credentials_rest(credentials=host_data['credentials'])
     yield host
     host.remove_credentials_rest()
-
-
-@pytest.fixture
-def current_server_time(appliance):
-    current_time = parser.parse(appliance.ssh_client.run_command('date').output)
-    tz_list = appliance.ssh_client.run_command("timedatectl | grep 'Time zone'") \
-        .output.strip().split(' ')
-
-    tz_name = tz_list[2]
-    tz_num = tz_list[-1][:-1]
-    date = current_time.replace(tzinfo=pytz.timezone(tz_name))
-    return date, tz_num
-
-
-def round_min(value, base=5):
-    return (0 if int(base * round(float(value) / base)) == 60
-            else int(base * round(float(value) / base)))
 
 
 def test_schedule_crud(appliance, current_server_time):
