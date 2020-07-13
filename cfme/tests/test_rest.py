@@ -1266,7 +1266,7 @@ def test_custom_logos_via_api(appliance, image_type, request):
 @pytest.mark.provider([VMwareProvider], selector=ONE)
 @pytest.mark.provider([RHEVMProvider], fixture_name="second_provider", selector=ONE)
 def test_provider_specific_vm(
-    appliance, request, soft_assert, provider, second_provider
+        appliance, request, soft_assert, provider, second_provider
 ):
     """
     Polarion:

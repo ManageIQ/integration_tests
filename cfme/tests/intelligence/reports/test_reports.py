@@ -20,7 +20,6 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.ftp import FTPException
 from cfme.utils.generators import random_vm_name
-from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.rest import assert_response
 from cfme.utils.update import update
@@ -218,35 +217,21 @@ def timezone(appliance):
 
 
 @pytest.fixture(scope="module")
-def setup_replicated_multiple_appliances_with_providers(
-    temp_appliances_unconfig_modscope_rhevm, replicated_appliances_modscope
-):
-    # In this case, first appliance from the 2 appliances spawned by
-    # `temp_appliances_unconfig_modscope_rhevm` is used by
-    # global_appliance in `replicated_appliances_modscope`
-    second_remote_appliance = temp_appliances_unconfig_modscope_rhevm[1]
-    remote_appliance, global_appliance = replicated_appliances_modscope
-    logger.info("Starting appliance replication configuration.")
-    second_remote_appliance.configure(region=89, key_address=remote_appliance.hostname)
-    second_remote_appliance.set_pglogical_replication(replication_type=":remote")
-    global_appliance.add_pglogical_replication_subscription(second_remote_appliance.hostname)
-    logger.info("Finished appliance replication configuration.")
-
-    second_remote_appliance.browser_steal = True
-
+def setup_providers_on_multi_region_cluster(multi_region_cluster, setup_multi_region_cluster):
+    remote_appliance, second_remote_appliance = multi_region_cluster.remote_appliances
     vmware_provider = provider_app_crud(VMwareProvider, remote_appliance)
     rhev_provider = provider_app_crud(RHEVMProvider, second_remote_appliance)
 
     vmware_provider.setup()
     rhev_provider.setup()
 
-    return vmware_provider, rhev_provider, global_appliance
+    return vmware_provider, rhev_provider
 
 
 @pytest.fixture(params=["new-report", "existing-report"], scope="module")
-def saved_report(request, setup_replicated_multiple_appliances_with_providers, get_report):
+def saved_report(request, multi_region_cluster, get_report):
     # here `appliance` is the global appliance
-    appliance = setup_replicated_multiple_appliances_with_providers[-1]
+    appliance = multi_region_cluster.global_appliance
     if request.param == "existing-report":
         report = appliance.collections.reports.instantiate(
             type="Configuration Management", subtype="Providers", menu_name="Providers Summary"
@@ -904,8 +889,9 @@ def test_reports_timezone(setup_provider, timezone, get_report):
 @test_requirements.multi_region
 @pytest.mark.tier(2)
 @pytest.mark.parametrize("context", [ViaREST, ViaUI])
+@pytest.mark.parametrize("temp_appliances_unconfig_modscope_rhevm", [3], indirect=True)
 def test_reports_in_global_region(
-    context, saved_report, setup_replicated_multiple_appliances_with_providers
+    context, setup_providers_on_multi_region_cluster, saved_report
 ):
     """
     This test case tests report creation and rendering from global region
@@ -928,7 +914,7 @@ def test_reports_in_global_region(
             4. Report should be rendered successfully and show expected data.
 
     """
-    vmware_provider, rhev_provider, _ = setup_replicated_multiple_appliances_with_providers
+    vmware_provider, rhev_provider = setup_providers_on_multi_region_cluster
 
     # get list of provider names from the report generated in global appliance
     if context == ViaUI:
