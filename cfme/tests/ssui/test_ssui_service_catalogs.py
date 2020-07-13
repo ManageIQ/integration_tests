@@ -6,6 +6,7 @@ from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import providers
+from cfme.services.dashboard.ssui import DashboardView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigate_to
@@ -115,21 +116,32 @@ def test_refresh_ssui_page(appliance, generic_service):
         assert view.is_displayed
 
 
-@pytest.mark.manual
 @pytest.mark.tier(2)
-def test_disabling_dashboard_under_service_ui_for_a_role_shall_disable_the_dashboard():
+@pytest.mark.customer_scenario
+@pytest.mark.meta(automates=[1589409])
+def test_ssui_disable_dashboard(appliance, user_self_service_role):
     """
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.9
-        tags: ssui
     Bugzilla:
         1589409
+    Polarion:
+        assignee: nansari
+        startsin: 5.11
+        casecomponent: SelfServiceUI
+        initialEstimate: 1/16h
     """
-    pass
+    user, role = user_self_service_role
+
+    product_features = [(['Everything', 'Service UI', 'Dashboard'], False)]
+    role.update({'product_features': product_features})
+
+    # login with user having self service role
+    with user:
+        with appliance.context.use(ViaSSUI):
+            appliance.server.login(user)
+
+            view = appliance.browser.create_view(DashboardView)
+            # Dashboard should not be present
+            assert not view.is_displayed
 
 
 @pytest.mark.manual
