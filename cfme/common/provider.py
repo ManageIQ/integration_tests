@@ -301,7 +301,12 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         }
 
         endpoint_default = self.endpoints["default"]
-        if getattr(endpoint_default.credentials, "principal", None):
+
+        from cfme.containers.provider.openshift import OpenshiftProvider
+
+        if self.one_of(OpenshiftProvider) and getattr(endpoint_default.credentials, "token", None):
+            default_connection["authentication"] = {"auth_key": endpoint_default.credentials.token}
+        elif getattr(endpoint_default.credentials, "principal", None):
             provider_attributes["credentials"] = {
                 "userid": endpoint_default.credentials.principal,
                 "password": endpoint_default.credentials.secret,
@@ -324,10 +329,17 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
 
         if getattr(endpoint_default, "api_port", None):
             default_connection["endpoint"]["port"] = endpoint_default.api_port
-        if getattr(endpoint_default, "security_protocol", None):
-            security_protocol = endpoint_default.security_protocol.lower()
+
+        sec_protocol = getattr(endpoint_default, "security_protocol", None) or getattr(
+            endpoint_default, "sec_protocol", None
+        )
+        if sec_protocol:
+            security_protocol = sec_protocol.lower()
             if security_protocol in ('basic (ssl)', 'ssl without validation'):
-                security_protocol = "ssl"
+                if self.one_of(OpenshiftProvider) and security_protocol == "ssl without validation":
+                    security_protocol = "ssl-without-validation"
+                else:
+                    security_protocol = "ssl"
             elif security_protocol == "ssl":
                 security_protocol = 'ssl-with-validation'
 
@@ -473,6 +485,36 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             }
         )
 
+    def _fill_hawkular_endpoint_dicts(self, connection_configs):
+        """Fills dicts with hawkular endpoint data.
+
+        Helper method for ``self.create_rest``
+        """
+        if "metrics" not in self.endpoints:
+            return
+
+        endpoint_hawkular = self.endpoints["metrics"]
+
+        hawkular_connection = {
+            "endpoint": {
+                "hostname": endpoint_hawkular.hostname,
+                "role": "hawkular",
+            },
+        }
+        if getattr(endpoint_hawkular, "api_port", None):
+            hawkular_connection["endpoint"]["port"] = endpoint_hawkular.api_port
+
+        if getattr(endpoint_hawkular, "sec_protocol", None):
+            security_protocol = endpoint_hawkular.sec_protocol.lower()
+            if security_protocol == 'ssl without validation':
+                security_protocol = "ssl-without-validation"
+            elif security_protocol == "ssl":
+                security_protocol = 'ssl-with-validation'
+
+            hawkular_connection["endpoint"]["security_protocol"] = security_protocol
+
+        connection_configs.append(hawkular_connection)
+
     def _compile_connection_configurations(self, provider_attributes, connection_configs):
         """Compiles together all dicts with data for ``connection_configurations``.
 
@@ -523,6 +565,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         self._fill_ceilometer_endpoint_dicts(provider_attributes, connection_configs)
         self._fill_smartstate_endpoint_dicts(provider_attributes)
         self._fill_vmrc_console_endpoint_dicts(provider_attributes)
+        self._fill_hawkular_endpoint_dicts(connection_configs)
         self._compile_connection_configurations(provider_attributes, connection_configs)
 
         try:
@@ -669,11 +712,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         Sets up the provider robustly
         """
         # TODO: Eventually this will become Sentakuified, but only after providers is CEMv3
-        if self.category in ['cloud', 'infra', 'physical', 'config_manager']:
-            return self.create_rest(check_existing=True, validate_inventory=True)
-        else:
-            return self.create(cancel=False, validate_credentials=True,
-                               check_existing=True, validate_inventory=True)
+        return self.create_rest(check_existing=True, validate_inventory=True)
 
     @variable(alias='rest')
     def is_refreshed(self, refresh_timer=None, refresh_delta=600, force_refresh=True):
