@@ -96,10 +96,18 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning):
     )
 
 
-class ProviderBlocker(Blocker):
+# There is a Libvirt bug BZ(1783355) on our RHV 4.4. This seem to prevent some tests to run with it.
+# I was about to use this blocker: JIRA('RHCFQE-14575'), but this didn't work because we seem to
+# lack credentials to read Jira tickets. There seemed to be no nicer way how to mark them other than
+# creating EternalBlocker and use the `unblock` kwarg that is handled in special way in the
+# `blockers` metaplugin to block only the tests executed against the RHV 4.4.
+
+
+class EternalBlocker(Blocker):
     def blocks(self):
         return True
 
+    # This needs to be defined, otherwise we are getting some exception.
     def url(self):
         return None
 
@@ -107,8 +115,7 @@ class ProviderBlocker(Blocker):
 @test_requirements.rhev
 @pytest.mark.meta(
     blockers=[
-        ProviderBlocker(unblock=lambda provider: provider.version < Version("4.4"))
-        # JIRA('RHCFQE-14575')
+        EternalBlocker(unblock=lambda provider: provider.version < Version("4.4"))
     ]
 )
 def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, setup_iso_datastore,
