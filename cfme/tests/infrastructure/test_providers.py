@@ -23,6 +23,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
 from cfme.markers.env_markers.provider import providers_by_class
+from cfme.utils import relative_difference
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.update import update
@@ -375,7 +376,7 @@ def test_rhv_guest_devices_count(appliance, setup_provider, provider):
 
     wait_for(_refresh_provider, timeout=300, delay=30)
     gd_count_after = _gd_count()
-    assert abs(gd_count_after - gd_count_before) < DEVICES_COUNT_TOLERANCE, \
+    assert abs(relative_difference(gd_count_after, gd_count_before)) > .05, \
         "The guest devices count changed suspiciously after refresh!"
 
 

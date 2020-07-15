@@ -1,4 +1,5 @@
 import atexit
+import math
 import os
 import re
 import subprocess
@@ -411,3 +412,19 @@ def periodic_call(period_seconds, call, args=None, kwargs=None):
         yield
     finally:
         timer.cancel()
+
+
+def fraction(numerator: float, denominator: float):
+    """
+    Note this returns -inf or inf when `denominator` is 0."""
+    try:
+        return numerator / denominator
+    except ZeroDivisionError:
+        if numerator == denominator == 0.:
+            return 0.
+        else:
+            return math.inf if numerator > 0 else -math.inf
+
+
+def relative_change(before: float, after: float):
+    return fraction(after, before) - 1
