@@ -439,3 +439,49 @@ def test_appliance_replicate_remote_down(replicated_appliances):
         global_appliance.browser.widgetastic.refresh()
         assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
             "Remote appliance not found on Replication tab after dropped connection.")
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize('location', ['zone', 'region'], ids=['from_zone', 'from_region'])
+def test_distributed_delete_appliance(distributed_appliances, location):
+    """In a distributed appliance configuration, shut down the secondary appliance, and verify that
+    the server record can be deleted from either the zone's or the region's Diagnostics page.
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Appliance
+        initialEstimate: 1/2h
+    """
+    primary_appliance, secondary_appliance = distributed_appliances
+
+    secondary_server = primary_appliance.collections.servers.instantiate(
+        sid=secondary_appliance.server.sid)
+
+    secondary_appliance.evmserverd.stop()
+
+    with primary_appliance:
+        if location == 'zone':
+            dest = primary_appliance.server.zone
+        else:
+            dest = primary_appliance.server.zone.region
+
+        # Delete stopped server from region or zone diagnostics page
+        view = navigate_to(dest, 'RolesByServers')
+        server_string = f'{secondary_server.name} [{secondary_server.sid}]'
+        view.rolesbyservers.tree.click_path(f'Server: {server_string} (stopped)')
+        view.rolesbyservers.configuration.item_select(f'Delete Server {server_string}',
+            handle_alert=True)
+
+        # Flash message appears when deleting server from zone page, but not from region page
+        if location == 'zone':
+            view.flash.assert_success_message(f'Server "{server_string}": Delete successful')
+
+        view.browser.refresh()
+        # Server is removed from Roles By Servers tab's tree
+        assert not any(e.text.startswith(f'Server: {server_string}') for e in
+            view.rolesbyservers.tree.root_items)
+        # Server is removed from Diagnostics tree
+        assert not any(e.text.startswith(f'Server: {server_string}') for e in
+            view.accordions.diagnostics.tree.root_items)
+        # Server is removed from Settings tree
+        assert not secondary_server.exists

@@ -10,6 +10,7 @@ from widgetastic_patternfly import CandidateNotFound
 
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import KeyPairNotFound
+from cfme.exceptions import RestLookupError
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -179,6 +180,7 @@ class BaseEntity(NavigatableMixin):
             NameError,
             NavigationDestinationNotFound,
             NoSuchElementException,
+            RestLookupError,
             RowNotFound,
             TimedOutError,
         ):
