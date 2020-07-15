@@ -13,7 +13,6 @@ from cfme.utils.wait import wait_for
 pytestmark = [test_requirements.configuration, pytest.mark.rhel_testing]
 
 STAT_CMD = "stat --format '%y' /etc/chrony.conf"
-POOL_SED_CMD = "sed -i 's/^pool /# &/' /etc/chrony.conf"
 
 
 @pytest.fixture
@@ -145,8 +144,6 @@ def test_ntp_server_check(appliance):
     past_date = orig_date - timedelta(days=1)
     logger.info(f"Server dates: original {orig_date}, new {past_date}.")
 
-    # Remove any pool configuration settings. Workaround for BZ1832278.
-    appliance.ssh_client.run_command(POOL_SED_CMD)
     appliance.ssh_client.run_command("systemctl restart chronyd")
 
     appliance.ssh_client.run_command(f"date --iso-8601 -s '{past_date.isoformat()}'")
