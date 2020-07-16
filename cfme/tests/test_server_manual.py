@@ -25,19 +25,6 @@ def test_appliance_terminates_unresponsive_worker_process():
     pass
 
 
-@pytest.mark.tier(1)
-def test_external_database_appliance():
-    """
-    Configure appliance to use external DB
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Configuration
-        initialEstimate: 1/4h
-    """
-    pass
-
-
 def test_session_purging_occurs_only_when_session_store_is_sql():
     """
     If Settings > server > session_store is set to "sql", then evm.log
