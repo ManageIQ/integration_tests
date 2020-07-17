@@ -287,7 +287,7 @@ def set_conversion_host_api(
         wait_for(
             lambda: response.task.state == "Finished",
             fail_func=response.task.reload,
-            num_sec=240,
+            num_sec=600,
             delay=3,
             message="Waiting for conversion configuration task to be finished")
 
