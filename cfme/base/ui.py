@@ -1481,6 +1481,13 @@ class ZoneDiagnosticsView(ConfigurationView):
     @View.nested
     class rolesbyservers(WaitTab):  # noqa
         TAB_NAME = "Roles by Servers"
+        title = Text(
+            '//*[@id="zone_tree_div"]/'
+            'h3[contains(normalize-space(.), "Status of Roles for Servers in Zone")]'
+        )
+        tree = DiagnosticsTreeView("roles_by_server_treebox")
+        selected_item = SummaryForm("Selected Item")
+        configuration = Dropdown("Configuration")
 
     @View.nested
     class serversbyroles(WaitTab):  # noqa

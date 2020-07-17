@@ -64,23 +64,6 @@ def test_distributed_zone_mixed_appliance_ip_versions():
     pass
 
 
-@pytest.mark.tier(3)
-def test_distributed_delete_offline_worker_appliance():
-    """
-    Steps to Reproduce:
-    have 3 servers .
-    Shutdown one server. This become inactive.
-    go to WebUI > Configuration > Diagnostics > Select "Zone: Default
-    zone" > Select worker > Configuration > Delete
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        initialEstimate: 1/2h
-    """
-    pass
-
-
 def test_distributed_zone_in_different_networks():
     """
     Polarion:
