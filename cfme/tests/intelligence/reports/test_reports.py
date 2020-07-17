@@ -3,12 +3,17 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
+from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import ReportDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_CATEGORY
 from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import users as _users
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.appliance import ViaREST
+from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
@@ -78,7 +83,10 @@ def tenant_report(appliance):
 
 @pytest.fixture(scope="module")
 def get_report(appliance, request):
-    def _report(file_name, menu_name, preserve_owner=False, overwrite=False):
+    def _report(
+        file_name, menu_name, preserve_owner=False, overwrite=False, custom_appliance=appliance
+    ):
+        appliance = custom_appliance
         collection = appliance.collections.reports
 
         # download the report from server
@@ -206,6 +214,35 @@ def timezone(appliance):
     appliance.user.my_settings.visual.timezone = visual_tz
     yield tz
     appliance.user.my_settings.visual.timezone = current_timezone
+
+
+@pytest.fixture(scope="module")
+def setup_providers_on_multi_region_cluster(multi_region_cluster, setup_multi_region_cluster):
+    remote_appliance, second_remote_appliance = multi_region_cluster.remote_appliances
+    vmware_provider = provider_app_crud(VMwareProvider, remote_appliance)
+    rhev_provider = provider_app_crud(RHEVMProvider, second_remote_appliance)
+
+    vmware_provider.setup()
+    rhev_provider.setup()
+
+    return vmware_provider, rhev_provider
+
+
+@pytest.fixture(params=["new-report", "existing-report"], scope="module")
+def saved_report(request, multi_region_cluster, get_report):
+    # here `appliance` is the global appliance
+    appliance = multi_region_cluster.global_appliance
+    if request.param == "existing-report":
+        report = appliance.collections.reports.instantiate(
+            type="Configuration Management", subtype="Providers", menu_name="Providers Summary"
+        )
+    else:
+        report = get_report(
+            file_name="test_reports_in_global_region.yaml",
+            menu_name="Custom Providers Summary Report",
+            custom_appliance=appliance,
+        )
+    return report.queue(wait_for_finish=True)
 
 
 # =========================================== Tests ===============================================
@@ -787,9 +824,7 @@ def test_reports_generate_custom_conditional_filter_report(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(
-    automates=[1743579], blockers=[BZ(1743579, forced_streams=["5.11", "5.10"])]
-)
+@pytest.mark.meta(automates=[1743579], blockers=[BZ(1743579, forced_streams=["5.11", "5.10"])])
 @pytest.mark.provider([InfraProvider], selector=ONE_PER_CATEGORY)
 @pytest.mark.parametrize("create_vm", ["small_template"], indirect=True, ids=[""])
 def test_created_on_time_report_field(create_vm, get_report):
@@ -845,8 +880,49 @@ def test_reports_timezone(setup_provider, timezone, get_report):
     )
     view = navigate_to(report, "Details")
     boot_time = [
-        timezone in row.boot_time.text
-        for row in view.table.rows()
-        if row.boot_time.text != ""
+        timezone in row.boot_time.text for row in view.table.rows() if row.boot_time.text != ""
     ]
     assert all(boot_time)
+
+
+@pytest.mark.long_running
+@test_requirements.multi_region
+@pytest.mark.tier(2)
+@pytest.mark.parametrize("context", [ViaREST, ViaUI])
+@pytest.mark.parametrize("temp_appliances_unconfig_modscope_rhevm", [3], indirect=True)
+def test_reports_in_global_region(
+    context, setup_providers_on_multi_region_cluster, saved_report
+):
+    """
+    This test case tests report creation and rendering from global region
+    based on data from remote regions.
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Reporting
+        caseimportance: critical
+        initialEstimate: 1/2h
+        testSteps:
+            1. Set up Multi-Region deployment with 2 remote region appliances
+            2. Add provider to each remote appliance
+            3. Create and render report in global region. report should use data from both providers
+            4. Use one of existing reports using data from added providers
+        expectedResults:
+            1.
+            2.
+            3. Report should be created and rendered successfully and show expected data.
+            4. Report should be rendered successfully and show expected data.
+
+    """
+    vmware_provider, rhev_provider = setup_providers_on_multi_region_cluster
+
+    # get list of provider names from the report generated in global appliance
+    if context == ViaUI:
+        view = navigate_to(saved_report, "Details")
+        actual_data = [row["Name"].text for row in view.table.rows()]
+    else:
+        # since the appliance is temporary and only one saved report is present, we can use indexing
+        result = saved_report.report.rest_api_entity.results.all[0]
+        actual_data = [data["name"] for data in result.result_set]
+
+    assert all(provider in actual_data for provider in [vmware_provider.name, rhev_provider.name])

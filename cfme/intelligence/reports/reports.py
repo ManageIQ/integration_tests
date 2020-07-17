@@ -17,6 +17,7 @@ from widgetastic_patternfly import Dropdown
 from widgetastic_patternfly import Input
 from widgetastic_patternfly import SelectorDropdown
 
+from cfme.exceptions import RestLookupError
 from cfme.intelligence.reports import CloudIntelReportsView
 from cfme.intelligence.reports import ReportsMultiBoxSelect
 from cfme.intelligence.reports.schedules import SchedulesFormCommon
@@ -491,6 +492,15 @@ class Report(BaseEntity, Updateable):
             self.subtype or "Custom",
             self.menu_name,
         ]
+
+    @property
+    def rest_api_entity(self):
+        try:
+            return self.appliance.rest_api.collections.reports.get(name=self.menu_name)
+        except ValueError:
+            raise RestLookupError(
+                f"No report rest entity found matching name {self.menu_name}"
+            )
 
 
 @attr.s
