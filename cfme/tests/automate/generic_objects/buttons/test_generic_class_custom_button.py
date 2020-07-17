@@ -350,7 +350,7 @@ def test_generic_object_button_delete_flash(button_without_group):
     )
 
 
-@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], coverage=[1753281, 1753388])
+@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], automates=[1753281, 1753388])
 def test_generic_object_button_delete_multiple(appliance, two_buttons_without_group):
     """
     Bugzilla:
