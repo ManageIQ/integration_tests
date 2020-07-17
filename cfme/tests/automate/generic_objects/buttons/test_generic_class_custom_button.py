@@ -82,6 +82,24 @@ def button_without_group(appliance, generic_definition):
         button.delete_if_exists()
 
 
+@pytest.fixture(scope="module")
+def two_buttons_without_group(appliance, generic_definition):
+    with appliance.context.use(ViaUI):
+        button1 = generic_definition.add_button(
+            name=fauxfactory.gen_alphanumeric(start="btn1", separator="-"),
+            description=fauxfactory.gen_alphanumeric(),
+            request=fauxfactory.gen_alphanumeric()
+        )
+        button2 = generic_definition.add_button(
+            name=fauxfactory.gen_alphanumeric(start="btn2", separator="-"),
+            description=fauxfactory.gen_alphanumeric(),
+            request=fauxfactory.gen_alphanumeric()
+        )
+        yield button1, button2
+        button1.delete_if_exists()
+        button2.delete_if_exists()
+
+
 @pytest.mark.meta(automates=[1744478, 1753289])
 def test_custom_group_on_generic_class_crud(appliance, generic_definition):
     """ Test custom button group crud operation on generic class definition
@@ -332,9 +350,8 @@ def test_generic_object_button_delete_flash(button_without_group):
     )
 
 
-@pytest.mark.manual
-@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], coverage=[1753281, 1753388])
-def test_generic_object_button_delete_multiple():
+@pytest.mark.meta(blockers=[BZ(1753281), BZ(1753388)], automates=[1753281, 1753388])
+def test_generic_object_button_delete_multiple(appliance, two_buttons_without_group):
     """
     Bugzilla:
         1753281
@@ -355,7 +372,10 @@ def test_generic_object_button_delete_multiple():
             3.
             4. The second button should be deleted, not both, no 404 error
     """
-    pass
+    view = navigate_to(two_buttons_without_group[1], "Details")
+    view.configuration.item_select('Remove this Custom Button from Inventory', handle_alert=False)
+    view = navigate_to(two_buttons_without_group[0], "Details")
+    assert view.is_displayed
 
 
 @pytest.mark.manual
