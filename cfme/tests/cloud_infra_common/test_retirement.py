@@ -14,7 +14,6 @@ from cfme.markers.env_markers.provider import providers
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
-from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
@@ -435,10 +434,13 @@ def test_resume_retired_instance(create_vm, provider, remove_date):
 @pytest.mark.long_running
 @test_requirements.multi_region
 @test_requirements.retirement
-@pytest.mark.meta(blockers=[BZ(1839770)])
+@pytest.mark.meta(automates=[1839770])
 def test_vm_retirement_from_global_region(replicated_appliances, create_vm):
     """
     Retire a VM via Centralized Administration
+
+    Bugzilla:
+        1839770
 
     Polarion:
         assignee: tpapaioa
