@@ -19,6 +19,7 @@ from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
 from cfme.exceptions import AddProviderError
 from cfme.exceptions import HostStatsNotContains
+from cfme.exceptions import ItemNotFound
 from cfme.exceptions import ProviderHasNoKey
 from cfme.exceptions import ProviderHasNoProperty
 from cfme.exceptions import RestLookupError
@@ -1166,6 +1167,29 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                         result_list.append(inner_tuple)
         return result_list
 
+    def run_smartstate_analysis_from_provider(self, datastores, wait_for_task_result=False):
+        """ Runs smartstate analysis on this host
+
+        Note:
+            The host must have valid credentials already set up for this to work.
+        """
+        view = navigate_to(self.provider, 'DatastoresOfProvider')
+        datastores = list(datastores)
+        checked_datastores = list()
+
+        for datastore in datastores:
+            try:
+                view.entities.get_entity(name=datastore.name, surf_pages=True).ensure_checked()
+                checked_datastores.append(datastore)
+            except ItemNotFound:
+                raise ValueError(f'Could not find datastore {datastore.name} in the UI')
+
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        for datastore in checked_datastores:
+            view.flash.assert_success_message(
+                f'"{datastore.name}": scan successfully initiated')
+
+
 
 class CloudInfraProviderMixin:
     detail_page_suffix = 'provider'
@@ -1335,3 +1359,18 @@ class DefaultEndpointForm(View):
     change_password = Text(locator='.//a[normalize-space(.)="Change stored password"]')
 
     validate = Button('Validate')
+
+
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
+from cfme.common.datastore_views import DatastoresView, ProviderAllDatastoresView
+
+
+@navigator.register(BaseProvider, 'DatastoresOfProvider')
+class DatastoresOfProvider(CFMENavigateStep):
+    VIEW = ProviderAllDatastoresView
+
+    def prerequisite(self):
+        return navigate_to(self.obj, 'Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.summary('Relationships').click_at('Datastores')

@@ -257,7 +257,11 @@ class BrowserManager:
                 if browser_conf[
                         'webdriver_options'][
                             'desired_capabilities']['browserName'].lower() == 'chrome':
-                    browser_kwargs['desired_capabilities']['chromeOptions'] = {}
+#                    from selenium.webdriver.chrome.options import Options
+#                    options = browser_kwargs['desired_capabilities']['chromeOptions'] = Options()
+#                    options.set_capability("acceptInsecureCerts", True)
+                    #browser_kwargs['desired_capabilities']['acceptInsecureCerts'] = True
+                    co = browser_kwargs['desired_capabilities'].setdefault('chromeOptions', {})
                     browser_kwargs[
                         'desired_capabilities']['chromeOptions']['args'] = ['--no-sandbox',
                                                                             '--start-maximized',

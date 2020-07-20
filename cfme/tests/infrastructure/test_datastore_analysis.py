@@ -3,12 +3,16 @@ from widgetastic_patternfly import DropdownDisabled
 
 from cfme import test_requirements
 from cfme.exceptions import MenuItemNotFound
+from cfme.infrastructure.datastore import Datastore
+from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [test_requirements.smartstate]
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
@@ -57,10 +61,16 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope='module')
-def datastore(setup_provider_modscope, appliance, provider, datastore_type, datastore_name):
+def datastore(setup_provider_modscope, appliance, provider, datastore_type, datastore_name)\
+        -> Datastore:
     return appliance.collections.datastores.instantiate(name=datastore_name,
                                                         provider=provider,
                                                         type=datastore_type)
+
+
+@pytest.fixture(scope='module')
+def datastores(appliance, provider) -> DatastoreCollection:
+    return appliance.collections.datastores
 
 
 @pytest.fixture(scope='module')
@@ -93,8 +103,8 @@ def clear_all_tasks(appliance):
 
 
 @pytest.mark.tier(2)
-def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastores_hosts_setup,
-                                clear_all_tasks, appliance):
+def test_run_datastore_analysis(setup_provider, datastore, datastores, soft_assert,
+                                clear_all_tasks, appliance, temp_appliance_preconfig_funcscope):
     """Tests smarthost analysis
 
     Metadata:
@@ -106,12 +116,19 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
         caseimportance: critical
         initialEstimate: 1/3h
     """
+    appliance = temp_appliance_preconfig_funcscope
     # Initiate analysis
-    try:
-        datastore.run_smartstate_analysis(wait_for_task_result=True)
-    except (MenuItemNotFound, DropdownDisabled):
-        # TODO need to update to cover all detastores
-        pytest.skip(f'Smart State analysis is disabled for {datastore.name} datastore')
+    # try:
+
+    # Note that it would be great to test both navigation paths.
+    if GH(('ManageIQ/manageiq', 20367)).blocks:
+        datastore.run_smartstate_analysis_from_provider()
+    else:
+        datastore.run_smartstate_analysis()
+
+    #except (MenuItemNotFound, DropdownDisabled):
+    #    # TODO need to update to cover all detastores
+    #    pytest.skip(f'Smart State analysis is disabled for {datastore.name} datastore')
     details_view = navigate_to(datastore, 'DetailsFromProvider')
     # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
 
@@ -121,10 +138,14 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
     #             'Datastore type does not match the type defined in yaml:' +
     #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
 
+    if datastore.provider.one_of(RHEVMProvider) and GH(('ManageIQ/manageiq', 20366)).blocks:
+        return
+
     wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
-             delay=15, timeout="3m",
+             delay=15, timeout="6m",
              fail_condition='0',
              fail_func=appliance.server.browser.refresh)
+
     managed_vms = details_view.entities.relationships.get_text_of('Managed VMs')
     if managed_vms != '0':
         for row_name in CONTENT_ROWS_TO_CHECK:

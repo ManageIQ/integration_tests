@@ -87,8 +87,12 @@ class EntityCollections:
         return self._collection_cache[name]
 
 
+from typing import Type, TypeVar, Generic
+
+T = TypeVar('T')
+
 @attr.s
-class BaseCollection(NavigatableMixin):
+class BaseCollection(NavigatableMixin, Generic[T]):
     """Class for helping create consistent Collections
 
     The BaseCollection class is responsible for ensuring two things:
@@ -99,11 +103,13 @@ class BaseCollection(NavigatableMixin):
     This class works in tandem with the entrypoint loader which ensures that the correct
     argument names have been used.
     """
-
-    ENTITY = None
+    ENTITY: Type[T]
 
     parent = attr.ib(repr=False)
     filters = attr.ib(default=attr.Factory(dict))
+
+    def instantiate(self, *args, **kwargs) -> T:
+        return self.ENTITY.from_collection(self, *args, **kwargs)
 
     @property
     def appliance(self):
@@ -124,9 +130,6 @@ class BaseCollection(NavigatableMixin):
     def for_entity_with_filter(cls, obj, filt, *k, **kw):
         return cls.for_entity(obj, *k, **kw).filter(filt)
 
-    def instantiate(self, *args, **kwargs):
-        return self.ENTITY.from_collection(self, *args, **kwargs)
-
     def filter(self, filter):
         filters = self.filters.copy()
         filters.update(filter)
@@ -146,7 +149,7 @@ class BaseEntity(NavigatableMixin):
     argument names have been used.
     """
 
-    parent = attr.ib(repr=False)  # This is the collection or not
+    parent: BaseCollection = attr.ib(repr=False)  # This is the collection or not
 
     # TODO This needs removing as we need proper __eq__ on objects, but it is part of a
     #      much larger discussion
@@ -157,7 +160,7 @@ class BaseEntity(NavigatableMixin):
         return self.parent.appliance
 
     @classmethod
-    def from_collection(cls, collection, *k, **kw):
+    def from_collection(cls, collection: BaseCollection, *k, **kw):
         return cls(collection, *k, **kw)
 
     @cached_property
