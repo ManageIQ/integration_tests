@@ -103,7 +103,7 @@ def clear_all_tasks(appliance):
 
 
 @pytest.mark.tier(2)
-def test_run_datastore_analysis(setup_provider, datastore, datastores, soft_assert,
+def test_run_datastore_analysis(setup_provider_temp_appliance, datastore, datastores, soft_assert,
                                 clear_all_tasks, temp_appliance_preconfig_funcscope):
     """Tests smarthost analysis
 
