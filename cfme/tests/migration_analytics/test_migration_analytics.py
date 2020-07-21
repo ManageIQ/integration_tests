@@ -11,32 +11,6 @@ pytestmark = [
 
 
 @pytest.mark.manual
-@pytest.mark.smoke
-def test_enable_migration_analytics():
-    """
-    Polarion:
-        assignee: ghubale
-        initialEstimate: 1/4h
-        startsin: 5.11
-        casecomponent: MigrationAnalytics
-        testSteps:
-            1. Navigate to configuration > Zones > Zone: Default Zone > Server
-            2. Click on Advanced tab
-            3. Update script as below:
-               :prototype:
-                    :migration_analytics:
-                    :enabled: true
-            4. SSH to appliance and restart evmserverd(systemctl restart evmserverd)
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Check in UI. You will have navigation to Migration > Migration Analytics
-    """
-    pass
-
-
-@pytest.mark.manual
 def test_payload_generation_for_basic_data_without_ssa():
     """
     Polarion:
@@ -211,5 +185,110 @@ def test_confirm_environment_summary_data():
             1.
             2.
             3. Check summary data
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1811226])
+def test_4k_vms_scan_one_appliance():
+    """
+    Bugzilla:
+        1811226
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        startsin: 5.11
+        casecomponent: MigrationAnalytics
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1810217])
+def test_payload_building_with_non_ascii_char():
+    """
+    Bugzilla:
+        1810217
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        startsin: 5.11
+        casecomponent: MigrationAnalytics
+        setup:
+            1. Add a file to SSA profile that includes weird characters.
+            2. Sample file used `/usr/java/latest/COPYRIGHT` of Oracle jdk 1.8.0
+        testSteps:
+            1. Install Oracle JDK 1.8.0 to a VM
+            2. Add `/usr/java/latest/COPYRIGHT` file (with content) to the SSA default profile
+            3. Run SSA
+            4. Go to Migration Analytics page and try to obtain a payload.
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Page with download link to obtain payload file
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1798054])
+def test_manifest_attributes():
+    """
+    Bugzilla:
+        1798054
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        startsin: 5.11
+        casecomponent: MigrationAnalytics
+        testSteps:
+            1. Download payload file
+        expectedResults:
+            1. Check if below attributes available in file:
+              "cpu_affinity": null,
+              "memory_hot_add_enabled": null,
+              "cpu_hot_add_enabled": null,
+              "cpu_hot_remove_enabled": null,
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1788730])
+def test_payload_download_button():
+    """
+    Bugzilla:
+        1788730
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        startsin: 5.11
+        casecomponent: MigrationAnalytics
+        testSteps:
+            1. Go to Migration Analytics payload download page
+        expectedResults:
+            1. Download button should available
+    """
+    pass
+
+
+@pytest.mark.manual
+@pytest.mark.meta(coverage=[1788729])
+def test_manifest_import_update():
+    """
+    Bugzilla:
+        1788729
+
+    Polarion:
+        assignee: ghubale
+        initialEstimate: 1/4h
+        startsin: 5.11
+        casecomponent: MigrationAnalytics
     """
     pass
