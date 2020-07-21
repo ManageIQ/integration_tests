@@ -580,6 +580,6 @@ def test_git_refresh_with_renamed_yaml(appliance):
         import_type="git", url=GIT_REPO_URL
     )
     with pytest.raises(AssertionError, match=(
-            "Error: import failed: Selected branch or tag does not contain a valid domain"
+            "Error: import failed: Import of domain failed"
     )):
         repo.import_domain_from(branch="origin/broken-yaml")

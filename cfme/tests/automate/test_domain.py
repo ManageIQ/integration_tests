@@ -650,7 +650,7 @@ def test_existing_domain_child_override(appliance, custom_domain, import_data):
     )
     datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
     view = appliance.browser.create_view(FileImportSelectorView)
-    view.flash.assert_message("Error: Selected domain is locked")
+    view.flash.assert_message("Error: Cannot import into a locked domain.")
     custom_domain.unlock()
     datastore.import_domain_from(import_data.from_domain, import_data.to_domain)
     view.flash.assert_no_error()
