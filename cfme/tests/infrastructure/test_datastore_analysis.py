@@ -60,21 +60,22 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope='module')
-def datastore(setup_provider_modscope, appliance, provider, datastore_type, datastore_name)\
+@pytest.fixture
+def datastore(setup_provider_modscope, temp_appliance_preconfig_funcscope, provider, datastore_type, datastore_name)\
         -> Datastore:
-    return appliance.collections.datastores.instantiate(name=datastore_name,
-                                                        provider=provider,
-                                                        type=datastore_type)
+    with temp_appliance_preconfig_funcscope as appliance:
+        return appliance.collections.datastores.instantiate(name=datastore_name,
+                                                            provider=provider,
+                                                            type=datastore_type)
 
 
-@pytest.fixture(scope='module')
-def datastores(appliance, provider) -> DatastoreCollection:
-    return appliance.collections.datastores
+@pytest.fixture
+def datastores(temp_appliance_preconfig_funcscope, provider) -> DatastoreCollection:
+    return temp_appliance_preconfig_funcscope.collections.datastores
 
 
-@pytest.fixture(scope='module')
-def datastores_hosts_setup(setup_provider_modscope, provider, datastore):
+@pytest.fixture
+def datastores_hosts_setup(setup_provider_temp_appliance, provider, datastore):
     updated_hosts = []
     for host in datastore.hosts.all():
         try:
@@ -95,7 +96,7 @@ def datastores_hosts_setup(setup_provider_modscope, provider, datastore):
         host.remove_credentials_rest()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def clear_all_tasks(appliance):
     # clear table
     col = appliance.collections.tasks.filter({'tab': 'AllTasks'})
@@ -116,6 +117,7 @@ def test_run_datastore_analysis(setup_provider_temp_appliance, datastore, datast
         caseimportance: critical
         initialEstimate: 1/3h
     """
+    temp_appliance_preconfig_funcscope.browser_steal = True;
     with temp_appliance_preconfig_funcscope as appliance:
         # Initiate analysis
         # try:
