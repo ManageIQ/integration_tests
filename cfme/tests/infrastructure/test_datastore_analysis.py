@@ -104,7 +104,7 @@ def clear_all_tasks(appliance):
 
 @pytest.mark.tier(2)
 def test_run_datastore_analysis(setup_provider, datastore, datastores, soft_assert,
-                                clear_all_tasks, appliance, temp_appliance_preconfig_funcscope):
+                                clear_all_tasks, temp_appliance_preconfig_funcscope):
     """Tests smarthost analysis
 
     Metadata:
@@ -116,41 +116,41 @@ def test_run_datastore_analysis(setup_provider, datastore, datastores, soft_asse
         caseimportance: critical
         initialEstimate: 1/3h
     """
-    appliance = temp_appliance_preconfig_funcscope
-    # Initiate analysis
-    # try:
+    with temp_appliance_preconfig_funcscope as appliance:
+        # Initiate analysis
+        # try:
 
-    # Note that it would be great to test both navigation paths.
-    if GH(('ManageIQ/manageiq', 20367)).blocks:
-        datastore.run_smartstate_analysis_from_provider()
-    else:
-        datastore.run_smartstate_analysis()
+        # Note that it would be great to test both navigation paths.
+        if GH(('ManageIQ/manageiq', 20367)).blocks:
+            datastore.run_smartstate_analysis_from_provider()
+        else:
+            datastore.run_smartstate_analysis()
 
-    #except (MenuItemNotFound, DropdownDisabled):
-    #    # TODO need to update to cover all detastores
-    #    pytest.skip(f'Smart State analysis is disabled for {datastore.name} datastore')
-    details_view = navigate_to(datastore, 'DetailsFromProvider')
-    # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
+        #except (MenuItemNotFound, DropdownDisabled):
+        #    # TODO need to update to cover all detastores
+        #    pytest.skip(f'Smart State analysis is disabled for {datastore.name} datastore')
+        details_view = navigate_to(datastore, 'DetailsFromProvider')
+        # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
 
-    # Check results of the analysis and the datastore type
-    # TODO need to clarify datastore type difference
-    # soft_assert(c_datastore == datastore.type.upper(),
-    #             'Datastore type does not match the type defined in yaml:' +
-    #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
+        # Check results of the analysis and the datastore type
+        # TODO need to clarify datastore type difference
+        # soft_assert(c_datastore == datastore.type.upper(),
+        #             'Datastore type does not match the type defined in yaml:' +
+        #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
 
-    if datastore.provider.one_of(RHEVMProvider) and GH(('ManageIQ/manageiq', 20366)).blocks:
-        return
+        if datastore.provider.one_of(RHEVMProvider) and GH(('ManageIQ/manageiq', 20366)).blocks:
+            return
 
-    wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
-             delay=15, timeout="6m",
-             fail_condition='0',
-             fail_func=appliance.server.browser.refresh)
+        wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
+                 delay=15, timeout="6m",
+                 fail_condition='0',
+                 fail_func=appliance.server.browser.refresh)
 
-    managed_vms = details_view.entities.relationships.get_text_of('Managed VMs')
-    if managed_vms != '0':
-        for row_name in CONTENT_ROWS_TO_CHECK:
-            value = details_view.entities.content.get_text_of(row_name)
-            soft_assert(value != '0',
-                        f'Expected value for {row_name} to be non-empty')
-    else:
-        assert details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[-1]) != '0'
+        managed_vms = details_view.entities.relationships.get_text_of('Managed VMs')
+        if managed_vms != '0':
+            for row_name in CONTENT_ROWS_TO_CHECK:
+                value = details_view.entities.content.get_text_of(row_name)
+                soft_assert(value != '0',
+                            f'Expected value for {row_name} to be non-empty')
+        else:
+            assert details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[-1]) != '0'
