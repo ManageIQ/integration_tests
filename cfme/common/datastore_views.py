@@ -39,6 +39,7 @@ class DatastoreEntities(BaseEntitiesView):
     def entity_class(self):
         return DatastoreEntity
 
+
 class DatastoreToolBar(View):
     """
     represents datastore toolbar and its controls

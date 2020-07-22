@@ -17,6 +17,7 @@ from cfme.base.credential import SSHCredential
 from cfme.base.credential import TokenCredential
 from cfme.common import CustomButtonEventsMixin
 from cfme.common import Taggable
+from cfme.common.datastore_views import ProviderAllDatastoresView
 from cfme.exceptions import AddProviderError
 from cfme.exceptions import HostStatsNotContains
 from cfme.exceptions import ItemNotFound
@@ -27,6 +28,7 @@ from cfme.modeling.base import BaseEntity
 from cfme.utils import conf
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.log import logger
@@ -1190,7 +1192,6 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
                 f'"{datastore.name}": scan successfully initiated')
 
 
-
 class CloudInfraProviderMixin:
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
@@ -1359,10 +1360,6 @@ class DefaultEndpointForm(View):
     change_password = Text(locator='.//a[normalize-space(.)="Change stored password"]')
 
     validate = Button('Validate')
-
-
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep
-from cfme.common.datastore_views import DatastoresView, ProviderAllDatastoresView
 
 
 @navigator.register(BaseProvider, 'DatastoresOfProvider')

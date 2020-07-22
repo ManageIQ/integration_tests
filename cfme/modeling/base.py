@@ -1,4 +1,7 @@
 from collections.abc import Callable
+from typing import Generic
+from typing import Type
+from typing import TypeVar
 
 import attr
 from cached_property import cached_property
@@ -87,9 +90,8 @@ class EntityCollections:
         return self._collection_cache[name]
 
 
-from typing import Type, TypeVar, Generic
+T = TypeVar('T', bound='BaseEntity')
 
-T = TypeVar('T')
 
 @attr.s
 class BaseCollection(NavigatableMixin, Generic[T]):
@@ -100,16 +102,13 @@ class BaseCollection(NavigatableMixin, Generic[T]):
     1) That the API consistently has the first argument passed to it
     2) That that first argument is an appliance instance
 
-    This class works in tandem with the entrypoint loader which ensures that the correct
+    This class works in tandem with the entry-point loader which ensures that the correct
     argument names have been used.
     """
     ENTITY: Type[T]
 
     parent = attr.ib(repr=False)
     filters = attr.ib(default=attr.Factory(dict))
-
-    def instantiate(self, *args, **kwargs) -> T:
-        return self.ENTITY.from_collection(self, *args, **kwargs)
 
     @property
     def appliance(self):
@@ -130,6 +129,10 @@ class BaseCollection(NavigatableMixin, Generic[T]):
     def for_entity_with_filter(cls, obj, filt, *k, **kw):
         return cls.for_entity(obj, *k, **kw).filter(filt)
 
+    def instantiate(self, *args, **kwargs) -> T:
+        return self.ENTITY.from_collection(self, *args, **kwargs)
+
+
     def filter(self, filter):
         filters = self.filters.copy()
         filters.update(filter)
@@ -138,14 +141,14 @@ class BaseCollection(NavigatableMixin, Generic[T]):
 
 @attr.s
 class BaseEntity(NavigatableMixin):
-    """Class for helping create consistent entitys
+    """Class for helping create consistent entities
 
     The BaseEntity class is responsible for ensuring two things:
 
     1) That the API consistently has the first argument passed to it
     2) That that first argument is a collection instance
 
-    This class works in tandem with the entrypoint loader which ensures that the correct
+    This class works in tandem with the entry-point loader which ensures that the correct
     argument names have been used.
     """
 
