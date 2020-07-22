@@ -140,7 +140,9 @@ def test_run_datastore_analysis(setup_provider_temp_appliance, datastore, datast
         #             'Datastore type does not match the type defined in yaml:' +
         #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
 
-        if datastore.provider.one_of(RHEVMProvider) and GH(('ManageIQ/manageiq', 20366)).blocks:
+        if datastore.provider.one_of(RHEVMProvider) and GH(('ManageIQ/manageiq', 20366)).blocks or
+            # TODO (jhenner) why is thati?
+            (datastore.provider.one_of(VMwareProvider) and Version(datastore.provider.version) == '6.5'):
             return
 
         wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
