@@ -49,11 +49,12 @@ def test_login(context, method, appliance):
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 @pytest.mark.parametrize('context', [ViaUI])
-# BZ 1632718 is only relevant for Chrome browser
-@pytest.mark.meta(blockers=[BZ(1632718)])
+@pytest.mark.meta(automates=[1632718])
 def test_bad_password(context, request, appliance):
-    """ Tests logging in with a bad password.
+    """ Tests logging in with a bad password and 1632718 is only relevant for Chrome browser
 
+    Bugzilla:
+        1632718
     Polarion:
         assignee: dgaikwad
         casecomponent: WebUI
@@ -67,7 +68,9 @@ def test_bad_password(context, request, appliance):
     user = appliance.collections.users.instantiate(credential=cred, name='Administrator')
 
     with appliance.context.use(context):
-        with pytest.raises(Exception, match="Login failed: Unauthorized"):
+        with pytest.raises(
+            Exception, match="Sorry, the username or password you entered is incorrect."
+        ):
             appliance.server.login(user)
         view = appliance.browser.create_view(LoginPage)
         assert view.password.read() == '' and view.username.read() == ''
