@@ -79,6 +79,7 @@ def ansible_tower_dialog_rest(request, appliance):
                                 "display": "edit",
                                 "required": True,
                                 "default_value": "QE",
+                                "data_type": "string",
                                 "values": [
                                     [
                                         "HR",
