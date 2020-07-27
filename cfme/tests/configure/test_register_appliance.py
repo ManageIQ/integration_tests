@@ -4,6 +4,7 @@ from cfme import test_requirements
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import GH
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.version import VersionPicker
@@ -168,6 +169,8 @@ def test_rh_creds_validation(reg_method, reg_data, proxy_url, proxy_creds):
 @pytest.mark.rhel_testing
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(automates=[1532201, 1673136])
+@pytest.mark.meta(blockers=[GH('ManageIQ/manageiq:20390',
+                               unblock=lambda reg_data: not reg_data['url'])])
 def test_rh_registration(
         temp_appliance_preconfig_funcscope, request, reg_method, reg_data, proxy_url, proxy_creds):
     """ Tests whether an appliance can be registered against RHSM and SAT6
