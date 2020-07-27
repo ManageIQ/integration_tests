@@ -39,7 +39,9 @@ pytestmark = [
     pytest.mark.long_running,
     test_requirements.provision,
     pytest.mark.tier(3),
-    pytest.mark.provider(gen_func=providers, scope="module"),
+    pytest.mark.provider(gen_func=providers, scope="module",
+                         filters=[ProviderFilter(required_flags=['provision'])])
+
 ]
 
 
