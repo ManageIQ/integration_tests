@@ -112,7 +112,10 @@ class RHEVMProvider(InfraProvider):
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
-        return appliance.collections.infra_providers.instantiate(
+
+        from cfme.infrastructure.provider import InfraProviderCollection
+        col: InfraProviderCollection = appliance.collections.infra_providers
+        obj = col.instantiate(
             prov_class=cls,
             name=prov_config['name'],
             endpoints=endpoints,
@@ -120,6 +123,7 @@ class RHEVMProvider(InfraProvider):
             key=prov_key,
             start_ip=start_ip,
             end_ip=end_ip)
+        return obj
 
     # Following methods will only work if the remote console window is open
     # and if selenium focused on it. These will not work if the selenium is

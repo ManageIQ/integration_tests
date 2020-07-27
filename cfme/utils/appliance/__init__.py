@@ -269,6 +269,8 @@ class IPAppliance:
 
     @property
     def server(self):
+        # TODO(jhenner) This annotation would be great to have: -> cfme.base.Server:
+        # but importing makes problems
         sid = self._rest_api_server.id
         return self.collections.servers.instantiate(sid=sid)
 
@@ -3125,7 +3127,7 @@ class DummyAppliance:
         assert stack.pop() is self, 'Dummy appliance on stack inconsistent'
 
 
-def find_appliance(obj, require=True):
+def find_appliance(obj, require=True) -> IPAppliance:
     if isinstance(obj, NavigatableMixin):
         return obj.appliance
     # duck type - either is the config of pytest, or holds it

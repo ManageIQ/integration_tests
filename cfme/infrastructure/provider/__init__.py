@@ -1,5 +1,7 @@
 """ A model of an Infrastructure Provider in CFME
 """
+from typing import Type
+
 import attr
 from navmazing import NavigateToAttribute
 from navmazing import NavigateToSibling
@@ -33,6 +35,7 @@ from cfme.infrastructure.virtual_machines import InfraTemplate
 from cfme.infrastructure.virtual_machines import InfraTemplateCollection
 from cfme.infrastructure.virtual_machines import InfraVm
 from cfme.modeling.base import BaseCollection
+from cfme.modeling.base import TBaseEntity
 from cfme.optimize.utilization import ProviderUtilizationTrendsView
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -228,8 +231,6 @@ class InfraProviderCollection(BaseCollection):
     """Collection object for InfraProvider object
     """
 
-    ENTITY = InfraProvider
-
     def all(self):
         view = navigate_to(self, 'All')
         provs = view.entities.get_all(surf_pages=True)
@@ -244,7 +245,7 @@ class InfraProviderCollection(BaseCollection):
 
         return [self.instantiate(prov_class=_get_class(p.data['id']), name=p.name) for p in provs]
 
-    def instantiate(self, prov_class, *args, **kwargs):
+    def instantiate(self, prov_class: Type[TBaseEntity], *args, **kwargs) -> TBaseEntity:
         return prov_class.from_collection(self, *args, **kwargs)
 
     def create(self, prov_class, *args, **kwargs):
