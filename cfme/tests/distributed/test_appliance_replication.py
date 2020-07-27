@@ -1,6 +1,8 @@
 from time import sleep
 
+import fauxfactory
 import pytest
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.base.ui import LoginPage
@@ -9,6 +11,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import InfraVmDetailsView
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.tests.configure.test_zones import create_zone
 from cfme.utils import conf
 from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
@@ -469,8 +472,8 @@ def test_distributed_delete_appliance(distributed_appliances, location):
         view = navigate_to(dest, 'RolesByServers')
         server_string = f'{secondary_server.name} [{secondary_server.sid}]'
         view.rolesbyservers.tree.click_path(f'Server: {server_string} (stopped)')
-        view.rolesbyservers.configuration.item_select(f'Delete Server {server_string}',
-            handle_alert=True)
+        view.rolesbyservers.configuration.item_select(
+            f'Delete Server {server_string}', handle_alert=True)
 
         # Flash message appears when deleting server from zone page, but not from region page
         if location == 'zone':
@@ -485,3 +488,34 @@ def test_distributed_delete_appliance(distributed_appliances, location):
             view.accordions.diagnostics.tree.root_items)
         # Server is removed from Settings tree
         assert not secondary_server.exists
+
+
+@pytest.mark.tier(1)
+def test_distributed_zone_delete_occupied(distributed_appliances):
+    """Verify that zone with appliances in it cannot be deleted.
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Appliance
+        caseimportance: critical
+        initialEstimate: 1/12h
+    """
+    _, secondary_appliance = distributed_appliances
+
+    with secondary_appliance:
+        # Create new zone
+        zone = create_zone(secondary_appliance, fauxfactory.gen_alphanumeric(),
+                           fauxfactory.gen_alphanumeric())
+
+        # Add secondary appliance to new zone
+        server_info = secondary_appliance.server.settings
+        server_info.update_basic_information({'appliance_zone': zone.name})
+
+        with pytest.raises(NoSuchElementException):
+            zone.delete()
+        assert zone.exists, "Occupied zone was deleted"
+
+        server_info.update_basic_information({'appliance_zone': 'default'})
+
+        zone.delete()
+        assert not zone.exists, "Zone could not be deleted"
