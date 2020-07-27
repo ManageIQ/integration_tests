@@ -38,7 +38,7 @@ def get_api_object_counts(appliance, project_name, provider):
     }
 
 
-def flatten_list(org_list, flattened_list=[]):
+def flatten_list(org_list, flattened_list=None):
     """Expands nested list elements to new flatten list
     Use for get len for of nested list
 
@@ -47,6 +47,9 @@ def flatten_list(org_list, flattened_list=[]):
             flattened_list: (list) empty list
     Returns: flatten list
     """
+    if not flattened_list:
+        flattened_list = []
+
     for elem in org_list:
         if not isinstance(elem, list):
             flattened_list.append(elem)
