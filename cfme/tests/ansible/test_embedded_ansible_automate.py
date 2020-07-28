@@ -487,3 +487,94 @@ def test_import_domain_containing_playbook_method(request, appliance, setup_ansi
         f"Playbook 'invalid_1677575.yml' not found in repository '{setup_ansible_repository.name}'"
     )
     view.flash.assert_message(text=error_msg, partial=True)
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1734629, 1734630])
+@pytest.mark.ignore_stream("5.10")
+@pytest.mark.parametrize(
+    ("import_data", "instance"),
+    ([DatastoreImport("bz_1734629.zip", "ansible_set_stat",
+                      None), "CatalogItemInitialization_29"],
+     [DatastoreImport("bz_1734629.zip", "ansible_set_stat",
+                      None), "CatalogItemInitialization_30"]),
+    ids=["object_update", "set_service_var"]
+)
+def test_automate_ansible_playbook_set_stats(request, appliance, setup_ansible_repository,
+import_datastore, import_data, instance, dialog, catalog):
+    """
+    Bugzilla:
+        1734629
+        1734630
+
+    Polarion:
+        assignee: gtalreja
+        initialEstimate: 1/4h
+        caseimportance: high
+        caseposneg: positive
+        casecomponent: Automate
+        startsin: 5.11
+        setup:
+            1. Enable EmbeddedAnsible server role
+            2. Add Ansible repo "test_playbooks_automate"
+            3. Go to Automation>Automate>Import/Export and import zip file (ansible_set_stats.zip)
+            5. Click on "Toggle All/None" and hit the submit button
+            6. Go to Automation>Automate>Explorer and Enable the imported domain
+            7. Make sure all the playbook methods have all the information (see if Repository,
+               Playbook and Machine credentials have values), update if needed
+        testSteps:
+            1. Create a Generic service catalog using with dialog.
+            1a. Select instance 'CatalogItemInitialization_29' then order service
+            1b. Select instance 'CatalogItemInitialization_30' then order service
+            2. Check automation.log from log directory
+        expectedResults:
+            1. Generic service catalog item created
+            2. For 1a scenario: Playbook should pass with updated status and [:config_info][:active]
+               and you should get logs like (https://bugzilla.redhat.com/show_bug.cgi?id=1734629#c8)
+               For 1b scenario: Playbook should pass, verify new value setting to service_var and
+               should get logs like this(https://bugzilla.redhat.com/show_bug.cgi?id=1734630#c9)
+    """
+    entry_point = (
+        "Datastore",
+        f"{import_datastore.name}",
+        "Service",
+        "Provisioning",
+        "StateMachines",
+        "ServiceProvision_Template",
+        f"{instance}",
+    )
+    catalog_item = appliance.collections.catalog_items.create(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
+        description=fauxfactory.gen_alphanumeric(15, start="item_disc_"),
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog,
+        provisioning_entry_point=entry_point,
+    )
+
+    @request.addfinalizer
+    def _finalize():
+        if catalog.exists:
+            catalog.delete()
+            catalog_item.catalog = None
+        catalog_item.delete_if_exists()
+        dialog.delete_if_exists()
+
+    if instance == "CatalogItemInitialization_29":
+        map_pattern = [
+            '.*status = "Warn".*',
+            '.*"config_info"=>{"active"=>true}.*'
+        ]
+    elif instance == "CatalogItemInitialization_30":
+        map_pattern = ['.*:service_vars=>{"ansible_stats_var1"=>"secret"}.*']
+
+    with LogValidator(
+        "/var/www/miq/vmdb/log/automation.log",
+        matched_patterns=map_pattern
+    ).waiting(timeout=300):
+        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+        service_catalogs.order()
+        req_description = f"Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]"
+        provision_request = appliance.collections.requests.instantiate(req_description)
+        provision_request.wait_for_request(method="ui")
