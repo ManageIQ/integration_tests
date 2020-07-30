@@ -6,6 +6,8 @@ from widgetastic.widget import Text
 from cfme import test_requirements
 from cfme.base.ui import LoginPage
 from cfme.cloud.provider import CloudProvider
+from cfme.common.datastore_views import DatastoresCompareView
+from cfme.common.datastore_views import ProviderAllDatastoresView
 from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import CloudProviderAddView
@@ -20,8 +22,6 @@ from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management import ConfigManagerProvider
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.config_management.satellite import SatelliteProvider
-from cfme.infrastructure.datastore import DatastoresCompareView
-from cfme.infrastructure.datastore import ProviderAllDatastoresView
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider import ProviderClustersView
 from cfme.infrastructure.provider import ProviderTemplatesView
