@@ -426,5 +426,5 @@ def fraction(numerator: float, denominator: float):
             return math.inf if numerator > 0 else -math.inf
 
 
-def relative_change(before: float, after: float):
+def relative_difference(before: float, after: float):
     return fraction(after, before) - 1
