@@ -874,12 +874,12 @@ def test_automate_task_schedule(appliance, custom_automate_setup, current_server
     else:
         start_date_minute = str(round_min(start_date.minute))
 
-        attribute_value_pairs = {
-            "domain": domain.name,
-            "namespace": namespace.name,
-            "class": auto_class.name,
-            "instance": instance.name,
-        }
+    attribute_value_pairs = {
+        "domain": domain.name,
+        "namespace": namespace.name,
+        "class": auto_class.name,
+        "instance": instance.name,
+    }
 
     schedule = appliance.collections.system_schedules.create(
         name=fauxfactory.gen_alphanumeric(),
