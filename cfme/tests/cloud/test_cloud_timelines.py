@@ -18,7 +18,7 @@ pytestmark = [
     pytest.mark.tier(2),
     # Only one prov out of the 2 is taken, if not supplying --use-provider=complete
     pytest.mark.provider([AzureProvider, EC2Provider], required_flags=['timelines', 'events']),
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider', 'provider'),
     pytest.mark.meta(blockers=[
         GH("ManageIQ/manageiq-providers-amazon:620",
            unblock=lambda provider: not provider.one_of(EC2Provider))
