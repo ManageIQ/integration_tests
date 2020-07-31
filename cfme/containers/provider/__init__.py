@@ -45,6 +45,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.browser import browser
 from cfme.utils.log import logger
+from cfme.utils.net import resolve_hostname
 from cfme.utils.pretty import Pretty
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
@@ -227,6 +228,30 @@ class ContainersProvider(BaseProvider, Pretty, PolicyProfileAssignable):
     def __attrs_post_init__(self):
         super().__attrs_post_init__()
         self.parent = self.appliance.collections.containers_providers
+
+    @property
+    def hostname(self):
+        return getattr(self.default_endpoint, "hostname", None)
+
+    @hostname.setter
+    def hostname(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.hostname = value
+        else:
+            logger.warning("can't set hostname because default endpoint is absent")
+
+    @property
+    def ip_address(self):
+        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
+
+    @ip_address.setter
+    def ip_address(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.ipaddress = value
+        else:
+            logger.warning("can't set ipaddress because default endpoint is absent")
 
     @property
     def view_value_mapping(self):
