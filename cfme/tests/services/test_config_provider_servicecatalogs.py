@@ -6,7 +6,6 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 
@@ -60,7 +59,7 @@ def test_order_tower_catalog_item(appliance, provider: AnsibleTowerProvider,
         casecomponent: Services
         caseimportance: high
     """
-    bug = GH(('ManageIQ/manageiq', 20382))
+    bug = BZ(1861827)
     if job_type == 'template_limit':
         host = provider.data['provisioning_data']['inventory_host']
         dialog_values = {'limit': host}
