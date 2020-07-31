@@ -11,9 +11,11 @@ from cfme.configure.access_control import AddUserView
 from cfme.configure.tasks import TasksView
 from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.exceptions import RBACOperationBlocked
+from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
+from cfme.markers.env_markers.provider import SECOND
 from cfme.roles import FEATURES_510
 from cfme.roles import FEATURES_511
 from cfme.services.myservice import MyService
@@ -40,6 +42,43 @@ ACCESS_RULES_VMS = VersionPicker(
     }
 )
 SETTINGS = VersionPicker({LOWEST: "Settings", "5.11": "User Settings"})
+
+
+@pytest.fixture
+def create_custom_user(appliance, provider):
+    """create a role, group, user with compute only role product features"""
+    # Creating Role
+    role = appliance.collections.roles.instantiate(name="EvmRole-user")
+    custom_role = role.copy(name=fauxfactory.gen_alphanumeric(30, start="EvmRole-user_copy_"))
+    with update(custom_role):
+        custom_role.product_features = [
+            (["Everything"], True),
+            (["Everything"], False),
+            (["Everything", "Compute"], True),
+        ]
+
+    # Creating Group
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(30, "group_description_"),
+        role=custom_role.name,
+        tenant="My Company",
+        host_cluster=([provider.data["name"]], True),
+    )
+
+    # Creating User
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric(start="user_").lower(),
+        credential=Credential(
+            principal=fauxfactory.gen_alphanumeric(start="uid"),
+            secret=fauxfactory.gen_alphanumeric(start="pwd"),
+        ),
+        email=fauxfactory.gen_email(),
+        groups=[group],
+    )
+    yield custom_role, group, user
+    user.delete()
+    group.delete()
+    custom_role.delete()
 
 
 def new_credential():
@@ -2228,12 +2267,14 @@ def test_tags_manual_features(create_vm, request, appliance, create_user):
         assert view.toolbar.policy.item_enabled('Edit Tags')
 
 
-@pytest.mark.manual
-@pytest.mark.provider([OpenshiftProvider])
 @test_requirements.rbac
-@pytest.mark.meta(coverage=[1631694, 1702076])
+@pytest.mark.meta(automates=[1631694, 1702076])
 @pytest.mark.tier(2)
-def test_host_clusters_pod_filter(setup_provider):
+@pytest.mark.provider([OpenshiftProvider], selector=ONE)
+@pytest.mark.provider([OpenshiftProvider], selector=SECOND, fixture_name="second_provider")
+def test_host_clusters_pod_filter(
+    appliance, request, provider, second_provider, setup_provider, create_custom_user
+):
     """
     Test that user with Hosts & Clusters filter is able to see pods belonging to that filter only
 
@@ -2261,7 +2302,24 @@ def test_host_clusters_pod_filter(setup_provider):
     Bugzilla:
         1631694
     """
-    pass
+    setup_or_skip(request, second_provider)
+
+    @request.addfinalizer
+    def _finalize():
+        provider.delete()
+        second_provider.delete()
+
+    custom_role, group, user = create_custom_user
+
+    with user:
+        # Only One provider should be displayed
+        view = navigate_to(appliance.collections.containers_providers, "All")
+        assert all(provider.name == prov.name for prov in view.entities.get_all())
+
+        # Pods should be displayed which are under the first provider not second
+        view = navigate_to(appliance.collections.container_pods, "All")
+        view.paginator.set_items_per_page("1000")
+        assert all(provider.name == pod["Provider"].text for pod in view.entities.elements)
 
 
 @pytest.mark.manual
