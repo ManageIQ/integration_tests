@@ -253,6 +253,46 @@ def test_embedded_ansible_private_repository_crud(request, ansible_private_repos
     assert not ansible_private_repository.exists
 
 
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1845281])
+def test_embedded_ansible_file_type_repository_crud(appliance, wait_for_ansible, request):
+    """
+    Bugzilla:
+        1845281
+
+    Polarion:
+        assignee: gtalreja
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: ansible_embed
+        testSteps:
+            1. Enable EmbeddedAnsible server role
+            2. Add ansible repo with URL as file://{dest}
+        expectedResults:
+            1. Role should be enabled
+            2. No validation Errors, UI should allow this type of URL's
+    """
+    repo = cfme_data.ansible_links.playbook_repositories.embedded_ansible
+    dest = '/opt/ansible_playbooks'
+    appliance.ssh_client.run_command(f'git clone { repo } { dest }')
+    repositories = appliance.collections.ansible_repositories
+    repository = repositories.create(
+        name=fauxfactory.gen_alpha(),
+        url=f'file://{ dest }',
+        description=fauxfactory.gen_alpha(),
+    )
+    view = navigate_to(repository, "Details")
+    wait_for(
+        lambda: repository.status == "successful",
+        num_sec=120,
+        delay=5,
+        fail_func=view.toolbar.refresh.click
+    )
+    request.addfinalizer(repository.delete_if_exists)
+    assert repository.exists
+
+
 @pytest.mark.rhel_testing
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
