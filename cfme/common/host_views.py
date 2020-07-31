@@ -12,6 +12,7 @@ from widgetastic_patternfly import Dropdown
 from cfme.common import BaseLoggedInPage
 from cfme.common import CompareView
 from cfme.common import TimelinesView
+from cfme.exceptions import displayed_not_implemented
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
@@ -431,3 +432,10 @@ class HostVmmInfoView(HostsView):
     def is_displayed(self):
         active_loc = f"{self.context['object'].name} (VM Monitor Information)"
         return self.breadcrumb.active_location == active_loc
+
+
+class RegisteredHostsView(HostsView):
+    """
+    represents Hosts related to some datastore
+    """
+    is_displayed = displayed_not_implemented

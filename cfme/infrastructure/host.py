@@ -13,6 +13,7 @@ from cfme.common import CustomButtonEventsMixin
 from cfme.common import PolicyProfileAssignable
 from cfme.common import Taggable
 from cfme.common.candu_views import HostInfraUtilizationView
+from cfme.common.datastore_views import HostAllDatastoresView
 from cfme.common.host_views import HostAddView
 from cfme.common.host_views import HostDetailsView
 from cfme.common.host_views import HostDevicesView
@@ -33,7 +34,6 @@ from cfme.common.host_views import ProviderAllHostsView
 from cfme.common.host_views import ProviderHostsCompareView
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import RestLookupError
-from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.networks.views import OneHostSubnetView

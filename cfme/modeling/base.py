@@ -1,4 +1,9 @@
 from collections.abc import Callable
+from typing import ClassVar
+from typing import Generic
+from typing import Type
+from typing import TypeVar
+from typing import Union
 
 import attr
 from cached_property import cached_property
@@ -11,6 +16,7 @@ from widgetastic_patternfly import CandidateNotFound
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import KeyPairNotFound
 from cfme.exceptions import RestLookupError
+from cfme.utils.appliance import Appliance
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -87,8 +93,11 @@ class EntityCollections:
         return self._collection_cache[name]
 
 
+TBaseEntity = TypeVar('TBaseEntity', bound='BaseEntity')
+
+
 @attr.s
-class BaseCollection(NavigatableMixin):
+class BaseCollection(NavigatableMixin, Generic[TBaseEntity]):
     """Class for helping create consistent Collections
 
     The BaseCollection class is responsible for ensuring two things:
@@ -96,13 +105,11 @@ class BaseCollection(NavigatableMixin):
     1) That the API consistently has the first argument passed to it
     2) That that first argument is an appliance instance
 
-    This class works in tandem with the entrypoint loader which ensures that the correct
+    This class works in tandem with the entry-point loader which ensures that the correct
     argument names have been used.
     """
-
-    ENTITY = None
-
-    parent = attr.ib(repr=False)
+    ENTITY: ClassVar[Type[TBaseEntity]]
+    parent: Union['BaseEntity', Appliance] = attr.ib(repr=False)
     filters = attr.ib(default=attr.Factory(dict))
 
     @property
@@ -113,19 +120,20 @@ class BaseCollection(NavigatableMixin):
             return self.parent
 
     @classmethod
-    def for_appliance(cls, appliance, *k, **kw):
+    def for_appliance(cls, appliance: Appliance, *k, **kw):
         return cls(appliance)
 
     @classmethod
-    def for_entity(cls, obj, *k, **kw):
+    def for_entity(cls, obj: 'BaseEntity', *k, **kw):
         return cls(obj, *k, **kw)
 
     @classmethod
     def for_entity_with_filter(cls, obj, filt, *k, **kw):
         return cls.for_entity(obj, *k, **kw).filter(filt)
 
-    def instantiate(self, *args, **kwargs):
-        return self.ENTITY.from_collection(self, *args, **kwargs)
+    def instantiate(self, *args, **kwargs) -> TBaseEntity:
+        obj = self.ENTITY.from_collection(self, *args, **kwargs)
+        return obj
 
     def filter(self, filter):
         filters = self.filters.copy()
@@ -135,18 +143,18 @@ class BaseCollection(NavigatableMixin):
 
 @attr.s
 class BaseEntity(NavigatableMixin):
-    """Class for helping create consistent entitys
+    """Class for helping create consistent entities
 
     The BaseEntity class is responsible for ensuring two things:
 
     1) That the API consistently has the first argument passed to it
     2) That that first argument is a collection instance
 
-    This class works in tandem with the entrypoint loader which ensures that the correct
+    This class works in tandem with the entry-point loader which ensures that the correct
     argument names have been used.
     """
 
-    parent = attr.ib(repr=False)  # This is the collection or not
+    parent: BaseCollection = attr.ib(repr=False)  # This is the collection or not
 
     # TODO This needs removing as we need proper __eq__ on objects, but it is part of a
     #      much larger discussion
@@ -157,7 +165,14 @@ class BaseEntity(NavigatableMixin):
         return self.parent.appliance
 
     @classmethod
-    def from_collection(cls, collection, *k, **kw):
+    def from_collection(cls, collection: BaseCollection, *k, **kw):
+        # TODO (jhenner) What to do with *k and **kw? We seem to need to accept it here to enable
+        # File "...cfme/infrastructure/provider/virtualcenter.py", line 95, in from_config
+        #      end_ip=end_ip)
+        #  py.test --use-sprout --sprout-group downstream-510z -s --use-provider complete \
+        #  'cfme/tests/infrastructure/test_provisioning_dialog.py::\
+        #  test_provisioning_schedule[ansible_tower-3.4]' \
+        #  --sprout-user-key jhenner --long-running --pdb
         return cls(collection, *k, **kw)
 
     @cached_property
