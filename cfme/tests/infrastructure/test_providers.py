@@ -329,6 +329,10 @@ def test_provider_rhv_create_delete_tls(request, has_no_providers, provider, ver
     prov.wait_for_delete()
 
 
+DEVICES_COUNT_TOLERANCE = 5
+""" The difference of guest devices counts between provider refresh we do allow. """
+
+
 @test_requirements.rhev
 @pytest.mark.meta(automates=[1691109, 1731237])
 @pytest.mark.provider([RHEVMProvider], selector=ONE_PER_VERSION, scope="function")
@@ -365,7 +369,8 @@ def test_rhv_guest_devices_count(appliance, setup_provider, provider):
 
     wait_for(_refresh_provider, timeout=300, delay=30)
     gd_count_after = _gd_count()
-    assert gd_count_before == gd_count_after, "guest devices count changed after refresh!"
+    assert abs(gd_count_after - gd_count_before) < DEVICES_COUNT_TOLERANCE, \
+        "The guest devices count changed suspiciously after refresh!"
 
 
 @test_requirements.rhev
