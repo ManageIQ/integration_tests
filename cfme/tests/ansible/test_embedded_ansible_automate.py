@@ -128,7 +128,7 @@ def test_automate_ansible_playbook_method_type_crud(appliance, ansible_repositor
         1740769
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/12h
     """
@@ -150,7 +150,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, ansible_repos
     """Tests execution an ansible playbook via ansible playbook method using Simulation.
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         casecomponent: Automate
         initialEstimate: 1/4h
     """
@@ -362,7 +362,7 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
         1678135
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseposneg: positive
         casecomponent: Automate
@@ -448,7 +448,7 @@ def test_import_domain_containing_playbook_method(request, appliance, setup_ansi
         1677575
 
     Polarion:
-        assignee: ghubale
+        assignee: dgaikwad
         initialEstimate: 1/8h
         caseimportance: high
         caseposneg: positive

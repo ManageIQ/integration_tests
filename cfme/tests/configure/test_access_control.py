@@ -1747,109 +1747,6 @@ def test_tenantadmin_user_crud(child_tenant_admin_user, tenant_role, child_tenan
 
 @pytest.mark.manual
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.tier(2)
-@test_requirements.multi_tenancy
-def test_tenant_visibility_service_template_catalogs_all_parents():
-    """
-    Members of child tenants can see service templates which are visible
-    in parent tenants.
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: medium
-        tags: cfme_tenancy
-        initialEstimate: 1/2h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.tier(2)
-@test_requirements.multi_tenancy
-def test_tenant_visibility_services_all_childs():
-    """
-    Members of parent tenant can see services of all child tenants.
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: medium
-        tags: cfme_tenancy
-        initialEstimate: 1h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@test_requirements.multi_tenancy
-def test_tenant_osp_mapping_refresh():
-    """
-    There is new feature in 5.7, mapping of Openstack tenants to CFME
-    tenants.
-
-    Polarion:
-        assignee: dgaikwad
-        caseimportance: medium
-        casecomponent: Appliance
-        tags: cfme_tenancy
-        initialEstimate: 1/4h
-        startsin: 5.7
-        testSteps:
-            1. Switch "Tenant Mapping Enabled" checkbox to Yes when adding RHOS
-            cloud provider
-            2. Create new test tenant in RHOS
-            3. Perform refresh of RHOS provider in CFME UI
-            4. New tenants are created automatically
-
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.tier(2)
-@test_requirements.multi_tenancy
-def test_tenant_visibility_providers_all_parents():
-    """
-    Child tenants can see providers which were defined in parent tenants.
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: medium
-        tags: cfme_tenancy
-        initialEstimate: 1/6h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.tier(2)
-@test_requirements.multi_tenancy
-def test_tenant_visibility_miq_requests_all_childs():
-    """
-    Tenant members can see MIQ requests of this tenant and its children.
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: medium
-        tags: cfme_tenancy
-        initialEstimate: 1/2h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_tenancy
 def test_tenant_osp_mapping_delete():
     """
@@ -1955,41 +1852,6 @@ def test_tenant_unique_automation_domain_name_on_parent_level(appliance, request
             pass
 
 
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@test_requirements.multi_tenancy
-def test_tenant_automation_domains():
-    """
-    Tenants can see Automation domains owned by tenant or parent tenants
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: high
-        tags: cfme_tenancy
-        initialEstimate: 1/4h
-        startsin: 5.5
-        testSteps:
-            1. Configure LDAP authentication on CFME
-            2. Create 2 different parent parent-tenants
-                - marketing
-                - finance
-            3. Create groups marketing and finance (these are defined in LDAP) and
-            group names in LDAP and CFME must match, assign these groups to corresponding
-            tenants and assign them EvmRole-SuperAdministrator roles
-            4. In LDAP we have 3 users:
-                - bill -> member of marketing group
-                - jim -> member of finance group
-                - mike -> is member of both groups
-            5. In each tenant create new Automation domain and copy
-            ManageIQ/System/Request/InspectMe instance and
-            ManageIQ/System/Request/new_method method to new domain
-            6. User can see only domains (locked) from his parent tenants and can
-            create his own which are visible only to his tenant
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 @test_requirements.multi_tenancy
 def test_superadmin_child_tenant_delete_parent_catalog(appliance, request):
@@ -2063,46 +1925,6 @@ def test_verify_groups_for_tenant_user():
         caseimportance: medium
         tags: cfme_tenancy
         initialEstimate: 1/4h
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.tier(2)
-@test_requirements.multi_tenancy
-def test_tenant_visibility_service_template_items_all_parents():
-    """
-    Child tenants can see all service template items defined in parent
-    tenants.
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: medium
-        tags: cfme_tenancy
-        initialEstimate: 1/2h
-        startsin: 5.5
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.tier(2)
-@test_requirements.multi_tenancy
-def test_tenant_visibility_vms_all_childs():
-    """
-    Members of parent tenant can see all VMs/instances created by users in
-    child tenants.
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Configuration
-        caseimportance: medium
-        tags: cfme_tenancy
-        initialEstimate: 1h
-        startsin: 5.5
     """
     pass
 
@@ -3135,48 +2957,6 @@ def test_ssui_login_http():
 
 @pytest.mark.manual
 @pytest.mark.tier(1)
-@pytest.mark.customer_scenario
-@pytest.mark.meta(coverage=[1710998])
-def test_verify_datastores_list():
-    """
-    Datastore filter should work properly after even delete the datastores
-    Bugzilla:
-        1710998
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Auth
-        caseimportance: high
-        initialEstimate: 1/4h
-    setup:
-        1. create setup like below
-            My VMWARE structure:
-            vcenter-server
-            |
-            | -> Datacenter1
-                | -> Cluster1
-            |
-            | -> Datacenter2
-                | -> Cluster2
-            |
-            | -> Datacenter3
-                | -> Cluster3
-    testSteps:
-        1. create a role and group `group1` and assigne filters for only `Cluster3`,
-        2. created user `user1`, logged in with user `user1` and verified that I can only
-        see `Cluster3`.
-        3. delete the 'cluster3'
-        4. navigate to check cluster list
-    expectedResults:
-        1. role and group successfully created
-        2. able to see only `cluster3`
-        3. cluster should be deleted successfully
-        4. There should not be any cluster in the list
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(1)
 @pytest.mark.meta(coverage=[1854839])
 def test_chargeback_report():
     """
@@ -3199,5 +2979,49 @@ def test_chargeback_report():
             2.
             3. report generated with correct data
 
+    """
+    pass
+
+
+@pytest.mark.customer_scenario
+@pytest.mark.tier(2)
+@pytest.mark.meta(coverage=[1836125])
+def test_ansible_playbook_stdout():
+    """ Test standard output of ansible playbook of particular user
+    Bugzilla:
+        1836125
+    Polarion:
+        assignee: dgaikwad
+        initialEstimate: 1/4h
+        caseimportance: high
+        casecomponent: Configuration
+        tags: rbac
+        setup:
+            1. create ansible playbook
+            2. create role from self_service with restriction="Only User or Group Owned"
+            3. create group using recently created role
+            4. create user using recently created group
+        testSteps:
+            1. create ansible playbook service catalog item
+            2. set ownership
+            3. create service catalog
+            4. log in SSUI using newly created user
+            5. add service to shopping card
+            6. order service
+            7. log in main UI using newly created user
+            8. navigate  Services->My Servcies>Service>
+            9. Under "Active catalog" click on ordered service
+            10. check stdout of service
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6.
+            7.
+            8.
+            9.
+            10. able to see standard output
     """
     pass
