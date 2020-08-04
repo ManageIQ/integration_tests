@@ -2,6 +2,10 @@ from collections import namedtuple
 
 import fauxfactory
 import pytest
+from widgetastic.widget import TextInput
+from widgetastic.widget import View
+from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import Button
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.myservice import MyService
@@ -16,6 +20,20 @@ from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 TargetMachine = namedtuple("TargetMachine", ["vm", "hostname", "username", "password"])
+
+
+class CredsHostsDialogView(View):
+    """This view for custom button default ansible playbook dialog"""
+
+    machine_credential = BootstrapSelect(locator=".//select[@id='credential']//parent::div")
+    hosts = TextInput(id="hosts")
+
+    submit = Button("Submit")
+    cancel = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        return self.submit.is_displayed and self.machine_credential.is_displayed
 
 
 @pytest.fixture(scope="module")
