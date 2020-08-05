@@ -1,6 +1,7 @@
 import re
 import socket
 import sys
+import typing
 from functools import total_ordering
 from os import path as os_path
 from subprocess import check_call
@@ -26,6 +27,12 @@ from cfme.utils.timeutil import parsetime
 from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
+
+# We need the Credential only for type checking and there is a circular import if imported
+# unconditionally. This is a hacky way to work this around.
+if typing.TYPE_CHECKING:
+    from cfme.base.credential import Credential
+
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)
 RUNCMD_TIMEOUT = 1200.0
@@ -161,6 +168,25 @@ class SSHClient(paramiko.SSHClient):
         self._connect_kwargs = compiled_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         _client_session.append(self)
+
+    def tunnel_to(self, **kwargs):
+        """
+        Tunnels the SSH session trough the host this client is connected to to other host.
+        All parameters are the same as for the `SSHClient.__init__`
+        """
+        transport: 'paramiko.Transport' = self.get_transport()
+
+        # It seems this is not really in any use in our case, but something has to be specified as
+        # the local address and port.
+        # https://github.com/paramiko/paramiko/issues/1410
+        # https://github.com/paramiko/paramiko/issues/1485
+        local_addr = ('0.0.0.0', 0)
+
+        dest_addr = (kwargs['hostname'], kwargs.get('port', ports.SSH))
+        channel = transport.open_channel("direct-tcpip", dest_addr, local_addr)
+
+        dest_client = SSHClient(**kwargs, sock=channel, use_check_port=False)
+        return dest_client
 
     @property
     def is_container(self):
@@ -867,18 +893,18 @@ def unquirked_ssh_client(**kwargs):
     return client
 
 
-def connect_ssh(vm: Vm, creds,
+def connect_ssh(vm: Vm, creds: 'Credential',
                 num_sec=CONNECT_RETRIES_TIMEOUT,
                 connect_timeout=CONNECT_TIMEOUT,
                 delay=CONNECT_SSH_DELAY):
     """
     This function attempts to connect all the IPs of the vm in several
-    round. After each round it will delay an ammount of seconds specified as
+    round. After each round it will delay an amount of seconds specified as
     `delay`. Once connective IP is found, it will return connected SSHClient.
     The `connect_timeout` specifies a timeout for each connection attempt.
     """
 
-    def _connection_factory(ip):
+    def connection_factory(ip):
         return unquirked_ssh_client(
             hostname=ip,
             username=creds.principal, password=creds.secret,
@@ -887,4 +913,4 @@ def connect_ssh(vm: Vm, creds,
     msg = "The num_sec is smaller then connect_timeout. This looks like a bug."
     assert num_sec > connect_timeout, msg
 
-    return retry_connect(lambda: vm.all_ips, _connection_factory, num_sec=num_sec, delay=delay)
+    return retry_connect(lambda: vm.all_ips, connection_factory, num_sec=num_sec, delay=delay)
