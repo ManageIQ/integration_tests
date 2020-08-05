@@ -6,9 +6,9 @@ from widgetastic.widget import TextInput
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import CandidateNotFound
 from widgetastic_patternfly import Input
+from widgetastic_patternfly import Kebab
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
-from cfme.dashboard import Kebab
 from cfme.exceptions import ItemNotFound
 from cfme.services.myservice import MyService
 from cfme.utils.appliance import MiqImplementationContext
@@ -59,7 +59,8 @@ class DetailsMyServiceView(MyServicesView):
 
     notification = Notification()
     policy = SSUIDropdown('Policy')
-    power_operations = Kebab()
+    power_operations = Kebab(
+        locator='.//div[contains(@class, "dropdown-kebab-pf") and ./button][1]')
     access_dropdown = SSUIAppendToBodyDropdown('Access')
     remove_service = Button("Remove Service")
     configuration = SSUIDropdown('Configuration')
@@ -290,10 +291,7 @@ def retire(self):
 @MiqImplementationContext.external_for(MyService.service_power, ViaSSUI)
 def service_power(self, power=None):
     view = navigate_to(self, 'Details')
-    if self.appliance.version < "5.10":
-        view.power_operations.item_select(power)
-    else:
-        view.power_operations.select(power)
+    view.power_operations.item_select(power)
     view.wait_displayed('60s')
     # TODO - assert vm state through rest api
 

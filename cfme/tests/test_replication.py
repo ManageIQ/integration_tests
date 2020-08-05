@@ -353,13 +353,13 @@ def test_replication_global_region_dashboard(request, setup_replication):
                   'Top Storage Consumers')
     remote_app_data, global_app_data = {}, {}
 
-    def get_tabel_data(widget):
+    def get_table_data(widget):
         ret = [row.name.text for row in widget.contents]
         logger.info("Widget text data:{%s}" % ret)
         return ret
 
     def data_check(view, table):
-        return bool(get_tabel_data(view.dashboards("Default Dashboard").widgets(table)))
+        return bool(get_table_data(view.dashboards("Default Dashboard").widgets(table)))
 
     view = navigate_to(remote_app.server, "Dashboard")
     for table_name in data_items:
@@ -369,7 +369,7 @@ def test_replication_global_region_dashboard(request, setup_replication):
             fail_func=view.dashboards("Default Dashboard").browser.refresh,
             message=f"Waiting for table data item: {table_name} "
         )
-        remote_app_data[table_name] = get_tabel_data(view.dashboards(
+        remote_app_data[table_name] = get_table_data(view.dashboards(
             "Default Dashboard").widgets(table_name))
 
     view = navigate_to(global_app.server, "Dashboard")
@@ -381,7 +381,7 @@ def test_replication_global_region_dashboard(request, setup_replication):
             message=f"Waiting for table data item: {table_name}"
         )
 
-        global_app_data[table_name] = get_tabel_data(view.dashboards(
+        global_app_data[table_name] = get_table_data(view.dashboards(
             "Default Dashboard").widgets(table_name))
 
     # TODO(ndhandre): Widget not implemented so some widget not checking in this test case they are

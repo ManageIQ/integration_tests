@@ -11,9 +11,9 @@ from widgetastic.widget import ParametrizedView
 from widgetastic.widget import Text
 from widgetastic.widget import View
 from widgetastic.widget import Widget
-from widgetastic.xpath import quote
 from widgetastic_patternfly import Button
 from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Kebab
 from widgetastic_patternfly import Tab
 
 from cfme.common import BaseLoggedInPage
@@ -25,73 +25,6 @@ from cfme.utils.appliance.implementations.ui import navigator
 from cfme.utils.timeutil import parsetime
 from cfme.utils.wait import wait_for
 from widgetastic_manageiq import Table
-
-
-# TODO: Move this into widgetastic_patternfly
-class Kebab(Widget):
-    """The so-called "kebab" widget of Patternfly.
-
-    <http://www.patternfly.org/pattern-library/widgets/#kebabs>
-
-    Args:
-        button_id: id of the button tag inside the kebab. If not specified, first kebab available
-            will be used
-
-    """
-    ROOT = ParametrizedLocator('{@locator}')
-    UL = './ul[contains(@class, "dropdown-menu")]'
-    BUTTON = './button'
-    ITEM = './ul/li/a[normalize-space(.)={}]'
-    ITEMS = './ul/li/a'
-
-    def __init__(self, parent, button_id=None, logger=None):
-        super().__init__(parent, logger=logger)
-        if button_id is not None:
-            self.locator = (
-                './/div[contains(@class, "dropdown-kebab-pf") and ./button[@id={}]]'.format(
-                    quote(button_id)))
-        else:
-            self.locator = './/div[contains(@class, "dropdown-kebab-pf") and ./button][1]'
-
-    @property
-    def is_opened(self):
-        """Returns opened state of the kebab."""
-        return self.browser.is_displayed(self.UL)
-
-    @property
-    def items(self):
-        """Lists all items in the kebab.
-
-        Returns:
-            :py:class:`list` of :py:class:`str`
-        """
-        return [self.browser.text(item) for item in self.browser.elements(self.ITEMS)]
-
-    def open(self):
-        """Open the kebab"""
-        if not self.is_opened:
-            self.browser.click(self.BUTTON)
-
-    def close(self):
-        """Close the kebab"""
-        if self.is_opened:
-            self.browser.click(self.BUTTON)
-
-    def select(self, item, close=True):
-        """Select a specific item from the kebab.
-
-        Args:
-            item: Item to be selected.
-            close: Whether to close the kebab after selection. If the item is a link, you may want
-                to set this to ``False``
-        """
-        try:
-            el = self.browser.element(self.ITEM.format(quote(item)))
-            self.open()
-            self.parent_browser.click(el)
-        finally:
-            if close:
-                self.close()
 
 
 class DashboardView(BaseLoggedInPage):
@@ -159,7 +92,7 @@ class DashboardView(BaseLoggedInPage):
                 ' and normalize-space(.)={title|quote}]]')
 
             title = Text('.//h2[contains(@class, "card-pf-title")]')
-            menu = Kebab(button_id=ParametrizedString('btn_{@widget_id}'))
+            menu = Kebab(id=ParametrizedString('btn_{@widget_id}'))
 
             contents = ConditionalSwitchableView(reference='content_type')
 
@@ -325,7 +258,7 @@ class DashboardWidget(BaseEntity):
         if 'Maximize' not in view.menu.items and 'Minimize' not in view.menu.items:
             raise ValueError(f'The widget {self.name} cannot be maximized or minimized')
         if 'Minimize' in view.menu.items:
-            view.menu.select('Minimize')
+            view.menu.item_select('Minimize')
 
     def restore(self):
         """Maximize this widget."""
@@ -335,26 +268,26 @@ class DashboardWidget(BaseEntity):
         if 'Maximize' not in view.menu.items and 'Minimize' not in view.menu.items:
             raise ValueError(f'The widget {self.name} cannot be maximized or minimized')
         if 'Maximize' in view.menu.items:
-            view.menu.select('Maximize')
+            view.menu.item_select('Maximize')
 
     def remove(self):
         """Remove this widget."""
         self.close_zoom()
         view = self.widget_view
-        view.menu.select('Remove Widget')
+        view.menu.item_select('Remove Widget')
 
     @property
     def is_zoomed(self):
         """Returns whether this widget is zoomed now."""
         view = self.create_view(DashboardView)
-        return view.zoomed.title.is_displayed and view.zoomed.title == self.name
+        return view.zoomed.title.is_displayed and view.zoomed.title.text == self.name
 
     def zoom(self):
         """Zoom this widget in."""
         if not self.is_zoomed:
             self.close_zoom()
             view = self.widget_view
-            view.menu.select('Zoom in', close=False)
+            view.menu.item_select('Zoom in', close=False)
             wait_for(lambda: self.is_zoomed, delay=0.2, timeout=10)
 
     @property
