@@ -1537,32 +1537,6 @@ def test_appliance_console_apache_reload_log_rotate(appliance):
     assert "bin/apache reload" not in result.output
 
 
-@pytest.mark.manual
-@pytest.mark.tier(1)
-def test_appliance_console_datetime_negative():
-    """
-    test setting invalid date/time
-
-    Polarion:
-        assignee: dgaikwad
-        casecomponent: Appliance
-        caseimportance: medium
-        caseposneg: negative
-        initialEstimate: 1/6h
-        testSteps:
-            1. 'ap' launches appliance_console.
-            2. RETURN clears info screen.
-            3. '3' Set Date and Time.
-            4. Provider invalid Date and Time.
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Invalid date/time should not be applied, check for failure there.
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_appliance_console_key_fetch_negative(temp_appliance_preconfig_funcscope):
     """
