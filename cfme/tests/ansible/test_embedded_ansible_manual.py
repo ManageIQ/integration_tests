@@ -1,7 +1,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider.openstack import OpenStackProvider
 
 pytestmark = [
     pytest.mark.manual,
@@ -25,6 +24,7 @@ def test_embed_tower_retire_service_with_instances_ec2():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(coverage=[1830349])
 def test_embed_tower_exec_play_against_machine_multi_appliance():
     """
     User/Admin is able to execute playbook without creating Job Temaplate
@@ -36,6 +36,9 @@ def test_embed_tower_exec_play_against_machine_multi_appliance():
     of AnsiblePlaybook type. Select playbook e.g. dump_all_vars and order
     it. When asked what machine to run it against, pick any rhel7 machine.
     Playbook should be executed successfully.
+
+    Bugzilla:
+        1830349
 
     Polarion:
         assignee: gtalreja
@@ -79,24 +82,6 @@ def test_embed_ansible_next_gen():
     pass
 
 
-@pytest.mark.tier(3)
-@pytest.mark.meta(coverage=[1511017])
-@pytest.mark.provider([OpenStackProvider])
-def test_embed_tower_exec_play_with_creds(appliance, provider):
-    """
-    User/Admin is able to execute playbook without creating Job Template
-    and can execute it against provider type with provider type credentials.
-
-    Polarion:
-        assignee: gtalreja
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(1)
 def test_embed_ansible_catalog_items():
     """
@@ -111,39 +96,6 @@ def test_embed_ansible_catalog_items():
         casecomponent: Configuration
         caseimportance: medium
         caseposneg: negative
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_embed_tower_add_private_repo():
-    """
-    Ability to add private repo with SCM credentials.
-
-    Polarion:
-        assignee: gtalreja
-        casecomponent: Ansible
-        caseimportance: critical
-        initialEstimate: 1/6h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(1)
-def test_embed_tower_repo_url_validation():
-    """
-    After all processes are running fill out a new repo with resolvable
-    /un-resolvable url, use the validation button to check its correct.
-
-    Bugzilla:
-        1478958
-
-    Polarion:
-        assignee: gtalreja
-        casecomponent: Ansible
         initialEstimate: 1/6h
         tags: ansible_embed
     """
@@ -195,25 +147,6 @@ def test_service_ansible_playbook_order_credentials_usecredsfromservicedialog():
         casecomponent: Ansible
         caseimportance: medium
         initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
-@pytest.mark.tier(3)
-def test_service_ansible_playbook_machine_credentials_service_details_sui():
-    """
-    Bugzilla:
-        1540689
-
-    When the service is viewed in my services it should also show that the cloud and
-    machine credentials were attached to the service.
-
-    Polarion:
-        assignee: gtalreja
-        casecomponent: Ansible
-        caseimportance: medium
-        initialEstimate: 1/2h
         tags: ansible_embed
     """
     pass
@@ -365,7 +298,7 @@ def test_embed_tower_playbook_with_retry_method():
 
 @pytest.mark.tier(3)
 @pytest.mark.ignore_stream("5.10")
-@pytest.mark.meta(coverage=[1807928])
+@pytest.mark.meta(coverage=[1807928, 1826410])
 @pytest.mark.parametrize("username, auth",
                          [
                              ('username', 'password'),
@@ -379,6 +312,7 @@ def test_embed_tower_exec_play_with_diff_auth(appliance, provider, username, aut
 
     Bugzilla:
         1807928
+        1826410
 
     Polarion:
         assignee: gtalreja
