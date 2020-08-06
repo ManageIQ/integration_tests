@@ -1232,3 +1232,50 @@ def test_dynamic_dropdown_auto_refresh_load(appliance, import_datastore, import_
         wait_for(
             lambda: view.fields("location").dropdown.read() == 'Alaska', timeout=7
         )
+
+
+@pytest.mark.meta(automates=[1834219])
+@pytest.mark.customer_scenario
+def test_navigate_details_dialog_view(appliance):
+    """
+    Bugzilla:
+        1834219
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/16h
+        startsin: 5.11
+        testSteps:
+            1. Create a new dialog, add just one field: Tag Control, select a valid category
+            2. Click on the newly created dialog in explorer tree
+        expectedResults:
+            1.
+            2. It shouldn't gives the validation error in log
+    """
+    service_dialog = appliance.collections.service_dialogs
+    element_data = {
+        "element_information": {
+            "ele_label": fauxfactory.gen_alphanumeric(15, start="ele_label_"),
+            "ele_name": fauxfactory.gen_alphanumeric(15, start="ele_name_"),
+            "ele_desc": fauxfactory.gen_alphanumeric(15, start="ele_desc_"),
+            "choose_type": "Tag Control",
+        },
+        'options': {
+            'field_category': "Service Level",
+            'field_required': True
+        }
+    }
+    sd = service_dialog.create(
+        label=fauxfactory.gen_alphanumeric(start="dialog_"), description="my dialog"
+    )
+    tab = sd.tabs.create(
+        tab_label=fauxfactory.gen_alphanumeric(start="tab_"), tab_desc="my tab desc"
+    )
+    box = tab.boxes.create(
+        box_label=fauxfactory.gen_alphanumeric(start="box_"), box_desc="my box desc"
+    )
+    box.elements.create(element_data=[element_data])
+    with LogValidator(
+            "/var/www/miq/vmdb/log/production.log", failure_patterns=[".*FATAL.*"]
+    ).waiting(timeout=120):
+        navigate_to(sd, 'Details')

@@ -9,23 +9,6 @@ pytestmark = [
 
 
 @pytest.mark.manual
-@pytest.mark.tier(2)
-def test_notification_banner_vm_provisioning_notification_and_service_request_should_be_in_syn():
-    """ Notification Banner - VM Provisioning Notification and Service Request should be in  Sync
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.7
-        tags: service
-    Bugzilla:
-        1389312
-    """
-    pass
-
-
-@pytest.mark.manual
 @pytest.mark.tier(3)
 def test_user_should_be_able_to_see_requests_irrespective_of_tags_assigned():
     """ User should be able to see requests irrespective of tags assigned
@@ -55,25 +38,6 @@ def test_changing_action_order_in_catalog_bundle_should_not_removes_resource():
         tags: service
     Bugzilla:
         1615853
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_notification_banner_service_event_should_be_shown_in_notification_bell():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/4h
-        testtype: functional
-        startsin: 5.9
-        tags: service
-        testSteps:
-            1. OPS UI  and SSUI service requests should create an event in notification bell
-            2. Also check , Clear All and "MArk as read" in notification bell
-            3. Number of events shown in notification bell
     """
     pass
 
