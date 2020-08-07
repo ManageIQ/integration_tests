@@ -984,7 +984,7 @@ class ReplicationGlobalView(ReplicationView):
     subscription_table = VanillaTable(
         '//form[@id="form_div"]//table[contains(@class, "table")]',
         column_widgets={
-            "Actions": Button("Update"),
+            8: Button("Update"),
             10: Kebab(locator='//td[10]/div[contains(@class, "dropdown-kebab-pf")]')
         }
     )
@@ -1004,17 +1004,12 @@ class ReplicationKebab(Kebab):
 
 class ReplicationGlobalAddView(ReplicationView):
     database = Input(locator='//input[contains(@ng-model, "dbname")]')
-    port = Input(name='port')
     host = Input(locator='//input[contains(@ng-model, "host")]')
-    username = Input(name='userid')
+    username = Input(locator='//input[contains(@ng-model, "user")]')
     password = Input(name='password')
+    port = Input(name='port')
     accept_button = Button('Accept')
-    action_dropdown = ReplicationKebab(
-        locator=(
-            '//tr[contains(@ng-if, "pglogicalReplicationModel.addEnabled")]'
-            '//div[contains(@class, "dropdown-kebab-pf")]'
-        )
-    )
+    action_dropdown = ReplicationKebab(locator='//div[contains(@class, "dropdown-kebab-pf")]')
 
     @property
     def is_displayed(self):
@@ -1082,16 +1077,17 @@ class Replication(NavigatableMixin):
     def _global_replication_row(self, host=None):
         """ Get replication row from table
 
-            Args:
-                host: host values
+            Kwargs:
+                host: :py:class`str` to match on the Host column in the table
             Returns:
-                host row object, of is host is not passed first table row is returned
+                :py:class:`TableRow` of matching row.
+                If host is not specified, then the first table row is returned.
         """
         view = navigate_to(self, 'Global')
         if host:
             return view.subscription_table.row(host=host)
         else:
-            return view.subscription_table.row[0]
+            return view.subscription_table[0]
 
     def get_replication_status(self, replication_type='global', host=None):
         """ Get replication status, if replication is active
