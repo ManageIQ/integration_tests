@@ -16,10 +16,13 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.markers.env_markers.provider import SECOND
+from cfme.rest.gen_data import users as _users
 from cfme.roles import FEATURES_510
 from cfme.roles import FEATURES_511
 from cfme.services.myservice import MyService
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.tests.integration.test_cfme_auth import retrieve_group
+from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.auth import auth_user_data
 from cfme.utils.blockers import BZ
@@ -29,6 +32,7 @@ from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.version import LOWEST
 from cfme.utils.version import VersionPicker
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [
@@ -241,6 +245,25 @@ def tenant_custom_role(appliance, request, provider):
     group.delete_if_exists()
     tenant_role.delete_if_exists()
 
+
+@pytest.fixture()
+def user_catalog(appliance, request, ansible_catalog_item):
+    user, user_data = _users(request, appliance, group="EvmGroup-user_self_service")
+
+    user_inst = appliance.collections.users.instantiate(
+        name=user[0].name,
+        credential=Credential(principal=user_data[0]["userid"], secret=user_data[0]["password"]),
+    )
+    ansible_catalog_item.set_ownership("Administrator", "EvmGroup-user_self_service")
+
+    ansible_catalog = appliance.collections.catalogs.create(
+        fauxfactory.gen_alphanumeric(),
+        description="my ansible catalog",
+        items=[ansible_catalog_item.name],
+    )
+
+    yield user_inst, ansible_catalog
+    ansible_catalog.delete_if_exists()
 
 # User test cases
 @pytest.mark.sauce
@@ -2985,9 +3008,11 @@ def test_chargeback_report():
 
 @pytest.mark.customer_scenario
 @pytest.mark.tier(2)
-@pytest.mark.meta(coverage=[1836125])
-def test_ansible_playbook_stdout():
-    """ Test standard output of ansible playbook of particular user
+@pytest.mark.meta(automates=[1836125])
+def test_ansible_playbook_stdout(
+    appliance, ansible_catalog_item, ansible_service_request, user_catalog, request
+):
+    """ Test standard output of ansible playbook service using particular user
     Bugzilla:
         1836125
     Polarion:
@@ -3009,7 +3034,7 @@ def test_ansible_playbook_stdout():
             5. add service to shopping card
             6. order service
             7. log in main UI using newly created user
-            8. navigate  Services->My Servcies>Service>
+            8. navigate Services->My Services>Service>
             9. Under "Active catalog" click on ordered service
             10. check stdout of service
         expectedResults:
@@ -3024,4 +3049,33 @@ def test_ansible_playbook_stdout():
             9.
             10. able to see standard output
     """
-    pass
+    user, ansible_catalog = user_catalog
+    service_catalog = ServiceCatalogs(appliance, ansible_catalog, ansible_catalog_item.name)
+    ansible_service = MyService(appliance, ansible_catalog_item.name)
+
+    @request.addfinalizer
+    def _finalize():
+        if ansible_service_request.exists():
+            ansible_service_request.remove_request()
+        if ansible_service.exists:
+            ansible_service.delete()
+
+    with user:
+        with appliance.context.use(ViaSSUI):
+            appliance.server.login(user)
+            service_catalog.add_to_shopping_cart()
+            service_catalog.order()
+
+    with user:
+        error_message = (
+            "MIQ(Api::TasksController.api_error) Api::NotFoundError: Couldn't find MiqTask with"
+        )
+        with LogValidator(
+                "/var/www/miq/vmdb/log/api.log", failure_patterns=[error_message],
+        ).waiting(timeout=120):
+            ansible_service_request.wait_for_request()
+            view = navigate_to(ansible_service, "Details")
+            view.provisioning_tab.click()
+            assert view.provisioning.standart_output.is_displayed
+            wait_for(lambda: view.provisioning.standart_output.text != "Loading...", timeout=30)
+            assert "Hello World" in view.provisioning.standart_output.text

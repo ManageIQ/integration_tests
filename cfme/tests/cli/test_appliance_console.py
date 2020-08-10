@@ -1746,8 +1746,8 @@ def test_appliance_overwrite_ssl_ipa(unconfigured_appliance, freeipa_provider):
 
 
 @pytest.mark.tier(0)
-@pytest.mark.manual
 @pytest.mark.meta(coverage=[1720223])
+@pytest.mark.manual("manualonly")
 def test_appliance_console_logfile_config_reboot():
     """
         test to verify logfiles disk
