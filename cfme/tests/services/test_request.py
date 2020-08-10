@@ -1,6 +1,8 @@
+import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.services.requests import RequestsView
@@ -15,6 +17,40 @@ pytestmark = [
     pytest.mark.tier(3),
     pytest.mark.provider([VMwareProvider], selector=ONE_PER_TYPE, scope="module"),
 ]
+
+
+@pytest.fixture(scope="function")
+def user(appliance):
+    """Creates new user, role, group with tag"""
+
+    product_features = [
+        (['Everything'], True), (['Everything'], False),
+        (['Everything', 'Services'], True)
+    ]
+    role = appliance.collections.roles.create(name=fauxfactory.gen_alphanumeric(),
+                                              product_features=product_features)
+
+    group = appliance.collections.groups.create(
+        description=fauxfactory.gen_alphanumeric(),
+        role=role.name,
+        tag=(["Environment", "Production"], True)
+    )
+
+    user = appliance.collections.users.create(
+        name=fauxfactory.gen_alphanumeric().lower(),
+        credential=Credential(
+            principal=fauxfactory.gen_alphanumeric(4),
+            secret=fauxfactory.gen_alphanumeric(4),
+        ),
+        email=fauxfactory.gen_email(),
+        groups=group,
+        cost_center="Workload",
+        value_assign="Database",
+    )
+    yield user
+    user.delete_if_exists()
+    group.delete_if_exists()
+    role.delete_if_exists()
 
 
 def test_copy_request_bz1194479(appliance, provider, catalog_item, request):
@@ -71,3 +107,33 @@ def test_services_requester_dropdown_sorting(appliance, generic_catalog_item):
 
     all_options = [option.text for option in view.filter_by.requester.all_options]
     assert ["Administrator", "All"] == all_options
+
+
+@pytest.mark.meta(automates=[1641012])
+@pytest.mark.customer_scenario
+def test_user_view_service_request_details(appliance, generic_catalog_item, user):
+    """
+    Bugzilla:
+        1641012
+
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.11
+        testSteps:
+            1. Create Role,Group with Tag and user
+            2. Order the catalog items with admin
+            3. Login with user
+            4. Go to Services -> Requests -> Request details page
+        expectedResults:
+            1.
+            2.
+            3.
+            4. User should be able to see the provision request
+    """
+    request = ServiceCatalogs(
+        appliance, catalog=generic_catalog_item.catalog, name=generic_catalog_item.name
+    ).order()
+    with user:
+        assert navigate_to(request, "Details")
