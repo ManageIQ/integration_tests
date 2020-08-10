@@ -5,6 +5,7 @@ from widgetastic.exceptions import RowNotFound
 
 from cfme import test_requirements
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.configure.configuration.region_settings import ReplicationGlobalAddView
 from cfme.configure.configuration.region_settings import ReplicationGlobalView
 from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider import InfraProvider
@@ -466,3 +467,39 @@ def test_replication_subscription_revalidation_pglogical(configured_appliance,
     region.replication.set_replication(replication_type="global",
                                        updates={"host": remote_app.hostname},
                                        validate=True)
+
+
+@test_requirements.settings
+@test_requirements.multi_region
+@pytest.mark.tier(3)
+def test_replication_subscription_update(multi_region_cluster, setup_multi_region_cluster):
+    """
+    Edit replication subscription
+
+    Polarion:
+        assignee: dgaikwad
+        casecomponent: Configuration
+        caseimportance: critical
+        initialEstimate: 1/4h
+    """
+    global_appliance = multi_region_cluster.global_appliance
+
+    region = global_appliance.collections.regions.instantiate(number=99)
+
+    # Update with bad password and verify that error flash message appears
+    row = region.replication._global_replication_row()
+
+    row[8].widget.click(handle_alert=True)
+
+    view = region.replication.create_view(ReplicationGlobalAddView)
+    view.fill({'username': 'bad_user'})
+    view.accept_button.click()
+    view.action_dropdown.item_select('Validate')
+    view.flash.assert_message("FATAL: password authentication failed", partial=True, t='error')
+
+    row[8].widget.click(handle_alert=True)
+
+    view.fill({'username': credentials.database.username})
+    view.accept_button.click()
+    view.action_dropdown.item_select('Validate')
+    view.flash.assert_success_message("Subscription Credentials validated successfully")
