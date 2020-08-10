@@ -7,8 +7,11 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.infrastructure.pxe import ISODatastore
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.version import Version
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -94,6 +97,8 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning):
 
 
 @test_requirements.rhev
+@pytest.mark.meta(blockers=[BZ(1783355, forced_streams=["5.11", "5.10"],
+                               unblock=lambda provider: provider.version != Version("4.4"))])
 def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, setup_iso_datastore,
                                  catalog_item, request):
     """Tests RHEV ISO service catalog
