@@ -48,12 +48,12 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
         soft_assert(widget.minimized, f'Widget {widget.name} could not be minimized')
         widget.restore()
         soft_assert(not widget.minimized, f'Widget {widget.name} could not be maximized')
-        # TODO: Once modal problems resolved, uncomment
-        # if widget.can_zoom:
-        #     widget.zoom()
-        #     assert widget.is_zoomed
-        #     widget.close_zoom()
-        #     assert not widget.is_zoomed
+
+        if widget.can_zoom:
+            widget.zoom()
+            assert widget.is_zoomed
+            widget.close_zoom()
+            assert not widget.is_zoomed
         widget.footer
         widget.contents
         if widget.content_type in ['chart', 'table']:

@@ -164,14 +164,14 @@ def order_service(appliance, provider, provisioning, dialog, catalog, request):
     # The above BZ got closed because of  INSUFFICIENT_DATA, so I havve reported the same issue
     # in BZ 775779.
     """ Orders service once the catalog item is created"""
-    if hasattr(request, 'param'):
-        vm_count = request.param['vm_count'] if 'vm_count' in request.param else '1'
-        console_test = request.param['console_test'] if 'console_test' in request.param else False
-
-        catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
-                            vm_count=vm_count, console_test=console_test)
-    else:
-        catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog)
+    param = getattr(request, 'param', None)
+    vm_count = '1'
+    console_test = False
+    if isinstance(param, dict):
+        vm_count = param.get('vm_count', vm_count)
+        console_test = param.get('console_test', console_test)
+    catalog_item = create_catalog_item(appliance, provider, provisioning, dialog, catalog,
+                                       vm_count=vm_count, console_test=console_test)
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     provision_request = service_catalogs.order()
     provision_request.wait_for_request(method='ui')
