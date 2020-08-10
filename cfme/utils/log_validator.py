@@ -95,14 +95,14 @@ class LogValidator:
         for pattern in self.matched_patterns:
             if re.search(pattern, line):
                 logger.info("Expected pattern %s was matched on line %s", pattern, line)
-                self._matches[pattern] = self._matches[pattern] + 1
+                self._matches[pattern] += 1
 
     @property
     def _is_valid(self):
-        for pattern, count in self.matches.items():
-            if count == 0:
-                logger.info("Expected '%s' pattern not found", pattern)
-                return False
+        patterns_not_found = [pattern for pattern, count in self.matches.items() if count == 0]
+        if patterns_not_found:
+            logger.info("Expected pattern(s) %s not found", patterns_not_found)
+            return False
         return True
 
     @property
@@ -122,19 +122,24 @@ class LogValidator:
         return self._matches
 
     def validate(self, wait=None, message="waiting for log validation", **kwargs):
-        """Validate log pattern
+        """Validate log pattern. The kwargs below are used by :py:meth:`wait_for`.
 
-        Args:
-            wait: Wait for log validation (timeout)
-            message: Specific message.
-        Returns (bool): True if expected pattern matched in log else False
+        Kwargs:
+            wait: :py:class:`int` timeout value. If not specified, the log pattern matching
+                will only be attempted once. (Default: None)
+            delay: :py:class:`int` time to wait between log file checks. (Default: None)
+            message: :py:class:`str` message to log while validating.
+
+        Returns:
+            True if expected pattern(s) matched in the log file, False otherwise.
+
         Raise:
             TimedOutError: If failed to match pattern in respective timeout
             FailPatternMatchError: If failure pattern matched
         """
-
+        delay = kwargs.pop('delay', 5)
         if wait:
-            wait_for(lambda: self._is_valid, delay=5, timeout=wait, message=message, **kwargs)
+            wait_for(lambda: self._is_valid, delay=delay, timeout=wait, message=message, **kwargs)
             return True
         else:
             return self._is_valid

@@ -81,65 +81,6 @@ def test_pg_stat_activity_view_in_postgres_should_show_worker_information():
 
 
 @pytest.mark.tier(1)
-def test_verify_purging_of_old_records():
-    """
-    Verify that DriftState, MiqReportResult, EventStream, PolicyEvent,
-    VmdbMetric, Metric, and Container-related records are purged
-    regularly.
-    Bug 1348625 - We might not be purging all tables that we should be
-
-    Bugzilla:
-        1348625
-
-    [----] I, [2017-05-19T07:48:23.994536 #63471:985134]  INFO -- :
-    MIQ(DriftState.purge_by_date) Purging Drift states older than
-    [2016-11-20 11:48:20 UTC]...Complete - Deleted 0 records"
-    [----] I, [2017-09-21T06:09:57.911327 #1775:a53138]  INFO -- :
-    MIQ(MiqReportResult.atStartup) Purging adhoc report results...
-    complete
-    [----] I, [2017-09-21T06:15:31.118400 #2181:a53138]  INFO -- :
-    MIQ(EventStream.purge) Purging all events older than [2017-03-25
-    10:15:27 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T06:15:31.284846 #2181:a53138]  INFO -- :
-    MIQ(PolicyEvent.purge_by_date) Purging Policy events older than
-    [2017-03-25 10:15:31 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T06:50:25.643198 #2116:a53138]  INFO -- :
-    MIQ(VmdbMetric.purge_by_date) Purging hourly metrics older than
-    [2017-03-25 10:50:19 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T06:50:25.674445 #2116:a53138]  INFO -- :
-    MIQ(VmdbMetric.purge_by_date) Purging daily metrics older than
-    [2017-03-25 10:50:19 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-21T11:04:18.496532 #32143:a53138]  INFO -- :
-    MIQ(Metric::Purging.purge) Purging all realtime metrics older than
-    [2017-09-21 11:04:13 UTC]...Complete - Deleted 135 records and 0
-    associated tag values - Timings: {:purge_metrics=>0.23389387130737305,
-    :total_time=>0.23413729667663574}
-    [----] I, [2017-09-27T15:37:42.206807 #6336:39d140]  INFO -- :
-    MIQ(Container.purge_by_date) Purging Containers older than [2017-03-31
-    19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.264940 #6326:39d140]  INFO -- :
-    MIQ(ContainerGroup.purge_by_date) Purging Container groups older than
-    [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.281474 #6336:39d140]  INFO -- :
-    MIQ(ContainerImage.purge_by_date) Purging Container images older than
-    [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.340960 #6336:39d140]  INFO -- :
-    MIQ(ContainerDefinition.purge_by_date) Purging Container definitions
-    older than [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-    [----] I, [2017-09-27T15:37:42.392486 #6326:39d140]  INFO -- :
-    MIQ(ContainerProject.purge_by_date) Purging Container projects older
-    than [2017-03-31 19:37:38 UTC]...Complete - Deleted 0 records
-
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Appliance
-        initialEstimate: 1/4h
-        startsin: 5.8
-    """
-    pass
-
-
-@pytest.mark.tier(1)
 def test_verify_that_errored_out_queue_messages_are_removed():
     """
     Verify that errored-out queue messages are removed.

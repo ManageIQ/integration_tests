@@ -4,6 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log_validator import LogValidator
 from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.rhel_testing]
@@ -92,6 +93,12 @@ def set_memory_threshold_in_advanced_settings(appliance, worker, new_threshold):
     return new_threshold
 
 
+def _update_advanced_settings_restart(appliance, updates):
+    appliance.update_advanced_settings(updates)
+    appliance.evmserverd.restart()
+    appliance.wait_for_miq_ready()
+
+
 @test_requirements.settings
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1658373, 1715633, 1787350, 1799443, 1805845, 1810773])
@@ -140,3 +147,72 @@ def test_set_memory_threshold(appliance, worker, request, set_memory_threshold):
     mem_threshold_real = get_memory_threshold_in_advanced_settings(appliance, worker)
     MESSAGE = "memory threshold have changed incorrectly in advanced settings"
     assert mem_threshold_real == f"{change_val}.gigabytes", MESSAGE
+
+
+@test_requirements.settings
+@pytest.mark.tier(1)
+@pytest.mark.meta(automates=[1348625])
+def test_verify_purging_of_old_records(request, appliance):
+    """
+    Verify that tables are being purged regularly.
+
+    Bugzilla:
+        1348625
+
+    Polarion:
+        assignee: tpapaioa
+        casecomponent: Appliance
+        initialEstimate: 1/6h
+        startsin: 5.8
+    """
+    old_settings = appliance.advanced_settings
+
+    @request.addfinalizer
+    def _restore_advanced_settings():
+        _update_advanced_settings_restart(appliance, old_settings)
+
+    purge_settings = {
+        'container_entities_purge_interval': '5.minutes',
+        'binary_blob_purge_interval': '5.minutes',
+        'compliance_purge_interval': '5.minutes',
+        'drift_state_purge_interval': '5.minutes',
+        'event_streams_purge_interval': '5.minutes',
+        'notifications_purge_interval': '5.minutes',
+        'performance_realtime_purging_interval': '5.minutes',
+        'performance_rollup_purging_interval': '5.minutes',
+        'policy_events_purge_interval': '5.minutes',
+        'report_result_purge_interval': '5.minutes',
+        'task_purge_interval': '5.minutes',
+        'vim_performance_states_purge_interval': '5.minutes'
+    }
+
+    new_settings = {'workers': {'worker_base': {'schedule_worker': purge_settings}}}
+
+    obj_types = (
+        'Binary blobs',
+        'Compliances',
+        'Container groups',
+        'Container images',
+        'Container nodes',
+        'Container projects',
+        'Container quota items',
+        'Container quotas',
+        'Containers',
+        'all daily metrics',
+        'Drift states',
+        'Event streams',
+        'all hourly metrics',
+        'Miq report results',
+        'Miq tasks',
+        'Notifications',
+        'orphans in Vim performance states',
+        'Policy events'
+    )
+
+    matched_patterns = [f"Purging {obj_type}" for obj_type in obj_types]
+
+    with LogValidator(
+        '/var/www/miq/vmdb/log/evm.log',
+        matched_patterns=matched_patterns,
+    ).waiting(wait=600, delay=30):
+        _update_advanced_settings_restart(appliance, new_settings)
