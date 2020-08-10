@@ -256,12 +256,11 @@ def retire(self, wait=True):
     view.toolbar.lifecycle.item_select('Retire this Service', handle_alert=True)
     view.flash.assert_no_error()
 
+    service_request = self.appliance.collections.requests.instantiate(
+        description=f"Service Retire for: {self.name}")
     if wait:
-        service_request = self.appliance.collections.requests.instantiate(
-            description=f"Service Retire for: {self.name}"
-        )
         service_request.wait_for_request()
-    return self.appliance.collections.requests.instantiate(self.name, partial_check=True)
+    return service_request
 
 
 @MiqImplementationContext.external_for(MyService.retire_on_date, ViaUI)
