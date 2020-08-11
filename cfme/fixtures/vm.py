@@ -52,8 +52,8 @@ def _create_vm(request, template_type, provider, vm_name):
         try:
             provider.refresh_provider_relationships()
         except Exception as e:
-            if e.args[0] == "Provider collection empty":
-                pass
+            if e.args[0] != "Provider collection empty":
+                raise
 
     vm_obj.mgmt.ensure_state(VmState.RUNNING)
 
