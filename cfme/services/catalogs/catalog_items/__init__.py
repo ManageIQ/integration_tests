@@ -35,6 +35,7 @@ from widgetastic_manageiq import AutomateRadioGroup
 from widgetastic_manageiq import EntryPoint
 from widgetastic_manageiq import FileInput
 from widgetastic_manageiq import FonticonPicker
+from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import SummaryFormItem
@@ -151,7 +152,9 @@ class AllCatalogItemView(ServicesCatalogView):
 
 
 class DetailsEntitiesCatalogItemView(View):
-    custom_image = FileInput("upload_image")
+    upload_image = FileInput(id="upload_image")
+    upload_button = InputButton("commit")
+    remove = Button(title="Remove this Custom Image")
     smart_management = SummaryTable("Smart Management")
 
 

@@ -13,6 +13,8 @@ from cfme.services.catalogs.catalog_items import DetailsCatalogItemView
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
+from cfme.utils.ftp import FTPClientWrapper
 from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
@@ -624,3 +626,36 @@ def test_add_bundle_in_bundle(appliance, catalog_bundle):
     options = view.resources.select_resource.all_options
     assert catalog_bundle.name not in [o.text for o in options]
     view.cancel_button.click()
+
+
+@pytest.mark.meta(automates=[1487056])
+def test_upload_delete_custom_image_on_bundle(catalog_bundle):
+    """
+    Bugzilla:
+        1487056
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/8h
+        testSteps:
+            1. Create a catalog item
+            2. Create a catalog  bundle
+            3. Upload a custom image to bundle
+            4. remove the image
+        expectedResults:
+            1.
+            2.
+            3.
+            4. Upload and Remove image should work
+    """
+    image = 'logo.png'
+    fs = FTPClientWrapper(cfme_data.ftpserver.entities.others)
+    file_path = fs.download(image)
+
+    view = navigate_to(catalog_bundle, 'Details')
+    view.entities.upload_image.fill(file_path)
+    view.entities.upload_button.click()
+    view.flash.assert_message(f'Custom Image file "{image}" successfully uploaded')
+
+    view.entities.remove.click()
+    view.flash.assert_message('Custom Image successfully removed')
