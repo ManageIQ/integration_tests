@@ -89,8 +89,8 @@ def _vm_state(vm, state):
 
 
 @pytest.fixture(params=["cold", "hot"])
-def vm_state(request, full_vm):
-    _vm_state(full_vm, request.param)
+def vm_state(request, create_vm):
+    _vm_state(create_vm, request.param)
     return request.param
 
 
