@@ -50,16 +50,6 @@ def test_distributed_zone_mixed_appliance_ip_versions():
     pass
 
 
-def test_distributed_zone_in_different_networks():
-    """
-    Polarion:
-        assignee: tpapaioa
-        casecomponent: Infra
-        initialEstimate: 1h
-    """
-    pass
-
-
 def test_distributed_diagnostics_servers_view():
     """
 
