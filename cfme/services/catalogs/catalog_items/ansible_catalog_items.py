@@ -134,7 +134,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         hosts = Input("provisioning_inventory")
         logging_output = BootstrapSelect("provisioning_log_output")
         max_ttl = Input("provisioning_execution_ttl")
-        escalate_privilege = BootstrapSwitch("provisioning_become_enabled")
+        escalate_privilege = BootstrapSwitch(name="provisioning_become_enabled")
         verbosity = BootstrapSelect("provisioning_verbosity")
         use_exisiting = Checkbox(locator=".//label[normalize-space(.)='Use Existing']/input")
         create_new = Checkbox(locator=".//label[normalize-space(.)='Create New']/input")

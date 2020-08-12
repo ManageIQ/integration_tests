@@ -1095,3 +1095,38 @@ def test_service_ansible_service_name(request, appliance, dialog_with_catalog_it
     # Go to Ordered service page and assert new name of service.
     service = MyService(appliance, service_name)
     assert service.exists
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1810477])
+def test_ansible_service_check_escalate_privilege(request, appliance, ansible_repository):
+    """
+    Bugzilla:
+        1810477
+
+    Polarion:
+        assignee: gtalreja
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/2h
+        tags: ansible_embed
+    """
+    creds = appliance.collections.ansible_credentials.create(
+        name=fauxfactory.gen_alpha(start="cred_"),
+        credential_type="Machine",
+        username=fauxfactory.gen_alpha(start="user_"),
+        password=fauxfactory.gen_alpha(start="pass_"),
+        privilage_escalation="sudo",
+        privilage_escalation_username="root",
+        privilage_escalation_password=fauxfactory.gen_alpha(start="pass_")
+    )
+    request.addfinalizer(creds.delete_if_exists)
+
+    collection = appliance.collections.catalog_items
+    cat_item = collection.instantiate(collection.ANSIBLE_PLAYBOOK, "", "", {})
+    view = navigate_to(cat_item, "Add")
+    view.provisioning.repository.fill(ansible_repository.name)
+    view.provisioning.machine_credential.fill('CFME Default Credential')
+    assert not view.provisioning.escalate_privilege.is_displayed
+    view.provisioning.machine_credential.fill(creds.name)
+    assert view.provisioning.escalate_privilege.is_displayed
