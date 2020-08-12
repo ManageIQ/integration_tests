@@ -87,7 +87,7 @@ def test_add_conversion_host_ui_crud(appliance, delete_conversion_hosts,
             hostname=host,
             conv_host_key=conv_host_key,
             transformation_method=transformation_method,
-            vddk_library_path=vddk_url(),
+            vddk_library_path=vddk_url('VDDK67'),
             vmware_ssh_key=get_vmware_ssh_key(transformation_method, source_provider),
             osp_cert_switch=osp_cert_switch,
             osp_ca_cert=osp_ca_cert
