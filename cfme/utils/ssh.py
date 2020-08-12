@@ -33,12 +33,18 @@ from cfme.utils.wait import wait_for
 if typing.TYPE_CHECKING:
     from cfme.base.credential import Credential
 
-# Default blocking time before giving up on an ssh command execution,
-# in seconds (float)
 RUNCMD_TIMEOUT = 1200.0
+""" Default blocking time before giving up on an ssh command execution, in seconds (float)"""
+
 CONNECT_RETRIES_TIMEOUT = 2 * 60
+""" The timeout for the whole connect_ssh. Approximately the amout of time the connect_ssh is
+allowed to keep blocking."""
+
 CONNECT_TIMEOUT = 10
+""" The default for SSHClient timeout parameter. """
+
 CONNECT_SSH_DELAY = 1
+""" The delay between trials to connect the obtained addresses. """
 
 
 @attr.s(frozen=True, eq=False)
