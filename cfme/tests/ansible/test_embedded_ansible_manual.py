@@ -102,23 +102,6 @@ def test_embed_ansible_catalog_items():
     pass
 
 
-@pytest.mark.tier(2)
-def test_embed_tower_order_service_extra_vars():
-    """
-    Bugzilla:
-        1444831
-
-    Execute playbook with extra variables which will be passed to Tower.
-
-    Polarion:
-        assignee: gtalreja
-        casecomponent: Ansible
-        initialEstimate: 1/4h
-        tags: ansible_embed
-    """
-    pass
-
-
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_with_already_existing_catalog_item_name():
     """

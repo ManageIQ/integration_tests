@@ -1130,3 +1130,57 @@ def test_ansible_service_check_escalate_privilege(request, appliance, ansible_re
     assert not view.provisioning.escalate_privilege.is_displayed
     view.provisioning.machine_credential.fill(creds.name)
     assert view.provisioning.escalate_privilege.is_displayed
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(automates=[1444831])
+def test_embed_tower_order_service_extra_vars(request, appliance, ansible_repository):
+    """
+    Bugzilla:
+        1444831
+
+    Polarion:
+        assignee: gtalreja
+        casecomponent: Ansible
+        caseimportance: medium
+        initialEstimate: 1/6h
+        tags: ansible_embed
+        testSteps:
+          1. Enable EmbeddedAnsible server role.
+          2. Add your favourite repo with playbooks.
+          3. Create new catalog and catalog item of AnsiblePlaybook type.
+          4. fill in all details, add extra variables e.g: 'testkey' & 'testvalue' and save.
+          5. Try to edit catalog item and delete 'testkey' variable.
+        expectedResults:
+          1. Role should be enabled.
+          2.
+          3.
+          4.
+          5. Save button should be clickable and form should be saved.
+    """
+    collection = appliance.collections.catalog_items
+    cat_item = collection.create(
+        collection.ANSIBLE_PLAYBOOK,
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        display_in_catalog=True,
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+            "extra_vars": [("testkey", "testvalue")]
+        }
+    )
+
+    @request.addfinalizer
+    def _finalize():
+        cat_item.delete_if_exists()
+        ansible_repository.delete_if_exists()
+
+    view = navigate_to(cat_item, "Edit")
+    row = list(view.provisioning.extra_vars.variables_table)
+    row[0].Actions.widget.delete.click()
+    view.save.click()
+    view.flash.assert_success_message(f"Catalog Item {cat_item.name} was saved")
