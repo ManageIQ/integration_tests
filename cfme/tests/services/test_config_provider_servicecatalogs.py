@@ -6,6 +6,7 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.version import Version
 
@@ -111,6 +112,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type,
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1740814])
 @pytest.mark.parametrize('job_type', ['template'], ids=['template_job'])
+@pytest.mark.meta(blockers=[GH(10294, unblock=lambda provider: provider.version != Version("3.5"))])
 def test_change_ansible_tower_job_template(catalog_item, job_type, ansible_api_version_change):
     """
     Bugzilla:
