@@ -9,6 +9,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.control.explorer.policies import VMControlPolicy
+from cfme.fixtures.ansible_fixtures import bulk_service_teardown
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -75,6 +76,26 @@ def local_ansible_catalog_item(appliance, ansible_repository):
     yield cat_item
 
     cat_item.delete_if_exists()
+
+
+@pytest.fixture(scope="function")
+def local_ansible_service(appliance, local_ansible_catalog_item):
+    service = MyService(appliance, local_ansible_catalog_item.name)
+    yield service
+
+    if service.exists:
+        service.delete()
+
+
+@pytest.fixture(scope="function")
+def local_ansible_service_request(appliance, ansible_catalog_item):
+    request_descr = (f"Provisioning Service [{ansible_catalog_item.name}] "
+                     f"from [{ansible_catalog_item.name}]")
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
+    yield service_request
+
+    # big diaper here because of service requests having the same description
+    bulk_service_teardown(appliance)
 
 
 @pytest.fixture(scope="function")
@@ -351,7 +372,7 @@ def test_service_ansible_playbook_bundle(appliance, ansible_catalog_item):
 
 @pytest.mark.tier(2)
 def test_service_ansible_playbook_provision_in_requests(
-    appliance, ansible_catalog_item, ansible_service, ansible_service_request, request
+    appliance, ansible_catalog_item, ansible_service_catalog, ansible_service_request
 ):
     """Tests if ansible playbook service provisioning is shown in service requests.
 
@@ -362,22 +383,12 @@ def test_service_ansible_playbook_provision_in_requests(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service.order()
+    ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
     cat_item_name = ansible_catalog_item.name
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
+    request_descr = f"Provisioning Service [{cat_item_name}] from [{cat_item_name}]"
     service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-
-    @request.addfinalizer
-    def _finalize():
-        service = MyService(appliance, cat_item_name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-        if service.exists:
-            service.delete()
+    _ = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
     assert service_request.exists()
 
@@ -501,20 +512,6 @@ def test_service_ansible_playbook_order_retire(
     ansible_service_catalog.ansible_dialog_values = {"hosts": order_value}
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
-    cat_item_name = ansible_catalog_item.name
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-
-    @request.addfinalizer
-    def _finalize():
-        service = MyService(appliance, cat_item_name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-        if service.exists:
-            service.delete()
 
     if action == "retirement":
         ansible_service.retire()
@@ -524,7 +521,7 @@ def test_service_ansible_playbook_order_retire(
 
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_plays_table(
-    ansible_service_request, ansible_service, soft_assert
+    ansible_service_request, ansible_service, ansible_service_catalog, soft_assert
 ):
     """Plays table in provisioned and retired service should contain at least one row.
 
@@ -535,7 +532,7 @@ def test_service_ansible_playbook_plays_table(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    ansible_service.order()
+    ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
     soft_assert(view.provisioning.plays.row_count > 1, "Plays table in provisioning tab is empty")
@@ -627,14 +624,6 @@ def test_service_ansible_execution_ttl(
             "max_ttl": 200
         }
 
-    def _revert():
-        with update(local_ansible_catalog_item):
-            local_ansible_catalog_item.provisioning = {
-                "playbook": "dump_all_variables.yml",
-                "max_ttl": "",
-            }
-
-    request.addfinalizer(_revert)
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
     view = navigate_to(ansible_service, "Details")
@@ -731,6 +720,7 @@ def test_embed_tower_exec_play_against(
     appliance,
     request,
     local_ansible_catalog_item,
+    local_ansible_service_request,
     ansible_service,
     ansible_service_catalog,
     credential,
@@ -752,27 +742,8 @@ def test_embed_tower_exec_play_against(
             "cloud_credential": provider_credentials.name,
         }
 
-    @request.addfinalizer
-    def _revert():
-        with update(local_ansible_catalog_item):
-            local_ansible_catalog_item.provisioning = {
-                "playbook": "dump_all_variables.yml",
-                "cloud_type": "<Choose>",
-            }
-
-        service = MyService(appliance, local_ansible_catalog_item.name)
-        if service_request.exists():
-            service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-        if service.exists:
-            service.delete()
-
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
-    request_descr = (f"Provisioning Service [{local_ansible_catalog_item.name}] "
-        f"from [{local_ansible_catalog_item.name}]")
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
 
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.results.get_text_of("Status") == "successful"
@@ -795,6 +766,8 @@ def test_service_ansible_verbosity(
     appliance,
     request,
     local_ansible_catalog_item,
+    local_ansible_service,
+    local_ansible_service_request,
     ansible_service_catalog,
     ansible_service_request,
     ansible_service,
@@ -821,26 +794,9 @@ def test_service_ansible_verbosity(
     # Start Log check or given pattern
     log.start_monitoring()
 
-    @request.addfinalizer
-    def _revert():
-        service = MyService(appliance, local_ansible_catalog_item.name)
-        if ansible_service_request.exists():
-            ansible_service_request.wait_for_request()
-            appliance.rest_api.collections.service_requests.action.delete(
-                id=service_request.id
-            )
-        if service.exists:
-            service.delete()
-
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
-    # 'request_descr' and 'service_request' being used in finalizer to remove
-    # first service request
-    request_descr = (f"Provisioning Service [{local_ansible_catalog_item.name}] "
-                     f"from [{local_ansible_catalog_item.name}]")
-    service_request = appliance.rest_api.collections.service_requests.get(
-        description=request_descr
-    )
+
     # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
     # is being logging in evm.log
     assert log.validate(wait="60s")
@@ -889,8 +845,8 @@ def test_ansible_service_order_vault_credentials(
     request,
     ansible_catalog_item,
     ansible_service_catalog,
-    ansible_service_request_funcscope,
-    ansible_service_funcscope
+    ansible_service_request,
+    ansible_service
 ):
     """
     Add vault password and test in the playbook that encrypted yml can be
@@ -915,18 +871,12 @@ def test_ansible_service_order_vault_credentials(
 
     @request.addfinalizer
     def _revert():
-        with update(ansible_catalog_item):
-            ansible_catalog_item.provisioning = {
-                "playbook": "dump_all_variables.yml",
-                "vault_credential": "<Choose>",
-            }
-
         vault_creds.delete_if_exists()
 
     ansible_service_catalog.order()
-    ansible_service_request_funcscope.wait_for_request()
+    ansible_service_request.wait_for_request()
 
-    view = navigate_to(ansible_service_funcscope, "Details")
+    view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
     status = "successful" if appliance.version < "5.11" else "Finished"
     assert view.provisioning.results.get_text_of("Status") == status
@@ -935,7 +885,7 @@ def test_ansible_service_order_vault_credentials(
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1734904)])
 def test_ansible_service_ansible_galaxy_role(appliance, request, ansible_catalog_item,
-ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope):
+ansible_service_catalog, ansible_service, ansible_service_request):
     """Check Role is fetched from Ansible Galaxy by using roles/requirements.yml file
     from playbook.
 
@@ -948,33 +898,22 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
         initialEstimate: 1/3h
         tags: ansible_embed
     """
-    old_playbook_value = ansible_catalog_item.provisioning
     with update(local_ansible_catalog_item):
         local_ansible_catalog_item.provisioning = {
             "playbook": "ansible_galaxy_role_users.yaml"
         }
 
-    @request.addfinalizer
-    def _revert():
-        with update(local_ansible_catalog_item):
-            local_ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
-
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
 
-    view = navigate_to(ansible_service_funcscope, "Details")
-    assert (
-        view.provisioning.results.get_text_of("Status") == "successful"
-        if appliance.version < "5.11"
-        else "Finished"
-    )
+    view = navigate_to(ansible_service, "Details")
+    assert view.provisioning.results.get_text_of("Status") == "Finished"
 
 
 @pytest.mark.tier(3)
-@pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(automates=[1742839], server_roles=["-ems_operations"])
 def test_ansible_service_with_operations_role_disabled(appliance, ansible_catalog_item,
-ansible_service_catalog, ansible_service_funcscope, ansible_service_request_funcscope):
+ansible_service_catalog, ansible_service, ansible_service_request):
     """If the embedded ansible role is *not* on the same server as the ems_operations role,
     then the run will never start.
     Bugzilla:
@@ -988,7 +927,7 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
 
-    assert ansible_service_funcscope.status == "Finished"
+    assert ansible_service.status == "Finished"
 
 
 @pytest.mark.meta(automates=[1444092, 1515561])
@@ -1006,8 +945,8 @@ ansible_service_catalog, ansible_service_funcscope, ansible_service_request_func
 )
 @pytest.mark.tier(3)
 def test_ansible_service_cloud_credentials(appliance, request, local_ansible_catalog_item,
-ansible_service_catalog, credential, provider_credentials, ansible_service_funcscope,
-ansible_service_request_funcscope):
+ansible_service_catalog, credential, provider_credentials, ansible_service,
+ansible_service_request):
     """
         When the service is viewed in my services it should also show that the Cloud Credentials
         were attached to the service.
@@ -1023,7 +962,6 @@ ansible_service_request_funcscope):
         tags: ansible_embed
     """
     # TODO: Include all providers once all playbooks are in place.
-    old_playbook_value = local_ansible_catalog_item.provisioning
     playbook = credential[2]
     with update(local_ansible_catalog_item):
         local_ansible_catalog_item.provisioning = {
@@ -1032,15 +970,10 @@ ansible_service_request_funcscope):
             "cloud_credential": provider_credentials.name,
         }
 
-    @request.addfinalizer
-    def _revert():
-        with update(local_ansible_catalog_item):
-            local_ansible_catalog_item.provisioning["playbook"] = old_playbook_value["playbook"]
-
     service_request = ansible_service_catalog.order()
     service_request.wait_for_request(num_sec=300, delay=20)
 
-    view = navigate_to(ansible_service_funcscope, "Details")
+    view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Cloud") == provider_credentials.name
 
 
