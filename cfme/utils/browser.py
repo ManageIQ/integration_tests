@@ -257,7 +257,7 @@ class BrowserManager:
                 if browser_conf[
                         'webdriver_options'][
                             'desired_capabilities']['browserName'].lower() == 'chrome':
-                    browser_kwargs['desired_capabilities']['chromeOptions'] = {}
+                    browser_kwargs['desired_capabilities'].setdefault('chromeOptions', {})
                     browser_kwargs[
                         'desired_capabilities']['chromeOptions']['args'] = ['--no-sandbox',
                                                                             '--start-maximized',
