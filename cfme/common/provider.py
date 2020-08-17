@@ -1,4 +1,5 @@
 import datetime
+from abc import ABC
 from collections import defaultdict
 from collections.abc import Iterable
 
@@ -92,7 +93,7 @@ def prepare_endpoints(endpoints):
 
 
 @attr.s(eq=False)
-class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEventsMixin):
+class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEventsMixin, ABC):
     # List of constants that every non-abstract subclass must have defined
 
     # TODO: Navigatable is used to ensure function until the reduced get_crud is
@@ -1206,7 +1207,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         return result_list
 
 
-class CloudInfraProviderMixin:
+class CloudInfraProviderMixin(BaseProvider, ABC):
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
