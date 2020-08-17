@@ -6,7 +6,9 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
+from cfme.utils.version import Version
 
 
 pytestmark = [
@@ -43,8 +45,8 @@ def catalog_item(appliance, request, provider, ansible_tower_dialog, catalog, jo
         scope='module')
 @pytest.mark.meta(automates=[BZ(1717500)])
 # The 'textarea_survey' job type automates BZ 1717500
-def test_order_tower_catalog_item(appliance, provider, catalog_item, request, job_type,
-        ansible_api_version_change):
+def test_order_tower_catalog_item(appliance, provider: AnsibleTowerProvider,
+                                  catalog_item, request, job_type, ansible_api_version_change):
     """Tests ordering of catalog items for Ansible Template and Workflow jobs
     Metadata:
         test_flag: provision
@@ -58,11 +60,15 @@ def test_order_tower_catalog_item(appliance, provider, catalog_item, request, jo
         casecomponent: Services
         caseimportance: high
     """
+    bug = BZ(1861827)
     if job_type == 'template_limit':
         host = provider.data['provisioning_data']['inventory_host']
         dialog_values = {'limit': host}
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name,
             dialog_values=dialog_values)
+    elif (job_type == 'template_survey' and Version(provider.version) >= Version('3.5')
+          and bug.blocks):
+        pytest.skip(f'Blocked by {bug}')
     else:
         service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
 
@@ -106,6 +112,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type,
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1740814])
 @pytest.mark.parametrize('job_type', ['template'], ids=['template_job'])
+@pytest.mark.meta(blockers=[GH(10294, unblock=lambda provider: provider.version != Version("3.5"))])
 def test_change_ansible_tower_job_template(catalog_item, job_type, ansible_api_version_change):
     """
     Bugzilla:
