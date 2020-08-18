@@ -13,10 +13,10 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils.appliance import find_appliance
+from cfme.utils.appliance.console import check_db_ha_failover
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
-from cfme.utils.log_validator import LogValidator
 from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 from cfme.utils.wait import wait_for_decorator
@@ -332,26 +332,13 @@ def test_update_ha(ha_appliances_with_providers, appliance, update_strategy, req
     Bugzilla:
         1704835
     """
-    evm_log = '/var/www/miq/vmdb/log/evm.log'
     update_strategy(ha_appliances_with_providers[2])
     wait_for(do_appliance_versions_match, func_args=(appliance, ha_appliances_with_providers[2]),
              num_sec=900, delay=20, handle_exception=True,
              message='Waiting for appliance to update')
 
-    with LogValidator(evm_log,
-                      matched_patterns=['Starting database failover monitor'],
-                      hostname=ha_appliances_with_providers[2].hostname).waiting(wait=60):
-        ha_appliances_with_providers[2].evm_failover_monitor.restart()
-        assert ha_appliances_with_providers[2].evm_failover_monitor.running
+    check_db_ha_failover(ha_appliances_with_providers[0], ha_appliances_with_providers[2])
 
-    with LogValidator(evm_log,
-                      matched_patterns=['Starting to execute failover'],
-                      hostname=ha_appliances_with_providers[2].hostname).waiting(wait=450):
-        # Cause failover to occur
-        ha_appliances_with_providers[0].db_service.stop()
-
-    ha_appliances_with_providers[2].evmserverd.wait_for_running()
-    ha_appliances_with_providers[2].wait_for_miq_ready()
     # Verify that existing provider can detect new VMs
     virtual_crud = provider_app_crud(VMwareProvider, ha_appliances_with_providers[2])
     vm = provision_vm(request, virtual_crud)

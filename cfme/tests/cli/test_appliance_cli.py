@@ -2,7 +2,7 @@ import pytest
 from wait_for import wait_for
 
 from cfme import test_requirements
-from cfme.utils.appliance.console import waiting_for_ha_monitor_started
+from cfme.utils.appliance.console import check_db_ha_failover
 from cfme.utils.log_validator import LogValidator
 
 pytestmark = [
@@ -270,17 +270,4 @@ def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
         'vmdb_production', apps[1].unpartitioned_disks[0]
     )
 
-    with waiting_for_ha_monitor_started(apps[2], app1_ip, timeout=300):
-        # Configure automatic failover on EVM appliance
-        command_set = ('ap', '', '10', '1', '')
-        apps[2].appliance_console.run_commands(command_set)
-
-    with LogValidator(evm_log,
-                      matched_patterns=['Starting to execute failover'],
-                      hostname=apps[2].hostname).waiting(timeout=450):
-        # Cause failover to occur
-        result = apps[0].ssh_client.run_command('systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, f"Failed to stop APPLIANCE_PG_SERVICE: {result.output}"
-
-    apps[2].evmserverd.wait_for_running()
-    apps[2].wait_for_miq_ready()
+    check_db_ha_failover(apps[0], apps[2])

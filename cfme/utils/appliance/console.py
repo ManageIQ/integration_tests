@@ -1,5 +1,6 @@
 import re
 import socket
+import typing
 from contextlib import contextmanager
 
 import lxml
@@ -15,6 +16,9 @@ from cfme.utils.version import Version
 from cfme.utils.version import VersionPicker
 from cfme.utils.wait import wait_for
 
+# Workaround problems with circular imports
+if typing.TYPE_CHECKING:
+    from cfme.utils.appliance import IPAppliance
 
 AP_WELCOME_SCREEN_TIMEOUT = 30
 
@@ -279,6 +283,25 @@ def waiting_for_ha_monitor_started(appl, standby_server_ip, timeout):
     else:
         yield
         wait_for(lambda: appl.evm_failover_monitor.running, timeout=300)
+
+
+def check_db_ha_failover(appl_to_fail: 'IPAppliance', appl_to_takeover: 'IPAppliance'):
+    evm_log = '/var/www/miq/vmdb/log/evm.log'
+
+    with LogValidator(evm_log,
+                      matched_patterns=['Starting database failover monitor'],
+                      hostname=appl_to_takeover.hostname).waiting(wait=60):
+        appl_to_takeover.evm_failover_monitor.restart()
+        assert appl_to_takeover.evm_failover_monitor.running
+
+    with LogValidator(evm_log,
+                      matched_patterns=['Starting to execute failover'],
+                      hostname=appl_to_takeover.hostname).waiting(wait=450):
+        # Cause failover to occur
+        appl_to_fail.db_service.stop()
+
+    appl_to_takeover.evmserverd.wait_for_running()
+    appl_to_takeover.wait_for_miq_ready()
 
 
 def configure_appliances_ha(appliances, pwd):
