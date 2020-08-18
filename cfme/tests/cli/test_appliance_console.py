@@ -702,37 +702,6 @@ def test_appliance_console_restart(temp_appliance_preconfig_funcscope):
     navigate_to(appliance.server, "LoggedIn")
 
 
-@test_requirements.ha_proxy
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_appliance_console_ha_dc_re_establish():
-    """
-    Test that upon re-connection of networks the repmgr process continues
-    to replicate correctly to the disconnected node within DC2.
-    To setup HA follow:
-    https://access.redhat.com/documentation/en-us/red_hat_cloudforms/4.7/h
-    tml/high_availability_guide//installation
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: HAProxy
-        initialEstimate: 1/2h
-        setup: Restore network connectivity between DC1 and DC2
-        startsin: 5.8
-        testSteps:
-            1. Setup HA
-            2. Disconnect DC2.
-            3. Check repmgr process replicating to DC1.
-            4. Restore network connectivity between DC1 and DC2
-        expectedResults:
-            1.
-            2.
-            3.
-            4. Confirm replication is working correctly
-    """
-    pass
-
-
 @pytest.mark.tier(2)
 def test_appliance_console_evm_stop(temp_appliance_preconfig_funcscope):
     """
