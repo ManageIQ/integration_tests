@@ -42,6 +42,7 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.rest import assert_response
 from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
 
@@ -989,10 +990,13 @@ class VM(BaseVM, RetirementMixin):
         Helper method to avoid NotFoundError's during test case tear down.
         """
         if self.exists_on_provider:
-            wait_for(self.mgmt.cleanup, handle_exception=handle_cleanup_exception,
+            try:
+                wait_for(self.mgmt.cleanup, handle_exception=handle_cleanup_exception,
                      timeout=300)
+            except TimedOutError:
+                logger.exception(f'cleanup_on_provider: entity {self.name} timed out.')
         else:
-            logger.debug('cleanup_on_provider: entity "%s" does not exist', self.name)
+            logger.debug(f'cleanup_on_provider: entity {self.name} does not exist')
 
     def equal_drift_results(self, drift_section, section, *indexes):
         """Compares drift analysis results of a row specified by it's title text.
