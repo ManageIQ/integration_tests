@@ -799,7 +799,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
             col[0].action.refresh()
             self.wait_for_relationship_refresh(wait, delay, refresh_delta)
         except IndexError:
-            raise Exception("Provider collection empty")
+            raise LookupError("Provider collection empty")
 
     @refresh_provider_relationships.variant('ui')
     def refresh_provider_relationships_ui(self, from_list_view=False, wait=0, delay=1,
