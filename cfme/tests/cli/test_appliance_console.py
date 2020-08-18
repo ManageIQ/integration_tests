@@ -12,7 +12,6 @@ from cfme import test_requirements
 from cfme.exceptions import SSHExpectTimeoutError
 from cfme.tests.cli import app_con_menu
 from cfme.utils import conf
-from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
@@ -267,92 +266,6 @@ def test_appliance_console_dedicated_db(unconfigured_appliance, app_creds):
                    TimedCommand(pwd, 360), RETURN)
     unconfigured_appliance.appliance_console.run_commands(command_set, timeout=20)
     wait_for(lambda: unconfigured_appliance.db.is_dedicated_active, timeout=900)
-
-
-@test_requirements.appliance
-@test_requirements.ha_proxy
-@pytest.mark.tier(2)
-def test_appliance_console_ha_crud(unconfigured_appliances, app_creds):
-    """Testing HA configuration with 3 appliances.
-
-    Appliance one configuring dedicated database, 'ap' launch appliance_console,
-    '' clear info screen, '5' setup db, '1' Creates v2_key, '1' selects internal db,
-    '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
-    360 secs and '' finish.
-
-    Appliance two creating region in dedicated database, 'ap' launch appliance_console, '' clear
-    info screen, '5' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
-    'pwd' appliance password, '' default v2_key location, '2' create region in external db, '0' db
-    region number, 'y' confirm create region in external db 'app0_ip', '' ip and default port for
-    dedicated db, '' use default db name, '' default username, 'pwd' db password, 'pwd' confirm db
-    password + wait 360 seconds and '' finish.
-
-    Appliance one configuring primary node for replication, 'ap' launch appliance_console, '' clear
-    info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
-    number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
-    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
-
-
-    Appliance three configuring standby node for replication, 'ap' launch appliance_console, ''
-    clear info screen, '6' configure db replication, '1' configure node as primary, '1' cluster node
-    number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
-    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
-
-
-    Appliance two configuring automatic failover of database nodes, 'ap' launch appliance_console,
-    '' clear info screen '9' configure application database failover monitor, '1' start failover
-    monitor. wait 30 seconds for service to start '' finish.
-
-    Appliance one, stop APPLIANCE_PG_SERVICE and check that the standby node takes over correctly
-    and evm starts up again pointing at the new primary database.
-
-
-    Polarion:
-        assignee: jhenner
-        caseimportance: high
-        casecomponent: HAProxy
-        initialEstimate: 1h
-        testtype: structural
-    """
-    apps = unconfigured_appliances
-    app0_ip = apps[0].hostname
-    app1_ip = apps[1].hostname
-    pwd = app_creds['password']
-    # Configure first appliance as dedicated database
-    command_set = ('ap', RETURN, '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), RETURN)
-    apps[0].appliance_console.run_commands(command_set)
-    wait_for(lambda: apps[0].db.is_dedicated_active)
-    # Configure EVM webui appliance with create region in dedicated database
-    command_set = ('ap', RETURN, '7', '2', app0_ip, RETURN, pwd, RETURN, '2', '0', 'y', app0_ip,
-                   RETURN, RETURN, RETURN, pwd, TimedCommand(pwd, 360), RETURN)
-    apps[2].appliance_console.run_commands(command_set)
-    apps[2].evmserverd.wait_for_running()
-    apps[2].wait_for_miq_ready()
-    # Configure primary replication node
-    command_set = ('ap', RETURN, '8', '1', '1', RETURN, RETURN, pwd, pwd, app0_ip, 'y',
-                   TimedCommand('y', 60), RETURN)
-    apps[0].appliance_console.run_commands(command_set)
-    # Configure secondary replication node
-    command_set = ('ap', RETURN, '8', '2', '2', app0_ip, RETURN, pwd, RETURN, '2', '2', RETURN,
-                   RETURN, pwd, pwd, app0_ip, app1_ip, 'y', TimedCommand('y', 360), RETURN)
-
-    apps[1].appliance_console.run_commands(command_set)
-
-    with waiting_for_ha_monitor_started(apps[2], app1_ip, timeout=300):
-        # Configure automatic failover on EVM appliance
-        command_set = ('ap', RETURN, '10', TimedCommand('1', 30), RETURN)
-        apps[2].appliance_console.run_commands(command_set)
-
-    with LogValidator(evm_log,
-                      matched_patterns=['Starting to execute failover'],
-                      hostname=apps[2].hostname).waiting(timeout=450):
-        # Cause failover to occur
-        result = apps[0].ssh_client.run_command(
-            'systemctl stop $APPLIANCE_PG_SERVICE', timeout=15)
-        assert result.success, f"Failed to stop APPLIANCE_PG_SERVICE: {result.output}"
-
-    apps[2].evmserverd.wait_for_running()
-    apps[2].wait_for_miq_ready()
 
 
 @pytest.mark.tier(2)

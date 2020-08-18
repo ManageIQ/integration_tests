@@ -4,6 +4,7 @@ from collections import namedtuple
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.fixtures.cli import do_appliance_versions_match
 from cfme.fixtures.cli import provider_app_crud
 from cfme.fixtures.cli import provision_vm
@@ -312,6 +313,9 @@ def test_update_replicated_webui(replicated_appliances_preupdate_with_providers,
     soft_assert(vm2.provider.mgmt.does_vm_exist(vm2.name), "vm not provisioned")
 
 
+@test_requirements.appliance
+@test_requirements.ha_proxy
+@test_requirements.update
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(automates=[1704835])
 @pytest.mark.parametrize("update_strategy", [update_appliance, do_yum_update], ids=["webui", "yum"])
