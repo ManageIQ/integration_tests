@@ -3,24 +3,23 @@ import pytest
 from widgetastic.utils import partial_match
 
 from cfme import test_requirements
-from cfme.infrastructure.provider import InfraProvider
+from cfme.fixtures.provider import setup_or_skip
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from cfme.infrastructure.pxe import ISODatastore
+from cfme.markers.env_markers.provider import ONE
+from cfme.markers.env_markers.provider import SECOND
 from cfme.provisioning import do_vm_provisioning
-from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import cfme_data
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('uses_infra_providers'),
-    pytest.mark.tier(2)
-]
-
-
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [InfraProvider], required_fields=[
+    pytest.mark.usefixtures('uses_infra_providers', 'provider', 'setup_provider'),
+    pytest.mark.provider(
+        [RHEVMProvider, VMwareProvider],
+        required_fields=[
             ('iso_datastore', True),
             ['provisioning', 'host'],
             ['provisioning', 'datastore'],
@@ -30,32 +29,26 @@ def pytest_generate_tests(metafunc):
             ['provisioning', 'iso_root_password'],
             ['provisioning', 'iso_image_type'],
             ['provisioning', 'vlan'],
-        ])
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(list(zip(argnames, argvalue_tuple)))
-        if args['provider'].type == "scvmm":
-            continue
-
-        iso_cust_template = args['provider'].data['provisioning']['iso_kickstart']
-        if iso_cust_template not in list(cfme_data.get('customization_templates', {}).keys()):
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+        ],
+        scope="module"),
+    pytest.mark.uncollectif(
+        lambda provider:
+        cfme_data.management_systems.get(provider.key, {}).get('provisioning', {}).get(
+            'iso_kickstart') not in cfme_data.get(
+            'customization_templates', {}).keys(),
+        reason="Uncollected if custom template not present"
+    ),
+    pytest.mark.tier(2)
+]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def iso_cust_template(provider, appliance):
     iso_cust_template = provider.data['provisioning']['iso_kickstart']
     return get_template_from_config(iso_cust_template, create=True, appliance=appliance)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def iso_datastore(provider, appliance):
     return ISODatastore(provider.name, appliance=appliance)
 
@@ -134,3 +127,28 @@ def test_iso_provision_from_template(appliance, provider, vm_name, datastore_ini
             'power_on': False}}
     do_vm_provisioning(appliance, iso_template, provider, vm_name, provisioning_data, request,
                        num_sec=1800)
+
+
+@pytest.mark.provider([RHEVMProvider], selector=ONE,
+                      required_fields=[('iso_datastore', True)])
+@pytest.mark.provider([RHEVMProvider], selector=SECOND, fixture_name="second_provider",
+                      scope="module")
+def test_add_multiple_iso_datastore(appliance, second_provider, datastore_init,
+                                    iso_datastore, request):
+    """Tests ISO provisioning with multiple instances
+
+    Metadata:
+        test_flag: iso, provision
+        suite: infra_provisioning
+
+    Polarion:
+        assignee: jhenner
+        caseimportance: high
+        casecomponent: Provisioning
+        initialEstimate: 1/4h
+    """
+
+    # setup second provider and assert button state
+    setup_or_skip(request, second_provider)
+    view = navigate_to(iso_datastore, 'All')
+    assert view.toolbar.configuration.item_enabled("Add a New ISO Datastore")
