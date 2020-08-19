@@ -4,6 +4,7 @@ import time
 import fauxfactory
 import pytest
 from widgetastic_patternfly import BootstrapSelect
+from widgetastic_patternfly import DropdownDisabled
 
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
@@ -160,6 +161,8 @@ def ansible_linked_vm_action(appliance, local_ansible_catalog_item, create_vm):
     with update(local_ansible_catalog_item):
         local_ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
 
+    wait_for(lambda: create_vm.ip_address is not None)
+
     action_values = {
         "run_ansible_playbook": {
             "playbook_catalog_item": local_ansible_catalog_item.name,
@@ -238,7 +241,10 @@ def ansible_credential(appliance):
     )
     yield credential
 
-    credential.delete_if_exists()
+    try:
+        credential.delete_if_exists()
+    except DropdownDisabled:
+        logger.exception('Dropdown disabled trying to delete ansible machine credential')
 
 
 @pytest.fixture
@@ -583,10 +589,7 @@ def test_service_ansible_playbook_pass_extra_vars(
     if action == "retirement":
         ansible_service.retire()
     view = navigate_to(ansible_service, "Details")
-    # To avoid NoSuchElementException
-    if action == "provisioning":
-        view.provisioning_tab.click()
-    stdout = getattr(view, action).standart_output
+    stdout = getattr(view, action).standard_output
     stdout.wait_displayed()
     pre = stdout.text
     json_str = pre.split("--------------------------------")
@@ -690,13 +693,10 @@ def test_ansible_group_id_in_payload(
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
-    view.provisioning_tab.click()
+    view.provisioning.standard_output.wait_displayed(10)
     assert view.provisioning.standart_output.is_displayed
     wait_for(lambda: view.provisioning.standart_output.text != "Loading...", timeout=30)
-    stdout = view.provisioning.standart_output
-    pre = stdout.text
-    json_str = pre.split("--------------------------------")
-    # Standard output has several sections splitted by --------------------------------
+    json_str = view.provisioning.standard_output.text.split("--------------------------------")
     # Required data is located in 6th section
     # Then we need to replace or remove some characters to get a parsable json string
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
@@ -878,8 +878,7 @@ def test_ansible_service_order_vault_credentials(
 
     view = navigate_to(ansible_service, "Details")
     assert view.provisioning.credentials.get_text_of("Vault") == vault_creds.name
-    status = "successful" if appliance.version < "5.11" else "Finished"
-    assert view.provisioning.results.get_text_of("Status") == status
+    assert view.provisioning.results.get_text_of("Status") == "Finished"
 
 
 @pytest.mark.tier(3)
@@ -1115,7 +1114,6 @@ def test_embed_tower_order_service_extra_vars(request, appliance, ansible_reposi
         ansible_repository.delete_if_exists()
 
     view = navigate_to(cat_item, "Edit")
-    row = list(view.provisioning.extra_vars.variables_table)
-    row[0].Actions.widget.delete.click()
+    view.provisioning.extra_vars.variables_table[0].Actions.widget.delete.click()  # first row
     view.save.click()
     view.flash.assert_success_message(f"Catalog Item {cat_item.name} was saved")

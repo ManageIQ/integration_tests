@@ -35,6 +35,7 @@ from widgetastic_manageiq import ParametrizedSummaryTable
 from widgetastic_manageiq import ReactTextInput
 from widgetastic_manageiq import Search
 from widgetastic_manageiq import SummaryTable
+from widgetastic_manageiq import WaitTab
 
 
 class MyServiceToolbar(View):
@@ -135,11 +136,10 @@ class MyServiceDetailView(MyServicesView):
     title = Text('#explorer_title_text')
     toolbar = View.nested(MyServiceDetailsToolbar)
     entities = View.nested(MyServiceDetailsEntities)
-    provisioning_tab = Text('//*[@id="provisioning_tab"]')
-    retirement_tab = Text('//*[@id="retirement_tab"]')
 
     @View.nested
-    class provisioning(View):  # noqa
+    class provisioning(WaitTab):  # noqa
+        TAB_NAME = 'Provisioning'
         results = SummaryTable(title='Results')
         plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
                       'normalize-space(.)="Plays"]]')
@@ -148,20 +148,23 @@ class MyServiceDetailView(MyServicesView):
         standart_output = Text('.//div[@id="provisioning"]/ansible-raw-stdout')
 
     @View.nested
-    class retirement(View):  # noqa
+    class retirement(WaitTab):  # noqa
+        TAB_NAME = 'Retirement'
         results = SummaryTable(title='Results')
         plays = Table('.//table[./thead/tr/th[contains(@align, "left") and '
                       'normalize-space(.)="Plays"]]')
         details = SummaryTable(title='Details')
         credentials = SummaryTable(title='Credentials')
-        standart_output = Text('.//div[@id="retirement"]//pre')
+        standard_output = Text('.//div[@id="retirement"]//pre')
 
     @property
     def is_displayed(self):
+        expected_name = self.context["object"].name
         return (
             self.in_myservices and
             self.myservice.is_opened and
-            self.title.text == 'Service "{}"'.format(self.context['object'].name))
+            self.title.text == f'Service "{expected_name}"'
+        )
 
 
 class EditMyServiceView(ServiceEditForm):
