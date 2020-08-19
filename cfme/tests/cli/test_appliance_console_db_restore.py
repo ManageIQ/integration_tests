@@ -10,7 +10,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.cli import provider_app_crud
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.console import configure_appliances_ha
-from cfme.utils.appliance.console import waiting_for_ha_monitor_started
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import manager
 from cfme.utils.conf import cfme_data
@@ -102,76 +101,6 @@ def get_ext_appliances_with_providers(temp_appliances_unconfig_funcscope_rhevm, 
     provider_app_crud(OpenStackProvider, appl1).setup()
     appl1.db.backup()
     return temp_appliances_unconfig_funcscope_rhevm
-
-
-@pytest.fixture
-def get_ha_appliances_with_providers(unconfigured_appliances, app_creds):
-    """Configure HA environment
-
-    Appliance one configuring dedicated database, 'ap' launch appliance_console,
-    '' clear info screen, '7' setup db, '1' Creates v2_key, '1' selects internal db,
-    '2' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd' confirm db password + wait
-    360 secs and '' finish.
-
-    Appliance two creating region in dedicated database, 'ap' launch appliance_console, '' clear
-    info screen, '7' setup db, '2' fetch v2_key, 'app0_ip' appliance ip address, '' default user,
-    'pwd' appliance password, '' default v2_key location, '2' create region in external db, '0' db
-    region number, 'y' confirm create region in external db 'app0_ip', '' ip and default port for
-    dedicated db, '' use default db name, '' default username, 'pwd' db password, 'pwd' confirm db
-    password + wait 360 seconds and '' finish.
-
-    Appliance one configuring primary node for replication, 'ap' launch appliance_console, '' clear
-    info screen, '8' configure db replication, '1' configure node as primary, '1' cluster node
-    number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
-    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
-
-
-    Appliance three configuring standby node for replication, 'ap' launch appliance_console, ''
-    clear info screen, '8' configure db replication, '1' configure node as primary, '1' cluster node
-    number set to 1, '' default dbname, '' default user, 'pwd' password, 'pwd' confirm password,
-    'app0_ip' primary appliance ip, confirm settings and wait 360 seconds to configure, '' finish.
-
-
-    Appliance two configuring automatic failover of database nodes, 'ap' launch appliance_console,
-    '' clear info screen '10' configure application database failover monitor, '1' start failover
-    monitor. wait 30 seconds for service to start '' finish.
-
-    """
-    appl1, appl2, appl3 = unconfigured_appliances
-    app0_ip = appl1.hostname
-    app1_ip = appl2.hostname
-    pwd = app_creds['password']
-    # Configure first appliance as dedicated database
-    command_set = ('ap', '', '7', '1', '1', '2', 'y', pwd, TimedCommand(pwd, 360), '')
-    appl1.appliance_console.run_commands(command_set)
-    wait_for(lambda: appl1.db.is_dedicated_active)
-    # Configure EVM webui appliance with create region in dedicated database
-    command_set = ('ap', '', '7', '2', app0_ip, '', pwd, '', '2', '0', 'y', app0_ip, '', '', '',
-        TimedCommand(pwd, 360), '')
-    appl3.appliance_console.run_commands(command_set)
-    appl3.evmserverd.wait_for_running()
-    appl3.wait_for_miq_ready()
-    # Configure primary replication node
-    command_set = ('ap', '', '8', '1', '1', '', '', pwd, pwd, app0_ip, TimedCommand('y', 60), '')
-    appl1.appliance_console.run_commands(command_set)
-
-    # Configure secondary replication node
-    command_set = ('ap', '', '8', '2', '2', app0_ip, '', pwd, '', '2', '2', '', '', pwd, pwd,
-                   app0_ip, app1_ip, 'y', TimedCommand('y', 60), '')
-    appl2.appliance_console.run_commands(command_set)
-    #
-    # Configure automatic failover on EVM appliance
-    with waiting_for_ha_monitor_started(appl3, app1_ip, timeout=300):
-        # Configure automatic failover on EVM appliance
-        command_set = ('ap', '', '10', TimedCommand('1', 30), '')
-        appl3.appliance_console.run_commands(command_set)
-
-    # Add infra/cloud providers and create db backup
-    provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(OpenStackProvider, appl3).setup()
-    appl1.db.backup()
-
-    return unconfigured_appliances
 
 
 def fetch_v2key(appl1, appl2):
