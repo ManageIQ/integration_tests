@@ -171,7 +171,7 @@ def bulk_service_teardown(appliance):
     requests = [r for r in appliance.rest_api.collections.service_requests]
     if requests:
         delete_resources_from_collection(
-            resources=[r for r in appliance.rest_api.collections.service_requests],
+            resources=requests,
             collection=appliance.rest_api.collections.service_requests,
             check_response=False
         )

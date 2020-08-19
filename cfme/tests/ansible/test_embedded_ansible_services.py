@@ -785,22 +785,17 @@ def test_service_ansible_verbosity(
         tags: ansible_embed
     """
     # Adding index 0 which will give pattern for e.g. pattern = "verbosity"=>0.
-    pattern = '"verbosity"=>{}'.format(verbosity[0])
+    pattern = fr'.*"verbosity"=>{verbosity[0]}.*'
     with update(local_ansible_catalog_item):
         local_ansible_catalog_item.provisioning = {"verbosity": verbosity}
         local_ansible_catalog_item.retirement = {"verbosity": verbosity}
-    # Log Validator
-    log = LogValidator("/var/www/miq/vmdb/log/evm.log", matched_patterns=[pattern])
-    # Start Log check or given pattern
-    log.start_monitoring()
 
     ansible_service_catalog.order()
-    ansible_service_request.wait_for_request()
-
-    # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
-    # is being logging in evm.log
-    assert log.validate(wait="60s")
-    logger.info(f"Pattern found {log.matched_patterns}")
+    with LogValidator("/var/www/miq/vmdb/log/automation.log",
+                      matched_patterns=[pattern]).waiting(timeout=600):
+        # Searching string '"verbosity"=>0' (example) in evm.log as Standard Output
+        # is being logging in evm.log
+        ansible_service_request.wait_for_request()  # default timeout of 1800
 
     view = navigate_to(ansible_service, "Details")
     assert verbosity[0] == view.provisioning.details.get_text_of("Verbosity")
@@ -832,7 +827,7 @@ def test_ansible_service_linked_vm(
         tags: ansible_embed
     """
     create_vm.add_tag()
-    wait_for(ansible_service_request.exists, num_sec=600)
+    wait_for(lambda: ansible_service_request.exists, num_sec=600)
     ansible_service_request.wait_for_request()
 
     view = navigate_to(ansible_service, "Details")
