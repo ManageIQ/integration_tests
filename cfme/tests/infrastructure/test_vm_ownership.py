@@ -8,7 +8,6 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
 
@@ -113,21 +112,9 @@ class TestVmOwnershipRESTAPI:
         assert rest_vm.evm_owner.userid == "admin"
 
 
-@pytest.fixture(scope='function')
-def small_vm(provider, small_template):
-    vm = provider.appliance.collections.infra_vms.instantiate(random_vm_name(context='rename'),
-                                                              provider,
-                                                              small_template.name)
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    vm.refresh_relationships()
-    yield vm
-    if vm.exists:
-        vm.cleanup_on_provider()
-
-
 @test_requirements.power
 @pytest.mark.provider([VMwareProvider], scope="function", selector=ONE_PER_TYPE)
-def test_rename_vm(small_vm):
+def test_rename_vm(create_vm):
     """Test for rename the VM.
 
     Polarion:
@@ -144,9 +131,9 @@ def test_rename_vm(small_vm):
             5. Click on submit
             6. Check whether VM is renamed or not
     """
-    view = navigate_to(small_vm, 'Details')
-    vm_name = small_vm.name
-    changed_vm = small_vm.rename(new_vm_name=fauxfactory.gen_alphanumeric(15, start="renamed_"))
+    view = navigate_to(create_vm, 'Details')
+    vm_name = create_vm.name
+    changed_vm = create_vm.rename(new_vm_name=fauxfactory.gen_alphanumeric(15, start="renamed_"))
     view.flash.wait_displayed(timeout=20)
     view.flash.assert_success_message('Rename of Virtual Machine "{vm_name}" has been initiated'
                                       .format(vm_name=vm_name))

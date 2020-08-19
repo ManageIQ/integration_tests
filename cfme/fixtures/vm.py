@@ -49,7 +49,11 @@ def _create_vm(request, template_type, provider, vm_name):
     @request.addfinalizer
     def _cleanup():
         vm_obj.cleanup_on_provider()
-        provider.refresh_provider_relationships()
+        try:
+            provider.refresh_provider_relationships()
+        except Exception as e:
+            if e.args[0] != "Provider collection empty":
+                raise
 
     vm_obj.mgmt.ensure_state(VmState.RUNNING)
 

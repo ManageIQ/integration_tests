@@ -5,7 +5,6 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.generators import random_vm_name
 from cfme.utils.log_validator import LogValidator
 
 
@@ -17,25 +16,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture()
-def new_vm(setup_provider, provider):
-    """Fixture to provision appliance to the provider being tested if necessary"""
-    vm_name = random_vm_name(context='migrate')
-    try:
-        template_name = provider.data.templates.small_template.name
-    except AttributeError:
-        pytest.skip('Could not find templates.small_template.name in provider yaml: {}'
-                    .format(provider.data))
-
-    vm = provider.appliance.collections.infra_vms.instantiate(vm_name, provider, template_name)
-
-    if not provider.mgmt.does_vm_exist(vm_name):
-        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    yield vm
-    vm.cleanup_on_provider()
-
-
-def test_vm_migrate(appliance, new_vm, provider):
+def test_vm_migrate(appliance, create_vm, provider):
     """Tests migration of a vm
 
     Metadata:
@@ -47,15 +28,15 @@ def test_vm_migrate(appliance, new_vm, provider):
         initialEstimate: 1/4h
     """
     # auto_test_services should exist to test migrate VM
-    view = navigate_to(new_vm, 'Details')
+    view = navigate_to(create_vm, 'Details')
     vm_host = view.entities.summary('Relationships').get_text_of('Host')
     hosts = [vds.name for vds in provider.hosts.all() if vds.name not in vm_host]
     if hosts:
         migrate_to = hosts[0]
     else:
         pytest.skip("There is only one host in the provider")
-    new_vm.migrate_vm("email@xyz.com", "first", "last", host=migrate_to)
-    request_description = new_vm.name
+    create_vm.migrate_vm("email@xyz.com", "first", "last", host=migrate_to)
+    request_description = create_vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
     migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
                                                                  partial_check=True)

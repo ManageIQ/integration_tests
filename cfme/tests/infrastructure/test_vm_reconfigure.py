@@ -14,7 +14,6 @@ from cfme.utils.appliance import ViaREST
 from cfme.utils.appliance import ViaUI
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.generators import random_vm_name
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
@@ -58,38 +57,19 @@ def reconfigure_vm(vm, config):
 
 
 @pytest.fixture(scope='function')
-def full_vm(appliance, provider, full_template):
-    """This fixture is function-scoped, because there is no un-ambiguous way how to search for
-    reconfigure request in UI in situation when you have two requests for the same reconfiguration
-    and for the same VM name. This happens if you run test_vm_reconfig_add_remove_hw_cold and then
-    test_vm_reconfig_add_remove_hw_hot or vice versa. Making thix fixture function-scoped will
-    ensure that the VM under test has a different name each time so the reconfigure requests
-    are unique as a result."""
-    vm = appliance.collections.infra_vms.instantiate(random_vm_name(context='reconfig'),
-                                                     provider,
-                                                     full_template.name)
-    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    vm.refresh_relationships()
-
-    yield vm
-
-    vm.cleanup_on_provider()
-
-
-@pytest.fixture(scope='function')
-def ensure_vm_stopped(full_vm):
-    if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_OFF):
-        full_vm.mgmt.ensure_state(VmState.STOPPED)
-        full_vm.wait_for_vm_state_change(full_vm.STATE_OFF)
+def ensure_vm_stopped(create_vm):
+    if create_vm.is_pwr_option_available_in_cfme(create_vm.POWER_OFF):
+        create_vm.mgmt.ensure_state(VmState.STOPPED)
+        create_vm.wait_for_vm_state_change(create_vm.STATE_OFF)
     else:
         raise Exception("Unknown power state - unable to continue!")
 
 
 @pytest.fixture(scope='function')
-def ensure_vm_running(full_vm):
-    if full_vm.is_pwr_option_available_in_cfme(full_vm.POWER_ON):
-        full_vm.mgmt.ensure_state(VmState.RUNNING)
-        full_vm.wait_for_vm_state_change(full_vm.STATE_ON)
+def ensure_vm_running(create_vm):
+    if create_vm.is_pwr_option_available_in_cfme(create_vm.POWER_ON):
+        create_vm.mgmt.ensure_state(VmState.RUNNING)
+        create_vm.wait_for_vm_state_change(create_vm.STATE_ON)
     else:
         raise Exception("Unknown power state - unable to continue!")
 
@@ -109,17 +89,17 @@ def _vm_state(vm, state):
 
 
 @pytest.fixture(params=["cold", "hot"])
-def vm_state(request, full_vm):
-    _vm_state(full_vm, request.param)
+def vm_state(request, create_vm):
+    _vm_state(create_vm, request.param)
     return request.param
 
 
 @pytest.fixture(scope='function')
-def enable_hot_plugin(provider, full_vm, ensure_vm_stopped):
+def enable_hot_plugin(provider, create_vm, ensure_vm_stopped):
     # Operation on Provider side
     # Hot plugin enable only needs for Vsphere Provider
     if provider.one_of(VMwareProvider):
-        vm = provider.mgmt.get_vm(full_vm.name)
+        vm = provider.mgmt.get_vm(create_vm.name)
         vm.cpu_hot_plug = True
         vm.memory_hot_plug = True
 
@@ -164,7 +144,8 @@ def request_succeeded(appliance):
 
 
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
-def test_vm_reconfig_add_remove_hw_cold(provider, full_vm, ensure_vm_stopped, change_type):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_vm_reconfig_add_remove_hw_cold(provider, create_vm, ensure_vm_stopped, change_type):
     """
     Polarion:
         assignee: nansari
@@ -172,19 +153,20 @@ def test_vm_reconfig_add_remove_hw_cold(provider, full_vm, ensure_vm_stopped, ch
         initialEstimate: 1/3h
         tags: reconfigure
     """
-    orig_config = full_vm.configuration.copy()
+    orig_config = create_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
 
     # Apply new config
-    reconfigure_vm(full_vm, new_config)
+    reconfigure_vm(create_vm, new_config)
 
     # Revert back to original config
-    reconfigure_vm(full_vm, orig_config)
+    reconfigure_vm(create_vm, orig_config)
 
 
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
     'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 # Disk modes cannot be specified when adding disk to VM in RHV provider
 @pytest.mark.uncollectif(lambda disk_mode, provider:
                          disk_mode != 'persistent' and provider.one_of(RHEVMProvider),
@@ -193,7 +175,7 @@ def test_vm_reconfig_add_remove_hw_cold(provider, full_vm, ensure_vm_stopped, ch
     blockers=[BZ(1692801, forced_streams=['5.10'],
                  unblock=lambda provider: not provider.one_of(RHEVMProvider))]
 )
-def test_vm_reconfig_add_remove_disk(provider, full_vm, vm_state, disk_type, disk_mode):
+def test_vm_reconfig_add_remove_disk(provider, create_vm, vm_state, disk_type, disk_mode):
     """
     Polarion:
         assignee: nansari
@@ -210,37 +192,38 @@ def test_vm_reconfig_add_remove_disk(provider, full_vm, vm_state, disk_type, dis
             5. Check the count in VM details page
             6. Remove the disk and Check the count in VM details page
     """
-    orig_config = full_vm.configuration.copy()
+    orig_config = create_vm.configuration.copy()
     new_config = orig_config.copy()
     new_config.add_disk(
         size=500, size_unit='MB', type=disk_type, mode=disk_mode)
 
-    add_disk_request = full_vm.reconfigure(new_config)
+    add_disk_request = create_vm.reconfigure(new_config)
     # Add disk request verification
     wait_for(add_disk_request.is_succeeded, timeout=360, delay=45,
              message="confirm that disk was added")
     # Add disk UI verification
     wait_for(
-        lambda: full_vm.configuration.num_disks == new_config.num_disks, timeout=360, delay=45,
-        fail_func=full_vm.refresh_relationships,
+        lambda: create_vm.configuration.num_disks == new_config.num_disks, timeout=360, delay=45,
+        fail_func=create_vm.refresh_relationships,
         message="confirm that disk was added")
     msg = "Disk wasn't added to VM config"
-    assert full_vm.configuration.num_disks == new_config.num_disks, msg
+    assert create_vm.configuration.num_disks == new_config.num_disks, msg
 
-    remove_disk_request = full_vm.reconfigure(orig_config)
+    remove_disk_request = create_vm.reconfigure(orig_config)
     # Remove disk request verification
     wait_for(remove_disk_request.is_succeeded, timeout=360, delay=45,
              message="confirm that previously-added disk was removed")
     # Remove disk UI verification
     wait_for(
-        lambda: full_vm.configuration.num_disks == orig_config.num_disks, timeout=360, delay=45,
-        fail_func=full_vm.refresh_relationships,
+        lambda: create_vm.configuration.num_disks == orig_config.num_disks, timeout=360, delay=45,
+        fail_func=create_vm.refresh_relationships,
         message="confirm that previously-added disk was removed")
     msg = "Disk wasn't removed from VM config"
-    assert full_vm.configuration.num_disks == orig_config.num_disks, msg
+    assert create_vm.configuration.num_disks == orig_config.num_disks, msg
 
 
-def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_reconfig_vm_negative_cancel(provider, create_vm, ensure_vm_stopped):
     """ Cancel reconfiguration changes
 
     Polarion:
@@ -249,7 +232,7 @@ def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
         initialEstimate: 1/3h
         tags: reconfigure
     """
-    config_vm = full_vm.configuration.copy()
+    config_vm = create_vm.configuration.copy()
 
     # Some changes in vm reconfigure before cancel
     config_vm.hw.cores_per_socket = config_vm.hw.cores_per_socket + 1
@@ -259,14 +242,15 @@ def test_reconfig_vm_negative_cancel(provider, full_vm, ensure_vm_stopped):
     config_vm.add_disk(
         size=5, size_unit='GB', type='thin', mode='persistent')
 
-    full_vm.reconfigure(config_vm, cancel=True)
+    create_vm.reconfigure(config_vm, cancel=True)
 
 
 @pytest.mark.meta(
     blockers=[BZ(1697967, unblock=lambda provider: not provider.one_of(RHEVMProvider))])
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 def test_vm_reconfig_add_remove_hw_hot(
-        provider, full_vm, enable_hot_plugin, ensure_vm_running, change_type):
+        provider, create_vm, enable_hot_plugin, ensure_vm_running, change_type):
     """Change number of CPU sockets and amount of memory while VM is running.
     Changing number of cores per socket on running VM is not supported by RHV.
 
@@ -276,18 +260,18 @@ def test_vm_reconfig_add_remove_hw_hot(
         initialEstimate: 1/4h
         tags: reconfigure
     """
-    orig_config = full_vm.configuration.copy()
+    orig_config = create_vm.configuration.copy()
     new_config = prepare_new_config(orig_config, change_type)
     assert vars(orig_config.hw) != vars(new_config.hw)
 
     # Apply new config
-    reconfigure_vm(full_vm, new_config)
+    reconfigure_vm(create_vm, new_config)
 
-    assert vars(full_vm.configuration.hw) == vars(new_config.hw)
+    assert vars(create_vm.configuration.hw) == vars(new_config.hw)
 
     # Revert back to original config only supported by RHV
     if provider.one_of(RHEVMProvider):
-        reconfigure_vm(full_vm, orig_config)
+        reconfigure_vm(create_vm, orig_config)
 
 
 @pytest.mark.provider([VMwareProvider])
@@ -295,10 +279,11 @@ def test_vm_reconfig_add_remove_hw_hot(
 @pytest.mark.parametrize('disk_mode', ['persistent',
                                        'independent_persistent',
                                        'independent_nonpersistent'])
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
 @pytest.mark.uncollectif(lambda disk_mode, vm_state:
                          disk_mode == 'independent_nonpersistent' and vm_state == 'hot',
                          reason='Disk resize not supported for hot vm independent_nonpersistent')
-def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_mode):
+def test_vm_reconfig_resize_disk(appliance, create_vm, vm_state, disk_type, disk_mode):
     """ Resize the disk while VM is running and not running
      Polarion:
          assignee: nansari
@@ -308,7 +293,7 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
          casecomponent: Infra
      """
     # get initial disks for later comparison
-    initial_disks = [disk.filename for disk in full_vm.configuration.disks]
+    initial_disks = [disk.filename for disk in create_vm.configuration.disks]
     add_data = [
         {
             "disk_size_in_mb": 20,
@@ -320,18 +305,18 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
         }
     ]
     # disk will be added to the VM via REST
-    vm_reconfig_via_rest(appliance, "disk_add", full_vm.rest_api_entity.id, add_data)
+    vm_reconfig_via_rest(appliance, "disk_add", create_vm.rest_api_entity.id, add_data)
 
     # assert the new disk was added
     assert wait_for(
-        lambda: full_vm.configuration.num_disks > len(initial_disks),
-        fail_func=full_vm.refresh_relationships,
+        lambda: create_vm.configuration.num_disks > len(initial_disks),
+        fail_func=create_vm.refresh_relationships,
         delay=5,
         timeout=200,
     )
 
     # there will always be 2 disks after the disk has been added
-    disks_present = [disk.filename for disk in full_vm.configuration.disks]
+    disks_present = [disk.filename for disk in create_vm.configuration.disks]
     # get the newly added disk
     try:
         disk_added = list(set(disks_present) - set(initial_disks))[0]
@@ -340,16 +325,16 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
 
     # resize the disk
     disk_size = 500
-    new_config = full_vm.configuration.copy()
+    new_config = create_vm.configuration.copy()
     new_config.resize_disk(size_unit='MB', size=disk_size, filename=disk_added)
-    resize_disk_request = full_vm.reconfigure(new_configuration=new_config)
+    resize_disk_request = create_vm.reconfigure(new_configuration=new_config)
 
     # Resize disk request verification
     wait_for(resize_disk_request.is_succeeded, timeout=360, delay=45,
              message="confirm that disk was Resize")
 
     # assert the new disk size was added
-    view = navigate_to(full_vm, 'Reconfigure')
+    view = navigate_to(create_vm, 'Reconfigure')
     assert int(view.disks_table.row(name=disk_added)["Size"].text) == disk_size
 
 
@@ -360,7 +345,8 @@ def test_vm_reconfig_resize_disk(appliance, full_vm, vm_state, disk_type, disk_m
 @pytest.mark.parametrize('disk_mode', ['persistent',
                                        'independent_persistent',
                                        'independent_nonpersistent'])
-def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, full_vm, memory=False):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, create_vm, memory=False):
     """
 
     Bugzilla:
@@ -388,12 +374,12 @@ def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, full_vm
         name=fauxfactory.gen_alphanumeric(start="snap_"),
         description=fauxfactory.gen_alphanumeric(start="desc_"),
         memory=memory,
-        parent_vm=full_vm
+        parent_vm=create_vm
     )
     snapshot.create()
     request.addfinalizer(snapshot.delete)
 
-    view = navigate_to(full_vm, 'Reconfigure')
+    view = navigate_to(create_vm, 'Reconfigure')
     row = next(r for r in view.disks_table.rows())
 
     # Delete button should enabled
@@ -410,7 +396,8 @@ def test_vm_reconfig_resize_disk_snapshot(request, disk_type, disk_mode, full_vm
     ["DPortGroup", "VM Network", "Management Network", "VMkernel"],
     ids=["DPortGroup", "VmNetwork", "MgmtNetwork", "VmKernel"],
 )
-def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, create_vm):
     """
     Polarion:
         assignee: nansari
@@ -426,37 +413,37 @@ def test_vm_reconfig_add_remove_network_adapters(request, adapters_type, full_vm
             4. Check the changes in VM reconfiguration page
             5. Remove the Adapters
     """
-    orig_config = full_vm.configuration.copy()
+    orig_config = create_vm.configuration.copy()
 
     # Create new configuration with new network adapter
     new_config = orig_config.copy()
     new_config.add_network_adapter(
         f"Network adapter {orig_config.num_network_adapters + 1}", vlan=adapters_type
     )
-    add_adapter_request = full_vm.reconfigure(new_config)
+    add_adapter_request = create_vm.reconfigure(new_config)
     add_adapter_request.wait_for_request(method="ui")
     request.addfinalizer(add_adapter_request.remove_request)
 
     # Verify network adapter added or not
     wait_for(
-        lambda: full_vm.configuration.num_network_adapters == new_config.num_network_adapters,
+        lambda: create_vm.configuration.num_network_adapters == new_config.num_network_adapters,
         timeout=120,
         delay=10,
-        fail_func=full_vm.refresh_relationships,
+        fail_func=create_vm.refresh_relationships,
         message="confirm that network adapter was added",
     )
 
     # Remove network adapter
-    remove_adapter_request = full_vm.reconfigure(orig_config)
+    remove_adapter_request = create_vm.reconfigure(orig_config)
     remove_adapter_request.wait_for_request(method="ui")
     request.addfinalizer(remove_adapter_request.remove_request)
 
     # Verify network adapter removed or not
     wait_for(
-        lambda: full_vm.configuration.num_network_adapters == orig_config.num_network_adapters,
+        lambda: create_vm.configuration.num_network_adapters == orig_config.num_network_adapters,
         timeout=120,
         delay=10,
-        fail_func=full_vm.refresh_relationships,
+        fail_func=create_vm.refresh_relationships,
         message="confirm that network adapter was added",
     )
 
@@ -570,7 +557,8 @@ def vm_reconfig_via_rest(appliance, config_type, vm_id, config_data):
 
 @test_requirements.rest
 @pytest.mark.tier(3)
-def test_vm_disk_reconfig_via_rest(appliance, full_vm):
+@pytest.mark.parametrize('create_vm', ['full_template'], indirect=True)
+def test_vm_disk_reconfig_via_rest(appliance, create_vm):
     """
     Polarion:
         assignee: pvala
@@ -593,9 +581,9 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
         1691635
         1692801
     """
-    vm_id = appliance.rest_api.collections.vms.get(name=full_vm.name).id
+    vm_id = appliance.rest_api.collections.vms.get(name=create_vm.name).id
     # get initial disks for later comparison
-    initial_disks = [disk.filename for disk in full_vm.configuration.disks]
+    initial_disks = [disk.filename for disk in create_vm.configuration.disks]
 
     # add a disk to VM
     add_data = [
@@ -612,18 +600,18 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
 
     # assert the new disk was added
     assert wait_for(
-        lambda: full_vm.configuration.num_disks > len(initial_disks),
-        fail_func=full_vm.refresh_relationships,
+        lambda: create_vm.configuration.num_disks > len(initial_disks),
+        fail_func=create_vm.refresh_relationships,
         delay=5,
         timeout=200,
     )
 
     # Disk GUID is displayed instead of disk name in the disks table for a rhev VM, and passing
     # disk GUID to the delete method results in failure, so skip this part until the BZ is fixed.
-    if not (BZ(1691635).blocks and full_vm.provider.one_of(RHEVMProvider)):
+    if not (BZ(1691635).blocks and create_vm.provider.one_of(RHEVMProvider)):
 
         # there will always be 2 disks after the disk has been added
-        disks_present = [disk.filename for disk in full_vm.configuration.disks]
+        disks_present = [disk.filename for disk in create_vm.configuration.disks]
         disk_added = list(set(disks_present) - set(initial_disks))[0]
 
         # remove the newly added disk from VM
@@ -633,8 +621,8 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
         # assert the disk was removed
         try:
             wait_for(
-                lambda: full_vm.configuration.num_disks == len(initial_disks),
-                fail_func=full_vm.refresh_relationships,
+                lambda: create_vm.configuration.num_disks == len(initial_disks),
+                fail_func=create_vm.refresh_relationships,
                 delay=5,
                 timeout=200,
             )
@@ -642,7 +630,7 @@ def test_vm_disk_reconfig_via_rest(appliance, full_vm):
             assert (
                 False
             ), "Number of disks expected was {expected}, found {actual}".format(
-                expected=len(initial_disks), actual=full_vm.configuration.num_disks
+                expected=len(initial_disks), actual=create_vm.configuration.num_disks
             )
 
 
