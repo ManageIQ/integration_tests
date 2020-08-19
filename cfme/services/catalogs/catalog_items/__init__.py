@@ -37,6 +37,7 @@ from widgetastic_manageiq import FileInput
 from widgetastic_manageiq import FonticonPicker
 from widgetastic_manageiq import InputButton
 from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ReactSelect
 from widgetastic_manageiq import SummaryForm
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_manageiq import SummaryTable
@@ -523,6 +524,32 @@ class BaseCatalogItem(BaseEntity, Updateable, Pretty, Taggable):
         else:
             return False
 
+    def set_ownership(self, owner, group):
+        view = navigate_to(self, "SetOwnership")
+        view.form.select_an_owner.fill(owner)
+        view.form.select_group.fill(group)
+        view.submit.click()
+
+
+class SetOwnershipView(ServicesCatalogView):
+    submit = Button("Submit")
+    reset = Button("Reset")
+    cancel = Button("Cancel")
+
+    @View.nested
+    class form(View):
+        select_an_owner = ReactSelect("user_name")
+        select_group = ReactSelect("group_name")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.form.select_an_owner.is_displayed
+            and self.form.select_group.is_displayed
+            and self.submit.is_displayed
+            and self.cancel.is_enabled
+        )
+
 
 @attr.s
 class CloudInfraCatalogItem(BaseCatalogItem):
@@ -829,3 +856,12 @@ class EditTags(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.policy.item_select('Edit Tags')
+
+
+@navigator.register(BaseCatalogItem, "SetOwnership")
+class CatalogItemSetOwnership(CFMENavigateStep):
+    VIEW = SetOwnershipView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select("Set Ownership")

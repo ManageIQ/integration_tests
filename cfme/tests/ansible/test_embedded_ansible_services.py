@@ -701,8 +701,10 @@ def test_ansible_group_id_in_payload(
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
+    view.provisioning_tab.click()
+    assert view.provisioning.standart_output.is_displayed
+    wait_for(lambda: view.provisioning.standart_output.text != "Loading...", timeout=30)
     stdout = view.provisioning.standart_output
-    wait_for(lambda: stdout.is_displayed, timeout=10)
     pre = stdout.text
     json_str = pre.split("--------------------------------")
     # Standard output has several sections splitted by --------------------------------

@@ -145,7 +145,7 @@ class MyServiceDetailView(MyServicesView):
                       'normalize-space(.)="Plays"]]')
         details = SummaryTable(title='Details')
         credentials = SummaryTable(title='Credentials')
-        standart_output = Text('.//div[@id="provisioning"]//pre')
+        standart_output = Text('.//div[@id="provisioning"]/ansible-raw-stdout')
 
     @View.nested
     class retirement(View):  # noqa
