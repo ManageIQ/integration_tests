@@ -1,9 +1,17 @@
-# These tests don't work at the moment, due to the security_groups multi select not working
-# in selenium (the group is selected then immediately reset)
+from abc import ABCMeta
+from abc import abstractmethod
+from contextlib import closing
+from contextlib import contextmanager
+from typing import ContextManager
+from typing import List
+
 import pytest
+import wrapanapi.entities
 from widgetastic.utils import partial_match
 
+import cfme.common.vm
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -17,33 +25,20 @@ from cfme.utils import ssh
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
+from cfme.utils.net import retry_connect
 from cfme.utils.providers import ProviderFilter
+from cfme.utils.ssh import connect_ssh
+from cfme.utils.ssh import SSHClient
 from cfme.utils.wait import wait_for
 
+REQUIRED_FIELDS = [['provisioning', 'ci-template']]
 
-pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider], required_fields=[['provisioning',
-                                                                               'ci-template']])
+pf1 = ProviderFilter(classes=[CloudProvider, InfraProvider], required_fields=REQUIRED_FIELDS)
 pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # SCVMM doesn't support cloud-init
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 ]
-
-
-def find_global_ipv6(vm):
-    """
-    Find global IPv6 on a VM if present.
-
-    Args:
-        vm: InfraVm object
-
-    Returns: IPv6 as a string if found, False otherwise
-    """
-    all_ips = vm.mgmt.all_ips
-    for ip in all_ips:
-        if ':' in ip and not ip.startswith('fe80'):
-            return ip
-    return False
 
 
 @pytest.fixture(scope="module")
@@ -87,10 +82,9 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
 
     inst_args = {
         'request': {'notes': note},
-        'customize': {'custom_template': {'name': provisioning['ci-template']}}
+        'customize': {'custom_template': {'name': provisioning['ci-template']}},
+        'template_name': image  # for image selection in before_fill
     }
-    # for image selection in before_fill
-    inst_args['template_name'] = image
 
     # TODO Perhaps merge this with stuff in test_provisioning_dialog.prov_data
     if provider.one_of(AzureProvider):
@@ -128,11 +122,125 @@ def test_provision_cloud_init(appliance, request, setup_provider, provider, prov
         wait_for(ssh_client.uptime, num_sec=200, handle_exception=True)
 
 
+class AddressModeBase(metaclass=ABCMeta):
+    def __repr__(self):
+        return self.__class__.__name__
+
+    @property
+    @abstractmethod
+    def bootproto(self) -> str:
+        pass
+
+    @abstractmethod
+    @contextmanager
+    def connect(self, provider: RHEVMProvider, instance: wrapanapi.entities.vm.Vm) \
+            -> ContextManager[SSHClient]:
+        pass
+
+    def checks(self, ssh_client: SSHClient, config_list: List[str] = None):
+        if config_list is None:
+            config_list = self.get_config_list(ssh_client)
+
+        # Compare contents of network script with cloud-init payload
+        assert f'BOOTPROTO={self.bootproto}' in config_list
+
+        # Check that correct hostname has been set
+        hostname_cmd = ssh_client.run_command('hostname')
+        assert hostname_cmd.success
+        assert hostname_cmd.output.strip() == self.payload['hostname']
+
+    @staticmethod
+    def get_config_list(ssh_client: SSHClient):
+        # Obtain network configuration script for eth0 and store it in a list
+        network_cfg_cmd = ssh_client.run_command('cat /etc/sysconfig/network-scripts/ifcfg-eth0')
+        assert network_cfg_cmd.success
+        config_list = network_cfg_cmd.output.split('\n')
+        return config_list
+
+    @property
+    @abstractmethod
+    def payload(self):
+        return {
+            'root_password': 'mysecret',
+            'hostname': 'cimachine',
+            'custom_template': {'name': 'oVirt cloud-init'}
+        }
+
+
+class DHCPAddressMode(AddressModeBase):
+    bootproto = "dhcp"
+
+    @property
+    def payload(self):
+        return dict(super().payload, address_mode='DHCP')
+
+    @contextmanager
+    def connect(self, provider, instance):
+        vm_creds = Credential('root', self.payload['root_password'])
+        with connect_ssh(instance, creds=vm_creds, num_sec=300) as ssh_client:
+            yield ssh_client
+
+
+class StaticAddressMode(AddressModeBase):
+    bootproto = "none"
+
+    @property
+    def payload(self):
+        return dict(super().payload,
+                    address_mode='Static',
+                    ip_address='169.254.0.1',
+                    subnet_mask='29',
+                    gateway='169.254.0.2',
+                    dns_servers='169.254.0.3',
+                    dns_suffixes='virt.lab.example.com')
+
+    def checks(self, ssh_client, config_list=None):
+        static_mode_payload = self.payload
+        if config_list is None:
+            config_list = self.get_config_list(ssh_client)
+
+        assert 'IPADDR={}'.format(static_mode_payload['ip_address']) in config_list
+        assert 'PREFIX={}'.format(static_mode_payload['subnet_mask']) in config_list
+        assert 'GATEWAY={}'.format(static_mode_payload['gateway']) in config_list
+        assert 'DNS1={}'.format(static_mode_payload['dns_servers']) in config_list
+        assert 'DOMAIN={}'.format(static_mode_payload['dns_suffixes']) in config_list
+
+    @contextmanager
+    def connect(self, provider, instance):
+        static_mode_payload = self.payload
+        wait_for(lambda: static_mode_payload['ip_address'] in instance.all_ips, timeout='5m')
+
+        # Any host that works can be used. To keep things simple, just pick the first one with
+        # fingers crossed.
+        jump_host_config = provider.data['hosts'][0]
+
+        jump_host_creds = Credential.from_config(jump_host_config['credentials']['default'])
+        jump_host_session = SSHClient(hostname=jump_host_config['name'],
+                                      username=jump_host_creds.principal,
+                                      password=jump_host_creds.secret)
+
+        def _connection_factory(ip):
+            return jump_host_session.tunnel_to(
+                hostname=ip,
+                username='root', password=static_mode_payload['root_password'],
+                timeout=ssh.CONNECT_TIMEOUT)
+
+        # Cleanup this explicitly because we can get to problems with ordering the cleanups of
+        # tunneled connections and the tunnels at the session end.
+        # Note that the SSHClient.__exit__ does NOT close the connection.
+        with closing(retry_connect(
+                lambda: instance.all_ips,
+                _connection_factory,
+                num_sec=ssh.CONNECT_RETRIES_TIMEOUT, delay=ssh.CONNECT_SSH_DELAY)) as ssh_client:
+            yield ssh_client
+
+
 @test_requirements.provision
-@pytest.mark.provider([RHEVMProvider])
+@pytest.mark.provider([RHEVMProvider], required_fields=REQUIRED_FIELDS)
 @pytest.mark.meta(automates=[1797706])
-def test_provision_cloud_init_payload(appliance, request, setup_provider, provider, provisioning,
-                                      vm_name):
+@pytest.mark.parametrize("address_mode", [StaticAddressMode(), DHCPAddressMode()], ids=repr)
+def test_provision_cloud_init_payload(appliance, request, setup_provider, provider: RHEVMProvider,
+                                      provisioning, vm_name, address_mode):
     """
     Tests that options specified in VM provisioning dialog in UI are properly passed as a cloud-init
     payload to the newly provisioned VM.
@@ -152,57 +260,24 @@ def test_provision_cloud_init_payload(appliance, request, setup_provider, provid
         image=image, vm=vm_name, provider=provider.key))
     logger.info(note)
 
-    ci_payload = {
-        'root_password': 'mysecret',
-        'address_mode': 'Static',
-        'hostname': 'cimachine',
-        'ip_address': '169.254.0.1',
-        'subnet_mask': '29',
-        'gateway': '169.254.0.2',
-        'dns_servers': '169.254.0.3',
-        'dns_suffixes': 'virt.lab.example.com',
-        'custom_template': {'name': 'oVirt cloud-init'}
-    }
-
     inst_args = {
         'request': {'notes': note},
         'customize': {'customize_type': 'Specification'},
         'template_name': image
     }
 
-    inst_args['customize'].update(ci_payload)
+    inst_args['customize'].update(address_mode.payload)
     logger.info(f'Instance args: {inst_args}')
 
     # Provision VM
     collection = appliance.provider_based_collection(provider)
-    instance = collection.create(vm_name, provider, form_values=inst_args)
-    request.addfinalizer(instance.cleanup_on_provider)
+    instance: cfme.common.vm.VM = collection.create(vm_name, provider, form_values=inst_args)
+    request.addfinalizer(lambda: instance.cleanup_on_provider(handle_cleanup_exception=False))
+
     provision_request = provider.appliance.collections.requests.instantiate(vm_name,
                                                                             partial_check=True)
     check_all_tabs(provision_request, provider)
     provision_request.wait_for_request()
 
-    connect_ip = wait_for(find_global_ipv6, func_args=[instance], num_sec=600, delay=20).out
-    logger.info(f'Connect IP: {connect_ip}')
-
-    # Connect to the newly provisioned VM
-    with ssh.SSHClient(hostname=connect_ip,
-                       username='root',
-                       password=ci_payload['root_password']) as ssh_client:
-        # Check that correct hostname has been set
-        hostname_cmd = ssh_client.run_command('hostname')
-        assert hostname_cmd.success
-        assert hostname_cmd.output.strip() == ci_payload['hostname']
-
-        # Obtain network configuration script for eth0 and store it in a list
-        network_cfg_cmd = ssh_client.run_command('cat /etc/sysconfig/network-scripts/ifcfg-eth0')
-        assert network_cfg_cmd.success
-        config_list = network_cfg_cmd.output.split('\n')
-
-        # Compare contents of network script with cloud-init payload
-        assert 'BOOTPROTO=none' in config_list, 'Address mode was not set to static'
-        assert 'IPADDR={}'.format(ci_payload['ip_address']) in config_list
-        assert 'PREFIX={}'.format(ci_payload['subnet_mask']) in config_list
-        assert 'GATEWAY={}'.format(ci_payload['gateway']) in config_list
-        assert 'DNS1={}'.format(ci_payload['dns_servers']) in config_list
-        assert 'DOMAIN={}'.format(ci_payload['dns_suffixes']) in config_list
+    with address_mode.connect(provider, instance.mgmt) as ssh_client:
+        address_mode.checks(ssh_client)
