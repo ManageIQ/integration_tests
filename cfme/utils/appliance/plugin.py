@@ -45,11 +45,11 @@ class AppliancePluginDescriptor(Generic[TAppliancePlugin]):
         if instance is None:
             return self
 
-        if instance not in self.cache:
+        plugin = self.cache.get(instance, None)
+        if plugin is None:
             plugin = self.plugin_type(instance, *self.args, **self.kwargs)
             self.cache[instance] = plugin
-        result = self.cache[instance]
-        return result
+        return plugin
 
 
 @attr.s
