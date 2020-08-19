@@ -268,7 +268,7 @@ class AnsiblePlaybookCatalogItem(BaseCatalogItem):
             "name": self.name,
             "description": self.description,
             "display_in_catalog": self.display_in_catalog,
-            "catalog": getattr(self.catalog, "name", None),
+            "catalog": self.catalog_name if self.catalog else "<Unassigned>",
             "provisioning": self.provisioning,
             "retirement": self.retirement
         }
