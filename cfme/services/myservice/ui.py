@@ -145,7 +145,8 @@ class MyServiceDetailView(MyServicesView):
                       'normalize-space(.)="Plays"]]')
         details = SummaryTable(title='Details')
         credentials = SummaryTable(title='Credentials')
-        standart_output = Text('.//div[@id="provisioning"]/ansible-raw-stdout')
+        standard_output = Text('.//div[h3[normalize-space(.)="Standard Output"]]'
+                               '//div[contains(@class, "term-container")]')
 
     @View.nested
     class retirement(WaitTab):  # noqa
@@ -155,7 +156,8 @@ class MyServiceDetailView(MyServicesView):
                       'normalize-space(.)="Plays"]]')
         details = SummaryTable(title='Details')
         credentials = SummaryTable(title='Credentials')
-        standard_output = Text('.//div[@id="retirement"]//pre')
+        standard_output = Text('.//div[h3[normalize-space(.)="Standard Output"]]'
+                               '//div[contains(@class, "term-container")]')
 
     @property
     def is_displayed(self):
