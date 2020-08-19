@@ -3,6 +3,7 @@ from wait_for import wait_for
 
 from cfme import test_requirements
 from cfme.utils.appliance.console import check_db_ha_failover
+from cfme.utils.blockers import GH
 from cfme.utils.log_validator import LogValidator
 
 pytestmark = [
@@ -236,6 +237,7 @@ def test_appliance_console_cli_configure_dedicated_db(unconfigured_appliance, ap
 
 @test_requirements.ha_proxy
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[GH('ManageIQ/manageiq:20455')])
 def test_appliance_console_cli_ha_crud(unconfigured_appliances, app_creds):
     """Tests the configuration of HA with three appliances including failover to standby node
 
