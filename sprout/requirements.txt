@@ -3,7 +3,7 @@ celery[redis]==4.3.0
 Django==2.2.5
 diaper
 django-object-actions
-django-ipware
+django-ipware==2.1.0  #ipware.ip.get_ip removed in 3.0
 flower
 gunicorn
 kombu==4.5.0
