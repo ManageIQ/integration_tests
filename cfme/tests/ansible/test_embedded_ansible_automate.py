@@ -161,6 +161,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, ansible_repos
         repository=ansible_repository.name,
         playbook="copy_file_example.yml",
         machine_credential="CFME Default Credential",
+        max_ttl=5,
         playbook_input_parameters=[("key", "value", "string")]
     )
     instance = klass.instances.create(
@@ -345,7 +346,6 @@ def setup_ansible_repository(appliance, wait_for_ansible):
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1678132, 1678135])
-@pytest.mark.ignore_stream("5.10")
 @pytest.mark.parametrize(
     ("import_data", "instance"),
     ([DatastoreImport("bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
@@ -416,24 +416,27 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
         provisioning_entry_point=entry_point,
     )
 
+    request.addfinalizer(lambda: catalog_item.delete_if_exists)
+
+    service_catalog = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
     with LogValidator(
         "/var/www/miq/vmdb/log/automation.log",
         matched_patterns=[
-            ".*if Fred is married to Wilma and Barney is married to Betty and Peebles and BamBam "
+            r".*if Fred is married to Wilma and Barney is married to Betty and Peebles and BamBam "
             "are the kids, then the tests work !!!.*"
         ],
-    ).waiting(timeout=120):
+    ).waiting(timeout=600):
         # Ordering service catalog bundle
-        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-        service_catalogs.order()
-        request_description = "Provisioning Service [{0}] from [{0}]".format(catalog_item.name)
-        provision_request = appliance.collections.requests.instantiate(request_description)
-        provision_request.wait_for_request(method="ui")
+        service_catalog.order()
+        provision_request = appliance.collections.requests.instantiate(
+            f"Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]"
+        )
         request.addfinalizer(provision_request.remove_request)
+        provision_request.wait_for_request(method="ui")
 
 
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(automates=[1677575])
 @pytest.mark.parametrize(
     "import_data",

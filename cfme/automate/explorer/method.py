@@ -448,13 +448,12 @@ class MethodCollection(BaseCollection):
     def create(
             self, name=None, display_name=None, location='inline', script=None, data=None,
             cancel=False, validate=True, repository=None, playbook=None, machine_credential=None,
-            hosts=None, max_ttl=None, logging_output=None, escalate_privilege=None, verbosity=None,
+            hosts=None, max_ttl=5, logging_output=None, escalate_privilege=None, verbosity=None,
             playbook_input_parameters=None, inputs=None, embedded_method=None):
 
         add_page = navigate_to(self, 'Add')
 
-        if self.browser.product_version > '5.11' and location.islower():
-            location = location.capitalize()
+        location = location.capitalize()
 
         add_page.fill({'location': location})
         if location.lower() == 'inline':
