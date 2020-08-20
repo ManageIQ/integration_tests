@@ -1673,7 +1673,7 @@ class IPAppliance:
             logger.exception('Exception clearing cached_property "guid"')
         return str(result).rstrip('\n')  # should return UUID from stdout
 
-    def wait_for_ssh(self, timeout=30):
+    def wait_for_ssh(self, timeout=120):
         """Waits for appliance SSH connection to be ready
 
         Args:
