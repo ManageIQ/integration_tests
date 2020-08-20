@@ -10,23 +10,6 @@ pytestmark = [
 
 @pytest.mark.manual
 @pytest.mark.tier(3)
-def test_changing_action_order_in_catalog_bundle_should_not_removes_resource():
-    """
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/16h
-        testtype: functional
-        startsin: 5.8
-        tags: service
-    Bugzilla:
-        1615853
-    """
-    pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(3)
 def test_request_filter_on_request_page():
     """
     Polarion:

@@ -71,6 +71,7 @@ class DetailsMyServiceView(MyServicesView):
     )
     resource_power_status = PowerIcon(".//span/i[contains(@class, 'pficon') and contains("
                                       "@uib-tooltip,'Power State')]")
+    standard_output = Text('.//div[@class="well"]')
 
 
 class ServiceEditForm(MyServicesView):

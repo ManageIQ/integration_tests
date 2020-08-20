@@ -11,6 +11,7 @@ from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigate_to
 from cfme.utils.providers import ProviderFilter
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -144,19 +145,40 @@ def test_ssui_disable_dashboard(appliance, user_self_service_role):
             assert not view.is_displayed
 
 
-@pytest.mark.manual
+@pytest.mark.customer_scenario
 @pytest.mark.tier(2)
-def test_sui_monitor_ansible_playbook_std_output():
-    """
-
-    Polarion:
-        assignee: nansari
-        casecomponent: SelfServiceUI
-        testtype: functional
-        initialEstimate: 1/4h
-        startsin: 5.8
-        tags: ssui
+@pytest.mark.meta(automates=[1437210])
+def test_ssui_ansible_playbook_stdout(appliance, ansible_service_catalog, ansible_service_request,
+                                      ansible_service):
+    """ Test standard output of ansible playbook service
     Bugzilla:
         1437210
+    Polarion:
+        assignee: nansari
+        initialEstimate: 1/4h
+        casecomponent: SelfServiceUI
+        setup:
+            1. Create ansible playbook
+        testSteps:
+            1. Create ansible playbook service catalog item
+            2. Create service catalog
+            3. Order service
+            4. Log in into SSUI
+            5. Navigate to My Services->Service details
+            6. check stdout of service
+        expectedResults:
+            1.
+            2.
+            3.
+            4.
+            5.
+            6. able to see standard output
     """
-    pass
+    ansible_service_catalog.order()
+    ansible_service_request.wait_for_request()
+
+    with appliance.context.use(ViaSSUI):
+        view = navigate_to(ansible_service, "Details")
+        assert view.standard_output.is_displayed
+        wait_for(lambda: view.standard_output.text != "Loading...", timeout=30)
+        assert "Hello World" in view.standard_output.text
