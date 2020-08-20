@@ -799,21 +799,20 @@ def test_service_ansible_verbosity(
 
     view = navigate_to(ansible_service, "Details")
     assert verbosity[0] == view.provisioning.details.get_text_of("Verbosity")
-    assert verbosity[0] == view.retirement.details.get_text_of("Verbosity")
 
 
 @pytest.mark.tier(3)
 @pytest.mark.provider([VMwareProvider])
-@pytest.mark.usefixtures("setup_provider")
-@pytest.mark.parametrize('create_vm', ['big_template'], indirect=True)
 @pytest.mark.meta(automates=[BZ(1448918)])
 def test_ansible_service_linked_vm(
     appliance,
-    create_vm,
+    provider,
+    setup_provider,
     ansible_policy_linked_vm,
     ansible_service_request,
     ansible_service,
-    request,
+    ansible_service_catalog,
+    ansible_catalog_item
 ):
     """Check Whether service has associated VM attached to it.
 
@@ -826,12 +825,16 @@ def test_ansible_service_linked_vm(
         initialEstimate: 1/3h
         tags: ansible_embed
     """
-    create_vm.add_tag()
-    wait_for(lambda: ansible_service_request.exists, num_sec=600)
+    ansible_service_catalog.order()
+    service_vm = appliance.provider_based_collection(provider).instantiate(
+        name=f"{ansible_catalog_item.prov_data['catalog']['vm_name']}0001",
+        provider=provider
+    )
+    wait_for(lambda: ansible_service_request.exists, num_sec=60)
     ansible_service_request.wait_for_request()
 
     view = navigate_to(ansible_service, "Details")
-    assert create_vm.name in view.entities.vms.all_entity_names
+    assert service_vm.name in view.entities.vms.all_entity_names
 
 
 @pytest.mark.tier(1)
