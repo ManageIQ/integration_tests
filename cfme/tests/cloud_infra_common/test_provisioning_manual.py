@@ -376,22 +376,3 @@ def test_auto_placement_provision_to_dvswitch_vlan_vmware():
         initialEstimate: 1/12h
     """
     pass
-
-
-@pytest.mark.manual
-@pytest.mark.tier(2)
-def test_add_multiple_iso_datastore():
-    """
-    Add two RHEV providers.
-    Under Infrastructure- PXE -ISO datastore - add ISO datastore for first
-    provider
-    Add new datastore button should not be disabled once the datastore was
-    added and second datastore can be added.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Services
-        initialEstimate: 1/8h
-        startsin: 5.5
-    """
-    pass
