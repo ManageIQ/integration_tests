@@ -118,7 +118,7 @@ def ansible_private_repository(request, appliance, ansible_scm_credentials):
     repository.delete_if_exists()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_catalog_item(appliance, ansible_repository):
     collection = appliance.collections.catalog_items
     cat_item = collection.create(
@@ -146,7 +146,7 @@ def ansible_catalog_item(appliance, ansible_repository):
     cat_item.delete_if_exists()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_catalog(appliance, ansible_catalog_item):
     catalog = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
                                                     description="my ansible catalog",
@@ -159,7 +159,7 @@ def ansible_catalog(appliance, ansible_catalog_item):
         ansible_catalog_item.catalog = None
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
     service_catalog = ServiceCatalogs(appliance, ansible_catalog, ansible_catalog_item.name)
     return service_catalog
@@ -200,7 +200,7 @@ def ansible_service(appliance, ansible_catalog_item):
         service.delete()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
                                     ansible_service_catalog):
     """Orders an ansible service through the UI
@@ -220,7 +220,7 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
         service.delete()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_catalog_item_create_empty_file(appliance, ansible_repository):
     collection = appliance.collections.catalog_items
     cat_item = collection.create(

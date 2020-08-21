@@ -76,7 +76,7 @@ def management_event_instance(management_event_class, management_event_method):
     )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(start="grp_"),

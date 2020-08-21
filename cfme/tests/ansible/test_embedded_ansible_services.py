@@ -10,7 +10,6 @@ from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.control.explorer.policies import VMControlPolicy
-from cfme.fixtures.ansible_fixtures import bulk_service_teardown
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE_PER_TYPE
@@ -46,57 +45,6 @@ CREDENTIALS = [
     ("Red Hat Virtualization", "host", "get_vms_facts_rhv.yaml"),
     ("Azure", "", "get_resourcegroup_facts_azure.yml"),
 ]
-
-
-@pytest.fixture(scope="function")
-def local_ansible_catalog_item(appliance, ansible_repository):
-    """override global ansible_catalog_item for function scope
-        as these tests modify the catalog item
-    """
-    collection = appliance.collections.catalog_items
-    cat_item = collection.create(
-        collection.ANSIBLE_PLAYBOOK,
-        fauxfactory.gen_alphanumeric(),
-        fauxfactory.gen_alphanumeric(),
-        display_in_catalog=True,
-        provisioning={
-            "repository": ansible_repository.name,
-            "playbook": "dump_all_variables.yml",
-            "machine_credential": "CFME Default Credential",
-            "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
-            "extra_vars": [("some_var", "some_value")]
-        },
-        retirement={
-            "repository": ansible_repository.name,
-            "playbook": "dump_all_variables.yml",
-            "machine_credential": "CFME Default Credential",
-            "extra_vars": [("some_var", "some_value")]
-        }
-    )
-    yield cat_item
-
-    cat_item.delete_if_exists()
-
-
-@pytest.fixture(scope="function")
-def local_ansible_service(appliance, local_ansible_catalog_item):
-    service = MyService(appliance, local_ansible_catalog_item.name)
-    yield service
-
-    if service.exists:
-        service.delete()
-
-
-@pytest.fixture(scope="function")
-def local_ansible_service_request(appliance, ansible_catalog_item):
-    request_descr = (f"Provisioning Service [{ansible_catalog_item.name}] "
-                     f"from [{ansible_catalog_item.name}]")
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    yield service_request
-
-    # big diaper here because of service requests having the same description
-    bulk_service_teardown(appliance)
 
 
 @pytest.fixture(scope="function")
@@ -157,15 +105,15 @@ def dialog_with_catalog_item(appliance, request, ansible_repository, ansible_cat
 
 
 @pytest.fixture()
-def ansible_linked_vm_action(appliance, local_ansible_catalog_item, create_vm):
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
+def ansible_linked_vm_action(appliance, ansible_catalog_item, create_vm):
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"playbook": "add_single_vm_to_service.yml"}
 
     wait_for(lambda: create_vm.ip_address is not None)
 
     action_values = {
         "run_ansible_playbook": {
-            "playbook_catalog_item": local_ansible_catalog_item.name,
+            "playbook_catalog_item": ansible_catalog_item.name,
             "inventory": {"specific_hosts": True, "hosts": create_vm.ip_address},
         }
     }
@@ -248,7 +196,7 @@ def ansible_credential(appliance):
 
 
 @pytest.fixture
-def custom_service_button(appliance, local_ansible_catalog_item):
+def custom_service_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(start="grp_"),
         hover=fauxfactory.gen_alphanumeric(15, start="grp_hvr_"),
@@ -256,7 +204,7 @@ def custom_service_button(appliance, local_ansible_catalog_item):
     button = buttongroup.buttons.create(
         text=fauxfactory.gen_alphanumeric(start="btn_"),
         hover=fauxfactory.gen_alphanumeric(15, start="btn_hvr_"),
-        dialog=local_ansible_catalog_item.provisioning["provisioning_dialog_name"],
+        dialog=ansible_catalog_item.provisioning["provisioning_dialog_name"],
         system="Request",
         request="Order_Ansible_Playbook",
     )
@@ -548,7 +496,7 @@ def test_service_ansible_playbook_plays_table(
 
 @pytest.mark.tier(3)
 def test_service_ansible_playbook_order_credentials(
-    local_ansible_catalog_item, ansible_credential, ansible_service_catalog
+    ansible_catalog_item, ansible_credential, ansible_service_catalog
 ):
     """Test if credentials avaialable in the dropdown in ordering ansible playbook service
     screen.
@@ -560,8 +508,8 @@ def test_service_ansible_playbook_order_credentials(
         initialEstimate: 1/6h
         tags: ansible_embed
     """
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
             "machine_credential": ansible_credential.name
         }
     view = navigate_to(ansible_service_catalog, "Order")
@@ -602,7 +550,7 @@ def test_service_ansible_playbook_pass_extra_vars(
 def test_service_ansible_execution_ttl(
     request,
     ansible_service_catalog,
-    local_ansible_catalog_item,
+    ansible_catalog_item,
     ansible_service,
     ansible_service_request,
 ):
@@ -621,8 +569,8 @@ def test_service_ansible_execution_ttl(
         1519275
         1515841
     """
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
             "playbook": "long_running_playbook.yml",
             "max_ttl": 200
         }
@@ -630,7 +578,7 @@ def test_service_ansible_execution_ttl(
     ansible_service_catalog.order()
     ansible_service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
     view = navigate_to(ansible_service, "Details")
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    assert view.provisioning.results.get_text_of("Status") == "Finished"
 
 
 @pytest.mark.tier(3)
@@ -694,8 +642,7 @@ def test_ansible_group_id_in_payload(
     ansible_service_request.wait_for_request()
     view = navigate_to(ansible_service, "Details")
     view.provisioning.standard_output.wait_displayed(10)
-    assert view.provisioning.standart_output.is_displayed
-    wait_for(lambda: view.provisioning.standart_output.text != "Loading...", timeout=30)
+    wait_for(lambda: view.provisioning.standard_output.text != "Loading...", timeout=30)
     json_str = view.provisioning.standard_output.text.split("--------------------------------")
     # Required data is located in 6th section
     # Then we need to replace or remove some characters to get a parsable json string
@@ -719,8 +666,8 @@ def test_ansible_group_id_in_payload(
 def test_embed_tower_exec_play_against(
     appliance,
     request,
-    local_ansible_catalog_item,
-    local_ansible_service_request,
+    ansible_catalog_item,
+    ansible_service_request,
     ansible_service,
     ansible_service_catalog,
     credential,
@@ -735,8 +682,8 @@ def test_embed_tower_exec_play_against(
         tags: ansible_embed
     """
     playbook = credential[2]
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
             "playbook": playbook,
             "cloud_type": provider_credentials.credential_type,
             "cloud_credential": provider_credentials.name,
@@ -765,12 +712,10 @@ def test_embed_tower_exec_play_against(
 def test_service_ansible_verbosity(
     appliance,
     request,
-    local_ansible_catalog_item,
-    local_ansible_service,
-    local_ansible_service_request,
-    ansible_service_catalog,
-    ansible_service_request,
+    ansible_catalog_item,
     ansible_service,
+    ansible_service_request,
+    ansible_service_catalog,
     verbosity,
 ):
     """Check if the different Verbosity levels can be applied to service and
@@ -786,9 +731,9 @@ def test_service_ansible_verbosity(
     """
     # Adding index 0 which will give pattern for e.g. pattern = "verbosity"=>0.
     pattern = fr'.*"verbosity"=>{verbosity[0]}.*'
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {"verbosity": verbosity}
-        local_ansible_catalog_item.retirement = {"verbosity": verbosity}
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {"verbosity": verbosity}
+        ansible_catalog_item.retirement = {"verbosity": verbosity}
 
     ansible_service_catalog.order()
     with LogValidator("/var/www/miq/vmdb/log/automation.log",
@@ -799,6 +744,10 @@ def test_service_ansible_verbosity(
 
     view = navigate_to(ansible_service, "Details")
     assert verbosity[0] == view.provisioning.details.get_text_of("Verbosity")
+
+    ansible_service.retire()
+    view = navigate_to(ansible_service, "Details")
+    assert verbosity[0] == view.retirement.details.get_text_of("Verbosity")
 
 
 @pytest.mark.tier(3)
@@ -895,8 +844,8 @@ ansible_service_catalog, ansible_service, ansible_service_request):
         initialEstimate: 1/3h
         tags: ansible_embed
     """
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
             "playbook": "ansible_galaxy_role_users.yaml"
         }
 
@@ -941,7 +890,7 @@ ansible_service_catalog, ansible_service, ansible_service_request):
     reason='Credential type not valid for parametrized provider'
 )
 @pytest.mark.tier(3)
-def test_ansible_service_cloud_credentials(appliance, request, local_ansible_catalog_item,
+def test_ansible_service_cloud_credentials(appliance, request, ansible_catalog_item,
 ansible_service_catalog, credential, provider_credentials, ansible_service,
 ansible_service_request):
     """
@@ -960,8 +909,8 @@ ansible_service_request):
     """
     # TODO: Include all providers once all playbooks are in place.
     playbook = credential[2]
-    with update(local_ansible_catalog_item):
-        local_ansible_catalog_item.provisioning = {
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
             "playbook": playbook,
             "cloud_type": provider_credentials.credential_type,
             "cloud_credential": provider_credentials.name,
