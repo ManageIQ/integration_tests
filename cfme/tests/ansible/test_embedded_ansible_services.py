@@ -664,8 +664,6 @@ def test_ansible_group_id_in_payload(
     reason='Credential type not valid for parametrized provider'
 )
 def test_embed_tower_exec_play_against(
-    appliance,
-    request,
     ansible_catalog_item,
     ansible_service_request,
     ansible_service,
@@ -693,7 +691,7 @@ def test_embed_tower_exec_play_against(
     service_request.wait_for_request(num_sec=300, delay=20)
 
     view = navigate_to(ansible_service, "Details")
-    assert view.provisioning.results.get_text_of("Status") == "successful"
+    assert view.provisioning.results.get_text_of("Status") == "Finished"
 
 
 @pytest.mark.tier(2)

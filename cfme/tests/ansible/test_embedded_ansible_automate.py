@@ -426,13 +426,12 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
             r".*if Fred is married to Wilma and Barney is married to Betty and Peebles and BamBam "
             "are the kids, then the tests work !!!.*"
         ],
-    ).waiting(timeout=600):
+    ).waiting(wait=600):
         # Ordering service catalog bundle
         service_catalog.order()
         provision_request = appliance.collections.requests.instantiate(
             f"Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]"
         )
-        request.addfinalizer(provision_request.remove_request)
         provision_request.wait_for_request(method="ui")
 
 
