@@ -126,14 +126,10 @@ def test_custom_group_on_generic_class_crud(appliance, generic_definition):
 
         # delete group
         group.delete()
-        if not (BZ(1744478).blocks or BZ(1773666).blocks):
-            view.flash.assert_success_message(
-                f'CustomButtonSet: "{group.name}" was successfully deleted'
-            )
-        else:
-            view.flash.assert_success_message(
-                'Button Group:"undefined" was successfully deleted'
-            )
+
+        # No 5.10 fix for BZ 1744478, 1773666
+        msg = 'Button Group:"undefined" was successfully deleted'
+        view.flash.assert_success_message(msg)
         assert not group.exists
 
 
@@ -192,14 +188,10 @@ def test_custom_button_on_generic_class_crud(appliance, button_group, is_undefin
 
         # delete button
         button.delete()
-        # TODO(ndhandre): For now, we can not guess exact flash message.
-        #  Change flash as per BZ-1744478.
-        if not (BZ(1744478).blocks or BZ(1773666).blocks):
-            view.flash.assert_success_message(
-                f'CustomButton: "{button.name}" was successfully deleted'
-            )
-        else:
-            view.flash.assert_success_message('Button:"undefined" was successfully deleted')
+
+        # No 5.10 fix for BZ 1744478, 1773666
+        msg = 'Button:"undefined" was successfully deleted'
+        view.flash.assert_success_message(msg)
         assert not button.exists
 
 
@@ -301,9 +293,7 @@ def test_generic_object_button_edited_request(button_without_group):
     assert view.request.read() == button_without_group.request
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1753289, forced_streams=["5.11"]), BZ(1744478)], automates=[1753289, 1744478]
-)
+@pytest.mark.meta(automates=[1753289, 1744478])
 def test_generic_object_button_delete_flash(button_without_group):
     """
     Bugzilla:
@@ -324,12 +314,13 @@ def test_generic_object_button_delete_flash(button_without_group):
             3. Assert that the button name is in the flash message
     """
     view = navigate_to(button_without_group, "Details")
-    view.configuration.item_select('Remove this Custom Button from Inventory', handle_alert=True)
+    view.configuration.item_select(button_without_group.REMOVE_TEXT, handle_alert=True)
     view = button_without_group.create_view(GenericObjectDefinitionAllView)
     assert view.is_displayed
-    view.flash.assert_success_message(
-        f'CustomButton: "{button_without_group.name}" was successfully deleted'
-    )
+
+    # No 5.10 fix for BZ 1744478, 1773666
+    msg = 'Button:"undefined" was successfully deleted'
+    view.flash.assert_success_message(msg)
 
 
 @pytest.mark.manual
