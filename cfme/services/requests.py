@@ -299,7 +299,7 @@ class RequestsView(RequestBasicView):
         contains = '' if not partial_check else '__contains'
         column_list = self.table.attributized_headers
         cells = copy(cells)
-        for key in cells.keys():
+        for key in list(cells):
             for column_name, column_text in column_list.items():
                 if key == column_text:
                     cells[f'{column_name}{contains}'] = cells.pop(key)
