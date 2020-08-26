@@ -57,15 +57,9 @@ class MyServicesView(BaseLoggedInPage):
 
     @property
     def in_myservices(self):
-        # Slicing in currently_selected is workaround for BZ-1733489
-        nav_selected = (
-            self.navigation.currently_selected[:2]
-            if BZ(1733489).blocks
-            else self.navigation.currently_selected
-        )
         return (
             self.logged_in_as_current_user and
-            nav_selected == ["Services", "My Services"]
+            self.navigation.currently_selected == ["Services", "My Services"]
         )
 
     @property
