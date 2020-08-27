@@ -486,6 +486,7 @@ def test_copy_save_service_dialog_with_the_same_name():
     Polarion:
         assignee: nansari
         startsin: 5.10
+        caseimportance: medium
         casecomponent: Services
         initialEstimate: 1/6h
         testSteps:
@@ -650,6 +651,7 @@ def test_access_child_services_from_the_my_service():
     Polarion:
         assignee: nansari
         startsin: 5.10
+        caseimportance: medium
         casecomponent: Services
         initialEstimate: 1/16h
         testSteps:
@@ -724,6 +726,7 @@ def test_datepicker_field_set_to_required():
     Polarion:
         assignee: nansari
         startsin: 5.10
+        caseimportance: medium
         casecomponent: Services
         initialEstimate: 1/6h
         testSteps:
