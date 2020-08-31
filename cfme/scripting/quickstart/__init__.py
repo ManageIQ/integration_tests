@@ -16,10 +16,8 @@ if sys.version_info.major != 3 and sys.version_info.minor >= 7:
     print("ERROR: quickstart only runs in python 3.7+")
     sys.exit(2)
 
-
 IN_VENV = os.path.exists(os.path.join(sys.prefix, 'pyvenv.cfg'))
 IN_LEGACY_VIRTUALENV = getattr(sys, 'real_prefix', None) is not None
-
 IN_VIRTUAL_ENV = IN_VENV or IN_LEGACY_VIRTUALENV
 
 

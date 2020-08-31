@@ -1,9 +1,9 @@
 # https://docs.travis-ci.com/user/languages/python/#python-37-and-higher
-dist: xenial
+dist: bionic
 addons:
   apt:
     packages:
-      - python3-venv
+      - python3
       - gcc
       - gnutls-dev
       - postgresql
@@ -34,44 +34,24 @@ jobs:
     - stage: linting
       python: '3.7'
       env:
+      before_install:
+        - sudo apt-get update
       install:
-      - pip install pre-commit flake8
+        - pip install pre-commit flake8
       script:
-      - pre-commit clean
-      - pre-commit run --all-files
+        - pre-commit clean
+        - pre-commit run --all-files
       after_failure:
-      - git diff
+        - git diff
 
     - stage: test
       python: '3.7'
-      dist: xenial
-      addons:
-        apt:
-          packages:
-            - python3-venv
-            - gcc
-            - gnutls-dev
-            - postgresql
-            - libxml2-dev
-            - libxslt1-dev
-            - libzmq3-dev
-            - libcurl4-openssl-dev
-            - g++
-            - openssl
-            - libffi-dev
-            - python3-dev
-            - libtesseract-dev
-            - libpng-dev
-            - libfreetype6-dev
-            - libssl-dev
-            - python3-dbg
-            - git
       env:
         # work around travis being missconfigured
         - BOTO_CONFIG=/dev/null
       install:
         - pip3 install -U setuptools pip
-        - python3 -m cfme.scripting.quickstart
+        - python3 -m cfme.scripting.quickstart --mk-virtualenv $HOME/virtualenv/python3.7
         # use templates for conf files necessary for collecting
         - cp conf/cfme_data.yaml.template conf/cfme_data.yaml
         - cp conf/env.yaml.template conf/env.yaml
