@@ -137,9 +137,13 @@ class LogValidator:
             TimedOutError: If failed to match pattern in respective timeout
             FailPatternMatchError: If failure pattern matched
         """
-        delay = kwargs.pop('delay', 5)
+        wait = kwargs.pop('timeout', None) or wait
         if wait:
-            wait_for(lambda: self._is_valid, delay=delay, timeout=wait, message=message, **kwargs)
+            wait_for(lambda: self._is_valid,
+                     delay=kwargs.pop('delay', 5),
+                     timeout=wait,
+                     message=message,
+                     **kwargs)
             return True
         else:
             return self._is_valid

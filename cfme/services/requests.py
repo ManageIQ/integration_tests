@@ -81,20 +81,24 @@ class Request(BaseEntity):
     def rest(self):
         if self.partial_check:
             matching_requests = self.appliance.rest_api.collections.requests.find_by(
-                description='%{}%'.format(self.cells['Description']))
+                description=f'%{self.cells["Description"]}%')
         else:
             matching_requests = self.appliance.rest_api.collections.requests.find_by(
                 description=self.cells['Description'])
 
         if len(matching_requests) > 1:
+            # TODO: This forces anything using requests to handle this exception
+            # The class needs support for identifying a request by its ID
+            # This ID might not be available on instantiation, but needs to be set somehow
+            # Ideally before MIQ receives multiple orders for the same service, which have same desc
             raise RequestException(
-                'Multiple requests with matching \"{}\" '
-                'found - be more specific!'.format(
-                    self.description))
+                f'Multiple requests with matching "{self.description}" found - be more specific!'
+            )
         elif len(matching_requests) == 0:
             raise ItemNotFound(
-                'Nothing matching "{}" with partial_check={} was found'.format(
-                    self.cells['Description'], self.partial_check))
+                f'Nothing matching "{self.cells["Description"]}" with '
+                f'partial_check={self.partial_check} was found'
+            )
         else:
             return matching_requests[0]
 

@@ -76,7 +76,7 @@ def management_event_instance(management_event_class, management_event_method):
     )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def custom_vm_button(appliance, ansible_catalog_item):
     buttongroup = appliance.collections.button_groups.create(
         text=fauxfactory.gen_alphanumeric(start="grp_"),
@@ -161,6 +161,7 @@ def test_automate_ansible_playbook_method_type(request, appliance, ansible_repos
         repository=ansible_repository.name,
         playbook="copy_file_example.yml",
         machine_credential="CFME Default Credential",
+        max_ttl=5,
         playbook_input_parameters=[("key", "value", "string")]
     )
     instance = klass.instances.create(
@@ -219,8 +220,8 @@ def test_ansible_playbook_button_crud(ansible_catalog_item, appliance, request):
 
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_embedded_ansible_custom_button_localhost(create_vm_modscope, custom_vm_button,
-        appliance, ansible_service_request_funcscope,
-        ansible_service_funcscope, ansible_catalog_item):
+        appliance, ansible_service_request,
+        ansible_service, ansible_catalog_item):
     """
     Polarion:
         assignee: gtalreja
@@ -235,9 +236,9 @@ def test_embedded_ansible_custom_button_localhost(create_vm_modscope, custom_vm_
     order_dialog_view.submit_button.wait_displayed()
     order_dialog_view.fields("credential").fill("CFME Default Credential")
     order_dialog_view.submit_button.click()
-    wait_for(ansible_service_request_funcscope.exists, num_sec=600)
-    ansible_service_request_funcscope.wait_for_request()
-    view = navigate_to(ansible_service_funcscope, "Details")
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == "localhost"
     status = "successful" if appliance.version < "5.11" else "Finished"
@@ -246,8 +247,8 @@ def test_embedded_ansible_custom_button_localhost(create_vm_modscope, custom_vm_
 
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_embedded_ansible_custom_button_target_machine(create_vm_modscope, custom_vm_button,
-        ansible_credential, appliance, ansible_service_request_funcscope,
-        ansible_service_funcscope):
+        ansible_credential, appliance, ansible_service_request,
+        ansible_service):
     """
     Polarion:
         assignee: gtalreja
@@ -262,9 +263,9 @@ def test_embedded_ansible_custom_button_target_machine(create_vm_modscope, custo
     order_dialog_view.submit_button.wait_displayed()
     order_dialog_view.fields("credential").fill(ansible_credential.name)
     order_dialog_view.submit_button.click()
-    wait_for(ansible_service_request_funcscope.exists, num_sec=600)
-    ansible_service_request_funcscope.wait_for_request()
-    view = navigate_to(ansible_service_funcscope, "Details")
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == create_vm_modscope.ip_address
     status = "successful" if appliance.version < "5.11" else "Finished"
@@ -273,8 +274,8 @@ def test_embedded_ansible_custom_button_target_machine(create_vm_modscope, custo
 
 @pytest.mark.parametrize('create_vm_modscope', ['full_template'], indirect=True)
 def test_embedded_ansible_custom_button_specific_hosts(create_vm_modscope, custom_vm_button,
-        ansible_credential, appliance, ansible_service_request_funcscope,
-        ansible_service_funcscope):
+        ansible_credential, appliance, ansible_service_request,
+        ansible_service):
     """
     Polarion:
         assignee: gtalreja
@@ -290,9 +291,9 @@ def test_embedded_ansible_custom_button_specific_hosts(create_vm_modscope, custo
     order_dialog_view.submit_button.wait_displayed()
     order_dialog_view.fields("credential").fill(ansible_credential.name)
     order_dialog_view.submit_button.click()
-    wait_for(ansible_service_request_funcscope.exists, num_sec=600)
-    ansible_service_request_funcscope.wait_for_request()
-    view = navigate_to(ansible_service_funcscope, "Details")
+    wait_for(ansible_service_request.exists, num_sec=600)
+    ansible_service_request.wait_for_request()
+    view = navigate_to(ansible_service, "Details")
     hosts = view.provisioning.details.get_text_of("Hosts")
     assert hosts == create_vm_modscope.ip_address
     status = "successful" if appliance.version < "5.11" else "Finished"
@@ -345,7 +346,6 @@ def setup_ansible_repository(appliance, wait_for_ansible):
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(automates=[1678132, 1678135])
-@pytest.mark.ignore_stream("5.10")
 @pytest.mark.parametrize(
     ("import_data", "instance"),
     ([DatastoreImport("bz_1678135.zip", "Ansible_State_Machine_for_Ansible_stats3",
@@ -416,24 +416,26 @@ def test_variable_pass(request, appliance, setup_ansible_repository, import_data
         provisioning_entry_point=entry_point,
     )
 
+    request.addfinalizer(lambda: catalog_item.delete_if_exists)
+
+    service_catalog = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
+
     with LogValidator(
         "/var/www/miq/vmdb/log/automation.log",
         matched_patterns=[
-            ".*if Fred is married to Wilma and Barney is married to Betty and Peebles and BamBam "
+            r".*if Fred is married to Wilma and Barney is married to Betty and Peebles and BamBam "
             "are the kids, then the tests work !!!.*"
         ],
-    ).waiting(timeout=120):
+    ).waiting(wait=600):
         # Ordering service catalog bundle
-        service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
-        service_catalogs.order()
-        request_description = "Provisioning Service [{0}] from [{0}]".format(catalog_item.name)
-        provision_request = appliance.collections.requests.instantiate(request_description)
+        service_catalog.order()
+        provision_request = appliance.collections.requests.instantiate(
+            f"Provisioning Service [{catalog_item.name}] from [{catalog_item.name}]"
+        )
         provision_request.wait_for_request(method="ui")
-        request.addfinalizer(provision_request.remove_request)
 
 
 @pytest.mark.tier(1)
-@pytest.mark.ignore_stream("5.10")
 @pytest.mark.meta(automates=[1677575])
 @pytest.mark.parametrize(
     "import_data",

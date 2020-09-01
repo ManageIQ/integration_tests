@@ -12,6 +12,7 @@ from cfme.utils.conf import cfme_data
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.net import find_pingable
+from cfme.utils.rest import delete_resources_from_collection
 from cfme.utils.wait import TimedOutError
 from cfme.utils.wait import wait_for
 
@@ -117,7 +118,7 @@ def ansible_private_repository(request, appliance, ansible_scm_credentials):
     repository.delete_if_exists()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_catalog_item(appliance, ansible_repository):
     collection = appliance.collections.catalog_items
     cat_item = collection.create(
@@ -145,7 +146,7 @@ def ansible_catalog_item(appliance, ansible_repository):
     cat_item.delete_if_exists()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_catalog(appliance, ansible_catalog_item):
     catalog = appliance.collections.catalogs.create(fauxfactory.gen_alphanumeric(),
                                                     description="my ansible catalog",
@@ -158,56 +159,53 @@ def ansible_catalog(appliance, ansible_catalog_item):
         ansible_catalog_item.catalog = None
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_service_catalog(appliance, ansible_catalog_item, ansible_catalog):
     service_catalog = ServiceCatalogs(appliance, ansible_catalog, ansible_catalog_item.name)
     return service_catalog
 
 
+def bulk_service_teardown(appliance):
+    """Delete all service requests on the appliance via rest"""
+    # big diaper here because of service requests having the same description
+    requests = [r for r in appliance.rest_api.collections.service_requests]
+    if requests:
+        delete_resources_from_collection(
+            resources=requests,
+            collection=appliance.rest_api.collections.service_requests,
+            check_response=False
+        )
+
+
 @pytest.fixture(scope="function")
-def ansible_service_request_funcscope(appliance, ansible_catalog_item):
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request = appliance.collections.requests.instantiate(description=request_descr)
-    yield service_request
-
-    if service_request.exists():
-        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
-
-
-@pytest.fixture(scope="function")
-def ansible_service_funcscope(appliance, ansible_catalog_item):
-    service = MyService(appliance, ansible_catalog_item.name)
-    yield service
-
-    if service.exists:
-        service.delete()
-
-
-@pytest.fixture(scope="module")
 def ansible_service_request(appliance, ansible_catalog_item):
-    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    """
+    This fixture is VERY aggressive in teardown, and deletes ALL service requests on the appliance
+    """
+    request_descr = (f"Provisioning Service [{ansible_catalog_item.name}] "
+                     f"from [{ansible_catalog_item.name}]")
     service_request = appliance.collections.requests.instantiate(description=request_descr)
     yield service_request
 
-    if service_request.exists():
-        service_id = appliance.rest_api.collections.service_requests.get(description=request_descr)
-        appliance.rest_api.collections.service_requests.action.delete(id=service_id.id)
+    bulk_service_teardown(appliance)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_service(appliance, ansible_catalog_item):
     service = MyService(appliance, ansible_catalog_item.name)
     yield service
 
+    bulk_service_teardown(appliance)  # deletes any service requests
     if service.exists:
         service.delete()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
                                     ansible_service_catalog):
-    """Tests if ansible playbook service provisioning is shown in service requests."""
+    """Orders an ansible service through the UI
+    Deletes the service request after completion, as well as the service
+    """
     ansible_service_catalog.order()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
@@ -222,7 +220,7 @@ def order_ansible_service_in_ops_ui(appliance, ansible_catalog_item,
         service.delete()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def ansible_catalog_item_create_empty_file(appliance, ansible_repository):
     collection = appliance.collections.catalog_items
     cat_item = collection.create(
