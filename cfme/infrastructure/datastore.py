@@ -18,6 +18,7 @@ from cfme.common.vm_views import VMEntities
 from cfme.exceptions import displayed_not_implemented
 from cfme.exceptions import ItemNotFound
 from cfme.exceptions import MenuItemNotFound
+from cfme.infrastructure.provider import InfraProvider
 from cfme.modeling.base import BaseCollection
 from cfme.modeling.base import BaseEntity
 from cfme.optimize.utilization import DatastoreUtilizationTrendsView
@@ -216,7 +217,7 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
     pretty_attrs = ['name', 'provider_key']
     _param_name = ParamClassName('name')
     name = attr.ib()
-    provider = attr.ib()
+    provider: InfraProvider = attr.ib()
     type = attr.ib(default=None)
 
     def __attrs_post_init__(self):
@@ -358,7 +359,7 @@ class Datastore(Pretty, BaseEntity, Taggable, CustomButtonEventsMixin):
 
 
 @attr.s
-class DatastoreCollection(BaseCollection):
+class DatastoreCollection(BaseCollection[Datastore]):
     """Collection class for :py:class:`cfme.infrastructure.datastore.Datastore`"""
     ENTITY = Datastore
 
@@ -421,7 +422,6 @@ class DatastoreCollection(BaseCollection):
         datastores = list(datastores)
 
         checked_datastores = list()
-
         view = navigate_to(self, 'All')
 
         for datastore in datastores:
@@ -469,6 +469,7 @@ class DetailsFromProvider(CFMENavigateStep):
     VIEW = DatastoreDetailsView
 
     def prerequisite(self):
+        # TODO use DatastoresOfProvider
         prov_view = navigate_to(self.obj.provider, 'Details')
         prov_view.entities.summary('Relationships').click_at('Datastores')
         return self.obj.create_view(DatastoresView)
