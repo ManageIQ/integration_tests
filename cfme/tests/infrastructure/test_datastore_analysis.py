@@ -1,14 +1,15 @@
 import pytest
-from widgetastic_patternfly import DropdownDisabled
 
 from cfme import test_requirements
-from cfme.exceptions import MenuItemNotFound
+from cfme.infrastructure.datastore import Datastore
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
+
 
 pytestmark = [test_requirements.smartstate]
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
@@ -56,41 +57,51 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope='module')
-def datastore(appliance, provider, datastore_type, datastore_name):
-    return appliance.collections.datastores.instantiate(name=datastore_name,
-                                                        provider=provider,
-                                                        type=datastore_type)
+@pytest.fixture
+def datastore(temp_appliance_preconfig_funcscope, provider, datastore_type, datastore_name)\
+        -> Datastore:
+    with temp_appliance_preconfig_funcscope as appliance:
+        return appliance.collections.datastores.instantiate(name=datastore_name,
+                                                            provider=provider,
+                                                            type=datastore_type)
 
 
-@pytest.fixture(scope='module')
-def datastores_hosts_setup(provider, datastore):
-    hosts = datastore.hosts.all()
-    for host in hosts:
-        host_data = [data
-                     for data in provider.data.get("hosts", {})
-                     if data.get("name") == host.name]
-        if not host_data:
-            pytest.skip(f"No host data for provider {provider} and datastore {datastore}")
-        host.update_credentials_rest(credentials=host_data[0]['credentials'])
-    else:
-        pytest.skip(f"No hosts attached to the datastore selected for testing: {datastore}")
+@pytest.fixture
+def datastores_hosts_setup(setup_provider_temp_appliance, provider, datastore):
+    updated_hosts = []
+    for host in datastore.hosts.all():
+        try:
+            host_data, = [data
+                          for data in provider.data.get("hosts", {})
+                          if data.get("name") == host.name]
+        except ValueError as exc:
+            pytest.skip(f"Data for host {host} in provider {provider} and datastore {datastore} "
+                        f"couldn't be determined: {exc}.")
+        else:
+            host.update_credentials_rest(credentials=host_data['credentials'])
+            updated_hosts.append(host)
+
+    if not updated_hosts:
+        pytest.skip(f"No hosts attached to the datastore {datastore} was selected for testing.")
     yield
-    for host in hosts:
+    for host in updated_hosts:
         host.remove_credentials_rest()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture()
 def clear_all_tasks(appliance):
     # clear table
     col = appliance.collections.tasks.filter({'tab': 'AllTasks'})
     col.delete_all()
 
 
+# Note that it seems like that if there is SSA already ongoing and we attempt to start another one,
+# we get "SmartState Analysis action does not apply to selected items" flash message. Therefore
+# I the temp_appliance is used here to work around this difficulty.
 @pytest.mark.tier(2)
-def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastores_hosts_setup,
-                                clear_all_tasks, appliance):
-    """Tests smarthost analysis
+def test_run_datastore_analysis(setup_provider_temp_appliance, datastore, soft_assert,
+                                clear_all_tasks, temp_appliance_preconfig_funcscope):
+    """Tests SmartState analysis
 
     Metadata:
         test_flag: datastore_analysis
@@ -101,30 +112,38 @@ def test_run_datastore_analysis(setup_provider, datastore, soft_assert, datastor
         caseimportance: critical
         initialEstimate: 1/3h
     """
-    # Initiate analysis
-    try:
-        datastore.run_smartstate_analysis(wait_for_task_result=True)
-    except (MenuItemNotFound, DropdownDisabled):
-        # TODO need to update to cover all detastores
-        pytest.skip(f'Smart State analysis is disabled for {datastore.name} datastore')
-    details_view = navigate_to(datastore, 'DetailsFromProvider')
-    # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
+    temp_appliance_preconfig_funcscope.browser_steal = True
+    with temp_appliance_preconfig_funcscope as appliance:
+        # Initiate analysis
+        # Note that it would be great to test both navigation paths.
+        if GH(('ManageIQ/manageiq', 20367)).blocks:
+            datastore.run_smartstate_analysis_from_provider()
+        else:
+            datastore.run_smartstate_analysis()
 
-    # Check results of the analysis and the datastore type
-    # TODO need to clarify datastore type difference
-    # soft_assert(c_datastore == datastore.type.upper(),
-    #             'Datastore type does not match the type defined in yaml:' +
-    #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
+        # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
+        # Check results of the analysis and the datastore type
+        # TODO need to clarify datastore type difference
+        # soft_assert(c_datastore == datastore.type.upper(),
+        #             'Datastore type does not match the type defined in yaml:' +
+        #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
 
-    wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
-             delay=15, timeout="3m",
-             fail_condition='0',
-             fail_func=appliance.server.browser.refresh)
-    managed_vms = details_view.entities.relationships.get_text_of('Managed VMs')
-    if managed_vms != '0':
-        for row_name in CONTENT_ROWS_TO_CHECK:
-            value = details_view.entities.content.get_text_of(row_name)
-            soft_assert(value != '0',
-                        f'Expected value for {row_name} to be non-empty')
-    else:
-        assert details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[-1]) != '0'
+        if datastore.provider.one_of(RHEVMProvider) and GH(('ManageIQ/manageiq', 20366)).blocks:
+            # or (datastore.provider.one_of(VMwareProvider) and
+            #     Version(datastore.provider.version) == '6.5'):   # Why is that needed?
+            return
+
+        details_view = navigate_to(datastore, 'DetailsFromProvider')
+        wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
+                 delay=15, timeout="6m",
+                 fail_condition='0',
+                 fail_func=appliance.server.browser.refresh)
+
+        managed_vms = details_view.entities.relationships.get_text_of('Managed VMs')
+        if managed_vms != '0':
+            for row_name in CONTENT_ROWS_TO_CHECK:
+                value = details_view.entities.content.get_text_of(row_name)
+                soft_assert(value != '0',
+                            f'Expected value for {row_name} to be non-empty')
+        else:
+            assert details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[-1]) != '0'
