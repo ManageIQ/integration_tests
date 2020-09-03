@@ -31,7 +31,7 @@ HTTPD_ROLES = ('cockpit_ws', 'user_interface', 'remote_console', 'web_services')
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_region
-def test_appliance_replicate_between_regions(provider, replicated_appliances):
+def test_appliance_replicate_between_regions(request, provider, replicated_appliances_modscope):
     """Test that a provider added to the remote appliance is replicated to the global
     appliance.
 
@@ -43,10 +43,17 @@ def test_appliance_replicate_between_regions(provider, replicated_appliances):
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_appliance, global_appliance = replicated_appliances
+    remote_appliance, global_appliance = replicated_appliances_modscope
 
     with remote_appliance:
         provider.create()
+
+    @request.addfinalizer
+    def _delete_provider():
+        with remote_appliance:
+            provider.delete_if_exists()
+
+    with remote_appliance:
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
     with global_appliance:
@@ -84,7 +91,8 @@ def test_external_database_appliance(provider, distributed_appliances):
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_region
-def test_appliance_replicate_database_disconnection(provider, replicated_appliances):
+def test_appliance_replicate_database_disconnection(
+        request, provider, replicated_appliances_modscope):
     """Test that a provider created on the remote appliance *after* a database restart on the
     global appliance is still successfully replicated to the global appliance.
 
@@ -96,7 +104,7 @@ def test_appliance_replicate_database_disconnection(provider, replicated_applian
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_appliance, global_appliance = replicated_appliances
+    remote_appliance, global_appliance = replicated_appliances_modscope
 
     global_appliance.db_service.stop()
     sleep(60)
@@ -104,6 +112,13 @@ def test_appliance_replicate_database_disconnection(provider, replicated_applian
 
     with remote_appliance:
         provider.create()
+
+    @request.addfinalizer
+    def _delete_provider():
+        with remote_appliance:
+            provider.delete_if_exists()
+
+    with remote_appliance:
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
     with global_appliance:
@@ -114,7 +129,8 @@ def test_appliance_replicate_database_disconnection(provider, replicated_applian
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_region
-def test_appliance_replicate_database_disconnection_with_backlog(provider, replicated_appliances):
+def test_appliance_replicate_database_disconnection_with_backlog(
+        request, provider, replicated_appliances_modscope):
     """Test that a provider created on the remote appliance *before* a database restart on the
     global appliance is still successfully replicated to the global appliance.
 
@@ -126,13 +142,21 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider, repli
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_appliance, global_appliance = replicated_appliances
+    remote_appliance, global_appliance = replicated_appliances_modscope
 
     with remote_appliance:
         provider.create()
-        global_appliance.db_service.stop()
-        sleep(60)
-        global_appliance.db_service.start()
+
+    @request.addfinalizer
+    def _delete_provider():
+        with remote_appliance:
+            provider.delete_if_exists()
+
+    global_appliance.db_service.stop()
+    sleep(60)
+    global_appliance.db_service.start()
+
+    with remote_appliance:
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
     with global_appliance:
@@ -147,7 +171,8 @@ def test_appliance_replicate_database_disconnection_with_backlog(provider, repli
 @pytest.mark.provider([CloudProvider, InfraProvider], selector=ONE_PER_TYPE)
 @test_requirements.multi_region
 @test_requirements.power
-def test_replication_vm_power_control(provider, create_vm, context, replicated_appliances):
+def test_replication_vm_power_control(
+        request, provider, create_vm, context, replicated_appliances_modscope):
     """Test that the global appliance can power off a VM managed by the remote appliance.
 
     Metadata:
@@ -158,15 +183,20 @@ def test_replication_vm_power_control(provider, create_vm, context, replicated_a
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_appliance, global_appliance = replicated_appliances
+    remote_appliance, global_appliance = replicated_appliances_modscope
 
     vm_per_appliance = {
         a: a.provider_based_collection(provider).instantiate(create_vm.name, provider)
-        for a in replicated_appliances
+        for a in replicated_appliances_modscope
     }
 
     with remote_appliance:
         assert provider.create(validate_inventory=True), "Could not create provider."
+
+    @request.addfinalizer
+    def _delete_provider():
+        with remote_appliance:
+            provider.delete_if_exists()
 
     with global_appliance:
         vm = vm_per_appliance[global_appliance]
@@ -189,7 +219,7 @@ def test_replication_vm_power_control(provider, create_vm, context, replicated_a
 @pytest.mark.meta(automates=[1678142])
 @pytest.mark.ignore_stream('upstream')
 @test_requirements.multi_region
-def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
+def test_replication_connect_to_vm_in_region(request, provider, replicated_appliances_modscope):
     """Test that the user can view the VM in the global appliance UI, click on the
     "Connect to VM in its Region" button, and be redirected to the VM in the remote appliance UI.
 
@@ -202,17 +232,24 @@ def test_replication_connect_to_vm_in_region(provider, replicated_appliances):
         casecomponent: Appliance
         startsin: 5.11
     """
-    remote_appliance, global_appliance = replicated_appliances
+    remote_appliance, global_appliance = replicated_appliances_modscope
 
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     vm_per_appliance = {
         a: a.provider_based_collection(provider).instantiate(vm_name, provider)
-        for a in replicated_appliances
+        for a in replicated_appliances_modscope
     }
 
     with remote_appliance:
         provider.create()
+
+    @request.addfinalizer
+    def _delete_provider():
+        with remote_appliance:
+            provider.delete_if_exists()
+
+    with remote_appliance:
         remote_appliance.collections.infra_providers.wait_for_a_provider()
 
     with global_appliance:
@@ -380,7 +417,7 @@ def test_server_role_failover(distributed_appliances):
 
 @pytest.mark.ignore_stream("upstream")
 @test_requirements.multi_region
-def test_appliance_replicate_zones(replicated_appliances):
+def test_appliance_replicate_zones(request, replicated_appliances_modscope):
     """
     Verify that no remote zones can be selected when changing the server's zone
     in the global appliance UI.
@@ -394,25 +431,35 @@ def test_appliance_replicate_zones(replicated_appliances):
         caseimportance: medium
         initialEstimate: 1/4h
     """
-    remote_appliance, global_appliance = replicated_appliances
+    remote_appliance, global_appliance = replicated_appliances_modscope
 
-    remote_zone = 'remote-A'
-    remote_appliance.collections.zones.create(name=remote_zone, description=remote_zone)
+    remote_zone = create_zone(
+        remote_appliance, fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric())
 
-    global_zone = 'global-A'
-    global_appliance.collections.zones.create(name=global_zone, description=global_zone)
+    @request.addfinalizer
+    def _delete_remote_zone():
+        with remote_appliance:
+            remote_zone.delete()
+
+    global_zone = create_zone(
+        global_appliance, fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric())
+
+    @request.addfinalizer
+    def _delete_global_zone():
+        with global_appliance:
+            global_zone.delete()
 
     with global_appliance:
         view = navigate_to(global_appliance.server, 'Server')
         global_zones = [o.text for o in view.basic_information.appliance_zone.all_options]
-        assert global_zone in global_zones and remote_zone not in global_zones
+        assert global_zone.name in global_zones and remote_zone.name not in global_zones
 
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(automates=[1796681])
 @test_requirements.multi_region
-def test_appliance_replicate_remote_down(replicated_appliances):
+def test_appliance_replicate_remote_down(request, replicated_appliances_modscope):
     """Test that the Replication tab displays in the global appliance UI when the remote appliance
     database cannot be reached.
 
@@ -427,7 +474,7 @@ def test_appliance_replicate_remote_down(replicated_appliances):
         initialEstimate: 1/4h
         casecomponent: Appliance
     """
-    remote_appliance, global_appliance = replicated_appliances
+    remote_appliance, global_appliance = replicated_appliances_modscope
 
     with global_appliance:
         global_region = global_appliance.server.zone.region
@@ -438,6 +485,13 @@ def test_appliance_replicate_remote_down(replicated_appliances):
             f"firewall-cmd --direct --add-rule ipv4 filter OUTPUT 0 -d {remote_appliance.hostname}"
             " -j DROP")
         assert result.success, "Could not create firewall rule on global appliance."
+
+        @request.addfinalizer
+        def _remove_firewall_rule():
+            result = global_appliance.ssh_client.run_command(
+                "firewall-cmd --direct --remove-rule ipv4 filter OUTPUT 0 -d"
+                f" {remote_appliance.hostname}  -j DROP")
+            assert result.success, "Could not remove firewall rule on global appliance."
 
         global_appliance.browser.widgetastic.refresh()
         assert global_region.replication.get_replication_status(host=remote_appliance.hostname), (
