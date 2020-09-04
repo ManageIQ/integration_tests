@@ -22,10 +22,11 @@ from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.markers.env_markers.provider import providers
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
+from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
-from cfme.utils.version import Version
 from cfme.utils.wait import wait_for
 
 pytestmark = [
@@ -534,9 +535,13 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
 @pytest.fixture
 @pytest.mark.provider([AnsibleTowerProvider], selector=ONE_PER_VERSION, scope="function")
 def provider_with_special_characters(provider):
-    # The AWX version 3.4 cannot be patched.
-
-    template_name = 'add_special_characters'
+    """
+    Adds a special character sequence to extra_vars on a AWX provider to test BZ 1819310.
+    Note it seems the the AWX version 3.4 cannot be patched. It is refusing the request.
+    Note this was making the CFME unable to load the provider, thus this may interfere with other
+    tests when CFME is broken (due to regression).
+    """
+    template_name = provider.data['special_chars_template']
     session = requests.session()
     session.verify = False
 
@@ -567,12 +572,16 @@ def provider_with_special_characters(provider):
 
 
 @pytest.mark.meta(automates=[1819310])
-@pytest.mark.provider([AnsibleTowerProvider], selector=ONE_PER_VERSION, scope="function")
-@pytest.mark.uncollectif(lambda provider: provider.version == Version(3.4),
-                         reason="The AWX version 3.4 cannot be modified to contain special chars.")
+@pytest.mark.provider(gen_func=providers,
+                      selector=ONE_PER_VERSION, scope="function",
+                      filters=[ProviderFilter(
+                          classes=[AnsibleTowerProvider],
+                          required_fields=['special_chars_template'])])
 def test_awx_with_special_chars_refreshes(provider_with_special_characters: AnsibleTowerProvider):
     """
     Tests whether provider with special characters in template definition refreshes in CFME.
+
+    Check the docs for the fixture `provider_with_special_characters` for details.
 
     Polarion:
         assignee: jhenner
