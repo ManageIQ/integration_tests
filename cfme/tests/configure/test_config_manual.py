@@ -236,22 +236,3 @@ def test_subscription_disruption():
             appeared in global appliance
     """
     pass
-
-
-@pytest.mark.manual
-@pytest.mark.meta(coverage=[1625788])
-def test_default_miq_group_is_tenant_group():
-    """
-    Test whether the
-    Tenant.root_tenant.default_miq_group.tenant_group? == true
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
-        initialEstimate: 1/8h
-        startsin: 5.10.0.18
-        caseimportance: high
-    Bugzilla:
-        1625788
-    """
-    pass

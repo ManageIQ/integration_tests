@@ -4,6 +4,7 @@ from cfme import test_requirements
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.markers.env_markers.provider import all_required
+from cfme.markers.env_markers.provider import ONE
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -94,3 +95,34 @@ def test_provider_type_support(appliance, soft_assert):
                     'Provider type [{}] not in Add provider form options [{}]'
                     .format(type_text, options)
                 )
+
+
+@test_requirements.configuration
+@pytest.mark.meta(automates=[1625788])
+@pytest.mark.provider([BaseProvider], scope="module", selector=ONE)
+def test_default_miq_group_is_tenant_group(appliance, create_vm):
+    """
+    Test whether the
+    Tenant.root_tenant.default_miq_group.tenant_group? == true
+
+    Bugzilla:
+        1625788
+
+    Polarion:
+        assignee: jhenner
+        casecomponent: Configuration
+        initialEstimate: 1/8h
+        startsin: 5.10.0.18
+        caseimportance: high
+        setup:
+            1. Provision a VM on the provider portal and wait for the VM to appear in CFME.
+        testSteps:
+            1. Navigate to VM's details page and check value of 'Group' under 'Lifecycle' table.
+            2. Run 'Tenant.root_tenant.default_miq_group.tenant_group? == true' command in
+                rails console and ensure it's success.
+    """
+    view = navigate_to(create_vm, "Details")
+    assert view.entities.summary("Lifecycle").get_text_of("Group") == "Tenant My Company access"
+    assert appliance.ssh_client.run_rails_command(
+        "Tenant.root_tenant.default_miq_group.tenant_group? == true"
+    ).success
