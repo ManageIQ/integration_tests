@@ -42,7 +42,7 @@ from widgetastic_manageiq import WaitTab
 
 class ConfigManagementToolbar(View):
     """Toolbar"""
-    refresh = Button(title='Refresh this page')
+    reload = Button(title='Refresh this page')
     configuration = Dropdown('Configuration')
     lifecycle = Dropdown('Lifecycle')
     policy = Dropdown('Policy')
