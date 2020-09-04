@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 import fauxfactory
 import pytest
 
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.rest.gen_data import _creating_skeleton
 from cfme.utils.blockers import GH
 from cfme.utils.update import update
@@ -131,7 +132,7 @@ def ansible_tower_dialog(request, appliance):
 
 
 @pytest.fixture
-def ansible_api_version_change(provider, ansible_api_version):
+def ansible_api_version_change(provider: AnsibleTowerProvider, ansible_api_version):
     """
     Fixture to update Tower url to /api/vx in the UI so that all supported versions of API
     can be tested.
