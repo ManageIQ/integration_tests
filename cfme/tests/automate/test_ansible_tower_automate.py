@@ -10,6 +10,7 @@ from cfme.utils.log_validator import LogValidator
 
 pytestmark = [
     test_requirements.automate,
+    test_requirements.tower,
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider')
 ]

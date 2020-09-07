@@ -11,6 +11,7 @@ from cfme.utils.version import Version
 
 pytestmark = [
     test_requirements.service,
+    test_requirements.tower,
     pytest.mark.tier(2),
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider'),

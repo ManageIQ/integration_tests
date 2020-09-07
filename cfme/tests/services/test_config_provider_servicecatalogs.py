@@ -14,6 +14,7 @@ from cfme.utils.version import Version
 
 pytestmark = [
     test_requirements.service,
+    test_requirements.tower,
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2),
@@ -123,7 +124,7 @@ def test_change_ansible_tower_job_template(catalog_item, job_type, ansible_api_v
         1740814
 
     Polarion:
-        assignee: nansari
+        assignee: jhenner
         casecomponent: Services
         initialEstimate: 1/16h
         startsin: 5.11
