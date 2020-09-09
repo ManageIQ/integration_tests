@@ -532,10 +532,6 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
 
 
 @pytest.fixture
-@pytest.mark.provider(gen_func=providers_by_class,
-                      classes=[AnsibleTowerProvider],
-                      selector=ONE_PER_VERSION, scope="function",
-                      required_fields=['special_chars_template'])
 def provider_with_special_characters(provider):
     """
     Adds a special character sequence to extra_vars on a AWX provider to test BZ 1819310.
@@ -574,6 +570,10 @@ def provider_with_special_characters(provider):
 
 
 @pytest.mark.meta(automates=[1819310])
+@pytest.mark.provider(gen_func=providers_by_class,
+                      classes=[AnsibleTowerProvider],
+                      selector=ONE_PER_VERSION, scope="function",
+                      required_fields=['special_chars_template'])
 def test_awx_with_special_chars_refreshes(provider_with_special_characters: AnsibleTowerProvider):
     """
     Tests whether provider with special characters in template definition refreshes in CFME.
