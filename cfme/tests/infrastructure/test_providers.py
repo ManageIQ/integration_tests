@@ -532,7 +532,7 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
 
 
 @pytest.fixture
-def provider_with_special_characters(provider):
+def provider_with_special_characters(provider: AnsibleTowerProvider):
     """
     Adds a special character sequence to extra_vars on a AWX provider to test BZ 1819310.
     Note it seems the the AWX version 3.4 cannot be patched. It is refusing the request.
@@ -567,6 +567,10 @@ def provider_with_special_characters(provider):
         response = session.patch(f'{url}/job_templates/{template["id"]}/',
                                  json=empty_extra_vars)
         assert response.ok
+
+        # Let's make sure the provider refreshes so if there was a regression -- special chars
+        # were problem, the problem would be isolated to only the test(s) using this fixture.
+        provider.refresh_provider_relationships()
 
 
 @pytest.mark.meta(automates=[1819310])
