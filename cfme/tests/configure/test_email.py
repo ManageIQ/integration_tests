@@ -11,6 +11,9 @@ pytestmark = [
 ]
 
 
+# testing PRT email functionality
+
+
 def test_send_test_email(smtp_test, random_string, appliance):
     """ This test checks whether the mail sent for testing really arrives.
 
