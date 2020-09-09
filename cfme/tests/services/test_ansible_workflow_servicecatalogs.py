@@ -6,10 +6,12 @@ from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
+from cfme.utils.version import Version
 
 
 pytestmark = [
     test_requirements.service,
+    test_requirements.tower,
     pytest.mark.tier(2),
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider'),
@@ -39,6 +41,11 @@ def ansible_workflow_catitem(appliance, provider, dialog, catalog, workflow_type
     catalog_item.delete_if_exists()
 
 
+def versioncheck(provider: AnsibleTowerProvider, ansible_api_version):
+    return provider.version >= Version(3.6) and ansible_api_version == 'v1'
+
+
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.parametrize('workflow_type', ['multiple_job_workflow', 'inventory_sync_workflow'],
         ids=['multiple_job_workflow', 'inventory_sync_workflow'], scope='module')
 @pytest.mark.meta(automates=[BZ(1719051)])
@@ -69,6 +76,7 @@ def test_tower_workflow_item(appliance, ansible_workflow_catitem, workflow_type,
     )
 
 
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.parametrize('workflow_type', ['multiple_job_workflow'], ids=['multiple_job_workflow'])
 def test_retire_ansible_workflow(appliance, ansible_workflow_catitem, workflow_type,
         ansible_api_version_change):

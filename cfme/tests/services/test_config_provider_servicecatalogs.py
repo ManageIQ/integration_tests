@@ -4,6 +4,7 @@ from cfme import test_requirements
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.services.myservice import MyService
 from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.tests.services.test_ansible_workflow_servicecatalogs import versioncheck
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.blockers import GH
@@ -13,6 +14,7 @@ from cfme.utils.version import Version
 
 pytestmark = [
     test_requirements.service,
+    test_requirements.tower,
     pytest.mark.provider([AnsibleTowerProvider], scope='module'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2),
@@ -39,6 +41,7 @@ def catalog_item(appliance, request, provider, ansible_tower_dialog, catalog, jo
     return catalog_item
 
 
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
         'textarea_survey'],
         ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
@@ -83,6 +86,7 @@ def test_order_tower_catalog_item(appliance, provider: AnsibleTowerProvider,
                                                               'List View')
 
 
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.parametrize('job_type', ['template'], ids=['template_job'])
 def test_retire_ansible_service(appliance, catalog_item, request, job_type,
         ansible_api_version_change):
@@ -108,6 +112,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type,
     myservice.retire()
 
 
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1740814])
@@ -119,7 +124,7 @@ def test_change_ansible_tower_job_template(catalog_item, job_type, ansible_api_v
         1740814
 
     Polarion:
-        assignee: nansari
+        assignee: jhenner
         casecomponent: Services
         initialEstimate: 1/16h
         startsin: 5.11
