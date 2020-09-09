@@ -41,7 +41,7 @@ def catalog_item(appliance, request, provider, ansible_tower_dialog, catalog, jo
     return catalog_item
 
 
-@pytest.mark.uncollectif(versioncheck, reason='API V2 not supported since Tower 3.6.')
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.parametrize('job_type', ['template', 'template_limit', 'template_survey',
         'textarea_survey'],
         ids=['template_job', 'template_limit_job', 'template_survey_job', 'textarea_survey_job'],
@@ -86,7 +86,7 @@ def test_order_tower_catalog_item(appliance, provider: AnsibleTowerProvider,
                                                               'List View')
 
 
-@pytest.mark.uncollectif(versioncheck, reason='API V2 not supported since Tower 3.6.')
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.parametrize('job_type', ['template'], ids=['template_job'])
 def test_retire_ansible_service(appliance, catalog_item, request, job_type,
         ansible_api_version_change):
@@ -112,7 +112,7 @@ def test_retire_ansible_service(appliance, catalog_item, request, job_type,
     myservice.retire()
 
 
-@pytest.mark.uncollectif(versioncheck, reason='API V2 not supported since Tower 3.6.')
+@pytest.mark.uncollectif(versioncheck, reason='API V1 not supported since Tower 3.6.')
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.customer_scenario
 @pytest.mark.meta(automates=[1740814])
