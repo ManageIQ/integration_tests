@@ -1,9 +1,12 @@
 import uuid
+from contextlib import closing
 from copy import copy
 from copy import deepcopy
+from textwrap import dedent
 
 import fauxfactory
 import pytest
+import requests
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
@@ -11,6 +14,7 @@ from cfme.common.provider_views import InfraProviderAddView
 from cfme.common.provider_views import InfraProvidersDiscoverView
 from cfme.common.provider_views import InfraProvidersView
 from cfme.fixtures.provider import setup_or_skip
+from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMEndpoint
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -18,7 +22,9 @@ from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
+from cfme.markers.env_markers.provider import providers_by_class
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -523,3 +529,61 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
 
     t_list = [t.name for t in t_coll]
     assert compare_view.verify_checked_items_compared(t_list, compare_view)
+
+
+@pytest.fixture
+def provider_with_special_characters(provider):
+    """
+    Adds a special character sequence to extra_vars on a AWX provider to test BZ 1819310.
+    Note it seems the the AWX version 3.4 cannot be patched. It is refusing the request.
+    Note this was making the CFME unable to load the provider, thus this may interfere with other
+    tests when CFME is broken (due to regression).
+    """
+    template_name = provider.data['special_chars_template']
+    session = requests.session()
+    session.verify = False
+
+    extra_vars_with_special_chars = {'extra_vars': dedent(
+        r"""
+        ---
+        entry_path: "test\/21\\test"
+        """)}
+    empty_extra_vars = {'extra_vars': ""}
+
+    with closing(session):
+        url = provider.url
+        creds = credentials[provider.data.credentials]
+        session.auth = (creds['username'], creds['password'])
+        response = session.get(f'{url}/job_templates/', params=dict(name=template_name))
+        assert response.ok
+        template, = response.json()['results']
+
+        response = session.patch(f'{url}/job_templates/{template["id"]}/',
+                                 json=extra_vars_with_special_chars)
+        assert response.ok
+
+        yield provider
+
+        response = session.patch(f'{url}/job_templates/{template["id"]}/',
+                                 json=empty_extra_vars)
+        assert response.ok
+
+
+@pytest.mark.meta(automates=[1819310])
+@pytest.mark.provider(gen_func=providers_by_class,
+                      classes=[AnsibleTowerProvider],
+                      selector=ONE_PER_VERSION, scope="function",
+                      required_fields=['special_chars_template'])
+def test_awx_with_special_chars_refreshes(provider_with_special_characters: AnsibleTowerProvider):
+    """
+    Tests whether provider with special characters in template definition refreshes in CFME.
+
+    Check the docs for the fixture `provider_with_special_characters` for details.
+
+    Polarion:
+        assignee: jhenner
+        initialEstimate: 1/20h
+        caseimportance: high
+    """
+    provider_with_special_characters.setup()
+    wait_for(provider_with_special_characters.is_refreshed, timeout=300)
