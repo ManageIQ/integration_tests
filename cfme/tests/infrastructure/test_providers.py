@@ -22,10 +22,9 @@ from cfme.infrastructure.provider.virtualcenter import VirtualCenterEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import ONE_PER_VERSION
-from cfme.markers.env_markers.provider import providers
+from cfme.markers.env_markers.provider import providers_by_class
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
-from cfme.utils.providers import ProviderFilter
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
@@ -533,11 +532,10 @@ def test_compare_templates(appliance, setup_provider_min_templates, provider, mi
 
 
 @pytest.fixture
-@pytest.mark.provider(gen_func=providers,
+@pytest.mark.provider(gen_func=providers_by_class,
+                      classes=[AnsibleTowerProvider],
                       selector=ONE_PER_VERSION, scope="function",
-                      filters=[ProviderFilter(
-                          classes=[AnsibleTowerProvider],
-                          required_fields=['special_chars_template'])])
+                      required_fields=['special_chars_template'])
 def provider_with_special_characters(provider):
     """
     Adds a special character sequence to extra_vars on a AWX provider to test BZ 1819310.
