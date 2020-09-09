@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -8,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 from cfme import test_requirements
 from cfme.utils import conf
 from cfme.utils import testgen
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.pretty import Pretty
 from cfme.utils.ssh import SSHClient
@@ -136,17 +138,47 @@ def get_full_path_to_file(path_on_host, schedule_name):
     return full_path
 
 
+@pytest.fixture
+def appliance_with_tmp_filled(appliance: IPAppliance):
+    """
+    Fills the /tmp of the appliance almost completely. This is useful for checking that when a
+    backup of the db is being made, is is not stored there as an intermediate step.
+    """
+    block_size = 10**6
+    df = appliance.ssh_client.run_command(f'df /tmp --output="file,avail" -B"{block_size}"')
+    assert df.success
+    m = re.match('File Avail\n/tmp\\s+(?P<count>\\d+)', df.output, re.MULTILINE)
+    assert m
+    count = int(m.group('count')) - 10
+    dd = appliance.ssh_client.run_command(
+        f'dd if=/dev/zero of=/tmp/wasted_space bs="{block_size}" count={count}')
+    assert dd.success
+
+    yield appliance
+
+    rm = appliance.ssh_client.run_command(f'rm /tmp/wasted_space')
+    assert rm.success
+
+
+@test_requirements.appliance
+@test_requirements.restore
+@test_requirements.scheduled_ops
 @pytest.mark.tier(3)
-@pytest.mark.meta(automates=[1678223, 1643106, 1732417])
-def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance):
-    """ Test scheduled one-type backup on given machines using smb/nfs
+@pytest.mark.meta(automates=[1678223, 1643106, 1732417, 1703278])
+def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance_with_tmp_filled):
+    """ Test scheduled one-type backup on given machines using smb/nfs.
+
+    The before the backup, the /tmp/ is being filled for checking the #1703278. If the backup file
+    is created there even just as an intermediate step, the backup is likely to fail and thus the
+    test should fail.
 
     Polarion:
-        assignee: sbulage
+        assignee: jhenner
         casecomponent: Appliance
         caseimportance: high
         initialEstimate: 1/4h
     """
+    appliance = appliance_with_tmp_filled
 
     # ---- Create new db backup schedule set to run in the next 6 min
     dt = get_schedulable_datetime()
@@ -187,7 +219,6 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
     full_path = get_full_path_to_file(path_on_host, db_backup_data.schedule_name)
 
     sched = appliance.collections.system_schedules.create(**sched_args)
-    # ----
 
     # ---- Add cleanup finalizer
     def delete_sched_and_files():
@@ -229,32 +260,3 @@ def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance
             num_sec=60,
             message=f"File '{full_path}' not found on share"
         )
-
-    # ----
-
-
-@pytest.mark.manual
-@test_requirements.configuration
-@pytest.mark.meta(coverage=[1703278])
-def test_scheduled_backup_handles_big_db():
-    """ Tests whether the scheduled db backups handle big DB. It should write
-    directly to the target endpoint -- it should not be writing to, for
-    example, /tmp.
-
-    Polarion:
-        assignee: jhenner
-        casecomponent: Configuration
-        caseimportance: high
-        initialEstimate: 1/2h
-        startsin: 5.11
-        testSteps:
-            1. Get a big dump of big DB. It needs to be bigger than a free
-               space on /tmp of the appliance.
-            2. Schedule the backup
-        expectedResults:
-            1. After scheduled time, backup should be on the target share. No
-               ERROR in the log.
-    Bugzila:
-        1703278
-    """
-    pass
