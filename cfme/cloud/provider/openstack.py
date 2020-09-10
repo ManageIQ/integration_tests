@@ -28,8 +28,8 @@ class OpenStackProvider(CloudProvider):
     ems_pretty_name = 'OpenStack'
 
     # xpath locators for elements, to be used by selenium
-    _console_connection_status_element = '//*[@id="noVNC_status"]'
-    _canvas_element = '//*[@id="noVNC_canvas"]'
+    _console_connection_status_element = '//*[@id="noVNC_status" or @id="status"]'
+    _canvas_element = '//*[@id="noVNC_canvas" or @id="screen"]'
     _ctrl_alt_del_xpath = '//*[@id="sendCtrlAltDelButton"]'
 
     api_port = attr.ib(default=None)
