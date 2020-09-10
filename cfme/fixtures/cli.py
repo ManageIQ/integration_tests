@@ -285,15 +285,7 @@ def distributed_appliances(temp_appliance_preconfig_funcscope_rhevm,
     return primary_appliance, secondary_appliance
 
 
-@pytest.fixture
-def replicated_appliances(temp_appliance_preconfig_funcscope_rhevm,
-        temp_appliance_unconfig_funcscope_rhevm):
-    """Configure a global appliance with region 99, sharing the same encryption key as the
-    preconfigured remote appliance with region 0. Then set up database replication between them.
-    """
-    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
-    global_appliance = temp_appliance_unconfig_funcscope_rhevm
-
+def _replicated_appliances(remote_appliance, global_appliance):
     logger.info("Starting appliance replication configuration.")
     global_appliance.configure(region=99, key_address=remote_appliance.hostname)
 
@@ -306,6 +298,30 @@ def replicated_appliances(temp_appliance_preconfig_funcscope_rhevm,
     global_appliance.browser_steal = True
 
     return remote_appliance, global_appliance
+
+
+@pytest.fixture
+def replicated_appliances(temp_appliance_preconfig_funcscope_rhevm,
+        temp_appliance_unconfig_funcscope_rhevm):
+    """Configure a global appliance with region 99, sharing the same encryption key as the
+    preconfigured remote appliance with region 0. Then set up database replication between them.
+    """
+    remote_appliance = temp_appliance_preconfig_funcscope_rhevm
+    global_appliance = temp_appliance_unconfig_funcscope_rhevm
+
+    return _replicated_appliances(remote_appliance, global_appliance)
+
+
+@pytest.fixture(scope='module')
+def replicated_appliances_modscope(temp_appliance_preconfig_modscope_rhevm,
+        temp_appliance_unconfig_modscope_rhevm):
+    """Configure a global appliance with region 99, sharing the same encryption key as the
+    preconfigured remote appliance with region 0. Then set up database replication between them.
+    """
+    remote_appliance = temp_appliance_preconfig_modscope_rhevm
+    global_appliance = temp_appliance_unconfig_modscope_rhevm
+
+    return _replicated_appliances(remote_appliance, global_appliance)
 
 
 @pytest.fixture
