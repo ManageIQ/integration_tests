@@ -470,19 +470,6 @@ class ConfigManagerProvider(BaseProvider, Updateable, Pretty):
         assert_response(self.appliance)
         return True
 
-    def delete_rest(self):
-        """Deletes the config manager from CFME using REST"""
-        try:
-            self.rest_api_entity.action.delete()
-        except APIException as err:
-            raise AssertionError(f"Provider wasn't deleted: {err}")
-
-        response = self.appliance.rest_api.response
-        if not response:
-            raise AssertionError(
-                f"Provider wasn't deleted, status code {response.status_code}"
-            )
-
     def refresh_relationships(self, cancel=False):
         """Refreshes relationships and power states of this manager"""
         view = navigate_to(self, 'AllOfType')

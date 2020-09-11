@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.utils.rest import assert_response
-from cfme.utils.rest import delete_resources_from_detail
 from cfme.utils.rest import query_resource_attributes
 from cfme.utils.wait import wait_for
 
@@ -213,76 +212,3 @@ class TestAuthenticationsRESTAPI:
         collection = appliance.rest_api.collections.authentications
         assert 'credential_types' in collection.options()['data']
         assert_response(appliance)
-
-
-# Keep this a function scoped fixture, otherwise it will fail for parametrized tests
-# where one something destructive is performed on the config_manager_ob by one of the tests.
-# e.g. test_config_manager_delete_rest
-@pytest.fixture
-def config_manager_rest(provider):
-    """Creates provider using REST API."""
-    # first remove the provider
-    provider.delete()
-    assert not provider.exists
-    # now create the provider via rest
-    provider.create_rest()
-    assert_response(provider.appliance)
-    rest_entity = provider.rest_api_entity
-    rest_entity.reload()
-
-    yield rest_entity
-
-    if rest_entity.exists:
-        rest_entity.action.delete()
-        rest_entity.wait_not_exists()
-
-
-@pytest.mark.tier(3)
-@test_requirements.rest
-def test_config_manager_create_rest(config_manager_rest):
-    """
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/10h
-
-    Bugzilla:
-        1621888
-    """
-    assert "?provider_class=provider" in config_manager_rest.href
-    assert "::Provider" in config_manager_rest.type
-
-
-@pytest.mark.tier(3)
-@test_requirements.rest
-def test_config_manager_edit_rest(request, config_manager_rest):
-    """Test editing a config manager using REST API.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    new_name = fauxfactory.gen_alpha(30)
-    old_name = config_manager_rest.name
-    request.addfinalizer(lambda: config_manager_rest.action.edit(name=old_name))
-    updated = config_manager_rest.action.edit(name=new_name)
-    config_manager_rest.reload()
-    assert config_manager_rest.name == new_name == updated.name
-
-
-@pytest.mark.tier(3)
-@test_requirements.rest
-@pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-def test_config_manager_delete_rest(config_manager_rest, method):
-    """Tests deletion of the config manager from detail using REST API.
-
-    Polarion:
-        assignee: pvala
-        casecomponent: Rest
-        caseimportance: medium
-        initialEstimate: 1/4h
-    """
-    delete_resources_from_detail([config_manager_rest], method=method)
