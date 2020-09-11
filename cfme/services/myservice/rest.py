@@ -11,3 +11,14 @@ def add_resource_generic_object(self, gen_obj):
             name=gen_obj.name
         )._ref_repr()
     )
+
+
+@MiqImplementationContext.external_for(MyService.retire, ViaREST)
+def retire(self, wait=True):
+    retire_request = self.rest_api_entity.action.request_retire()
+    service_request = self.appliance.collections.requests.instantiate(
+        description=retire_request.description
+    )
+    if wait:
+        service_request.wait_for_request()
+    return service_request
