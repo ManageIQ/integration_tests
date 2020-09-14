@@ -2,11 +2,9 @@ import pytest
 
 from cfme import test_requirements
 from cfme.infrastructure.datastore import Datastore
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import GH
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -27,10 +25,8 @@ CONTENT_ROWS_TO_CHECK = (
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc,
-        [RHEVMProvider, VMwareProvider],
-        required_fields=['datastores']
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc,
+        [VMwareProvider], required_fields=['datastores']
     )
     argnames.append('datastore_type')
     argnames.append('datastore_name')
@@ -99,8 +95,9 @@ def clear_all_tasks(appliance):
 # we get "SmartState Analysis action does not apply to selected items" flash message. Therefore
 # I the temp_appliance is used here to work around this difficulty.
 @pytest.mark.tier(2)
+@pytest.mark.parametrize("nav_pattern", ['from_provider', 'from_datastore'])
 def test_run_datastore_analysis(setup_provider_temp_appliance, datastore, soft_assert,
-                                clear_all_tasks, temp_appliance_preconfig_funcscope):
+                                clear_all_tasks, temp_appliance_preconfig_funcscope, nav_pattern):
     """Tests SmartState analysis
 
     Metadata:
@@ -116,10 +113,12 @@ def test_run_datastore_analysis(setup_provider_temp_appliance, datastore, soft_a
     with temp_appliance_preconfig_funcscope as appliance:
         # Initiate analysis
         # Note that it would be great to test both navigation paths.
-        if GH(('ManageIQ/manageiq', 20367)).blocks:
+        if nav_pattern == "from_provider":
             datastore.run_smartstate_analysis_from_provider()
-        else:
+        elif nav_pattern == "from_datastore":
             datastore.run_smartstate_analysis()
+        else:
+            raise ValueError("The nav_pattern argument doesn't have any of the expected values.")
 
         # c_datastore = details_view.entities.properties.get_text_of("Datastore Type")
         # Check results of the analysis and the datastore type
@@ -127,11 +126,6 @@ def test_run_datastore_analysis(setup_provider_temp_appliance, datastore, soft_a
         # soft_assert(c_datastore == datastore.type.upper(),
         #             'Datastore type does not match the type defined in yaml:' +
         #             'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
-
-        if datastore.provider.one_of(RHEVMProvider) and GH(('ManageIQ/manageiq', 20366)).blocks:
-            # or (datastore.provider.one_of(VMwareProvider) and
-            #     Version(datastore.provider.version) == '6.5'):   # Why is that needed?
-            return
 
         details_view = navigate_to(datastore, 'DetailsFromProvider')
         wait_for(lambda: details_view.entities.content.get_text_of(CONTENT_ROWS_TO_CHECK[0]),
