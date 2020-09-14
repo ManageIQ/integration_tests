@@ -1724,7 +1724,7 @@ class ReportDataControllerMixin:
         return result
 
     def get_ids_by_keys(self, **keys):
-        updated_keys = keys.copy()
+        updated_keys = list(keys)
         for key in updated_keys:
             # js api compares values in lower case but don't replace space with underscore
             updated_keys[key.replace("_", " ")] = str(updated_keys.pop(key))

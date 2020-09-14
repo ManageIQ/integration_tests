@@ -7,6 +7,7 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.fixtures.ansible_tower import ansible_tower_dialog_rest
+from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -39,9 +40,14 @@ pytestmark = [
 #       between all the fixtures that create catalog_item.
 
 
-@pytest.fixture
-def remote_appliance(replicated_appliances):
-    return replicated_appliances[0]
+@pytest.fixture(scope='module')
+def remote_appliance(replicated_appliances_modscope):
+    return replicated_appliances_modscope[0]
+
+
+@pytest.fixture(scope='module')
+def global_appliance(replicated_appliances_modscope):
+    return replicated_appliances_modscope[1]
 
 
 @pytest.fixture
@@ -84,9 +90,9 @@ def remote_embedded_ansible_dialog(request, remote_appliance):
 
 
 @pytest.fixture
-def setup_remote_provider(provider, remote_appliance):
+def setup_remote_provider(request, provider, remote_appliance):
     with remote_appliance:
-        provider.create(validate_inventory=True)
+        setup_or_skip(request, provider, appliance=remote_appliance))
 
 
 @pytest.fixture
@@ -276,7 +282,9 @@ def order_retire_service(request, context, appliance, catalog_item):
         ).order()
         provision_request.wait_for_request(method='ui')
         assert provision_request.is_succeeded(method='ui')
-        if isinstance(catalog_item, appliance.collections.catalog_items.GENERIC):
+
+        # dialog fixture sets service name to dialog label
+        if hasattr(catalog_item, 'dialog'):
             service_name = catalog_item.dialog.label
         else:
             service_name = catalog_item.name
@@ -309,7 +317,7 @@ def order_retire_service(request, context, appliance, catalog_item):
 @test_requirements.service
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 def test_service_provision_retire_from_global_region(
-        request, provider, context, replicated_appliances, remote_catalog_item):
+        request, provider, context, global_appliance, remote_catalog_item):
     """Order and retire a cloud or infrastructure provider service from the global appliance.
 
     Polarion:
@@ -318,7 +326,6 @@ def test_service_provision_retire_from_global_region(
         casecomponent: Services
         initialEstimate: 1/3h
     """
-    _, global_appliance = replicated_appliances
     order_retire_service(request, context, global_appliance, remote_catalog_item)
 
     vm_name = f"{remote_catalog_item.prov_data['catalog']['vm_name']}0001"
@@ -333,7 +340,7 @@ def test_service_provision_retire_from_global_region(
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.parametrize('ansible_api_version', ['v2'])
 def test_service_provision_retire_from_global_region_ansible_tower(
-        request, provider, context, replicated_appliances, remote_ansible_catalog_item,
+        request, provider, context, global_appliance, remote_ansible_catalog_item,
         remote_ansible_api_version_change):
     """Order and retire an Ansible Tower service from the global appliance.
 
@@ -343,7 +350,6 @@ def test_service_provision_retire_from_global_region_ansible_tower(
         casecomponent: Services
         initialEstimate: 1/3h
     """
-    _, global_appliance = replicated_appliances
     order_retire_service(request, context, global_appliance, remote_ansible_catalog_item)
 
 
@@ -353,7 +359,7 @@ def test_service_provision_retire_from_global_region_ansible_tower(
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.provider([VMwareProvider], scope='module')
 def test_service_provision_retire_from_global_region_embedded_ansible(
-        request, context, replicated_appliances, setup_remote_provider,
+        request, context, global_appliance, setup_remote_provider,
         remote_embedded_ansible_catalog_item):
     """Order and retire an embedded Ansible playbook service from the global appliance,
     against the default host.
@@ -364,14 +370,13 @@ def test_service_provision_retire_from_global_region_embedded_ansible(
         casecomponent: Ansible
         caseimportance: high
     """
-    _, global_appliance = replicated_appliances
     order_retire_service(
         request, context, global_appliance, remote_embedded_ansible_catalog_item)
 
 
 @pytest.mark.parametrize("context", [ViaREST, ViaUI])
 def test_service_provision_retire_from_global_region_generic(
-    request, context, replicated_appliances, remote_generic_catalog_item
+    request, context, global_appliance, remote_generic_catalog_item
 ):
     """Order and retire a Generic service from the global appliance.
     Polarion:
@@ -380,7 +385,6 @@ def test_service_provision_retire_from_global_region_generic(
         casecomponent: Services
         initialEstimate: 1/3h
     """
-    _, global_appliance = replicated_appliances
     order_retire_service(request, context, global_appliance, remote_generic_catalog_item)
 
 
