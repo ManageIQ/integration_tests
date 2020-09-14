@@ -777,7 +777,8 @@ def test_azure_instance_password_requirements(
 
 
 @pytest.mark.tier(3)
-def test_cloud_names_grid_floating_ips(appliance, ec2_provider, soft_assert):
+@pytest.mark.provider([EC2Provider])
+def test_cloud_names_grid_floating_ips(appliance, setup_provider, soft_assert):
     """
         Requirement: Cloud provider with floating IPs
 

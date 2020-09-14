@@ -412,27 +412,31 @@ def test_change_network_security_groups_per_page_items(setup_provider, appliance
 
 
 @pytest.fixture(scope="function")
-def testing_vm(appliance, provider, win2012_template):
+def custom_testing_vm(appliance, request, provider):
     """Fixture to provision vm
     Note: Need to use windows template to make sure `Extract Running process` works.
     """
-    vm_name = random_vm_name('pwr-c')
-    vm = appliance.collections.infra_vms.instantiate(
-        vm_name, provider, template_name=win2012_template.name
-    )
 
-    if not provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    yield vm
-    vm.cleanup_on_provider()
+    def _testing_vm(template_name):
+        vm_name = random_vm_name("pwr-c")
+        vm = appliance.collections.infra_vms.instantiate(
+            vm_name, provider, template_name=template_name
+        )
+
+        if not provider.mgmt.does_vm_exist(vm.name):
+            logger.info("deploying %s on provider %s", vm.name, provider.key)
+            vm.create_on_provider(allow_skip="default", find_in_cfme=True)
+        request.addfinalizer(vm.cleanup_on_provider)
+        return vm
+
+    return _testing_vm
 
 
 @test_requirements.relationships
 @pytest.mark.tier(1)
-@pytest.mark.meta(automates=[1729953], blockers=[BZ(1729953)])
+@pytest.mark.meta(automates=[1729953])
 @pytest.mark.provider([RHEVMProvider], selector=ONE)
-def test_datastore_relationships(setup_provider, testing_vm):
+def test_datastore_relationships(setup_provider, full_template, custom_testing_vm):
     """
     Bugzilla:
         1729953
@@ -458,24 +462,25 @@ def test_datastore_relationships(setup_provider, testing_vm):
             2.
             3. Operations should be performed successfully. It should not give unexpected error.
     """
+    testing_vm = custom_testing_vm(full_template.name)
     view = navigate_to(testing_vm.datastore, "ManagedVMs")
     view.entities.get_entity(name=testing_vm.name).check()
 
-    view.toolbar.configuration.item_select("Refresh Relationships and Power States",
-                                           handle_alert=True)
+    view.toolbar.configuration.item_select(
+        "Refresh Relationships and Power States", handle_alert=True
+    )
     view.flash.assert_success_message(
         "Refresh Provider initiated for 1 VM and Instance from the CFME Database"
     )
     view.flash.dismiss()
 
-    view.toolbar.configuration.item_select('Perform SmartState Analysis',
-                                           handle_alert=True)
+    view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)
     view.flash.assert_success_message(
         "Analysis initiated for 1 VM and Instance from the CFME Database"
     )
     view.flash.dismiss()
 
-    view.toolbar.configuration.item_select('Extract Running Processes', handle_alert=True)
+    view.toolbar.configuration.item_select("Extract Running Processes", handle_alert=True)
     view.flash.assert_no_error()
 
 
@@ -494,7 +499,7 @@ def cluster(provider):
 @pytest.mark.tier(1)
 @pytest.mark.meta(automates=[1732370])
 @pytest.mark.provider([InfraProvider], selector=ONE)
-def test_ssa_cluster_relationships(setup_provider, cluster, testing_vm):
+def test_ssa_cluster_relationships(setup_provider, cluster, custom_testing_vm, win2012_template):
     """
     Bugzilla:
         1732370
@@ -519,6 +524,7 @@ def test_ssa_cluster_relationships(setup_provider, cluster, testing_vm):
             3.
             4. Operations should be performed successfully. It should not give unexpected error.
     """
+    testing_vm = custom_testing_vm(win2012_template.name)
     view = navigate_to(cluster, "AllVMs")
     view.entities.get_entity(name=testing_vm.name, surf_pages=True).check()
 

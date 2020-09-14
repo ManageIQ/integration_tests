@@ -327,7 +327,7 @@ class TestTagsViaREST:
         edited = []
         new_names = []
         for tag in tags:
-            new_name = fauxfactory.gen_alphanumeric(15, start="test_tag_")
+            new_name = fauxfactory.gen_alphanumeric(15, start="test_tag_").lower()
             new_names.append(new_name)
             edited.append(tag.action.edit(name=new_name))
             assert_response(appliance)
