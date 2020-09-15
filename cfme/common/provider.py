@@ -160,7 +160,7 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
     def rest_api_entity(self):
         try:
             return self.appliance.rest_api.collections.providers.get(name=self.name)
-        except ValueError:
+        except (ValueError, APIException):
             raise RestLookupError(f'No provider rest entity found matching name {self.name}')
 
     @property
@@ -697,10 +697,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
 
     def delete_rest(self):
         """Deletes a provider from CFME using REST"""
-        provider_rest = self.appliance.rest_api.collections.providers.get(name=self.name)
-
         try:
-            provider_rest.action.delete()
+            self.rest_api_entity.action.delete()
         except APIException as err:
             raise AssertionError(f"Provider wasn't deleted: {err}")
 
@@ -913,13 +911,8 @@ class BaseProvider(Taggable, Updateable, Navigatable, BaseEntity, CustomButtonEv
         return False
 
     def wait_for_delete(self):
-        try:
-            provider_rest = self.appliance.rest_api.collections.providers.get(name=self.name)
-        except (ValueError, APIException):  # if the record doesn't exist, APIException from 404
-            return
-
         logger.info('Waiting for a provider to delete...')
-        provider_rest.wait_not_exists(message="Wait provider to disappear", num_sec=1000)
+        self.rest_api_entity.wait_not_exists(message="Wait provider to disappear", num_sec=1000)
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins.
