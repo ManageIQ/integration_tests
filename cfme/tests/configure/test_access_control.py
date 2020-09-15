@@ -3075,7 +3075,6 @@ def test_ansible_playbook_stdout(
         ).waiting(timeout=120):
             ansible_service_request.wait_for_request()
             view = navigate_to(ansible_service, "Details")
-            view.provisioning_tab.click()
-            assert view.provisioning.standart_output.is_displayed
-            wait_for(lambda: view.provisioning.standart_output.text != "Loading...", timeout=30)
-            assert "Hello World" in view.provisioning.standart_output.text
+            assert view.provisioning.standard_output.is_displayed
+            wait_for(lambda: view.provisioning.standard_output.text != "Loading...", timeout=30)
+            assert "Hello World" in view.provisioning.standard_output.text
