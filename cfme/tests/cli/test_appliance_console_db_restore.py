@@ -426,7 +426,7 @@ def test_appliance_console_restore_db_replicated(
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream('upstream')
-@pytest.mark.meta(automates=[1740515, 1693189])
+@pytest.mark.meta(automates=[1740515, 1693189, 1856470])
 def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_creds):
     """Configure HA environment with providers, run backup/restore on configuration,
     Confirm that ha failover continues to work correctly and providers still exist.
@@ -439,52 +439,58 @@ def test_appliance_console_restore_db_ha(request, unconfigured_appliances, app_c
     Bugzilla:
         1693189
         1740515
+        1856470
     """
     pwd = app_creds["password"]
-    appl1, appl2, appl3 = configure_appliances_ha(unconfigured_appliances, pwd)
+    db_appl_1, db_appl_2, webui_appl = configure_appliances_ha(unconfigured_appliances, pwd)
 
     # Add infra/cloud providers and create db backup
-    provider_app_crud(VMwareProvider, appl3).setup()
-    provider_app_crud(OpenStackProvider, appl3).setup()
-    appl1.db.backup()
+    provider_app_crud(VMwareProvider, webui_appl).setup()
+    provider_app_crud(OpenStackProvider, webui_appl).setup()
+    db_appl_1.db.backup()
 
-    providers_before_restore = set(appl3.managed_provider_names)
+    providers_before_restore = set(webui_appl.managed_provider_names)
     # Restore DB on the second appliance
-    appl3.evmserverd.stop()
-    appl1.repmgr.stop()
-    appl2.repmgr.stop()
-    appl1.db.drop()
-    appl1.db.create()
-    fetch_v2key(appl3, appl1)
-    restore_db(appl1)
+    webui_appl.evmserverd.stop()
+    db_appl_1.repmgr.stop()
+    db_appl_2.repmgr.stop()
+    db_appl_1.db.drop()
+    db_appl_1.db.create()
+    fetch_v2key(webui_appl, db_appl_1)
+    restore_db(db_appl_1)
 
-    appl1.appliance_console.reconfigure_primary_replication_node(pwd)
-    appl2.appliance_console.reconfigure_standby_replication_node(pwd, appl1.hostname)
+    db_appl_1.appliance_console.reconfigure_primary_replication_node(pwd)
+    db_appl_2.appliance_console.reconfigure_standby_replication_node(pwd, db_appl_1.hostname)
 
-    appl3.appliance_console.configure_automatic_failover(primary_ip=appl1.hostname)
-    appl3.evm_failover_monitor.restart()
+    # Reboot the standby node to make sure the repmgr10 starts automatically and is ready to
+    # take-over (BZ 1856470).
+    db_appl_2.reboot(wait_for_miq_ready=False)
 
-    appl3.evmserverd.start()
-    appl3.wait_for_miq_ready()
+    webui_appl.appliance_console.configure_automatic_failover(primary_ip=db_appl_1.hostname)
+    webui_appl.evm_failover_monitor.restart()
+
+    webui_appl.evmserverd.start()
+    webui_appl.wait_for_miq_ready()
     # Assert providers still exist after restore
-    assert providers_before_restore == set(appl3.managed_provider_names), (
+    assert providers_before_restore == set(webui_appl.managed_provider_names), (
         'Restored DB is missing some providers'
     )
 
     with LogValidator(evm_log,
                       matched_patterns=['Starting to execute failover'],
-                      hostname=appl3.hostname).waiting(timeout=450):
-        # Cause failover to occur
-        appl1.db_service.stop()
+                      hostname=webui_appl.hostname).waiting(timeout=450):
+        # Cause failover to occur. Note that reboot of the active node may not cause failover to
+        # occur as the node can come back again soon enough.
+        db_appl_1.db_service.stop()
 
-    appl3.evmserverd.wait_for_running()
-    appl3.wait_for_miq_ready()
+    webui_appl.evmserverd.wait_for_running()
+    webui_appl.wait_for_miq_ready()
     # Assert providers still exist after ha failover
-    assert providers_before_restore == set(appl3.managed_provider_names), (
+    assert providers_before_restore == set(webui_appl.managed_provider_names), (
         'Restored DB is missing some providers'
     )
     # Verify that existing provider can detect new VMs after restore/failover
-    virtual_crud = provider_app_crud(VMwareProvider, appl3)
+    virtual_crud = provider_app_crud(VMwareProvider, webui_appl)
     vm = provision_vm(request, virtual_crud)
     assert vm.mgmt.is_running, "vm not running"
 

@@ -3,6 +3,7 @@ from collections import namedtuple
 from configparser import ConfigParser
 from contextlib import contextmanager
 from io import StringIO
+from typing import Tuple
 
 import fauxfactory
 import pytest
@@ -18,6 +19,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.test_framework.sprout.client import AuthException
 from cfme.test_framework.sprout.client import SproutClient
 from cfme.utils import conf
+from cfme.utils.appliance import IPAppliance
 from cfme.utils.appliance.console import configure_appliances_ha
 from cfme.utils.conf import auth_data
 from cfme.utils.conf import cfme_data
@@ -56,6 +58,9 @@ def unconfigured_appliance_secondary(request, appliance, pytestconfig):
         _collect_logs(request.config, apps)
 
 
+TThreeAppliances = Tuple[IPAppliance, IPAppliance, IPAppliance]
+
+
 @pytest.fixture()
 def unconfigured_appliances(request, appliance, pytestconfig):
     with sprout_appliances(
@@ -65,7 +70,7 @@ def unconfigured_appliances(request, appliance, pytestconfig):
             config=pytestconfig,
             provider_type='rhevm',
     ) as apps:
-        yield apps
+        yield tuple(apps)
         _collect_logs(request.config, apps)
 
 

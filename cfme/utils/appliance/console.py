@@ -20,7 +20,7 @@ from cfme.utils.wait import wait_for
 if typing.TYPE_CHECKING:
     from cfme.utils.appliance import IPAppliance
 
-AP_WELCOME_SCREEN_TIMEOUT = 30
+AP_WELCOME_SCREEN_TIMEOUT = 60
 
 
 class ApplianceConsole(AppliancePlugin):
@@ -149,7 +149,7 @@ class ApplianceConsole(AppliancePlugin):
                 re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '')
 
-    def reconfigure_primary_replication_node(self, pwd):
+    def reconfigure_primary_replication_node(self, pwd: str):
         # Configure primary replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
@@ -172,7 +172,7 @@ class ApplianceConsole(AppliancePlugin):
                 re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '')
 
-    def configure_standby_replication_node(self, pwd, primary_ip):
+    def configure_standby_replication_node(self, pwd: str, primary_ip: str):
         # Configure secondary (standby) replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
@@ -208,7 +208,8 @@ class ApplianceConsole(AppliancePlugin):
                 re.escape('Apply this Replication Server Configuration? (Y/N): '), 'y')
             interaction.answer('Press any key to continue.', '', timeout=10 * 60)
 
-    def reconfigure_standby_replication_node(self, pwd, primary_ip, repmgr_reconfigure=False):
+    def reconfigure_standby_replication_node(self, pwd: str, primary_ip: str,
+                                             repmgr_reconfigure=False):
         # Configure secondary (standby) replication node
         with SSHExpect(self.appliance) as interaction:
             interaction.send('ap')
@@ -304,7 +305,11 @@ def check_db_ha_failover(appl_to_fail: 'IPAppliance', appl_to_takeover: 'IPAppli
     appl_to_takeover.wait_for_miq_ready()
 
 
-def configure_appliances_ha(appliances, pwd):
+if typing.TYPE_CHECKING:
+    from cfme.fixtures.cli import TThreeAppliances
+
+
+def configure_appliances_ha(appliances: 'TThreeAppliances', pwd: str):
     """Configure HA environment
 
     Appliance one configuring dedicated database, 'ap' launch appliance_console,
