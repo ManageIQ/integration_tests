@@ -441,6 +441,7 @@ class UserEdit(CFMENavigateStep):
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 class MyCompanyTagsTree(View):
     tree_locator = 'tags_treebox'
+    # TODO: Change this CbTree to Card widget.
     tree = CbTree(tree_locator)
     tag_category = ReactSelect(locator='.//div[@id="tag_cat"]')
     tag_name = ReactSelect(locator='.//div[@id="cat_tags_div"]')

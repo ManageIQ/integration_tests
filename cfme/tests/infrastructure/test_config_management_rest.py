@@ -68,6 +68,9 @@ def _check_edited_authentications(appliance, authentications, new_names):
         assert auth.name == record[0].name
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.version == 3.6, reason="API V1 not supported since Tower 3.6."
+)
 class TestAuthenticationsRESTAPI:
     def test_query_authentications_attributes(self, authentications, soft_assert):
         """Tests access to authentication attributes.
