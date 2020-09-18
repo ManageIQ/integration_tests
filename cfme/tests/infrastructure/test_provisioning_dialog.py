@@ -39,8 +39,12 @@ pytestmark = [
     pytest.mark.long_running,
     test_requirements.provision,
     pytest.mark.tier(3),
-    pytest.mark.provider(gen_func=providers, scope="module",
-                         filters=[ProviderFilter(required_flags=['provision'])])
+    pytest.mark.provider([InfraProvider],
+                         scope="module",
+                         required_flags=['provision'],
+                         required_fields=[['provisioning', 'template'],
+                                          ['provisioning', 'host'],
+                                          ['provisioning', 'datastore']]),
 
 ]
 
@@ -215,9 +219,6 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
                          (provider.one_of(VMwareProvider) and
                           disk_format == "Thick" and
                           appliance.version > '5.11') or
-                         (provider.one_of(VMwareProvider) and
-                          disk_format in ["Thick - Lazy Zero", "Thick - Eager Zero"] and
-                          appliance.version < '5.11') or
                          (not provider.one_of(RHEVMProvider) and
                           disk_format == "Preallocated") or
                          # Temporarily, our storage domain cannot handle Preallocated disks
