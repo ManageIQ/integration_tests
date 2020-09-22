@@ -378,7 +378,7 @@ def test_generic_object_button_delete_multiple(appliance, two_buttons_without_gr
     assert view.is_displayed
 
 
-@pytest.mark.manual
+@pytest.mark.manual('manualonly')
 @test_requirements.ansible
 @pytest.mark.meta(blockers=[BZ(1753338)], coverage=[1753338])
 def test_generic_object_button_execute_playbook():
