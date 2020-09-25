@@ -7,6 +7,7 @@ from widgetastic.utils import partial_match
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.fixtures.ansible_tower import ansible_tower_dialog_rest
+from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.config_management.ansible_tower import AnsibleTowerProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -84,9 +85,9 @@ def remote_embedded_ansible_dialog(request, remote_appliance):
 
 
 @pytest.fixture
-def setup_remote_provider(provider, remote_appliance):
+def setup_remote_provider(request, provider, remote_appliance):
     with remote_appliance:
-        provider.create(validate_inventory=True)
+        setup_or_skip(request, provider, appliance=remote_appliance)
 
 
 @pytest.fixture
@@ -124,6 +125,32 @@ def remote_generic_catalog_item(remote_appliance, remote_catalog, remote_dialog)
 
     with remote_appliance:
         catalog_item.delete_if_exists()
+
+
+@pytest.fixture
+def remote_catalog_bundle(remote_appliance, provider, setup_remote_provider, remote_catalog,
+                        remote_dialog, provisioning_data):
+    with remote_appliance:
+        catalog_item = remote_appliance.collections.catalog_items.create(
+            provider.catalog_item_type,
+            name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
+            description="my catalog item",
+            display_in=False,
+            catalog=remote_catalog,
+            dialog=None,
+            prov_data=provisioning_data)
+        catalog_bundle = remote_appliance.collections.catalog_bundles.create(
+            name=fauxfactory.gen_alphanumeric(15, start="cat_bundle_"),
+            description="my catalog bundle",
+            display_in=True,
+            catalog=remote_catalog,
+            dialog=remote_dialog,
+            catalog_items=[catalog_item.name])
+
+    yield catalog_bundle
+
+    with remote_appliance:
+        catalog_bundle.delete_if_exists()
 
 
 @pytest.fixture
@@ -276,11 +303,7 @@ def order_retire_service(request, context, appliance, catalog_item):
         ).order()
         provision_request.wait_for_request(method='ui')
         assert provision_request.is_succeeded(method='ui')
-        if isinstance(catalog_item, appliance.collections.catalog_items.GENERIC):
-            service_name = catalog_item.dialog.label
-        else:
-            service_name = catalog_item.name
-        service = MyService(appliance, service_name)
+        service = MyService(appliance, catalog_item.dialog.label)
 
         @request.addfinalizer
         def _clear_request_service():
@@ -300,7 +323,7 @@ def order_retire_service(request, context, appliance, catalog_item):
         def _remove_retire_request():
             retire_request.remove_request()
 
-        wait_for(lambda: service.is_retired, delay=5, num_sec=300,
+        wait_for(lambda: service.is_retired, delay=5, num_sec=600,
             fail_func=service.browser.refresh, message="Waiting for service to retire")
 
 
@@ -369,11 +392,14 @@ def test_service_provision_retire_from_global_region_embedded_ansible(
         request, context, global_appliance, remote_embedded_ansible_catalog_item)
 
 
+@pytest.mark.tier(2)
+@test_requirements.multi_region
+@test_requirements.service
 @pytest.mark.parametrize("context", [ViaREST, ViaUI])
 def test_service_provision_retire_from_global_region_generic(
-    request, context, replicated_appliances, remote_generic_catalog_item
-):
+        request, context, replicated_appliances, remote_generic_catalog_item):
     """Order and retire a Generic service from the global appliance.
+
     Polarion:
         assignee: tpapaioa
         caseimportance: high
@@ -384,13 +410,32 @@ def test_service_provision_retire_from_global_region_generic(
     order_retire_service(request, context, global_appliance, remote_generic_catalog_item)
 
 
-@pytest.mark.manual
+@pytest.mark.tier(2)
+@test_requirements.multi_region
+@test_requirements.service
+@pytest.mark.parametrize('context', [ViaREST, ViaUI])
+def test_service_provision_retire_from_global_region_bundle(
+        request, provider, context, replicated_appliances, remote_catalog_bundle):
+    """From the global appliance in a multi-region appliance configuration, order and then retire
+    a VM provisioning service (with a catalog bundle) on the remote appliance.
+
+    Polarion:
+        assignee: tpapaioa
+        caseimportance: high
+        casecomponent: Services
+        initialEstimate: 1/3h
+    """
+    _, global_appliance = replicated_appliances
+    order_retire_service(request, context, global_appliance, remote_catalog_bundle)
+
+
+@pytest.mark.manual('manualonly')
 @pytest.mark.tier(2)
 @test_requirements.multi_region
 @test_requirements.service
 @pytest.mark.parametrize('context', [ViaREST, ViaUI])
 @pytest.mark.parametrize('catalog_location', ['remote'])  # TODO add global
-@pytest.mark.parametrize('item_type', ['ansible', 'orchestration', 'bundle'])
+@pytest.mark.parametrize('item_type', ['orchestration'])
 def test_service_provision_retire_from_global_region_manual(item_type, catalog_location, context):
     """
     Polarion:

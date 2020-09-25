@@ -41,7 +41,7 @@ class MyService(Updateable, Navigatable, Taggable, sentaku.modeling.ElementMixin
     @property
     def rest_api_entity(self):
         try:
-            return self.appliance.rest_api.collections.services.get(name=self.name)
+            return self.appliance.rest_api.collections.services.get(name=self.name, display=True)
         except ValueError:
             raise RestLookupError(f'No service rest entity found matching name {self.name}')
 
