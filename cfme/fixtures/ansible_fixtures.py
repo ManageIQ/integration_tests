@@ -287,7 +287,7 @@ def target_machine(provider, setup_provider_modscope):
 
 
 @pytest.fixture(scope="module")
-def target_machine_ansible_creds(appliance, target_machine):
+def target_machine_ansible_creds(appliance, wait_for_ansible, target_machine):
     creds = appliance.collections.ansible_credentials.create(
         name=fauxfactory.gen_alpha(start="cred_"),
         credential_type="Machine",
