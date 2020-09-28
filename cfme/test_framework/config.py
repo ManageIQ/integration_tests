@@ -3,6 +3,7 @@ classes to manage the cfme test framework configuration
 """
 import os
 import warnings
+from pathlib import Path
 
 import attr
 import yaycl
@@ -30,9 +31,10 @@ class Configuration:
 
         assert self.yaycl_config is None
         if crypt_key_file and os.path.exists(crypt_key_file):
+            crypt_key = Path(crypt_key_file).read_text().strip()
             self.yaycl_config = yaycl.Config(
                 config_dir=config_dir,
-                crypt_key_file=crypt_key_file)
+                crypt_key=crypt_key)
         else:
             self.yaycl_config = yaycl.Config(config_dir=config_dir)
 
