@@ -2356,6 +2356,7 @@ def test_verify_that_changing_groups_in_the_webui_updates_dashboard_items():
         assignee: dgaikwad
         casecomponent: WebUI
         initialEstimate: 1/4h
+        caseimportance: medium
         setup: Create a user with two or more groups. The groups should have role
                permissions that grant access to different features so you can easily
                see that the dashboard is updated appropriately.

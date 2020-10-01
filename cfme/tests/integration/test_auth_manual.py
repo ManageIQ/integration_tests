@@ -70,6 +70,7 @@ def test_saml_get_user_groups_from_ext_auth_httpd():
 
     Polarion:
         assignee: dgaikwad
+        caseimportance: medium
         casecomponent: Auth
         initialEstimate: 1/2h
     """
