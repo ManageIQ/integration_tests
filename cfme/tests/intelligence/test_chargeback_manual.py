@@ -25,6 +25,7 @@ assignments = [
     RateAssignment('storage', 'tenant')]
 
 
+@pytest.mark.manual('manualonly')
 @pytest.mark.parametrize('report_period', ['daily_report', 'weekly_report', 'monthly_report'])
 @pytest.mark.parametrize('rate_period', ['hourly_rate', 'weekly_rate', 'monthly_rate'])
 @pytest.mark.parametrize('resource', ['cpu', 'memory', 'storage'])

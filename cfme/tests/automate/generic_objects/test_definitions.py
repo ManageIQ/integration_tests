@@ -76,7 +76,7 @@ def test_generic_object_definition_crud(appliance, context, soft_assert):
         assert not definition.exists
 
 
-@pytest.mark.manual
+@pytest.mark.manual('manualonly')
 @pytest.mark.tier(3)
 def test_generic_objects_class_accordion_should_display_when_locale_is_french():
     """ Generic objects class accordion should display when locale is french
