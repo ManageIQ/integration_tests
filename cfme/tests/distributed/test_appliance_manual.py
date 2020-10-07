@@ -10,6 +10,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.manual('manualonly')
 def test_distributed_add_provider_to_remote_zone():
     """
     Adding a provider from the global region to a remote zone.
