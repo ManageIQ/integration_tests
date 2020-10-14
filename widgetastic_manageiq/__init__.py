@@ -1051,11 +1051,15 @@ class ReactCodeMirror(Widget):
             self.browser.set_attribute("contentEditable", "true", self)
 
     def fill(self, value):
-        # TODO(anikifor): remove the 2 workarounds below as soon as BZ 1740753 is verified
-        self.make_editable()
-        self.browser.set_attribute("style", "overflow: visible", self.PARENT_DIV)
-        self.browser.element(self.CLICK_DIV).click()
-        self.element.send_keys(value)
+        # CodeMirror is too smart for filling with send_keys.
+        # Fixing BZ#1740753 and BZ#1754543 didn't really help.
+        # Now the problem is that the CodeMirror auto-indents which means
+        # additional indents are created when using send_keys.
+        self.browser.execute_script(
+            """arguments[0].CodeMirror.setValue(arguments[1])""",
+            self.browser.element(self.CLICK_DIV),
+            value,
+        )
         return True
 
     def read(self):
