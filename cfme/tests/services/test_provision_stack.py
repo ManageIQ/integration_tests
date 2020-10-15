@@ -206,7 +206,6 @@ def svc_cleanup(service):
 
 
 @test_requirements.provision
-@pytest.mark.meta(blockers=[BZ(1754543)])
 def test_provision_stack(order_stack, stack_created):
     """Tests stack provisioning
 
@@ -251,7 +250,6 @@ def test_reconfigure_service(appliance, service_catalogs, request):
                       filters=[cloud_filter, not_ec2],
                       selector=ONE_PER_TYPE,
                       scope='module')
-@pytest.mark.meta(blockers=[BZ(1754543)])
 def test_remove_non_read_only_orch_template(appliance, provider, template, service_catalogs,
                                             request):
     """
@@ -316,7 +314,6 @@ def test_remove_read_only_orch_template_neg(appliance, provider, template, order
     assert order_stack.is_succeeded()
 
 
-@pytest.mark.meta(blockers=[BZ(1754543)])
 def test_retire_stack(stack_created):
     """Tests stack retirement.
 
@@ -468,7 +465,6 @@ def test_retire_catalog_bundle_service_orchestration_item(appliance, request, ca
 
 
 @pytest.mark.meta(automates=[1698439])
-@pytest.mark.meta(blockers=[BZ(1754543)])
 @pytest.mark.tier(2)
 @pytest.mark.provider([EC2Provider], selector=ONE, scope='module')
 def test_read_dialog_timeout_ec2_stack(order_stack):
