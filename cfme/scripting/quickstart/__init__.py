@@ -12,7 +12,7 @@ from cfme.scripting.quickstart.system import install_system_packages
 CREATED = object()
 
 REQUIREMENT_FILE = 'requirements/frozen.txt'
-if sys.version_info.major != 3 and sys.version_info.minor >= 7:
+if not float(f"{sys.version_info.major}.{sys.version_info.minor}") >= 3.7:
     print("ERROR: quickstart only runs in python 3.7+")
     sys.exit(2)
 
