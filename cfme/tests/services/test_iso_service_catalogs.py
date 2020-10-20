@@ -97,7 +97,7 @@ def catalog_item(appliance, provider, dialog, catalog, provisioning):
 
 
 @test_requirements.rhev
-@pytest.mark.meta(blockers=[BZ(1783355, forced_streams=["5.11", "5.10"],
+@pytest.mark.meta(blockers=[BZ(1888748, forced_streams=["5.11", "5.10"],
                                unblock=lambda provider: provider.version != Version("4.4"))])
 def test_rhev_iso_servicecatalog(appliance, provider, setup_provider, setup_iso_datastore,
                                  catalog_item, request):
