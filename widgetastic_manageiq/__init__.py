@@ -1032,8 +1032,9 @@ class ReactCodeMirror(Widget):
     https://github.com/JedWatson/react-codemirror"""
 
     ROOT = "//div[contains(@class,'miq-codemirror')]//textarea"
-    PARENT_DIV = "./.."  # we need to change visibility of this one
-    CLICK_DIV = "./../.."  # the widget has very nested divs,we need to click on that one ¯\_(ツ)_/¯
+
+    # The CodeMirror has very nested divs, we need to setValue on this one ¯\_(ツ)_/¯.
+    SET_VALUE_ELEMENT = "../.."
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1042,20 +1043,16 @@ class ReactCodeMirror(Widget):
     def element(self):
         return self.browser.element(self)
 
-    @property
-    def is_editable(self):
-        return self.element.get_attribute("contentEditable") == "true"
-
-    def make_editable(self):
-        if not self.is_editable:
-            self.browser.set_attribute("contentEditable", "true", self)
-
     def fill(self, value):
-        # TODO(anikifor): remove the 2 workarounds below as soon as BZ 1740753 is verified
-        self.make_editable()
-        self.browser.set_attribute("style", "overflow: visible", self.PARENT_DIV)
-        self.browser.element(self.CLICK_DIV).click()
-        self.element.send_keys(value)
+        # CodeMirror is too smart for filling with send_keys.
+        # Fixing BZ#1740753 and BZ#1754543 didn't really help.
+        # Now the problem is that the CodeMirror auto-indents which means
+        # additional indents are created when using send_keys.
+        self.browser.execute_script(
+            """arguments[0].CodeMirror.setValue(arguments[1])""",
+            self.browser.element(self.SET_VALUE_ELEMENT),
+            value,
+        )
         return True
 
     def read(self):
