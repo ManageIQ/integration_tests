@@ -133,7 +133,9 @@ def test_rename_vm(create_vm):
     """
     view = navigate_to(create_vm, 'Details')
     vm_name = create_vm.name
-    changed_vm = create_vm.rename(new_vm_name=fauxfactory.gen_alphanumeric(15, start="renamed_"))
+    changed_vm = create_vm.rename(
+        new_vm_name=fauxfactory.gen_alphanumeric(15, start="test-renamed_")
+    )
     view.flash.wait_displayed(timeout=20)
     view.flash.assert_success_message('Rename of Virtual Machine "{vm_name}" has been initiated'
                                       .format(vm_name=vm_name))
