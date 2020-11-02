@@ -242,6 +242,14 @@ class SavedReportDetailsView(CloudIntelReportsView):
             if self.parent.view_selector.selected != "Data View":
                 self.parent.view_selector.select("Data View")
 
+        @property
+        def is_displayed(self):
+            return (
+                self.field.is_displayed
+                and self.search_text.is_displayed
+                and self.table.is_displayed
+            )
+
     @property
     def is_displayed(self):
         return (
