@@ -12,7 +12,9 @@ from cfme.markers.env_markers.provider import ONE
 from cfme.markers.env_markers.provider import SECOND
 from cfme.provisioning import do_vm_provisioning
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
+from cfme.utils.version import Version
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -70,6 +72,8 @@ def vm_name():
     return vm_name
 
 
+@pytest.mark.meta(blockers=[BZ(1888748, forced_streams=["5.11", "5.10"],
+                            unblock=lambda provider: provider.version != Version("4.4"))])
 @pytest.mark.tier(2)
 @test_requirements.provision
 def test_iso_provision_from_template(appliance, provider, vm_name, datastore_init, request):
