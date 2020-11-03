@@ -164,7 +164,7 @@ def appliance_with_tmp_filled(appliance: IPAppliance):
 @test_requirements.restore
 @test_requirements.scheduled_ops
 @pytest.mark.tier(3)
-@pytest.mark.meta(automates=[1678223, 1643106, 1732417, 1703278])
+@pytest.mark.meta(automates=[1678223, 1643106, 1732417, 1703278, 1767895])
 def test_db_backup_schedule(request, db_backup_data, depot_machine_ip, appliance_with_tmp_filled):
     """ Test scheduled one-type backup on given machines using smb/nfs.
 
