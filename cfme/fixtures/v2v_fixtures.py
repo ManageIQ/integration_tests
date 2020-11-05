@@ -87,10 +87,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
                                  osp_provider=osp_provider)
 
     # Transformation method can be vddk or ssh
-    if hasattr(request, "param"):
-        transformation_method = request.param
-    else:
-        transformation_method = 'VDDK67'
+    transformation_method = request.param if hasattr(request, "param") else 'VDDK67'
 
     # set host credentials for Vmware and RHEV hosts
     __host_credentials(appliance, transformation_method, v2v_providers)
