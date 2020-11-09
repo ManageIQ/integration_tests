@@ -73,11 +73,25 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope):
-    """Requests appliance from sprout and configures rpms for crud update
+    """Requests appliance from sprout and configures repos for crud update.
 
-    To create the required repo (fresh-new (clean) CFME appliance required).
+    This function is using rpmrebuild to build a CFME with high version number to
+    force the update.
 
-    register and attach the system to RHN
+    In the past, the rpmrebuild tool was used. The downside is that it is
+    quite ancient tool, not in any common repo and it may be necessary to build
+    it from SRPM if some deps are not met.
+
+    Note that it would certainly be posible to just take the SRPM of CFME
+    and rebuild them using rpmbuild instead of using the rpmrebuild.
+
+    To create the required repo with rpmrebuild:
+
+    # # A fresh-new (clean) CFME appliance required.
+    #
+    # # Register and attach the system to RHN
+    #
+    # # Define values to be used.
     # SERVER=...redhat.com
     # CFME_STREAM=5.10
     #
@@ -110,8 +124,16 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope):
         pytest.skip('Failed looking up rpmrebuild in cfme_data.basic_info')
 
     def run(c):
-        assert appliance.ssh_client.run_command(c).success
+        cmd = appliance.ssh_client.run_command(c)
+        assert cmd.success
 
+    rhsm_url = cfme_data['redhat_updates']['registration']['rhsm']['url']
+    rhsm_username = conf.credentials['rhsm']['username']
+    rhsm_password = conf.credentials['rhsm']['password']
+
+    run(f'subscription-manager register '
+        f'--server {rhsm_url} --password {rhsm_password} --username {rhsm_username}')
+    run(f'subscription-manager attach')
     run(f'curl -o /etc/yum.repos.d/rpmrebuild.repo {url}')
     run('yum install rpmrebuild createrepo -y')
     run('mkdir /myrepo')
@@ -119,8 +141,9 @@ def appliance_preupdate(temp_appliance_preconfig_funcscope):
     run('cp /root/rpmbuild/RPMS/x86_64/cfme-appliance-* /myrepo/')
     run('createrepo /myrepo/')
     run('echo '
-        '"[local-repo]\nname=Internal repository\nbaseurl=file:///myrepo/\nenabled=1\ngpgcheck=0"'
+        '"[local-repo]\nname=Local repository\nbaseurl=file:///myrepo/\nenabled=1\ngpgcheck=0"'
         ' > /etc/yum.repos.d/local.repo')
+    run(f'subscription-manager clean')
     yield appliance
 
 
