@@ -533,40 +533,6 @@ def test_reorder_buttons_in_catalog_items():
     pass
 
 
-@pytest.mark.meta(coverage=[1602072])
-@pytest.mark.manual
-@pytest.mark.ignore_stream('5.10')
-@pytest.mark.tier(2)
-def test_catalog_item_price_currency():
-    """
-    Bugzilla:
-        1602072
-
-    Polarion:
-        assignee: nansari
-        casecomponent: Services
-        initialEstimate: 1/6h
-        startsin: 5.11
-        testSteps:
-            1. Add a generic item with price and currency
-            2. Add an ansible playbook item with price and currency
-            3. Add generic item with currency but no price
-            4. Add generic item with currency but non-float price
-            5. Add ansible playbook item with currency but no price
-            6. Add Ansible Playbook item with currency but non-float price
-            7. Unset currency in generic
-        expectedResults:
-            1. Able to add price and currency
-            2. Able to add price and currency
-            3. Validation should be fail for generic item with currency but no price
-            4. Validation should be fail for generic item with currency but non-float price
-            5. Validation Should be fail for ansible playbook item with currency but no price
-            6. Validation should be fail for ansible playbook item with currency but non-float price
-            7. Able to unset currency in generic catalog item
-    """
-    pass
-
-
 @pytest.mark.ignore_stream('5.10')
 @pytest.mark.meta(blockers=[BZ(1740399, forced_streams=["5.11"])], automates=[1740399])
 @pytest.mark.tier(2)
@@ -659,3 +625,67 @@ def test_upload_delete_custom_image_on_bundle(catalog_bundle):
 
     view.entities.remove.click()
     view.flash.assert_message('Custom Image successfully removed')
+
+
+CURRENCY_VALUES = {
+    "valid": fauxfactory.gen_numeric_string(4),
+    "empty": "",
+    "invalid": fauxfactory.gen_alpha(4)
+}
+@pytest.mark.meta(automates=[1602072])
+@pytest.mark.parametrize("value", CURRENCY_VALUES.values(), ids=CURRENCY_VALUES.keys())
+def test_catalog_item_price_currency(appliance, catalog, value):
+    """
+    Bugzilla:
+        1602072
+    Polarion:
+        assignee: nansari
+        casecomponent: Services
+        initialEstimate: 1/6h
+        startsin: 5.11
+        testSteps:
+            1. Create a catalog item with price and currency
+            2. Unset currency in generic
+            3. Add generic item with currency but no price
+            4. Add generic item with currency but non-float price
+        expectedResults:
+            1. Able to add price and currency
+            2. Able to unset currency in generic catalog item
+            3. Validation should be fail for generic item with currency but no price
+            4. Validation should be fail for generic item with currency but non-float price
+    """
+    cat_item = appliance.collections.catalog_items.instantiate(
+        appliance.collections.catalog_items.GENERIC,
+        name=fauxfactory.gen_alphanumeric(15, start="cat_item_"),
+        description="my catalog item",
+        catalog=catalog,
+        currency="$ [United States Dollar]",
+        price_per_month=value,
+    )
+
+    view = navigate_to(cat_item, "Add")
+    view.fill({'name': cat_item.name,
+               'select_catalog': cat_item.catalog_name,
+               'currency': cat_item.currency,
+               'price_per_month': cat_item.price_per_month})
+    view.add.click()
+
+    if str(value).isdigit():
+        view = cat_item.create_view(AllCatalogItemView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        view = navigate_to(cat_item, 'Details')
+        assert view.currency_price.read() == f"{cat_item.price_per_month}.0"
+
+        with update(cat_item):
+            cat_item.currency = '<Choose>'
+            cat_item.price_per_month = ''
+        view.flash.assert_success_message('Service Catalog Item "{}" was saved'
+                                          .format(cat_item.name))
+        cat_item.delete()
+    else:
+        assert view.is_displayed
+        view.flash.assert_message(
+            "Price must be a numeric value" if value else "Price / Month is required"
+        )
+        view.cancel.click()

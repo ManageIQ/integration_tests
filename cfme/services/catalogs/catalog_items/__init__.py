@@ -162,6 +162,7 @@ class DetailsEntitiesCatalogItemView(View):
 class DetailsCatalogItemView(ServicesCatalogView):
     title = Text('#explorer_title_text')
     basic_info = SummaryForm("Basic Information")
+    currency_price = Text(locator='.//div[../label[contains(text(), "Price / Month")]]')
 
     @property
     def is_displayed(self):
