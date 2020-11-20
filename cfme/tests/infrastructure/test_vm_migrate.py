@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log_validator import LogValidator
 
 
@@ -16,6 +17,17 @@ pytestmark = [
 ]
 
 
+@pytest.mark.meta(
+    blockers=[
+        BZ(
+            1879912,
+            forced_streams=["5.11"],
+            unblock=lambda provider: (
+                not (provider.one_of(RHEVMProvider) and provider.version == 4.2)
+            ),
+        )
+    ]
+)
 def test_vm_migrate(appliance, create_vm, provider):
     """Tests migration of a vm
 

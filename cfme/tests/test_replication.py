@@ -93,8 +93,8 @@ def test_replication_powertoggle(request, provider, setup_replication, small_tem
     instance_name = fauxfactory.gen_alphanumeric(start="test_replication_", length=25).lower()
     remote_app, global_app = setup_replication
 
-    provider_app_crud(OpenStackProvider, remote_app).setup()
     provider.appliance = remote_app
+    provider.setup()
 
     remote_instance = remote_app.collections.cloud_instances.instantiate(
         instance_name, provider, small_template.name
