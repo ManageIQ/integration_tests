@@ -579,7 +579,7 @@ def test_migration_with_no_conversion(appliance, source_provider, request, provi
     @request.addfinalizer
     def _cleanup():
         migration_plan.delete_completed_plan()
-        set_conversion_host_api(appliance, "vddk", source_provider, provider)
+        set_conversion_host_api(appliance, "VDDK67", source_provider, provider)
 
     view = navigate_to(migration_plan, "InProgress")
     assert not view.progress_card.is_plan_started(migration_plan.name)

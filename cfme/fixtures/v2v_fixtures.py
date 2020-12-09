@@ -87,10 +87,7 @@ def v2v_provider_setup(request, appliance, source_provider, provider):
                                  osp_provider=osp_provider)
 
     # Transformation method can be vddk or ssh
-    if hasattr(request, "param") and request.param == "SSH":
-        transformation_method = "SSH"
-    else:
-        transformation_method = "VDDK"
+    transformation_method = request.param if hasattr(request, "param") else 'VDDK67'
 
     # set host credentials for Vmware and RHEV hosts
     __host_credentials(appliance, transformation_method, v2v_providers)
@@ -199,17 +196,16 @@ def create_tags(appliance, transformation_method):
     return tag1, tag2
 
 
-def vddk_url():
+def vddk_url(transformation_method):
     """Get vddk url from cfme_data"""
-    vddk_version = "v2v_vddk"
     try:
         vddk_urls = conf.cfme_data.basic_info.vddk_url
     except (KeyError, AttributeError):
         pytest.skip("VDDK URLs not found in cfme_data.basic_info")
-    url = vddk_urls.get(vddk_version)
+    url = vddk_urls.get(transformation_method)
 
     if url is None:
-        pytest.skip(f"VDDK {vddk_version} is unavailable, skipping test")
+        pytest.skip(f"VDDK {transformation_method} is unavailable, skipping test")
     return url
 
 
@@ -268,7 +264,7 @@ def set_conversion_host_api(
             source_provider.data["private-keys"]["vmware-ssh-key"]["credentials"]]
         vmware_ssh_private_key = vmware_key.password
     else:
-        vmware_vddk_package_url = vddk_url()
+        vmware_vddk_package_url = vddk_url(transformation_method)
 
     for host in conversion_data["hosts"]:
         conversion_entity = "hosts" if target_provider.one_of(RHEVMProvider) else "vms"

@@ -32,7 +32,7 @@ pytestmark = [
 
 
 @pytest.mark.parametrize("v2v_provider_setup",
-                         ['SSH', 'VDDK'], indirect=True)
+                         ['SSH', 'VDDK65', 'VDDK67', 'VDDK7'], indirect=True)
 @pytest.mark.parametrize(
     "source_type, dest_type, template_type",
     [

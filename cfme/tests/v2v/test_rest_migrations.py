@@ -215,7 +215,7 @@ def test_rest_mapping_bulk_delete_from_collection(
     assert results[1]["success"] is True
 
 
-@pytest.mark.parametrize("transformation_method", ["SSH", "VDDK"])
+@pytest.mark.parametrize("transformation_method", ["SSH", "VDDK67"])
 def test_rest_conversion_host_crud(appliance, source_provider, provider, transformation_method):
     """
     Tests conversion host crud via REST
