@@ -209,7 +209,7 @@ class ServerInformation(Updateable, Pretty):
         'embedded_ansible', 'event', 'git_owner', 'internet_connectivity',
         'notifier', 'ems_inventory', 'ems_operations', 'remote_console',
         'reporting', 'scheduler', 'smartproxy', 'smartstate', 'user_interface',
-        'web_services'
+        'web_services', 'websocket'
     )
     _basic_information = ['hostname', 'company_name', 'appliance_name', 'appliance_zone',
                           'time_zone', 'locale']
