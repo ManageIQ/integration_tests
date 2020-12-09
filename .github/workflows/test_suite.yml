@@ -1,0 +1,68 @@
+name: 🕵️ Test suite
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Run every day at 23:59 UTC
+    - cron: 59 23 * * *
+
+jobs:
+  linting:
+    name: 📃 Code quality [pre-commit]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to Integration Test
+        uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+
+      - name: pre-commit Checks
+        run: |
+            python -m pip install pre-commit
+            pre-commit clean
+            pre-commit run --all-files
+
+      - name: Analysis (git diff)
+        if: failure()
+        run: git diff
+
+  tests:
+    name: 🐍 Python-${{ matrix.python-version }}
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [ 3.7, 3.8 ]
+
+    steps:
+    - name: Checkout to Integration Test
+      uses: actions/checkout@v2
+
+    - name: Set up Python-${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Setup integration test with Python-${{ matrix.python-version }}
+      run: |
+        python -m pip install -U setuptools pip
+        python -m cfme.scripting.quickstart
+        cp conf/cfme_data.yaml.template conf/cfme_data.yaml
+        cp conf/env.yaml.template conf/env.yaml
+        cp conf/credentials.yaml.template conf/credentials.yaml
+
+    - name: Basic tests
+      run: |
+        source .cfme_venv/bin/activate
+        pytest cfme/utils/tests cfme/modeling/tests requirements --dummy-appliance
+        pytest -p no:cfme cfme/tests/test_modules_importable.py --dummy-appliance --long-running
+
+    - name: Test collection
+      run: |
+        source .cfme_venv/bin/activate
+        pytest --dummy-appliance --collect-only --include-manual --long-running
