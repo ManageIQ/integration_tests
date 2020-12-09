@@ -5409,7 +5409,7 @@ class MigrationProgressBar(Widget):
     VMS_LOCATOR = './/strong[contains(@id,"vms-migrated")]'
     SPINNER_LOCATOR = './/div[contains(@class,"spinner")]'
     ERROR_LOCATOR = './/div/span[contains(@class,"pficon-error-circle-o")]'
-    ERROR_TXT = './/p[contains(@class, "blank-slate-pf-info")]'
+    ERROR_TXT = '//*[@id="progress-bar-items"]/div[2]/table/tbody/tr[1]/td[5]/div/div'
     PROGRESS_BARS = './/div[@class="progress-bar"]'
     PROGRESS_DESCRIPTION = './/div[contains(@class,"progress-description")]'
     ITEM_CUTOVER_BUTTON_LOCATOR = './/button[text()="Schedule Cutover"]'
