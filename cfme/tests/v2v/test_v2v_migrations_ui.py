@@ -614,8 +614,8 @@ def test_v2v_custom_attribute(request, appliance, provider,
     # Selecting second flavor (admin-linux) and security group(admin-group1)
     # since first(m1.mini flavor and default security group) is default
     map_flavor = provider.data.flavors[1] if attribute == "flavor" else provider.data.flavors[0]
-    map_security_group = (provider.data.security_groups.admin[1]
-        if attribute == "security_group" else provider.data.security_groups.admin[0])
+    map_security_group = (provider.data.security_groups['qe-auto'][1]
+        if attribute == "security_group" else provider.data.security_groups['qe-auto'][0])
 
     migration_plan_collection = appliance.collections.v2v_migration_plans
     migration_plan = migration_plan_collection.create(
