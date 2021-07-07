@@ -252,3 +252,18 @@ def parent_of_type(obj, klass):
     for x in _walk_to_obj_root(obj):
         if isinstance(x, klass):
             return x
+
+
+def match_items(items, filter):
+    ''' Return only items matching filter dict. '''
+    for item in items:
+        for attr_name, val in filter.items():
+            if getattr(item, attr_name) != val:
+                break
+        else:
+            yield item
+
+
+def first(items):
+    ''' Return the first item in the iterable. '''
+    return next(iter(items))
