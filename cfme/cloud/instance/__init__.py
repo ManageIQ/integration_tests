@@ -341,7 +341,8 @@ class Instance(VM):
             },
             'properties': {
                 'instance_type': partial_match(provisioning.get('instance_type')),
-                'guest_keypair': provisioning.get('guest_keypair')
+                'guest_keypair': provisioning.get('guest_keypair'),
+                'is_preemptible': provisioning.get('is_preemptible')
             }
         }
 

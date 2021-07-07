@@ -117,6 +117,8 @@ def test_provision_from_template(provisioned_instance):
 
 @pytest.mark.provider([GCEProvider], required_fields=[['provisioning', 'image']])
 @pytest.mark.usefixtures('setup_provider')
+@pytest.mark.meta(blockers=[GH('ManageIQ/integration_tests:7661')])
+@pytest.mark.meta(blockers=[BZ(1619298, forced_streams=['5.9', '5.10'])])
 def test_gce_preemptible_provision(appliance, provider, instance_args, soft_assert):
     """
     Polarion:
@@ -126,7 +128,7 @@ def test_gce_preemptible_provision(appliance, provider, instance_args, soft_asse
         initialEstimate: 1/6h
     """
     vm_name, inst_args = instance_args
-    inst_args['properties']['is_preemptible'] = True
+    inst_args.setdefault('properties', {})['is_preemptible'] = True
     instance = appliance.collections.cloud_instances.create(vm_name,
                                                             provider,
                                                             form_values=inst_args)
