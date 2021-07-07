@@ -27,7 +27,6 @@ from widgetastic_patternfly import Input as WInput
 
 from cfme.common import BaseLoggedInPage
 from cfme.common import ComparableMixin
-from cfme.common import CompareView
 from cfme.common import TimelinesView
 from cfme.common.provider_views import TemplatesCompareView
 from cfme.common.vm import Template
@@ -311,6 +310,8 @@ class HostTemplatesOnlyAllView(TemplatesOnlyAllView):
 
 class VmTemplatesCompareView(TemplatesCompareView):
     """Compare Templates page."""
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
+    comparison_table = Table(locator='//div[@id="compare-grid"]/table')
 
     @property
     def is_displayed(self):
@@ -1314,8 +1315,11 @@ class InfraVm(VM):
 
 
 @attr.s
-class InfraVmCollection(VMCollection):
+class InfraVmCollection(ComparableMixin, VMCollection):
     ENTITY = InfraVm
+
+    # COMPARE_VIEW = ProviderInfraVmCompareView # I'll need to create this.
+    # COMPARE_APP_VIEW = InfraVmCompareView
 
     def all(self):
         """Return entities for all items in collection"""
@@ -1370,6 +1374,19 @@ class InfraTemplateCollection(ComparableMixin, TemplateCollection):
     def NAV_STRING(self):
         parent = self.filters.get('parent')  # None if no filter
         return 'ProviderTemplates' if parent else 'TemplatesOnly'
+
+    from cfme.common.provider_views import TemplatesCompareView
+    COMPARE_VIEW = TemplatesCompareView
+    COMPARE_APP_VIEW = VmTemplatesCompareView
+    DROPDOWN_TEXT = 'Compare Selected Templates'
+    NAV_STRING = 'TemplatesOnly'
+
+    @property
+    def name(self):
+        try:
+            return self.filters.get('provider').name
+        except Exception:
+            pass
 
     def all(self):
         """Return entities for all items in collection"""
@@ -1723,6 +1740,38 @@ class TemplatesAll(CFMENavigateStep):
         elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
             self.view.sidebar.templates.tree.click_path('All Templates',
                                                         kwargs['filter_folder'],
+                                                        kwargs['filter_name'])
+        else:
+            raise DestinationNotFound("the destination isn't found")
+
+
+@navigator.register(InfraTemplateCollection, 'TemplatesOnly2')
+class TemplatesAll2(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    @property
+    def VIEW(self):  # noqa
+        from cfme.infrastructure.provider import ProviderTemplatesView
+        from cfme.infrastructure.provider import InfraProvider
+        try:
+            if self.obj.parent.one_of(InfraProvider):
+                return ProviderTemplatesView  # ProviderTemplatesOnlyAllView?? What is this?
+        except Exception:
+            pass
+        return TemplatesOnlyAllView
+
+    def step(self, *args, **kwargs):
+        from cfme.infrastructure.provider import InfraProvider
+        try:
+            if self.obj.parent.one_of(InfraProvider):
+                navigate_to(self.obj.parent, 'ProviderTemplates')
+                return
+        except Exception:
+            pass
+        if 'filter_folder' not in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates')
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates', kwargs['filter_folder'],
                                                         kwargs['filter_name'])
         else:
             raise DestinationNotFound("the destination isn't found")

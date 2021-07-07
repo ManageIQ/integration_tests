@@ -367,6 +367,40 @@ class ManagePolicies(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
+class ComparableCommonBase:
+    """
+    This will be the base class for a Mixin for comparing entities.
+    Not sure yet what will go here versus Comparable
+    """
+    pass
+
+
+class ComparableMixin(ComparableCommonBase):
+    """
+    Mixin for comparing entities
+    Todo: Update this!!!
+    """
+    DROPDOWN_TEXT = 'Compare Selected items'
+
+    def compare_entities_col(self, provider, entities_list=None):
+        from cfme.utils.appliance.implementations.ui import navigate_to
+        from cfme.common.host_views import HostsCompareView
+        from cfme.common.host_views import ProviderHostsCompareView
+        from cfme.common.vm import VM
+        entity_view = navigate_to(self, "All")
+        for item in entities_list:
+            v_entity = entity_view.entities.get_entity(name=item.name)
+            v_entity.ensure_checked()
+        entity_view.toolbar.configuration.item_select(
+            self.DROPDOWN_TEXT, handle_alert=True)
+        if self.parent != provider:
+            compare_entity_view = provider.create_view(self.COMPARE_APP_VIEW)
+        else:
+            compare_entity_view = provider.create_view(self.COMPARE_VIEW)
+        assert compare_entity_view.is_displayed
+        return compare_entity_view
+
+
 class CompareView(BaseLoggedInPage):
     """generic class for compare views"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')

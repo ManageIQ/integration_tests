@@ -18,6 +18,7 @@ from cfme.common.host_views import HostStorageAdaptersView
 from cfme.common.host_views import HostsView
 from cfme.common.host_views import HostVmmInfoView
 from cfme.common.provider_views import InfraProviderDetailsView
+from cfme.common.provider_views import InfraProvidersView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.fixtures.provider import setup_or_skip
 from cfme.infrastructure.provider import InfraProvider
@@ -32,6 +33,7 @@ from cfme.utils.appliance.constants import DownloadOptions
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
+from cfme.utils.log import logger
 from cfme.utils.log_validator import LogValidator
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
@@ -501,6 +503,39 @@ def test_infrastructure_hosts_navigation_after_download_from_compare(
         handle_extra_tabs(hosts_view)
     hosts_view.navigation.select("Compute")
     assert hosts_view.is_displayed
+
+# we need to handle appliance and provider nav, number of hosts, list of hosts??
+#
+# ? view = navigate_to(self, 'All' if provider=None else 'AllForProvider') ?? is AllForProvider
+# the same as provider.collections and All same as appliance.collections??
+# set defaults and use a list of hosts or num hosts. Error if neither is passed.
+# host_list will not use get all, but will use other methods to get by name
+# make this work for hosts first then look at differences needed to support other entities.
+# There may be just too many differences to make using one method useful.
+# may be easier just to put unique one in class def
+# !!!If we want to remove navigation from this we can just pass in the starting view?
+
+
+def compare_hosts(appliance, provider=None, num_hosts=2, host_list=None):
+    if num_hosts < 2:
+        pass  # display error. OR just make = 2?
+    if host_list:
+        pass  # add functionality
+    else:
+        ent_slice = slice(0, num_hosts, None)
+    if provider:
+        hosts_view = navigate_to(provider.collections.hosts, "All")
+    else:
+        hosts_view = navigate_to(appliance.collections.hosts, "All")  # use different nav so don't
+        # need appliance
+    for h in hosts_view.entities.get_all(slice=ent_slice):
+        h.ensure_checked()
+    hosts_view.toolbar.configuration.item_select('Compare Selected items',
+                                                 handle_alert=True)
+    compare_hosts_view = provider.create_view(HostsCompareView)
+    assert compare_hosts_view.is_displayed
+    # do we want to compare values on the compare view? Clone and update method used in templates.
+    return compare_hosts_view
 
 
 @test_requirements.rhev

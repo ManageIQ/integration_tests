@@ -333,6 +333,17 @@ class HostsEditView(HostEditView):
 class HostsCompareView(CompareView, ComputeInfrastructureHostsView):
     """Compare Host / Node page."""
 
+    @View.nested
+    class toolbar(View):
+        all_attributes = Button(title="All attributes")
+        different_values_attributes = Button(title="Attributes with different values")
+        same_values_attributes = Button(title="Attributes with same values")
+        details_mode = Button(title="Details Mode")
+        exists_mode = Button(title="Exists Mode")
+        # add expanded view, compressed view buttons.
+        download = Dropdown('Download')
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
     @property
     def is_displayed(self):
         title = "Compare Host / Node"
