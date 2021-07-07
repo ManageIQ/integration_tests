@@ -162,6 +162,15 @@ if __name__ == '__main__':
                 logger.info("%s:%s Skipped due to block upload.", uploader.log_name, provider_key)
                 continue
 
+            if uploader.template_upload_data.get('block_upstream', False) and 'upstream' in stream:
+                logger.info("%s:%s Skipped due to block_upstream.", uploader.log_name, provider_key)
+                continue
+
+            if (uploader.template_upload_data.get('block_downstream', False) and
+                    'downstream' in stream):
+                logger.info("%s:%s Skipped due to block_upstream.", uploader.log_name, provider_key)
+                continue
+
             thread = Thread(target=uploader.main)
             thread.daemon = True
             thread_queue.append(thread)
