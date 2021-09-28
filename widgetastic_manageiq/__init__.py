@@ -4229,7 +4229,12 @@ class WaitTab(Tab):
                 if _tries >= _to_try:  # raise the TimedOutError if we've tried enough times
                     raise
         try:
-            widget.wait_displayed(timeout=2)
+            from widgetastic.widget.base import ParametrizedViewRequest
+
+            if isinstance(widget, ParametrizedViewRequest):
+                pass
+            else:
+                widget.wait_displayed(timeout=2)
         except TimedOutError:
             self.logger.warning("Tab widget not displayed, continuing...")
 
