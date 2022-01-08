@@ -707,7 +707,10 @@ class All(CFMENavigateStep):
             try:
                 self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Hosts")
             except NoSuchElementException:
-                self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Nodes")
+                try:
+                    self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Nodes")
+                except NoSuchElementException:
+                    self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Hosts / Nodes")
 
 
 @navigator.register(Host)
