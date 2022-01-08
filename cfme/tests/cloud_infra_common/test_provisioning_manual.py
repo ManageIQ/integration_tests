@@ -88,13 +88,23 @@ def test_public_ip_reuse_azure():
 
 @pytest.mark.manual
 @pytest.mark.tier(2)
-def test_vmware_default_placement_vmware():
+def test_vmware_host_placement_on_drs_cluster():
     """
-    Test host autoplacement provisioning on VMware. now we are able to get
-    DRS property of the Cluster from VC and specify if selected Cluster
-    requires pre-selected Host Name or not
-    CFME: Cluster properties -  DRS = True
-    VC: Cluster / Manage / Settings / vSphere DRS
+    Test host autoplacement provisioning on VMware.
+
+    Requirements:
+        A cluster in vSphere with DRS enabled:
+            CFME: Cluster properties -  DRS = True
+        This can be achieved in VirtualCenter on:
+            Cluster / Manage / Settings / vSphere DRS
+
+    testSteps:
+        1) Provision a VM on vcenter. Select *manual* placement. Do *not* specify
+           the Host (choose host <None>).
+
+    expectedResults:
+        1) VM provisioned.
+
 
     Polarion:
         assignee: jhenner
