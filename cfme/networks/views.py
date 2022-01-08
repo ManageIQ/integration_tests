@@ -641,7 +641,13 @@ class SubnetAddView(BaseLoggedInPage):
     gateway = TextInput(name='gateway_ip')
     add = Button('Add')
 
-    is_displayed = displayed_not_implemented
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Networks', 'Subnets'] and
+            self.title.text == 'Add New Subnet'
+        )
 
 
 class SubnetEditView(BaseLoggedInPage):
@@ -852,6 +858,7 @@ class OneProviderSecurityGroupView(BaseLoggedInPage):
 
 class FloatingIpToolBar(View):
     """ Represents floating ips toolbar and its controls """
+    configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
@@ -859,6 +866,7 @@ class FloatingIpToolBar(View):
 
 class FloatingIpDetailsToolBar(View):
     """ Represents toolbar of summary of port """
+    configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Button(title='Print or export summary')
 
@@ -918,6 +926,27 @@ class FloatingIpDetailsView(BaseLoggedInPage):
     def is_displayed(self):
         return (self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
                 self.entities.title.text == '{} (Summary)'.format(self.context['object'].address))
+
+
+class FloatingIpAddView(BaseLoggedInPage):
+    """ Represents Add view of floating IP """
+    title = Text('//div[@id="main-content"]//h1')
+    network_manager = Select(name='ems_id')
+    network = Select(name='cloud_network_id')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    floating_ip_address = TextInput(name='address')
+    fixed_ip_address = TextInput(name='fixed_ip_address')
+    network_port_id = TextInput(name='network_port_ems_ref')
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
+            self.title.text == 'Add New Floating IP'
+        )
 
 
 class OneProviderFloatingIpView(BaseLoggedInPage):
